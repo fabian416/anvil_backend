@@ -64,6 +64,11 @@ LIFI_CHAINS = {
     "fantom": 250,
     "gnosis": 100,
     "zksync": 324,
+    # Hyperliquid chains
+    "hyperliquid": 1337,  # HyperCore (perps/spot)
+    "hpl": 1337,          # Alias for hyperliquid
+    "hyperevm": 999,      # HyperEVM (smart contracts)
+    "hyp": 999,           # Alias for hyperevm
 }
 
 # Common token addresses
@@ -94,6 +99,17 @@ LIFI_TOKENS = {
         "ETH": NATIVE_ETH_ADDRESS,
         "WETH": "0x4200000000000000000000000000000000000006",
         "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    },
+    # Hyperliquid tokens (chain 1337 - HyperCore)
+    "hyperliquid": {
+        "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",       # USDC (Perps)
+        "USDC_PERPS": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", # USDC (Perps) alias
+        "USDC_SPOT": "0x6d1e7cde53bA9467B783Cb7c530CE05400000000",  # USDC (Spot)
+    },
+    "hpl": {
+        "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+        "USDC_PERPS": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+        "USDC_SPOT": "0x6d1e7cde53bA9467B783Cb7c530CE05400000000",
     },
 }
 

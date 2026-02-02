@@ -33,21 +33,22 @@ When the frontend receives `execute.execution_mode === "multi_step"`:
 
 ---
 
-## Complete Hyperliquid Swap Flow
+## Complete Hyperliquid Swap Flow (Using LiFi Bridge)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         HYPERLIQUID SWAP FLOW                               │
+│                    HYPERLIQUID SWAP FLOW (LiFi Integration)                 │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-User has USDC on Base/Arbitrum (in Privy wallet)
+User has USDC on Base (in Privy wallet)
                     │
                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ STEP 1: Deposit USDC to Hyperliquid (if requires_deposit = true)           │
-│ - Approve USDC to Hyperliquid Bridge contract                               │
-│ - Call bridge.sendUSDC(amount) via Privy sendTransaction                    │
-│ - Wait for confirmation (~1-2 minutes)                                      │
+│ STEP 1: Bridge USDC via LiFi (if requires_deposit = true)                  │
+│ - Use LiFi SDK/API to get bridge quote                                      │
+│ - Execute bridge transaction on Base (gas paid on Base!)                   │
+│ - LiFi routes: Base USDC → Hyperliquid USDC (Perps)                        │
+│ - Wait for confirmation (~30 seconds via Relay bridge)                     │
 │ - Funds arrive in Hyperliquid PERPS account                                 │
 │ - Report to backend: POST /execute with step_completed=1                    │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -73,6 +74,19 @@ User has USDC on Base/Arbitrum (in Privy wallet)
                     ▼
 User now has PURR in Hyperliquid Spot account
 ```
+
+### Key Improvement: LiFi Bridge
+
+**Previous flow (Arbitrum Bridge):**
+- ❌ User needed ETH on Arbitrum for gas
+- ❌ Two EVM transactions (approve + deposit)
+- ❌ 1-2 minute confirmation time
+
+**New flow (LiFi Bridge):**
+- ✅ Gas paid on source chain (Base) - no ETH on Arbitrum needed!
+- ✅ Single transaction via LiFi
+- ✅ ~30 second confirmation via Relay bridge
+- ✅ LiFi handles routing and optimization
 
 ---
 
@@ -103,16 +117,20 @@ User now has PURR in Hyperliquid Spot account
   "steps": [
     {
       "step": 1,
-      "action": "deposit",
+      "action": "lifi_bridge",
       "status": "pending",
-      "description": "Bridge 100.00 USDC to Hyperliquid",
-      "chain": "arbitrum",
-      "chain_id": 42161,
+      "description": "Bridge 100.00 USDC to Hyperliquid via LiFi",
+      "source_chain": "base",
+      "source_chain_id": 8453,
+      "destination_chain": "hyperliquid",
+      "destination_chain_id": 1337,
       "amount": "100.00",
       "token": "USDC",
-      "bridge_contract": "0x2Df1c51E09aECF9cacB7bc98cB1742757f163dF7",
-      "usdc_contract": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-      "estimated_time": "1-2 minutes"
+      "source_token_address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "destination_token_address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+      "bridge_provider": "lifi",
+      "gas_paid_on": "base",
+      "estimated_time": "~30 seconds"
     },
     {
       "step": 2,
@@ -146,6 +164,16 @@ User now has PURR in Hyperliquid Spot account
   },
   "requires_deposit": true,
   "requires_transfer": true,
+  
+  "lifi_config": {
+    "source_chain": "base",
+    "source_chain_id": 8453,
+    "destination_chain": "hyperliquid",
+    "destination_chain_id": 1337,
+    "source_usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "destination_usdc": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+    "lifi_quote_url": "https://li.quest/v1/quote"
+  },
   
   "bridge_config": {
     "bridge": "0x2Df1c51E09aECF9cacB7bc98cB1742757f163dF7",
@@ -187,13 +215,22 @@ import * as hl from '@nktkas/hyperliquid';
 
 interface HyperliquidStep {
   step: number;
-  action: 'deposit' | 'transfer_to_spot' | 'spot_swap';
+  action: 'lifi_bridge' | 'deposit' | 'transfer_to_spot' | 'spot_swap';
   status: 'pending' | 'in_progress' | 'completed' | 'error';
   description: string;
   amount: string;
   token: string;
   estimated_time: string;
-  // Deposit step
+  // LiFi bridge step (NEW - preferred)
+  source_chain?: string;
+  source_chain_id?: number;
+  destination_chain?: string;
+  destination_chain_id?: number;
+  source_token_address?: string;
+  destination_token_address?: string;
+  bridge_provider?: string;
+  gas_paid_on?: string;
+  // Legacy deposit step (Arbitrum bridge)
   chain?: string;
   chain_id?: number;
   bridge_contract?: string;
@@ -210,6 +247,17 @@ interface HyperliquidExecutePayload {
   current_step: number;
   requires_deposit: boolean;
   requires_transfer: boolean;
+  // NEW: LiFi bridge configuration (preferred)
+  lifi_config: {
+    source_chain: string;
+    source_chain_id: number;
+    destination_chain: string;
+    destination_chain_id: number;
+    source_usdc: string;
+    destination_usdc: string;
+    lifi_quote_url: string;
+  };
+  // LEGACY: Arbitrum bridge configuration (fallback)
   bridge_config: {
     bridge: string;
     usdc: string;
@@ -296,7 +344,15 @@ export function useHyperliquidMultiStepSwap(conversationId: string) {
         let txHash: string;
 
         switch (step.action) {
+          case 'lifi_bridge':
+            // NEW: Use LiFi for bridging (gas paid on source chain)
+            txHash = await executeLiFiBridgeStep(wallet, step, execute.lifi_config);
+            // Wait for bridge to be confirmed on Hyperliquid
+            await waitForHyperliquidDeposit(wallet.address, parseFloat(step.amount));
+            break;
+            
           case 'deposit':
+            // LEGACY: Direct Arbitrum bridge (requires ETH on Arbitrum)
             txHash = await executeDepositStep(wallet, step, execute.bridge_config);
             // Wait for deposit to be confirmed on Hyperliquid
             await waitForHyperliquidDeposit(wallet.address, parseFloat(step.amount));
@@ -367,7 +423,57 @@ export function useHyperliquidMultiStepSwap(conversationId: string) {
   };
 }
 
-// Helper: Execute deposit step
+// Helper: Execute LiFi bridge step (replaces old Arbitrum deposit)
+async function executeLiFiBridgeStep(
+  wallet: any,
+  step: HyperliquidStep,
+  lifiConfig: {
+    source_chain: string;
+    source_chain_id: number;
+    source_usdc: string;
+    destination_usdc: string;
+  }
+): Promise<string> {
+  const provider = await wallet.getEthereumProvider();
+
+  // Switch to source chain (Base)
+  await wallet.switchChain(lifiConfig.source_chain_id);
+
+  const amountWei = parseUnits(step.amount, 6); // USDC = 6 decimals
+
+  // 1. Get LiFi quote with transaction data
+  const quoteResponse = await fetch(
+    `https://li.quest/v1/quote?` +
+    `fromChain=${lifiConfig.source_chain_id}` +
+    `&toChain=1337` + // Hyperliquid chain ID
+    `&fromToken=${lifiConfig.source_usdc}` +
+    `&toToken=${lifiConfig.destination_usdc}` +
+    `&fromAmount=${amountWei.toString()}` +
+    `&fromAddress=${wallet.address.toLowerCase()}`
+  );
+  const quote = await quoteResponse.json();
+
+  if (!quote.transactionRequest) {
+    throw new Error('LiFi quote failed: ' + (quote.message || 'Unknown error'));
+  }
+
+  // 2. Execute the LiFi transaction (includes approval if needed)
+  const tx = quote.transactionRequest;
+  const bridgeTx = await provider.request({
+    method: 'eth_sendTransaction',
+    params: [{
+      from: wallet.address,
+      to: tx.to,
+      data: tx.data,
+      value: tx.value,
+      gasLimit: tx.gasLimit,
+    }],
+  });
+
+  return bridgeTx;
+}
+
+// Legacy helper for backward compatibility (Arbitrum direct bridge)
 async function executeDepositStep(
   wallet: any,
   step: HyperliquidStep,
@@ -628,17 +734,23 @@ Response:
 
 ## Important Notes
 
-### 1. Deposit Source Chain
-- **Arbitrum**: Primary supported chain for Hyperliquid deposits
-- **Base**: No direct bridge - must go via Arbitrum or use LiFi to bridge first
+### 1. Bridge Method (LiFi vs Legacy)
+- **LiFi (Preferred)**: Bridge from any chain (Base, Ethereum, Arbitrum) to Hyperliquid
+  - Gas paid on source chain (no ETH on Arbitrum needed!)
+  - Uses Relay bridge (~30 seconds)
+  - Single transaction
+- **Legacy (Arbitrum Bridge)**: Direct bridge from Arbitrum only
+  - Requires ETH on Arbitrum for gas
+  - Two transactions (approve + deposit)
+  - 1-2 minute confirmation
 
 ### 2. Timing
-- Deposit confirmation: 1-2 minutes
+- LiFi bridge: ~30 seconds
 - Transfer to Spot: Instant
 - Swap execution: Instant
 
 ### 3. Fees
-- Bridge deposit: Gas on Arbitrum (~$0.10-0.50)
+- LiFi bridge: ~$0.35 on source chain (Base) + ~$0.03 LiFi fee
 - Hyperliquid operations: Zero gas (Hyperliquid covers)
 - Trading fee: 0.02% (maker) / 0.05% (taker)
 
@@ -649,33 +761,22 @@ Response:
 
 ---
 
-## ⚠️ CRITICAL: Gas Check Before Deposit
+## Gas Check Before Bridge (LiFi Simplifies This!)
 
-### The Problem
+### With LiFi (New - Recommended)
 
-When depositing USDC to Hyperliquid, the user needs to:
-1. **Approve** the bridge contract to spend USDC (requires gas in ETH)
-2. **Deposit** USDC to the bridge contract (requires gas in ETH)
-
-If the user has USDC but **no native ETH on Arbitrum**, they will see:
-```
-"Add funds on Arbitrum One to complete transaction"
-```
-
-### Required Pre-Checks
-
-**Before showing the Execute button**, the frontend MUST check:
+LiFi bridges from the user's **source chain** (e.g., Base), so gas is paid on Base - not Arbitrum!
 
 ```typescript
-// Check gas availability BEFORE executing deposit step
+// Check gas on source chain (Base in this case)
 async function checkGasAvailability(
   wallet: any, 
-  bridgeConfig: { chain_id: number }
+  lifiConfig: { source_chain_id: number }
 ): Promise<{ hasGas: boolean; ethBalance: bigint; required: bigint }> {
   const provider = await wallet.getEthereumProvider();
   
-  // Switch to Arbitrum (or source chain)
-  await wallet.switchChain(bridgeConfig.chain_id);
+  // Switch to source chain (Base)
+  await wallet.switchChain(lifiConfig.source_chain_id);
   
   // Get native ETH balance
   const ethBalance = await provider.request({
@@ -683,8 +784,8 @@ async function checkGasAvailability(
     params: [wallet.address, 'latest'],
   });
   
-  // Minimum required: ~0.001 ETH for approve + deposit
-  const MINIMUM_ETH_FOR_GAS = BigInt("1000000000000000"); // 0.001 ETH
+  // LiFi bridge on Base requires ~0.0002 ETH for gas (~$0.40)
+  const MINIMUM_ETH_FOR_GAS = BigInt("200000000000000"); // 0.0002 ETH
   
   return {
     hasGas: BigInt(ethBalance) >= MINIMUM_ETH_FOR_GAS,
@@ -694,7 +795,7 @@ async function checkGasAvailability(
 }
 ```
 
-### Updated Execute Flow
+### Updated Execute Flow (LiFi)
 
 ```typescript
 export function SwapExecuteButton({ execute, conversationId, onSuccess, onError }: Props) {
@@ -711,7 +812,9 @@ export function SwapExecuteButton({ execute, conversationId, onSuccess, onError 
   const checkGas = async () => {
     setIsCheckingGas(true);
     try {
-      const result = await checkGasAvailability(wallet, execute.bridge_config);
+      // Use lifi_config for source chain (new), fallback to bridge_config (legacy)
+      const chainId = execute.lifi_config?.source_chain_id || execute.bridge_config.chain_id;
+      const result = await checkGasAvailability(wallet, { source_chain_id: chainId });
       setGasCheck(result);
     } finally {
       setIsCheckingGas(false);
@@ -720,30 +823,17 @@ export function SwapExecuteButton({ execute, conversationId, onSuccess, onError 
   
   // Show error if no gas
   if (gasCheck && !gasCheck.hasGas) {
+    const sourceChain = execute.lifi_config?.source_chain || 'Base';
     return (
       <div className="p-4 bg-yellow-900/30 border border-yellow-600 rounded-lg">
         <h4 className="font-semibold text-yellow-400 mb-2">
-          ⚠️ Insufficient Gas on Arbitrum
+          ⚠️ Insufficient Gas on {sourceChain}
         </h4>
         <p className="text-sm text-gray-300 mb-3">
-          You need a small amount of ETH on Arbitrum to pay for gas fees.
-          The deposit transaction requires approximately $0.10-0.50 in ETH.
+          You need a small amount of ETH on {sourceChain} to pay for gas fees (~$0.40).
         </p>
         <div className="text-xs text-gray-400">
           Current ETH balance: {formatEther(gasCheck.ethBalance)} ETH
-        </div>
-        <div className="text-xs text-gray-400">
-          Required: ~0.001 ETH (minimum)
-        </div>
-        <div className="mt-3">
-          <a 
-            href="https://bridge.arbitrum.io/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-400 underline text-sm"
-          >
-            Bridge ETH to Arbitrum →
-          </a>
         </div>
       </div>
     );
@@ -757,19 +847,18 @@ export function SwapExecuteButton({ execute, conversationId, onSuccess, onError 
 
 | Error | Meaning | Solution |
 |-------|---------|----------|
-| "Add funds on Arbitrum One to complete transaction" | No ETH for gas | Bridge ETH to Arbitrum first |
-| "Insufficient allowance" | Approval not yet confirmed | Wait for approval tx or retry |
+| "Insufficient Gas on Base" | No ETH on source chain | Need ETH on Base for gas |
+| "LiFi quote failed" | Bridge route unavailable | Try again or use fallback |
 | "Insufficient balance" | Not enough USDC | User needs more USDC |
 
-### Gas Cost Estimates
+### Gas Cost Comparison
 
-| Operation | Estimated Gas | Cost (~$3000 ETH) |
-|-----------|---------------|-------------------|
-| USDC Approve | ~46,000 gas | ~$0.05 |
-| Bridge Deposit | ~80,000 gas | ~$0.10 |
-| **Total** | ~126,000 gas | **~$0.15** |
+| Method | Gas Chain | Estimated Cost |
+|--------|-----------|----------------|
+| **LiFi (Base → Hyperliquid)** | Base | ~$0.35-0.40 |
+| Legacy (Arbitrum Bridge) | Arbitrum | ~$0.15-0.20 |
 
-Note: Arbitrum gas costs are very low. $0.50 in ETH is more than enough for multiple transactions.
+**Key Benefit**: Users likely already have ETH on Base from other transactions!
 
 ---
 

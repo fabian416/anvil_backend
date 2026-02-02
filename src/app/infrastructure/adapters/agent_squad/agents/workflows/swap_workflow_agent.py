@@ -1240,8 +1240,10 @@ Aqui está a cotação do swap:
         """
         Build multi-step execute_data for Hyperliquid swaps.
         
-        Hyperliquid Flow:
-        1. Deposit: Bridge USDC from Arbitrum to Hyperliquid (if no balance)
+        Hyperliquid Flow (using LiFi for deposits):
+        1. Deposit: Bridge USDC via LiFi from user's chain to Hyperliquid (if no balance)
+           - LiFi handles cross-chain bridging (Base/Arbitrum → Hyperliquid)
+           - Gas is paid on source chain (no need for ETH on Arbitrum)
         2. Transfer: Move from Perps to Spot account (if balance in Perps)
         3. Swap: Execute spot swap USDC → meme token
         
@@ -1287,26 +1289,47 @@ Aqui está a cotação do swap:
         steps = []
         current_step = 1
         
-        # Step 1: Deposit (if not enough on Hyperliquid)
+        # Step 1: Deposit via LiFi (if not enough on Hyperliquid)
         total_on_hyperliquid = available_on_spot + available_on_perps
         needs_deposit = total_on_hyperliquid < amount_float and is_selling_usdc
         
+        # Default source chain is Base (where user likely has funds)
+        # Frontend can override based on user's actual balances
+        source_chain = "base"
+        source_chain_id = 8453
+        
+        # LiFi bridge configuration
+        lifi_config = {
+            "source_chain": source_chain,
+            "source_chain_id": source_chain_id,
+            "destination_chain": "hyperliquid",
+            "destination_chain_id": 1337,
+            # USDC addresses
+            "source_usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",  # Base USDC
+            "destination_usdc": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",  # HL Perps USDC
+            # LiFi API endpoint for quote
+            "lifi_quote_url": "https://li.quest/v1/quote",
+        }
+        
         if needs_deposit:
             deposit_amount = amount_float - total_on_hyperliquid
-            bridge_config = HYPERLIQUID_BRIDGE_CONTRACTS.get("arbitrum", {})
             
             steps.append({
                 "step": 1,
-                "action": "deposit",
+                "action": "lifi_bridge",  # Changed from "deposit" to "lifi_bridge"
                 "status": "pending",
-                "description": f"Bridge {deposit_amount:.2f} USDC to Hyperliquid",
-                "chain": "arbitrum",
-                "chain_id": bridge_config.get("chain_id", 42161),
+                "description": f"Bridge {deposit_amount:.2f} USDC to Hyperliquid via LiFi",
+                "source_chain": source_chain,
+                "source_chain_id": source_chain_id,
+                "destination_chain": "hyperliquid",
+                "destination_chain_id": 1337,
                 "amount": f"{deposit_amount:.2f}",
                 "token": "USDC",
-                "bridge_contract": bridge_config.get("bridge"),
-                "usdc_contract": bridge_config.get("usdc"),
-                "estimated_time": "1-2 minutes",
+                "source_token_address": lifi_config["source_usdc"],
+                "destination_token_address": lifi_config["destination_usdc"],
+                "bridge_provider": "lifi",
+                "estimated_time": "~30 seconds",
+                "gas_paid_on": source_chain,  # User pays gas on source chain!
             })
             current_step = 1
         
@@ -1382,7 +1405,9 @@ Aqui está a cotação do swap:
             },
             "requires_deposit": needs_deposit,
             "requires_transfer": needs_transfer,
-            # Bridge info (for deposit step)
+            # LiFi bridge config (replaces old Arbitrum bridge config)
+            "lifi_config": lifi_config,
+            # Keep legacy bridge_config for backward compatibility
             "bridge_config": HYPERLIQUID_BRIDGE_CONTRACTS.get("arbitrum", {}),
         }
         
@@ -2578,8 +2603,8 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
         
         if is_hyperliquid_deposit:
             total_steps = execute_data.get("total_steps", 3)
-            bridge_chain = execute_data.get("bridge_config", {}).get("chain_id", 42161)
-            bridge_chain_name = "Arbitrum" if bridge_chain == 42161 else "Unknown"
+            lifi_config = execute_data.get("lifi_config", {})
+            source_chain = lifi_config.get("source_chain", "base").capitalize()
             
             msgs = {
                 "en": f"""✅ **Ready to Execute!**
@@ -2590,11 +2615,11 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 • Network: Hyperliquid
 
 **Multi-Step Swap** ({total_steps} steps):
-1️⃣ Bridge {from_token} to Hyperliquid (via {bridge_chain_name})
+1️⃣ Bridge {from_token} to Hyperliquid via LiFi
 2️⃣ Transfer to Spot account
 3️⃣ Execute swap
 
-⚠️ **Important:** You need a small amount of ETH on {bridge_chain_name} for gas fees (~$0.15).
+💡 Gas fees (~$0.35) will be paid on {source_chain} - no need for ETH on Arbitrum!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -2608,11 +2633,11 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 • Red: Hyperliquid
 
 **Swap Multi-Paso** ({total_steps} pasos):
-1️⃣ Bridge {from_token} a Hyperliquid (vía {bridge_chain_name})
+1️⃣ Bridge {from_token} a Hyperliquid vía LiFi
 2️⃣ Transferir a cuenta Spot
 3️⃣ Ejecutar swap
 
-⚠️ **Importante:** Necesitas una pequeña cantidad de ETH en {bridge_chain_name} para gas (~$0.15).
+💡 Los costos de gas (~$0.35) se pagarán en {source_chain} - ¡no necesitas ETH en Arbitrum!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -2626,11 +2651,11 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 • Rede: Hyperliquid
 
 **Swap Multi-Etapas** ({total_steps} etapas):
-1️⃣ Bridge {from_token} para Hyperliquid (via {bridge_chain_name})
+1️⃣ Bridge {from_token} para Hyperliquid via LiFi
 2️⃣ Transferir para conta Spot
 3️⃣ Executar swap
 
-⚠️ **Importante:** Você precisa de uma pequena quantidade de ETH em {bridge_chain_name} para gas (~$0.15).
+💡 As taxas de gas (~$0.35) serão pagas em {source_chain} - não precisa de ETH em Arbitrum!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
