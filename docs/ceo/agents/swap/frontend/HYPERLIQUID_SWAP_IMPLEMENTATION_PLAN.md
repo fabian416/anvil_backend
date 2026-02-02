@@ -6,20 +6,30 @@ The backend now supports **multi-step execution** for Hyperliquid swaps. The `ex
 
 ## Current State ✅ UPDATED
 
-### Backend (swap_workflow_agent.py) - IMPLEMENTED
+### Backend (swap_workflow_agent.py) - ✅ FULLY IMPLEMENTED
+
+The backend **already sends** `execution_mode: "multi_step"` for all Hyperliquid swaps:
+
 - ✅ Gets spot quotes from Hyperliquid API
 - ✅ Returns quote data (price, amount, spread)
 - ✅ Token addresses are `null` (Hyperliquid is not EVM)
-- ✅ **NEW**: `get_spot_balance()` and `get_perps_balance()` methods
-- ✅ **NEW**: Multi-step `execute_data` with `steps[]` array
-- ✅ **NEW**: Smart step detection (skips deposit/transfer if user has balance)
-- ✅ **NEW**: Bridge contract addresses in constants
+- ✅ `get_spot_balance()` and `get_perps_balance()` in `hyperliquid_client.py`
+- ✅ **Sends `execution_mode: "multi_step"`** in execute_data
+- ✅ **Sends `steps[]` array** with deposit/transfer/swap steps
+- ✅ Smart step detection (skips deposit/transfer if user has balance)
+- ✅ Bridge contract addresses in `HYPERLIQUID_BRIDGE_CONTRACTS`
+
+**Code location:** `_build_hyperliquid_execute_data()` in `swap_workflow_agent.py` (line ~1354)
 
 ### Frontend - REQUIRED CHANGES
-- ❌ Handle `execution_mode: "multi_step"` payloads
-- ❌ Execute steps in order: Deposit → Transfer → Swap
+
+When the frontend receives `execute.execution_mode === "multi_step"`:
+
+- ❌ Detect multi-step mode and show step progress UI
+- ❌ Execute steps in order: Deposit → Transfer → Swap  
+- ❌ Use `@nktkas/hyperliquid` SDK for Hyperliquid operations
 - ❌ Report step completion to `/execute` API
-- ❌ Show step progress UI
+- ❌ Handle step errors and retry logic
 
 ---
 
