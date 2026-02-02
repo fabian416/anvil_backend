@@ -2086,32 +2086,93 @@ Response Guidelines:
                 }
             )
 
-        # Handle swap/bridge confirmations
-        if request.metadata and request.metadata.get("action") in (
-            "lifi_bridge", "lifi_swap", "swap", "bridge", "1inch_swap"
-        ):
+        # Handle swap workflow step confirmations
+        # Supported actions from swap_workflow multi-step execution:
+        # - lifi_bridge: Bridge tokens via LiFi (step 1)
+        # - transfer_to_spot: Transfer from Perps to Spot on Hyperliquid (step 2)
+        # - spot_swap: Execute the final swap on Hyperliquid Spot (step 3)
+        # - lifi_swap, swap, bridge, 1inch_swap: Single-step swaps
+        SWAP_WORKFLOW_ACTIONS = {
+            # Multi-step swap workflow actions
+            "lifi_bridge",
+            "transfer_to_spot",
+            "spot_swap",
+            # Single-step swap actions
+            "lifi_swap",
+            "swap",
+            "bridge",
+            "1inch_swap",
+            # Additional swap providers
+            "uniswap_swap",
+            "sushiswap_swap",
+            "hyperliquid_swap",
+        }
+
+        if request.metadata and request.metadata.get("action") in SWAP_WORKFLOW_ACTIONS:
             action = request.metadata.get("action")
             step_completed = request.metadata.get("step_completed", 1)
+            total_steps = request.metadata.get("total_steps", 1)
             tx_hash = request.transaction_hash
 
+            # Extract additional metadata for tracking
+            from_token = request.metadata.get("from_token")
+            to_token = request.metadata.get("to_token")
+            amount = request.metadata.get("amount")
+            chain = request.metadata.get("chain")
+            source_chain = request.metadata.get("source_chain")
+            destination_chain = request.metadata.get("destination_chain")
+
             logger.info(
-                f"Swap/bridge confirmation: action={action}, "
-                f"tx_hash={tx_hash}, step={step_completed}, "
+                f"Swap workflow step confirmed: action={action}, "
+                f"step={step_completed}/{total_steps}, tx_hash={tx_hash}, "
                 f"conversation_id={conversation_id}, user_id={user.id}"
             )
 
-            # Record the completed transaction for analytics/tracking
-            # TODO: Persist to swap_transactions table for history
+            # Determine if workflow is complete or has more steps
+            is_workflow_complete = step_completed >= total_steps
+            next_step = step_completed + 1 if not is_workflow_complete else None
+
+            # Build response message based on action type
+            action_messages = {
+                "lifi_bridge": f"Bridge transaction confirmed. Tokens bridging to destination chain.",
+                "transfer_to_spot": "Transfer to Spot account confirmed.",
+                "spot_swap": "Swap executed successfully!",
+                "lifi_swap": "LiFi swap completed successfully!",
+                "swap": "Swap completed successfully!",
+                "bridge": "Bridge transaction confirmed.",
+                "1inch_swap": "1inch swap completed successfully!",
+                "uniswap_swap": "Uniswap swap completed successfully!",
+                "sushiswap_swap": "SushiSwap swap completed successfully!",
+                "hyperliquid_swap": "Hyperliquid swap completed successfully!",
+            }
+
+            message = action_messages.get(action, f"Step {step_completed} completed.")
+            if not is_workflow_complete:
+                message += f" Ready for step {next_step} of {total_steps}."
+            elif total_steps > 1:
+                message = f"🎉 All {total_steps} steps completed! {message}"
+
+            # TODO: Persist to swap_transactions table for history/analytics
 
             return ExecuteResponse(
-                message=f"Transaction confirmed successfully. {action} completed.",
+                message=message,
                 execute_data=None,
                 metadata={
                     "action": action,
                     "transaction_hash": tx_hash,
                     "step_completed": step_completed,
-                    "status": "confirmed",
+                    "total_steps": total_steps,
+                    "next_step": next_step,
+                    "is_workflow_complete": is_workflow_complete,
+                    "status": "complete" if is_workflow_complete else "in_progress",
                     "conversation_id": str(conversation_id),
+                    # Include swap details for tracking
+                    "from_token": from_token,
+                    "to_token": to_token,
+                    "amount": amount,
+                    "chain": chain,
+                    "source_chain": source_chain,
+                    "destination_chain": destination_chain,
                 }
             )
 
