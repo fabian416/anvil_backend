@@ -2627,7 +2627,8 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
         if is_hyperliquid_deposit:
             total_steps = execute_data.get("total_steps", 3)
             lifi_config = execute_data.get("lifi_config", {})
-            source_chain = lifi_config.get("source_chain", "base").capitalize()
+            supported_chains = list(lifi_config.get("supported_source_chains", {}).keys())
+            chains_str = ", ".join([c.capitalize() for c in supported_chains]) if supported_chains else "Base, Arbitrum, or Ethereum"
             
             msgs = {
                 "en": f"""✅ **Ready to Execute!**
@@ -2642,7 +2643,7 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 2️⃣ Transfer to Spot account
 3️⃣ Execute swap
 
-💡 Gas fees (~$0.35) will be paid on {source_chain} - no need for ETH on Arbitrum!
+⚠️ **Requires:** ~$0.40 of ETH for gas on {chains_str}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -2660,7 +2661,7 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 2️⃣ Transferir a cuenta Spot
 3️⃣ Ejecutar swap
 
-💡 Los costos de gas (~$0.35) se pagarán en {source_chain} - ¡no necesitas ETH en Arbitrum!
+⚠️ **Requiere:** ~$0.40 de ETH para gas en {chains_str}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -2678,7 +2679,7 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 2️⃣ Transferir para conta Spot
 3️⃣ Executar swap
 
-💡 As taxas de gas (~$0.35) serão pagas em {source_chain} - não precisa de ETH em Arbitrum!
+⚠️ **Requer:** ~$0.40 de ETH para gas em {chains_str}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
