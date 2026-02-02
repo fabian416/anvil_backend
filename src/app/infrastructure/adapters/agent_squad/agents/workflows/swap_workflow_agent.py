@@ -1220,8 +1220,8 @@ Aqui está a cotação do swap:
         state.execute_data = execute_data
         state.step = WorkflowStep.COMPLETED.value
         
-        # Format ready-to-execute response
-        response = self._format_execute_response(state.data, user_context.language)
+        # Format ready-to-execute response (pass execute_data for multi-step info)
+        response = self._format_execute_response(state.data, user_context.language, execute_data)
         return response, state
     
     async def _build_hyperliquid_execute_data(
@@ -2556,7 +2556,12 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
         }
         return msgs.get(language, msgs["en"])
     
-    def _format_execute_response(self, data: dict, language: str) -> str:
+    def _format_execute_response(
+        self, 
+        data: dict, 
+        language: str,
+        execute_data: dict | None = None,
+    ) -> str:
         """Format ready-to-execute response."""
         from_token = data.get("from_token", "?")
         to_token = data.get("to_token", "?")
@@ -2564,6 +2569,76 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
         output = data.get("output_amount", "0")
         chain = data.get("chain", "base")
         
+        # Check if this is a Hyperliquid multi-step swap requiring deposit
+        is_hyperliquid_deposit = (
+            execute_data 
+            and execute_data.get("execution_mode") == "multi_step"
+            and execute_data.get("requires_deposit")
+        )
+        
+        if is_hyperliquid_deposit:
+            total_steps = execute_data.get("total_steps", 3)
+            bridge_chain = execute_data.get("bridge_config", {}).get("chain_id", 42161)
+            bridge_chain_name = "Arbitrum" if bridge_chain == 42161 else "Unknown"
+            
+            msgs = {
+                "en": f"""✅ **Ready to Execute!**
+
+**Swap Details:**
+• From: {amount} {from_token}
+• To: ~{output} {to_token}
+• Network: Hyperliquid
+
+**Multi-Step Swap** ({total_steps} steps):
+1️⃣ Bridge {from_token} to Hyperliquid (via {bridge_chain_name})
+2️⃣ Transfer to Spot account
+3️⃣ Execute swap
+
+⚠️ **Important:** You need a small amount of ETH on {bridge_chain_name} for gas fees (~$0.15).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👉 Click **Execute** below to start the multi-step swap.""",
+
+                "es": f"""✅ **¡Listo para Ejecutar!**
+
+**Detalles del Swap:**
+• De: {amount} {from_token}
+• A: ~{output} {to_token}
+• Red: Hyperliquid
+
+**Swap Multi-Paso** ({total_steps} pasos):
+1️⃣ Bridge {from_token} a Hyperliquid (vía {bridge_chain_name})
+2️⃣ Transferir a cuenta Spot
+3️⃣ Ejecutar swap
+
+⚠️ **Importante:** Necesitas una pequeña cantidad de ETH en {bridge_chain_name} para gas (~$0.15).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👉 Haz clic en **Ejecutar** para iniciar el swap multi-paso.""",
+
+                "pt": f"""✅ **Pronto para Executar!**
+
+**Detalhes do Swap:**
+• De: {amount} {from_token}
+• Para: ~{output} {to_token}
+• Rede: Hyperliquid
+
+**Swap Multi-Etapas** ({total_steps} etapas):
+1️⃣ Bridge {from_token} para Hyperliquid (via {bridge_chain_name})
+2️⃣ Transferir para conta Spot
+3️⃣ Executar swap
+
+⚠️ **Importante:** Você precisa de uma pequena quantidade de ETH em {bridge_chain_name} para gas (~$0.15).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👉 Clique em **Executar** para iniciar o swap multi-etapas.""",
+            }
+            return msgs.get(language, msgs["en"])
+        
+        # Standard swap response
         msgs = {
             "en": f"""✅ **Ready to Execute!**
 
