@@ -1293,22 +1293,42 @@ Aqui está a cotação do swap:
         total_on_hyperliquid = available_on_spot + available_on_perps
         needs_deposit = total_on_hyperliquid < amount_float and is_selling_usdc
         
-        # Default source chain is Base (where user likely has funds)
-        # Frontend can override based on user's actual balances
-        source_chain = "base"
-        source_chain_id = 8453
+        # Supported source chains for LiFi bridge to Hyperliquid
+        # Frontend should select based on where user has ETH for gas
+        SUPPORTED_SOURCE_CHAINS = {
+            "base": {
+                "chain_id": 8453,
+                "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            },
+            "arbitrum": {
+                "chain_id": 42161,
+                "usdc": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+            },
+            "ethereum": {
+                "chain_id": 1,
+                "usdc": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+            },
+        }
         
-        # LiFi bridge configuration
+        # Default source chain (frontend can override based on user's ETH balance)
+        default_source = "base"
+        source_chain = default_source
+        source_chain_id = SUPPORTED_SOURCE_CHAINS[default_source]["chain_id"]
+        source_usdc = SUPPORTED_SOURCE_CHAINS[default_source]["usdc"]
+        
+        # LiFi bridge configuration - includes all supported chains
         lifi_config = {
             "source_chain": source_chain,
             "source_chain_id": source_chain_id,
             "destination_chain": "hyperliquid",
             "destination_chain_id": 1337,
             # USDC addresses
-            "source_usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",  # Base USDC
+            "source_usdc": source_usdc,
             "destination_usdc": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",  # HL Perps USDC
             # LiFi API endpoint for quote
             "lifi_quote_url": "https://li.quest/v1/quote",
+            # All supported source chains - frontend picks based on ETH balance
+            "supported_source_chains": SUPPORTED_SOURCE_CHAINS,
         }
         
         if needs_deposit:
@@ -1319,17 +1339,20 @@ Aqui está a cotação do swap:
                 "action": "lifi_bridge",  # Changed from "deposit" to "lifi_bridge"
                 "status": "pending",
                 "description": f"Bridge {deposit_amount:.2f} USDC to Hyperliquid via LiFi",
+                # Default source chain - frontend should override based on user's ETH balance
                 "source_chain": source_chain,
                 "source_chain_id": source_chain_id,
                 "destination_chain": "hyperliquid",
                 "destination_chain_id": 1337,
                 "amount": f"{deposit_amount:.2f}",
                 "token": "USDC",
-                "source_token_address": lifi_config["source_usdc"],
+                "source_token_address": source_usdc,
                 "destination_token_address": lifi_config["destination_usdc"],
                 "bridge_provider": "lifi",
                 "estimated_time": "~30 seconds",
-                "gas_paid_on": source_chain,  # User pays gas on source chain!
+                # Frontend should check ETH balance on each supported chain
+                # and use the one where user has gas
+                "supported_source_chains": list(SUPPORTED_SOURCE_CHAINS.keys()),
             })
             current_step = 1
         

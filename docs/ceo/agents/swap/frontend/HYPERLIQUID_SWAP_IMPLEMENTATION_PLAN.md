@@ -773,26 +773,65 @@ Response:
 
 ### With LiFi (New - Recommended)
 
-LiFi bridges from the user's **source chain** (e.g., Base), so gas is paid on Base - not Arbitrum!
+LiFi can bridge from **multiple source chains** (Base, Arbitrum, Ethereum). The frontend should check which chain the user has ETH on and use that one.
 
 ```typescript
-// Check gas on source chain (Base in this case)
+// Check gas availability across all supported source chains
+async function findBestSourceChain(
+  wallet: any, 
+  lifiConfig: { 
+    source_chain_id: number;
+    supported_source_chains: Record<string, { chain_id: number; usdc: string }>;
+  }
+): Promise<{ chain: string; chainId: number; usdcAddress: string; ethBalance: bigint } | null> {
+  const provider = await wallet.getEthereumProvider();
+  const MINIMUM_ETH_FOR_GAS = BigInt("200000000000000"); // 0.0002 ETH (~$0.40)
+  
+  // Check ETH balance on each supported chain
+  for (const [chainName, config] of Object.entries(lifiConfig.supported_source_chains)) {
+    try {
+      // Switch to this chain
+      await wallet.switchChain(config.chain_id);
+      
+      // Get native ETH balance
+      const ethBalance = await provider.request({
+        method: 'eth_getBalance',
+        params: [wallet.address, 'latest'],
+      });
+      
+      if (BigInt(ethBalance) >= MINIMUM_ETH_FOR_GAS) {
+        // Found a chain with enough ETH!
+        return {
+          chain: chainName,
+          chainId: config.chain_id,
+          usdcAddress: config.usdc,
+          ethBalance: BigInt(ethBalance),
+        };
+      }
+    } catch (e) {
+      // Chain not available or error, try next
+      continue;
+    }
+  }
+  
+  // No chain has enough ETH
+  return null;
+}
+
+// Simple check on default chain
 async function checkGasAvailability(
   wallet: any, 
-  lifiConfig: { source_chain_id: number }
+  chainId: number
 ): Promise<{ hasGas: boolean; ethBalance: bigint; required: bigint }> {
   const provider = await wallet.getEthereumProvider();
   
-  // Switch to source chain (Base)
-  await wallet.switchChain(lifiConfig.source_chain_id);
+  await wallet.switchChain(chainId);
   
-  // Get native ETH balance
   const ethBalance = await provider.request({
     method: 'eth_getBalance',
     params: [wallet.address, 'latest'],
   });
   
-  // LiFi bridge on Base requires ~0.0002 ETH for gas (~$0.40)
   const MINIMUM_ETH_FOR_GAS = BigInt("200000000000000"); // 0.0002 ETH
   
   return {
@@ -803,49 +842,80 @@ async function checkGasAvailability(
 }
 ```
 
-### Updated Execute Flow (LiFi)
+### Updated Execute Flow (LiFi with Multi-Chain Support)
 
 ```typescript
 export function SwapExecuteButton({ execute, conversationId, onSuccess, onError }: Props) {
-  const [gasCheck, setGasCheck] = useState<{ hasGas: boolean; ethBalance: bigint } | null>(null);
+  const [bestChain, setBestChain] = useState<{
+    chain: string;
+    chainId: number;
+    usdcAddress: string;
+    ethBalance: bigint;
+  } | null>(null);
   const [isCheckingGas, setIsCheckingGas] = useState(false);
+  const [noGasOnAnyChain, setNoGasOnAnyChain] = useState(false);
   
-  // Check gas when multi-step with deposit
+  // Find best source chain when multi-step with deposit
   useEffect(() => {
     if (execute.execution_mode === 'multi_step' && execute.requires_deposit) {
-      checkGas();
+      findBestChain();
     }
   }, [execute]);
   
-  const checkGas = async () => {
+  const findBestChain = async () => {
     setIsCheckingGas(true);
     try {
-      // Use lifi_config for source chain (new), fallback to bridge_config (legacy)
-      const chainId = execute.lifi_config?.source_chain_id || execute.bridge_config.chain_id;
-      const result = await checkGasAvailability(wallet, { source_chain_id: chainId });
-      setGasCheck(result);
+      const result = await findBestSourceChain(wallet, execute.lifi_config);
+      if (result) {
+        setBestChain(result);
+        setNoGasOnAnyChain(false);
+      } else {
+        setBestChain(null);
+        setNoGasOnAnyChain(true);
+      }
     } finally {
       setIsCheckingGas(false);
     }
   };
   
-  // Show error if no gas
-  if (gasCheck && !gasCheck.hasGas) {
-    const sourceChain = execute.lifi_config?.source_chain || 'Base';
+  // Show error if no gas on ANY supported chain
+  if (noGasOnAnyChain) {
+    const supportedChains = Object.keys(execute.lifi_config?.supported_source_chains || {});
     return (
       <div className="p-4 bg-yellow-900/30 border border-yellow-600 rounded-lg">
         <h4 className="font-semibold text-yellow-400 mb-2">
-          ⚠️ Insufficient Gas on {sourceChain}
+          ⚠️ Insufficient Gas for Bridge
         </h4>
         <p className="text-sm text-gray-300 mb-3">
-          You need a small amount of ETH on {sourceChain} to pay for gas fees (~$0.40).
+          You need ETH on one of these chains to pay for gas: {supportedChains.join(', ')}.
         </p>
-        <div className="text-xs text-gray-400">
-          Current ETH balance: {formatEther(gasCheck.ethBalance)} ETH
-        </div>
+        <p className="text-xs text-gray-400">
+          Required: ~0.0002 ETH (~$0.40) for gas fees
+        </p>
       </div>
     );
   }
+  
+  // Show which chain will be used
+  if (bestChain) {
+    console.log(`Using ${bestChain.chain} (chain ${bestChain.chainId}) for bridge`);
+  }
+  
+  // Execute with the best chain
+  const handleExecute = async () => {
+    if (bestChain && execute.requires_deposit) {
+      // Override the source chain with the one that has gas
+      const updatedLifiConfig = {
+        ...execute.lifi_config,
+        source_chain: bestChain.chain,
+        source_chain_id: bestChain.chainId,
+        source_usdc: bestChain.usdcAddress,
+      };
+      // Use updatedLifiConfig when calling LiFi API
+      await executeLiFiBridgeStep(wallet, execute.steps[0], updatedLifiConfig);
+    }
+    // ... continue with other steps
+  };
   
   // ... rest of button logic
 }
