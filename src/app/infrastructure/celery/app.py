@@ -30,6 +30,7 @@ def create_celery() -> Celery:
             "app.infrastructure.celery.tasks.money_market_tasks",
             "app.infrastructure.celery.tasks.privy_balance_tasks",
             "app.infrastructure.celery.tasks.etherscan_balance_tasks",
+            "app.infrastructure.celery.tasks.user_context_tasks",
         ],
     )
     app.conf.task_serializer = "json"
