@@ -47,8 +47,84 @@ if TYPE_CHECKING:
     from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
     from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
+    from app.infrastructure.adapters.wallet_balance_db import WalletBalanceDbAdapter
 
 logger = logging.getLogger(__name__)
+
+
+async def _get_eth_balances_for_wallet(wallet_address: str) -> dict[str, float]:
+    """
+    Query ETH balances from database for a wallet address.
+    
+    Returns dict mapping chain name to ETH balance (e.g., {"ethereum": 0.00288, "base": 0})
+    """
+    try:
+        from sqlalchemy import create_engine, text
+        from sqlalchemy.pool import NullPool
+        import os
+        
+        # Get database URL from environment or config
+        db_url = os.environ.get("DATABASE_URL")
+        if not db_url:
+            # Try to construct from individual vars
+            db_host = os.environ.get("POSTGRES_HOST", "localhost")
+            db_port = os.environ.get("POSTGRES_PORT", "5432")
+            db_user = os.environ.get("POSTGRES_USER", "postgres")
+            db_pass = os.environ.get("POSTGRES_PASSWORD", "changethis")
+            db_name = os.environ.get("POSTGRES_DB", "anvil_db")
+            db_url = f"postgresql+psycopg://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
+        
+        # Use sync engine with NullPool for one-off queries
+        engine = create_engine(db_url, poolclass=NullPool)
+        
+        eth_balances: dict[str, float] = {}
+        
+        with engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT ca.chain, ca.eth_balance
+                FROM chain_addresses ca
+                JOIN wallets w ON w.id = ca.wallet_id
+                WHERE LOWER(w.address) = LOWER(:addr)
+                  AND ca.is_active = true
+            """), {"addr": wallet_address})
+            
+            for row in result:
+                chain_name = str(row[0]) if row[0] else "unknown"
+                eth_balance = float(row[1]) if row[1] else 0.0
+                eth_balances[chain_name] = eth_balance
+        
+        engine.dispose()
+        return eth_balances
+        
+    except Exception as e:
+        logger.warning(f"Failed to query ETH balances from DB: {e}")
+        return {}
+
+
+def _find_best_chain_for_gas(
+    eth_balances: dict[str, float],
+    supported_chains: list[str],
+    min_eth_required: float = 0.0002,
+) -> str | None:
+    """
+    Find the best chain for gas fees from supported chains.
+    
+    Args:
+        eth_balances: Dict mapping chain name to ETH balance
+        supported_chains: List of chain names to consider
+        min_eth_required: Minimum ETH required for gas (default ~$0.40)
+    
+    Returns:
+        Chain name with sufficient ETH, or None if no chain has enough
+    """
+    for chain in supported_chains:
+        eth_balance = eth_balances.get(chain, 0.0)
+        if eth_balance >= min_eth_required:
+            logger.info(f"Best chain for gas: {chain} ({eth_balance:.6f} ETH >= {min_eth_required})")
+            return chain
+    
+    logger.warning(f"No chain has sufficient ETH for gas. Balances: {eth_balances}")
+    return None
 
 
 # =============================================================================
@@ -1294,7 +1370,6 @@ Aqui está a cotação do swap:
         needs_deposit = total_on_hyperliquid < amount_float and is_selling_usdc
         
         # Supported source chains for LiFi bridge to Hyperliquid
-        # Frontend should select based on where user has ETH for gas
         SUPPORTED_SOURCE_CHAINS = {
             "base": {
                 "chain_id": 8453,
@@ -1310,13 +1385,44 @@ Aqui está a cotação do swap:
             },
         }
         
-        # Default source chain (frontend can override based on user's ETH balance)
-        default_source = "base"
-        source_chain = default_source
-        source_chain_id = SUPPORTED_SOURCE_CHAINS[default_source]["chain_id"]
-        source_usdc = SUPPORTED_SOURCE_CHAINS[default_source]["usdc"]
+        # Find best source chain based on where user has ETH for gas
+        best_source_chain: str | None = None
+        eth_balances: dict[str, float] = {}
+        no_gas_error: str | None = None
         
-        # LiFi bridge configuration - includes all supported chains
+        if user_context.wallet_address and needs_deposit:
+            try:
+                # Query ETH balances from database using standalone function
+                eth_balances = await _get_eth_balances_for_wallet(user_context.wallet_address)
+                
+                # Find best chain (minimum 0.0002 ETH for gas ~$0.40)
+                MIN_ETH_FOR_GAS = 0.0002
+                best_source_chain = _find_best_chain_for_gas(
+                    eth_balances,
+                    list(SUPPORTED_SOURCE_CHAINS.keys()),
+                    MIN_ETH_FOR_GAS,
+                )
+                
+                if best_source_chain:
+                    logger.info(
+                        f"[SwapWorkflow] Best chain for gas: {best_source_chain} "
+                        f"(ETH: {eth_balances.get(best_source_chain, 0):.6f})"
+                    )
+                else:
+                    logger.warning(
+                        f"[SwapWorkflow] No chain has enough ETH for gas. "
+                        f"Balances: {eth_balances}"
+                    )
+                    no_gas_error = "insufficient_gas"
+            except Exception as e:
+                logger.warning(f"[SwapWorkflow] Failed to check ETH balances: {e}")
+        
+        # Use best source chain or fall back to default
+        source_chain = best_source_chain or "base"
+        source_chain_id = SUPPORTED_SOURCE_CHAINS[source_chain]["chain_id"]
+        source_usdc = SUPPORTED_SOURCE_CHAINS[source_chain]["usdc"]
+        
+        # LiFi bridge configuration - includes all supported chains and ETH balances
         lifi_config = {
             "source_chain": source_chain,
             "source_chain_id": source_chain_id,
@@ -1327,8 +1433,14 @@ Aqui está a cotação do swap:
             "destination_usdc": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",  # HL Perps USDC
             # LiFi API endpoint for quote
             "lifi_quote_url": "https://li.quest/v1/quote",
-            # All supported source chains - frontend picks based on ETH balance
+            # All supported source chains
             "supported_source_chains": SUPPORTED_SOURCE_CHAINS,
+            # ETH balances per chain (for frontend display)
+            "eth_balances": eth_balances,
+            # Best chain selected by backend (has enough ETH for gas)
+            "best_source_chain": best_source_chain,
+            # Error if no chain has enough gas
+            "gas_error": no_gas_error,
         }
         
         if needs_deposit:
@@ -1336,10 +1448,10 @@ Aqui está a cotação do swap:
             
             steps.append({
                 "step": 1,
-                "action": "lifi_bridge",  # Changed from "deposit" to "lifi_bridge"
+                "action": "lifi_bridge",
                 "status": "pending",
-                "description": f"Bridge {deposit_amount:.2f} USDC to Hyperliquid via LiFi",
-                # Default source chain - frontend should override based on user's ETH balance
+                "description": f"Bridge {deposit_amount:.2f} USDC to Hyperliquid via LiFi from {source_chain.capitalize()}",
+                # Best source chain (has ETH for gas) - determined by backend
                 "source_chain": source_chain,
                 "source_chain_id": source_chain_id,
                 "destination_chain": "hyperliquid",
@@ -1350,8 +1462,9 @@ Aqui está a cotação do swap:
                 "destination_token_address": lifi_config["destination_usdc"],
                 "bridge_provider": "lifi",
                 "estimated_time": "~30 seconds",
-                # Frontend should check ETH balance on each supported chain
-                # and use the one where user has gas
+                # ETH balance on selected chain
+                "gas_chain_eth_balance": eth_balances.get(source_chain, 0),
+                # All supported chains (for fallback)
                 "supported_source_chains": list(SUPPORTED_SOURCE_CHAINS.keys()),
             })
             current_step = 1
