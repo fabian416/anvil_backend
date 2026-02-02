@@ -48,9 +48,6 @@ class WalletBalanceDbAdapter(WalletBalancePort):
         token_balances_table = mapping_registry.metadata.tables.get("token_balances")
         chain_addresses_table = mapping_registry.metadata.tables.get("chain_addresses")
         
-        # Debug: Log which tables are available
-        logger.info(f"[WalletBalanceDbAdapter] Tables available: wallets={wallets_table is not None}, token_balances={token_balances_table is not None}, user_id={user_id}")
-        
         if wallets_table is None:
             logger.warning("wallets table not found")
             return UserWalletAggregate(user_id=user_id)
@@ -164,8 +161,6 @@ class WalletBalanceDbAdapter(WalletBalancePort):
             if wallet_total > max_balance:
                 max_balance = wallet_total
                 primary_wallet_address = wallet_address
-        
-        logger.info(f"[WalletBalanceDbAdapter] Final: user_id={user_id}, total_balance=${total_balance:.2f}, wallet_count={len(wallet_summaries)}, primary={primary_wallet_address}")
         
         return UserWalletAggregate(
             user_id=user_id,
