@@ -3,8 +3,9 @@ Database-based Wallet Balance Adapter.
 
 Fetches wallet balances from local database tables:
 - wallets: User wallet associations
-- chain_addresses: Per-chain balances (balance_usd)
-- portfolio_snapshots: Historical snapshots with total_usd
+- token_balances: Per-chain token balances (ETH, WETH, USDC) with balance_usd
+- chain_addresses: Legacy per-chain balances (fallback)
+- portfolio_snapshots: Historical snapshots with total_usd (fallback)
 
 This adapter provides balance data for the context-aware agents
 to classify users by their portfolio value.
@@ -44,6 +45,7 @@ class WalletBalanceDbAdapter(WalletBalancePort):
     async def get_user_balance(self, user_id: int) -> UserWalletAggregate:
         """Get aggregated balance for a user across all wallets."""
         wallets_table = mapping_registry.metadata.tables.get("wallets")
+        token_balances_table = mapping_registry.metadata.tables.get("token_balances")
         chain_addresses_table = mapping_registry.metadata.tables.get("chain_addresses")
         
         if wallets_table is None:
@@ -81,7 +83,38 @@ class WalletBalanceDbAdapter(WalletBalancePort):
             chain_balances: list[ChainBalance] = []
             wallet_total = Decimal("0")
             
-            if chain_addresses_table is not None:
+            # FIRST: Try token_balances table (most accurate - includes ETH, WETH, USDC)
+            if token_balances_table is not None:
+                token_stmt = (
+                    select(
+                        token_balances_table.c.chain,
+                        func.sum(token_balances_table.c.balance_usd).label("total_usd"),
+                        func.max(token_balances_table.c.last_balance_update).label("last_update"),
+                    )
+                    .where(token_balances_table.c.wallet_id == wallet_id)
+                    .group_by(token_balances_table.c.chain)
+                )
+                
+                token_result = await self._session.execute(token_stmt)
+                token_rows = token_result.fetchall()
+                
+                if token_rows:
+                    for token_row in token_rows:
+                        chain_name = str(token_row[0]) if token_row[0] else "unknown"
+                        balance = Decimal(str(token_row[1])) if token_row[1] else Decimal("0")
+                        last_updated = token_row[2]
+                        
+                        chain_balances.append(ChainBalance(
+                            chain=chain_name,
+                            balance_usd=balance,
+                            last_updated=last_updated,
+                        ))
+                        wallet_total += balance
+                    
+                    logger.debug(f"Got balance from token_balances: wallet_id={wallet_id}, total=${wallet_total:.2f}")
+            
+            # FALLBACK: Try chain_addresses table (legacy)
+            if not chain_balances and chain_addresses_table is not None:
                 chain_stmt = (
                     select(
                         chain_addresses_table.c.chain,
@@ -93,9 +126,9 @@ class WalletBalanceDbAdapter(WalletBalancePort):
                 )
                 
                 chain_result = await self._session.execute(chain_stmt)
-                chain_rows = chain_result.fetchall()
+                chain_rows_legacy = chain_result.fetchall()
                 
-                for chain_row in chain_rows:
+                for chain_row in chain_rows_legacy:
                     chain_name = str(chain_row[0]) if chain_row[0] else "unknown"
                     balance = Decimal(str(chain_row[1])) if chain_row[1] else Decimal("0")
                     last_updated = chain_row[2]
@@ -106,8 +139,11 @@ class WalletBalanceDbAdapter(WalletBalancePort):
                         last_updated=last_updated,
                     ))
                     wallet_total += balance
+                
+                if chain_balances:
+                    logger.debug(f"Got balance from chain_addresses (fallback): wallet_id={wallet_id}, total=${wallet_total:.2f}")
             
-            # If no chain_addresses, try portfolio_snapshots
+            # LAST FALLBACK: Try portfolio_snapshots
             if not chain_balances:
                 wallet_total = await self._get_latest_snapshot_balance(wallet_id)
             
@@ -138,6 +174,7 @@ class WalletBalanceDbAdapter(WalletBalancePort):
     async def get_wallet_balance(self, wallet_address: str) -> WalletBalanceSummary:
         """Get balance for a specific wallet address."""
         wallets_table = mapping_registry.metadata.tables.get("wallets")
+        token_balances_table = mapping_registry.metadata.tables.get("token_balances")
         chain_addresses_table = mapping_registry.metadata.tables.get("chain_addresses")
         
         if wallets_table is None:
@@ -146,10 +183,10 @@ class WalletBalanceDbAdapter(WalletBalancePort):
                 total_balance_usd=Decimal("0"),
             )
         
-        # Find wallet by address
+        # Find wallet by address (case-insensitive)
         wallet_stmt = (
             select(wallets_table.c.id)
-            .where(wallets_table.c.address == wallet_address.lower())
+            .where(func.lower(wallets_table.c.address) == wallet_address.lower())
             .limit(1)
         )
         
@@ -166,7 +203,36 @@ class WalletBalanceDbAdapter(WalletBalancePort):
         chain_balances: list[ChainBalance] = []
         wallet_total = Decimal("0")
         
-        if chain_addresses_table is not None:
+        # FIRST: Try token_balances table (most accurate - includes ETH, WETH, USDC)
+        if token_balances_table is not None:
+            token_stmt = (
+                select(
+                    token_balances_table.c.chain,
+                    func.sum(token_balances_table.c.balance_usd).label("total_usd"),
+                    func.max(token_balances_table.c.last_balance_update).label("last_update"),
+                )
+                .where(token_balances_table.c.wallet_id == wallet_id)
+                .group_by(token_balances_table.c.chain)
+            )
+            
+            token_result = await self._session.execute(token_stmt)
+            token_rows = token_result.fetchall()
+            
+            if token_rows:
+                for token_row in token_rows:
+                    chain_name = str(token_row[0]) if token_row[0] else "unknown"
+                    balance = Decimal(str(token_row[1])) if token_row[1] else Decimal("0")
+                    last_updated = token_row[2]
+                    
+                    chain_balances.append(ChainBalance(
+                        chain=chain_name,
+                        balance_usd=balance,
+                        last_updated=last_updated,
+                    ))
+                    wallet_total += balance
+        
+        # FALLBACK: Try chain_addresses table (legacy)
+        if not chain_balances and chain_addresses_table is not None:
             chain_stmt = (
                 select(
                     chain_addresses_table.c.chain,
@@ -178,9 +244,9 @@ class WalletBalanceDbAdapter(WalletBalancePort):
             )
             
             chain_result = await self._session.execute(chain_stmt)
-            chain_rows = chain_result.fetchall()
+            chain_rows_legacy = chain_result.fetchall()
             
-            for chain_row in chain_rows:
+            for chain_row in chain_rows_legacy:
                 chain_name = str(chain_row[0]) if chain_row[0] else "unknown"
                 balance = Decimal(str(chain_row[1])) if chain_row[1] else Decimal("0")
                 last_updated = chain_row[2]
@@ -192,7 +258,7 @@ class WalletBalanceDbAdapter(WalletBalancePort):
                 ))
                 wallet_total += balance
         
-        # Fallback to portfolio snapshots
+        # LAST FALLBACK: Try portfolio snapshots
         if not chain_balances:
             wallet_total = await self._get_latest_snapshot_balance(wallet_id)
         
