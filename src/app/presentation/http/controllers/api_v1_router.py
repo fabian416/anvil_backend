@@ -51,9 +51,6 @@ from app.presentation.http.controllers.chat.intent_detection_router import (
 from app.presentation.http.controllers.chat.conversations_router import (
     create_conversations_router,
 )
-from app.presentation.http.controllers.chat.universal_chat_router import (
-    router as universal_chat_router,
-)
 from app.presentation.http.controllers.chat.analytics_dashboard import (
     router as analytics_dashboard_router,
 )
@@ -166,7 +163,6 @@ def create_api_v1_router() -> APIRouter:
         # REMOVED: create_chat_router() - Legacy router deprecated 2026-06-01
         create_chat_websocket_router(),
         create_intent_detection_router(),
-        universal_chat_router,  # Universal chat endpoint (guest + authenticated)
         create_conversations_router(),  # Chat System V2 conversations
         analytics_dashboard_router,
         # Admin overview routers

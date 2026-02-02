@@ -2086,11 +2086,40 @@ Response Guidelines:
                 }
             )
 
+        # Handle swap/bridge confirmations
+        if request.metadata and request.metadata.get("action") in (
+            "lifi_bridge", "lifi_swap", "swap", "bridge", "1inch_swap"
+        ):
+            action = request.metadata.get("action")
+            step_completed = request.metadata.get("step_completed", 1)
+            tx_hash = request.transaction_hash
+
+            logger.info(
+                f"Swap/bridge confirmation: action={action}, "
+                f"tx_hash={tx_hash}, step={step_completed}, "
+                f"conversation_id={conversation_id}, user_id={user.id}"
+            )
+
+            # Record the completed transaction for analytics/tracking
+            # TODO: Persist to swap_transactions table for history
+
+            return ExecuteResponse(
+                message=f"Transaction confirmed successfully. {action} completed.",
+                execute_data=None,
+                metadata={
+                    "action": action,
+                    "transaction_hash": tx_hash,
+                    "step_completed": step_completed,
+                    "status": "confirmed",
+                    "conversation_id": str(conversation_id),
+                }
+            )
+
         # Handle other execution types here
-        logger.warning(f"Unknown execution type for conversation {conversation_id}")
+        logger.warning(f"Unknown execution type for conversation {conversation_id}, metadata={request.metadata}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unknown execution type. Please provide loop_id or batch_id in metadata.",
+            detail="Unknown execution type. Please provide loop_id, batch_id, or action in metadata.",
         )
 
     return router

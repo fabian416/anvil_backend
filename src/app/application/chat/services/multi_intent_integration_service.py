@@ -2,13 +2,13 @@
 Multi-Intent Integration Service.
 
 This service integrates the multi-intent detection and orchestration system
-into the existing unified chat handler, providing seamless support for both
+into the chat system, providing seamless support for both
 single and multi-intent messages.
 
 Architecture:
-    UnifiedChatHandler → MultiIntentIntegrationService → Multi-Intent Pipeline
-                      ↓
-                   Single-Intent Pipeline (backward compatible)
+    Chat Handler → MultiIntentIntegrationService → Multi-Intent Pipeline
+                ↓
+             Single-Intent Pipeline (backward compatible)
 
 Features:
     - Automatic detection of multi-intent vs single-intent messages
