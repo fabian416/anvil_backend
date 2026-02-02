@@ -27,7 +27,7 @@ class TestPasswordResetRequest:
         }
 
         response = await client.post(
-            "/api/v1/account/password-reset/request",
+            "/api/v1/account/forgot-password",
             json=reset_request
         )
 
@@ -45,7 +45,7 @@ class TestPasswordResetRequest:
         }
 
         response = await client.post(
-            "/api/v1/account/password-reset/request",
+            "/api/v1/account/forgot-password",
             json=reset_request
         )
 
@@ -62,7 +62,7 @@ class TestPasswordResetRequest:
         }
 
         response = await client.post(
-            "/api/v1/account/password-reset/request",
+            "/api/v1/account/forgot-password",
             json=reset_request
         )
 
@@ -75,7 +75,7 @@ class TestPasswordResetRequest:
         THEN system SHALL return validation error
         """
         response = await client.post(
-            "/api/v1/account/password-reset/request",
+            "/api/v1/account/forgot-password",
             json={}
         )
 
@@ -100,7 +100,7 @@ class TestPasswordResetConfirmation:
         }
 
         response = await client.post(
-            "/api/v1/account/password-reset/confirm",
+            "/api/v1/account/reset-password",
             json=reset_data
         )
 
@@ -118,7 +118,7 @@ class TestPasswordResetConfirmation:
         }
 
         response = await client.post(
-            "/api/v1/account/password-reset/confirm",
+            "/api/v1/account/reset-password",
             json=reset_data
         )
 
@@ -136,7 +136,7 @@ class TestPasswordResetConfirmation:
         }
 
         response = await client.post(
-            "/api/v1/account/password-reset/confirm",
+            "/api/v1/account/reset-password",
             json=reset_data
         )
 
@@ -154,7 +154,7 @@ class TestPasswordResetConfirmation:
         }
 
         response = await client.post(
-            "/api/v1/account/password-reset/confirm",
+            "/api/v1/account/reset-password",
             json=reset_data
         )
 
@@ -172,7 +172,7 @@ class TestPasswordResetConfirmation:
         }
 
         response = await client.post(
-            "/api/v1/account/password-reset/confirm",
+            "/api/v1/account/reset-password",
             json=reset_data
         )
 
@@ -197,11 +197,11 @@ class TestPasswordResetSecurityBehavior:
 
         # Both requests should fail (token invalid/used)
         response1 = await client.post(
-            "/api/v1/account/password-reset/confirm",
+            "/api/v1/account/reset-password",
             json=reset_data
         )
         response2 = await client.post(
-            "/api/v1/account/password-reset/confirm",
+            "/api/v1/account/reset-password",
             json=reset_data
         )
 
@@ -220,7 +220,7 @@ class TestPasswordResetSecurityBehavior:
         responses = []
         for _ in range(5):
             response = await client.post(
-                "/api/v1/account/password-reset/request",
+                "/api/v1/account/forgot-password",
                 json=reset_request
             )
             responses.append(response.status_code)

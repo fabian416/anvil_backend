@@ -406,9 +406,9 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             )
             return response, state
         
-        # If neither token is provided, show generic help
+        # If neither token is provided, show smart help based on balance
         if not from_token or not to_token:
-            response = self._get_missing_params_response(params, user_context.language)
+            response = await self._get_missing_params_response(params, user_context)
             return response, state
         
         # Check if tokens are supported on Hyperliquid Spot
@@ -1849,14 +1849,159 @@ Por favor insira:
         }
         return msgs.get(language, msgs["en"])
     
-    def _get_missing_params_response(self, params: dict, language: str) -> str:
-        """Response when tokens are missing (generic case)."""
+    async def _get_missing_params_response(self, params: dict, user_context: "UserContext") -> str:
+        """Response when tokens are missing - with smart examples based on user balance."""
+        language = user_context.language
+        user_balance_usd = user_context.total_balance_usd
+        
+        # Build smart examples based on user's actual balance
+        examples_section = self._build_smart_swap_examples(user_balance_usd, language)
+        
+        # Build balance section
+        if user_balance_usd < 1:
+            balance_section = {
+                "en": f"💰 **Your Balance:** ${user_balance_usd:.2f}\n\n💡 **Tip:** Say `buy crypto` to get USDC first!",
+                "es": f"💰 **Tu Saldo:** ${user_balance_usd:.2f}\n\n💡 **Consejo:** ¡Di `comprar cripto` para obtener USDC primero!",
+                "pt": f"💰 **Seu Saldo:** ${user_balance_usd:.2f}\n\n💡 **Dica:** Diga `comprar cripto` para obter USDC primeiro!",
+                "zh": f"💰 **您的余额：** ${user_balance_usd:.2f}\n\n💡 **提示：** 说 `买加密货币` 先获取 USDC！",
+            }.get(language, f"💰 **Your Balance:** ${user_balance_usd:.2f}\n\n💡 **Tip:** Say `buy crypto` to get USDC first!")
+        else:
+            balance_section = {
+                "en": f"💰 **Your Balance:** ~${user_balance_usd:.2f}",
+                "es": f"💰 **Tu Saldo:** ~${user_balance_usd:.2f}",
+                "pt": f"💰 **Seu Saldo:** ~${user_balance_usd:.2f}",
+                "zh": f"💰 **您的余额：** ~${user_balance_usd:.2f}",
+            }.get(language, f"💰 **Your Balance:** ~${user_balance_usd:.2f}")
+        
         msgs = {
-            "en": "🔄 **Hyperliquid Spot Swaps**\n\nWhat meme token would you like to swap?\n\n**Examples:**\n• `swap 100 USDC to PURR`\n• `swap 50 USDC to TRUMP`\n• `swap 1000 PEPE to USDC`\n\n**Supported:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 more meme tokens\n**Note:** All swaps use USDC pairs. Major tokens (ETH, BTC, SOL) are NOT supported.",
-            "es": "🔄 **Swaps en Hyperliquid Spot**\n\n¿Qué meme token te gustaría intercambiar?\n\n**Ejemplos:**\n• `swap 100 USDC to PURR`\n• `swap 50 USDC to TRUMP`\n• `swap 1000 PEPE to USDC`\n\n**Soportados:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 más\n**Nota:** Todos los swaps usan pares USDC. Tokens mayores (ETH, BTC, SOL) NO están soportados.",
-            "pt": "🔄 **Swaps no Hyperliquid Spot**\n\nQual meme token você gostaria de trocar?\n\n**Exemplos:**\n• `swap 100 USDC to PURR`\n• `swap 50 USDC to TRUMP`\n• `swap 1000 PEPE to USDC`\n\n**Suportados:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 mais\n**Nota:** Todas as trocas usam pares USDC. Tokens maiores (ETH, BTC, SOL) NÃO são suportados.",
-            "zh": "🔄 **Hyperliquid Spot 交易**\n\n您想交换哪个meme代币？\n\n**示例：**\n• `swap 100 USDC to PURR`\n• `swap 50 USDC to TRUMP`\n• `swap 1000 PEPE to USDC`\n\n**支持：** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50多个meme代币\n**注意：** 所有交易使用USDC交易对。主流代币（ETH, BTC, SOL）不支持。",
+            "en": f"""🔄 **Hyperliquid Spot Swaps**
+
+{balance_section}
+
+What meme token would you like to swap?
+
+{examples_section}
+
+**Supported:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 more meme tokens
+**Note:** All swaps use USDC pairs. Major tokens (ETH, BTC, SOL) are NOT supported.""",
+            
+            "es": f"""🔄 **Swaps en Hyperliquid Spot**
+
+{balance_section}
+
+¿Qué meme token te gustaría intercambiar?
+
+{examples_section}
+
+**Soportados:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 más
+**Nota:** Todos los swaps usan pares USDC. Tokens mayores (ETH, BTC, SOL) NO están soportados.""",
+            
+            "pt": f"""🔄 **Swaps no Hyperliquid Spot**
+
+{balance_section}
+
+Qual meme token você gostaria de trocar?
+
+{examples_section}
+
+**Suportados:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 mais
+**Nota:** Todas as trocas usam pares USDC. Tokens maiores (ETH, BTC, SOL) NÃO são suportados.""",
+            
+            "zh": f"""🔄 **Hyperliquid Spot 交易**
+
+{balance_section}
+
+您想交换哪个meme代币？
+
+{examples_section}
+
+**支持：** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50多个meme代币
+**注意：** 所有交易使用USDC交易对。主流代币（ETH, BTC, SOL）不支持。""",
         }
+        return msgs.get(language, msgs["en"])
+    
+    def _build_smart_swap_examples(self, user_balance_usd: float, language: str) -> str:
+        """Build balance-appropriate swap examples."""
+        
+        if user_balance_usd < 1:
+            # Very low balance - suggest small amounts after buying
+            msgs = {
+                "en": """**Examples (after buying USDC):**
+• `swap 5 USDC to PURR`
+• `swap 10 USDC to TRUMP`""",
+                "es": """**Ejemplos (después de comprar USDC):**
+• `swap 5 USDC to PURR`
+• `swap 10 USDC to TRUMP`""",
+                "pt": """**Exemplos (após comprar USDC):**
+• `swap 5 USDC to PURR`
+• `swap 10 USDC to TRUMP`""",
+                "zh": """**示例（购买 USDC 后）：**
+• `swap 5 USDC to PURR`
+• `swap 10 USDC to TRUMP`""",
+            }
+        elif user_balance_usd < 10:
+            # Small balance - show realistic small amounts
+            small_amt = max(1, user_balance_usd * 0.3)
+            med_amt = max(2, user_balance_usd * 0.5)
+            
+            msgs = {
+                "en": f"""**Examples based on your balance:**
+• `swap {small_amt:.0f} USDC to PURR` (~{small_amt/user_balance_usd*100:.0f}% of balance)
+• `swap {med_amt:.0f} USDC to TRUMP` (~{med_amt/user_balance_usd*100:.0f}% of balance)""",
+                "es": f"""**Ejemplos basados en tu saldo:**
+• `swap {small_amt:.0f} USDC to PURR` (~{small_amt/user_balance_usd*100:.0f}% del saldo)
+• `swap {med_amt:.0f} USDC to TRUMP` (~{med_amt/user_balance_usd*100:.0f}% del saldo)""",
+                "pt": f"""**Exemplos baseados no seu saldo:**
+• `swap {small_amt:.0f} USDC to PURR` (~{small_amt/user_balance_usd*100:.0f}% do saldo)
+• `swap {med_amt:.0f} USDC to TRUMP` (~{med_amt/user_balance_usd*100:.0f}% do saldo)""",
+                "zh": f"""**基于您余额的示例：**
+• `swap {small_amt:.0f} USDC to PURR` (~{small_amt/user_balance_usd*100:.0f}% 的余额)
+• `swap {med_amt:.0f} USDC to TRUMP` (~{med_amt/user_balance_usd*100:.0f}% 的余额)""",
+            }
+        elif user_balance_usd < 100:
+            # Medium balance
+            small_amt = user_balance_usd * 0.2
+            med_amt = user_balance_usd * 0.5
+            
+            msgs = {
+                "en": f"""**Examples based on your balance:**
+• `swap {small_amt:.0f} USDC to PURR` (~20% of balance)
+• `swap {med_amt:.0f} USDC to TRUMP` (~50% of balance)
+• `swap {user_balance_usd * 0.9:.0f} USDC to PEPE` (~90% of balance)""",
+                "es": f"""**Ejemplos basados en tu saldo:**
+• `swap {small_amt:.0f} USDC to PURR` (~20% del saldo)
+• `swap {med_amt:.0f} USDC to TRUMP` (~50% del saldo)
+• `swap {user_balance_usd * 0.9:.0f} USDC to PEPE` (~90% del saldo)""",
+                "pt": f"""**Ejemplos basados no seu saldo:**
+• `swap {small_amt:.0f} USDC to PURR` (~20% do saldo)
+• `swap {med_amt:.0f} USDC to TRUMP` (~50% do saldo)
+• `swap {user_balance_usd * 0.9:.0f} USDC to PEPE` (~90% do saldo)""",
+                "zh": f"""**基于您余额的示例：**
+• `swap {small_amt:.0f} USDC to PURR` (~20% 的余额)
+• `swap {med_amt:.0f} USDC to TRUMP` (~50% 的余额)
+• `swap {user_balance_usd * 0.9:.0f} USDC to PEPE` (~90% 的余额)""",
+            }
+        else:
+            # Large balance - show nice round numbers
+            msgs = {
+                "en": f"""**Examples:**
+• `swap 50 USDC to PURR`
+• `swap 100 USDC to TRUMP`
+• `swap 500 USDC to PEPE`""",
+                "es": f"""**Ejemplos:**
+• `swap 50 USDC to PURR`
+• `swap 100 USDC to TRUMP`
+• `swap 500 USDC to PEPE`""",
+                "pt": f"""**Exemplos:**
+• `swap 50 USDC to PURR`
+• `swap 100 USDC to TRUMP`
+• `swap 500 USDC to PEPE`""",
+                "zh": f"""**示例：**
+• `swap 50 USDC to PURR`
+• `swap 100 USDC to TRUMP`
+• `swap 500 USDC to PEPE`""",
+            }
+        
         return msgs.get(language, msgs["en"])
     
     def _get_amount_prompt(self, from_token: str, to_token: str, language: str) -> str:
