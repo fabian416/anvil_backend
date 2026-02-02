@@ -281,16 +281,16 @@ class UserContextAware:
         
         return "\n".join(parts)
     
-    def mark_updated(self, cooldown_hours: int = 1) -> None:
+    def mark_updated(self, cooldown_minutes: int = 3) -> None:
         """
         Mark context as updated and set next eligible update time.
         
         Args:
-            cooldown_hours: Hours until next update is allowed
+            cooldown_minutes: Minutes until next update is allowed (default: 3)
         """
         now = datetime.now(UTC)
         self.context_updated_at = now
-        self.next_update_eligible_at = now + timedelta(hours=cooldown_hours)
+        self.next_update_eligible_at = now + timedelta(minutes=cooldown_minutes)
         self.update_count += 1
         self.updated_at = now
     

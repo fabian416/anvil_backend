@@ -4,9 +4,9 @@ User Context Update Celery Tasks.
 Background tasks for updating user context data used by context-aware agents.
 
 Task Configuration:
-- Runs every 10 minutes
+- Runs every 30 seconds
 - Processes max 100 users per run
-- Skips users updated within the last hour
+- Skips users updated within the last 3 minutes
 
 This ensures user context is reasonably fresh without overloading the system.
 """
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # Task configuration
 MAX_USERS_PER_RUN = 100  # Max users to UPDATE per run
 MAX_CREATE_PER_RUN = 30  # Max users to CREATE context for per run
-UPDATE_COOLDOWN_HOURS = 1
+UPDATE_COOLDOWN_MINUTES = 3  # Cooldown between updates (was 1 hour, now 3 minutes)
 
 
 async def _run_task(coro_factory):
@@ -193,7 +193,7 @@ def update_user_context():
             # Get eligible users
             users = await service.get_users_for_update(
                 limit=MAX_USERS_PER_RUN,
-                cooldown_hours=UPDATE_COOLDOWN_HOURS,
+                cooldown_minutes=UPDATE_COOLDOWN_MINUTES,
             )
             
             if not users:
@@ -205,7 +205,7 @@ def update_user_context():
                     try:
                         result = await service.update_user_context(
                             chat_user_id=user.chat_user_id,
-                            cooldown_hours=UPDATE_COOLDOWN_HOURS,
+                            cooldown_minutes=UPDATE_COOLDOWN_MINUTES,
                         )
                         
                         if result:

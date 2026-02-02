@@ -242,7 +242,7 @@ class UserContextService:
             wallet_provider=wallet_provider,
             # Processing metadata
             context_updated_at=now,
-            next_update_eligible_at=now + timedelta(hours=1),
+            next_update_eligible_at=now + timedelta(minutes=3),
             update_count=0,
             created_at=now,
             updated_at=now,
@@ -267,7 +267,7 @@ class UserContextService:
     async def get_users_for_update(
         self,
         limit: int = 100,
-        cooldown_hours: int = 1,
+        cooldown_minutes: int = 3,
     ) -> list[UserContextAware]:
         """
         Get users eligible for context update.
@@ -277,7 +277,7 @@ class UserContextService:
         
         Args:
             limit: Maximum users to return (default: 100)
-            cooldown_hours: Hours since last update to be eligible (default: 1)
+            cooldown_minutes: Minutes since last update to be eligible (default: 3)
             
         Returns:
             List of UserContextAware entities eligible for update
@@ -291,7 +291,7 @@ class UserContextService:
     async def update_user_context(
         self,
         chat_user_id: UUID,
-        cooldown_hours: int = 1,
+        cooldown_minutes: int = 3,
     ) -> UserContextAware | None:
         """
         Update context for a single user.
@@ -304,7 +304,7 @@ class UserContextService:
         
         Args:
             chat_user_id: The chat user's UUID
-            cooldown_hours: Hours until next update eligible (default: 1)
+            cooldown_minutes: Minutes until next update eligible (default: 3)
             
         Returns:
             Updated UserContextAware entity, or None if user not found
@@ -390,7 +390,7 @@ class UserContextService:
             ).value
             
             # Mark updated with cooldown
-            context.mark_updated(cooldown_hours=cooldown_hours)
+            context.mark_updated(cooldown_minutes=cooldown_minutes)
             
             # Save
             saved = await self._context_repo.save(context)
