@@ -1541,7 +1541,7 @@ Aqui está a cotação do swap:
                 "bridge_provider": "lifi",
                 "estimated_time": "~30 seconds",
                 # ETH balance on selected chain
-                "gas_chain_eth_balance": eth_balances.get(source_chain, 0),
+                "gas_chain_eth_balance": chain_balances.get(source_chain, {}).get("eth_balance", 0),
                 # All supported chains (for fallback)
                 "supported_source_chains": list(SUPPORTED_SOURCE_CHAINS.keys()),
             })
