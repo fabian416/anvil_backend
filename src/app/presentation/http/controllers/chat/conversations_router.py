@@ -164,6 +164,12 @@ class ExecuteActionData(BaseModel):
     
     # Bridge configuration
     bridge_config: dict[str, Any] | None = Field(default=None, description="Hyperliquid bridge contract addresses")
+    
+    # LiFi bridge configuration (for Hyperliquid swaps via LiFi)
+    lifi_config: dict[str, Any] | None = Field(
+        default=None, 
+        description="LiFi bridge config with token_balances (can_pay_gas, usdc, weth per chain)"
+    )
 
 
 class ChatResponse(BaseModel):

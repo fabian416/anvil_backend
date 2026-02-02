@@ -52,11 +52,21 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-async def _get_eth_balances_for_wallet(wallet_address: str) -> dict[str, float]:
+async def _get_token_balances_for_wallet(wallet_address: str) -> dict[str, dict[str, Any]]:
     """
-    Query ETH balances from database for a wallet address.
+    Query all token balances from the token_balances table.
     
-    Returns dict mapping chain name to ETH balance (e.g., {"ethereum": 0.00288, "base": 0})
+    Returns dict mapping chain name to token info:
+    {
+        "ethereum": {
+            "eth_balance": 0.00070785,
+            "can_pay_gas": True,
+            "usdc_balance": 2.80,
+            "weth_balance": 0.00081710,
+            "total_usd": 6.16
+        },
+        ...
+    }
     """
     try:
         from sqlalchemy import create_engine, text
@@ -77,54 +87,109 @@ async def _get_eth_balances_for_wallet(wallet_address: str) -> dict[str, float]:
         # Use sync engine with NullPool for one-off queries
         engine = create_engine(db_url, poolclass=NullPool)
         
-        eth_balances: dict[str, float] = {}
+        chain_balances: dict[str, dict[str, Any]] = {}
         
         with engine.connect() as conn:
             result = conn.execute(text("""
-                SELECT ca.chain, ca.eth_balance
-                FROM chain_addresses ca
-                JOIN wallets w ON w.id = ca.wallet_id
+                SELECT 
+                    tb.chain,
+                    tb.token_symbol,
+                    tb.balance_human,
+                    tb.balance_usd,
+                    tb.can_pay_gas,
+                    tb.is_stablecoin
+                FROM token_balances tb
+                JOIN wallets w ON w.id = tb.wallet_id
                 WHERE LOWER(w.address) = LOWER(:addr)
-                  AND ca.is_active = true
+                ORDER BY tb.chain, tb.token_symbol
             """), {"addr": wallet_address})
             
             for row in result:
-                chain_name = str(row[0]) if row[0] else "unknown"
-                eth_balance = float(row[1]) if row[1] else 0.0
-                eth_balances[chain_name] = eth_balance
+                chain = str(row[0])
+                symbol = str(row[1])
+                balance = float(row[2]) if row[2] else 0.0
+                usd = float(row[3]) if row[3] else 0.0
+                can_gas = bool(row[4])
+                is_stable = bool(row[5])
+                
+                if chain not in chain_balances:
+                    chain_balances[chain] = {
+                        "eth_balance": 0.0,
+                        "can_pay_gas": False,
+                        "usdc_balance": 0.0,
+                        "weth_balance": 0.0,
+                        "total_usd": 0.0,
+                        "tokens": {}
+                    }
+                
+                chain_balances[chain]["tokens"][symbol] = {
+                    "balance": balance,
+                    "usd": usd,
+                    "can_pay_gas": can_gas,
+                    "is_stablecoin": is_stable,
+                }
+                chain_balances[chain]["total_usd"] += usd
+                
+                # Set convenience fields
+                if symbol == "ETH" and can_gas:
+                    chain_balances[chain]["eth_balance"] = balance
+                    chain_balances[chain]["can_pay_gas"] = balance > 0.0001  # Min ~$0.20 for gas
+                elif symbol == "USDC":
+                    chain_balances[chain]["usdc_balance"] = balance
+                elif symbol == "WETH":
+                    chain_balances[chain]["weth_balance"] = balance
         
         engine.dispose()
-        return eth_balances
+        return chain_balances
         
     except Exception as e:
-        logger.warning(f"Failed to query ETH balances from DB: {e}")
+        logger.warning(f"Failed to query token balances from DB: {e}")
         return {}
 
 
 def _find_best_chain_for_gas(
-    eth_balances: dict[str, float],
+    chain_balances: dict[str, dict[str, Any]],
     supported_chains: list[str],
     min_eth_required: float = 0.0002,
-) -> str | None:
+) -> tuple[str | None, dict[str, Any]]:
     """
     Find the best chain for gas fees from supported chains.
     
+    Uses the token_balances table with can_pay_gas flag.
+    
     Args:
-        eth_balances: Dict mapping chain name to ETH balance
+        chain_balances: Dict from _get_token_balances_for_wallet()
         supported_chains: List of chain names to consider
         min_eth_required: Minimum ETH required for gas (default ~$0.40)
     
     Returns:
-        Chain name with sufficient ETH, or None if no chain has enough
+        Tuple of (chain name, gas info dict) or (None, error info)
     """
-    for chain in supported_chains:
-        eth_balance = eth_balances.get(chain, 0.0)
-        if eth_balance >= min_eth_required:
-            logger.info(f"Best chain for gas: {chain} ({eth_balance:.6f} ETH >= {min_eth_required})")
-            return chain
+    gas_info: dict[str, Any] = {
+        "chains_checked": {},
+        "best_chain": None,
+        "min_eth_required": min_eth_required,
+    }
     
-    logger.warning(f"No chain has sufficient ETH for gas. Balances: {eth_balances}")
-    return None
+    for chain in supported_chains:
+        chain_data = chain_balances.get(chain, {})
+        eth_balance = chain_data.get("eth_balance", 0.0)
+        can_pay = chain_data.get("can_pay_gas", False)
+        
+        gas_info["chains_checked"][chain] = {
+            "eth_balance": eth_balance,
+            "can_pay_gas": can_pay,
+            "has_enough": eth_balance >= min_eth_required,
+        }
+        
+        if can_pay and eth_balance >= min_eth_required:
+            logger.info(f"Best chain for gas: {chain} ({eth_balance:.6f} ETH >= {min_eth_required})")
+            gas_info["best_chain"] = chain
+            return chain, gas_info
+    
+    logger.warning(f"No chain has sufficient ETH for gas. Checked: {supported_chains}")
+    gas_info["error"] = "No chain has sufficient native ETH for gas fees"
+    return None, gas_info
 
 
 # =============================================================================
@@ -1385,44 +1450,46 @@ Aqui está a cotação do swap:
             },
         }
         
-        # Find best source chain based on where user has ETH for gas
+        # Find best source chain based on where user has ETH for gas (can_pay_gas=True)
         best_source_chain: str | None = None
-        eth_balances: dict[str, float] = {}
+        chain_balances: dict[str, dict[str, Any]] = {}
+        gas_info: dict[str, Any] = {}
         no_gas_error: str | None = None
         
         if user_context.wallet_address and needs_deposit:
             try:
-                # Query ETH balances from database using standalone function
-                eth_balances = await _get_eth_balances_for_wallet(user_context.wallet_address)
+                # Query ALL token balances from token_balances table
+                chain_balances = await _get_token_balances_for_wallet(user_context.wallet_address)
                 
                 # Find best chain (minimum 0.0002 ETH for gas ~$0.40)
                 MIN_ETH_FOR_GAS = 0.0002
-                best_source_chain = _find_best_chain_for_gas(
-                    eth_balances,
+                best_source_chain, gas_info = _find_best_chain_for_gas(
+                    chain_balances,
                     list(SUPPORTED_SOURCE_CHAINS.keys()),
                     MIN_ETH_FOR_GAS,
                 )
                 
                 if best_source_chain:
+                    chain_data = chain_balances.get(best_source_chain, {})
                     logger.info(
                         f"[SwapWorkflow] Best chain for gas: {best_source_chain} "
-                        f"(ETH: {eth_balances.get(best_source_chain, 0):.6f})"
+                        f"(ETH: {chain_data.get('eth_balance', 0):.6f}, can_pay_gas: {chain_data.get('can_pay_gas')})"
                     )
                 else:
                     logger.warning(
                         f"[SwapWorkflow] No chain has enough ETH for gas. "
-                        f"Balances: {eth_balances}"
+                        f"Gas info: {gas_info}"
                     )
-                    no_gas_error = "insufficient_gas"
+                    no_gas_error = gas_info.get("error", "insufficient_gas")
             except Exception as e:
-                logger.warning(f"[SwapWorkflow] Failed to check ETH balances: {e}")
+                logger.warning(f"[SwapWorkflow] Failed to check token balances: {e}")
         
         # Use best source chain or fall back to default
         source_chain = best_source_chain or "base"
         source_chain_id = SUPPORTED_SOURCE_CHAINS[source_chain]["chain_id"]
         source_usdc = SUPPORTED_SOURCE_CHAINS[source_chain]["usdc"]
         
-        # LiFi bridge configuration - includes all supported chains and ETH balances
+        # LiFi bridge configuration - includes all supported chains and token balances
         lifi_config = {
             "source_chain": source_chain,
             "source_chain_id": source_chain_id,
@@ -1435,10 +1502,21 @@ Aqui está a cotação do swap:
             "lifi_quote_url": "https://li.quest/v1/quote",
             # All supported source chains
             "supported_source_chains": SUPPORTED_SOURCE_CHAINS,
-            # ETH balances per chain (for frontend display)
-            "eth_balances": eth_balances,
+            # Full token balances per chain (includes can_pay_gas, usdc, weth)
+            "token_balances": {
+                chain: {
+                    "eth_balance": data.get("eth_balance", 0),
+                    "can_pay_gas": data.get("can_pay_gas", False),
+                    "usdc_balance": data.get("usdc_balance", 0),
+                    "weth_balance": data.get("weth_balance", 0),
+                    "total_usd": data.get("total_usd", 0),
+                }
+                for chain, data in chain_balances.items()
+            },
             # Best chain selected by backend (has enough ETH for gas)
             "best_source_chain": best_source_chain,
+            # Gas check details
+            "gas_info": gas_info,
             # Error if no chain has enough gas
             "gas_error": no_gas_error,
         }
