@@ -535,6 +535,167 @@ export function SwapExecuteButton({ execute, onSuccess, onError }: SwapExecuteBu
 
 ---
 
+---
+
+## Backend API: Execute Endpoint
+
+After each step is completed on the frontend, call the backend `/execute` endpoint to report progress and get the next step.
+
+### Endpoint
+
+```
+POST /api/v1/conversations/{conversation_id}/execute
+```
+
+### Request
+
+```typescript
+interface ExecuteRequest {
+  // Transaction hash of the completed step
+  transaction_hash: string;
+  
+  // Metadata for multi-step workflows
+  metadata?: {
+    // For Hyperliquid multi-step swaps
+    swap_id?: string;           // Swap execution ID
+    step_completed?: number;     // Which step was just completed (1, 2, or 3)
+    action?: string;            // "deposit" | "transfer_to_spot" | "spot_swap"
+    
+    // For leverage loops
+    loop_id?: string;
+    
+    // User wallet
+    wallet_address?: string;
+  };
+}
+```
+
+### Response
+
+```typescript
+interface ExecuteResponse {
+  // Status message
+  message: string;
+  
+  // Next step's execute_data (if workflow continues)
+  execute_data: ExecutePayload | null;
+  
+  // Additional metadata
+  metadata: {
+    status: "in_progress" | "completed" | "error";
+    step_completed?: number;
+    next_step?: number;
+    total_steps?: number;
+    transaction_hash?: string;
+  };
+}
+```
+
+### Example: Hyperliquid Multi-Step Flow
+
+```typescript
+// Step 1: User completes deposit (bridge tx)
+const step1Response = await fetch(`/api/v1/conversations/${conversationId}/execute`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`,
+  },
+  body: JSON.stringify({
+    transaction_hash: depositTxHash,
+    metadata: {
+      swap_id: execute.swap_id,
+      step_completed: 1,
+      action: "deposit",
+      wallet_address: userAddress,
+    },
+  }),
+});
+const step1Data = await step1Response.json();
+// step1Data.execute_data contains step 2 (transfer_to_spot)
+
+// Step 2: User completes transfer (Hyperliquid SDK)
+const step2Response = await fetch(`/api/v1/conversations/${conversationId}/execute`, {
+  method: "POST",
+  body: JSON.stringify({
+    transaction_hash: "hl_transfer_" + Date.now(), // Hyperliquid internal ID
+    metadata: {
+      swap_id: execute.swap_id,
+      step_completed: 2,
+      action: "transfer_to_spot",
+    },
+  }),
+});
+const step2Data = await step2Response.json();
+// step2Data.execute_data contains step 3 (spot_swap)
+
+// Step 3: User completes swap (Hyperliquid SDK)
+const step3Response = await fetch(`/api/v1/conversations/${conversationId}/execute`, {
+  method: "POST",
+  body: JSON.stringify({
+    transaction_hash: swapOrderId,
+    metadata: {
+      swap_id: execute.swap_id,
+      step_completed: 3,
+      action: "spot_swap",
+    },
+  }),
+});
+const step3Data = await step3Response.json();
+// step3Data.metadata.status === "completed"
+```
+
+### Frontend Integration Hook
+
+```typescript
+function useMultiStepSwap(conversationId: string) {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [steps, setSteps] = useState<HyperliquidStep[]>([]);
+  
+  const reportStepComplete = async (
+    transactionHash: string,
+    stepNumber: number,
+    action: string
+  ) => {
+    const response = await fetch(
+      `/api/v1/conversations/${conversationId}/execute`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify({
+          transaction_hash: transactionHash,
+          metadata: {
+            step_completed: stepNumber,
+            action: action,
+          },
+        }),
+      }
+    );
+    
+    const data = await response.json();
+    
+    // Update step status
+    setSteps(prev => prev.map(s => 
+      s.step === stepNumber ? { ...s, status: "completed" } : s
+    ));
+    
+    // Move to next step if available
+    if (data.execute_data) {
+      setCurrentStep(data.metadata.next_step);
+    }
+    
+    return data;
+  };
+  
+  return { currentStep, steps, setSteps, reportStepComplete };
+}
+```
+
+---
+
 ## Step Progress UI Component
 
 ```typescript
