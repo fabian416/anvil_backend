@@ -537,9 +537,50 @@ export function SwapExecuteButton({ execute, onSuccess, onError }: SwapExecuteBu
 
 ---
 
-## Backend API: Execute Endpoint
+## Important: How to Get execute_data
 
-After each step is completed on the frontend, call the backend `/execute` endpoint to report progress and get the next step.
+### ❌ WRONG: Calling /execute to start a swap
+
+```typescript
+// This is WRONG - /execute is for REPORTING completed steps
+POST /api/v1/conversations/{id}/execute
+{ action_type: "swap", from_token: "USDC", ... }  // ❌ Wrong payload
+```
+
+### ✅ CORRECT: Get execute_data from chat response
+
+The `execute_data` comes from the **chat message response**, not from `/execute`:
+
+```typescript
+// 1. User sends swap message via chat
+POST /api/v1/conversations/{id}/messages
+{ content: "swap 1 USDC to PURR", language: "en" }
+
+// 2. Backend returns execute_data in the response
+{
+  "conversation_id": "...",
+  "message_id": "...",
+  "agent_message": { "content": "Ready to swap..." },
+  "execute": {  // ← THIS is your execute_data
+    "action_type": "swap",
+    "provider": "hyperliquid",
+    "execution_mode": "multi_step",
+    "steps": [...],
+    ...
+  }
+}
+
+// 3. Frontend uses execute_data to perform the swap locally
+// 4. After each step, report to /execute
+```
+
+---
+
+## Backend API: /execute Endpoint (Step Reporting)
+
+**Purpose:** Report completion of each step AFTER executing it locally.
+
+**NOT for:** Starting a swap or getting execute_data.
 
 ### Endpoint
 
@@ -551,7 +592,7 @@ POST /api/v1/conversations/{conversation_id}/execute
 
 ```typescript
 interface ExecuteRequest {
-  // Transaction hash of the completed step
+  // Transaction hash of the COMPLETED step (required)
   transaction_hash: string;
   
   // Metadata for multi-step workflows
