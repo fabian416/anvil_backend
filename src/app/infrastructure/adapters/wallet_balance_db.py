@@ -280,10 +280,14 @@ class WalletBalanceDbAdapter(WalletBalancePort):
         chat_user_id: UUID,
     ) -> UserWalletAggregate | None:
         """Get aggregated balance via chat_user_id."""
-        chat_users_table = mapping_registry.metadata.tables.get("chat_users")
+        # Use table reflection to get actual DB schema (mapping may be outdated)
+        from sqlalchemy import MetaData, Table
+        metadata = MetaData()
         
-        if chat_users_table is None:
-            logger.warning("chat_users table not found")
+        try:
+            chat_users_table = Table("chat_users", metadata, autoload_with=self._session.get_bind())
+        except Exception as e:
+            logger.warning(f"Failed to reflect chat_users table: {e}")
             return None
         
         # Resolve chat_user_id to legacy user_id via identifier column
