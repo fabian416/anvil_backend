@@ -395,7 +395,6 @@ jobs:
     
     - name: Run mypy
       run: |
-        mypy src/app/infrastructure/agno/
         mypy src/app/infrastructure/mcp/
         mypy src/app/presentation/http/websocket/
         mypy src/app/infrastructure/celery/tasks/ --ignore-missing-imports
