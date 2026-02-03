@@ -30,6 +30,15 @@ from app.infrastructure.adapters.chat_unified_repository_sqla import ChatMessage
 from app.application.common.services.current_user import CurrentUserService
 from app.application.common.exceptions.authorization import AuthorizationError
 from app.infrastructure.auth.exceptions import AuthenticationError
+from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.entities.transaction import Transaction, TransactionId
+from app.domain.entities.wallet import WalletId
+from app.domain.enums.chain_type import ChainType
+from app.domain.enums.transaction_status import TransactionStatus
+from app.domain.enums.transaction_type import TransactionType
+from app.domain.value_objects.user_id import UserId
+from app.domain.value_objects.created_at import CreatedAt
+from decimal import Decimal
 
 
 # ========================================
@@ -2038,6 +2047,7 @@ Response Guidelines:
         http_request: Request,
         user_service: FromDishka[UserService],
         current_user: FromDishka[CurrentUserService],
+        transaction_repository: FromDishka["TransactionRepository"] = None,
     ) -> ExecuteResponse:
         """Execute approved transaction and continue multi-step workflows."""
         import logging
@@ -2056,33 +2066,156 @@ Response Guidelines:
             current_user=current_user,
         )
 
-        # Check if this is a leverage loop continuation
-        if request.metadata and request.metadata.get("loop_id"):
-            loop_id = UUID(request.metadata["loop_id"])
+        # ============================================================
+        # LENDING OPERATIONS (Leverage Loops, Supply, Borrow, etc.)
+        # ============================================================
+        LENDING_ACTIONS = {
+            "supply", "withdraw", "borrow", "repay", "liquidate",
+            "leverage_loop", "loop_supply", "loop_borrow", "loop_swap"
+        }
+
+        if request.metadata and (
+            request.metadata.get("loop_id") or
+            request.metadata.get("action") in LENDING_ACTIONS
+        ):
+            action = request.metadata.get("action", "leverage_loop")
             tx_hash = request.transaction_hash
+            loop_id = request.metadata.get("loop_id")
 
-            # Get user's wallet address (from auth context or user context service)
-            # For now, we'll use a placeholder - this should come from user_context_service
-            wallet_address = request.metadata.get("wallet_address", "0x0")
-
-            # Get dependencies from Dishka container
-            # NOTE: This is a simplified version - in production, these should be injected via Dishka
-            # For now, we'll return a placeholder response
+            # Extract lending metadata
+            protocol = request.metadata.get("protocol", "morpho")  # morpho, aave
+            chain = request.metadata.get("chain", "base")
+            asset = request.metadata.get("asset") or request.metadata.get("token")
+            amount = request.metadata.get("amount")
+            step_completed = request.metadata.get("step_completed", 1)
+            total_steps = request.metadata.get("total_steps", 1)
 
             logger.info(
-                f"Leverage loop continuation request: loop_id={loop_id}, "
-                f"tx_hash={tx_hash}, user_id={user.id}"
+                f"Lending operation: action={action}, protocol={protocol}, "
+                f"tx_hash={tx_hash}, loop_id={loop_id}, user_id={user.id}"
             )
 
-            # TODO: Inject LendingHandler and call continue_leverage_loop
-            # For now, return a success response
+            # Persist to transactions table (general ledger)
+            transaction_id = None
+            if transaction_repository:
+                try:
+                    # Get user ID
+                    app_user = None
+                    try:
+                        app_user = await current_user.get_current_user()
+                        user_id_value = app_user.id_.value
+                    except (AuthenticationError, AuthorizationError):
+                        user_id_value = int(user.identifier) if user.identifier.isdigit() else 0
+
+                    # Parse chain
+                    try:
+                        chain_enum = ChainType[chain.upper()]
+                    except (KeyError, AttributeError):
+                        chain_enum = ChainType.BASE
+
+                    # Parse amount
+                    amount_decimal = None
+                    if amount:
+                        try:
+                            amount_decimal = Decimal(str(amount))
+                        except (ValueError, TypeError):
+                            pass
+
+                    # Map lending action to transaction type
+                    action_to_type = {
+                        "supply": TransactionType.FUND,  # Supply = Deposit
+                        "withdraw": TransactionType.SEND,  # Withdraw = Send out
+                        "borrow": TransactionType.FUND,
+                        "repay": TransactionType.SEND,
+                        "leverage_loop": TransactionType.SWAP,
+                        "loop_supply": TransactionType.FUND,
+                        "loop_borrow": TransactionType.FUND,
+                        "loop_swap": TransactionType.SWAP,
+                    }
+                    tx_type = action_to_type.get(action, TransactionType.SWAP)
+
+                    # Build metadata
+                    tx_metadata = {
+                        "conversation_id": str(conversation_id),
+                        "action": action,
+                        "protocol": protocol,
+                        "loop_id": str(loop_id) if loop_id else None,
+                        "step_completed": step_completed,
+                        "total_steps": total_steps,
+                        "workflow_type": "lending",
+                    }
+
+                    # Create transaction
+                    transaction = Transaction(
+                        id_=TransactionId(0),
+                        user_id=UserId(user_id_value),
+                        wallet_id=WalletId(0),
+                        to_address=None,
+                        type=tx_type,
+                        chain=chain_enum,
+                        asset_in=asset,
+                        amount_in=amount_decimal,
+                        asset_out=None,
+                        amount_out=None,
+                        fee=None,
+                        fee_usd=None,
+                        tx_hash=tx_hash,
+                        status=TransactionStatus.SUCCESS,
+                        dex_aggregator=f"{protocol}_{action}",
+                        dex_route=None,
+                        slippage=None,
+                        error_message=None,
+                        block_number=None,
+                        confirmed_at=None,
+                        created_at=CreatedAt.now(),
+                        gas_used=None,
+                        gas_price=None,
+                        tx_metadata=tx_metadata,
+                    )
+
+                    saved_transaction = await transaction_repository.save(transaction)
+                    transaction_id = saved_transaction.id_.value
+
+                    logger.info(
+                        f"✅ Lending transaction persisted: id={transaction_id}, "
+                        f"action={action}, protocol={protocol}, tx_hash={tx_hash[:10]}..."
+                    )
+                except Exception as save_error:
+                    logger.error(f"Failed to persist lending transaction: {save_error}", exc_info=True)
+
+            # Build response message
+            action_messages = {
+                "supply": f"Supply transaction confirmed on {protocol}.",
+                "withdraw": f"Withdrawal transaction confirmed.",
+                "borrow": f"Borrow transaction confirmed.",
+                "repay": f"Repayment transaction confirmed.",
+                "leverage_loop": "Leverage loop step completed.",
+                "loop_supply": "Loop supply completed.",
+                "loop_borrow": "Loop borrow completed.",
+                "loop_swap": "Loop swap completed.",
+            }
+
+            message = action_messages.get(action, f"Lending operation {action} completed.")
+            is_complete = step_completed >= total_steps
+
+            if not is_complete:
+                message += f" Ready for step {step_completed + 1} of {total_steps}."
+            elif total_steps > 1:
+                message = f"🎉 All {total_steps} steps completed! {message}"
+
             return ExecuteResponse(
-                message="Leverage loop step completed. Ready for next step.",
-                execute_data=None,  # Would contain next step's execute_data
+                message=message,
+                execute_data=None,
                 metadata={
-                    "loop_id": str(loop_id),
+                    "action": action,
+                    "protocol": protocol,
                     "transaction_hash": tx_hash,
-                    "status": "in_progress",
+                    "transaction_id": transaction_id,
+                    "loop_id": str(loop_id) if loop_id else None,
+                    "step_completed": step_completed,
+                    "total_steps": total_steps,
+                    "status": "complete" if is_complete else "in_progress",
+                    "saved_to_db": transaction_id is not None,
                 }
             )
 
@@ -2152,7 +2285,98 @@ Response Guidelines:
             elif total_steps > 1:
                 message = f"🎉 All {total_steps} steps completed! {message}"
 
-            # TODO: Persist to swap_transactions table for history/analytics
+            # Persist swap transaction to database for history/analytics
+            transaction_id = None
+            if transaction_repository:
+                try:
+                    # Get authenticated user for user_id
+                    app_user = None
+                    wallet_id_value = 0  # Default, will be resolved by repository
+
+                    try:
+                        app_user = await current_user.get_current_user()
+                        user_id_value = app_user.id_.value
+                    except (AuthenticationError, AuthorizationError):
+                        # For guest users or auth failures, use identifier from chat_user
+                        # Note: This is a fallback - ideally we should have user_id
+                        user_id_value = int(user.identifier) if user.identifier.isdigit() else 0
+
+                    # Parse chain
+                    try:
+                        chain_enum = ChainType[chain.upper()] if chain else ChainType.BASE
+                    except (KeyError, AttributeError):
+                        chain_mapping = {
+                            "ethereum": ChainType.ETHEREUM,
+                            "base": ChainType.BASE,
+                            "polygon": ChainType.POLYGON,
+                            "arbitrum": ChainType.ARBITRUM,
+                            "optimism": ChainType.OPTIMISM,
+                        }
+                        chain_enum = chain_mapping.get(chain.lower() if chain else "base", ChainType.BASE)
+
+                    # Parse amounts (if available)
+                    amount_in = None
+                    amount_out = None
+                    if amount:
+                        try:
+                            amount_in = Decimal(str(amount))
+                        except (ValueError, TypeError):
+                            pass
+
+                    # Build comprehensive metadata
+                    tx_metadata = {
+                        "conversation_id": str(conversation_id),
+                        "action": action,
+                        "step_completed": step_completed,
+                        "total_steps": total_steps,
+                        "source_chain": source_chain,
+                        "destination_chain": destination_chain,
+                        "workflow_type": "multi_step" if total_steps > 1 else "single_step",
+                    }
+
+                    # Create transaction entity
+                    transaction = Transaction(
+                        id_=TransactionId(0),  # Will be auto-generated
+                        user_id=UserId(user_id_value),
+                        wallet_id=WalletId(wallet_id_value),
+                        to_address=None,  # Not applicable for swaps
+                        type=TransactionType.SWAP,
+                        chain=chain_enum,
+                        asset_in=from_token or "UNKNOWN",
+                        amount_in=amount_in,
+                        asset_out=to_token or "UNKNOWN",
+                        amount_out=amount_out,
+                        fee=None,
+                        fee_usd=None,
+                        tx_hash=tx_hash,
+                        status=TransactionStatus.SUCCESS,  # Already confirmed by user
+                        dex_aggregator=action,  # e.g., "lifi_bridge", "1inch_swap"
+                        dex_route=None,
+                        slippage=None,
+                        error_message=None,
+                        block_number=None,
+                        confirmed_at=None,
+                        created_at=CreatedAt.now(),
+                        gas_used=None,
+                        gas_price=None,
+                        tx_metadata=tx_metadata,
+                    )
+
+                    # Save to database
+                    saved_transaction = await transaction_repository.save(transaction)
+                    transaction_id = saved_transaction.id_.value
+
+                    logger.info(
+                        f"✅ Transaction persisted: id={transaction_id}, "
+                        f"tx_hash={tx_hash[:10]}..., action={action}, user_id={user_id_value}"
+                    )
+
+                except Exception as save_error:
+                    # Log error but don't fail the request
+                    logger.error(
+                        f"Failed to persist transaction (non-critical): {save_error}",
+                        exc_info=True
+                    )
 
             return ExecuteResponse(
                 message=message,
@@ -2160,6 +2384,7 @@ Response Guidelines:
                 metadata={
                     "action": action,
                     "transaction_hash": tx_hash,
+                    "transaction_id": transaction_id,  # Database ID for tracking
                     "step_completed": step_completed,
                     "total_steps": total_steps,
                     "next_step": next_step,
@@ -2173,14 +2398,136 @@ Response Guidelines:
                     "chain": chain,
                     "source_chain": source_chain,
                     "destination_chain": destination_chain,
+                    "saved_to_db": transaction_id is not None,  # Confirmation flag
                 }
             )
 
-        # Handle other execution types here
+        # ============================================================
+        # MONEY MARKET OPERATIONS (Rate Comparisons, Deposits, etc.)
+        # ============================================================
+        MONEY_MARKET_ACTIONS = {
+            "money_market_deposit", "money_market_withdraw",
+            "rate_comparison", "yield_optimization"
+        }
+
+        if request.metadata and request.metadata.get("action") in MONEY_MARKET_ACTIONS:
+            action = request.metadata.get("action")
+            tx_hash = request.transaction_hash
+            protocol = request.metadata.get("protocol", "aave")
+            chain = request.metadata.get("chain", "base")
+            asset = request.metadata.get("asset") or request.metadata.get("token")
+            amount = request.metadata.get("amount")
+            apy = request.metadata.get("apy") or request.metadata.get("rate")
+
+            logger.info(
+                f"Money market operation: action={action}, protocol={protocol}, "
+                f"tx_hash={tx_hash}, user_id={user.id}"
+            )
+
+            # Persist to transactions table
+            transaction_id = None
+            if transaction_repository:
+                try:
+                    # Get user ID
+                    try:
+                        app_user = await current_user.get_current_user()
+                        user_id_value = app_user.id_.value
+                    except (AuthenticationError, AuthorizationError):
+                        user_id_value = int(user.identifier) if user.identifier.isdigit() else 0
+
+                    # Parse chain
+                    try:
+                        chain_enum = ChainType[chain.upper()]
+                    except (KeyError, AttributeError):
+                        chain_enum = ChainType.BASE
+
+                    # Parse amount
+                    amount_decimal = None
+                    if amount:
+                        try:
+                            amount_decimal = Decimal(str(amount))
+                        except (ValueError, TypeError):
+                            pass
+
+                    # Determine transaction type
+                    tx_type = TransactionType.FUND if "deposit" in action else TransactionType.SEND
+
+                    # Build metadata
+                    tx_metadata = {
+                        "conversation_id": str(conversation_id),
+                        "action": action,
+                        "protocol": protocol,
+                        "apy": apy,
+                        "workflow_type": "money_market",
+                    }
+
+                    # Create transaction
+                    transaction = Transaction(
+                        id_=TransactionId(0),
+                        user_id=UserId(user_id_value),
+                        wallet_id=WalletId(0),
+                        to_address=None,
+                        type=tx_type,
+                        chain=chain_enum,
+                        asset_in=asset,
+                        amount_in=amount_decimal,
+                        asset_out=None,
+                        amount_out=None,
+                        fee=None,
+                        fee_usd=None,
+                        tx_hash=tx_hash,
+                        status=TransactionStatus.SUCCESS,
+                        dex_aggregator=f"{protocol}_money_market",
+                        dex_route=None,
+                        slippage=None,
+                        error_message=None,
+                        block_number=None,
+                        confirmed_at=None,
+                        created_at=CreatedAt.now(),
+                        gas_used=None,
+                        gas_price=None,
+                        tx_metadata=tx_metadata,
+                    )
+
+                    saved_transaction = await transaction_repository.save(transaction)
+                    transaction_id = saved_transaction.id_.value
+
+                    logger.info(
+                        f"✅ Money market transaction persisted: id={transaction_id}, "
+                        f"action={action}, protocol={protocol}"
+                    )
+                except Exception as save_error:
+                    logger.error(f"Failed to persist money market transaction: {save_error}", exc_info=True)
+
+            # Build response
+            action_messages = {
+                "money_market_deposit": f"Deposit confirmed on {protocol} money market.",
+                "money_market_withdraw": f"Withdrawal confirmed from {protocol}.",
+                "rate_comparison": f"Rate comparison completed across {protocol}.",
+                "yield_optimization": f"Yield optimization executed on {protocol}.",
+            }
+
+            message = action_messages.get(action, f"Money market operation {action} completed.")
+
+            return ExecuteResponse(
+                message=message,
+                execute_data=None,
+                metadata={
+                    "action": action,
+                    "protocol": protocol,
+                    "transaction_hash": tx_hash,
+                    "transaction_id": transaction_id,
+                    "apy": apy,
+                    "status": "complete",
+                    "saved_to_db": transaction_id is not None,
+                }
+            )
+
+        # Handle unknown execution types
         logger.warning(f"Unknown execution type for conversation {conversation_id}, metadata={request.metadata}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unknown execution type. Please provide loop_id, batch_id, or action in metadata.",
+            detail="Unknown execution type. Supported: swap actions, lending operations, money_market operations.",
         )
 
     return router
