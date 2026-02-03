@@ -1,0 +1,485 @@
+# PostgreSQL
+[postgres]
+DB = "anvil_db"
+HOST = "localhost"
+PORT = 5432
+DRIVER = "psycopg"
+
+# Uvicorn
+[uvicorn]
+HOST = "0.0.0.0"
+PORT = 8080
+
+# SQLAlchemy
+[sqla]
+ECHO = false
+ECHO_POOL = false
+POOL_SIZE = 50
+MAX_OVERFLOW = 10
+
+# Logs
+[logs]
+# Level can be set to "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+LEVEL = "DEBUG"
+
+# Stripe (non-secret defaults)
+[stripe]
+STRIPE_API_KEY = "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"
+
+
+
+
+
+# Admin Configuration
+[admin]
+USER_ADMIN = "admin@anvil.com"
+
+ALLOWED_ADMIN_EMAILS = [
+  "admin@anvil.com",
+  "yordansolis2@gmail.com",
+  "cmizc8ioj041bl80d0qecu54g@wallet.anvil.io",
+]
+
+# ========================================
+# Agent Squad Configuration (18 Agents)
+# ========================================
+[agent_squad]
+# Master toggle (disable entire Agent Squad system)
+enabled = true
+# Demo mode: Use pre-built demo handlers instead of real LLM calls
+# Set to false to enable real LLM for authenticated users
+use_demo_mode = false
+# Debug: Include agent execution timing in responses (for performance analysis)
+# Set via .secrets.toml: [agent_squad.debug] enable_agent_timing = true
+
+# ========================================
+# External API Feature Flags (Phase 7)
+# ========================================
+[agent_squad.external_apis]
+# DeFi Data APIs (Week 1)
+enable_1inch = true
+enable_defillama = true
+enable_coingecko = true
+enable_hyperliquid = true
+enable_uniswap = true
+enable_curve = true
+enable_aave = true
+
+# Enterprise APIs (Week 2)
+enable_chainalysis = false  # Requires paid license
+enable_trm_labs = false     # Requires paid license
+enable_gnosis_safe = true
+enable_forta = true
+enable_twilio = false       # Requires paid account
+
+# Advanced APIs (Week 3)
+enable_privy = false        # Requires app ID
+enable_axelar = true
+enable_layerzero = true
+enable_opensea = false      # Requires API key
+enable_snapshot = true
+
+# Unified Chat Routing (Phase 8)
+enable_unified_routing = true  # Enable intelligent intent-based routing
+unified_routing_use_llm = true  # Use LLM for intent classification (fallback to keywords if false)
+
+# Intent classification
+intent_classification_model = "gemini-2.0-flash"  # Fast model for routing (Vertex AI)
+intent_confidence_threshold = 0.85  # Min confidence (0.0-1.0)
+fallback_agent = "chat"  # Fallback if intent unclear
+
+# GraphRAG routing
+enable_graphrag_routing = true  # Route protocol/risk queries to GraphRAG
+
+# Hunter AI routing (Phase 8.1)
+enable_hunter_routing = true  # Route market intelligence queries to Hunter AI
+enable_hunter_sentiment = true  # Sentiment analysis (Twitter, Reddit, Discord, News)
+enable_hunter_price_prediction = true  # Price forecasting with ML models
+enable_hunter_risk_signals = true  # Market risk warnings
+enable_hunter_trading_signals = true  # Buy/sell signals
+enable_hunter_patterns = true  # Chart pattern detection
+enable_hunter_portfolio = true  # Portfolio optimization (MPT)
+
+# ULTRA routing (Phase 8.2)
+enable_ultra_routing = true  # Route DeFi automation queries to ULTRA
+enable_ultra_arbitrage = true  # Arbitrage opportunity discovery
+enable_ultra_flash_loans = true  # Flash loan protocol selection
+enable_ultra_mev_protection = true  # MEV-protected execution via Flashbots
+enable_ultra_auto_executor = true  # Automated trading bot control
+
+# Supervisor coordination
+enable_supervisor = true
+supervisor_model = "gemini-2.0-flash"  # Standard model for coordination (Vertex AI)
+supervisor_max_agents = 5
+supervisor_timeout_seconds = 120
+
+# Context preservation
+conversation_history_limit = 20  # Messages to keep
+context_window_tokens = 8000  # Max tokens
+
+# Performance
+max_concurrent_agents = 3  # Parallel execution
+routing_timeout_seconds = 5
+execution_timeout_seconds = 60
+
+# Storage
+storage_backend = "postgresql"  # or "redis"
+storage_ttl_seconds = 86400  # 24 hours
+
+# Telemetry
+telemetry_enabled = true
+telemetry_sample_rate = 1.0  # 0.0-1.0
+
+# ========================================
+# Per-Agent Configuration (18 Agents)
+# ========================================
+
+# Core User-Facing Agents (10) - ENABLED
+# Models: gemini-2.0-flash (standard, Generative AI API - Vertex AI), gemini-1.5-pro (premium)
+[agent_squad.agents.chat]
+enabled = true
+model = "gemini-2.0-flash"  # Fast responses for general chat (Vertex AI)
+temperature = 0.7
+
+[agent_squad.agents.knowledge]
+enabled = true
+model = "gemini-2.0-flash"  # Educational queries and Anvil knowledge (Vertex AI)
+temperature = 0.5  # Lower temperature for factual responses
+max_tokens = 1500  # More tokens for detailed explanations
+
+[agent_squad.agents.hunter_ai]
+enabled = true
+model = "gemini-2.0-flash"  # Market analysis
+temperature = 0.3
+max_tokens = 1500
+
+[agent_squad.agents.research]
+enabled = true
+model = "gemini-2.0-flash"  # Deep protocol analysis
+temperature = 0.2
+max_tokens = 2000
+
+[agent_squad.agents.execution]
+enabled = true
+model = "gemini-2.0-flash"  # Transaction execution (low temp for precision)
+temperature = 0.1
+max_tokens = 1000
+
+[agent_squad.agents.risk_analyzer]
+enabled = true
+model = "gemini-2.0-flash"  # Risk assessment
+temperature = 0.2
+max_tokens = 1500
+
+[agent_squad.agents.portfolio]
+enabled = true
+model = "gemini-2.0-flash"  # Portfolio optimization
+temperature = 0.3
+max_tokens = 2000
+
+[agent_squad.agents.tax_optimizer]
+enabled = true
+model = "gemini-2.0-flash"  # Tax strategies
+temperature = 0.2
+max_tokens = 1500
+
+[agent_squad.agents.defi_yield]
+enabled = true
+model = "gemini-2.0-flash"  # Yield farming
+temperature = 0.3
+max_tokens = 1500
+
+[agent_squad.agents.security_auditor]
+enabled = true
+model = "gemini-2.0-flash"  # Security analysis (low temp for accuracy)
+temperature = 0.1
+max_tokens = 2000
+
+[agent_squad.agents.gas_optimizer]
+enabled = true
+model = "gemini-2.0-flash"  # Gas optimization
+temperature = 0.2
+max_tokens = 1000
+
+# Enterprise Agents (8) - DISABLED (enable per tier)
+[agent_squad.agents.compliance_monitor]
+enabled = false  # Enterprise only
+model = "gemini-2.0-flash"  # AML/KYC compliance
+temperature = 0.1
+max_tokens = 2000
+
+[agent_squad.agents.multisig_coordinator]
+enabled = false  # Enterprise only
+model = "gemini-2.0-flash"  # Treasury management
+temperature = 0.2
+max_tokens = 1500
+
+[agent_squad.agents.alert_monitoring]
+enabled = false  # Pro/Enterprise
+model = "gemini-2.0-flash"  # Real-time alerts
+temperature = 0.3
+max_tokens = 1000
+
+[agent_squad.agents.crisis_manager]
+enabled = false  # Enterprise only
+model = "gemini-2.0-flash"  # Emergency response
+temperature = 0.1
+max_tokens = 2000
+
+[agent_squad.agents.bridge_crosschain]
+enabled = false  # Pro tier+
+model = "gemini-2.0-flash"  # Cross-chain operations
+temperature = 0.2
+max_tokens = 1500
+
+[agent_squad.agents.lending_borrowing]
+enabled = false  # Pro tier+
+model = "gemini-2.0-flash"  # Leverage strategies
+temperature = 0.2
+max_tokens = 1500
+
+[agent_squad.agents.nft_asset_manager]
+enabled = false  # Pro tier (NFT focused)
+model = "gemini-2.0-flash"  # NFT portfolio
+temperature = 0.3
+max_tokens = 1500
+
+[agent_squad.agents.dao_governance]
+enabled = false  # Pro tier (DAO focused)
+model = "gemini-2.0-flash"  # DAO voting
+temperature = 0.3
+max_tokens = 1500
+enable_multi_agent_routing = true
+debug_mode = false
+log_intent_classification = true
+log_agent_selection = true
+
+# ========================================
+# LLM Provider Configuration
+# ========================================
+[llm_provider]
+# Primary provider for agent squad (vertex_ai, deepinfra)
+# Note: OpenAI removed - using native Vertex AI / DeepInfra model names
+primary_provider = "vertex_ai"
+
+# Fallback provider if primary fails
+fallback_provider = "deepinfra"
+
+# Enable automatic fallback
+enable_fallback = true
+
+# Use unified LLM gateway for agent squad
+use_unified_gateway = true
+
+# ----------------------------------------
+# Vertex AI Configuration (Primary)
+# ----------------------------------------
+[llm_provider.vertex_ai]
+# Uses credentials from [vertex_ai] section in .secrets.toml
+# Available models (Generative AI API):
+#   - gemini-2.0-flash      (fast, cost-effective - recommended)
+#   - gemini-2.0-flash-001  (alternative flash model)
+#   - gemini-2.5-flash      (newer flash model)
+#   - gemini-1.5-pro        (premium, complex reasoning - requires Platform API)
+#   - gemini-1.5-flash      (balanced - requires Platform API)
+# default_model moved to [llm_provider.vertex_ai] section below
+
+# ----------------------------------------
+# DeepInfra Configuration (Fallback)
+# ----------------------------------------
+[llm_provider.deepinfra]
+# Uses credentials from [deepinfra] section in .secrets.toml
+# Available models:
+#   - meta-llama/Llama-3.2-3B-Instruct       (fast, 3B params) ← USING THIS (70B is overloaded)
+#   - meta-llama/Meta-Llama-3.1-70B-Instruct (standard, 70B params)
+#   - meta-llama/Meta-Llama-3.1-405B-Instruct (premium, 405B params)
+default_model = "meta-llama/Llama-3.2-3B-Instruct"  # Default DeepInfra model (fallback only)
+
+# Model mapping: Vertex AI names -> DeepInfra equivalents (for fallback)
+# NOTE: Using 3B model because 70B is frequently overloaded ("Model busy")
+# This mapping is used when Vertex AI fails and we need to fallback to DeepInfra
+[llm_provider.deepinfra.model_mapping]
+"gemini-2.0-flash" = "meta-llama/Llama-3.2-3B-Instruct"
+"gemini-2.0-flash-001" = "meta-llama/Llama-3.2-3B-Instruct"
+"gemini-1.5-flash" = "meta-llama/Llama-3.2-3B-Instruct"
+"gemini-1.5-pro" = "meta-llama/Meta-Llama-3.1-70B-Instruct"
+
+# Privy Configuration
+[privy]
+# IMPORTANTE: Debe coincidir con VITE_PRIVY_APP_ID del frontend
+APP_ID = "cmiz7qucf0027jo0cxrykq7j0"
+APP_SECRET = "privy_app_secret_3RLnafWUFVUsaT37ZPSrF7RA9eNgBqLZBcFm4m7v8fY5V2rS2cjA5A81jAewSjEPbKgR5JSbfvfws5HGJ16yEZRZ"  # Set this in .secrets.toml or environment variable
+
+# Wallet Source Mode Configuration
+# Controls how the backend fetches and stores wallet data:
+# - "privy": Prefer Privy API, use DB as cache/analytics store
+# - "hybrid": Use Privy when available, always persist to DB; tolerate outages
+# - "local": No Privy calls; DB-only mode for offline/air-gapped environments
+WALLETS_SOURCE_MODE = "hybrid"
+
+# Integration Feature Flags
+[integrations]
+
+# Chat Integration
+[integrations.chat]
+enabled = true  # Master switch for chat integration
+hunter_tools_enabled = true  # Enable Hunter AI tools (sentiment, prediction, risk, signals, portfolio, patterns)
+ultra_tools_enabled = true  # Enable ULTRA tools (flash loans, arbitrage, MEV, auto-executor)
+comprehensive_analysis_enabled = true  # Enable parallel multi-tool analysis
+max_parallel_tools = 10  # Max tools to execute in parallel
+
+# Project Integration
+[integrations.projects]
+enabled = true  # Master switch for project integration
+templates_enabled = true  # Enable pre-built project templates
+risk_validation_enabled = true  # Enable risk limit validation
+tool_permissions_enabled = true  # Enable tool permission enforcement
+
+# MCP Server Feature Flags
+[mcp]
+enabled = true
+
+[distillation]
+enabled = true  # Master switch (env: DISTILLATION_ENABLED)
+provider = "vertex_ai"  # vertex_ai | deepinfra
+fallback_provider = "deepinfra"
+temperature = 0.3
+max_tokens = 200
+timeout_seconds = 5.0
+fail_open = true  # Allow requests if distillation fails
+rate_limit_per_user = 100  # Per minute
+rate_limit_global = 10000  # Per minute
+
+[distillation.vertex_ai]
+project_id = "atlantean-field-480121-i2"  # Project ID
+project_number = "369224500418"  # Project number
+location = "us-central1"
+credentials_path = ""  # Set via VERTEX_AI_CREDENTIALS_PATH or use API key
+api_key = ""  # Set in .secrets.toml - API Key for simplified auth
+model = "gemini-2.0-flash"  # Latest available: gemini-2.5-flash, gemini-2.0-flash-exp, etc.
+
+[distillation.deepinfra]
+api_key = ""  # Set via DEEPINFRA_API_KEY
+model = "meta-llama/Llama-3.2-3B-Instruct"
+base_url = "https://api.deepinfra.com/v1/openai"
+
+[distillation.retry]
+enabled = true
+max_retries = 3
+initial_backoff_seconds = 1.0
+max_backoff_seconds = 5.0
+exponential_base = 2.0
+
+[distillation.telemetry]
+enabled = true
+async_recording = true
+batch_size = 100
+flush_interval_seconds = 60  # Master switch for all MCP servers
+
+[mcp.servers]
+# Core Data & Market Intelligence (6 servers)
+defillama_enabled = true  # DeFiLlama TVL & protocol data (Free tier)
+oneinch_enabled = true  # 1inch DEX aggregation (Paid API)
+thegraph_enabled = true  # The Graph blockchain indexing (Paid API)
+coingecko_enabled = true  # CoinGecko market data (Free tier)
+aave_enabled = true  # Aave lending protocol integration
+portfolio_enabled = true  # Portfolio tracking & analytics
+
+# Advanced DeFi & Trading (5 servers)
+perplexity_enabled = true  # AI-powered research and search
+morpho_enabled = true  # MetaMorpho vaults & yield optimization
+curve_enabled = true  # Curve DEX stable swaps & liquidity pools
+hyperliquid_enabled = true  # Perpetual futures trading
+layerzero_enabled = true  # Cross-chain messaging & OFT transfers
+
+# Agno Agent Feature Flags
+[agno]
+enabled = true  # Master switch for all Agno agents
+intent_classification_enabled = true  # Auto-route queries to agents
+fallback_to_general = true  # Fallback if agent disabled
+
+[agno.agents]
+trading_enabled = true  # Trade execution & strategy (1inch)
+lending_enabled = true  # Lending/borrowing (Aave)
+portfolio_enabled = true  # Portfolio optimization
+analytics_enabled = true  # Data analysis & insights (DeFiLlama)
+
+# Project Template Feature Flags
+[projects]
+enabled = true  # Master switch for project system
+templates_enabled = true  # Master switch for pre-built templates
+
+[projects.templates]
+defi_swing_trader_enabled = true  # Intermediate swing trading
+arbitrage_hunter_enabled = true  # Expert arbitrage (ULTRA tools)
+ai_portfolio_manager_enabled = true  # Long-term portfolio management
+conservative_investor_enabled = true  # Beginner-friendly, safe mode
+day_trader_pro_enabled = true  # Expert day trading
+
+# ========================================
+# Transaction Confirmation Worker
+# ========================================
+[transaction_confirmation]
+# Network mode: true for testnet (Sepolia, Base Sepolia), false for mainnet
+USE_TESTNET = true
+
+# Processing settings
+INTERVAL_SECONDS = 30  # Seconds between batches in loop mode
+BATCH_LIMIT = 50       # Max transactions per batch
+OLDER_THAN_SECONDS = 10  # Only process transactions older than this
+
+# HTTP settings for RPC calls
+HTTP_TIMEOUT = 30
+
+# Enable/disable worker
+ENABLED = true
+
+# ========================================
+# Translation Services Configuration
+# ========================================
+[translation]
+# Master switch for translation features
+enabled = false  # Disabled by default - enable when API keys are configured
+
+# Default provider: "deepl", "google", or "fallback"
+default_provider = "deepl"
+
+# DeepL API Configuration
+# Sign up at: https://www.deepl.com/pro-api
+# Free tier: 500,000 characters/month
+deepl_api_key = ""  # Add your DeepL API key here
+deepl_formality = "default"  # Options: default, more, less, prefer_more, prefer_less
+
+# Google Cloud Translation Configuration
+# Setup guide: https://cloud.google.com/translate/docs/setup
+# Pricing: $20 per 1M characters
+google_project_id = ""  # Add your GCP project ID here
+google_location = "global"  # Options: global, us-central1, europe-west1, etc.
+google_credentials_path = ""  # Path to service account JSON (leave empty to use default credentials)
+google_enable_html = true  # Enable HTML translation support
+
+# Caching and performance
+cache_ttl = 300  # Cache translations for 5 minutes
+
+# Cost tracking and limits
+enable_cost_tracking = true  # Track translation costs
+cost_limit_usd = 100.0  # Monthly cost limit in USD (optional)
+
+# Quality settings
+min_confidence_score = 0.7  # Minimum acceptable confidence (0.0-1.0)
+
+# Feature flags
+auto_detect_language = true  # Auto-detect source language
+preserve_technical_terms = true  # Preserve DeFi protocols, tokens, technical terms
+
+
+
+
+# config/local/config.toml
+[moonpay]
+MOONPAY_API_KEY = "pk_test_zJtsRVDetOru63X98XExqNoRHaFDco"
+MOONPAY_ENVIRONMENT = "sandbox"
+# Etherscan API V2 Configuration
+[etherscan]
+# Most settings use defaults from EtherscanSettings class
+# Only override if needed for local development

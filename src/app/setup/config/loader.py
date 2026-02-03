@@ -23,6 +23,7 @@ class ValidEnvs(StrEnum):
     LOCAL = "local"
     DEV = "dev"
     PROD = "prod"
+    TEST = "test"
 
 
 class DirContents(StrEnum):
