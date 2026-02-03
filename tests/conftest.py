@@ -208,9 +208,16 @@ def test_db_engine():
     # Map all domain entities to database tables
     map_tables()
 
-    # Create PostgreSQL test database engine
+    # Create PostgreSQL test database engine using environment variables
+    import os
+    db_user = os.getenv("POSTGRES_USER", "postgres")
+    db_password = os.getenv("POSTGRES_PASSWORD", "postgres")
+    db_host = os.getenv("POSTGRES_HOST", "localhost")
+    db_port = os.getenv("POSTGRES_PORT", "5432")
+    db_name = os.getenv("POSTGRES_DB", "anvil_test")
+    
     engine = create_engine(
-        "postgresql+psycopg://anvil:changethis@localhost:5432/anvil_test",
+        f"postgresql+psycopg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}",
         pool_pre_ping=True,
         echo=False
     )
