@@ -90,7 +90,9 @@ class MessageTooLongError(ApplicationError):
             details["length"] = length
         if max_length is not None:
             details["max_length"] = max_length
-        super().__init__(ErrorCode.CHAT_MESSAGE_TOO_LONG, details=details, field="content")
+        super().__init__(
+            ErrorCode.CHAT_MESSAGE_TOO_LONG, details=details, field="content"
+        )
 
 
 # =============================================================================
@@ -130,7 +132,9 @@ class InvalidAgentTypeError(ApplicationError):
             details["agent_type"] = agent_type
         if valid_types:
             details["valid_types"] = valid_types
-        super().__init__(ErrorCode.CHAT_INVALID_AGENT_TYPE, details=details, field="agent_type")
+        super().__init__(
+            ErrorCode.CHAT_INVALID_AGENT_TYPE, details=details, field="agent_type"
+        )
 
 
 class AgentProcessingError(ApplicationError):

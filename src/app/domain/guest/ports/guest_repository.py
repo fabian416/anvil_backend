@@ -72,9 +72,7 @@ class GuestRepository(Protocol):
         """Archive conversations older than specified time. Returns count archived."""
         ...
 
-    async def delete_conversation_for_guest(
-        self, guest_user_id: UUID
-    ) -> bool:
+    async def delete_conversation_for_guest(self, guest_user_id: UUID) -> bool:
         """
         Delete (archive) the active conversation for a guest user and clear all messages.
         Returns True if successful, False if no active conversation found.

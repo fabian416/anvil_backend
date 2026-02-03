@@ -205,7 +205,13 @@ class ActivityMultiStepHandler:
         transactions_text = ""
         for i, tx in enumerate(self.DEMO_TRANSACTIONS, 1):
             time_ago = self._format_time_ago(tx["timestamp"], language)
-            status_emoji = "✅" if tx["status"] == "completed" else "⏳" if tx["status"] == "pending" else "❌"
+            status_emoji = (
+                "✅"
+                if tx["status"] == "completed"
+                else "⏳"
+                if tx["status"] == "pending"
+                else "❌"
+            )
 
             # Format transaction details based on type
             if tx["type"] == "swap":
@@ -220,27 +226,27 @@ class ActivityMultiStepHandler:
                 detail = f"{tx['type'].title()} transaction"
 
             transactions_text += f"""
-**{i}.** {tx['emoji']} **{tx['type'].upper()}** {status_emoji}
+**{i}.** {tx["emoji"]} **{tx["type"].upper()}** {status_emoji}
    • {detail}
-   • {msg['time']}: {time_ago}
-   • TX: `{tx['tx_hash']}`
+   • {msg["time"]}: {time_ago}
+   • TX: `{tx["tx_hash"]}`
 """
 
         content = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{msg['title']}
+{msg["title"]}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🔔 **{msg['demo_notice']}**
+🔔 **{msg["demo_notice"]}**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**📋 {msg['recent_activity']}** ({len(self.DEMO_TRANSACTIONS)} transactions)
+**📋 {msg["recent_activity"]}** ({len(self.DEMO_TRANSACTIONS)} transactions)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {transactions_text}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**🔗 {msg['signup_title']}**
+**🔗 {msg["signup_title"]}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{msg['signup_text']}
+{msg["signup_text"]}
 
 👉 **Sign up now**
 """
@@ -252,16 +258,24 @@ class ActivityMultiStepHandler:
                 "status": tx["status"],
                 "timestamp": tx["timestamp"].isoformat(),
                 "tx_hash": tx["tx_hash"],
-                **({
-                    "from_token": tx["from_token"],
-                    "to_token": tx["to_token"],
-                    "from_amount": tx["from_amount"],
-                    "to_amount": tx["to_amount"],
-                } if tx["type"] == "swap" else {}),
-                **({
-                    "token": tx["token"],
-                    "amount": tx["amount"],
-                } if tx["type"] in ["receive", "send", "buy"] else {}),
+                **(
+                    {
+                        "from_token": tx["from_token"],
+                        "to_token": tx["to_token"],
+                        "from_amount": tx["from_amount"],
+                        "to_amount": tx["to_amount"],
+                    }
+                    if tx["type"] == "swap"
+                    else {}
+                ),
+                **(
+                    {
+                        "token": tx["token"],
+                        "amount": tx["amount"],
+                    }
+                    if tx["type"] in ["receive", "send", "buy"]
+                    else {}
+                ),
             }
             for tx in self.DEMO_TRANSACTIONS
         ]

@@ -48,7 +48,9 @@ class GetCollectionStats:
         """Initialize query."""
         self._gateway = gateway
 
-    async def execute(self, request: GetCollectionStatsRequest) -> CollectionStatsResponse:
+    async def execute(
+        self, request: GetCollectionStatsRequest
+    ) -> CollectionStatsResponse:
         """Execute query to get collection stats."""
         stats = await self._gateway.get_collection_stats(request.collection_slug)
 

@@ -45,17 +45,21 @@ if TYPE_CHECKING:
     from app.infrastructure.adapters.external.oneinch_client import OneInchClient
     from app.infrastructure.adapters.external.lifi_client import LiFiClient
     from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
-    from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+    from app.infrastructure.adapters.external.hyperliquid_client import (
+        HyperliquidClient,
+    )
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
     from app.infrastructure.adapters.wallet_balance_db import WalletBalanceDbAdapter
 
 logger = logging.getLogger(__name__)
 
 
-async def _get_token_balances_for_wallet(wallet_address: str) -> dict[str, dict[str, Any]]:
+async def _get_token_balances_for_wallet(
+    wallet_address: str,
+) -> dict[str, dict[str, Any]]:
     """
     Query all token balances from the token_balances table.
-    
+
     Returns dict mapping chain name to token info:
     {
         "ethereum": {
@@ -72,7 +76,7 @@ async def _get_token_balances_for_wallet(wallet_address: str) -> dict[str, dict[
         from sqlalchemy import create_engine, text
         from sqlalchemy.pool import NullPool
         import os
-        
+
         # Get database URL from environment or config
         db_url = os.environ.get("DATABASE_URL")
         if not db_url:
@@ -83,14 +87,15 @@ async def _get_token_balances_for_wallet(wallet_address: str) -> dict[str, dict[
             db_pass = os.environ.get("POSTGRES_PASSWORD", "changethis")
             db_name = os.environ.get("POSTGRES_DB", "anvil_db")
             db_url = f"postgresql+psycopg://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
-        
+
         # Use sync engine with NullPool for one-off queries
         engine = create_engine(db_url, poolclass=NullPool)
-        
+
         chain_balances: dict[str, dict[str, Any]] = {}
-        
+
         with engine.connect() as conn:
-            result = conn.execute(text("""
+            result = conn.execute(
+                text("""
                 SELECT 
                     tb.chain,
                     tb.token_symbol,
@@ -102,8 +107,10 @@ async def _get_token_balances_for_wallet(wallet_address: str) -> dict[str, dict[
                 JOIN wallets w ON w.id = tb.wallet_id
                 WHERE LOWER(w.address) = LOWER(:addr)
                 ORDER BY tb.chain, tb.token_symbol
-            """), {"addr": wallet_address})
-            
+            """),
+                {"addr": wallet_address},
+            )
+
             for row in result:
                 chain = str(row[0])
                 symbol = str(row[1])
@@ -111,7 +118,7 @@ async def _get_token_balances_for_wallet(wallet_address: str) -> dict[str, dict[
                 usd = float(row[3]) if row[3] else 0.0
                 can_gas = bool(row[4])
                 is_stable = bool(row[5])
-                
+
                 if chain not in chain_balances:
                     chain_balances[chain] = {
                         "eth_balance": 0.0,
@@ -119,9 +126,9 @@ async def _get_token_balances_for_wallet(wallet_address: str) -> dict[str, dict[
                         "usdc_balance": 0.0,
                         "weth_balance": 0.0,
                         "total_usd": 0.0,
-                        "tokens": {}
+                        "tokens": {},
                     }
-                
+
                 chain_balances[chain]["tokens"][symbol] = {
                     "balance": balance,
                     "usd": usd,
@@ -129,19 +136,21 @@ async def _get_token_balances_for_wallet(wallet_address: str) -> dict[str, dict[
                     "is_stablecoin": is_stable,
                 }
                 chain_balances[chain]["total_usd"] += usd
-                
+
                 # Set convenience fields
                 if symbol == "ETH" and can_gas:
                     chain_balances[chain]["eth_balance"] = balance
-                    chain_balances[chain]["can_pay_gas"] = balance > 0.0001  # Min ~$0.20 for gas
+                    chain_balances[chain]["can_pay_gas"] = (
+                        balance > 0.0001
+                    )  # Min ~$0.20 for gas
                 elif symbol == "USDC":
                     chain_balances[chain]["usdc_balance"] = balance
                 elif symbol == "WETH":
                     chain_balances[chain]["weth_balance"] = balance
-        
+
         engine.dispose()
         return chain_balances
-        
+
     except Exception as e:
         logger.warning(f"Failed to query token balances from DB: {e}")
         return {}
@@ -154,14 +163,14 @@ def _find_best_chain_for_gas(
 ) -> tuple[str | None, dict[str, Any]]:
     """
     Find the best chain for gas fees from supported chains.
-    
+
     Uses the token_balances table with can_pay_gas flag.
-    
+
     Args:
         chain_balances: Dict from _get_token_balances_for_wallet()
         supported_chains: List of chain names to consider
         min_eth_required: Minimum ETH required for gas (default ~$0.40)
-    
+
     Returns:
         Tuple of (chain name, gas info dict) or (None, error info)
     """
@@ -170,23 +179,25 @@ def _find_best_chain_for_gas(
         "best_chain": None,
         "min_eth_required": min_eth_required,
     }
-    
+
     for chain in supported_chains:
         chain_data = chain_balances.get(chain, {})
         eth_balance = chain_data.get("eth_balance", 0.0)
         can_pay = chain_data.get("can_pay_gas", False)
-        
+
         gas_info["chains_checked"][chain] = {
             "eth_balance": eth_balance,
             "can_pay_gas": can_pay,
             "has_enough": eth_balance >= min_eth_required,
         }
-        
+
         if can_pay and eth_balance >= min_eth_required:
-            logger.info(f"Best chain for gas: {chain} ({eth_balance:.6f} ETH >= {min_eth_required})")
+            logger.info(
+                f"Best chain for gas: {chain} ({eth_balance:.6f} ETH >= {min_eth_required})"
+            )
             gas_info["best_chain"] = chain
             return chain, gas_info
-    
+
     logger.warning(f"No chain has sufficient ETH for gas. Checked: {supported_chains}")
     gas_info["error"] = "No chain has sufficient native ETH for gas fees"
     return None, gas_info
@@ -203,22 +214,88 @@ def _find_best_chain_for_gas(
 HYPERLIQUID_SPOT_TOKENS = {
     "USDC",  # Quote currency (required for all Hyperliquid spot swaps)
     # Popular meme tokens on Hyperliquid Spot
-    "PURR", "HFUN", "TRUMP", "PEPE", "MOG", "POINTS", "JEFF",
-    "GMEOW", "LICK", "MANLET", "SIX", "WAGMI", "CAPPY",
-    "XULIAN", "RUG", "CZ", "BAGS", "ANSEM", "TATE", "FUN",
-    "BIGBEN", "KOBE", "VEGAS", "PUMP", "SCHIZO", "CATNIP",
-    "HAPPY", "SELL", "HBOOST", "GPT", "PANDA", "HODL", "RAGE",
-    "ASI", "LEAP", "VAPOR", "X", "PILL", "CAT", "HPEPE",
-    "MBAPPE", "MAGA", "OMNIX", "COKE", "MEOW", "ANT", "NEIRO",
+    "PURR",
+    "HFUN",
+    "TRUMP",
+    "PEPE",
+    "MOG",
+    "POINTS",
+    "JEFF",
+    "GMEOW",
+    "LICK",
+    "MANLET",
+    "SIX",
+    "WAGMI",
+    "CAPPY",
+    "XULIAN",
+    "RUG",
+    "CZ",
+    "BAGS",
+    "ANSEM",
+    "TATE",
+    "FUN",
+    "BIGBEN",
+    "KOBE",
+    "VEGAS",
+    "PUMP",
+    "SCHIZO",
+    "CATNIP",
+    "HAPPY",
+    "SELL",
+    "HBOOST",
+    "GPT",
+    "PANDA",
+    "HODL",
+    "RAGE",
+    "ASI",
+    "LEAP",
+    "VAPOR",
+    "X",
+    "PILL",
+    "CAT",
+    "HPEPE",
+    "MBAPPE",
+    "MAGA",
+    "OMNIX",
+    "COKE",
+    "MEOW",
+    "ANT",
+    "NEIRO",
 }
 
 # Major tokens that are NOT supported for swaps on Anvil
 # Users should use external DEXs for these tokens
 UNSUPPORTED_SWAP_TOKENS = {
-    "ETH", "BTC", "SOL", "WBTC", "WETH", "LINK", "UNI", "AAVE",
-    "CRV", "MKR", "DAI", "USDT", "MATIC", "ARB", "OP", "AVAX",
-    "DOT", "ATOM", "APT", "SUI", "SEI", "TIA", "INJ", "FTM",
-    "XRP", "ADA", "DOGE", "LTC", "SHIB", "AVAX",
+    "ETH",
+    "BTC",
+    "SOL",
+    "WBTC",
+    "WETH",
+    "LINK",
+    "UNI",
+    "AAVE",
+    "CRV",
+    "MKR",
+    "DAI",
+    "USDT",
+    "MATIC",
+    "ARB",
+    "OP",
+    "AVAX",
+    "DOT",
+    "ATOM",
+    "APT",
+    "SUI",
+    "SEI",
+    "TIA",
+    "INJ",
+    "FTM",
+    "XRP",
+    "ADA",
+    "DOGE",
+    "LTC",
+    "SHIB",
+    "AVAX",
 }
 
 
@@ -282,13 +359,13 @@ HYPERLIQUID_BRIDGE_CONTRACTS = {
     # Arbitrum is the primary supported chain for Hyperliquid deposits
     "arbitrum": {
         "bridge": "0x2Df1c51E09aECF9cacB7bc98cB1742757f163dF7",  # Hyperliquid deposit contract
-        "usdc": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",    # Native USDC on Arbitrum
+        "usdc": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",  # Native USDC on Arbitrum
         "chain_id": 42161,
     },
     # Base support (may require bridging to Arbitrum first)
     "base": {
         "bridge": None,  # No direct bridge - must go via Arbitrum
-        "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",   # Native USDC on Base
+        "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",  # Native USDC on Base
         "chain_id": 8453,
     },
 }
@@ -331,7 +408,7 @@ TOKEN_DECIMALS = {
 class SwapWorkflowAgent(BaseWorkflowAgent):
     """
     AGNO-based multi-step swap workflow agent.
-    
+
     Steps:
     1. parse_request: Extract from_token, to_token, amount, chain
     2. fetch_data: Get quotes from appropriate provider:
@@ -340,7 +417,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
        - LiFi for cross-chain
     3. confirm: Show quote, wait for user confirmation
     4. execute: Generate execute_data for frontend
-    
+
     Features:
     - Intelligent provider routing based on token type
     - Meme token swaps via Hyperliquid Spot (zero gas fees)
@@ -349,7 +426,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
     - User modification support ("change to 1 ETH instead")
     - Multi-language support
     """
-    
+
     def __init__(
         self,
         llm_client: "LLMClientGateway | None" = None,
@@ -360,7 +437,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
     ):
         """
         Initialize swap workflow agent.
-        
+
         Args:
             llm_client: LLM client for parameter extraction
             oneinch_client: 1inch API client for same-chain major token swaps
@@ -373,15 +450,15 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         self._lifi = lifi_client
         self._coingecko = coingecko_client
         self._hyperliquid = hyperliquid_client
-    
+
     @property
     def agent_type(self) -> AgentType:
         return AgentType.SWAP_WORKFLOW
-    
+
     @property
     def workflow_name(self) -> str:
         return "SwapWorkflow"
-    
+
     async def process_step(
         self,
         message: MessageContent,
@@ -389,60 +466,129 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
         """Process swap workflow step."""
-        
+
         step = state.step
         language = user_context.language
         text_lower = message.value.lower().strip()
-        
-        logger.info(f"[SwapWorkflow] Processing step={step}, message={message.value[:50]}...")
-        
+
+        logger.info(
+            f"[SwapWorkflow] Processing step={step}, message={message.value[:50]}..."
+        )
+
         # Check if user wants to continue or start new after EXECUTE/COMPLETED
         # If user just says "swap" without full params after an executed swap,
         # ask if they want to repeat the last swap or start fresh
         if step in (WorkflowStep.EXECUTE.value, WorkflowStep.COMPLETED.value):
             # Check if user is saying just "swap" without specific params
-            simple_swap_keywords = ["swap", "exchange", "trade", "cambiar", "trocar", "intercambiar"]
-            is_simple_swap = text_lower in simple_swap_keywords or text_lower in [
-                "i want to swap", "quiero cambiar", "quiero intercambiar",
-                "swap again", "another swap", "repeat", "again",
-                "repetir", "de nuevo", "otra vez",
+            simple_swap_keywords = [
+                "swap",
+                "exchange",
+                "trade",
+                "cambiar",
+                "trocar",
+                "intercambiar",
             ]
-            
+            is_simple_swap = text_lower in simple_swap_keywords or text_lower in [
+                "i want to swap",
+                "quiero cambiar",
+                "quiero intercambiar",
+                "swap again",
+                "another swap",
+                "repeat",
+                "again",
+                "repetir",
+                "de nuevo",
+                "otra vez",
+            ]
+
             # Check if user wants to continue with last swap
-            continue_keywords = ["yes", "si", "sí", "sim", "continue", "continuar", "repeat", "repetir", "again", "de nuevo"]
+            continue_keywords = [
+                "yes",
+                "si",
+                "sí",
+                "sim",
+                "continue",
+                "continuar",
+                "repeat",
+                "repetir",
+                "again",
+                "de nuevo",
+            ]
             wants_continue = text_lower in continue_keywords
-            
+
             # Check if user wants to start fresh
-            fresh_keywords = ["new", "nuevo", "nova", "fresh", "start over", "empezar de nuevo", "começar de novo", "different", "diferente"]
+            fresh_keywords = [
+                "new",
+                "nuevo",
+                "nova",
+                "fresh",
+                "start over",
+                "empezar de nuevo",
+                "começar de novo",
+                "different",
+                "diferente",
+            ]
             wants_fresh = any(kw in text_lower for kw in fresh_keywords)
-            
-            if wants_continue and state.data.get("from_token") and state.data.get("to_token"):
+
+            if (
+                wants_continue
+                and state.data.get("from_token")
+                and state.data.get("to_token")
+            ):
                 # User wants to repeat last swap - go directly to fetch quote
                 logger.info(f"[SwapWorkflow] User wants to continue with last swap")
                 state.step = WorkflowStep.FETCH_DATA.value
                 state.confirmed = False
                 state.execute_data = None
                 return await self._handle_fetch_quote(message, state, user_context)
-            
+
             elif wants_fresh:
                 # User explicitly wants a new swap
                 logger.info(f"[SwapWorkflow] User wants to start fresh swap")
                 state = WorkflowState()
                 state.step = WorkflowStep.PARSE_REQUEST.value
                 return await self._handle_parse_request(message, state, user_context)
-            
-            elif is_simple_swap and state.data.get("from_token") and state.data.get("to_token"):
+
+            elif (
+                is_simple_swap
+                and state.data.get("from_token")
+                and state.data.get("to_token")
+            ):
                 # User said "swap" without params after a completed swap - ask what they want
-                logger.info(f"[SwapWorkflow] User said 'swap' after execute - asking if continue or new")
+                logger.info(
+                    f"[SwapWorkflow] User said 'swap' after execute - asking if continue or new"
+                )
                 state.data["awaiting_continue_choice"] = True
                 state.execute_data = None  # Don't show execute until user confirms
                 return self._get_continue_or_new_prompt(state, language), state
-        
+
         # Check if user is responding to continue/new prompt
         if state.data.get("awaiting_continue_choice"):
-            continue_keywords = ["yes", "si", "sí", "sim", "continue", "continuar", "1", "repeat", "repetir", "last", "anterior"]
-            fresh_keywords = ["no", "new", "nuevo", "nova", "2", "fresh", "different", "diferente", "start"]
-            
+            continue_keywords = [
+                "yes",
+                "si",
+                "sí",
+                "sim",
+                "continue",
+                "continuar",
+                "1",
+                "repeat",
+                "repetir",
+                "last",
+                "anterior",
+            ]
+            fresh_keywords = [
+                "no",
+                "new",
+                "nuevo",
+                "nova",
+                "2",
+                "fresh",
+                "different",
+                "diferente",
+                "start",
+            ]
+
             if any(kw in text_lower for kw in continue_keywords):
                 # Continue with last swap
                 state.data.pop("awaiting_continue_choice", None)
@@ -466,46 +612,54 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
                     state.data.pop("awaiting_continue_choice", None)
                     state = WorkflowState()
                     state.step = WorkflowStep.PARSE_REQUEST.value
-                    return await self._handle_parse_request(message, state, user_context)
+                    return await self._handle_parse_request(
+                        message, state, user_context
+                    )
                 # Re-prompt
                 return self._get_continue_or_new_prompt(state, language), state
-        
+
         # Check if user wants to start a NEW swap flow (restart detection)
         # This resets state when user says "swap 100 USDC to ETH", etc.
         # while already in an ongoing flow (FETCH_DATA, CONFIRM step)
         if step in (WorkflowStep.FETCH_DATA.value, WorkflowStep.CONFIRM.value):
             # Only restart if user provides specific swap params (not just "swap")
             new_params = await self._extract_swap_params(message.value)
-            has_specific_params = new_params.get("from_token") and new_params.get("to_token") and new_params.get("amount")
-            
+            has_specific_params = (
+                new_params.get("from_token")
+                and new_params.get("to_token")
+                and new_params.get("amount")
+            )
+
             if has_specific_params:
                 # User provided complete new swap params - start fresh
-                logger.info(f"[SwapWorkflow] New swap params detected - starting fresh swap")
+                logger.info(
+                    f"[SwapWorkflow] New swap params detected - starting fresh swap"
+                )
                 state = WorkflowState()
                 state.step = WorkflowStep.PARSE_REQUEST.value
                 return await self._handle_parse_request(message, state, user_context)
-        
+
         # Step 1: Parse request
         if step == WorkflowStep.PARSE_REQUEST.value:
             return await self._handle_parse_request(message, state, user_context)
-        
+
         # Step 2: Fetch quote
         if step == WorkflowStep.FETCH_DATA.value:
             return await self._handle_fetch_quote(message, state, user_context)
-        
+
         # Step 3: Confirm
         if step == WorkflowStep.CONFIRM.value:
             return await self._handle_confirm(message, state, user_context)
-        
+
         # Step 4: Execute
         if step == WorkflowStep.EXECUTE.value:
             return await self._handle_execute(message, state, user_context)
-        
+
         # Unknown step - restart
         logger.warning(f"[SwapWorkflow] Unknown step={step}, restarting")
         state.step = WorkflowStep.PARSE_REQUEST.value
         return await self._handle_parse_request(message, state, user_context)
-    
+
     async def _handle_parse_request(
         self,
         message: MessageContent,
@@ -514,13 +668,13 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
     ) -> tuple[str, WorkflowState]:
         """
         Step 1: Parse swap parameters from user message.
-        
+
         Extracts: from_token, to_token, amount, chain, to_chain
-        
+
         Enhanced with token selection:
         - If only from_token + amount provided, show numbered token list
         - User can respond with "1" or "PURR" to select destination token
-        
+
         IMPORTANT: Anvil only supports swaps via Hyperliquid Spot.
         Hyperliquid Spot only supports meme tokens paired with USDC.
         Major tokens (ETH, BTC, etc.) are NOT supported for swaps.
@@ -528,13 +682,13 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         # Check if we're awaiting token selection from a previous turn
         if state.data.get("awaiting_token_selection"):
             return await self._handle_token_selection(message, state, user_context)
-        
+
         # Check if we already have from_token and to_token from previous turn
         # and user is just providing the amount
         existing_from = state.data.get("from_token", "").upper()
         existing_to = state.data.get("to_token", "").upper()
         user_input = message.value.strip()
-        
+
         # If we have both tokens and user provides just a number, treat it as amount
         if existing_from and existing_to and not state.data.get("amount"):
             # Check if user input is just a number (amount)
@@ -546,49 +700,53 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
                     amount_match = clean_input
             except ValueError:
                 pass
-            
+
             if amount_match:
-                logger.info(f"[SwapWorkflow] User provided amount '{amount_match}' for {existing_from} → {existing_to}")
+                logger.info(
+                    f"[SwapWorkflow] User provided amount '{amount_match}' for {existing_from} → {existing_to}"
+                )
                 state.data["amount"] = amount_match
                 # Proceed to fetch quote
                 state.step = WorkflowStep.FETCH_DATA.value
                 return await self._handle_fetch_quote(message, state, user_context)
-        
+
         params = await self._extract_swap_params(message.value)
-        
+
         # Check for partial request: has from_token (likely USDC) but missing to_token
         from_token = params.get("from_token", "").upper() or existing_from
         to_token = params.get("to_token", "").upper() or existing_to
         amount = params.get("amount") or state.data.get("amount")
-        
+
         # If we have USDC + amount but no destination token, show selection menu
         if from_token == "USDC" and amount and not to_token:
             state.data["from_token"] = from_token
             state.data["amount"] = amount
             state.data["chain"] = params.get("chain", "base")
             state.data["awaiting_token_selection"] = True
-            
+
             response = await self._get_token_selection_prompt(
                 from_token=from_token,
                 amount=amount,
                 user_context=user_context,
             )
             return response, state
-        
+
         # If neither token is provided, show smart help based on balance
         if not from_token or not to_token:
             response = await self._get_missing_params_response(params, user_context)
             return response, state
-        
+
         # Check if tokens are supported on Hyperliquid Spot
-        unsupported_error = self._check_unsupported_tokens(from_token, to_token, user_context.language)
+        unsupported_error = self._check_unsupported_tokens(
+            from_token, to_token, user_context.language
+        )
         if unsupported_error:
             state.error = "unsupported_token"
             return unsupported_error, state
-        
+
         # Update state with extracted params
         state.data.update(params)
-        
+
         # If amount is missing, ask for it
         if not amount:
             response = self._get_amount_prompt(
@@ -598,11 +756,11 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             )
             state.step = WorkflowStep.PARSE_REQUEST.value  # Stay in parse step
             return response, state
-        
+
         # All params available - proceed to fetch quote
         state.step = WorkflowStep.FETCH_DATA.value
         return await self._handle_fetch_quote(message, state, user_context)
-    
+
     async def _handle_token_selection(
         self,
         message: MessageContent,
@@ -611,50 +769,50 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
     ) -> tuple[str, WorkflowState]:
         """
         Handle user's token selection response.
-        
+
         User can respond with:
         - Number (1-10) to select from the list
         - Token symbol (PURR, TRUMP, etc.)
         """
         user_input = message.value.strip().upper()
-        
+
         # Clear the awaiting flag
         state.data["awaiting_token_selection"] = False
-        
+
         selected_token = None
-        
+
         # Check if it's a number selection
         if user_input.isdigit():
             index = int(user_input) - 1  # 1-based to 0-based
             if 0 <= index < len(POPULAR_MEME_TOKENS):
                 selected_token = POPULAR_MEME_TOKENS[index][0]
-        
+
         # Check if it's a token symbol
         if not selected_token:
             # Clean up the input - might be "purr", "PURR", "1. PURR", etc.
             clean_input = user_input.replace(".", "").strip()
             if clean_input in HYPERLIQUID_SPOT_TOKENS:
                 selected_token = clean_input
-        
+
         if not selected_token:
             # Invalid selection - show menu again
             state.data["awaiting_token_selection"] = True
-            
+
             response = self._get_invalid_selection_response(
                 user_input=message.value,
                 language=user_context.language,
             )
             return response, state
-        
+
         # Update state with selected token
         state.data["to_token"] = selected_token
-        
+
         # Now we have all params - proceed to fetch quote
         state.step = WorkflowStep.FETCH_DATA.value
-        
+
         # Create a dummy message to pass to fetch_quote
         return await self._handle_fetch_quote(message, state, user_context)
-    
+
     def _check_unsupported_tokens(
         self,
         from_token: str,
@@ -663,16 +821,16 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
     ) -> str | None:
         """
         Check if tokens are supported on Hyperliquid Spot.
-        
+
         Anvil ONLY supports swaps via Hyperliquid Spot, which means:
         - Only meme tokens + USDC are supported
         - Major tokens (ETH, BTC, etc.) are NOT supported
-        
+
         Returns an error message if tokens are not supported, or None if valid.
         """
         from_supported = from_token in HYPERLIQUID_SPOT_TOKENS
         to_supported = to_token in HYPERLIQUID_SPOT_TOKENS
-        
+
         # Both tokens must be in Hyperliquid Spot supported list
         if not from_supported or not to_supported:
             # Determine which token(s) are unsupported
@@ -681,20 +839,20 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
                 unsupported.append(from_token)
             if not to_supported:
                 unsupported.append(to_token)
-            
+
             return self._build_unsupported_message(
                 from_token=from_token,
                 to_token=to_token,
                 unsupported_tokens=unsupported,
                 language=language,
             )
-        
+
         # One token must be USDC (Hyperliquid Spot requirement)
         if from_token != "USDC" and to_token != "USDC":
             return self._build_usdc_required_message(from_token, to_token, language)
-        
+
         return None
-    
+
     def _build_unsupported_message(
         self,
         from_token: str,
@@ -708,7 +866,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
 
 Anvil uses **Hyperliquid Spot** for swaps, which only supports **meme tokens paired with USDC**.
 
-**Tokens like {', '.join(unsupported_tokens)} are not available for swaps.**
+**Tokens like {", ".join(unsupported_tokens)} are not available for swaps.**
 
 ---
 
@@ -723,7 +881,7 @@ Anvil uses **Hyperliquid Spot** for swaps, which only supports **meme tokens pai
 
 ---
 
-**💡 For major tokens ({', '.join(unsupported_tokens)}), you can:**
+**💡 For major tokens ({", ".join(unsupported_tokens)}), you can:**
 
 • **Check prices:** "what's the price of ETH?"
 • **Track portfolio:** "show my portfolio"
@@ -734,7 +892,7 @@ Anvil uses **Hyperliquid Spot** for swaps, which only supports **meme tokens pai
 
 Anvil usa **Hyperliquid Spot** para swaps, que solo soporta **meme tokens con USDC**.
 
-**Tokens como {', '.join(unsupported_tokens)} no están disponibles para swaps.**
+**Tokens como {", ".join(unsupported_tokens)} no están disponibles para swaps.**
 
 **✅ Qué PUEDES hacer en Anvil:**
 
@@ -746,7 +904,7 @@ Anvil usa **Hyperliquid Spot** para swaps, que solo soporta **meme tokens con US
 
 Anvil usa **Hyperliquid Spot** para swaps, que só suporta **meme tokens com USDC**.
 
-**Tokens como {', '.join(unsupported_tokens)} não estão disponíveis para swaps.**
+**Tokens como {", ".join(unsupported_tokens)} não estão disponíveis para swaps.**
 
 **✅ O que você PODE fazer no Anvil:**
 
@@ -756,7 +914,7 @@ Anvil usa **Hyperliquid Spot** para swaps, que só suporta **meme tokens com USD
 """,
         }
         return messages.get(language, messages["en"])
-    
+
     def _build_usdc_required_message(
         self,
         from_token: str,
@@ -795,7 +953,7 @@ Hyperliquid Spot só suporta swaps **com USDC**.
 """,
         }
         return messages.get(language, messages["en"])
-    
+
     async def _handle_fetch_quote(
         self,
         message: MessageContent,
@@ -804,7 +962,7 @@ Hyperliquid Spot só suporta swaps **com USDC**.
     ) -> tuple[str, WorkflowState]:
         """
         Step 2: Fetch swap quote from 1inch/LiFi with enhanced market data.
-        
+
         If user has insufficient funds, shows a helpful recommendation to buy crypto
         but still provides swap information so they know what to expect.
         """
@@ -812,21 +970,21 @@ Hyperliquid Spot só suporta swaps **com USDC**.
         state.execute_data = None
         state.confirmed = False
         state.cancelled = False
-        
+
         # Use 'or' to handle both missing keys AND None values
         from_token = state.data.get("from_token") or "ETH"
         to_token = state.data.get("to_token") or "USDC"
         amount = state.data.get("amount") or "0"
         chain = state.data.get("chain") or "base"
         to_chain = state.data.get("to_chain")
-        
+
         is_cross_chain = to_chain and to_chain.lower() != chain.lower()
-        
+
         logger.info(
             f"[SwapWorkflow] Fetching quote: {amount} {from_token} → {to_token} "
             f"on {chain}" + (f" → {to_chain}" if is_cross_chain else "")
         )
-        
+
         # Smart balance check: compare requested amount against user balance
         # For stablecoins (USDC, USDT, DAI), amount is roughly equal to USD value
         # For other tokens, we still allow the swap if user has some balance
@@ -834,7 +992,7 @@ Hyperliquid Spot só suporta swaps **com USDC**.
         has_sufficient_funds = True
         amount_float = self._parse_amount_float(amount)
         user_balance = user_context.total_balance_usd
-        
+
         # Determine if user has enough for this specific swap
         if from_token.upper() in ("USDC", "USDT", "DAI", "BUSD", "FRAX"):
             # Stablecoin: direct USD comparison
@@ -848,7 +1006,7 @@ Hyperliquid Spot só suporta swaps **com USDC**.
             # Non-stablecoin: allow if user has any meaningful balance
             # We can't easily compare ETH amount to USD balance without price data
             has_sufficient_funds = True
-        
+
         if not has_sufficient_funds:
             logger.info(
                 f"[SwapWorkflow] User has insufficient funds: "
@@ -862,7 +1020,7 @@ Hyperliquid Spot só suporta swaps **com USDC**.
                 user_balance=user_balance,
                 language=user_context.language,
             )
-        
+
         # Fetch quote
         quote_result = await self._fetch_quote(
             from_token=from_token,
@@ -872,15 +1030,17 @@ Hyperliquid Spot só suporta swaps **com USDC**.
             to_chain=to_chain,
             wallet_address=user_context.wallet_address,
         )
-        
+
         if quote_result.get("error"):
             state.error = quote_result["error"]
-            response = self._get_quote_error_response(quote_result["error"], user_context.language)
+            response = self._get_quote_error_response(
+                quote_result["error"], user_context.language
+            )
             # Prepend funding recommendation if applicable
             if funding_recommendation:
                 response = funding_recommendation + "\n" + response
             return response, state
-        
+
         # Store quote in state
         state.data["quote"] = quote_result
         state.data["output_amount"] = quote_result.get("output_amount", "0")
@@ -892,11 +1052,11 @@ Hyperliquid Spot só suporta swaps **com USDC**.
             state.data["from_token_address"] = quote_result["from_token_address"]
         if quote_result.get("to_token_address"):
             state.data["to_token_address"] = quote_result["to_token_address"]
-        
+
         # Fetch enhanced market data (prices, gas info)
         market_data = await self._fetch_market_enrichment(from_token, to_token, chain)
         state.data["market_data"] = market_data
-        
+
         # Only move to confirm step if user has sufficient funds
         # If user needs funding, stay in informational mode
         if has_sufficient_funds:
@@ -908,20 +1068,20 @@ Hyperliquid Spot só suporta swaps **com USDC**.
             logger.info(
                 f"[SwapWorkflow] Not advancing to confirm - user needs funding first"
             )
-        
+
         # Format quote response with enhanced market data
         response = self._format_quote_response(state.data, user_context.language)
-        
+
         # Prepend funding recommendation if user has insufficient funds
         if funding_recommendation:
             response = funding_recommendation + "\n" + response
-        
+
         return response, state
-    
+
     def _get_funding_recommendation(self, from_token: str, language: str) -> str:
         """
         Get a helpful recommendation for users with insufficient funds.
-        
+
         This is shown before the swap quote to guide users on how to fund their wallet.
         """
         recommendations = {
@@ -957,7 +1117,7 @@ Aqui está a cotação do swap que você solicitou:
 """,
         }
         return recommendations.get(language, recommendations["en"])
-    
+
     def _parse_amount_float(self, amount: str) -> float:
         """Parse amount string to float, handling edge cases."""
         try:
@@ -966,7 +1126,7 @@ Aqui está a cotação do swap que você solicitou:
             return float(clean)
         except (ValueError, TypeError):
             return 0.0
-    
+
     def _get_smart_funding_recommendation(
         self,
         from_token: str,
@@ -976,7 +1136,7 @@ Aqui está a cotação do swap que você solicitou:
     ) -> str:
         """
         Get smart funding recommendation based on the gap between requested and available.
-        
+
         Suggests:
         1. If user has some balance: adjust amount to available balance
         2. If user has zero: recommend buying crypto
@@ -1053,9 +1213,9 @@ Para completar este swap, você precisará de **{from_token}** em sua carteira.
 Aqui está a cotação do swap:
 """,
             }
-        
+
         return recommendations.get(language, recommendations["en"])
-    
+
     async def _fetch_market_enrichment(
         self,
         from_token: str,
@@ -1073,7 +1233,7 @@ Aqui está a cotação do swap:
             "gas_usd_estimate": None,
             "gas_timing": None,
         }
-        
+
         try:
             # Fetch token prices from CoinGecko
             if self._coingecko:
@@ -1089,31 +1249,41 @@ Aqui está a cotação do swap:
                     "MATIC": "matic-network",
                     "SOL": "solana",
                 }
-                
+
                 from_id = token_to_coingecko.get(from_token.upper())
                 to_id = token_to_coingecko.get(to_token.upper())
-                
+
                 if from_id:
                     try:
                         price_data = await self._coingecko.get_price(from_id)
                         market_data["from_token_price"] = price_data.usd
                         market_data["from_token_24h_change"] = price_data.usd_24h_change
                     except Exception as e:
-                        logger.debug(f"[SwapWorkflow] Failed to fetch {from_token} price: {e}")
-                
-                if to_id and to_id not in ["usd-coin", "tether", "dai"]:  # Skip stablecoin prices
+                        logger.debug(
+                            f"[SwapWorkflow] Failed to fetch {from_token} price: {e}"
+                        )
+
+                if to_id and to_id not in [
+                    "usd-coin",
+                    "tether",
+                    "dai",
+                ]:  # Skip stablecoin prices
                     try:
                         price_data = await self._coingecko.get_price(to_id)
                         market_data["to_token_price"] = price_data.usd
                     except Exception as e:
-                        logger.debug(f"[SwapWorkflow] Failed to fetch {to_token} price: {e}")
-            
+                        logger.debug(
+                            f"[SwapWorkflow] Failed to fetch {to_token} price: {e}"
+                        )
+
             # Estimate gas costs
             gas_estimate = 200000  # Default estimate
             gas_price_gwei = 0.01 if chain == "base" else 30  # Base L2 vs mainnet
-            
+
             # Calculate USD gas cost
-            eth_price = market_data.get("from_token_price") or 3000  # Fallback ETH price
+            eth_price = (
+                market_data.get("from_token_price") or 3000
+            )  # Fallback ETH price
             if from_token.upper() not in ["ETH", "WETH"]:
                 # If not swapping ETH, fetch ETH price for gas calculation
                 if self._coingecko:
@@ -1122,26 +1292,30 @@ Aqui está a cotação do swap:
                         eth_price = eth_data.usd
                     except Exception:
                         pass
-            
+
             gas_cost_eth = (gas_estimate * gas_price_gwei) / 1e9
             gas_cost_usd = gas_cost_eth * eth_price
-            
+
             market_data["gas_price_gwei"] = gas_price_gwei
             market_data["gas_usd_estimate"] = round(gas_cost_usd, 4)
-            
+
             # Gas timing recommendation based on network
             if chain == "base":
                 market_data["gas_timing"] = "Base L2 has consistently low fees (~$0.01)"
             elif chain == "ethereum":
-                market_data["gas_timing"] = "Consider executing during low-traffic hours (weekends, early morning UTC)"
+                market_data["gas_timing"] = (
+                    "Consider executing during low-traffic hours (weekends, early morning UTC)"
+                )
             else:
-                market_data["gas_timing"] = "L2 networks typically have lower and stable fees"
-                
+                market_data["gas_timing"] = (
+                    "L2 networks typically have lower and stable fees"
+                )
+
         except Exception as e:
             logger.warning(f"[SwapWorkflow] Market enrichment failed: {e}")
-        
+
         return market_data
-    
+
     async def _handle_confirm(
         self,
         message: MessageContent,
@@ -1152,13 +1326,13 @@ Aqui está a cotação do swap:
         Step 3: Handle user confirmation/modification/cancellation.
         """
         intent = self._parse_user_intent(message.value)
-        
+
         if intent == "confirm":
             # User confirmed - generate execute_data
             state.confirmed = True
             state.step = WorkflowStep.EXECUTE.value
             return await self._handle_execute(message, state, user_context)
-        
+
         elif intent == "cancel":
             # User cancelled - clear execute_data to prevent execution
             state.cancelled = True
@@ -1166,11 +1340,11 @@ Aqui está a cotação do swap:
             state.execute_data = None  # Clear execute_data on cancel
             response = self._get_cancel_response(user_context.language)
             return response, state
-        
+
         elif intent == "modify":
             # User wants to modify - extract new params
             new_params = await self._extract_swap_params(message.value)
-            
+
             # Update state with new params (keep existing if not provided)
             if new_params.get("amount"):
                 state.data["amount"] = new_params["amount"]
@@ -1178,16 +1352,16 @@ Aqui está a cotação do swap:
                 state.data["from_token"] = new_params["from_token"]
             if new_params.get("to_token"):
                 state.data["to_token"] = new_params["to_token"]
-            
+
             # Re-fetch quote
             state.step = WorkflowStep.FETCH_DATA.value
             return await self._handle_fetch_quote(message, state, user_context)
-        
+
         else:
             # Unclear response - re-prompt for confirmation
             response = self._get_confirm_prompt(user_context.language)
             return response, state
-    
+
     async def _handle_execute(
         self,
         message: MessageContent,
@@ -1196,12 +1370,12 @@ Aqui está a cotação do swap:
     ) -> tuple[str, WorkflowState]:
         """
         Step 4: Generate execute_data for frontend execution.
-        
+
         For Hyperliquid swaps, generates multi-step execute_data:
         1. Deposit USDC to Hyperliquid (if needed)
         2. Transfer from Perps to Spot (if needed)
         3. Execute spot swap
-        
+
         IMPORTANT: Checks user balance before allowing execution.
         If user has insufficient funds, shows helpful message to buy crypto.
         """
@@ -1212,12 +1386,12 @@ Aqui está a cotação do swap:
         chain = state.data.get("chain") or "base"
         to_chain = state.data.get("to_chain")
         aggregator = state.data.get("aggregator") or "hyperliquid"
-        
+
         # Smart balance check: compare requested amount against user balance
         amount_float = self._parse_amount_float(amount)
         user_balance = user_context.total_balance_usd
         has_sufficient_funds = True
-        
+
         if from_token.upper() in ("USDC", "USDT", "DAI", "BUSD", "FRAX"):
             # Stablecoin: direct USD comparison with 10% buffer for gas
             required_amount = amount_float * 1.10
@@ -1226,7 +1400,7 @@ Aqui está a cotação do swap:
             # User has essentially zero balance
             has_sufficient_funds = False
         # For non-stablecoins, allow if user has any balance
-        
+
         if not has_sufficient_funds:
             logger.info(
                 f"[SwapWorkflow] Blocking execution - insufficient funds: "
@@ -1234,7 +1408,7 @@ Aqui está a cotação do swap:
             )
             # Calculate recommended amount (90% of balance to leave room for gas)
             recommended_amount = max(0, user_balance * 0.90)
-            
+
             # Auto-update state with recommended amount and re-fetch quote
             if recommended_amount >= 0.01:
                 state.data["amount"] = f"{recommended_amount:.2f}"
@@ -1249,7 +1423,9 @@ Aqui está a cotação do swap:
                     language=user_context.language,
                 )
                 # Fetch new quote with adjusted amount
-                new_quote_response, state = await self._handle_fetch_quote(message, state, user_context)
+                new_quote_response, state = await self._handle_fetch_quote(
+                    message, state, user_context
+                )
                 return f"{response}\n\n{new_quote_response}", state
             else:
                 # User has no usable balance - show buy crypto message
@@ -1259,50 +1435,58 @@ Aqui está a cotação do swap:
                 )
                 state.error = "insufficient_balance"
                 return response, state
-        
+
         # Get quote data for execute_data
         output_amount = state.data.get("output_amount", "0")
         price_impact = state.data.get("price_impact", 0)
         gas_estimate = state.data.get("gas_estimate")
         quote_data = state.data.get("quote", {})
         market_data = state.data.get("market_data", {})
-        
+
         # Calculate exchange rate (as string for Pydantic validation)
         try:
             amount_float = float(amount)
             output_float = float(output_amount)
-            exchange_rate = str(output_float / amount_float) if amount_float > 0 else "0"
+            exchange_rate = (
+                str(output_float / amount_float) if amount_float > 0 else "0"
+            )
         except (ValueError, TypeError):
             exchange_rate = "0"
-        
+
         # Get market enrichment data
         from_token_price = market_data.get("from_token_price")
         from_token_24h_change = market_data.get("from_token_24h_change")
         gas_usd = market_data.get("gas_usd_estimate")
-        
+
         # Convert gas_usd to string for Pydantic validation
         network_fee_usd_str = str(gas_usd) if gas_usd is not None else None
-        
+
         # Calculate USD value (as string)
         try:
-            value_usd = str(float(amount) * from_token_price) if from_token_price else None
+            value_usd = (
+                str(float(amount) * from_token_price) if from_token_price else None
+            )
         except (ValueError, TypeError):
             value_usd = None
-        
+
         # Calculate minimum output with slippage
         slippage_pct = 1.0  # 1% default slippage
         try:
             min_amount_out = float(output_amount) * (1 - slippage_pct / 100)
-            min_amount_out_str = f"{min_amount_out:.6f}".rstrip('0').rstrip('.')
+            min_amount_out_str = f"{min_amount_out:.6f}".rstrip("0").rstrip(".")
         except (ValueError, TypeError):
             min_amount_out_str = None
-        
+
         # Convert numeric fields to strings for Pydantic validation
-        from_token_price_str = str(from_token_price) if from_token_price is not None else None
-        from_token_24h_change_str = str(from_token_24h_change) if from_token_24h_change is not None else None
+        from_token_price_str = (
+            str(from_token_price) if from_token_price is not None else None
+        )
+        from_token_24h_change_str = (
+            str(from_token_24h_change) if from_token_24h_change is not None else None
+        )
         price_impact_str = str(price_impact) if price_impact is not None else None
         gas_estimate_str = str(gas_estimate) if gas_estimate is not None else None
-        
+
         # ============================================================
         # HYPERLIQUID MULTI-STEP EXECUTION
         # ============================================================
@@ -1311,9 +1495,9 @@ Aqui está a cotação do swap:
         # 2. Transfer from Perps to Spot account
         # 3. Execute spot swap
         # ============================================================
-        
+
         is_hyperliquid = aggregator == "hyperliquid"
-        
+
         if is_hyperliquid:
             execute_data = await self._build_hyperliquid_execute_data(
                 from_token=from_token,
@@ -1330,9 +1514,13 @@ Aqui está a cotação do swap:
         else:
             # Standard EVM swap (1inch, LiFi)
             # Get token addresses from state (stored during quote fetch) or resolve
-            from_token_address = state.data.get("from_token_address") or self._resolve_token_address(from_token, chain)
-            to_token_address = state.data.get("to_token_address") or self._resolve_token_address(to_token, chain)
-            
+            from_token_address = state.data.get(
+                "from_token_address"
+            ) or self._resolve_token_address(from_token, chain)
+            to_token_address = state.data.get(
+                "to_token_address"
+            ) or self._resolve_token_address(to_token, chain)
+
             execute_data = self._build_execute_data(
                 action_type="swap",
                 provider=aggregator,
@@ -1349,22 +1537,28 @@ Aqui está a cotação do swap:
                 slippage=slippage_pct,
                 to_chain=to_chain,
                 # Token addresses
-                from_token_address=from_token_address if from_token_address and from_token_address.startswith("0x") else None,
-                to_token_address=to_token_address if to_token_address and to_token_address.startswith("0x") else None,
+                from_token_address=from_token_address
+                if from_token_address and from_token_address.startswith("0x")
+                else None,
+                to_token_address=to_token_address
+                if to_token_address and to_token_address.startswith("0x")
+                else None,
                 # Price data
                 from_token_price_usd=from_token_price_str,
                 from_token_24h_change=from_token_24h_change_str,
                 value_usd=value_usd,
             )
-        
+
         # Store execute_data in state
         state.execute_data = execute_data
         state.step = WorkflowStep.COMPLETED.value
-        
+
         # Format ready-to-execute response (pass execute_data for multi-step info)
-        response = self._format_execute_response(state.data, user_context.language, execute_data)
+        response = self._format_execute_response(
+            state.data, user_context.language, execute_data
+        )
         return response, state
-    
+
     async def _build_hyperliquid_execute_data(
         self,
         from_token: str,
@@ -1380,43 +1574,49 @@ Aqui está a cotação do swap:
     ) -> dict[str, Any]:
         """
         Build multi-step execute_data for Hyperliquid swaps.
-        
+
         Hyperliquid Flow (using LiFi for deposits):
         1. Deposit: Bridge USDC via LiFi from user's chain to Hyperliquid (if no balance)
            - LiFi handles cross-chain bridging (Base/Arbitrum → Hyperliquid)
            - Gas is paid on source chain (no need for ETH on Arbitrum)
         2. Transfer: Move from Perps to Spot account (if balance in Perps)
         3. Swap: Execute spot swap USDC → meme token
-        
+
         Returns execute_data with steps[] array for frontend to process.
         """
         amount_float = self._parse_amount_float(amount)
-        
+
         # Check Hyperliquid balances to determine which steps are needed
         hl_perps_usdc = 0.0
         hl_spot_usdc = 0.0
         hl_spot_from_token = 0.0
-        
+
         if self._hyperliquid and user_context.wallet_address:
             try:
-                all_balances = await self._hyperliquid.get_all_balances(user_context.wallet_address)
+                all_balances = await self._hyperliquid.get_all_balances(
+                    user_context.wallet_address
+                )
                 hl_perps_usdc = all_balances.get("perps", {}).get("USDC", 0.0)
                 hl_spot_usdc = all_balances.get("spot", {}).get("USDC", 0.0)
-                hl_spot_from_token = all_balances.get("spot", {}).get(from_token.upper(), 0.0)
-                
+                hl_spot_from_token = all_balances.get("spot", {}).get(
+                    from_token.upper(), 0.0
+                )
+
                 logger.info(
                     f"[SwapWorkflow] Hyperliquid balances for {user_context.wallet_address}: "
                     f"Perps USDC={hl_perps_usdc}, Spot USDC={hl_spot_usdc}, "
                     f"Spot {from_token}={hl_spot_from_token}"
                 )
             except Exception as e:
-                logger.warning(f"[SwapWorkflow] Failed to get Hyperliquid balances: {e}")
-        
+                logger.warning(
+                    f"[SwapWorkflow] Failed to get Hyperliquid balances: {e}"
+                )
+
         # Determine which steps are needed
         # If swapping FROM USDC, check USDC balance
         # If swapping FROM meme token (e.g., PURR → USDC), check meme token balance
         is_selling_usdc = from_token.upper() == "USDC"
-        
+
         if is_selling_usdc:
             # User wants to swap USDC → meme token
             available_on_spot = hl_spot_usdc
@@ -1425,15 +1625,15 @@ Aqui está a cotação do swap:
             # User wants to swap meme token → USDC
             available_on_spot = hl_spot_from_token
             available_on_perps = 0  # Meme tokens are only on Spot
-        
+
         # Build steps based on what's needed
         steps = []
         current_step = 1
-        
+
         # Step 1: Deposit via LiFi (if not enough on Hyperliquid)
         total_on_hyperliquid = available_on_spot + available_on_perps
         needs_deposit = total_on_hyperliquid < amount_float and is_selling_usdc
-        
+
         # Supported source chains for LiFi bridge to Hyperliquid
         SUPPORTED_SOURCE_CHAINS = {
             "base": {
@@ -1449,18 +1649,20 @@ Aqui está a cotação do swap:
                 "usdc": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
             },
         }
-        
+
         # Find best source chain based on where user has ETH for gas (can_pay_gas=True)
         best_source_chain: str | None = None
         chain_balances: dict[str, dict[str, Any]] = {}
         gas_info: dict[str, Any] = {}
         no_gas_error: str | None = None
-        
+
         if user_context.wallet_address and needs_deposit:
             try:
                 # Query ALL token balances from token_balances table
-                chain_balances = await _get_token_balances_for_wallet(user_context.wallet_address)
-                
+                chain_balances = await _get_token_balances_for_wallet(
+                    user_context.wallet_address
+                )
+
                 # Find best chain (minimum 0.0002 ETH for gas ~$0.40)
                 MIN_ETH_FOR_GAS = 0.0002
                 best_source_chain, gas_info = _find_best_chain_for_gas(
@@ -1468,7 +1670,7 @@ Aqui está a cotação do swap:
                     list(SUPPORTED_SOURCE_CHAINS.keys()),
                     MIN_ETH_FOR_GAS,
                 )
-                
+
                 if best_source_chain:
                     chain_data = chain_balances.get(best_source_chain, {})
                     logger.info(
@@ -1483,12 +1685,12 @@ Aqui está a cotação do swap:
                     no_gas_error = gas_info.get("error", "insufficient_gas")
             except Exception as e:
                 logger.warning(f"[SwapWorkflow] Failed to check token balances: {e}")
-        
+
         # Use best source chain or fall back to default
         source_chain = best_source_chain or "base"
         source_chain_id = SUPPORTED_SOURCE_CHAINS[source_chain]["chain_id"]
         source_usdc = SUPPORTED_SOURCE_CHAINS[source_chain]["usdc"]
-        
+
         # LiFi bridge configuration - includes all supported chains and token balances
         lifi_config = {
             "source_chain": source_chain,
@@ -1520,10 +1722,10 @@ Aqui está a cotação do swap:
             # Error if no chain has enough gas
             "gas_error": no_gas_error,
         }
-        
+
         if needs_deposit:
             deposit_amount = amount_float - total_on_hyperliquid
-            
+
             steps.append({
                 "step": 1,
                 "action": "lifi_bridge",
@@ -1541,21 +1743,27 @@ Aqui está a cotação do swap:
                 "bridge_provider": "lifi",
                 "estimated_time": "~30 seconds",
                 # ETH balance on selected chain
-                "gas_chain_eth_balance": chain_balances.get(source_chain, {}).get("eth_balance", 0),
+                "gas_chain_eth_balance": chain_balances.get(source_chain, {}).get(
+                    "eth_balance", 0
+                ),
                 # All supported chains (for fallback)
                 "supported_source_chains": list(SUPPORTED_SOURCE_CHAINS.keys()),
             })
             current_step = 1
-        
+
         # Step 2: Transfer to Spot (if balance is in Perps)
         needs_transfer = (
-            is_selling_usdc and 
-            available_on_spot < amount_float and 
-            (available_on_perps > 0 or needs_deposit)
+            is_selling_usdc
+            and available_on_spot < amount_float
+            and (available_on_perps > 0 or needs_deposit)
         )
-        
+
         if needs_transfer:
-            transfer_amount = min(amount_float - available_on_spot, available_on_perps + (amount_float - total_on_hyperliquid if needs_deposit else 0))
+            transfer_amount = min(
+                amount_float - available_on_spot,
+                available_on_perps
+                + (amount_float - total_on_hyperliquid if needs_deposit else 0),
+            )
             steps.append({
                 "step": 2 if needs_deposit else 1,
                 "action": "transfer_to_spot",
@@ -1567,7 +1775,7 @@ Aqui está a cotação do swap:
             })
             if not needs_deposit:
                 current_step = 1
-        
+
         # Step 3: Execute Swap (always needed)
         swap_step_num = len(steps) + 1
         steps.append({
@@ -1582,11 +1790,11 @@ Aqui está a cotação do swap:
             "min_output": min_amount_out,
             "estimated_time": "instant",
         })
-        
+
         # If no deposit/transfer needed, start at swap step
         if not needs_deposit and not needs_transfer:
             current_step = 1  # Swap is the only step
-        
+
         # Build the complete execute_data
         execute_data = {
             "action_type": "swap",
@@ -1624,9 +1832,9 @@ Aqui está a cotação do swap:
             # Keep legacy bridge_config for backward compatibility
             "bridge_config": HYPERLIQUID_BRIDGE_CONTRACTS.get("arbitrum", {}),
         }
-        
+
         return execute_data
-    
+
     def _build_insufficient_balance_message(
         self,
         from_token: str,
@@ -1641,7 +1849,7 @@ Aqui está a cotação do swap:
         """
         amount_float = self._parse_amount_float(amount)
         available = user_balance * 0.90  # Leave 10% for gas
-        
+
         if user_balance > 0.01:
             # User has some balance - suggest adjusting
             messages = {
@@ -1714,11 +1922,11 @@ Você precisa de {from_token} na sua carteira.
 """,
             }
         return messages.get(language, messages["en"])
-    
+
     async def _extract_swap_params(self, message: str) -> dict[str, Any]:
         """
         Extract swap parameters from user message.
-        
+
         Uses LLM if available, otherwise falls back to regex parsing.
         """
         # Try LLM extraction first
@@ -1735,19 +1943,19 @@ Você precisa de {from_token} na sua carteira.
                 examples=[
                     {
                         "input": "swap 100 USDC to PURR",
-                        "output": '{"from_token": "USDC", "to_token": "PURR", "amount": "100", "chain": "base", "to_chain": null}'
+                        "output": '{"from_token": "USDC", "to_token": "PURR", "amount": "100", "chain": "base", "to_chain": null}',
                     },
                     {
                         "input": "swap 50 USDC to TRUMP",
-                        "output": '{"from_token": "USDC", "to_token": "TRUMP", "amount": "50", "chain": "base", "to_chain": null}'
+                        "output": '{"from_token": "USDC", "to_token": "TRUMP", "amount": "50", "chain": "base", "to_chain": null}',
                     },
                     {
                         "input": "swap 1000 PEPE to USDC",
-                        "output": '{"from_token": "PEPE", "to_token": "USDC", "amount": "1000", "chain": "base", "to_chain": null}'
+                        "output": '{"from_token": "PEPE", "to_token": "USDC", "amount": "1000", "chain": "base", "to_chain": null}',
                     },
                 ],
             )
-            
+
             if params.get("from_token") and params.get("to_token"):
                 # Normalize token symbols
                 params["from_token"] = params["from_token"].upper()
@@ -1757,33 +1965,44 @@ Você precisa de {from_token} na sua carteira.
                 if params.get("to_chain"):
                     params["to_chain"] = params["to_chain"].lower()
                 return params
-        
+
         # Fallback to regex parsing
         return self._parse_swap_params_regex(message)
-    
+
     def _parse_swap_params_regex(self, message: str) -> dict[str, Any]:
         """Parse swap parameters using regex (fallback)."""
         params: dict[str, Any] = {"chain": "base"}
-        
+
         message_lower = message.lower()
         message_upper = message.upper()
-        
+
         # Extract amount (number with optional decimal)
-        amount_match = re.search(r'(\d+\.?\d*)', message)
+        amount_match = re.search(r"(\d+\.?\d*)", message)
         if amount_match:
             params["amount"] = amount_match.group(1)
-        
+
         # Extract tokens (common DeFi tokens)
-        tokens = ["ETH", "WETH", "USDC", "USDT", "DAI", "WBTC", "BTC", "MATIC", "WMATIC", "SOL"]
+        tokens = [
+            "ETH",
+            "WETH",
+            "USDC",
+            "USDT",
+            "DAI",
+            "WBTC",
+            "BTC",
+            "MATIC",
+            "WMATIC",
+            "SOL",
+        ]
         found_tokens = []
         for token in tokens:
             if token in message_upper:
                 found_tokens.append(token)
-        
+
         # Assign tokens based on position/context
         if len(found_tokens) >= 2:
             # Check for "X to Y" pattern
-            to_match = re.search(r'(\w+)\s+to\s+(\w+)', message, re.IGNORECASE)
+            to_match = re.search(r"(\w+)\s+to\s+(\w+)", message, re.IGNORECASE)
             if to_match:
                 potential_from = to_match.group(1).upper()
                 potential_to = to_match.group(2).upper()
@@ -1797,7 +2016,7 @@ Você precisa de {from_token} na sua carteira.
         elif len(found_tokens) == 1:
             # Only one token - likely the source
             params["from_token"] = found_tokens[0]
-        
+
         # Extract chain
         chains = {
             "ethereum": ["ethereum", "eth mainnet", "mainnet"],
@@ -1806,7 +2025,7 @@ Você precisa de {from_token} na sua carteira.
             "polygon": ["polygon", "matic"],
             "optimism": ["optimism", "op"],
         }
-        
+
         for chain, keywords in chains.items():
             if any(kw in message_lower for kw in keywords):
                 # Check if it's source or destination chain
@@ -1817,37 +2036,47 @@ Você precisa de {from_token} na sua carteira.
                 else:
                     params["chain"] = chain
                 break
-        
+
         return params
-    
-    def _is_hyperliquid_swap(self, from_token: str | None, to_token: str | None) -> bool:
+
+    def _is_hyperliquid_swap(
+        self, from_token: str | None, to_token: str | None
+    ) -> bool:
         """
         Check if this swap should use Hyperliquid Spot.
-        
+
         Hyperliquid Spot only supports meme tokens paired with USDC.
         One of the tokens MUST be USDC, and the other must be a supported meme token.
         """
         # Safety check for None values
         if not from_token or not to_token:
             return False
-        
+
         from_upper = from_token.upper()
         to_upper = to_token.upper()
-        
+
         # Same token swap is a no-op, not a Hyperliquid swap
         if from_upper == to_upper:
             return False
-        
+
         # Check if one is USDC and the other is a Hyperliquid meme token (not USDC itself)
-        if from_upper == "USDC" and to_upper in HYPERLIQUID_SPOT_TOKENS and to_upper != "USDC":
+        if (
+            from_upper == "USDC"
+            and to_upper in HYPERLIQUID_SPOT_TOKENS
+            and to_upper != "USDC"
+        ):
             return True
-        if to_upper == "USDC" and from_upper in HYPERLIQUID_SPOT_TOKENS and from_upper != "USDC":
+        if (
+            to_upper == "USDC"
+            and from_upper in HYPERLIQUID_SPOT_TOKENS
+            and from_upper != "USDC"
+        ):
             return True
-        
+
         # Both are meme tokens (rare but possible) - requires USDC as intermediary
         # This case would need two swaps, so we don't route it to Hyperliquid directly
         # Example: PURR → TRUMP would need PURR → USDC → TRUMP
-        
+
         return False
 
     async def _fetch_quote(
@@ -1861,14 +2090,14 @@ Você precisa de {from_token} na sua carteira.
     ) -> dict[str, Any]:
         """
         Fetch swap quote from the appropriate provider.
-        
+
         Provider Selection:
         1. Hyperliquid Spot: For meme tokens (PURR, TRUMP, etc.) paired with USDC
         2. 1inch: For major tokens same-chain swaps
         3. LiFi: For cross-chain swaps
         """
         is_cross_chain = to_chain and to_chain.lower() != chain.lower()
-        
+
         try:
             # ============================================================
             # HYPERLIQUID SPOT: Meme tokens paired with USDC
@@ -1882,19 +2111,21 @@ Você precisa de {from_token} na sua carteira.
                     try:
                         # Hyperliquid uses human-readable amounts, not wei
                         amount_float = float(amount)
-                        
+
                         quote = await self._hyperliquid.get_spot_quote(
                             from_token=from_token.upper(),
                             to_token=to_token.upper(),
                             amount=amount_float,
                         )
-                        
+
                         # Hyperliquid uses its own API, NOT EVM contract addresses
                         # Don't provide fake addresses that will fail balanceOf calls
                         # Frontend should detect provider="hyperliquid" and use Hyperliquid SDK
-                        
+
                         return {
-                            "output_amount": f"{quote.to_amount:.6f}".rstrip('0').rstrip('.'),
+                            "output_amount": f"{quote.to_amount:.6f}".rstrip(
+                                "0"
+                            ).rstrip("."),
                             "price_impact": quote.spread_bps / 100,  # Convert bps to %
                             "gas_estimate": 0,  # Hyperliquid = zero gas fees
                             "aggregator": "hyperliquid",
@@ -1914,19 +2145,23 @@ Você precisa de {from_token} na sua carteira.
                         f"[SwapWorkflow] Hyperliquid client not configured, "
                         f"cannot swap meme tokens: {from_token}/{to_token}"
                     )
-            
+
             amount_wei = self._to_wei(amount, from_token)
-            
+
             # ============================================================
             # CROSS-CHAIN: Use LiFi
             # ============================================================
             if is_cross_chain:
                 if not self._lifi:
-                    return {"error": "Cross-chain swaps require LiFi client (not configured)"}
-                
+                    return {
+                        "error": "Cross-chain swaps require LiFi client (not configured)"
+                    }
+
                 # Use a valid placeholder address if no wallet connected
                 # LiFi requires a valid ETH address format
-                sender_address = wallet_address or "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+                sender_address = (
+                    wallet_address or "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+                )
                 quote = await self._lifi.get_quote(
                     from_chain=chain,
                     to_chain=to_chain,
@@ -1935,20 +2170,24 @@ Você precisa de {from_token} na sua carteira.
                     from_amount=amount_wei,
                     from_address=sender_address,
                 )
-                
+
                 # Resolve addresses for cross-chain
                 from_token_addr = self._resolve_token_address(from_token, chain)
                 to_token_addr = self._resolve_token_address(to_token, to_chain)
-                
+
                 return {
                     "output_amount": self._from_wei(quote.to_amount, to_token),
-                    "price_impact": getattr(quote, 'price_impact', 0),
-                    "gas_estimate": int(getattr(quote, 'estimated_gas', 250000)),
+                    "price_impact": getattr(quote, "price_impact", 0),
+                    "gas_estimate": int(getattr(quote, "estimated_gas", 250000)),
                     "aggregator": "lifi",
-                    "from_token_address": from_token_addr if from_token_addr.startswith("0x") else None,
-                    "to_token_address": to_token_addr if to_token_addr.startswith("0x") else None,
+                    "from_token_address": from_token_addr
+                    if from_token_addr.startswith("0x")
+                    else None,
+                    "to_token_address": to_token_addr
+                    if to_token_addr.startswith("0x")
+                    else None,
                 }
-            
+
             # ============================================================
             # SAME-CHAIN MAJOR TOKENS: Try 1inch, fallback to LiFi
             # ============================================================
@@ -1956,31 +2195,35 @@ Você precisa de {from_token} na sua carteira.
                 # Primary: Use 1inch
                 from_addr = self._resolve_token_address(from_token, chain)
                 to_addr = self._resolve_token_address(to_token, chain)
-                
+
                 quote = await self._oneinch.get_swap_quote(
                     from_token=from_addr,
                     to_token=to_addr,
                     amount=amount_wei,
                     slippage=1.0,
                 )
-                
+
                 return {
                     "output_amount": self._from_wei(quote.to_amount, to_token),
-                    "price_impact": getattr(quote, 'price_impact', 0),
-                    "gas_estimate": int(getattr(quote, 'estimated_gas', 200000)),
+                    "price_impact": getattr(quote, "price_impact", 0),
+                    "gas_estimate": int(getattr(quote, "estimated_gas", 200000)),
                     "aggregator": "1inch",
-                    "from_token_address": from_addr if from_addr.startswith("0x") else None,
+                    "from_token_address": from_addr
+                    if from_addr.startswith("0x")
+                    else None,
                     "to_token_address": to_addr if to_addr.startswith("0x") else None,
                 }
             elif self._lifi:
                 # Fallback: Use LiFi for same-chain swaps
                 logger.info("[SwapWorkflow] Using LiFi fallback for same-chain swap")
-                sender_address = wallet_address or "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
-                
+                sender_address = (
+                    wallet_address or "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+                )
+
                 # Resolve addresses for same-chain LiFi
                 from_token_addr = self._resolve_token_address(from_token, chain)
                 to_token_addr = self._resolve_token_address(to_token, chain)
-                
+
                 quote = await self._lifi.get_quote(
                     from_chain=chain,
                     to_chain=chain,  # Same chain
@@ -1989,59 +2232,65 @@ Você precisa de {from_token} na sua carteira.
                     from_amount=amount_wei,
                     from_address=sender_address,
                 )
-                
+
                 return {
                     "output_amount": self._from_wei(quote.to_amount, to_token),
-                    "price_impact": getattr(quote, 'price_impact', 0),
-                    "gas_estimate": int(getattr(quote, 'estimated_gas', 250000)),
+                    "price_impact": getattr(quote, "price_impact", 0),
+                    "gas_estimate": int(getattr(quote, "estimated_gas", 250000)),
                     "aggregator": "lifi",
-                    "from_token_address": from_token_addr if from_token_addr.startswith("0x") else None,
-                    "to_token_address": to_token_addr if to_token_addr.startswith("0x") else None,
+                    "from_token_address": from_token_addr
+                    if from_token_addr.startswith("0x")
+                    else None,
+                    "to_token_address": to_token_addr
+                    if to_token_addr.startswith("0x")
+                    else None,
                 }
             else:
-                return {"error": "Swap quote unavailable - no swap aggregator configured"}
-                
+                return {
+                    "error": "Swap quote unavailable - no swap aggregator configured"
+                }
+
         except Exception as e:
             logger.error(f"[SwapWorkflow] Quote fetch failed: {e}")
             return {"error": str(e)}
-    
+
     def _to_wei(self, amount: str, token: str) -> str:
         """Convert human readable amount to wei."""
         decimals = TOKEN_DECIMALS.get(token.upper(), 18)
         try:
-            value = float(amount) * (10 ** decimals)
+            value = float(amount) * (10**decimals)
             return str(int(value))
         except ValueError:
             return "0"
-    
+
     def _from_wei(self, amount_wei: str, token: str) -> str:
         """Convert wei to human readable amount."""
         decimals = TOKEN_DECIMALS.get(token.upper(), 18)
         try:
-            value = int(amount_wei) / (10 ** decimals)
-            return f"{value:.6f}".rstrip('0').rstrip('.')
+            value = int(amount_wei) / (10**decimals)
+            return f"{value:.6f}".rstrip("0").rstrip(".")
         except (ValueError, TypeError):
             return "0"
-    
+
     def _resolve_token_address(self, token: str, chain: str) -> str:
         """Resolve token symbol to address."""
         if token.startswith("0x"):
             return token
-        
+
         # First check chain-specific addresses
         chain_tokens = TOKEN_ADDRESSES.get(chain.lower(), {})
         if token.upper() in chain_tokens:
             return chain_tokens[token.upper()]
-        
+
         # Then check Hyperliquid token addresses (for meme tokens)
         if token.upper() in HYPERLIQUID_TOKEN_ADDRESSES:
             return HYPERLIQUID_TOKEN_ADDRESSES[token.upper()]
-        
+
         # Return symbol if no address found
         return token
-    
+
     # Response formatting methods
-    
+
     async def _get_token_selection_prompt(
         self,
         from_token: str,
@@ -2050,17 +2299,17 @@ Você precisa de {from_token} na sua carteira.
     ) -> str:
         """
         Build token selection prompt with numbered list, prices, and user context.
-        
+
         Includes:
         - Knowledge about Hyperliquid Spot and meme tokens
         - User's current balance (if available)
         - Real-time prices from CoinGecko
         """
         language = user_context.language
-        
+
         # Try to fetch prices for popular tokens
         prices = await self._fetch_token_prices()
-        
+
         # Build token list with prices
         token_lines = []
         for i, (symbol, description) in enumerate(POPULAR_MEME_TOKENS, 1):
@@ -2069,12 +2318,12 @@ Você precisa de {from_token} na sua carteira.
                 price = prices[symbol.lower()]
                 price_info = f" • ${price:,.6f}"
             token_lines.append(f"**{i}.** {symbol}{price_info}")
-        
+
         token_list = "\n".join(token_lines)
-        
+
         # Build knowledge section
         knowledge_section = self._get_swap_knowledge(language)
-        
+
         # Build user balance section
         user_balance_section = self._build_swap_user_balance_section(
             user_context=user_context,
@@ -2082,7 +2331,7 @@ Você precisa de {from_token} na sua carteira.
             amount=amount,
             language=language,
         )
-        
+
         msgs = {
             "en": f"""🔄 **Swap {amount} {from_token}**
 
@@ -2101,7 +2350,6 @@ Você precisa de {from_token} na sua carteira.
 • Or type the token name (e.g., PURR)
 
 💡 All swaps via **Hyperliquid Spot** (0.02% fee, zero gas)""",
-
             "es": f"""🔄 **Intercambiar {amount} {from_token}**
 
 {knowledge_section}
@@ -2119,7 +2367,6 @@ Você precisa de {from_token} na sua carteira.
 • O escribe el nombre del token (ej: PURR)
 
 💡 Swaps via **Hyperliquid Spot** (0.02% comisión, sin gas)""",
-
             "pt": f"""🔄 **Trocar {amount} {from_token}**
 
 {knowledge_section}
@@ -2137,7 +2384,6 @@ Você precisa de {from_token} na sua carteira.
 • Ou digite o nome do token (ex: PURR)
 
 💡 Swaps via **Hyperliquid Spot** (0.02% taxa, sem gas)""",
-
             "zh": f"""🔄 **兑换 {amount} {from_token}**
 
 {knowledge_section}
@@ -2157,18 +2403,18 @@ Você precisa de {from_token} na sua carteira.
 💡 所有交易通过 **Hyperliquid Spot** (0.02% 手续费，零gas)""",
         }
         return msgs.get(language, msgs["en"])
-    
+
     async def _fetch_token_prices(self) -> dict[str, float]:
         """
         Fetch current prices for popular meme tokens.
-        
+
         Uses CoinGecko API if available, returns empty dict on error.
         """
         prices = {}
-        
+
         if not self._coingecko:
             return prices
-        
+
         try:
             # Map our tokens to CoinGecko IDs
             token_to_coingecko = {
@@ -2181,12 +2427,12 @@ Você precisa de {from_token} na sua carteira.
                 "wagmi": "wagmi-2",
                 "gmeow": "gmeow",
             }
-            
+
             # Fetch prices for tokens we have mappings for
             coin_ids = list(token_to_coingecko.values())
-            
+
             price_data = await self._coingecko.get_prices_bulk(coin_ids)
-            
+
             if price_data:
                 # Reverse map back to our symbols
                 for symbol, coin_id in token_to_coingecko.items():
@@ -2199,9 +2445,9 @@ Você precisa de {from_token} na sua carteira.
                             prices[symbol] = price_obj["usd"]
         except Exception as e:
             logger.warning(f"[SwapWorkflow] Failed to fetch token prices: {e}")
-        
+
         return prices
-    
+
     def _get_swap_knowledge(self, language: str) -> str:
         """Get knowledge paragraph about Hyperliquid Spot swaps."""
         msgs = {
@@ -2209,24 +2455,21 @@ Você precisa de {from_token} na sua carteira.
 Trade meme tokens with zero gas fees and 0.02% trading fee.
 High-speed execution (20,000+ TPS) on Hyperliquid L1.
 Real-time order book pricing - no slippage surprises.""",
-
             "es": """**¿Qué es Hyperliquid Spot?**
 Opera meme tokens con cero gas y 0.02% comisión.
 Ejecución de alta velocidad (20,000+ TPS) en Hyperliquid L1.
 Precios en tiempo real - sin sorpresas de slippage.""",
-
             "pt": """**O que é Hyperliquid Spot?**
 Negocie meme tokens com zero gas e 0.02% de taxa.
 Execução de alta velocidade (20,000+ TPS) no Hyperliquid L1.
 Preços em tempo real - sem surpresas de slippage.""",
-
             "zh": """**什么是 Hyperliquid Spot？**
 零 gas 费交易 meme 代币，仅 0.02% 交易费。
 Hyperliquid L1 上的高速执行（20,000+ TPS）。
 实时订单簿定价 - 无滑点意外。""",
         }
         return msgs.get(language, msgs["en"])
-    
+
     def _build_swap_user_balance_section(
         self,
         user_context: UserContext,
@@ -2237,15 +2480,15 @@ Hyperliquid L1 上的高速执行（20,000+ TPS）。
         """Build user balance context section for swap."""
         if not user_context.is_authenticated:
             return ""
-        
+
         balance = user_context.total_balance_usd
         portfolio_state = user_context.portfolio_state
-        
+
         try:
             swap_amount = float(amount)
         except (ValueError, TypeError):
             swap_amount = 0
-        
+
         # Check if user has enough balance
         if portfolio_state == "empty" or balance < 1:
             # Note: Only USDC is available for purchase via card
@@ -2269,13 +2512,13 @@ Hyperliquid L1 上的高速执行（20,000+ TPS）。
                 "pt": f"💰 **Seu Saldo:** ~${balance:,.2f} ✅",
                 "zh": f"💰 **您的余额：** ~${balance:,.2f} ✅",
             }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     def _get_invalid_selection_response(self, user_input: str, language: str) -> str:
         """Response when user enters invalid token selection."""
         token_names = ", ".join([t[0] for t in POPULAR_MEME_TOKENS])
-        
+
         msgs = {
             "en": f"""❌ **Invalid selection:** "{user_input}"
 
@@ -2284,7 +2527,6 @@ Please enter:
 • Or type a valid token symbol like **PURR**, **TRUMP**, **PEPE**
 
 **Available tokens:** {token_names}""",
-
             "es": f"""❌ **Selección inválida:** "{user_input}"
 
 Por favor ingresa:
@@ -2292,7 +2534,6 @@ Por favor ingresa:
 • O escribe un símbolo válido como **PURR**, **TRUMP**, **PEPE**
 
 **Tokens disponibles:** {token_names}""",
-
             "pt": f"""❌ **Seleção inválida:** "{user_input}"
 
 Por favor insira:
@@ -2300,7 +2541,6 @@ Por favor insira:
 • Ou digite um símbolo válido como **PURR**, **TRUMP**, **PEPE**
 
 **Tokens disponíveis:** {token_names}""",
-
             "zh": f"""❌ **选择无效：** "{user_input}"
 
 请输入：
@@ -2310,15 +2550,17 @@ Por favor insira:
 **可用代币：** {token_names}""",
         }
         return msgs.get(language, msgs["en"])
-    
-    async def _get_missing_params_response(self, params: dict, user_context: "UserContext") -> str:
+
+    async def _get_missing_params_response(
+        self, params: dict, user_context: "UserContext"
+    ) -> str:
         """Response when tokens are missing - with smart examples based on user balance."""
         language = user_context.language
         user_balance_usd = user_context.total_balance_usd
-        
+
         # Build smart examples based on user's actual balance
         examples_section = self._build_smart_swap_examples(user_balance_usd, language)
-        
+
         # Build balance section
         if user_balance_usd < 1:
             balance_section = {
@@ -2326,7 +2568,10 @@ Por favor insira:
                 "es": f"💰 **Tu Saldo:** ${user_balance_usd:.2f}\n\n💡 **Consejo:** ¡Di `comprar cripto` para obtener USDC primero!",
                 "pt": f"💰 **Seu Saldo:** ${user_balance_usd:.2f}\n\n💡 **Dica:** Diga `comprar cripto` para obter USDC primeiro!",
                 "zh": f"💰 **您的余额：** ${user_balance_usd:.2f}\n\n💡 **提示：** 说 `买加密货币` 先获取 USDC！",
-            }.get(language, f"💰 **Your Balance:** ${user_balance_usd:.2f}\n\n💡 **Tip:** Say `buy crypto` to get USDC first!")
+            }.get(
+                language,
+                f"💰 **Your Balance:** ${user_balance_usd:.2f}\n\n💡 **Tip:** Say `buy crypto` to get USDC first!",
+            )
         else:
             balance_section = {
                 "en": f"💰 **Your Balance:** ~${user_balance_usd:.2f}",
@@ -2334,7 +2579,7 @@ Por favor insira:
                 "pt": f"💰 **Seu Saldo:** ~${user_balance_usd:.2f}",
                 "zh": f"💰 **您的余额：** ~${user_balance_usd:.2f}",
             }.get(language, f"💰 **Your Balance:** ~${user_balance_usd:.2f}")
-        
+
         msgs = {
             "en": f"""🔄 **Hyperliquid Spot Swaps**
 
@@ -2346,7 +2591,6 @@ What meme token would you like to swap?
 
 **Supported:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 more meme tokens
 **Note:** All swaps use USDC pairs. Major tokens (ETH, BTC, SOL) are NOT supported.""",
-            
             "es": f"""🔄 **Swaps en Hyperliquid Spot**
 
 {balance_section}
@@ -2357,7 +2601,6 @@ What meme token would you like to swap?
 
 **Soportados:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 más
 **Nota:** Todos los swaps usan pares USDC. Tokens mayores (ETH, BTC, SOL) NO están soportados.""",
-            
             "pt": f"""🔄 **Swaps no Hyperliquid Spot**
 
 {balance_section}
@@ -2368,7 +2611,6 @@ Qual meme token você gostaria de trocar?
 
 **Suportados:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 mais
 **Nota:** Todas as trocas usam pares USDC. Tokens maiores (ETH, BTC, SOL) NÃO são suportados.""",
-            
             "zh": f"""🔄 **Hyperliquid Spot 交易**
 
 {balance_section}
@@ -2381,10 +2623,10 @@ Qual meme token você gostaria de trocar?
 **注意：** 所有交易使用USDC交易对。主流代币（ETH, BTC, SOL）不支持。""",
         }
         return msgs.get(language, msgs["en"])
-    
+
     def _build_smart_swap_examples(self, user_balance_usd: float, language: str) -> str:
         """Build balance-appropriate swap examples."""
-        
+
         if user_balance_usd < 1:
             # Very low balance - suggest small amounts after buying
             msgs = {
@@ -2405,26 +2647,26 @@ Qual meme token você gostaria de trocar?
             # Small balance - show realistic small amounts
             small_amt = max(1, user_balance_usd * 0.3)
             med_amt = max(2, user_balance_usd * 0.5)
-            
+
             msgs = {
                 "en": f"""**Examples based on your balance:**
-• `swap {small_amt:.0f} USDC to PURR` (~{small_amt/user_balance_usd*100:.0f}% of balance)
-• `swap {med_amt:.0f} USDC to TRUMP` (~{med_amt/user_balance_usd*100:.0f}% of balance)""",
+• `swap {small_amt:.0f} USDC to PURR` (~{small_amt / user_balance_usd * 100:.0f}% of balance)
+• `swap {med_amt:.0f} USDC to TRUMP` (~{med_amt / user_balance_usd * 100:.0f}% of balance)""",
                 "es": f"""**Ejemplos basados en tu saldo:**
-• `swap {small_amt:.0f} USDC to PURR` (~{small_amt/user_balance_usd*100:.0f}% del saldo)
-• `swap {med_amt:.0f} USDC to TRUMP` (~{med_amt/user_balance_usd*100:.0f}% del saldo)""",
+• `swap {small_amt:.0f} USDC to PURR` (~{small_amt / user_balance_usd * 100:.0f}% del saldo)
+• `swap {med_amt:.0f} USDC to TRUMP` (~{med_amt / user_balance_usd * 100:.0f}% del saldo)""",
                 "pt": f"""**Exemplos baseados no seu saldo:**
-• `swap {small_amt:.0f} USDC to PURR` (~{small_amt/user_balance_usd*100:.0f}% do saldo)
-• `swap {med_amt:.0f} USDC to TRUMP` (~{med_amt/user_balance_usd*100:.0f}% do saldo)""",
+• `swap {small_amt:.0f} USDC to PURR` (~{small_amt / user_balance_usd * 100:.0f}% do saldo)
+• `swap {med_amt:.0f} USDC to TRUMP` (~{med_amt / user_balance_usd * 100:.0f}% do saldo)""",
                 "zh": f"""**基于您余额的示例：**
-• `swap {small_amt:.0f} USDC to PURR` (~{small_amt/user_balance_usd*100:.0f}% 的余额)
-• `swap {med_amt:.0f} USDC to TRUMP` (~{med_amt/user_balance_usd*100:.0f}% 的余额)""",
+• `swap {small_amt:.0f} USDC to PURR` (~{small_amt / user_balance_usd * 100:.0f}% 的余额)
+• `swap {med_amt:.0f} USDC to TRUMP` (~{med_amt / user_balance_usd * 100:.0f}% 的余额)""",
             }
         elif user_balance_usd < 100:
             # Medium balance
             small_amt = user_balance_usd * 0.2
             med_amt = user_balance_usd * 0.5
-            
+
             msgs = {
                 "en": f"""**Examples based on your balance:**
 • `swap {small_amt:.0f} USDC to PURR` (~20% of balance)
@@ -2463,9 +2705,9 @@ Qual meme token você gostaria de trocar?
 • `swap 100 USDC to TRUMP`
 • `swap 500 USDC to PEPE`""",
             }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     def _get_amount_prompt(self, from_token: str, to_token: str, language: str) -> str:
         """Prompt for missing amount."""
         msgs = {
@@ -2475,12 +2717,12 @@ Qual meme token você gostaria de trocar?
             "zh": f"您想将多少 {from_token} 兑换为 {to_token}？",
         }
         return msgs.get(language, msgs["en"])
-    
+
     def _get_quote_error_response(self, error: str, language: str) -> str:
         """Response when quote fetch fails - user-friendly message without technical details."""
         # Determine user-friendly error reason (without exposing URLs or technical details)
         error_lower = error.lower() if error else ""
-        
+
         if "404" in error_lower or "not found" in error_lower:
             # Token not found or not supported on chain
             reason = {
@@ -2518,7 +2760,7 @@ Qual meme token você gostaria de trocar?
                 "pt": "Não foi possível obter cotação no momento.",
                 "zh": "目前无法获取报价。",
             }
-        
+
         msgs = {
             "en": f"""⚠️ **Swap Quote Unavailable**
 
@@ -2556,7 +2798,7 @@ Qual meme token você gostaria de trocar?
 • 稍后再试""",
         }
         return msgs.get(language, msgs["en"])
-    
+
     def _format_quote_response(self, data: dict, language: str) -> str:
         """Format swap quote response with enhanced market data."""
         from_token = data.get("from_token", "?")
@@ -2566,21 +2808,21 @@ Qual meme token você gostaria de trocar?
         impact = data.get("price_impact", 0)
         aggregator = data.get("aggregator", "DEX")
         chain = data.get("chain", "base")
-        
+
         # Market enrichment data
         market = data.get("market_data", {})
         from_price = market.get("from_token_price")
         from_24h = market.get("from_token_24h_change")
         gas_usd = market.get("gas_usd_estimate")
         gas_timing = market.get("gas_timing")
-        
+
         # Calculate USD value
         try:
             amount_float = float(amount)
             usd_value = amount_float * from_price if from_price else None
         except (ValueError, TypeError):
             usd_value = None
-        
+
         # Build market context section
         market_context = ""
         if from_price:
@@ -2588,18 +2830,20 @@ Qual meme token você gostaria de trocar?
             if from_24h:
                 emoji = "📈" if from_24h >= 0 else "📉"
                 change_str = f" ({emoji} {from_24h:+.1f}% 24h)"
-            market_context += f"💰 **{from_token} Price:** ${from_price:,.2f}{change_str}\n"
-        
+            market_context += (
+                f"💰 **{from_token} Price:** ${from_price:,.2f}{change_str}\n"
+            )
+
         if usd_value:
             market_context += f"💵 **Value:** ~${usd_value:,.2f} USD\n"
-        
+
         # Gas info section
         gas_info = ""
         if gas_usd is not None:
             gas_info = f"⛽ **Est. Gas:** ~${gas_usd:.4f}"
             if gas_timing:
                 gas_info += f"\n💡 {gas_timing}"
-        
+
         msgs = {
             "en": f"""📊 **Swap Quote**
 
@@ -2615,7 +2859,6 @@ Qual meme token você gostaria de trocar?
 ✅ Say **"yes"** or **"confirm"** to execute this swap
 ✏️ Or say **"swap [amount] {from_token} to {to_token}"** to change the amount
 ❌ Say **"cancel"** to cancel""",
-
             "es": f"""📊 **Cotización de Swap**
 
 **{amount} {from_token}** → **{output} {to_token}**
@@ -2630,7 +2873,6 @@ Qual meme token você gostaria de trocar?
 ✅ Di **"sí"** o **"confirmar"** para ejecutar este swap
 ✏️ O di **"swap [cantidad] {from_token} a {to_token}"** para cambiar la cantidad
 ❌ Di **"cancelar"** para cancelar""",
-
             "pt": f"""📊 **Cotação de Swap**
 
 **{amount} {from_token}** → **{output} {to_token}**
@@ -2646,9 +2888,9 @@ Qual meme token você gostaria de trocar?
 ✏️ Ou diga **"swap [quantidade] {from_token} para {to_token}"** para mudar a quantidade
 ❌ Diga **"cancelar"** para cancelar""",
         }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     def _get_confirm_prompt(self, language: str) -> str:
         """Re-prompt for confirmation (not used - frontend handles via execute_data card)."""
         msgs = {
@@ -2658,7 +2900,7 @@ Qual meme token você gostaria de trocar?
             "zh": "查看上方的交换详情。",
         }
         return msgs.get(language, msgs["en"])
-    
+
     def _get_cancel_response(self, language: str) -> str:
         """Response when user cancels."""
         msgs = {
@@ -2668,13 +2910,13 @@ Qual meme token você gostaria de trocar?
             "zh": "❌ 交换已取消。如果您想重试，请告诉我！",
         }
         return msgs.get(language, msgs["en"])
-    
+
     def _get_continue_or_new_prompt(self, state: WorkflowState, language: str) -> str:
         """Prompt asking if user wants to continue last swap or start new."""
         from_token = state.data.get("from_token", "?")
         to_token = state.data.get("to_token", "?")
         amount = state.data.get("amount", "?")
-        
+
         msgs = {
             "en": f"""🔄 **Continue or New Swap?**
 
@@ -2718,7 +2960,7 @@ Você gostaria de:
 💡 或者直接告诉我您想交换什么，例如："交换 50 USDC 到 PURR\"""",
         }
         return msgs.get(language, msgs["en"])
-    
+
     def _get_auto_adjust_message(
         self,
         original_amount: str,
@@ -2752,7 +2994,7 @@ Ajustei a troca para **{recommended_amount} {from_token}** → **{to_token}**"""
 我已将交换调整为 **{recommended_amount} {from_token}** → **{to_token}**""",
         }
         return msgs.get(language, msgs["en"])
-    
+
     def _get_zero_balance_message(self, from_token: str, language: str) -> str:
         """Message when user has zero usable balance."""
         msgs = {
@@ -2794,10 +3036,10 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 一旦您有资金，回来再试您的交换！""",
         }
         return msgs.get(language, msgs["en"])
-    
+
     def _format_execute_response(
-        self, 
-        data: dict, 
+        self,
+        data: dict,
         language: str,
         execute_data: dict | None = None,
     ) -> str:
@@ -2807,20 +3049,26 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
         amount = data.get("amount", "0")
         output = data.get("output_amount", "0")
         chain = data.get("chain", "base")
-        
+
         # Check if this is a Hyperliquid multi-step swap requiring deposit
         is_hyperliquid_deposit = (
-            execute_data 
+            execute_data
             and execute_data.get("execution_mode") == "multi_step"
             and execute_data.get("requires_deposit")
         )
-        
+
         if is_hyperliquid_deposit:
             total_steps = execute_data.get("total_steps", 3)
             lifi_config = execute_data.get("lifi_config", {})
-            supported_chains = list(lifi_config.get("supported_source_chains", {}).keys())
-            chains_str = ", ".join([c.capitalize() for c in supported_chains]) if supported_chains else "Base, Arbitrum, or Ethereum"
-            
+            supported_chains = list(
+                lifi_config.get("supported_source_chains", {}).keys()
+            )
+            chains_str = (
+                ", ".join([c.capitalize() for c in supported_chains])
+                if supported_chains
+                else "Base, Arbitrum, or Ethereum"
+            )
+
             msgs = {
                 "en": f"""✅ **Ready to Execute!**
 
@@ -2839,7 +3087,6 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 👉 Click **Execute** below to start the multi-step swap.""",
-
                 "es": f"""✅ **¡Listo para Ejecutar!**
 
 **Detalles del Swap:**
@@ -2857,7 +3104,6 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 👉 Haz clic en **Ejecutar** para iniciar el swap multi-paso.""",
-
                 "pt": f"""✅ **Pronto para Executar!**
 
 **Detalhes do Swap:**
@@ -2877,7 +3123,7 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 👉 Clique em **Executar** para iniciar o swap multi-etapas.""",
             }
             return msgs.get(language, msgs["en"])
-        
+
         # Standard swap response
         msgs = {
             "en": f"""✅ **Ready to Execute!**
@@ -2890,7 +3136,6 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 👉 Click **Execute** below to sign the transaction with your wallet.""",
-
             "es": f"""✅ **¡Listo para Ejecutar!**
 
 **Detalles del Swap:**
@@ -2901,7 +3146,6 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 👉 Haz clic en **Ejecutar** abajo para firmar la transacción con tu billetera.""",
-
             "pt": f"""✅ **Pronto para Executar!**
 
 **Detalhes do Swap:**
@@ -2913,5 +3157,5 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 
 👉 Clique em **Executar** abaixo para assinar a transação com sua carteira.""",
         }
-        
+
         return msgs.get(language, msgs["en"])

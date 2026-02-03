@@ -46,9 +46,7 @@ class InvalidAddressError(PerpetualError):
 
     def __init__(self, address: str, message: str | None = None):
         self.address = address
-        super().__init__(
-            message or f"Invalid wallet address: {address}"
-        )
+        super().__init__(message or f"Invalid wallet address: {address}")
 
 
 class HyperliquidAPIError(PerpetualError):

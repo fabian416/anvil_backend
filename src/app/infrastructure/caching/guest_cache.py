@@ -28,30 +28,38 @@ class GuestCache:
     # Extended TTL configurations for guest system (in seconds)
     GUEST_TTL_CONFIG = {
         # Hunter AI response caching
-        "hunter:sentiment": 300,           # Sentiment analysis: 5min
-        "hunter:trading_signals": 300,     # Trading signals: 5min
-        "hunter:patterns": 600,            # Pattern detection: 10min
-        "hunter:portfolio": 600,           # Portfolio optimization: 10min
-        "hunter:price_prediction": 300,    # Price predictions: 5min
-        "hunter:risk_signals": 300,        # Risk signals: 5min
-
+        "hunter:sentiment": 300,  # Sentiment analysis: 5min
+        "hunter:trading_signals": 300,  # Trading signals: 5min
+        "hunter:patterns": 600,  # Pattern detection: 10min
+        "hunter:portfolio": 600,  # Portfolio optimization: 10min
+        "hunter:price_prediction": 300,  # Price predictions: 5min
+        "hunter:risk_signals": 300,  # Risk signals: 5min
         # User context and session data
-        "guest:context": 3600,             # User conversation context: 1hr
-        "guest:preferences": 3600,         # Language/token preferences: 1hr
-        "guest:session": 1800,             # Session state: 30min
-
+        "guest:context": 3600,  # User conversation context: 1hr
+        "guest:preferences": 3600,  # Language/token preferences: 1hr
+        "guest:session": 1800,  # Session state: 30min
         # Rate limiting
-        "ratelimit:counter": 3600,         # Rate limit counters: 1hr
-        "ratelimit:blocked": 86400,        # Blocked user cache: 24hr
-
+        "ratelimit:counter": 3600,  # Rate limit counters: 1hr
+        "ratelimit:blocked": 86400,  # Blocked user cache: 24hr
         # Token data (pre-warmed)
-        "token:price": 60,                 # Current prices: 1min
-        "token:metadata": 3600,            # Token metadata: 1hr
-        "token:trending": 300,             # Trending tokens: 5min
+        "token:price": 60,  # Current prices: 1min
+        "token:metadata": 3600,  # Token metadata: 1hr
+        "token:trending": 300,  # Trending tokens: 5min
     }
 
     # Popular tokens to pre-warm on startup
-    POPULAR_TOKENS = ["BTC", "ETH", "SOL", "USDT", "BNB", "USDC", "XRP", "ADA", "DOGE", "MATIC"]
+    POPULAR_TOKENS = [
+        "BTC",
+        "ETH",
+        "SOL",
+        "USDT",
+        "BNB",
+        "USDC",
+        "XRP",
+        "ADA",
+        "DOGE",
+        "MATIC",
+    ]
 
     # Supported languages for cache warming
     SUPPORTED_LANGUAGES = ["en", "es", "pt", "zh"]
@@ -68,10 +76,7 @@ class GuestCache:
     # ========== Hunter AI Response Caching ==========
 
     async def get_hunter_response(
-        self,
-        intent: str,
-        token: str,
-        language: str = "en"
+        self, intent: str, token: str, language: str = "en"
     ) -> Optional[Dict[str, Any]]:
         """
         Get cached Hunter AI response.
@@ -108,7 +113,9 @@ class GuestCache:
         ttl = self.GUEST_TTL_CONFIG.get(ttl_key, 300)  # Default 5min
 
         await self.cache.set(key, response, ttl=ttl)
-        logger.debug(f"Cached Hunter AI response: {intent}/{token}/{language} (TTL: {ttl}s)")
+        logger.debug(
+            f"Cached Hunter AI response: {intent}/{token}/{language} (TTL: {ttl}s)"
+        )
 
     async def invalidate_hunter_response(
         self,
@@ -265,7 +272,9 @@ class GuestCache:
             duration: Block duration in seconds (default 24hr)
         """
         key = self.cache.make_key("ratelimit", "blocked", ip_address)
-        await self.cache.set(key, {"blocked_at": datetime.now(UTC).isoformat()}, ttl=duration)
+        await self.cache.set(
+            key, {"blocked_at": datetime.now(UTC).isoformat()}, ttl=duration
+        )
 
     # ========== Token Data Caching ==========
 

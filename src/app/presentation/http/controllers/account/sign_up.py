@@ -11,13 +11,19 @@ from app.domain.exceptions.user import (
     RoleAssignmentNotPermittedError,
     EmailAlreadyExistsError,
 )
-from app.infrastructure.auth.exceptions import AlreadyAuthenticatedError, AuthenticationError
+from app.infrastructure.auth.exceptions import (
+    AlreadyAuthenticatedError,
+    AuthenticationError,
+)
 from app.infrastructure.auth.handlers.sign_up import (
     SignUpHandler,
     SignUpRequest,
     SignUpResponse,
 )
-from app.domain.exceptions.location import CountryNotFoundError, CityNotFoundInCountryError
+from app.domain.exceptions.location import (
+    CountryNotFoundError,
+    CityNotFoundInCountryError,
+)
 from app.infrastructure.exceptions.gateway import DataMapperError
 from app.presentation.http.errors.callbacks import (
     log_error,

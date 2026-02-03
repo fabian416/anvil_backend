@@ -239,13 +239,11 @@ class BedrockAdapter:
         for tool in tools:
             if tool.get("type") == "function":
                 func = tool.get("function", {})
-                claude_tools.append(
-                    {
-                        "name": func.get("name"),
-                        "description": func.get("description"),
-                        "input_schema": func.get("parameters"),
-                    }
-                )
+                claude_tools.append({
+                    "name": func.get("name"),
+                    "description": func.get("description"),
+                    "input_schema": func.get("parameters"),
+                })
 
         return claude_tools
 

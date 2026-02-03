@@ -1,4 +1,5 @@
 """Get project query."""
+
 from typing import Optional
 from uuid import UUID
 
@@ -9,23 +10,23 @@ from app.domain.projects.ports.project_repository import ProjectRepository
 class GetProject:
     """
     Get a project by ID or slug.
-    
+
     This orchestrates:
     1. Load project from repository
     """
-    
+
     def __init__(
         self,
         repository: ProjectRepository,
     ):
         """
         Initialize interactor.
-        
+
         Args:
             repository: Project repository
         """
         self._repository = repository
-    
+
     async def execute(
         self,
         project_id: Optional[UUID] = None,
@@ -33,14 +34,14 @@ class GetProject:
     ) -> Optional[Project]:
         """
         Execute the query.
-        
+
         Args:
             project_id: Project identifier
             slug: Project slug
-        
+
         Returns:
             Project entity or None if not found
-        
+
         Raises:
             ValueError: If neither project_id nor slug provided
         """

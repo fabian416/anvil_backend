@@ -38,10 +38,10 @@ class SqlaMainTransactionManager(TransactionManager):
     async def rollback(self) -> None:
         """
         Rollback the transaction to clean up session state.
-        
+
         This is a best-effort operation - if it fails, we log the error but don't
         raise an exception to avoid masking the original error that triggered the rollback.
-        
+
         Common cases where rollback might fail:
         - Session is provisioning a new connection (no transaction to rollback)
         - Session is already closed or invalidated
@@ -54,13 +54,13 @@ class SqlaMainTransactionManager(TransactionManager):
                 log.debug("%s Main session.", DB_ROLLBACK_DONE)
             else:
                 log.debug("Rollback skipped - no active transaction. Main session.")
-                
+
         except InvalidRequestError as error:
             # Session is in an invalid state (e.g., provisioning connection)
             # This is expected in some edge cases - just log and continue
             log.warning(
-                "Rollback skipped - session in invalid state. Main session. Error: %s", 
-                error
+                "Rollback skipped - session in invalid state. Main session. Error: %s",
+                error,
             )
         except SQLAlchemyError as error:
             # Other database errors during rollback - log but don't raise

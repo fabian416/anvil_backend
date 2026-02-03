@@ -12,7 +12,9 @@ from unittest.mock import AsyncMock, MagicMock
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
-from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.domain.value_objects.agent_squad.conversation_context import (
+    ConversationContext,
+)
 from app.infrastructure.adapters.agent_squad.agents.chat_agent import ChatAgent
 from app.infrastructure.adapters.agent_squad.agents.hunter_ai_agent import HunterAIAgent
 
@@ -22,16 +24,20 @@ def mock_llm_client():
     """Mock LLM client gateway."""
     client = AsyncMock()
     # Mock both generate and chat methods
-    client.generate = AsyncMock(return_value={
-        "content": "Mocked response",
-        "tokens_used": 100,
-        "model": "gemini-2.0-flash",
-    })
-    client.chat = AsyncMock(return_value={
-        "content": "Mocked response",
-        "tokens_used": 100,
-        "model": "gemini-2.0-flash",
-    })
+    client.generate = AsyncMock(
+        return_value={
+            "content": "Mocked response",
+            "tokens_used": 100,
+            "model": "gemini-2.0-flash",
+        }
+    )
+    client.chat = AsyncMock(
+        return_value={
+            "content": "Mocked response",
+            "tokens_used": 100,
+            "model": "gemini-2.0-flash",
+        }
+    )
     return client
 
 

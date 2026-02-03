@@ -65,5 +65,3 @@ def create_me_router() -> APIRouter:
         return await handler.execute(req)
 
     return router
-
-

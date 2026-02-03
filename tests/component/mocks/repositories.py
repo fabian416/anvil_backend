@@ -99,10 +99,7 @@ class InMemoryConversationRepository:
         Note: Returns deep copies to prevent mutations
         """
         # Filter by user_id
-        user_conversations = [
-            c for c in self._storage.values()
-            if c.user_id == user_id
-        ]
+        user_conversations = [c for c in self._storage.values() if c.user_id == user_id]
 
         # Sort by created_at descending (most recent first)
         user_conversations.sort(
@@ -111,7 +108,7 @@ class InMemoryConversationRepository:
         )
 
         # Apply pagination
-        paginated = user_conversations[offset:offset + limit]
+        paginated = user_conversations[offset : offset + limit]
 
         # Return deep copies
         return [deepcopy(c) for c in paginated]
@@ -262,8 +259,7 @@ class InMemoryMessageRepository:
         """
         # Filter by conversation_id
         conversation_messages = [
-            m for m in self._storage
-            if m.conversation_id == conversation_id
+            m for m in self._storage if m.conversation_id == conversation_id
         ]
 
         # Sort by created_at ascending (chronological order)
@@ -301,7 +297,4 @@ class InMemoryMessageRepository:
         Utility method for test assertions.
         Not part of production interface.
         """
-        return sum(
-            1 for m in self._storage
-            if m.conversation_id == conversation_id
-        )
+        return sum(1 for m in self._storage if m.conversation_id == conversation_id)

@@ -82,7 +82,9 @@ class SourceInfo:
         fetched_at = None
         if data.get("fetched_at"):
             if isinstance(data["fetched_at"], str):
-                fetched_at = datetime.fromisoformat(data["fetched_at"].replace("Z", "+00:00"))
+                fetched_at = datetime.fromisoformat(
+                    data["fetched_at"].replace("Z", "+00:00")
+                )
             else:
                 fetched_at = data["fetched_at"]
 

@@ -26,7 +26,10 @@ from app.domain.value_objects.wallet_address import WalletAddress
 from app.domain.value_objects.auth_provider import AuthProvider
 from app.domain.value_objects.ip_address import IpAddress
 from app.domain.enums.user_role import UserRole
-from app.infrastructure.adapters.constants import DB_QUERY_FAILED, DB_CONSTRAINT_VIOLATION
+from app.infrastructure.adapters.constants import (
+    DB_QUERY_FAILED,
+    DB_CONSTRAINT_VIOLATION,
+)
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.exceptions.gateway import DataMapperError
 from app.infrastructure.persistence_sqla.mappings.user import map_users_table
@@ -50,7 +53,7 @@ class SqlaUserDataMapper(UserCommandGateway):
             password_value = None
             if user.password and user.password.value:
                 password_value = user.password.value.decode("utf-8", errors="ignore")
-            
+
             values = {
                 "email": user.email.value,
                 "first_name": user.first_name.value,
@@ -61,7 +64,9 @@ class SqlaUserDataMapper(UserCommandGateway):
                 "is_verified": user.is_verified.value,
                 "retry_count": user.retry_count.value,
                 "password": password_value,
-                "profile_picture": user.profile_picture.value if user.profile_picture else None,
+                "profile_picture": user.profile_picture.value
+                if user.profile_picture
+                else None,
                 "phone_number": user.phone_number.value if user.phone_number else None,
                 "language": user.language.value,
                 "address": user.address.value if user.address else None,
@@ -70,14 +75,24 @@ class SqlaUserDataMapper(UserCommandGateway):
                 "city_id": user.city_id.value if user.city_id else None,
                 "subscription": user.subscription.value if user.subscription else None,
                 # Privy fields
-                "privy_user_id": user.privy_user_id.value if user.privy_user_id else None,
-                "primary_wallet_address": user.primary_wallet_address.value if user.primary_wallet_address else None,
-                "auth_provider": user.auth_provider.value if user.auth_provider else "email",
+                "privy_user_id": user.privy_user_id.value
+                if user.privy_user_id
+                else None,
+                "primary_wallet_address": user.primary_wallet_address.value
+                if user.primary_wallet_address
+                else None,
+                "auth_provider": user.auth_provider.value
+                if user.auth_provider
+                else "email",
                 # IP tracking fields
                 "last_ip": user.last_ip.value if user.last_ip else None,
-                "registration_ip": user.registration_ip.value if user.registration_ip else None,
+                "registration_ip": user.registration_ip.value
+                if user.registration_ip
+                else None,
             }
-            insert_stmt = UsersTable.insert().values(**values).returning(UsersTable.c.id)
+            insert_stmt = (
+                UsersTable.insert().values(**values).returning(UsersTable.c.id)
+            )
             result = await self._session.execute(insert_stmt)
             new_id = result.scalar_one()
             # Assign generated id back to domain entity if placeholder
@@ -95,7 +110,7 @@ class SqlaUserDataMapper(UserCommandGateway):
         try:
             map_users_table()
             UsersTable = mapping_registry.metadata.tables["users"]  # type: ignore
-            
+
             update_values = {
                 "first_name": user.first_name.value,
                 "last_name": user.last_name.value,
@@ -104,7 +119,9 @@ class SqlaUserDataMapper(UserCommandGateway):
                 "is_blocked": user.is_blocked.value,
                 "is_verified": user.is_verified.value,
                 "retry_count": user.retry_count.value,
-                "profile_picture": user.profile_picture.value if user.profile_picture else None,
+                "profile_picture": user.profile_picture.value
+                if user.profile_picture
+                else None,
                 "phone_number": user.phone_number.value if user.phone_number else None,
                 "language": user.language.value,
                 "address": user.address.value if user.address else None,
@@ -114,22 +131,30 @@ class SqlaUserDataMapper(UserCommandGateway):
                 "last_login": user.last_login.value if user.last_login else None,
                 "updated_at": user.updated_at.value,
                 # Privy fields
-                "privy_user_id": user.privy_user_id.value if user.privy_user_id else None,
-                "primary_wallet_address": user.primary_wallet_address.value if user.primary_wallet_address else None,
-                "auth_provider": user.auth_provider.value if user.auth_provider else None,
+                "privy_user_id": user.privy_user_id.value
+                if user.privy_user_id
+                else None,
+                "primary_wallet_address": user.primary_wallet_address.value
+                if user.primary_wallet_address
+                else None,
+                "auth_provider": user.auth_provider.value
+                if user.auth_provider
+                else None,
                 # IP tracking - only update last_ip (registration_ip is immutable)
                 "last_ip": user.last_ip.value if user.last_ip else None,
             }
-            
+
             # Only update password if it's a valid bcrypt hash (starts with $2)
             # This prevents overwriting valid passwords with empty ones from Privy users
             if user.password and user.password.value:
                 password_str = user.password.value.decode("utf-8", errors="ignore")
                 if password_str.startswith("$2"):  # Valid bcrypt hash
                     update_values["password"] = password_str
-            
+
             await self._session.execute(
-                UsersTable.update().where(UsersTable.c.id == user.id_.value).values(**update_values)
+                UsersTable.update()
+                .where(UsersTable.c.id == user.id_.value)
+                .values(**update_values)
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
@@ -140,7 +165,9 @@ class SqlaUserDataMapper(UserCommandGateway):
         """
         try:
             UsersTable = mapping_registry.metadata.tables["users"]  # type: ignore
-            select_stmt: Select = select(UsersTable).where(UsersTable.c.id == user_id.value)
+            select_stmt: Select = select(UsersTable).where(
+                UsersTable.c.id == user_id.value
+            )
             row = (await self._session.execute(select_stmt)).mappings().first()
             return self._row_to_user(row) if row else None
         except SQLAlchemyError as error:
@@ -156,7 +183,9 @@ class SqlaUserDataMapper(UserCommandGateway):
         """
         try:
             UsersTable = mapping_registry.metadata.tables["users"]  # type: ignore
-            select_stmt: Select = select(UsersTable).where(UsersTable.c.email == email.value)
+            select_stmt: Select = select(UsersTable).where(
+                UsersTable.c.email == email.value
+            )
             if for_update:
                 select_stmt = select_stmt.with_for_update()
             row = (await self._session.execute(select_stmt)).mappings().first()
@@ -171,7 +200,7 @@ class SqlaUserDataMapper(UserCommandGateway):
     ) -> User | None:
         """
         Find user by Privy user ID.
-        
+
         :raises DataMapperError:
         """
         try:
@@ -193,7 +222,7 @@ class SqlaUserDataMapper(UserCommandGateway):
     ) -> User | None:
         """
         Find user by primary wallet address.
-        
+
         :raises DataMapperError:
         """
         try:
@@ -212,12 +241,12 @@ class SqlaUserDataMapper(UserCommandGateway):
     def _row_to_user(row: dict | None) -> User | None:
         if not row:
             return None
-        
+
         # Handle password - it can be None for Privy-only users
         password_value = b""
         if row.get("password"):
             password_value = str(row["password"]).encode("utf-8")
-        
+
         # row is a Mapping with keys matching users table columns
         return User(
             id_=UserId(int(row["id"])),
@@ -233,18 +262,38 @@ class SqlaUserDataMapper(UserCommandGateway):
             created_at=CreatedAt(row["created_at"]),
             updated_at=UpdatedAt(row["updated_at"]),
             last_login=LastLogin(row["last_login"]) if row.get("last_login") else None,
-            profile_picture=ProfilePicture(row["profile_picture"]) if row.get("profile_picture") else None,
-            phone_number=PhoneNumber(row["phone_number"]) if row.get("phone_number") else None,
-            language=Language(str(row["language"])) if row.get("language") else Language("en"),
+            profile_picture=ProfilePicture(row["profile_picture"])
+            if row.get("profile_picture")
+            else None,
+            phone_number=PhoneNumber(row["phone_number"])
+            if row.get("phone_number")
+            else None,
+            language=Language(str(row["language"]))
+            if row.get("language")
+            else Language("en"),
             address=Address(row["address"]) if row.get("address") else None,
-            postal_code=PostalCode(row["postal_code"]) if row.get("postal_code") else None,
-            country_id=CountryId(int(row["country_id"])) if row.get("country_id") is not None else None,
-            city_id=CityId(int(row["city_id"])) if row.get("city_id") is not None else None,
-            subscription=Subscription(row["subscription"]) if row.get("subscription") else None,
+            postal_code=PostalCode(row["postal_code"])
+            if row.get("postal_code")
+            else None,
+            country_id=CountryId(int(row["country_id"]))
+            if row.get("country_id") is not None
+            else None,
+            city_id=CityId(int(row["city_id"]))
+            if row.get("city_id") is not None
+            else None,
+            subscription=Subscription(row["subscription"])
+            if row.get("subscription")
+            else None,
             # Privy fields
-            privy_user_id=PrivyUserId(row["privy_user_id"]) if row.get("privy_user_id") else None,
-            primary_wallet_address=WalletAddress(row["primary_wallet_address"]) if row.get("primary_wallet_address") else None,
-            auth_provider=AuthProvider(row["auth_provider"]) if row.get("auth_provider") else None,
+            privy_user_id=PrivyUserId(row["privy_user_id"])
+            if row.get("privy_user_id")
+            else None,
+            primary_wallet_address=WalletAddress(row["primary_wallet_address"])
+            if row.get("primary_wallet_address")
+            else None,
+            auth_provider=AuthProvider(row["auth_provider"])
+            if row.get("auth_provider")
+            else None,
             # IP tracking fields
             last_ip=IpAddress.from_optional(row.get("last_ip")),
             registration_ip=IpAddress.from_optional(row.get("registration_ip")),

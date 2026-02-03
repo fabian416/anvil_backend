@@ -33,7 +33,11 @@ class IntentDetectionStrategy:
         Returns:
             Custom validation prompt for intent detection
         """
-        expected_intents_text = ', '.join(test_metadata.expected_intents) if test_metadata.expected_intents else 'unknown'
+        expected_intents_text = (
+            ", ".join(test_metadata.expected_intents)
+            if test_metadata.expected_intents
+            else "unknown"
+        )
         assertions_text = self._format_assertions(test_metadata.assertions)
 
         return f"""# Validation Task: {test_metadata.test_name}
@@ -149,7 +153,7 @@ Verdict Guidelines:
             assertion_desc = self._get_assertion_description(assertion)
             lines.append(f"{i}. **{assertion_desc}**: `{assertion.full_assertion}`")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def _get_assertion_description(self, assertion: ExtractedAssertion) -> str:
         """Get human-readable description of assertion type.
@@ -169,4 +173,6 @@ Verdict Guidelines:
             "generic": "Generic Assertion",
         }
 
-        return type_descriptions.get(assertion.assertion_type, assertion.assertion_type.replace("_", " ").title())
+        return type_descriptions.get(
+            assertion.assertion_type, assertion.assertion_type.replace("_", " ").title()
+        )

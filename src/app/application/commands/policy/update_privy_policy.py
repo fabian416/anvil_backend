@@ -65,11 +65,15 @@ class UpdatePrivyPolicy:
         self._privy_client = privy_client
         self._session = session
 
-    async def execute(self, request: UpdatePrivyPolicyRequest) -> UpdatePrivyPolicyResult:
+    async def execute(
+        self, request: UpdatePrivyPolicyRequest
+    ) -> UpdatePrivyPolicyResult:
         current_user = await self._current_user_service.get_current_user()
         authorize(
             CanManageRole(),
-            context=RoleManagementContext(subject=current_user, target_role=UserRole.USER),
+            context=RoleManagementContext(
+                subject=current_user, target_role=UserRole.USER
+            ),
         )
 
         try:
@@ -80,7 +84,11 @@ class UpdatePrivyPolicy:
                 authorization_signature=request.authorization_signature,
             )
             policy = PrivyPolicyDTO.from_api(data)
-            actor_user_id = getattr(current_user, "id_", None).value if getattr(current_user, "id_", None) else None
+            actor_user_id = (
+                getattr(current_user, "id_", None).value
+                if getattr(current_user, "id_", None)
+                else None
+            )
 
             repo = PolicyRepositorySqla(self._session)
             await repo.upsert_from_privy(
@@ -98,7 +106,8 @@ class UpdatePrivyPolicy:
         except PrivyClientError as e:
             raise PolicyUpdateError(str(e)) from e
         except Exception as e:
-            if isinstance(e, (AuthorizationError, PolicyNotFoundError, PolicyUpdateError)):
+            if isinstance(
+                e, (AuthorizationError, PolicyNotFoundError, PolicyUpdateError)
+            ):
                 raise
             raise PolicyUpdateError(str(e)) from e
-

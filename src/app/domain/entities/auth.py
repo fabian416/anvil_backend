@@ -15,6 +15,7 @@ class AuthContext:
     """
     Represents the authentication context for a request.
     """
+
     access_token: AccessToken
     user_email: Email
     user_role: UserRole
@@ -26,6 +27,7 @@ class RoleChangeRequest:
     """
     Represents a request to change a user's role.
     """
+
     target_email: Email
     new_role: UserRole
     requested_by: Email

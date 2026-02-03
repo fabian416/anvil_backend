@@ -3,6 +3,7 @@ Retry telemetry collector.
 
 Tracks retry attempts, circuit breaker state changes, and service overrides.
 """
+
 from typing import Dict, Any, Optional
 from uuid import UUID
 from datetime import datetime
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class RetryEventType(Enum):
     """Types of retry events."""
+
     ATTEMPT_START = "attempt_start"
     ATTEMPT_SUCCESS = "attempt_success"
     ATTEMPT_FAILURE = "attempt_failure"
@@ -24,24 +26,24 @@ class RetryEventType(Enum):
 class RetryTelemetryCollector:
     """
     Telemetry collector for retry system.
-    
+
     Tracks:
     - Retry attempts and outcomes
     - Circuit breaker state changes
     - Service overrides
     - Performance metrics
     """
-    
+
     def __init__(self, repository: Optional[Any] = None):
         """
         Initialize telemetry collector.
-        
+
         Args:
             repository: Repository for persisting telemetry data (optional)
         """
         self.repository = repository
         self.enabled = repository is not None
-    
+
     async def record_attempt_start(
         self,
         service_name: str,
@@ -50,7 +52,7 @@ class RetryTelemetryCollector:
     ) -> None:
         """
         Record the start of a retry attempt.
-        
+
         Args:
             service_name: Name of the service
             attempt_number: Attempt number (0 = first attempt)
@@ -58,7 +60,7 @@ class RetryTelemetryCollector:
         """
         if not self.enabled:
             return
-        
+
         try:
             await self.repository.create_attempt(
                 service_name=service_name,
@@ -68,7 +70,7 @@ class RetryTelemetryCollector:
             )
         except Exception as e:
             logger.error(f"Failed to record attempt start: {e}")
-    
+
     async def record_success(
         self,
         service_name: str,
@@ -78,7 +80,7 @@ class RetryTelemetryCollector:
     ) -> None:
         """
         Record a successful attempt.
-        
+
         Args:
             service_name: Name of the service
             attempt_number: Attempt number
@@ -87,7 +89,7 @@ class RetryTelemetryCollector:
         """
         if not self.enabled:
             return
-        
+
         try:
             await self.repository.create_attempt(
                 service_name=service_name,
@@ -96,12 +98,12 @@ class RetryTelemetryCollector:
                 request_context=context or {},
                 success=True,
             )
-            
+
             # Update daily aggregate
             await self.repository.increment_success(service_name, latency_ms)
         except Exception as e:
             logger.error(f"Failed to record success: {e}")
-    
+
     async def record_failure(
         self,
         service_name: str,
@@ -112,7 +114,7 @@ class RetryTelemetryCollector:
     ) -> None:
         """
         Record a failed attempt.
-        
+
         Args:
             service_name: Name of the service
             attempt_number: Attempt number
@@ -122,7 +124,7 @@ class RetryTelemetryCollector:
         """
         if not self.enabled:
             return
-        
+
         try:
             await self.repository.create_attempt(
                 service_name=service_name,
@@ -132,12 +134,12 @@ class RetryTelemetryCollector:
                 request_context=context or {},
                 success=False,
             )
-            
+
             # Update daily aggregate
             await self.repository.increment_failure(service_name)
         except Exception as e:
             logger.error(f"Failed to record failure: {e}")
-    
+
     async def record_circuit_state_change(
         self,
         service_name: str,
@@ -149,7 +151,7 @@ class RetryTelemetryCollector:
     ) -> None:
         """
         Record a circuit breaker state change.
-        
+
         Args:
             service_name: Name of the service
             from_state: Previous state (CLOSED, OPEN, HALF_OPEN)
@@ -160,7 +162,7 @@ class RetryTelemetryCollector:
         """
         if not self.enabled:
             return
-        
+
         try:
             await self.repository.create_circuit_event(
                 service_name=service_name,
@@ -170,13 +172,13 @@ class RetryTelemetryCollector:
                 failure_count=failure_count,
                 success_count=success_count,
             )
-            
+
             # If opening circuit, increment aggregate
             if to_state == "OPEN":
                 await self.repository.increment_circuit_open(service_name)
         except Exception as e:
             logger.error(f"Failed to record circuit state change: {e}")
-    
+
     async def record_service_override(
         self,
         service_name: str,
@@ -187,7 +189,7 @@ class RetryTelemetryCollector:
     ) -> None:
         """
         Record a manual service override.
-        
+
         Args:
             service_name: Name of the service
             action: 'enable' or 'disable'
@@ -197,7 +199,7 @@ class RetryTelemetryCollector:
         """
         if not self.enabled:
             return
-        
+
         try:
             await self.repository.create_override_event(
                 service_name=service_name,
@@ -208,7 +210,7 @@ class RetryTelemetryCollector:
             )
         except Exception as e:
             logger.error(f"Failed to record service override: {e}")
-    
+
     async def get_service_metrics(
         self,
         service_name: str,
@@ -216,17 +218,17 @@ class RetryTelemetryCollector:
     ) -> Dict[str, Any]:
         """
         Get aggregated metrics for a service.
-        
+
         Args:
             service_name: Name of the service
             days: Number of days to retrieve
-        
+
         Returns:
             Dictionary with metrics
         """
         if not self.enabled:
             return {}
-        
+
         try:
             return await self.repository.get_aggregated_metrics(
                 service_name=service_name,

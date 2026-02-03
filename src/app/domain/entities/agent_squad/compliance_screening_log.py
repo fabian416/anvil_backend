@@ -16,27 +16,29 @@ from app.domain.value_objects.created_at import CreatedAt
 @dataclass(eq=False, kw_only=True)
 class ComplianceScreeningLogId:
     """Compliance Screening Log identifier."""
+
     value: uuid.UUID
-    
+
     def __init__(self, value: uuid.UUID | str):
         if isinstance(value, str):
             value = uuid.UUID(value)
-        object.__setattr__(self, 'value', value)
-    
+        object.__setattr__(self, "value", value)
+
     def __hash__(self) -> int:
         return hash(self.value)
-    
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ComplianceScreeningLogId):
             return False
         return self.value == other.value
-    
+
     def __str__(self) -> str:
         return str(self.value)
 
 
 class ScreeningResult:
     """Screening result enum."""
+
     APPROVED = "approved"
     BLOCKED = "blocked"
     REVIEW = "review"
@@ -44,12 +46,14 @@ class ScreeningResult:
 
 class OFACStatus:
     """OFAC sanction status."""
+
     CLEAR = "clear"
     SANCTIONED = "sanctioned"
 
 
 class PEPStatus:
     """Politically Exposed Person status."""
+
     CLEAR = "clear"
     DETECTED = "detected"
 
@@ -58,7 +62,7 @@ class PEPStatus:
 class ComplianceScreeningLog(Entity[ComplianceScreeningLogId]):
     """
     Compliance screening log: AML/KYC screening results.
-    
+
     Enterprise feature for regulatory compliance:
     - OFAC sanction checks
     - PEP (Politically Exposed Person) detection
@@ -66,6 +70,7 @@ class ComplianceScreeningLog(Entity[ComplianceScreeningLogId]):
     - High-risk source detection
     - Risk scoring (0-100)
     """
+
     user_id: UserId
     wallet_address: WalletAddress
     risk_score: int  # 0-100 (higher = riskier)
@@ -76,7 +81,7 @@ class ComplianceScreeningLog(Entity[ComplianceScreeningLogId]):
     screening_result: str  # "approved", "blocked", "review"
     screening_data: dict[str, Any]  # Full Chainalysis/TRM Labs response
     created_at: CreatedAt
-    
+
     @classmethod
     def create(
         cls,
@@ -104,42 +109,42 @@ class ComplianceScreeningLog(Entity[ComplianceScreeningLogId]):
             screening_data=screening_data,
             created_at=CreatedAt.now(),
         )
-    
+
     @property
     def is_high_risk(self) -> bool:
         """Check if wallet is high-risk (score >= 70)."""
         return self.risk_score >= 70
-    
+
     @property
     def is_sanctioned(self) -> bool:
         """Check if wallet is on OFAC sanction list."""
         return self.ofac_status == OFACStatus.SANCTIONED
-    
+
     @property
     def is_pep(self) -> bool:
         """Check if wallet owner is a Politically Exposed Person."""
         return self.pep_status == PEPStatus.DETECTED
-    
+
     @property
     def has_mixer_exposure(self) -> bool:
         """Check if wallet has significant mixer exposure (>10%)."""
         return self.mixer_exposure_pct > 10.0
-    
+
     @property
     def is_approved(self) -> bool:
         """Check if screening result is approved."""
         return self.screening_result == ScreeningResult.APPROVED
-    
+
     @property
     def is_blocked(self) -> bool:
         """Check if screening result is blocked."""
         return self.screening_result == ScreeningResult.BLOCKED
-    
+
     @property
     def requires_manual_review(self) -> bool:
         """Check if screening requires manual compliance review."""
         return self.screening_result == ScreeningResult.REVIEW
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary for storage."""
         return {

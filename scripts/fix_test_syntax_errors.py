@@ -5,6 +5,7 @@ Fix syntax errors in test files caused by misplaced LLM validation code.
 The issue: LLM validation code was incorrectly placed inside function parameter
 lists instead of being in the function body. This script removes those blocks.
 """
+
 import re
 import sys
 from pathlib import Path
@@ -60,10 +61,10 @@ def fix_file(filepath: Path) -> tuple[bool, str]:
         # 4. Another parameter follows
 
         # Use regex to find and remove the misplaced validation blocks
-        pattern = r'\n\n    # Optional LLM semantic validation.*?\n    if llm_validator\.enabled:.*?(?=\n    \w+:)'
+        pattern = r"\n\n    # Optional LLM semantic validation.*?\n    if llm_validator\.enabled:.*?(?=\n    \w+:)"
 
         # Remove all occurrences
-        content = re.sub(pattern, '', content, flags=re.DOTALL)
+        content = re.sub(pattern, "", content, flags=re.DOTALL)
 
         if content == original_content:
             return False, "No changes needed"
@@ -73,7 +74,7 @@ def fix_file(filepath: Path) -> tuple[bool, str]:
 
         # Try to compile to verify
         try:
-            compile(content, str(filepath), 'exec')
+            compile(content, str(filepath), "exec")
             return True, "Fixed successfully"
         except SyntaxError as e:
             # Restore original if compilation fails

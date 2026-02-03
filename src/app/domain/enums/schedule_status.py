@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class ScheduleStatus(Enum):
     ACTIVE = "active"
     PAUSED = "paused"

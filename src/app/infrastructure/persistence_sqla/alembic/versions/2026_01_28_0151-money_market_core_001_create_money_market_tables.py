@@ -44,11 +44,21 @@ def upgrade() -> None:
     op.execute("DROP TYPE IF EXISTS money_market_notification_channel_enum CASCADE;")
 
     # Create ENUMs
-    op.execute("CREATE TYPE money_market_protocol_enum AS ENUM ('aave_v3', 'compound_v3', 'morpho');")
-    op.execute("CREATE TYPE money_market_data_source_enum AS ENUM ('on_chain', 'api', 'graph', 'estimated');")
-    op.execute("CREATE TYPE money_market_comparison_type_enum AS ENUM ('supply', 'borrow', 'both');")
-    op.execute("CREATE TYPE money_market_alert_condition_enum AS ENUM ('rate_above', 'rate_below', 'rate_change_percent', 'best_rate_available');")
-    op.execute("CREATE TYPE money_market_notification_channel_enum AS ENUM ('email', 'push', 'in_app');")
+    op.execute(
+        "CREATE TYPE money_market_protocol_enum AS ENUM ('aave_v3', 'compound_v3', 'morpho');"
+    )
+    op.execute(
+        "CREATE TYPE money_market_data_source_enum AS ENUM ('on_chain', 'api', 'graph', 'estimated');"
+    )
+    op.execute(
+        "CREATE TYPE money_market_comparison_type_enum AS ENUM ('supply', 'borrow', 'both');"
+    )
+    op.execute(
+        "CREATE TYPE money_market_alert_condition_enum AS ENUM ('rate_above', 'rate_below', 'rate_change_percent', 'best_rate_available');"
+    )
+    op.execute(
+        "CREATE TYPE money_market_notification_channel_enum AS ENUM ('email', 'push', 'in_app');"
+    )
 
     # =========================================================================
     # TABLE 1: money_market_protocols (Protocol Registry)
@@ -340,7 +350,7 @@ def upgrade() -> None:
     )
 
     # CRITICAL INDEXES for money_market_rates (Hot Path Optimization)
-    
+
     # 1. Partial index for active cache entries (WHERE valid_until > NOW())
     op.create_index(
         "idx_money_market_rates_active_cache",
@@ -801,7 +811,9 @@ def upgrade() -> None:
         "idx_money_market_rate_alerts_ready",
         "money_market_rate_alerts",
         ["asset_symbol", "chain", "condition"],
-        postgresql_where=sa.text("is_active = true AND (last_triggered_at IS NULL OR last_triggered_at < NOW() - (cooldown_minutes || ' minutes')::INTERVAL)"),
+        postgresql_where=sa.text(
+            "is_active = true AND (last_triggered_at IS NULL OR last_triggered_at < NOW() - (cooldown_minutes || ' minutes')::INTERVAL)"
+        ),
     )
 
     # =========================================================================

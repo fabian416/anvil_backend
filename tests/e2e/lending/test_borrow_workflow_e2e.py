@@ -38,7 +38,7 @@ class TestBorrowWorkflowE2E:
     ):
         """
         Test complete successful borrow flow with SAFE health factor.
-        
+
         Flow:
         1. User initiates borrow via LENDING_BORROW shortcut
         2. BorrowInteractor validates health factor (SAFE: HF > 2.0)
@@ -49,7 +49,7 @@ class TestBorrowWorkflowE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = BorrowCommand(
             user_id=user_id,
             protocol="aave",
@@ -59,7 +59,7 @@ class TestBorrowWorkflowE2E:
             rate_mode="variable",
             min_health_factor=Decimal("1.5"),
         )
-        
+
         # Mock SAFE health factor validation
         safe_hf_result = HealthFactorResult(
             current_hf=Decimal("3.5"),
@@ -75,7 +75,7 @@ class TestBorrowWorkflowE2E:
             is_safe=True,
         )
         mock_hf_validator.validate_borrow.return_value = safe_hf_result
-        
+
         # Mock Aave market data
         mock_market_data = [
             MagicMock(
@@ -86,11 +86,11 @@ class TestBorrowWorkflowE2E:
             )
         ]
         mock_aave_gateway.get_market_data.return_value = mock_market_data
-        
+
         # Mock repository
         expected_position_id = uuid4()
         mock_lending_repository.save_borrow_position.return_value = expected_position_id
-        
+
         # Create interactor
         interactor = BorrowInteractor(
             hf_validator=mock_hf_validator,
@@ -98,15 +98,15 @@ class TestBorrowWorkflowE2E:
             aave_gateway=mock_aave_gateway,
             repository=mock_lending_repository,
         )
-        
+
         # ACT
         result = await interactor.execute(
             command=command,
             wallet_address=wallet_address,
         )
-        
+
         # ASSERT
-        
+
         # 1. Health factor was validated FIRST
         mock_hf_validator.validate_borrow.assert_called_once_with(
             wallet=wallet_address,
@@ -114,10 +114,10 @@ class TestBorrowWorkflowE2E:
             borrow_amount=Decimal("2000.0"),
             chain="ethereum",
         )
-        
+
         # 2. Aave market data was fetched
         mock_aave_gateway.get_market_data.assert_called_once_with(chain="ethereum")
-        
+
         # 3. Position was saved with health factor tracking
         mock_lending_repository.save_borrow_position.assert_called_once()
         call_args = mock_lending_repository.save_borrow_position.call_args[1]
@@ -128,7 +128,7 @@ class TestBorrowWorkflowE2E:
         assert call_args["health_factor_before"] == "3.5"
         assert call_args["health_factor_after"] == "2.8"
         assert call_args["rate_mode"] == "variable"
-        
+
         # 4. Result has execute_data
         assert result.position_id == expected_position_id
         assert result.status == "awaiting_signature"
@@ -136,7 +136,7 @@ class TestBorrowWorkflowE2E:
         assert result.health_factor_projected == Decimal("2.8")
         assert result.risk_level == "SAFE"
         assert result.borrow_apy == Decimal("6.5")
-        
+
         # 5. execute_data structure
         execute_data = result.execute_data
         assert execute_data["action_type"] == "borrow"
@@ -158,14 +158,14 @@ class TestBorrowWorkflowE2E:
     ):
         """
         Test borrow is BLOCKED when projected HF < min_health_factor.
-        
+
         CRITICAL: User should NEVER see approval UI for unsafe borrows.
         This prevents users from accidentally liquidating themselves.
         """
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = BorrowCommand(
             user_id=user_id,
             protocol="aave",
@@ -175,7 +175,7 @@ class TestBorrowWorkflowE2E:
             rate_mode="variable",
             min_health_factor=Decimal("1.5"),  # Safety threshold
         )
-        
+
         # Mock DANGER health factor (projected HF = 1.1 < 1.5)
         danger_hf_result = HealthFactorResult(
             current_hf=Decimal("2.0"),
@@ -191,25 +191,25 @@ class TestBorrowWorkflowE2E:
             is_safe=False,
         )
         mock_hf_validator.validate_borrow.return_value = danger_hf_result
-        
+
         interactor = BorrowInteractor(
             hf_validator=mock_hf_validator,
             balance_checker=mock_balance_checker,
             aave_gateway=mock_aave_gateway,
             repository=mock_lending_repository,
         )
-        
+
         # ACT & ASSERT: Should raise UnsafeBorrowError
         with pytest.raises(UnsafeBorrowError) as exc_info:
             await interactor.execute(command=command, wallet_address=wallet_address)
-        
+
         # Verify exception contains health factor details
         assert exc_info.value.validation_result.projected_hf == Decimal("1.1")
         assert exc_info.value.validation_result.level == HealthFactorLevel.DANGER
-        
+
         # CRITICAL: NO execute_data was generated
         mock_aave_gateway.get_market_data.assert_not_called()
-        
+
         # CRITICAL: NO database write occurred
         mock_lending_repository.save_borrow_position.assert_not_called()
 
@@ -226,7 +226,7 @@ class TestBorrowWorkflowE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = BorrowCommand(
             user_id=user_id,
             protocol="aave",
@@ -236,7 +236,7 @@ class TestBorrowWorkflowE2E:
             rate_mode="variable",
             min_health_factor=Decimal("1.2"),
         )
-        
+
         # Mock CRITICAL health factor (projected HF = 1.05)
         critical_hf_result = HealthFactorResult(
             current_hf=Decimal("1.8"),
@@ -252,18 +252,18 @@ class TestBorrowWorkflowE2E:
             is_safe=False,
         )
         mock_hf_validator.validate_borrow.return_value = critical_hf_result
-        
+
         interactor = BorrowInteractor(
             hf_validator=mock_hf_validator,
             balance_checker=mock_balance_checker,
             aave_gateway=mock_aave_gateway,
             repository=mock_lending_repository,
         )
-        
+
         # ACT & ASSERT
         with pytest.raises(UnsafeBorrowError):
             await interactor.execute(command=command, wallet_address=wallet_address)
-        
+
         # No execute_data or database write
         mock_aave_gateway.get_market_data.assert_not_called()
         mock_lending_repository.save_borrow_position.assert_not_called()
@@ -279,14 +279,14 @@ class TestBorrowWorkflowE2E:
     ):
         """
         Test borrow ALLOWED when HF is CAUTION but above min threshold.
-        
+
         CAUTION (1.5 < HF < 2.0) is allowed if HF >= min_health_factor.
         User gets warning but can proceed.
         """
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = BorrowCommand(
             user_id=user_id,
             protocol="aave",
@@ -296,7 +296,7 @@ class TestBorrowWorkflowE2E:
             rate_mode="variable",
             min_health_factor=Decimal("1.5"),  # User accepts CAUTION level
         )
-        
+
         # Mock CAUTION health factor (projected HF = 1.7 >= 1.5)
         caution_hf_result = HealthFactorResult(
             current_hf=Decimal("2.5"),
@@ -312,7 +312,7 @@ class TestBorrowWorkflowE2E:
             is_safe=True,  # Safe enough given user's threshold
         )
         mock_hf_validator.validate_borrow.return_value = caution_hf_result
-        
+
         # Mock Aave data
         mock_market_data = [
             MagicMock(
@@ -322,26 +322,28 @@ class TestBorrowWorkflowE2E:
             )
         ]
         mock_aave_gateway.get_market_data.return_value = mock_market_data
-        
+
         expected_position_id = uuid4()
         mock_lending_repository.save_borrow_position.return_value = expected_position_id
-        
+
         interactor = BorrowInteractor(
             hf_validator=mock_hf_validator,
             balance_checker=mock_balance_checker,
             aave_gateway=mock_aave_gateway,
             repository=mock_lending_repository,
         )
-        
+
         # ACT
-        result = await interactor.execute(command=command, wallet_address=wallet_address)
-        
+        result = await interactor.execute(
+            command=command, wallet_address=wallet_address
+        )
+
         # ASSERT: Borrow allowed but with warning
         assert result.status == "awaiting_signature"
         assert result.risk_level == "CAUTION"
         assert result.health_factor_projected == Decimal("1.7")
         assert "⚠️" in result.message or "CAUTION" in result.message
-        
+
         # execute_data and database write occurred
         mock_aave_gateway.get_market_data.assert_called_once()
         mock_lending_repository.save_borrow_position.assert_called_once()
@@ -359,7 +361,7 @@ class TestBorrowWorkflowE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = BorrowCommand(
             user_id=user_id,
             protocol="aave",
@@ -369,7 +371,7 @@ class TestBorrowWorkflowE2E:
             rate_mode="variable",
             min_health_factor=Decimal("1.5"),
         )
-        
+
         # Mock validation result with NO collateral
         no_collateral_result = HealthFactorResult(
             current_hf=Decimal("inf"),  # No debt yet
@@ -385,18 +387,18 @@ class TestBorrowWorkflowE2E:
             is_safe=False,
         )
         mock_hf_validator.validate_borrow.return_value = no_collateral_result
-        
+
         interactor = BorrowInteractor(
             hf_validator=mock_hf_validator,
             balance_checker=mock_balance_checker,
             aave_gateway=mock_aave_gateway,
             repository=mock_lending_repository,
         )
-        
+
         # ACT & ASSERT: Should raise InsufficientCollateralError
         with pytest.raises(InsufficientCollateralError) as exc_info:
             await interactor.execute(command=command, wallet_address=wallet_address)
-        
+
         assert exc_info.value.available_usd == Decimal("0")
 
     @pytest.mark.asyncio
@@ -412,7 +414,7 @@ class TestBorrowWorkflowE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = BorrowCommand(
             user_id=user_id,
             protocol="aave",
@@ -422,7 +424,7 @@ class TestBorrowWorkflowE2E:
             rate_mode="stable",  # STABLE rate mode
             min_health_factor=Decimal("1.5"),
         )
-        
+
         # Mock safe validation
         safe_hf_result = HealthFactorResult(
             current_hf=Decimal("5.0"),
@@ -438,7 +440,7 @@ class TestBorrowWorkflowE2E:
             is_safe=True,
         )
         mock_hf_validator.validate_borrow.return_value = safe_hf_result
-        
+
         # Mock market data with different APYs
         mock_market_data = [
             MagicMock(
@@ -449,20 +451,22 @@ class TestBorrowWorkflowE2E:
             )
         ]
         mock_aave_gateway.get_market_data.return_value = mock_market_data
-        
+
         expected_position_id = uuid4()
         mock_lending_repository.save_borrow_position.return_value = expected_position_id
-        
+
         interactor = BorrowInteractor(
             hf_validator=mock_hf_validator,
             balance_checker=mock_balance_checker,
             aave_gateway=mock_aave_gateway,
             repository=mock_lending_repository,
         )
-        
+
         # ACT
-        result = await interactor.execute(command=command, wallet_address=wallet_address)
-        
+        result = await interactor.execute(
+            command=command, wallet_address=wallet_address
+        )
+
         # ASSERT: Uses stable_borrow_apy
         assert result.borrow_apy == Decimal("7.0")  # Stable rate, not variable
         assert result.execute_data["rate_mode"] == "stable"
@@ -471,6 +475,7 @@ class TestBorrowWorkflowE2E:
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def test_user_context():

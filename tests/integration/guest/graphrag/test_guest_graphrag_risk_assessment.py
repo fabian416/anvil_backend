@@ -16,7 +16,7 @@ class TestGuestGraphRAGRiskAssessment:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What are the risks of using Aave?", "language": "en"}
+            json={"content": "What are the risks of using Aave?", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -32,7 +32,11 @@ class TestGuestGraphRAGRiskAssessment:
         # Should have enrichment
         assert "enrichment" in data
         enrichment = data["enrichment"]
-        assert "risk_score" in enrichment or "risks" in enrichment or "assessment" in enrichment
+        assert (
+            "risk_score" in enrichment
+            or "risks" in enrichment
+            or "assessment" in enrichment
+        )
 
         # Guests can access without registration
         assert data["registration_required"]["required"] is False
@@ -43,7 +47,7 @@ class TestGuestGraphRAGRiskAssessment:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "assess risk for Compound protocol", "language": "en"}
+            json={"content": "assess risk for Compound protocol", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -64,7 +68,7 @@ class TestGuestGraphRAGRiskAssessment:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "security analysis of Morpho", "language": "en"}
+            json={"content": "security analysis of Morpho", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -73,10 +77,20 @@ class TestGuestGraphRAGRiskAssessment:
         content = data["agent_message"]["content"]
 
         # Should have risk categories
-        assert "risks" in enrichment or "categories" in enrichment or "assessment" in enrichment
+        assert (
+            "risks" in enrichment
+            or "categories" in enrichment
+            or "assessment" in enrichment
+        )
 
         # Should mention risk types
-        risk_types = ["smart contract", "audit", "centralization", "liquidity", "oracle"]
+        risk_types = [
+            "smart contract",
+            "audit",
+            "centralization",
+            "liquidity",
+            "oracle",
+        ]
         assert any(risk_type in content.lower() for risk_type in risk_types)
 
     @pytest.mark.asyncio
@@ -88,7 +102,7 @@ class TestGuestGraphRAGRiskAssessment:
         for protocol in protocols:
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={"content": f"risk assessment for {protocol}", "language": "en"}
+                json={"content": f"risk assessment for {protocol}", "language": "en"},
             )
             assert response.status_code == 200
             data = response.json()
@@ -106,7 +120,7 @@ class TestGuestGraphRAGRiskAssessment:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "is Aave audited and safe?", "language": "en"}
+            json={"content": "is Aave audited and safe?", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -115,7 +129,11 @@ class TestGuestGraphRAGRiskAssessment:
         content = data["agent_message"]["content"]
 
         # Should have audit information
-        assert "audits" in enrichment or "audit_history" in enrichment or "assessment" in enrichment
+        assert (
+            "audits" in enrichment
+            or "audit_history" in enrichment
+            or "assessment" in enrichment
+        )
 
         # Should mention audits
         audit_keywords = ["audit", "audited", "security review", "verified"]
@@ -127,7 +145,7 @@ class TestGuestGraphRAGRiskAssessment:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "has Compound been hacked?", "language": "en"}
+            json={"content": "has Compound been hacked?", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -136,7 +154,11 @@ class TestGuestGraphRAGRiskAssessment:
         content = data["agent_message"]["content"]
 
         # Should have incident history
-        assert "exploits" in enrichment or "incidents" in enrichment or "assessment" in enrichment
+        assert (
+            "exploits" in enrichment
+            or "incidents" in enrichment
+            or "assessment" in enrichment
+        )
 
         # Should mention security history
         security_keywords = ["hack", "exploit", "incident", "vulnerability", "security"]
@@ -148,7 +170,7 @@ class TestGuestGraphRAGRiskAssessment:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "risk analysis for Morpho protocol", "language": "en"}
+            json={"content": "risk analysis for Morpho protocol", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -169,7 +191,7 @@ class TestGuestGraphRAGRiskAssessment:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "how safe is Uniswap?", "language": "en"}
+            json={"content": "how safe is Uniswap?", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -178,10 +200,20 @@ class TestGuestGraphRAGRiskAssessment:
         content = data["agent_message"]["content"]
 
         # Should have recommendations
-        assert "recommendations" in enrichment or "suggestions" in enrichment or "assessment" in enrichment
+        assert (
+            "recommendations" in enrichment
+            or "suggestions" in enrichment
+            or "assessment" in enrichment
+        )
 
         # Should suggest risk management
-        recommendation_keywords = ["consider", "recommend", "suggest", "diversify", "limit"]
+        recommendation_keywords = [
+            "consider",
+            "recommend",
+            "suggest",
+            "diversify",
+            "limit",
+        ]
         assert any(keyword in content.lower() for keyword in recommendation_keywords)
 
     @pytest.mark.asyncio
@@ -190,7 +222,7 @@ class TestGuestGraphRAGRiskAssessment:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "risk analysis for Aave", "language": "en"}
+            json={"content": "risk analysis for Aave", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -204,7 +236,7 @@ class TestGuestGraphRAGRiskAssessment:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "security assessment for Compound", "language": "en"}
+            json={"content": "security assessment for Compound", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -212,7 +244,11 @@ class TestGuestGraphRAGRiskAssessment:
         enrichment = data["enrichment"]
 
         # Should have real assessment data
-        assert "risks" in enrichment or "assessment" in enrichment or "risk_score" in enrichment
+        assert (
+            "risks" in enrichment
+            or "assessment" in enrichment
+            or "risk_score" in enrichment
+        )
 
         # Data should be structured
         assessment_data = enrichment.get("risks") or enrichment.get("assessment")
@@ -225,7 +261,7 @@ class TestGuestGraphRAGRiskAssessment:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "evaluación de riesgo para Aave", "language": "es"}
+            json={"content": "evaluación de riesgo para Aave", "language": "es"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -233,7 +269,9 @@ class TestGuestGraphRAGRiskAssessment:
         content = data["agent_message"]["content"]
 
         # Should contain Spanish or English text (fallback)
-        assert any(word in content for word in ["Riesgo", "Risk", "Seguridad", "Security"])
+        assert any(
+            word in content for word in ["Riesgo", "Risk", "Seguridad", "Security"]
+        )
 
 
 class TestGuestGraphRAGRiskAssessmentStorytellingQuality:
@@ -245,7 +283,7 @@ class TestGuestGraphRAGRiskAssessmentStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "risk analysis for Aave", "language": "en"}
+            json={"content": "risk analysis for Aave", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
@@ -258,7 +296,7 @@ class TestGuestGraphRAGRiskAssessmentStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "security analysis for Compound", "language": "en"}
+            json={"content": "security analysis for Compound", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
@@ -273,8 +311,7 @@ class TestGuestGraphRAGRiskAssessmentStorytellingQuality:
         """Test that assessment provides balanced view."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "is Morpho safe?", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "is Morpho safe?", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -288,12 +325,18 @@ class TestGuestGraphRAGRiskAssessmentStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "what are the risks of Uniswap?", "language": "en"}
+            json={"content": "what are the risks of Uniswap?", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
         # Should explain risk concepts
-        educational_keywords = ["means", "refers to", "involves", "can lead to", "because"]
+        educational_keywords = [
+            "means",
+            "refers to",
+            "involves",
+            "can lead to",
+            "because",
+        ]
         assert any(keyword in content.lower() for keyword in educational_keywords)
 
     @pytest.mark.asyncio
@@ -302,7 +345,7 @@ class TestGuestGraphRAGRiskAssessmentStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "risk assessment for Aave", "language": "en"}
+            json={"content": "risk assessment for Aave", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 

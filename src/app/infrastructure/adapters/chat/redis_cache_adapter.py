@@ -228,7 +228,9 @@ class RedisCacheAdapter(CacheAdapter):
             # Filter by similarity threshold and convert to entries
             entries = []
             for doc in results.docs:
-                similarity = 1 - float(doc.__embedding_score)  # Convert distance to similarity
+                similarity = 1 - float(
+                    doc.__embedding_score
+                )  # Convert distance to similarity
                 if similarity >= threshold:
                     entry_dict = json.loads(doc.json)
                     entry = self._dict_to_entry(entry_dict)

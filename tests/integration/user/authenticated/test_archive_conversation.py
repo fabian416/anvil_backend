@@ -29,7 +29,9 @@ pytestmark = pytest.mark.skip(reason="Uses legacy /api/v1/user/chat endpoint")
 async def client():
     """Create test client."""
     app = make_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
@@ -37,7 +39,7 @@ async def client():
 async def test_user_and_conversation(client: AsyncClient):
     """
     Create a test user and conversation.
-    
+
     Returns:
         conversation_id
     """
@@ -46,10 +48,10 @@ async def test_user_and_conversation(client: AsyncClient):
         "/api/v1/user/chat/conversations",
         "/api/v1/chat/conversations",
     ]
-    
+
     conversation_id = None
     base_path = None
-    
+
     for endpoint in endpoints:
         response = await client.post(
             endpoint,
@@ -62,7 +64,7 @@ async def test_user_and_conversation(client: AsyncClient):
             # Extract base path from endpoint
             base_path = endpoint.rsplit("/", 1)[0] if "/" in endpoint else endpoint
             break
-    
+
     if not conversation_id:
         # If both fail, try without auth (guest mode)
         for endpoint in endpoints:
@@ -75,7 +77,7 @@ async def test_user_and_conversation(client: AsyncClient):
                 conversation_id = conversation_data["id"]
                 base_path = endpoint.rsplit("/", 1)[0] if "/" in endpoint else endpoint
                 break
-    
+
     assert conversation_id is not None, "Failed to create conversation"
     return conversation_id, base_path
 
@@ -87,23 +89,23 @@ async def test_delete_endpoint_archives_conversation(
 ):
     """
     Test that DELETE endpoint archives conversation instead of deleting.
-    
+
     CTO Framework: Verification Phase
     - Verify DELETE endpoint calls archive() method
     - Verify conversation status changes to 'archived'
     - Verify conversation is not permanently deleted
     """
     conversation_id, base_path = test_user_and_conversation
-    
+
     # Archive conversation via DELETE
     response = await client.delete(
         f"{base_path}/{conversation_id}",
         headers={"Authorization": "Bearer test-token"},
     )
-    
+
     assert response.status_code == 200
     data = response.json()
-    
+
     # Verify response structure
     assert "id" in data
     assert "status" in data
@@ -118,28 +120,28 @@ async def test_archived_conversation_not_in_default_list(
 ):
     """
     Test that archived conversations are excluded from default list.
-    
+
     CTO Framework: Validation Phase
     - Verify list endpoint filters by status='active' by default
     - Verify archived conversations are not returned
     """
     conversation_id, base_path = test_user_and_conversation
-    
+
     # Archive conversation
     await client.delete(
         f"{base_path}/{conversation_id}",
         headers={"Authorization": "Bearer test-token"},
     )
-    
+
     # List conversations (default should filter by status='active')
     response = await client.get(
         base_path,
         headers={"Authorization": "Bearer test-token"},
     )
-    
+
     assert response.status_code == 200
     conversations = response.json()
-    
+
     # Verify archived conversation is not in the list
     conversation_ids = [conv["id"] for conv in conversations]
     assert conversation_id not in conversation_ids
@@ -152,25 +154,25 @@ async def test_archived_conversation_retrievable_by_id(
 ):
     """
     Test that archived conversation can still be retrieved by ID.
-    
+
     CTO Framework: Quality Assurance Phase
     - Verify archived conversations are not permanently deleted
     - Verify they can be accessed directly by ID
     """
     conversation_id, base_path = test_user_and_conversation
-    
+
     # Archive conversation
     await client.delete(
         f"{base_path}/{conversation_id}",
         headers={"Authorization": "Bearer test-token"},
     )
-    
+
     # Try to retrieve archived conversation by ID
     response = await client.get(
         f"{base_path}/{conversation_id}",
         headers={"Authorization": "Bearer test-token"},
     )
-    
+
     # Should still be retrievable (not 404)
     assert response.status_code == 200
     data = response.json()
@@ -185,31 +187,31 @@ async def test_archived_conversation_in_filtered_list(
 ):
     """
     Test that archived conversations appear when filtering by status='archived'.
-    
+
     CTO Framework: Edge Case Testing
     - Verify filtering by status='archived' returns archived conversations
     """
     conversation_id, base_path = test_user_and_conversation
-    
+
     # Archive conversation
     await client.delete(
         f"{base_path}/{conversation_id}",
         headers={"Authorization": "Bearer test-token"},
     )
-    
+
     # List conversations with status='archived' filter
     response = await client.get(
         f"{base_path}?status=archived",
         headers={"Authorization": "Bearer test-token"},
     )
-    
+
     assert response.status_code == 200
     conversations = response.json()
-    
+
     # Verify archived conversation is in the filtered list
     conversation_ids = [conv["id"] for conv in conversations]
     assert conversation_id in conversation_ids
-    
+
     # Verify all returned conversations are archived
     for conv in conversations:
         assert conv["status"] == "archived"
@@ -220,18 +222,18 @@ async def test_archived_conversation_in_filtered_list(
 async def test_delete_nonexistent_conversation_returns_404(client: AsyncClient):
     """
     Test that deleting a nonexistent conversation returns 404.
-    
+
     CTO Framework: Error Handling
     - Verify proper error response for invalid conversation ID
     """
     fake_id = "00000000-0000-0000-0000-000000000000"
-    
+
     # Try both possible endpoints
     endpoints = [
         f"/api/v1/user/chat/conversations/{fake_id}",
         f"/api/v1/chat/conversations/{fake_id}",
     ]
-    
+
     response = None
     for endpoint in endpoints:
         resp = await client.delete(
@@ -241,14 +243,14 @@ async def test_delete_nonexistent_conversation_returns_404(client: AsyncClient):
         if resp.status_code != 404:  # If not 404, might be the right endpoint
             response = resp
             break
-    
+
     if not response:
         # If both returned 404, use the first one
         response = await client.delete(
             endpoints[0],
             headers={"Authorization": "Bearer test-token"},
         )
-    
+
     assert response.status_code == 404
     assert "not found" in response.json()["detail"].lower()
 
@@ -260,17 +262,17 @@ async def test_delete_conversation_requires_authentication(
 ):
     """
     Test that deleting a conversation requires authentication.
-    
+
     CTO Framework: Security Testing
     - Verify unauthorized access is prevented
     """
     conversation_id, base_path = test_user_and_conversation
-    
+
     # Try to delete without authentication
     response = await client.delete(
         f"{base_path}/{conversation_id}",
     )
-    
+
     # Should either require auth or use guest user
     # Based on the implementation, it might create a guest user
     # Let's verify the behavior is consistent

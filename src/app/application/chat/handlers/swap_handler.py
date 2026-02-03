@@ -143,7 +143,13 @@ class SwapHandler:
         elif self._lifi:
             # Fallback to LiFi for same-chain
             return await self._get_lifi_quote(
-                from_token, to_token, amount, from_chain, from_chain, slippage, start_time
+                from_token,
+                to_token,
+                amount,
+                from_chain,
+                from_chain,
+                slippage,
+                start_time,
             )
         else:
             # No aggregators configured - return informational response
@@ -436,7 +442,9 @@ To get live quotes, configure the aggregator API keys.
             title = f"🔄 **Swap Quote on {from_chain.upper()}**"
             route_info = f"• **Chain:** {from_chain.upper()}"
 
-        duration_str = f"{duration // 60}m {duration % 60}s" if duration > 60 else f"{duration}s"
+        duration_str = (
+            f"{duration // 60}m {duration % 60}s" if duration > 60 else f"{duration}s"
+        )
 
         return f"""{title}
 
@@ -471,7 +479,7 @@ To get live quotes, configure the aggregator API keys.
             decimals = 8
 
         try:
-            value = float(amount) * (10 ** decimals)
+            value = float(amount) * (10**decimals)
             return str(int(value))
         except ValueError:
             return "0"
@@ -485,12 +493,14 @@ To get live quotes, configure the aggregator API keys.
             decimals = 8
 
         try:
-            value = int(amount_wei) / (10 ** decimals)
+            value = int(amount_wei) / (10**decimals)
             return f"{value:.6f}"
         except (ValueError, ZeroDivisionError):
             return "0"
 
-    def parse_swap_from_message(self, message: str) -> tuple[str, str, str, str, Optional[str]]:
+    def parse_swap_from_message(
+        self, message: str
+    ) -> tuple[str, str, str, str, Optional[str]]:
         """
         Parse swap details from user message.
 
@@ -538,7 +548,9 @@ To get live quotes, configure the aggregator API keys.
                 found_chains.append(chain)
 
         # Check for cross-chain keywords
-        is_bridge = any(word in message_lower for word in ["bridge", "cross-chain", "from", "to"])
+        is_bridge = any(
+            word in message_lower for word in ["bridge", "cross-chain", "from", "to"]
+        )
 
         if len(found_chains) >= 2 and is_bridge:
             from_chain = found_chains[0]

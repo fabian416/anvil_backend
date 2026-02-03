@@ -282,7 +282,9 @@ class TestLiquidationPrice:
         # At liquidation (HF = 1.0):
         # 1.0 = (1.667 * Price * 0.825) / 3000
         # Price = 3000 / (1.667 * 0.825) = 2181.82
-        expected = Decimal("3000") / (Decimal("5000") / Decimal("3000") * Decimal("0.825"))
+        expected = Decimal("3000") / (
+            Decimal("5000") / Decimal("3000") * Decimal("0.825")
+        )
         assert liquidation_price == expected
 
     def test_liquidation_price_shows_in_warning(self):
@@ -299,7 +301,10 @@ class TestLiquidationPrice:
         )
 
         assert result.liquidation_price is not None
-        assert "Liquidation" in result.warning_message or "liquidation" in result.warning_message
+        assert (
+            "Liquidation" in result.warning_message
+            or "liquidation" in result.warning_message
+        )
 
 
 class TestEdgeCases:

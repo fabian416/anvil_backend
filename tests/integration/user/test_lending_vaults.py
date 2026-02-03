@@ -29,7 +29,9 @@ ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ
 async def client():
     """Create test client."""
     app = make_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
@@ -66,27 +68,32 @@ async def test_user_lending_vault_discovery_best_vaults(
 
     # Validate routing
     routing = data.get("routing", {})
-    assert routing.get("intent") in ("LENDING", "SUPERVISOR_WORKFLOW"), \
+    assert routing.get("intent") in ("LENDING", "SUPERVISOR_WORKFLOW"), (
         f"Expected LENDING or SUPERVISOR_WORKFLOW, got {routing.get('intent')}"
+    )
 
     # CRITICAL: Should route to lending_workflow, NOT defi_yield
     agents_used = routing.get("agents_used", [])
-    assert "lending_workflow" in agents_used or "lending_handler" in str(routing).lower(), \
-        f"Expected lending_workflow agent, got {agents_used}"
+    assert (
+        "lending_workflow" in agents_used or "lending_handler" in str(routing).lower()
+    ), f"Expected lending_workflow agent, got {agents_used}"
 
     # Should NOT route to defi_yield or risk_analyzer
-    assert "defi_yield" not in agents_used, \
+    assert "defi_yield" not in agents_used, (
         f"Should NOT use defi_yield for vault queries, got {agents_used}"
+    )
 
     content = data["agent_message"]["content"]
     assert len(content) > 100, "Should provide comprehensive vault information"
 
     # Validate Morpho vault data is present
     content_lower = content.lower()
-    assert "morpho" in content_lower or "vault" in content_lower, \
+    assert "morpho" in content_lower or "vault" in content_lower, (
         "Response should mention Morpho or vaults"
-    assert "apy" in content_lower or "yield" in content_lower, \
+    )
+    assert "apy" in content_lower or "yield" in content_lower, (
         "Response should include APY/yield information"
+    )
 
     validation = None
     if llm_validator.enabled:
@@ -101,13 +108,13 @@ async def test_user_lending_vault_discovery_best_vaults(
                 "Should route through lending_workflow agent, not defi_yield."
             ),
             additional_context={
-                'test_category': 'lending_vault_routing',
-                'user_type': 'authenticated',
-                'expected_agent': 'lending_workflow',
-                'actual_agents': agents_used,
-                'routing_intent': routing.get('intent'),
-                'fix_commits': ['2351206f', '4ccf3009', '1bc72e1d']
-            }
+                "test_category": "lending_vault_routing",
+                "user_type": "authenticated",
+                "expected_agent": "lending_workflow",
+                "actual_agents": agents_used,
+                "routing_intent": routing.get("intent"),
+                "fix_commits": ["2351206f", "4ccf3009", "1bc72e1d"],
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -116,34 +123,66 @@ async def test_user_lending_vault_discovery_best_vaults(
             )
 
     # CSV tracking
-    await csv_tracker("user", "lending_vaults", {
-        "test_id": "user_lending_vault_discovery_001",
-        "s_multistep": False,
-        "input": "Show best lending vaults",
-        "output": content,
-        "test_label_sequence": "lending_vault_discovery",
-        "output_expected": "Morpho vault data (not DeFiLlama pools) routed through lending_workflow",
-        "expected_agent": "lending_workflow",
-        "actual_agents": json.dumps(agents_used),
-        "routing_intent": routing.get('intent'),
-        "status": "PASS" if response.status_code in (200, 201) and "lending_workflow" in agents_used else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "lending_vaults",
+        {
+            "test_id": "user_lending_vault_discovery_001",
+            "s_multistep": False,
+            "input": "Show best lending vaults",
+            "output": content,
+            "test_label_sequence": "lending_vault_discovery",
+            "output_expected": "Morpho vault data (not DeFiLlama pools) routed through lending_workflow",
+            "expected_agent": "lending_workflow",
+            "actual_agents": json.dumps(agents_used),
+            "routing_intent": routing.get("intent"),
+            "status": "PASS"
+            if response.status_code in (200, 201) and "lending_workflow" in agents_used
+            else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -168,8 +207,9 @@ async def test_user_lending_vault_discovery_top_vaults(
     routing = data.get("routing", {})
     agents_used = routing.get("agents_used", [])
 
-    assert "lending_workflow" in agents_used or "lending_handler" in str(routing).lower(), \
-        f"Expected lending_workflow agent, got {agents_used}"
+    assert (
+        "lending_workflow" in agents_used or "lending_handler" in str(routing).lower()
+    ), f"Expected lending_workflow agent, got {agents_used}"
 
     content = data["agent_message"]["content"]
     assert len(content) > 80, "Should provide vault information"
@@ -185,11 +225,11 @@ async def test_user_lending_vault_discovery_top_vaults(
                 "Response should include vault names, APYs, and TVL data."
             ),
             additional_context={
-                'test_category': 'lending_vault_routing',
-                'user_type': 'authenticated',
-                'expected_agent': 'lending_workflow',
-                'actual_agents': agents_used
-            }
+                "test_category": "lending_vault_routing",
+                "user_type": "authenticated",
+                "expected_agent": "lending_workflow",
+                "actual_agents": agents_used,
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -197,29 +237,47 @@ async def test_user_lending_vault_discovery_top_vaults(
                 f"{validation.reasoning}"
             )
 
-    await csv_tracker("user", "lending_vaults", {
-        "test_id": "user_lending_vault_discovery_002",
-        "s_multistep": False,
-        "input": "top vaults",
-        "output": content,
-        "test_label_sequence": "lending_vault_discovery",
-        "output_expected": "Top Morpho vaults by APY",
-        "expected_agent": "lending_workflow",
-        "actual_agents": json.dumps(agents_used),
-        "routing_intent": routing.get('intent'),
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "lending_vaults",
+        {
+            "test_id": "user_lending_vault_discovery_002",
+            "s_multistep": False,
+            "input": "top vaults",
+            "output": content,
+            "test_label_sequence": "lending_vault_discovery",
+            "output_expected": "Top Morpho vaults by APY",
+            "expected_agent": "lending_workflow",
+            "actual_agents": json.dumps(agents_used),
+            "routing_intent": routing.get("intent"),
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -244,8 +302,9 @@ async def test_user_lending_vault_discovery_best_morpho_vaults(
     routing = data.get("routing", {})
     agents_used = routing.get("agents_used", [])
 
-    assert "lending_workflow" in agents_used or "lending_handler" in str(routing).lower(), \
-        f"Expected lending_workflow agent, got {agents_used}"
+    assert (
+        "lending_workflow" in agents_used or "lending_handler" in str(routing).lower()
+    ), f"Expected lending_workflow agent, got {agents_used}"
 
     content = data["agent_message"]["content"]
     assert len(content) > 80, "Should provide Morpho vault information"
@@ -262,11 +321,11 @@ async def test_user_lending_vault_discovery_best_morpho_vaults(
                 "Response should clearly identify Morpho protocol and vault details."
             ),
             additional_context={
-                'test_category': 'lending_vault_routing',
-                'user_type': 'authenticated',
-                'expected_agent': 'lending_workflow',
-                'actual_agents': agents_used
-            }
+                "test_category": "lending_vault_routing",
+                "user_type": "authenticated",
+                "expected_agent": "lending_workflow",
+                "actual_agents": agents_used,
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -274,29 +333,47 @@ async def test_user_lending_vault_discovery_best_morpho_vaults(
                 f"{validation.reasoning}"
             )
 
-    await csv_tracker("user", "lending_vaults", {
-        "test_id": "user_lending_vault_discovery_003",
-        "s_multistep": False,
-        "input": "best morpho vaults",
-        "output": content,
-        "test_label_sequence": "lending_vault_discovery",
-        "output_expected": "Best Morpho vaults with explicit protocol identification",
-        "expected_agent": "lending_workflow",
-        "actual_agents": json.dumps(agents_used),
-        "routing_intent": routing.get('intent'),
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "lending_vaults",
+        {
+            "test_id": "user_lending_vault_discovery_003",
+            "s_multistep": False,
+            "input": "best morpho vaults",
+            "output": content,
+            "test_label_sequence": "lending_vault_discovery",
+            "output_expected": "Best Morpho vaults with explicit protocol identification",
+            "expected_agent": "lending_workflow",
+            "actual_agents": json.dumps(agents_used),
+            "routing_intent": routing.get("intent"),
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -321,8 +398,9 @@ async def test_user_lending_vault_comparison(
     routing = data.get("routing", {})
     agents_used = routing.get("agents_used", [])
 
-    assert "lending_workflow" in agents_used or "lending_handler" in str(routing).lower(), \
-        f"Expected lending_workflow agent, got {agents_used}"
+    assert (
+        "lending_workflow" in agents_used or "lending_handler" in str(routing).lower()
+    ), f"Expected lending_workflow agent, got {agents_used}"
 
     content = data["agent_message"]["content"]
     assert len(content) > 100, "Should provide comprehensive vault comparison"
@@ -338,11 +416,11 @@ async def test_user_lending_vault_comparison(
                 "Response should provide side-by-side comparison to help user choose."
             ),
             additional_context={
-                'test_category': 'lending_vault_comparison',
-                'user_type': 'authenticated',
-                'expected_agent': 'lending_workflow',
-                'actual_agents': agents_used
-            }
+                "test_category": "lending_vault_comparison",
+                "user_type": "authenticated",
+                "expected_agent": "lending_workflow",
+                "actual_agents": agents_used,
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -350,29 +428,47 @@ async def test_user_lending_vault_comparison(
                 f"{validation.reasoning}"
             )
 
-    await csv_tracker("user", "lending_vaults", {
-        "test_id": "user_lending_vault_comparison_004",
-        "s_multistep": False,
-        "input": "compare vaults",
-        "output": content,
-        "test_label_sequence": "lending_vault_comparison",
-        "output_expected": "Comprehensive vault comparison with APY, TVL, risk levels",
-        "expected_agent": "lending_workflow",
-        "actual_agents": json.dumps(agents_used),
-        "routing_intent": routing.get('intent'),
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "lending_vaults",
+        {
+            "test_id": "user_lending_vault_comparison_004",
+            "s_multistep": False,
+            "input": "compare vaults",
+            "output": content,
+            "test_label_sequence": "lending_vault_comparison",
+            "output_expected": "Comprehensive vault comparison with APY, TVL, risk levels",
+            "expected_agent": "lending_workflow",
+            "actual_agents": json.dumps(agents_used),
+            "routing_intent": routing.get("intent"),
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -396,8 +492,9 @@ async def test_user_lending_vault_vs_yield_routing(
     routing1 = data1.get("routing", {})
     agents1 = routing1.get("agents_used", [])
 
-    assert "lending_workflow" in agents1 or "lending_handler" in str(routing1).lower(), \
-        f"'best vaults' should route to lending_workflow, got {agents1}"
+    assert (
+        "lending_workflow" in agents1 or "lending_handler" in str(routing1).lower()
+    ), f"'best vaults' should route to lending_workflow, got {agents1}"
 
     # Test 2: Generic yield query (without "vault") may route to defi_yield
     r2 = await client.post(
@@ -426,12 +523,12 @@ async def test_user_lending_vault_vs_yield_routing(
                 "These should be distinct routing paths based on the 'vault' keyword."
             ),
             additional_context={
-                'test_category': 'routing_distinction',
-                'user_type': 'authenticated',
-                'vault_query_agents': agents1,
-                'yield_query_agents': agents2,
-                'distinction_keyword': 'vault'
-            }
+                "test_category": "routing_distinction",
+                "user_type": "authenticated",
+                "vault_query_agents": agents1,
+                "yield_query_agents": agents2,
+                "distinction_keyword": "vault",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -439,28 +536,46 @@ async def test_user_lending_vault_vs_yield_routing(
                 f"{validation.reasoning}"
             )
 
-    await csv_tracker("user", "lending_vaults", {
-        "test_id": "user_lending_vault_vs_yield_005",
-        "s_multistep": True,
-        "input": "Comparison: 'best vaults' vs 'best yield farms'",
-        "output": f"Vaults: {agents1} | Yield: {agents2}",
-        "test_label_sequence": "lending_vault_yield_distinction",
-        "output_expected": "Vault queries route to lending_workflow, generic yield may route to defi_yield",
-        "expected_agent": "lending_workflow (for vaults)",
-        "actual_agents": json.dumps({"vaults": agents1, "yield": agents2}),
-        "status": "PASS" if "lending_workflow" in agents1 else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "lending_vaults",
+        {
+            "test_id": "user_lending_vault_vs_yield_005",
+            "s_multistep": True,
+            "input": "Comparison: 'best vaults' vs 'best yield farms'",
+            "output": f"Vaults: {agents1} | Yield: {agents2}",
+            "test_label_sequence": "lending_vault_yield_distinction",
+            "output_expected": "Vault queries route to lending_workflow, generic yield may route to defi_yield",
+            "expected_agent": "lending_workflow (for vaults)",
+            "actual_agents": json.dumps({"vaults": agents1, "yield": agents2}),
+            "status": "PASS" if "lending_workflow" in agents1 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -500,12 +615,12 @@ async def test_user_lending_vault_multi_language_spanish(
                 "Should route to lending_workflow regardless of language."
             ),
             additional_context={
-                'test_category': 'multi_language_support',
-                'user_type': 'authenticated',
-                'language': 'es',
-                'expected_agent': 'lending_workflow',
-                'actual_agents': agents_used
-            }
+                "test_category": "multi_language_support",
+                "user_type": "authenticated",
+                "language": "es",
+                "expected_agent": "lending_workflow",
+                "actual_agents": agents_used,
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -513,30 +628,48 @@ async def test_user_lending_vault_multi_language_spanish(
                 f"{validation.reasoning}"
             )
 
-    await csv_tracker("user", "lending_vaults", {
-        "test_id": "user_lending_vault_multilang_es_006",
-        "s_multistep": False,
-        "input": "mejores bóvedas de préstamos",
-        "output": content,
-        "test_label_sequence": "lending_vault_multilanguage",
-        "output_expected": "Morpho vault information in Spanish",
-        "expected_agent": "lending_workflow",
-        "actual_agents": json.dumps(agents_used),
-        "routing_intent": routing.get('intent'),
-        "language": "es",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "lending_vaults",
+        {
+            "test_id": "user_lending_vault_multilang_es_006",
+            "s_multistep": False,
+            "input": "mejores bóvedas de préstamos",
+            "output": content,
+            "test_label_sequence": "lending_vault_multilanguage",
+            "output_expected": "Morpho vault information in Spanish",
+            "expected_agent": "lending_workflow",
+            "actual_agents": json.dumps(agents_used),
+            "routing_intent": routing.get("intent"),
+            "language": "es",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -584,11 +717,11 @@ async def test_user_lending_vault_deposit_workflow(
                 "Should maintain context from vault discovery to deposit guidance."
             ),
             additional_context={
-                'test_category': 'multi_step_workflow',
-                'user_type': 'authenticated',
-                'workflow_steps': ['discovery', 'deposit_guidance'],
-                'conversation_turns': 2
-            }
+                "test_category": "multi_step_workflow",
+                "user_type": "authenticated",
+                "workflow_steps": ["discovery", "deposit_guidance"],
+                "conversation_turns": 2,
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -596,26 +729,46 @@ async def test_user_lending_vault_deposit_workflow(
                 f"{validation.reasoning}"
             )
 
-    await csv_tracker("user", "lending_vaults", {
-        "test_id": "user_lending_vault_workflow_007",
-        "s_multistep": True,
-        "input": "Multi-step: 1) Show best lending vaults 2) How do I deposit into the best vault?",
-        "output": content2,
-        "test_label_sequence": "lending_vault_deposit_workflow",
-        "output_expected": "Contextual deposit instructions for previously identified best vault",
-        "status": "PASS" if r2.status_code in (200, 201) and len(content2) > 80 else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "lending_vaults",
+        {
+            "test_id": "user_lending_vault_workflow_007",
+            "s_multistep": True,
+            "input": "Multi-step: 1) Show best lending vaults 2) How do I deposit into the best vault?",
+            "output": content2,
+            "test_label_sequence": "lending_vault_deposit_workflow",
+            "output_expected": "Contextual deposit instructions for previously identified best vault",
+            "status": "PASS"
+            if r2.status_code in (200, 201) and len(content2) > 80
+            else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -664,10 +817,16 @@ async def test_user_lending_vault_response_format(
                 "5) Recommendation section with deposit instructions"
             ),
             additional_context={
-                'test_category': 'response_format_validation',
-                'user_type': 'authenticated',
-                'expected_fields': ['vault_names', 'apy', 'tvl', 'addresses', 'recommendations']
-            }
+                "test_category": "response_format_validation",
+                "user_type": "authenticated",
+                "expected_fields": [
+                    "vault_names",
+                    "apy",
+                    "tvl",
+                    "addresses",
+                    "recommendations",
+                ],
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -675,26 +834,46 @@ async def test_user_lending_vault_response_format(
                 f"{validation.reasoning}"
             )
 
-    await csv_tracker("user", "lending_vaults", {
-        "test_id": "user_lending_vault_format_008",
-        "s_multistep": False,
-        "input": "Show best lending vaults",
-        "output": content,
-        "test_label_sequence": "lending_vault_response_format",
-        "output_expected": "Structured vault data with names, APY, TVL, addresses, recommendations",
-        "has_apy": has_apy,
-        "has_vault_names": has_vault_names,
-        "has_amounts": has_amounts,
-        "status": "PASS" if (response.status_code in (200, 201) and has_apy and has_vault_names) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "lending_vaults",
+        {
+            "test_id": "user_lending_vault_format_008",
+            "s_multistep": False,
+            "input": "Show best lending vaults",
+            "output": content,
+            "test_label_sequence": "lending_vault_response_format",
+            "output_expected": "Structured vault data with names, APY, TVL, addresses, recommendations",
+            "has_apy": has_apy,
+            "has_vault_names": has_vault_names,
+            "has_amounts": has_amounts,
+            "status": "PASS"
+            if (response.status_code in (200, 201) and has_apy and has_vault_names)
+            else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )

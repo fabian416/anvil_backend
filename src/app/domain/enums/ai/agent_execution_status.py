@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class AgentExecutionStatus(Enum):
     PENDING = "pending"
     RUNNING = "running"

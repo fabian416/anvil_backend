@@ -55,7 +55,9 @@ class AuthGatewaySqla(AuthGateway):
         self._session = session
         self._jwt_handler = jwt_handler
         # Support both formats: ADMIN_USER_ADMIN (from TOML export) or USER_ADMIN (legacy)
-        self._super_admin_email = os.getenv("ADMIN_USER_ADMIN") or os.getenv("USER_ADMIN")
+        self._super_admin_email = os.getenv("ADMIN_USER_ADMIN") or os.getenv(
+            "USER_ADMIN"
+        )
 
     async def validate_token(self, access_token: str) -> Optional[AuthContext]:
         """
@@ -91,7 +93,9 @@ class AuthGatewaySqla(AuthGateway):
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
 
-    async def update_user_role(self, user_id: int, new_role: UserRole) -> Optional[User]:
+    async def update_user_role(
+        self, user_id: int, new_role: UserRole
+    ) -> Optional[User]:
         """
         Update a user's role.
         """
@@ -123,12 +127,12 @@ class AuthGatewaySqla(AuthGateway):
         """Convert a database row to a User entity."""
         if not row:
             return None
-        
+
         # Handle password - can be None for Privy-only users
         password_value = b""
         if row.get("password"):
             password_value = str(row["password"]).encode("utf-8")
-        
+
         return User(
             id_=UserId(int(row["id"])),
             email=Email(str(row["email"])),
@@ -143,15 +147,35 @@ class AuthGatewaySqla(AuthGateway):
             created_at=CreatedAt(row["created_at"]),
             updated_at=UpdatedAt(row["updated_at"]),
             last_login=LastLogin(row["last_login"]) if row.get("last_login") else None,
-            profile_picture=ProfilePicture(row["profile_picture"]) if row.get("profile_picture") else None,
-            phone_number=PhoneNumber(row["phone_number"]) if row.get("phone_number") else None,
-            language=Language(str(row["language"])) if row.get("language") else Language("en"),
+            profile_picture=ProfilePicture(row["profile_picture"])
+            if row.get("profile_picture")
+            else None,
+            phone_number=PhoneNumber(row["phone_number"])
+            if row.get("phone_number")
+            else None,
+            language=Language(str(row["language"]))
+            if row.get("language")
+            else Language("en"),
             address=Address(row["address"]) if row.get("address") else None,
-            postal_code=PostalCode(row["postal_code"]) if row.get("postal_code") else None,
-            country_id=CountryId(int(row["country_id"])) if row.get("country_id") is not None else None,
-            city_id=CityId(int(row["city_id"])) if row.get("city_id") is not None else None,
-            subscription=Subscription(row["subscription"]) if row.get("subscription") else None,
-            privy_user_id=PrivyUserId(row["privy_user_id"]) if row.get("privy_user_id") else None,
-            primary_wallet_address=WalletAddress(row["primary_wallet_address"]) if row.get("primary_wallet_address") else None,
-            auth_provider=AuthProvider(row["auth_provider"]) if row.get("auth_provider") else None,
+            postal_code=PostalCode(row["postal_code"])
+            if row.get("postal_code")
+            else None,
+            country_id=CountryId(int(row["country_id"]))
+            if row.get("country_id") is not None
+            else None,
+            city_id=CityId(int(row["city_id"]))
+            if row.get("city_id") is not None
+            else None,
+            subscription=Subscription(row["subscription"])
+            if row.get("subscription")
+            else None,
+            privy_user_id=PrivyUserId(row["privy_user_id"])
+            if row.get("privy_user_id")
+            else None,
+            primary_wallet_address=WalletAddress(row["primary_wallet_address"])
+            if row.get("primary_wallet_address")
+            else None,
+            auth_provider=AuthProvider(row["auth_provider"])
+            if row.get("auth_provider")
+            else None,
         )

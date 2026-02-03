@@ -59,5 +59,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Drop moonpay_customer_tokens table."""
-    op.drop_index("ix_moonpay_customer_tokens_user_id", table_name="moonpay_customer_tokens")
+    op.drop_index(
+        "ix_moonpay_customer_tokens_user_id", table_name="moonpay_customer_tokens"
+    )
     op.drop_table("moonpay_customer_tokens")

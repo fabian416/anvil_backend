@@ -56,16 +56,26 @@ Each agent configuration includes:
 """
 
 # Import individual agent factories
-from app.application.agents.library.curve_finance_expert import create_curve_finance_expert
+from app.application.agents.library.curve_finance_expert import (
+    create_curve_finance_expert,
+)
 from app.application.agents.library.aave_specialist import create_aave_specialist
 from app.application.agents.library.uniswap_expert import create_uniswap_expert
 from app.application.agents.library.yearn_strategist import create_yearn_strategist
 from app.application.agents.library.compound_advisor import create_compound_advisor
-from app.application.agents.library.smart_contract_auditor import create_smart_contract_auditor
-from app.application.agents.library.gas_optimization_expert import create_gas_optimization_expert
-from app.application.agents.library.mev_protection_advisor import create_mev_protection_advisor
+from app.application.agents.library.smart_contract_auditor import (
+    create_smart_contract_auditor,
+)
+from app.application.agents.library.gas_optimization_expert import (
+    create_gas_optimization_expert,
+)
+from app.application.agents.library.mev_protection_advisor import (
+    create_mev_protection_advisor,
+)
 from app.application.agents.library.bridge_specialist import create_bridge_specialist
-from app.application.agents.library.wallet_security_expert import create_wallet_security_expert
+from app.application.agents.library.wallet_security_expert import (
+    create_wallet_security_expert,
+)
 
 # Import registry and convenience functions
 from app.application.agents.library.agent_registry import (
@@ -93,12 +103,10 @@ __all__ = [
     "create_mev_protection_advisor",
     "create_bridge_specialist",
     "create_wallet_security_expert",
-
     # Registry classes
     "AgentLibraryRegistry",
     "AgentCategory",
     "AgentLibraryEntry",
-
     # Convenience functions (recommended for most use cases)
     "get_agent_registry",
     "get_agent",

@@ -56,7 +56,9 @@ class MoneyMarketUserPreference:
     def __post_init__(self) -> None:
         """Validate entity invariants."""
         # Validate alert_threshold_apy_change (must be between 0.01% and 10%)
-        if self.alert_threshold_apy_change < Decimal("0.01") or self.alert_threshold_apy_change > Decimal("10.0"):
+        if self.alert_threshold_apy_change < Decimal(
+            "0.01"
+        ) or self.alert_threshold_apy_change > Decimal("10.0"):
             raise ValueError(
                 f"Invalid alert_threshold_apy_change: {self.alert_threshold_apy_change}. "
                 "Must be between 0.01% and 10%."
@@ -67,18 +69,14 @@ class MoneyMarketUserPreference:
             if not asset or len(asset.strip()) == 0:
                 raise ValueError("Watched asset cannot be empty.")
             if not asset.isupper():
-                raise ValueError(
-                    f"Watched asset must be uppercase: {asset}"
-                )
+                raise ValueError(f"Watched asset must be uppercase: {asset}")
 
         # Validate watched_chains (must be lowercase if provided)
         for chain in self.watched_chains:
             if not chain or len(chain.strip()) == 0:
                 raise ValueError("Watched chain cannot be empty.")
             if not chain.islower():
-                raise ValueError(
-                    f"Watched chain must be lowercase: {chain}"
-                )
+                raise ValueError(f"Watched chain must be lowercase: {chain}")
 
         # Validate preferred_protocol (if provided)
         if self.preferred_protocol is not None:

@@ -12,7 +12,12 @@ Feature Flag: mcp.servers.thegraph_enabled
 
 from typing import Dict, Any, Optional
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 from app.infrastructure.mcp.base_server import MCPServer
 from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
@@ -20,7 +25,7 @@ from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 
 class TheGraphMCPServer(MCPServer):
     """MCP Server for The Graph protocol data."""
-    
+
     def __init__(
         self,
         api_key: str = "",
@@ -29,24 +34,24 @@ class TheGraphMCPServer(MCPServer):
     ):
         """
         Initialize The Graph MCP server.
-        
+
         Args:
             api_key: The Graph API key (optional)
             base_url: The Graph API base URL
             settings: MCP configuration settings
-            
+
         Raises:
             MCPServerDisabledError: If The Graph server is disabled
         """
         self.settings = settings or MCPSettings()
-        
+
         # Check if server is enabled
         if not self.settings.enabled or not self.settings.servers.thegraph_enabled:
             raise MCPServerDisabledError(
                 "The Graph MCP server is disabled. "
                 "Enable with mcp.servers.thegraph_enabled=true in config."
             )
-        
+
         super().__init__(
             server_name="thegraph",
             description="The Graph subgraph queries for blockchain data",
@@ -57,14 +62,14 @@ class TheGraphMCPServer(MCPServer):
         self.client = httpx.AsyncClient(
             timeout=30.0,
         )
-        
+
         # Common subgraph endpoints
         self.subgraphs = {
             "uniswap_v3": "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3",
             "aave_v3": "https://api.thegraph.com/subgraphs/name/aave/protocol-v3",
             "curve": "https://api.thegraph.com/subgraphs/name/messari/curve-finance-ethereum",
         }
-        
+
         # Create retry decorator for this server
         self._retry = retry(
             stop=stop_after_attempt(3),
@@ -72,13 +77,13 @@ class TheGraphMCPServer(MCPServer):
             retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
             reraise=True,
         )
-        
+
         # Register tools
         self.setup_tools()
 
     def setup_tools(self):
         """Register all The Graph tools."""
-        
+
         # Tool 1: Query Uniswap V3
         self.register_tool(
             name="query_uniswap_v3",
@@ -101,7 +106,7 @@ class TheGraphMCPServer(MCPServer):
             },
             handler=self._query_uniswap_v3,
         )
-        
+
         # Tool 2: Query Aave V3
         self.register_tool(
             name="query_aave_v3",
@@ -124,7 +129,7 @@ class TheGraphMCPServer(MCPServer):
             },
             handler=self._query_aave_v3,
         )
-        
+
         # Tool 3: Custom GraphQL query
         self.register_tool(
             name="custom_query",
@@ -145,7 +150,7 @@ class TheGraphMCPServer(MCPServer):
             },
             handler=self._custom_query,
         )
-        
+
         # Tool 4: Get available subgraphs
         self.register_tool(
             name="get_subgraphs",
@@ -156,7 +161,7 @@ class TheGraphMCPServer(MCPServer):
             },
             handler=self._get_subgraphs,
         )
-    
+
     async def _query_uniswap_v3(
         self,
         query_type: str,
@@ -164,11 +169,11 @@ class TheGraphMCPServer(MCPServer):
     ) -> Dict[str, Any]:
         """
         Query Uniswap V3 subgraph.
-        
+
         Args:
             query_type: Type of query
             limit: Number of results
-        
+
         Returns:
             Query results
         """
@@ -226,14 +231,14 @@ class TheGraphMCPServer(MCPServer):
                 """
             else:
                 return {"error": f"Invalid query type: {query_type}"}
-            
+
             response = await self.client.post(
                 self.subgraphs["uniswap_v3"],
                 json={"query": query},
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return {
                 "subgraph": "uniswap_v3",
                 "query_type": query_type,
@@ -249,7 +254,7 @@ class TheGraphMCPServer(MCPServer):
                 "error": f"Error querying Uniswap V3: {str(e)}",
                 "subgraph": "uniswap_v3",
             }
-    
+
     async def _query_aave_v3(
         self,
         query_type: str,
@@ -257,11 +262,11 @@ class TheGraphMCPServer(MCPServer):
     ) -> Dict[str, Any]:
         """
         Query Aave V3 subgraph.
-        
+
         Args:
             query_type: Type of query
             limit: Number of results
-        
+
         Returns:
             Query results
         """
@@ -315,14 +320,14 @@ class TheGraphMCPServer(MCPServer):
                 """
             else:
                 return {"error": f"Invalid query type: {query_type}"}
-            
+
             response = await self.client.post(
                 self.subgraphs["aave_v3"],
                 json={"query": query},
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return {
                 "subgraph": "aave_v3",
                 "query_type": query_type,
@@ -338,7 +343,7 @@ class TheGraphMCPServer(MCPServer):
                 "error": f"Error querying Aave V3: {str(e)}",
                 "subgraph": "aave_v3",
             }
-    
+
     async def _custom_query(
         self,
         subgraph: str,
@@ -346,11 +351,11 @@ class TheGraphMCPServer(MCPServer):
     ) -> Dict[str, Any]:
         """
         Execute custom GraphQL query.
-        
+
         Args:
             subgraph: Subgraph identifier
             query: GraphQL query
-        
+
         Returns:
             Query results
         """
@@ -360,14 +365,14 @@ class TheGraphMCPServer(MCPServer):
                     "error": f"Unknown subgraph: {subgraph}",
                     "available": list(self.subgraphs.keys()),
                 }
-            
+
             response = await self.client.post(
                 self.subgraphs[subgraph],
                 json={"query": query},
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return {
                 "subgraph": subgraph,
                 "data": data.get("data", {}),
@@ -383,11 +388,11 @@ class TheGraphMCPServer(MCPServer):
                 "error": f"Error executing query: {str(e)}",
                 "subgraph": subgraph,
             }
-    
+
     async def _get_subgraphs(self) -> Dict[str, Any]:
         """
         Get available subgraphs.
-        
+
         Returns:
             List of subgraphs
         """
@@ -411,7 +416,7 @@ class TheGraphMCPServer(MCPServer):
             ],
             "count": len(self.subgraphs),
         }
-    
+
     async def close(self):
         """Close HTTP client."""
         await self.client.aclose()
@@ -421,16 +426,16 @@ class TheGraphMCPServer(MCPServer):
 if __name__ == "__main__":
     import os
     import uvicorn
-    
+
     # Get API key from environment
     api_key = os.getenv("THEGRAPH_API_KEY", "")
-    
+
     # Create server
     server = TheGraphMCPServer(api_key=api_key)
-    
+
     print(f"Starting The Graph MCP Server on http://0.0.0.0:8083")
     print(f"Tools endpoint: http://localhost:8083/tools")
     print(f"Health check: http://localhost:8083/health")
-    
+
     # Run server
     uvicorn.run(server.app, host="0.0.0.0", port=8083)

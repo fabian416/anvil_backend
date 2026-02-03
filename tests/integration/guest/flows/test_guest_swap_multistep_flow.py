@@ -15,7 +15,9 @@ class TestGuestSwapMultiStepFlow:
     """Test multi-step swap conversational flow."""
 
     @pytest.mark.asyncio
-    async def test_complete_swap_flow_btc_to_eth(self, client, llm_validator, csv_tracker):
+    async def test_complete_swap_flow_btc_to_eth(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test complete 5-step swap flow: BTC → ETH."""
 
         # Build conversation history for multi-step validation
@@ -23,8 +25,7 @@ class TestGuestSwapMultiStepFlow:
 
         # Step 1: Initiate swap
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "swap", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "swap", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -45,8 +46,7 @@ class TestGuestSwapMultiStepFlow:
 
         # Step 2: Select FROM token (BTC)
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "BTC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "BTC", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -63,8 +63,7 @@ class TestGuestSwapMultiStepFlow:
 
         # Step 3: Select TO token (ETH)
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "ETH", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -83,8 +82,7 @@ class TestGuestSwapMultiStepFlow:
 
         # Step 4: Enter amount
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "0.01", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "0.01", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -96,7 +94,10 @@ class TestGuestSwapMultiStepFlow:
         assert "confirm" in step4_content.lower()
 
         # Verify quote information present
-        assert any(keyword in step4_content.lower() for keyword in ["rate", "exchange", "price"])
+        assert any(
+            keyword in step4_content.lower()
+            for keyword in ["rate", "exchange", "price"]
+        )
 
         # Verify metadata
         assert data["enrichment"]["swap_flow"] == "step4_confirmation"
@@ -110,8 +111,7 @@ class TestGuestSwapMultiStepFlow:
 
         # Step 5: Confirm swap
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "confirm", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "confirm", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -128,6 +128,7 @@ class TestGuestSwapMultiStepFlow:
 
         # PHASE 3: LLM validation with multi-step conversation history
         validation = None
+
     @pytest.mark.asyncio
     async def test_complete_swap_flow_usdc_to_sol(self, client):
         """Test complete swap flow with different tokens: USDC → SOL."""
@@ -142,8 +143,7 @@ class TestGuestSwapMultiStepFlow:
 
         for i, (message, expected_flow) in enumerate(steps, 1):
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": message, "language": "en"}
+                "/api/v1/guest/chat", json={"content": message, "language": "en"}
             )
             assert response.status_code == 200
             data = response.json()
@@ -163,21 +163,21 @@ class TestGuestSwapMultiStepFlow:
 
         # Start swap
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "swap", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "swap", "language": "en"}
         )
 
         # Enter invalid token
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "INVALID_TOKEN", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "INVALID_TOKEN", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
 
         # Should show error and re-ask
         content = data["agent_message"]["content"]
-        assert "❌" in content or "error" in content.lower() or "valid" in content.lower()
+        assert (
+            "❌" in content or "error" in content.lower() or "valid" in content.lower()
+        )
         assert any(token in content for token in ["BTC", "ETH", "SOL", "USDC"])
 
     @pytest.mark.asyncio
@@ -186,22 +186,18 @@ class TestGuestSwapMultiStepFlow:
 
         # Complete first 2 steps
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "swap", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "swap", "language": "en"}
         )
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "BTC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "BTC", "language": "en"}
         )
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "ETH", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
         )
 
         # Enter invalid amount
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "not_a_number", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "not_a_number", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -217,26 +213,21 @@ class TestGuestSwapMultiStepFlow:
 
         # Complete flow to confirmation
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "swap", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "swap", "language": "en"}
         )
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "BTC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "BTC", "language": "en"}
         )
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "ETH", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
         )
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "0.5", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "0.5", "language": "en"}
         )
 
         # Cancel
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "cancel", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "cancel", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -250,26 +241,20 @@ class TestGuestSwapMultiStepFlow:
 
         # Complete flow to confirmation
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "swap", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "swap", "language": "en"}
         )
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "BTC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "BTC", "language": "en"}
         )
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "ETH", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
         )
-        await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "1", "language": "en"}
-        )
+        await client.post("/api/v1/guest/chat", json={"content": "1", "language": "en"})
 
         # Change amount
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "change amount to 0.5", "language": "en"}
+            json={"content": "change amount to 0.5", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -285,15 +270,17 @@ class TestGuestSwapMultiStepFlow:
 
         # Step 1
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "swap", "language": "es"}
+            "/api/v1/guest/chat", json={"content": "swap", "language": "es"}
         )
         assert response.status_code == 200
         data = response.json()
 
         content = data["agent_message"]["content"]
         # Should contain Spanish text
-        assert any(word in content.lower() for word in ["swap", "intercambiar", "token", "disponibles"])
+        assert any(
+            word in content.lower()
+            for word in ["swap", "intercambiar", "token", "disponibles"]
+        )
 
     @pytest.mark.asyncio
     async def test_swap_flow_complete_request(self, client):
@@ -301,7 +288,7 @@ class TestGuestSwapMultiStepFlow:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "swap 1 BTC to ETH", "language": "en"}
+            json={"content": "swap 1 BTC to ETH", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -318,21 +305,17 @@ class TestGuestSwapMultiStepFlow:
 
         # Complete flow to quote
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "swap", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "swap", "language": "en"}
         )
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "BTC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "BTC", "language": "en"}
         )
         await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "ETH", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
         )
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "0.01", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "0.01", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -362,29 +345,32 @@ class TestGuestSwapMultiStepFlow:
         # Send 12 messages before starting swap to test >10 message limit
         for i in range(12):
             await client.post(
-                "/api/v1/guest/chat",
-                json={"content": f"hello {i}", "language": "en"}
+                "/api/v1/guest/chat", json={"content": f"hello {i}", "language": "en"}
             )
 
         # Now start swap flow
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "swap", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "swap", "language": "en"}
         )
         assert response.status_code == 200
         # Verify it's a swap flow step (step1_from_token, step2_to_token, etc.)
-        assert "step" in response.json()["enrichment"]["swap_flow"] or "swap" in response.json()["enrichment"]["swap_flow"]
+        assert (
+            "step" in response.json()["enrichment"]["swap_flow"]
+            or "swap" in response.json()["enrichment"]["swap_flow"]
+        )
 
         # Continue with BTC
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "BTC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "BTC", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
 
         # Verify continuation worked (should ask for TO token, not restart)
-        assert "step2" in data["enrichment"]["swap_flow"] or "to_token" in data["enrichment"]["swap_flow"]
+        assert (
+            "step2" in data["enrichment"]["swap_flow"]
+            or "to_token" in data["enrichment"]["swap_flow"]
+        )
         assert "BTC" in data["agent_message"]["content"]
 
 
@@ -400,8 +386,7 @@ class TestGuestSwapFlowStorytellingQuality:
 
         for step in steps:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": step, "language": "en"}
+                "/api/v1/guest/chat", json={"content": step, "language": "en"}
             )
             content = response.json()["agent_message"]["content"]
 
@@ -414,8 +399,7 @@ class TestGuestSwapFlowStorytellingQuality:
         """Test that responses use emojis to enhance communication."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "swap", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "swap", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -427,12 +411,17 @@ class TestGuestSwapFlowStorytellingQuality:
         """Test that confirmation step has clear CTAs."""
 
         # Get to confirmation
-        await client.post("/api/v1/guest/chat", json={"content": "swap", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "BTC", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "ETH", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "swap", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "BTC", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
+        )
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "0.1", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "0.1", "language": "en"}
         )
 
         content = response.json()["agent_message"]["content"]

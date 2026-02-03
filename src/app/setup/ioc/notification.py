@@ -8,7 +8,9 @@ from dishka import Provider, Scope, provide
 from redis.asyncio import Redis
 
 from app.domain.ports.notification_adapter import NotificationAdapter
-from app.infrastructure.adapters.chat.notification_adapter import RedisNotificationAdapter
+from app.infrastructure.adapters.chat.notification_adapter import (
+    RedisNotificationAdapter,
+)
 
 
 class NotificationProvider(Provider):

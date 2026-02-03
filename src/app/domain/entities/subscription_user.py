@@ -27,10 +27,11 @@ from app.domain.value_objects.updated_at import UpdatedAt
 class SubscriptionUser(Entity[SubscriptionUserId]):
     """
     SubscriptionUser entity representing a user's subscription in the system.
-    
+
     This is an anemic model following DDD principles where behavior
     is handled by domain services rather than the entity itself.
     """
+
     user_id: UserId
     subscription_id: SubscriptionId
     status: SubscriptionStatus

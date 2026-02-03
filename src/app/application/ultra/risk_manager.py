@@ -119,16 +119,25 @@ class RiskManager:
             (allowed, reason)
         """
         if capital > self.profile.max_capital_per_trade:
-            return False, f"Capital ${capital} exceeds max ${self.profile.max_capital_per_trade}"
+            return (
+                False,
+                f"Capital ${capital} exceeds max ${self.profile.max_capital_per_trade}",
+            )
 
         # Check concurrent trades
         if len(self._active_trades) >= self.profile.max_concurrent_trades:
-            return False, f"Max concurrent trades ({self.profile.max_concurrent_trades}) reached"
+            return (
+                False,
+                f"Max concurrent trades ({self.profile.max_concurrent_trades}) reached",
+            )
 
         # Check daily exposure
         today_exposure = self._get_daily_exposure()
         if today_exposure + capital > self.profile.max_daily_exposure:
-            return False, f"Daily exposure ${today_exposure + capital} exceeds max ${self.profile.max_daily_exposure}"
+            return (
+                False,
+                f"Daily exposure ${today_exposure + capital} exceeds max ${self.profile.max_daily_exposure}",
+            )
 
         return True, None
 
@@ -141,7 +150,10 @@ class RiskManager:
         # Check daily loss
         today_loss = self._get_daily_loss()
         if today_loss >= self.profile.max_daily_loss:
-            return False, f"Daily loss ${today_loss} hit stop-loss ${self.profile.max_daily_loss}"
+            return (
+                False,
+                f"Daily loss ${today_loss} hit stop-loss ${self.profile.max_daily_loss}",
+            )
 
         return True, None
 
@@ -171,7 +183,10 @@ class RiskManager:
         # Check profitability
         net_profit = expected_profit - gas_cost
         if net_profit < self.profile.min_profit_threshold:
-            return False, f"Net profit ${net_profit} below threshold ${self.profile.min_profit_threshold}"
+            return (
+                False,
+                f"Net profit ${net_profit} below threshold ${self.profile.min_profit_threshold}",
+            )
 
         return True, None
 

@@ -390,7 +390,9 @@ class DEXPriceFetcher:
         # Add simulated DEX quotes for comparison
         dexes = ["uniswap_v3", "sushiswap", "curve", "balancer"]
         for dex in dexes:
-            sim_quote = await self.get_simulated_quote(from_token, to_token, amount, dex)
+            sim_quote = await self.get_simulated_quote(
+                from_token, to_token, amount, dex
+            )
             quotes.append(sim_quote)
 
         # Sort by output amount (best first)

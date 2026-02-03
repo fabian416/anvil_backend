@@ -136,6 +136,7 @@ class AllProvidersFailedError(ApplicationError):
 
 # Additional LLM-specific exceptions
 
+
 class ModelNotFoundError(ApplicationError):
     """Raised when an LLM model is not found."""
 

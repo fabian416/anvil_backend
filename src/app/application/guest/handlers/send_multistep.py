@@ -59,7 +59,12 @@ class SendMultiStepHandler:
         # Handle continuation steps
         if continuation_step:
             return await self._handle_continuation(
-                content, content_lower, language, is_authenticated, continuation_step, send_info
+                content,
+                content_lower,
+                language,
+                is_authenticated,
+                continuation_step,
+                send_info,
             )
 
         # Parse complete send request (e.g., "send 1 ETH to 0x123...")
@@ -67,7 +72,9 @@ class SendMultiStepHandler:
         if parsed["token"] and parsed["amount"] and parsed["address"]:
             # Complete info provided
             send_info.update(parsed)
-            return await self._show_review_and_confirm(send_info, language, is_authenticated)
+            return await self._show_review_and_confirm(
+                send_info, language, is_authenticated
+            )
         elif parsed["token"] and parsed["amount"]:
             # Has token and amount, need address
             send_info.update(parsed)
@@ -78,7 +85,10 @@ class SendMultiStepHandler:
             return self._ask_for_amount(send_info, language, is_authenticated)
 
         # Initial "send" command - start flow
-        if any(kw in content_lower for kw in ["send", "transfer", "enviar", "envoyer", "发送"]):
+        if any(
+            kw in content_lower
+            for kw in ["send", "transfer", "enviar", "envoyer", "发送"]
+        ):
             return self._ask_for_token(language, is_authenticated)
 
         # Fallback
@@ -97,13 +107,35 @@ class SendMultiStepHandler:
 
         # Handle confirmation
         if step == "send_awaiting_confirmation":
-            if any(kw in content_lower for kw in ["confirm", "yes", "ok", "proceed", "go", "sí", "sim", "oui", "是"]):
+            if any(
+                kw in content_lower
+                for kw in [
+                    "confirm",
+                    "yes",
+                    "ok",
+                    "proceed",
+                    "go",
+                    "sí",
+                    "sim",
+                    "oui",
+                    "是",
+                ]
+            ):
                 return self._execute_send(send_info, language, is_authenticated)
-            elif any(kw in content_lower for kw in ["cancel", "no", "stop", "cancelar", "non", "否"]):
+            elif any(
+                kw in content_lower
+                for kw in ["cancel", "no", "stop", "cancelar", "non", "否"]
+            ):
                 return self._cancel_send(language)
-            elif "change" in content_lower or "edit" in content_lower or "modify" in content_lower:
+            elif (
+                "change" in content_lower
+                or "edit" in content_lower
+                or "modify" in content_lower
+            ):
                 # Allow editing any parameter
-                return await self._handle_edit(content, send_info, language, is_authenticated)
+                return await self._handle_edit(
+                    content, send_info, language, is_authenticated
+                )
 
         # Handle address input
         if step == "send_awaiting_address":
@@ -111,9 +143,13 @@ class SendMultiStepHandler:
             if address:
                 send_info["address"] = address
                 send_info["network"] = self._detect_network(send_info["token"], address)
-                return await self._show_review_and_confirm(send_info, language, is_authenticated)
+                return await self._show_review_and_confirm(
+                    send_info, language, is_authenticated
+                )
             else:
-                return self._ask_for_address(send_info, language, is_authenticated, error=True)
+                return self._ask_for_address(
+                    send_info, language, is_authenticated, error=True
+                )
 
         # Handle amount input
         if step == "send_awaiting_amount":
@@ -122,7 +158,9 @@ class SendMultiStepHandler:
                 send_info["amount"] = amount
                 return self._ask_for_address(send_info, language, is_authenticated)
             else:
-                return self._ask_for_amount(send_info, language, is_authenticated, error=True)
+                return self._ask_for_amount(
+                    send_info, language, is_authenticated, error=True
+                )
 
         # Handle token input
         if step == "send_awaiting_token":
@@ -142,8 +180,8 @@ class SendMultiStepHandler:
 
         # Pattern: "send 1 ETH to 0x123..."
         pattern = re.compile(
-            r'(?:send|transfer)?\s*(?:(\\d+\\.?\\d*)\\s+)?(\\w+)\\s+(?:to)?\\s*(0x[a-fA-F0-9]{40}|[a-zA-Z0-9]{32,44})?',
-            re.IGNORECASE
+            r"(?:send|transfer)?\s*(?:(\\d+\\.?\\d*)\\s+)?(\\w+)\\s+(?:to)?\\s*(0x[a-fA-F0-9]{40}|[a-zA-Z0-9]{32,44})?",
+            re.IGNORECASE,
         )
         match = pattern.search(content)
 
@@ -171,18 +209,21 @@ class SendMultiStepHandler:
 
     def _extract_amount(self, content: str) -> str | None:
         """Extract amount from content."""
-        match = re.search(r'(\\d+\\.?\\d*)', content)
+        match = re.search(r"(\\d+\\.?\\d*)", content)
         return match.group(1) if match else None
 
     def _extract_address(self, content: str) -> str | None:
         """Extract wallet address from content."""
         # Ethereum address (0x + 40 hex chars)
-        eth_match = re.search(r'(0x[a-fA-F0-9]{40})', content)
+        eth_match = re.search(r"(0x[a-fA-F0-9]{40})", content)
         if eth_match:
             return eth_match.group(1)
 
         # Bitcoin/Solana address (alphanumeric, 32-44 chars)
-        other_match = re.search(r'\\b([13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59}|[1-9A-HJ-NP-Za-km-z]{32,44})\\b', content)
+        other_match = re.search(
+            r"\\b([13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59}|[1-9A-HJ-NP-Za-km-z]{32,44})\\b",
+            content,
+        )
         if other_match:
             return other_match.group(1)
 
@@ -200,7 +241,9 @@ class SendMultiStepHandler:
             return "Ethereum"  # Default
 
     # Response builders
-    def _ask_for_token(self, language: str, is_authenticated: bool, error: bool = False) -> dict:
+    def _ask_for_token(
+        self, language: str, is_authenticated: bool, error: bool = False
+    ) -> dict:
         """Ask user which token to send."""
         translations = {
             "en": {
@@ -208,14 +251,14 @@ class SendMultiStepHandler:
                 "title": "📤 **Send Crypto Safely**\\n\\n",
                 "intro": "Great! Let's send some crypto. I'll guide you through it step by step.\\n\\n",
                 "question": "**Step 1 of 4:** Which crypto do you want to send?\\n\\n",
-                "options": "💎 Available tokens:\\n• **BTC** ₿ Bitcoin\\n• **ETH** Ξ Ethereum\\n• **SOL** ◎ Solana\\n• **USDC** 💵 USD Coin\\n\\n💡 *Just type the token symbol, like \\\"ETH\\\"*",
+                "options": '💎 Available tokens:\\n• **BTC** ₿ Bitcoin\\n• **ETH** Ξ Ethereum\\n• **SOL** ◎ Solana\\n• **USDC** 💵 USD Coin\\n\\n💡 *Just type the token symbol, like \\"ETH\\"*',
             },
             "es": {
                 "error": "❌ Hmm, no reconocí ese token. ¡Intentemos de nuevo!\\n\\n",
                 "title": "📤 **Enviar Cripto de Forma Segura**\\n\\n",
                 "intro": "¡Genial! Enviemos cripto. Te guiaré paso a paso.\\n\\n",
                 "question": "**Paso 1 de 4:** ¿Qué cripto quieres enviar?\\n\\n",
-                "options": "💎 Tokens disponibles:\\n• **BTC** ₿ Bitcoin\\n• **ETH** Ξ Ethereum\\n• **SOL** ◎ Solana\\n• **USDC** 💵 USD Coin\\n\\n💡 *Solo escribe el símbolo, como \\\"ETH\\\"*",
+                "options": '💎 Tokens disponibles:\\n• **BTC** ₿ Bitcoin\\n• **ETH** Ξ Ethereum\\n• **SOL** ◎ Solana\\n• **USDC** 💵 USD Coin\\n\\n💡 *Solo escribe el símbolo, como \\"ETH\\"*',
             },
         }
         t = translations.get(language, translations["en"])
@@ -233,10 +276,18 @@ class SendMultiStepHandler:
             "send_info": {},
         }
 
-    def _ask_for_amount(self, send_info: dict, language: str, is_authenticated: bool, error: bool = False) -> dict:
+    def _ask_for_amount(
+        self,
+        send_info: dict,
+        language: str,
+        is_authenticated: bool,
+        error: bool = False,
+    ) -> dict:
         """Ask user how much to send."""
         token = send_info.get("token", "")
-        token_info = next((t for t in self.SUPPORTED_TOKENS.values() if t["symbol"] == token), None)
+        token_info = next(
+            (t for t in self.SUPPORTED_TOKENS.values() if t["symbol"] == token), None
+        )
         emoji = token_info["emoji"] if token_info else "💎"
 
         translations = {
@@ -265,11 +316,19 @@ class SendMultiStepHandler:
             "send_info": send_info,
         }
 
-    def _ask_for_address(self, send_info: dict, language: str, is_authenticated: bool, error: bool = False) -> dict:
+    def _ask_for_address(
+        self,
+        send_info: dict,
+        language: str,
+        is_authenticated: bool,
+        error: bool = False,
+    ) -> dict:
         """Ask user for destination address."""
         token = send_info.get("token", "")
         amount = send_info.get("amount", "")
-        token_info = next((t for t in self.SUPPORTED_TOKENS.values() if t["symbol"] == token), None)
+        token_info = next(
+            (t for t in self.SUPPORTED_TOKENS.values() if t["symbol"] == token), None
+        )
         emoji = token_info["emoji"] if token_info else "💎"
 
         translations = {
@@ -292,24 +351,34 @@ class SendMultiStepHandler:
 
         return {
             "content": content,
-            "enrichment": {"send_flow": "step3_address", "token": token, "amount": amount},
+            "enrichment": {
+                "send_flow": "step3_address",
+                "token": token,
+                "amount": amount,
+            },
             "requires_registration": not is_authenticated,
             "pending_action": "send_awaiting_address",
             "send_info": send_info,
         }
 
-    async def _show_review_and_confirm(self, send_info: dict, language: str, is_authenticated: bool) -> dict:
+    async def _show_review_and_confirm(
+        self, send_info: dict, language: str, is_authenticated: bool
+    ) -> dict:
         """Show transaction review and ask for confirmation."""
         token = send_info.get("token", "")
         amount = send_info.get("amount", "")
         address = send_info.get("address", "")
         network = send_info.get("network", "Unknown")
 
-        token_info = next((t for t in self.SUPPORTED_TOKENS.values() if t["symbol"] == token), None)
+        token_info = next(
+            (t for t in self.SUPPORTED_TOKENS.values() if t["symbol"] == token), None
+        )
         emoji = token_info["emoji"] if token_info else "💎"
 
         # Truncate address for display
-        display_address = f"{address[:6]}...{address[-4:]}" if len(address) > 10 else address
+        display_address = (
+            f"{address[:6]}...{address[-4:]}" if len(address) > 10 else address
+        )
 
         translations = {
             "en": {
@@ -373,16 +442,22 @@ class SendMultiStepHandler:
             "send_info": send_info,
         }
 
-    def _execute_send(self, send_info: dict, language: str, is_authenticated: bool) -> dict:
+    def _execute_send(
+        self, send_info: dict, language: str, is_authenticated: bool
+    ) -> dict:
         """Execute send transaction (requires authentication)."""
         token = send_info.get("token", "")
         amount = send_info.get("amount", "")
         address = send_info.get("address", "")
 
-        token_info = next((t for t in self.SUPPORTED_TOKENS.values() if t["symbol"] == token), None)
+        token_info = next(
+            (t for t in self.SUPPORTED_TOKENS.values() if t["symbol"] == token), None
+        )
         emoji = token_info["emoji"] if token_info else "💎"
 
-        display_address = f"{address[:6]}...{address[-4:]}" if len(address) > 10 else address
+        display_address = (
+            f"{address[:6]}...{address[-4:]}" if len(address) > 10 else address
+        )
 
         translations = {
             "en": (
@@ -426,14 +501,18 @@ class SendMultiStepHandler:
             "requires_registration": False,
         }
 
-    async def _handle_edit(self, content: str, send_info: dict, language: str, is_authenticated: bool) -> dict:
+    async def _handle_edit(
+        self, content: str, send_info: dict, language: str, is_authenticated: bool
+    ) -> dict:
         """Handle edit request."""
         # Extract new amount if mentioned
         if "amount" in content.lower():
             new_amount = self._extract_amount(content)
             if new_amount:
                 send_info["amount"] = new_amount
-                return await self._show_review_and_confirm(send_info, language, is_authenticated)
+                return await self._show_review_and_confirm(
+                    send_info, language, is_authenticated
+                )
 
         # Generic edit response - restart from amount
         return self._ask_for_amount(send_info, language, is_authenticated)

@@ -132,6 +132,7 @@ class CacheError(ApplicationError):
 
 # Additional system-specific exceptions
 
+
 class ConnectionError(ApplicationError):
     """Raised when a connection fails."""
 

@@ -21,6 +21,7 @@ Integration Points:
 
 Feature Flag: mcp.servers.hyperliquid_enabled
 """
+
 from typing import Dict, Any, List, Optional
 from decimal import Decimal
 
@@ -76,7 +77,9 @@ class HyperliquidMCPServer(MCPServer):
         self.settings = settings or MCPSettings()
 
         # Check if server is enabled
-        if not self.settings.enabled or not getattr(self.settings.servers, 'hyperliquid_enabled', False):
+        if not self.settings.enabled or not getattr(
+            self.settings.servers, "hyperliquid_enabled", False
+        ):
             raise MCPServerDisabledError(
                 "Hyperliquid MCP server is disabled. "
                 "Enable with mcp.servers.hyperliquid_enabled=true in config."
@@ -89,7 +92,7 @@ class HyperliquidMCPServer(MCPServer):
         )
 
         self.perpetual_gateway = perpetual_gateway
-        
+
         # Register tools
         self.setup_tools()
 
@@ -444,7 +447,9 @@ class HyperliquidMCPServer(MCPServer):
         try:
             funding = await self.perpetual_gateway.get_funding_rate(symbol=symbol)
 
-            direction = "Longs pay shorts" if funding.current_rate > 0 else "Shorts pay longs"
+            direction = (
+                "Longs pay shorts" if funding.current_rate > 0 else "Shorts pay longs"
+            )
 
             return {
                 "symbol": funding.symbol,
@@ -478,7 +483,9 @@ class HyperliquidMCPServer(MCPServer):
 
             rate_data = []
             for f in funding_rates:
-                direction = "Longs pay shorts" if f.current_rate > 0 else "Shorts pay longs"
+                direction = (
+                    "Longs pay shorts" if f.current_rate > 0 else "Shorts pay longs"
+                )
                 annualized = float(f.current_rate) * 365 * 3 * 100  # 3 times per day
 
                 rate_data.append({
@@ -665,8 +672,7 @@ class HyperliquidMCPServer(MCPServer):
 
             # Filter by minimum rate (absolute value)
             opportunities = [
-                f for f in funding_rates
-                if abs(float(f.current_rate)) >= min_rate
+                f for f in funding_rates if abs(float(f.current_rate)) >= min_rate
             ]
 
             # Sort by absolute rate
@@ -677,7 +683,11 @@ class HyperliquidMCPServer(MCPServer):
 
             opp_data = []
             for f in opportunities:
-                strategy = "Short perp (collect funding)" if f.current_rate > 0 else "Long perp (collect funding)"
+                strategy = (
+                    "Short perp (collect funding)"
+                    if f.current_rate > 0
+                    else "Long perp (collect funding)"
+                )
                 annualized = float(f.current_rate) * 365 * 3 * 100
 
                 opp_data.append({

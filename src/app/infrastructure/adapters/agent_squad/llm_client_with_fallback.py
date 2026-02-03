@@ -41,14 +41,14 @@ class LLMClientWithFallback:
             f"LLM Client initialized: primary={primary_name}, "
             f"fallback={fallback_name}, fallback_enabled={self._enable_fallback}"
         )
-    
+
     def _map_model_for_fallback(self, model: str) -> str:
         """
         Map Vertex AI model names to DeepInfra model names.
-        
+
         Args:
             model: Original model name (may be Vertex AI model)
-            
+
         Returns:
             DeepInfra-compatible model name
         """
@@ -61,17 +61,19 @@ class LLMClientWithFallback:
             "gemini-1.5-pro": "meta-llama/Meta-Llama-3.1-405B-Instruct",
             "gemini-2.0-pro": "meta-llama/Meta-Llama-3.1-405B-Instruct",
         }
-        
+
         # If it's a Vertex AI model, map to DeepInfra equivalent
         if model in model_mapping:
             mapped_model = model_mapping[model]
-            logger.info(f"🔄 Mapping Vertex AI model '{model}' → DeepInfra model '{mapped_model}' for fallback")
+            logger.info(
+                f"🔄 Mapping Vertex AI model '{model}' → DeepInfra model '{mapped_model}' for fallback"
+            )
             return mapped_model
-        
+
         # If it's already a DeepInfra model (starts with meta-llama/) or unknown, return as-is
         if model.startswith("meta-llama/"):
             return model
-        
+
         # Unknown model - use default DeepInfra model
         default_fallback = "meta-llama/Meta-Llama-3.1-70B-Instruct"
         logger.warning(
@@ -90,12 +92,12 @@ class LLMClientWithFallback:
         except Exception as e:
             error_str = str(e)
             is_rate_limit = (
-                "429" in error_str or
-                "rate limit" in error_str.lower() or
-                "resource exhausted" in error_str.lower() or
-                "RESOURCE_EXHAUSTED" in error_str
+                "429" in error_str
+                or "rate limit" in error_str.lower()
+                or "resource exhausted" in error_str.lower()
+                or "RESOURCE_EXHAUSTED" in error_str
             )
-            
+
             if self._enable_fallback:
                 if is_rate_limit:
                     logger.warning(
@@ -122,12 +124,12 @@ class LLMClientWithFallback:
         except Exception as e:
             error_str = str(e)
             is_rate_limit = (
-                "429" in error_str or
-                "rate limit" in error_str.lower() or
-                "resource exhausted" in error_str.lower() or
-                "RESOURCE_EXHAUSTED" in error_str
+                "429" in error_str
+                or "rate limit" in error_str.lower()
+                or "resource exhausted" in error_str.lower()
+                or "RESOURCE_EXHAUSTED" in error_str
             )
-            
+
             if self._enable_fallback:
                 if is_rate_limit:
                     logger.warning(
@@ -154,12 +156,12 @@ class LLMClientWithFallback:
         except Exception as e:
             error_str = str(e)
             is_rate_limit = (
-                "429" in error_str or
-                "rate limit" in error_str.lower() or
-                "resource exhausted" in error_str.lower() or
-                "RESOURCE_EXHAUSTED" in error_str
+                "429" in error_str
+                or "rate limit" in error_str.lower()
+                or "resource exhausted" in error_str.lower()
+                or "RESOURCE_EXHAUSTED" in error_str
             )
-            
+
             if self._enable_fallback:
                 if is_rate_limit:
                     logger.warning(
@@ -188,12 +190,12 @@ class LLMClientWithFallback:
             error_str = str(e)
             # Check if it's a rate limit error (429)
             is_rate_limit = (
-                "429" in error_str or
-                "rate limit" in error_str.lower() or
-                "resource exhausted" in error_str.lower() or
-                "RESOURCE_EXHAUSTED" in error_str
+                "429" in error_str
+                or "rate limit" in error_str.lower()
+                or "resource exhausted" in error_str.lower()
+                or "RESOURCE_EXHAUSTED" in error_str
             )
-            
+
             if self._enable_fallback:
                 if is_rate_limit:
                     logger.warning(
@@ -207,7 +209,9 @@ class LLMClientWithFallback:
                     )
                 # Map Vertex AI model to DeepInfra model if needed
                 fallback_model = self._map_model_for_fallback(model)
-                return await self._fallback.chat(messages, fallback_model, temperature, max_tokens)
+                return await self._fallback.chat(
+                    messages, fallback_model, temperature, max_tokens
+                )
             raise
 
     async def generate(
@@ -219,17 +223,19 @@ class LLMClientWithFallback:
     ) -> str:
         """Generate text completion with fallback support."""
         try:
-            return await self._primary.generate(model, messages, temperature, max_tokens)
+            return await self._primary.generate(
+                model, messages, temperature, max_tokens
+            )
         except Exception as e:
             error_str = str(e)
             # Check if it's a rate limit error (429)
             is_rate_limit = (
-                "429" in error_str or
-                "rate limit" in error_str.lower() or
-                "resource exhausted" in error_str.lower() or
-                "RESOURCE_EXHAUSTED" in error_str
+                "429" in error_str
+                or "rate limit" in error_str.lower()
+                or "resource exhausted" in error_str.lower()
+                or "RESOURCE_EXHAUSTED" in error_str
             )
-            
+
             if self._enable_fallback:
                 if is_rate_limit:
                     logger.warning(
@@ -243,5 +249,7 @@ class LLMClientWithFallback:
                     )
                 # Map Vertex AI model to DeepInfra model if needed
                 fallback_model = self._map_model_for_fallback(model)
-                return await self._fallback.generate(fallback_model, messages, temperature, max_tokens)
+                return await self._fallback.generate(
+                    fallback_model, messages, temperature, max_tokens
+                )
             raise

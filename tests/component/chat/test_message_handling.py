@@ -30,7 +30,9 @@ class TestSendMessage:
         THEN system SHALL return user message and agent response
         """
         # Arrange
-        mock_agent_gateway.process_message.return_value = "DeFi is decentralized finance."
+        mock_agent_gateway.process_message.return_value = (
+            "DeFi is decentralized finance."
+        )
 
         # Act
         user_message, agent_message = await send_message_command.execute(
@@ -59,6 +61,7 @@ class TestSendMessage:
 
         # Act & Assert
         from app.domain.exceptions.chat import ConversationNotFoundError
+
         with pytest.raises(ConversationNotFoundError):
             await send_message_command.execute(
                 user_id=test_user["id"],
@@ -77,6 +80,7 @@ class TestSendMessage:
         """
         # Act & Assert
         from app.domain.exceptions.chat import ConversationAccessDeniedError
+
         with pytest.raises(ConversationAccessDeniedError):
             await send_message_command.execute(
                 user_id=999,  # Different user
@@ -96,7 +100,9 @@ class TestSendMessage:
         THEN system SHALL still process it (validation happens at presentation layer)
         """
         # Arrange
-        mock_agent_gateway.process_message.return_value = "I see you sent an empty message."
+        mock_agent_gateway.process_message.return_value = (
+            "I see you sent an empty message."
+        )
 
         # Act
         user_message, agent_message = await send_message_command.execute(

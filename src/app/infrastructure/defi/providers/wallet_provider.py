@@ -27,10 +27,10 @@ TOKEN_ADDRESSES = {
 class WalletProvider:
     """
     Multi-chain wallet balance provider.
-    
+
     Supports Ethereum, Polygon, Arbitrum, Optimism via RPC.
     """
-    
+
     # RPC endpoints (can be configured via env)
     RPC_ENDPOINTS = {
         "ethereum": "https://eth.llamarpc.com",
@@ -38,11 +38,11 @@ class WalletProvider:
         "arbitrum": "https://arbitrum.llamarpc.com",
         "optimism": "https://optimism.llamarpc.com",
     }
-    
+
     def __init__(self, custom_rpc: Optional[Dict[str, str]] = None):
         """
         Initialize wallet provider.
-        
+
         Args:
             custom_rpc: Custom RPC endpoints (network -> url)
         """
@@ -54,7 +54,7 @@ class WalletProvider:
             )
             for network, url in self.rpc_endpoints.items()
         }
-    
+
     async def get_native_balance(
         self,
         address: str,
@@ -62,11 +62,11 @@ class WalletProvider:
     ) -> Dict[str, Any]:
         """
         Get native token balance (ETH, MATIC, etc.).
-        
+
         Args:
             address: Wallet address
             network: Network name (ethereum, polygon, arbitrum, optimism)
-        
+
         Returns:
             Balance data with amount in wei and formatted
         """
@@ -74,7 +74,7 @@ class WalletProvider:
             client = self._clients.get(network)
             if not client:
                 raise ValueError(f"Unsupported network: {network}")
-            
+
             # eth_getBalance RPC call
             response = await client.post(
                 "/",
@@ -83,19 +83,19 @@ class WalletProvider:
                     "method": "eth_getBalance",
                     "params": [address, "latest"],
                     "id": 1,
-                }
+                },
             )
             response.raise_for_status()
-            
+
             data = response.json()
-            
+
             if "error" in data:
                 raise ValueError(f"RPC error: {data['error']}")
-            
+
             # Convert hex to decimal
             balance_wei = int(data["result"], 16)
             balance_eth = Decimal(balance_wei) / Decimal(10**18)
-            
+
             return {
                 "address": address,
                 "network": network,
@@ -104,11 +104,11 @@ class WalletProvider:
                 "balance": str(balance_eth),
                 "formatted": f"{balance_eth:.6f}",
             }
-        
+
         except Exception as e:
             logger.error(f"Error getting native balance: {e}")
             raise
-    
+
     async def get_token_balance(
         self,
         address: str,
@@ -118,13 +118,13 @@ class WalletProvider:
     ) -> Dict[str, Any]:
         """
         Get ERC-20 token balance.
-        
+
         Args:
             address: Wallet address
             token_address: Token contract address
             network: Network name
             decimals: Token decimals (default 18)
-        
+
         Returns:
             Token balance data
         """
@@ -132,12 +132,12 @@ class WalletProvider:
             client = self._clients.get(network)
             if not client:
                 raise ValueError(f"Unsupported network: {network}")
-            
+
             # ERC-20 balanceOf(address) function signature
             # Function selector: 0x70a08231
             # Padded address parameter
             data = f"0x70a08231000000000000000000000000{address[2:].lower()}"
-            
+
             # eth_call RPC
             response = await client.post(
                 "/",
@@ -149,22 +149,22 @@ class WalletProvider:
                             "to": token_address,
                             "data": data,
                         },
-                        "latest"
+                        "latest",
                     ],
                     "id": 1,
-                }
+                },
             )
             response.raise_for_status()
-            
+
             result = response.json()
-            
+
             if "error" in result:
                 raise ValueError(f"RPC error: {result['error']}")
-            
+
             # Convert hex result to decimal
             balance_raw = int(result["result"], 16)
             balance = Decimal(balance_raw) / Decimal(10**decimals)
-            
+
             return {
                 "address": address,
                 "network": network,
@@ -174,11 +174,11 @@ class WalletProvider:
                 "formatted": f"{balance:.6f}",
                 "decimals": decimals,
             }
-        
+
         except Exception as e:
             logger.error(f"Error getting token balance: {e}")
             raise
-    
+
     async def get_portfolio_balances(
         self,
         address: str,
@@ -187,12 +187,12 @@ class WalletProvider:
     ) -> Dict[str, Any]:
         """
         Get complete portfolio balances for an address.
-        
+
         Args:
             address: Wallet address
             network: Network name
             tokens: Token symbols to check (defaults to common tokens)
-        
+
         Returns:
             Portfolio data with all balances
         """
@@ -200,39 +200,36 @@ class WalletProvider:
             # Default to checking common tokens
             if tokens is None:
                 tokens = ["USDC", "USDT", "DAI", "WETH", "WBTC"]
-            
+
             # Get native balance
             native = await self.get_native_balance(address, network)
-            
+
             # Get token balances
             token_balances = []
             for token_symbol in tokens:
                 token_address = TOKEN_ADDRESSES.get(token_symbol)
                 if not token_address:
                     continue
-                
+
                 try:
                     # Determine decimals
                     decimals = 6 if token_symbol in ["USDC", "USDT"] else 18
-                    
+
                     balance = await self.get_token_balance(
                         address=address,
                         token_address=token_address,
                         network=network,
                         decimals=decimals,
                     )
-                    
+
                     # Only include if balance > 0
                     if Decimal(balance["balance"]) > 0:
-                        token_balances.append({
-                            "symbol": token_symbol,
-                            **balance
-                        })
-                
+                        token_balances.append({"symbol": token_symbol, **balance})
+
                 except Exception as e:
                     logger.warning(f"Failed to get {token_symbol} balance: {e}")
                     continue
-            
+
             return {
                 "address": address,
                 "network": network,
@@ -240,11 +237,11 @@ class WalletProvider:
                 "tokens": token_balances,
                 "total_tokens": len(token_balances),
             }
-        
+
         except Exception as e:
             logger.error(f"Error getting portfolio balances: {e}")
             raise
-    
+
     async def close(self):
         """Close all HTTP clients."""
         for client in self._clients.values():
@@ -253,4 +250,5 @@ class WalletProvider:
 
 class WalletProviderError(Exception):
     """Wallet provider error."""
+
     pass

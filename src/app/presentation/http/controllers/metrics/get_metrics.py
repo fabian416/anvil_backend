@@ -24,6 +24,7 @@ from app.presentation.http.errors.translators import ServiceUnavailableTranslato
 
 class UserMetricsSummaryResponse(BaseModel):
     """Response schema for user metrics summary."""
+
     user_id: int
     total_events: int
     first_event_at: Optional[str]
@@ -36,6 +37,7 @@ class UserMetricsSummaryResponse(BaseModel):
 
 class EventListResponse(BaseModel):
     """Response schema for event list."""
+
     events: list[dict[str, Any]]
     total: int
     limit: int
@@ -66,9 +68,9 @@ async def get_my_metrics(
     """Get metrics summary for the authenticated user."""
     current_user = await current_user_service.get_current_user()
     user_id = current_user.id_.value
-    
+
     summary = await metrics_repo.get_user_metrics_summary(user_id)
-    
+
     if not summary:
         return UserMetricsSummaryResponse(
             user_id=user_id,
@@ -80,12 +82,16 @@ async def get_my_metrics(
             devices_used=[],
             platforms_used=[],
         )
-    
+
     return UserMetricsSummaryResponse(
         user_id=summary["user_id"],
         total_events=summary["total_events"],
-        first_event_at=summary["first_event_at"].isoformat() if summary["first_event_at"] else None,
-        last_event_at=summary["last_event_at"].isoformat() if summary["last_event_at"] else None,
+        first_event_at=summary["first_event_at"].isoformat()
+        if summary["first_event_at"]
+        else None,
+        last_event_at=summary["last_event_at"].isoformat()
+        if summary["last_event_at"]
+        else None,
         events_by_category=summary["events_by_category"],
         events_by_type=summary["events_by_type"],
         devices_used=summary["devices_used"],
@@ -121,16 +127,16 @@ async def get_my_events(
     """Get events for the authenticated user."""
     current_user = await current_user_service.get_current_user()
     user_id = current_user.id_.value
-    
+
     filters: UserEventFilter = {
         "user_id": user_id,
         "event_type": event_type,
         "event_category": event_category,
     }
-    
+
     events = await metrics_repo.get_events(filters, limit=limit, offset=offset)
     total = await metrics_repo.get_event_count(user_id=user_id, event_type=event_type)
-    
+
     return EventListResponse(
         events=events,
         total=total,
@@ -165,16 +171,16 @@ async def get_platform_metrics(
 ) -> dict:
     """Get platform-wide metrics summary."""
     current_user = await current_user_service.get_current_user()
-    
+
     # Check admin role
     if current_user.role.value != "admin":
         raise InsufficientPermissionsError("Admin access required")
-    
+
     from_date = datetime.now(UTC) - timedelta(days=days)
-    
+
     total_events = await metrics_repo.get_event_count(from_date=from_date)
     active_users = await metrics_repo.get_active_users_count(from_date=from_date)
-    
+
     return {
         "period_days": days,
         "total_events": total_events,

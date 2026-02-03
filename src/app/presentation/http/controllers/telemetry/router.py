@@ -53,13 +53,13 @@ router = APIRouter(prefix="/telemetry", tags=["Telemetry"])
 async def get_telemetry_flags() -> dict:
     """
     Get current telemetry feature flags.
-    
+
     Returns the current state of all telemetry feature flags:
     - Global enable/disable
     - Component-level flags (API, LLM, DB, Tracing)
     - Sampling rates
     - Per-API and per-provider configurations
-    
+
     Returns:
         Feature flags configuration dictionary
     """
@@ -70,21 +70,39 @@ async def get_telemetry_flags() -> dict:
 @router.put("/flags")
 async def update_telemetry_flags(
     authorization: Annotated[str, Security(bearer_scheme)],
-    global_enabled: Annotated[Optional[bool], Query(description="Master telemetry switch")] = None,
-    api_telemetry_enabled: Annotated[Optional[bool], Query(description="API telemetry")] = None,
-    llm_telemetry_enabled: Annotated[Optional[bool], Query(description="LLM telemetry")] = None,
-    db_telemetry_enabled: Annotated[Optional[bool], Query(description="Database telemetry")] = None,
-    tracing_enabled: Annotated[Optional[bool], Query(description="Distributed tracing")] = None,
-    api_sample_rate: Annotated[Optional[float], Query(description="API sampling rate (0.0-1.0)", ge=0.0, le=1.0)] = None,
-    llm_sample_rate: Annotated[Optional[float], Query(description="LLM sampling rate (0.0-1.0)", ge=0.0, le=1.0)] = None,
-    db_sample_rate: Annotated[Optional[float], Query(description="DB sampling rate (0.0-1.0)", ge=0.0, le=1.0)] = None,
+    global_enabled: Annotated[
+        Optional[bool], Query(description="Master telemetry switch")
+    ] = None,
+    api_telemetry_enabled: Annotated[
+        Optional[bool], Query(description="API telemetry")
+    ] = None,
+    llm_telemetry_enabled: Annotated[
+        Optional[bool], Query(description="LLM telemetry")
+    ] = None,
+    db_telemetry_enabled: Annotated[
+        Optional[bool], Query(description="Database telemetry")
+    ] = None,
+    tracing_enabled: Annotated[
+        Optional[bool], Query(description="Distributed tracing")
+    ] = None,
+    api_sample_rate: Annotated[
+        Optional[float],
+        Query(description="API sampling rate (0.0-1.0)", ge=0.0, le=1.0),
+    ] = None,
+    llm_sample_rate: Annotated[
+        Optional[float],
+        Query(description="LLM sampling rate (0.0-1.0)", ge=0.0, le=1.0),
+    ] = None,
+    db_sample_rate: Annotated[
+        Optional[float], Query(description="DB sampling rate (0.0-1.0)", ge=0.0, le=1.0)
+    ] = None,
 ) -> dict:
     """
     Update telemetry feature flags at runtime.
-    
+
     Admin-only endpoint to toggle telemetry components dynamically.
     Changes take effect immediately but do not persist across restarts.
-    
+
     Query parameters:
     - global_enabled: Master switch for all telemetry
     - api_telemetry_enabled: Toggle API telemetry
@@ -94,12 +112,12 @@ async def update_telemetry_flags(
     - api_sample_rate: Set API sampling rate (0.0-1.0)
     - llm_sample_rate: Set LLM sampling rate (0.0-1.0)
     - db_sample_rate: Set database sampling rate (0.0-1.0)
-    
+
     Returns:
         Updated feature flags configuration
     """
     flags = get_feature_flags()
-    
+
     # Update flags that were provided
     if global_enabled is not None:
         flags.global_enabled = global_enabled
@@ -117,7 +135,7 @@ async def update_telemetry_flags(
         flags.llm_sample_rate = llm_sample_rate
     if db_sample_rate is not None:
         flags.db_sample_rate = db_sample_rate
-    
+
     return {
         "status": "success",
         "message": "Telemetry flags updated",
@@ -132,18 +150,18 @@ async def disable_api_telemetry(
 ) -> dict:
     """
     Disable telemetry for a specific API.
-    
+
     Admin-only endpoint to stop collecting telemetry for a specific API.
-    
+
     Path parameters:
     - api_name: Name of the API to disable (e.g., "coingecko", "uniswap")
-    
+
     Returns:
         Updated disabled APIs list
     """
     flags = get_feature_flags()
     flags.disabled_apis.add(api_name.lower())
-    
+
     return {
         "status": "success",
         "message": f"Telemetry disabled for API: {api_name}",
@@ -158,18 +176,18 @@ async def enable_api_telemetry(
 ) -> dict:
     """
     Re-enable telemetry for a specific API.
-    
+
     Admin-only endpoint to resume collecting telemetry for a specific API.
-    
+
     Path parameters:
     - api_name: Name of the API to enable (e.g., "coingecko", "uniswap")
-    
+
     Returns:
         Updated disabled APIs list
     """
     flags = get_feature_flags()
     flags.disabled_apis.discard(api_name.lower())
-    
+
     return {
         "status": "success",
         "message": f"Telemetry enabled for API: {api_name}",
@@ -184,18 +202,18 @@ async def disable_llm_telemetry(
 ) -> dict:
     """
     Disable telemetry for a specific LLM provider.
-    
+
     Admin-only endpoint to stop collecting telemetry for a specific LLM provider.
-    
+
     Path parameters:
     - provider: Name of the provider (e.g., "vertex_ai", "openai")
-    
+
     Returns:
         Updated disabled providers list
     """
     flags = get_feature_flags()
     flags.disabled_llm_providers.add(provider.lower())
-    
+
     return {
         "status": "success",
         "message": f"Telemetry disabled for LLM provider: {provider}",
@@ -210,18 +228,18 @@ async def enable_llm_telemetry(
 ) -> dict:
     """
     Re-enable telemetry for a specific LLM provider.
-    
+
     Admin-only endpoint to resume collecting telemetry for a specific LLM provider.
-    
+
     Path parameters:
     - provider: Name of the provider (e.g., "vertex_ai", "openai")
-    
+
     Returns:
         Updated disabled providers list
     """
     flags = get_feature_flags()
     flags.disabled_llm_providers.discard(provider.lower())
-    
+
     return {
         "status": "success",
         "message": f"Telemetry enabled for LLM provider: {provider}",
@@ -237,15 +255,15 @@ async def save_telemetry_flags(
 ) -> dict:
     """
     Persist current telemetry flags to Redis.
-    
+
     Admin-only endpoint to save current flag settings so they persist across restarts.
-    
+
     Returns:
         Save confirmation
     """
     flags = get_feature_flags()
     success = await save_flags_to_redis(flags, redis)
-    
+
     if success:
         return {
             "status": "success",
@@ -267,16 +285,16 @@ async def load_telemetry_flags(
 ) -> dict:
     """
     Load telemetry flags from Redis.
-    
+
     Admin-only endpoint to reload flag settings from Redis storage.
-    
+
     Returns:
         Load confirmation with current flags
     """
     from app.infrastructure.telemetry.feature_flags import set_feature_flags
-    
+
     loaded_flags = await load_flags_from_redis(redis)
-    
+
     if loaded_flags is not None:
         set_feature_flags(loaded_flags)
         return {
@@ -300,15 +318,15 @@ async def delete_saved_telemetry_flags(
 ) -> dict:
     """
     Delete persisted telemetry flags from Redis.
-    
+
     Admin-only endpoint to remove saved flags. After deletion, system will
     fall back to environment-based flags on next restart.
-    
+
     Returns:
         Delete confirmation
     """
     success = await delete_flags_from_redis(redis)
-    
+
     if success:
         return {
             "status": "success",
@@ -334,17 +352,17 @@ async def get_api_metrics(
 ) -> dict:
     """
     Get API telemetry metrics.
-    
+
     Returns comprehensive metrics including:
     - Request counts (total, successful, failed, cached)
     - Latency statistics (avg, min, max, p50, p95, p99)
     - Error rates and error breakdown
     - Rate limit events
     - Estimated API costs
-    
+
     Query parameters:
     - api: Filter by specific API name (optional)
-    
+
     Returns:
         JSON metrics data
     """
@@ -360,7 +378,7 @@ async def get_prometheus_metrics(
 ) -> str:
     """
     Get metrics in Prometheus/OpenMetrics format.
-    
+
     Returns metrics suitable for scraping by Prometheus:
     - anvil_api_requests_total
     - anvil_api_request_duration_seconds
@@ -368,7 +386,7 @@ async def get_prometheus_metrics(
     - anvil_api_rate_limits_total
     - anvil_api_cache_hits_total
     - anvil_api_estimated_cost_usd
-    
+
     Returns:
         Prometheus text format metrics
     """
@@ -379,21 +397,23 @@ async def get_prometheus_metrics(
 @inject
 async def get_traces(
     tracing: FromDishka[TracingService],
-    limit: Annotated[int, Query(description="Maximum traces to return", ge=1, le=100)] = 20,
+    limit: Annotated[
+        int, Query(description="Maximum traces to return", ge=1, le=100)
+    ] = 20,
 ) -> list[dict]:
     """
     Get recent distributed traces.
-    
+
     Returns list of recent traces with:
     - trace_id
     - root_span name
     - duration
     - status
     - span count
-    
+
     Query parameters:
     - limit: Maximum number of traces to return (1-100, default 20)
-    
+
     Returns:
         List of trace summaries
     """
@@ -408,17 +428,17 @@ async def get_trace_details(
 ) -> list[dict]:
     """
     Get detailed spans for a specific trace.
-    
+
     Returns all spans in a trace including:
     - span_id and parent_span_id
     - span name and kind
     - timing (start, end, duration)
     - attributes
     - events
-    
+
     Path parameters:
     - trace_id: The trace ID to retrieve
-    
+
     Returns:
         List of spans in the trace
     """
@@ -432,23 +452,27 @@ async def get_trace_details(
 @inject
 async def get_slow_calls(
     telemetry: FromDishka[APITelemetry],
-    threshold_ms: Annotated[float, Query(description="Minimum latency threshold in ms")] = 1000,
-    limit: Annotated[int, Query(description="Maximum calls to return", ge=1, le=100)] = 10,
+    threshold_ms: Annotated[
+        float, Query(description="Minimum latency threshold in ms")
+    ] = 1000,
+    limit: Annotated[
+        int, Query(description="Maximum calls to return", ge=1, le=100)
+    ] = 10,
 ) -> list[dict]:
     """
     Get slowest API calls.
-    
+
     Returns slow API calls sorted by duration:
     - api and operation
     - duration in ms
     - status
     - timestamp
     - request parameters
-    
+
     Query parameters:
     - threshold_ms: Minimum latency to include (default 1000ms)
     - limit: Maximum calls to return (1-100, default 10)
-    
+
     Returns:
         List of slow API calls
     """
@@ -459,22 +483,26 @@ async def get_slow_calls(
 @inject
 async def get_slow_traces(
     tracing: FromDishka[TracingService],
-    threshold_ms: Annotated[float, Query(description="Minimum latency threshold in ms")] = 1000,
-    limit: Annotated[int, Query(description="Maximum traces to return", ge=1, le=100)] = 10,
+    threshold_ms: Annotated[
+        float, Query(description="Minimum latency threshold in ms")
+    ] = 1000,
+    limit: Annotated[
+        int, Query(description="Maximum traces to return", ge=1, le=100)
+    ] = 10,
 ) -> list[dict]:
     """
     Get slowest traces.
-    
+
     Returns slow traces sorted by duration:
     - trace_id
     - root_span name
     - duration in ms
     - span count
-    
+
     Query parameters:
     - threshold_ms: Minimum latency to include (default 1000ms)
     - limit: Maximum traces to return (1-100, default 10)
-    
+
     Returns:
         List of slow traces
     """
@@ -486,21 +514,23 @@ async def get_slow_traces(
 async def get_errors(
     telemetry: FromDishka[APITelemetry],
     api: Annotated[Optional[str], Query(description="Filter by API name")] = None,
-    limit: Annotated[int, Query(description="Maximum errors to return", ge=1, le=100)] = 20,
+    limit: Annotated[
+        int, Query(description="Maximum errors to return", ge=1, le=100)
+    ] = 20,
 ) -> list[dict]:
     """
     Get recent API errors.
-    
+
     Returns recent errors including:
     - api and operation
     - status (error, timeout, rate_limited)
     - error type and message
     - timestamp
-    
+
     Query parameters:
     - api: Filter by specific API name (optional)
     - limit: Maximum errors to return (1-100, default 20)
-    
+
     Returns:
         List of recent errors
     """
@@ -515,17 +545,17 @@ async def get_telemetry_health(
 ) -> dict:
     """
     Get telemetry system health.
-    
+
     Returns health status of telemetry components:
     - API telemetry status
     - Tracing service status
     - Current metrics summary
-    
+
     Returns:
         Health status dictionary
     """
     all_metrics = telemetry.get_all_metrics()
-    
+
     return {
         "status": "healthy",
         "components": {
@@ -548,16 +578,18 @@ async def get_telemetry_health(
 async def reset_telemetry(
     authorization: Annotated[str, Security(bearer_scheme)],
     telemetry: FromDishka[APITelemetry],
-    api: Annotated[Optional[str], Query(description="API to reset (all if not specified)")] = None,
+    api: Annotated[
+        Optional[str], Query(description="API to reset (all if not specified)")
+    ] = None,
 ) -> dict:
     """
     Reset telemetry metrics.
-    
+
     Admin-only endpoint to reset collected metrics.
-    
+
     Query parameters:
     - api: Reset only specific API (optional, all if not specified)
-    
+
     Returns:
         Reset confirmation
     """
@@ -577,21 +609,23 @@ async def reset_telemetry(
 @inject
 async def get_llm_metrics(
     llm_telemetry: FromDishka[LLMTelemetry],
-    provider: Annotated[Optional[str], Query(description="Filter by provider name")] = None,
+    provider: Annotated[
+        Optional[str], Query(description="Filter by provider name")
+    ] = None,
 ) -> dict:
     """
     Get LLM provider telemetry metrics.
-    
+
     Returns comprehensive LLM metrics including:
     - Token usage (input, output, total)
     - Cost tracking (per provider, per model)
     - Latency statistics (avg, p50, p90, p99)
     - Error rates and breakdown
     - Monthly budget tracking
-    
+
     Query parameters:
     - provider: Filter by specific provider (optional)
-    
+
     Returns:
         JSON LLM metrics data
     """
@@ -603,7 +637,7 @@ async def get_llm_metrics(
             metric_name=f"provider:{provider}",
             reason="Provider not found in telemetry data",
         )
-    
+
     return llm_telemetry.get_summary()
 
 
@@ -614,13 +648,13 @@ async def get_llm_costs(
 ) -> dict:
     """
     Get LLM cost breakdown.
-    
+
     Returns detailed cost analysis:
     - Monthly total and budget
     - Cost by provider
     - Cost by model
     - Budget alerts status
-    
+
     Returns:
         Cost breakdown dictionary
     """
@@ -634,13 +668,13 @@ async def get_llm_model_usage(
 ) -> dict:
     """
     Get LLM model usage statistics.
-    
+
     Returns usage breakdown by model:
     - Call counts
     - Token usage
     - Cost per model
     - Provider distribution
-    
+
     Returns:
         Model usage dictionary
     """
@@ -651,22 +685,25 @@ async def get_llm_model_usage(
 @inject
 async def get_llm_alerts(
     llm_telemetry: FromDishka[LLMTelemetry],
-    severity: Annotated[Optional[str], Query(description="Filter by severity: info, warning, error, critical")] = None,
+    severity: Annotated[
+        Optional[str],
+        Query(description="Filter by severity: info, warning, error, critical"),
+    ] = None,
     hours: Annotated[int, Query(description="Look back hours", ge=1, le=168)] = 24,
 ) -> list[dict]:
     """
     Get LLM telemetry alerts.
-    
+
     Returns alerts including:
     - Budget warnings
     - Error rate spikes
     - Rate limiting events
     - High latency alerts
-    
+
     Query parameters:
     - severity: Filter by severity level (optional)
     - hours: Look back period (default 24, max 168)
-    
+
     Returns:
         List of alerts
     """
@@ -677,7 +714,7 @@ async def get_llm_alerts(
             end_time=f"now-{hours}h",
             reason="Hours must be between 1 and 168",
         )
-    
+
     sev = AlertSeverity(severity) if severity else None
     alerts = llm_telemetry.get_alerts(severity=sev, hours=hours)
     return [a.to_dict() for a in alerts]
@@ -690,18 +727,18 @@ async def get_llm_providers(
 ) -> dict:
     """
     Get list of tracked LLM providers with basic metrics.
-    
+
     Returns for each provider:
     - Total calls
     - Success rate
     - Average latency
     - Total cost
-    
+
     Returns:
         Provider summary dictionary
     """
     all_metrics = llm_telemetry.get_all_metrics()
-    
+
     return {
         provider: {
             "total_calls": metrics.total_calls,
@@ -722,10 +759,10 @@ async def reset_llm_telemetry(
 ) -> dict:
     """
     Reset LLM telemetry metrics.
-    
+
     Admin-only endpoint to reset all LLM metrics and alerts.
     Note: This does NOT reset the monthly budget tracker.
-    
+
     Returns:
         Reset confirmation
     """
@@ -748,14 +785,14 @@ async def get_db_metrics(
 ) -> dict:
     """
     Get database query telemetry metrics.
-    
+
     Returns comprehensive database metrics including:
     - Total query counts (by type)
     - Success/error rates
     - Duration statistics
     - Queries by table
     - Slow query counts
-    
+
     Returns:
         JSON database metrics
     """
@@ -766,12 +803,16 @@ async def get_db_metrics(
 @inject
 async def get_db_slow_queries(
     db_telemetry: FromDishka[DatabaseTelemetry],
-    threshold_ms: Annotated[float, Query(description="Minimum latency threshold in ms")] = 100,
-    limit: Annotated[int, Query(description="Maximum queries to return", ge=1, le=100)] = 10,
+    threshold_ms: Annotated[
+        float, Query(description="Minimum latency threshold in ms")
+    ] = 100,
+    limit: Annotated[
+        int, Query(description="Maximum queries to return", ge=1, le=100)
+    ] = 10,
 ) -> list[dict]:
     """
     Get slow database queries.
-    
+
     Returns slow queries sorted by duration:
     - Query text (truncated)
     - Query type
@@ -779,11 +820,11 @@ async def get_db_slow_queries(
     - Tables involved
     - Row count
     - Error message (if any)
-    
+
     Query parameters:
     - threshold_ms: Minimum latency to include (default 100ms)
     - limit: Maximum queries to return (1-100, default 10)
-    
+
     Returns:
         List of slow queries
     """
@@ -794,23 +835,30 @@ async def get_db_slow_queries(
 @inject
 async def get_db_query_patterns(
     db_telemetry: FromDishka[DatabaseTelemetry],
-    order_by: Annotated[str, Query(description="Order by: execution_count, avg_duration, max_duration, error_rate")] = "execution_count",
-    limit: Annotated[int, Query(description="Maximum patterns to return", ge=1, le=100)] = 20,
+    order_by: Annotated[
+        str,
+        Query(
+            description="Order by: execution_count, avg_duration, max_duration, error_rate"
+        ),
+    ] = "execution_count",
+    limit: Annotated[
+        int, Query(description="Maximum patterns to return", ge=1, le=100)
+    ] = 20,
 ) -> list[dict]:
     """
     Get database query patterns.
-    
+
     Returns aggregated statistics for normalized query patterns:
     - Normalized query template
     - Execution count
     - Average/min/max duration
     - Error rate
     - Total rows affected
-    
+
     Query parameters:
     - order_by: Sort metric (default: execution_count)
     - limit: Maximum patterns to return (1-100, default 20)
-    
+
     Returns:
         List of query patterns with statistics
     """
@@ -824,13 +872,13 @@ async def get_db_pool_stats(
 ) -> dict:
     """
     Get database connection pool statistics.
-    
+
     Returns pool metrics:
     - Pool size and overflow
     - Checked out/in connections
     - Checkout/checkin counts
     - Connect/disconnect counts
-    
+
     Returns:
         Connection pool statistics
     """
@@ -845,16 +893,16 @@ async def get_db_table_stats(
 ) -> dict:
     """
     Get query statistics for a specific table.
-    
+
     Returns for the specified table:
     - Total query count
     - Average duration
     - Error count
     - Query type breakdown
-    
+
     Path parameters:
     - table: Table name to get statistics for
-    
+
     Returns:
         Table-specific query statistics
     """
@@ -865,21 +913,23 @@ async def get_db_table_stats(
 @inject
 async def get_db_errors(
     db_telemetry: FromDishka[DatabaseTelemetry],
-    limit: Annotated[int, Query(description="Maximum errors to return", ge=1, le=100)] = 20,
+    limit: Annotated[
+        int, Query(description="Maximum errors to return", ge=1, le=100)
+    ] = 20,
 ) -> list[dict]:
     """
     Get recent database query errors.
-    
+
     Returns recent errors including:
     - Query text
     - Error type (error, timeout, deadlock)
     - Error message
     - Duration
     - Timestamp
-    
+
     Query parameters:
     - limit: Maximum errors to return (1-100, default 20)
-    
+
     Returns:
         List of recent query errors
     """
@@ -893,13 +943,13 @@ async def get_db_summary(
 ) -> dict:
     """
     Get comprehensive database telemetry summary.
-    
+
     Returns combined metrics:
     - Overall metrics
     - Connection pool stats
     - Top query patterns
     - Slow query count
-    
+
     Returns:
         Comprehensive summary dictionary
     """
@@ -914,9 +964,9 @@ async def reset_db_telemetry(
 ) -> dict:
     """
     Reset database telemetry metrics.
-    
+
     Admin-only endpoint to reset all database metrics and patterns.
-    
+
     Returns:
         Reset confirmation
     """

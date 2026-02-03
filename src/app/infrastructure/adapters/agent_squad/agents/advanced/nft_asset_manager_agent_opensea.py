@@ -9,7 +9,9 @@ from decimal import Decimal
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
-from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.domain.value_objects.agent_squad.conversation_context import (
+    ConversationContext,
+)
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentResponse
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
@@ -17,11 +19,11 @@ from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 class NFTAssetManagerAgentOpenSea:
     """
     NFT Asset Manager Agent OpenSea implementation.
-    
+
     Implements: AgentGateway
-    
+
     Purpose: NFT portfolio management & valuation
-    
+
     Capabilities:
     - NFT portfolio tracking
     - Floor price monitoring (real-time)
@@ -29,13 +31,13 @@ class NFTAssetManagerAgentOpenSea:
     - Collection analytics (volume, holders, etc.)
     - Profitable exit strategies
     - Mint sniping recommendations
-    
+
     Supported Marketplaces:
     - OpenSea (primary)
     - Blur
     - LooksRare
     - X2Y2
-    
+
     Features:
     - Real-time floor price tracking
     - Rarity scoring (percentile rankings)
@@ -43,11 +45,11 @@ class NFTAssetManagerAgentOpenSea:
     - Best listing platform (lowest fees)
     - Historical sales analysis
     - Sweep opportunities
-    
+
     Model: gpt-4o (NFT reasoning)
     Temperature: 0.3 (balanced)
     """
-    
+
     def __init__(
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
@@ -62,12 +64,12 @@ class NFTAssetManagerAgentOpenSea:
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
-    
+
     @property
     def agent_type(self) -> AgentType:
         """Get agent type."""
         return AgentType.NFT_ASSET_MANAGER
-    
+
     async def execute(
         self,
         conversation_id: ConversationId,
@@ -76,49 +78,55 @@ class NFTAssetManagerAgentOpenSea:
     ) -> AgentResponse:
         """Execute NFT asset manager agent."""
         start_time = time.time()
-        
+
         # Get user NFT portfolio
         portfolio = await self._get_nft_portfolio()
-        
+
         # Generate portfolio report
         report = await self._generate_portfolio_report(portfolio)
-        
+
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         # Collect sources
         from datetime import datetime, UTC
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_llm_source,
             create_api_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add OpenSea source
-        sources.append(create_api_source(
-            source_name="OpenSea",
-            url="https://opensea.io/",
-            citation_text="NFT portfolio data from OpenSea",
-            fetched_at=fetched_at,
-            provider="OpenSea API",
-        ))
-        
+        sources.append(
+            create_api_source(
+                source_name="OpenSea",
+                url="https://opensea.io/",
+                citation_text="NFT portfolio data from OpenSea",
+                fetched_at=fetched_at,
+                provider="OpenSea API",
+            )
+        )
+
         # Add Blur source
-        sources.append(create_api_source(
-            source_name="Blur",
-            url="https://blur.io/",
-            citation_text="NFT marketplace data from Blur",
-            fetched_at=fetched_at,
-            provider="Blur API",
-        ))
-        
+        sources.append(
+            create_api_source(
+                source_name="Blur",
+                url="https://blur.io/",
+                citation_text="NFT marketplace data from Blur",
+                fetched_at=fetched_at,
+                provider="Blur API",
+            )
+        )
+
         # Add LLM source
-        sources.append(create_llm_source(
-            model=self._model,
-            fetched_at=fetched_at,
-        ))
-        
+        sources.append(
+            create_llm_source(
+                model=self._model,
+                fetched_at=fetched_at,
+            )
+        )
+
         return AgentResponse(
             content=report,
             agent_type=self.agent_type,
@@ -130,15 +138,15 @@ class NFTAssetManagerAgentOpenSea:
                 "portfolio_value_eth": float(portfolio["total_value_eth"]),
             },
         )
-    
+
     async def is_available(self) -> bool:
         """Check if agent is available."""
         return True
-    
+
     async def _get_nft_portfolio(self) -> dict:
         """Get user's NFT portfolio."""
         # TODO: Implement real OpenSea API integration
-        
+
         # Mock portfolio
         return {
             "total_nfts": 12,
@@ -178,13 +186,13 @@ class NFTAssetManagerAgentOpenSea:
                 },
             ],
         }
-    
+
     async def _generate_portfolio_report(self, portfolio: dict) -> str:
         """Generate NFT portfolio report."""
         total_nfts = portfolio["total_nfts"]
         total_eth = portfolio["total_value_eth"]
         total_usd = portfolio["total_value_usd"]
-        
+
         report = f"""🖼️ **NFT PORTFOLIO OVERVIEW**
 
 **Total NFTs**: {total_nfts}
@@ -196,25 +204,25 @@ class NFTAssetManagerAgentOpenSea:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 """
-        
+
         for collection in portfolio["collections"]:
             name = collection["name"]
             count = collection["count"]
             floor_eth = collection["floor_price_eth"]
-            
+
             report += f"""
 📦 **{name}**
   Holdings: {count} NFT{"s" if count > 1 else ""}
   Floor Price: {floor_eth} ETH
   
 """
-            
+
             for nft in collection["your_nfts"]:
                 token_id = nft["token_id"]
                 value_eth = nft["estimated_value_eth"]
                 rarity_rank = nft.get("rarity_rank")
                 rarity_pct = nft.get("rarity_percentile")
-                
+
                 # Rarity indicator
                 if rarity_pct and rarity_pct < 10:
                     rarity_emoji = "⭐⭐⭐"
@@ -222,19 +230,19 @@ class NFTAssetManagerAgentOpenSea:
                     rarity_emoji = "⭐⭐"
                 else:
                     rarity_emoji = "⭐"
-                
+
                 report += f"""  • #{token_id}
     Value: {value_eth} ETH
     Rarity: #{rarity_rank} ({rarity_emoji})
 """
-                
+
                 # Premium NFT recommendation
                 if rarity_pct and rarity_pct < 15:
                     premium = value_eth - floor_eth
                     report += f"""    💎 **Premium Asset** (+{premium} ETH vs floor)
     Recommendation: HOLD (rare traits)
 """
-        
+
         report += """
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **PORTFOLIO ANALYSIS**
@@ -265,5 +273,5 @@ class NFTAssetManagerAgentOpenSea:
 **Powered By**: OpenSea, Blur, Reservoir
 **Rarity Data**: trait.tools, rarity.tools
 """
-        
+
         return report.strip()

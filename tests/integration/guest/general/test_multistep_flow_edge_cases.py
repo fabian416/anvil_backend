@@ -18,7 +18,12 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Requires proper LLM mock for multi-step flows"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.multi_step_flows]
+pytestmark = [
+    pytest.mark.skip(reason="Requires proper LLM mock for multi-step flows"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.multi_step_flows,
+]
 
 
 class TestMultiStepFlowEdgeCases:
@@ -34,10 +39,7 @@ class TestMultiStepFlowEdgeCases:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "I'm not sure what to do",
-                "language": "en"
-            }
+            json={"content": "I'm not sure what to do", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -60,10 +62,7 @@ class TestMultiStepFlowEdgeCases:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What's the current Bitcoin price?",
-                "language": "en"
-            }
+            json={"content": "What's the current Bitcoin price?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -88,10 +87,10 @@ class TestMultiStepFlowEdgeCases:
             "/api/v1/guest/chat",
             json={
                 "content": "Check BTC price, check ETH price, check SOL price, "
-                          "check gas fees, check network status, calculate my portfolio "
-                          "value, recommend best DeFi protocol, and suggest next action",
-                "language": "en"
-            }
+                "check gas fees, check network status, calculate my portfolio "
+                "value, recommend best DeFi protocol, and suggest next action",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -102,7 +101,9 @@ class TestMultiStepFlowEdgeCases:
 
         # Should handle multiple sequential requests
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 150, "Should address all steps in complex flow (150+ chars)"
+        assert len(agent_response) > 150, (
+            "Should address all steps in complex flow (150+ chars)"
+        )
 
     @pytest.mark.llm_validation
     async def test_flow_with_all_step_types(self, client: AsyncClient, llm_validator):
@@ -116,10 +117,10 @@ class TestMultiStepFlowEdgeCases:
             "/api/v1/guest/chat",
             json={
                 "content": "Show me Ethereum's price (query), analyze if it's a good time "
-                          "to buy (analysis), and recommend whether I should buy now or wait "
-                          "(recommendation)",
-                "language": "en"
-            }
+                "to buy (analysis), and recommend whether I should buy now or wait "
+                "(recommendation)",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK

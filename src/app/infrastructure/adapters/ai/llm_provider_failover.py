@@ -254,14 +254,14 @@ class LLMProviderFailover:
 
                 except (AuthenticationError, InvalidRequestError) as e:
                     # Don't retry these errors
-                    logger.error(f"Non-retryable error from {provider.provider_name}: {e}")
+                    logger.error(
+                        f"Non-retryable error from {provider.provider_name}: {e}"
+                    )
                     circuit.record_failure()
                     raise
 
                 except RateLimitError as e:
-                    logger.warning(
-                        f"Rate limit from {provider.provider_name}: {e}"
-                    )
+                    logger.warning(f"Rate limit from {provider.provider_name}: {e}")
                     circuit.record_failure()
                     last_error = e
 
@@ -274,9 +274,7 @@ class LLMProviderFailover:
                     break
 
                 except (TimeoutError, ProviderUnavailableError) as e:
-                    logger.warning(
-                        f"Provider error from {provider.provider_name}: {e}"
-                    )
+                    logger.warning(f"Provider error from {provider.provider_name}: {e}")
                     circuit.record_failure()
                     last_error = e
 
@@ -362,9 +360,7 @@ class LLMProviderFailover:
                 raise
 
             except Exception as e:
-                logger.warning(
-                    f"Streaming failed with {provider.provider_name}: {e}"
-                )
+                logger.warning(f"Streaming failed with {provider.provider_name}: {e}")
                 circuit.record_failure()
                 last_error = e
                 continue  # Try next provider
@@ -437,7 +433,7 @@ def create_openai_anthropic_failover(
 
     Returns:
         Configured failover orchestrator
-        
+
     Note:
         OpenAI provider has been removed. This function now only supports Anthropic.
         For Vertex AI/DeepInfra, use the agent_squad_infrastructure provider.
@@ -458,7 +454,7 @@ def create_openai_anthropic_failover(
             "OpenAI provider has been removed. "
             "Please use 'anthropic' or configure Vertex AI/DeepInfra as primary."
         )
-    
+
     # Only Anthropic supported now (OpenAI removed)
     providers = [
         ProviderConfig(provider=anthropic, priority=0, cost_tier="standard"),

@@ -23,11 +23,17 @@ def map_subscription_users_table() -> None:
         id = mapped_column(Integer, primary_key=True, index=True)
 
         # Foreign keys
-        user_id = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-        subscription_id = mapped_column(Integer, ForeignKey("subscriptions.id"), nullable=False)
+        user_id = mapped_column(
+            Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        )
+        subscription_id = mapped_column(
+            Integer, ForeignKey("subscriptions.id"), nullable=False
+        )
 
         # Subscription user information
-        status = mapped_column(String(50), nullable=False, default="pending")  # pending, cancelled, active
+        status = mapped_column(
+            String(50), nullable=False, default="pending"
+        )  # pending, cancelled, active
         start_date = mapped_column(DateTime(timezone=True), nullable=True)
         end_date = mapped_column(DateTime(timezone=True), nullable=True)
         stripe_subscription_id = mapped_column(String(255), nullable=True)

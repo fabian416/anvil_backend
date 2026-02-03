@@ -55,7 +55,7 @@ async def conversation_id(client: AsyncClient, auth_token: str):
         json={"title": "Shortcuts Test", "language": "en"},
         headers={"Authorization": f"Bearer {auth_token}"},
     )
-    
+
     if response.status_code != 201:
         # Fallback to legacy endpoint
         response = await client.post(
@@ -63,8 +63,10 @@ async def conversation_id(client: AsyncClient, auth_token: str):
             json={"title": "Shortcuts Test", "language": "en"},
             headers={"Authorization": f"Bearer {auth_token}"},
         )
-    
-    assert response.status_code == 201, f"Failed to create conversation: {response.status_code} {response.text}"
+
+    assert response.status_code == 201, (
+        f"Failed to create conversation: {response.status_code} {response.text}"
+    )
     return response.json()["id"]
 
 
@@ -73,9 +75,9 @@ async def conversation_id(client: AsyncClient, auth_token: str):
 @pytest.mark.llm_validation
 class TestUserShortcuts:
     """Test all shortcut examples for authenticated users."""
-    
+
     results: list[TestResult] = []
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, client, auth_token, llm_validator):
         """Setup for each test."""
@@ -83,7 +85,7 @@ class TestUserShortcuts:
         self.auth_token = auth_token
         self.llm_validator = llm_validator
         yield
-    
+
     @classmethod
     def teardown_class(cls):
         """Save results after all tests."""
@@ -93,20 +95,22 @@ class TestUserShortcuts:
                 reporter.add_result(result)
             csv_path = reporter.write_csv()
             summary_path = reporter.write_summary()
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Test Results: shortcuts")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
             print(f"Total:   {len(cls.results)}")
             pass_count = sum(1 for r in cls.results if r.status == "PASS")
             fail_count = sum(1 for r in cls.results if r.status == "FAIL")
             partial_count = sum(1 for r in cls.results if r.status == "PARTIAL")
-            print(f"PASS:    {pass_count} ({100*pass_count/len(cls.results):.1f}%)")
-            print(f"PARTIAL: {partial_count} ({100*partial_count/len(cls.results):.1f}%)")
-            print(f"FAIL:    {fail_count} ({100*fail_count/len(cls.results):.1f}%)")
-            print(f"{'='*60}")
+            print(f"PASS:    {pass_count} ({100 * pass_count / len(cls.results):.1f}%)")
+            print(
+                f"PARTIAL: {partial_count} ({100 * partial_count / len(cls.results):.1f}%)"
+            )
+            print(f"FAIL:    {fail_count} ({100 * fail_count / len(cls.results):.1f}%)")
+            print(f"{'=' * 60}")
             print(f"CSV output: {csv_path}")
             print(f"Summary: {summary_path}")
-    
+
     @pytest.mark.asyncio
     async def test_shortcut_intent_detection(
         self,
@@ -119,11 +123,11 @@ class TestUserShortcuts:
         """
         failures = []
         passes = []
-        
+
         for shortcut in shortcuts_data:
             intent = shortcut["intent"]
             command = shortcut["command"]
-            
+
             # Create fresh conversation for each shortcut category to avoid context pollution
             create_resp = await self.client.post(
                 "/api/v1/conversations",
@@ -135,17 +139,17 @@ class TestUserShortcuts:
             else:
                 # Fallback to provided conversation_id if creation fails
                 fresh_conv_id = conversation_id
-            
+
             for example in shortcut["examples"]:
                 start_time = datetime.now(timezone.utc)
-                
+
                 # Try new endpoint first
                 response = await self.client.post(
                     f"/api/v1/conversations/{fresh_conv_id}/messages",
                     json={"content": example, "language": "en"},
                     headers={"Authorization": f"Bearer {self.auth_token}"},
                 )
-                
+
                 if response.status_code == 404:
                     # Fallback to legacy
                     response = await self.client.post(
@@ -153,9 +157,11 @@ class TestUserShortcuts:
                         json={"content": example, "language": "en"},
                         headers={"Authorization": f"Bearer {self.auth_token}"},
                     )
-                
-                elapsed_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
-                
+
+                elapsed_ms = (
+                    datetime.now(timezone.utc) - start_time
+                ).total_seconds() * 1000
+
                 if response.status_code not in (200, 201):
                     failures.append({
                         "shortcut": command,
@@ -164,15 +170,20 @@ class TestUserShortcuts:
                         "error": f"HTTP {response.status_code}",
                     })
                     continue
-                
+
                 data = response.json()
                 detected_intent = data.get("routing", {}).get("intent", "unknown")
                 content = data.get("agent_message", {}).get("content", "")
-                
+
                 # Acceptable intent mappings (shortcut intent -> valid detected intents)
                 # Some shortcuts may route through different handlers that achieve the same result
                 acceptable_intents = {
-                    "swap": ["swap", "moonpay_swap", "swap_continue", "supervisor_workflow"],
+                    "swap": [
+                        "swap",
+                        "moonpay_swap",
+                        "swap_continue",
+                        "supervisor_workflow",
+                    ],
                     "money_market": ["money_market", "supervisor_workflow", "lending"],
                     "lending": ["lending", "lending_continue", "supervisor_workflow"],
                     "buy": ["buy", "buy_continue", "moonpay_swap"],
@@ -182,11 +193,11 @@ class TestUserShortcuts:
                     "activity": ["activity", "supervisor_workflow"],
                     "receive": ["receive", "supervisor_workflow"],
                 }
-                
+
                 # Check if detected intent is acceptable for this shortcut
                 valid_intents = acceptable_intents.get(intent.lower(), [intent.lower()])
                 status = "PASS" if detected_intent.lower() in valid_intents else "FAIL"
-                
+
                 if status == "FAIL":
                     failures.append({
                         "shortcut": command,
@@ -196,7 +207,7 @@ class TestUserShortcuts:
                     })
                 else:
                     passes.append(example)
-                
+
                 # LLM validation
                 llm_validation = await validate_with_llm(
                     self.llm_validator,
@@ -204,9 +215,9 @@ class TestUserShortcuts:
                     example,
                     content,
                     f"System should detect intent as '{intent}' and provide relevant response",
-                    {"expected_intent": intent, "detected_intent": detected_intent}
+                    {"expected_intent": intent, "detected_intent": detected_intent},
                 )
-                
+
                 # Record result using correct signature
                 test_case = {
                     "category": "shortcuts",
@@ -221,7 +232,9 @@ class TestUserShortcuts:
                         "intent": detected_intent,
                         "agents_used": [detected_intent.lower()],  # Must be a list
                         "handler": data.get("routing", {}).get("handler", ""),
-                        "user_type": data.get("routing", {}).get("user_type", "authenticated"),
+                        "user_type": data.get("routing", {}).get(
+                            "user_type", "authenticated"
+                        ),
                     },
                 }
                 result = create_test_result(
@@ -232,11 +245,11 @@ class TestUserShortcuts:
                     llm_validation=llm_validation,
                 )
                 TestUserShortcuts.results.append(result)
-        
+
         # Summary
         total = len(passes) + len(failures)
         print(f"\n✅ Intent Detection: {len(passes)}/{total} passed")
-        
+
         if failures:
             error_msg = "\n".join([
                 f"❌ {f['shortcut']} ({f['intent']}): '{f['example']}' → detected as '{f.get('detected', f.get('error'))}'"
@@ -244,8 +257,9 @@ class TestUserShortcuts:
             ])
             if len(failures) > 10:
                 error_msg += f"\n... and {len(failures) - 10} more failures"
-            pytest.fail(f"Intent detection failures ({len(failures)}/{total}):\n{error_msg}")
-
+            pytest.fail(
+                f"Intent detection failures ({len(failures)}/{total}):\n{error_msg}"
+            )
 
     @pytest.mark.asyncio
     async def test_shortcut_no_generic_fallback(
@@ -258,40 +272,42 @@ class TestUserShortcuts:
         """
         failures = []
         passes = []
-        
+
         for shortcut in shortcuts_data:
             intent = shortcut["intent"]
             command = shortcut["command"]
-            
+
             for example in shortcut["examples"]:
                 start_time = datetime.now(timezone.utc)
-                
+
                 # Try new endpoint first
                 response = await self.client.post(
                     f"/api/v1/conversations/{conversation_id}/messages",
                     json={"content": example, "language": "en"},
                     headers={"Authorization": f"Bearer {self.auth_token}"},
                 )
-                
+
                 if response.status_code == 404:
                     response = await self.client.post(
                         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
                         json={"content": example, "language": "en"},
                         headers={"Authorization": f"Bearer {self.auth_token}"},
                     )
-                
-                elapsed_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
-                
+
+                elapsed_ms = (
+                    datetime.now(timezone.utc) - start_time
+                ).total_seconds() * 1000
+
                 if response.status_code not in (200, 201):
                     continue
-                
+
                 data = response.json()
                 content = data.get("agent_message", {}).get("content", "")
-                
+
                 # Check if response is generic fallback
                 is_generic = GENERIC_FALLBACK_MESSAGE in content
                 status = "FAIL" if is_generic else "PASS"
-                
+
                 if is_generic:
                     failures.append({
                         "shortcut": command,
@@ -300,7 +316,7 @@ class TestUserShortcuts:
                     })
                 else:
                     passes.append(example)
-                
+
                 # Record result using correct signature
                 detected = data.get("routing", {}).get("intent", "unknown")
                 test_case = {
@@ -325,17 +341,19 @@ class TestUserShortcuts:
                     response_time_ms=int(elapsed_ms),
                 )
                 TestUserShortcuts.results.append(result)
-        
+
         total = len(passes) + len(failures)
         print(f"\n✅ No Generic Fallback: {len(passes)}/{total} passed")
-        
+
         if failures:
             error_msg = "\n".join([
                 f"❌ {f['shortcut']} ({f['intent']}): '{f['example']}' → Generic fallback"
                 for f in failures[:10]
             ])
-            pytest.fail(f"Generic fallback detected ({len(failures)}/{total}):\n{error_msg}")
-    
+            pytest.fail(
+                f"Generic fallback detected ({len(failures)}/{total}):\n{error_msg}"
+            )
+
     @pytest.mark.asyncio
     async def test_shortcut_meaningful_content(
         self,
@@ -347,48 +365,74 @@ class TestUserShortcuts:
         """
         failures = []
         passes = []
-        
+
         # Intent-specific keywords
         intent_keywords = {
-            "lending": ["lending", "vault", "yield", "morpho", "deposit", "apy", "rate"],
+            "lending": [
+                "lending",
+                "vault",
+                "yield",
+                "morpho",
+                "deposit",
+                "apy",
+                "rate",
+            ],
             "money_market": ["aave", "compound", "rate", "supply", "lending", "borrow"],
-            "swap": ["swap", "quote", "rate", "bridge", "exchange", "price", "usdc", "eth"],
-            "portfolio": ["portfolio", "dashboard", "holdings", "assets", "tokens", "balance"],
+            "swap": [
+                "swap",
+                "quote",
+                "rate",
+                "bridge",
+                "exchange",
+                "price",
+                "usdc",
+                "eth",
+            ],
+            "portfolio": [
+                "portfolio",
+                "dashboard",
+                "holdings",
+                "assets",
+                "tokens",
+                "balance",
+            ],
             "balance": ["balance", "wallet", "account", "holdings"],
             "activity": ["transaction", "history", "activity", "recent"],
             "receive": ["address", "wallet", "receive", "deposit", "0x"],
             "buy": ["buy", "crypto", "card", "purchase"],
             "send": ["send", "transfer", "wallet", "recipient"],
         }
-        
+
         for shortcut in shortcuts_data:
             intent = shortcut["intent"]
             command = shortcut["command"]
-            
+
             for example in shortcut["examples"]:
                 start_time = datetime.now(timezone.utc)
-                
+
                 response = await self.client.post(
                     f"/api/v1/conversations/{conversation_id}/messages",
                     json={"content": example, "language": "en"},
                     headers={"Authorization": f"Bearer {self.auth_token}"},
                 )
-                
+
                 if response.status_code == 404:
                     response = await self.client.post(
                         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
                         json={"content": example, "language": "en"},
                         headers={"Authorization": f"Bearer {self.auth_token}"},
                     )
-                
-                elapsed_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
-                
+
+                elapsed_ms = (
+                    datetime.now(timezone.utc) - start_time
+                ).total_seconds() * 1000
+
                 if response.status_code not in (200, 201):
                     continue
-                
+
                 data = response.json()
                 content = data.get("agent_message", {}).get("content", "").lower()
-                
+
                 # Check minimum length
                 if len(content) < 50:
                     failures.append({
@@ -415,7 +459,7 @@ class TestUserShortcuts:
                 else:
                     passes.append(example)
                     status = "PASS"
-                
+
                 # Record result using correct signature
                 detected = data.get("routing", {}).get("intent", "unknown")
                 test_case = {
@@ -440,13 +484,15 @@ class TestUserShortcuts:
                     response_time_ms=int(elapsed_ms),
                 )
                 TestUserShortcuts.results.append(result)
-        
+
         total = len(passes) + len(failures)
         print(f"\n✅ Meaningful Content: {len(passes)}/{total} passed")
-        
+
         if failures:
             error_msg = "\n".join([
                 f"❌ {f['shortcut']} ({f['intent']}): '{f['example']}' → {f['issue']}"
                 for f in failures[:10]
             ])
-            pytest.fail(f"Content quality issues ({len(failures)}/{total}):\n{error_msg}")
+            pytest.fail(
+                f"Content quality issues ({len(failures)}/{total}):\n{error_msg}"
+            )

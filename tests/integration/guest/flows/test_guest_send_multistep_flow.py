@@ -23,8 +23,7 @@ class TestGuestSendMultiStepFlow:
 
         # Step 1: Initiate send
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "send", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "send", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -45,8 +44,7 @@ class TestGuestSendMultiStepFlow:
 
         # Step 2: Select token (ETH)
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "ETH", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -63,8 +61,7 @@ class TestGuestSendMultiStepFlow:
 
         # Step 3: Enter amount
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "0.5", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "0.5", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -73,7 +70,9 @@ class TestGuestSendMultiStepFlow:
         step3_content = data["agent_message"]["content"]
         assert "0.5" in step3_content
         assert "ETH" in step3_content
-        assert "address" in step3_content.lower() or "destination" in step3_content.lower()
+        assert (
+            "address" in step3_content.lower() or "destination" in step3_content.lower()
+        )
         assert data["enrichment"]["send_flow"] == "step3_address"
         assert data["enrichment"]["amount"] == "0.5"
 
@@ -83,7 +82,10 @@ class TestGuestSendMultiStepFlow:
         # Step 4: Enter address
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb", "language": "en"}
+            json={
+                "content": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+                "language": "en",
+            },
         )
         assert response.status_code == 200
         data = response.json()
@@ -97,19 +99,25 @@ class TestGuestSendMultiStepFlow:
         assert data["enrichment"]["send_flow"] == "step4_confirmation"
 
         # Track step 4
-        conversation_history.append({"user": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb", "agent": step4_content})
+        conversation_history.append({
+            "user": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+            "agent": step4_content,
+        })
 
         # Step 5: Confirm send
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "confirm", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "confirm", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
 
         # Verify step 5 response (execution)
         step5_content = data["agent_message"]["content"]
-        assert "✅" in step5_content or "Confirmed" in step5_content or "🎉" in step5_content
+        assert (
+            "✅" in step5_content
+            or "Confirmed" in step5_content
+            or "🎉" in step5_content
+        )
         assert "sign up" in step5_content.lower() or "signup" in step5_content.lower()
         assert data["enrichment"]["send_flow"] == "execution"
         assert data["registration_required"]["required"] is True
@@ -119,6 +127,7 @@ class TestGuestSendMultiStepFlow:
 
         # PHASE 3: LLM validation with multi-step conversation history
         validation = None
+
     @pytest.mark.asyncio
     async def test_complete_send_flow_btc(self, client):
         """Test complete send flow with Bitcoin."""
@@ -133,8 +142,7 @@ class TestGuestSendMultiStepFlow:
 
         for i, (message, expected_flow) in enumerate(steps, 1):
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": message, "language": "en"}
+                "/api/v1/guest/chat", json={"content": message, "language": "en"}
             )
             assert response.status_code == 200
             data = response.json()
@@ -145,7 +153,10 @@ class TestGuestSendMultiStepFlow:
 
             # Verify final step
             if i == len(steps):
-                assert "🎉" in data["agent_message"]["content"] or "✅" in data["agent_message"]["content"]
+                assert (
+                    "🎉" in data["agent_message"]["content"]
+                    or "✅" in data["agent_message"]["content"]
+                )
                 assert data["enrichment"]["send_flow"] == "execution"
 
     @pytest.mark.asyncio
@@ -153,39 +164,50 @@ class TestGuestSendMultiStepFlow:
         """Test error handling for invalid address."""
 
         # Complete flow to address step
-        await client.post("/api/v1/guest/chat", json={"content": "send", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "ETH", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "send", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
+        )
         await client.post("/api/v1/guest/chat", json={"content": "1", "language": "en"})
 
         # Enter invalid address
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "invalid_address", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "invalid_address", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
 
         # Should show error and re-ask
         content = data["agent_message"]["content"]
-        assert "❌" in content or "error" in content.lower() or "valid" in content.lower()
+        assert (
+            "❌" in content or "error" in content.lower() or "valid" in content.lower()
+        )
 
     @pytest.mark.asyncio
     async def test_send_flow_cancel(self, client):
         """Test cancelling send at confirmation."""
 
         # Complete flow to confirmation
-        await client.post("/api/v1/guest/chat", json={"content": "send", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "ETH", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "send", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
+        )
         await client.post("/api/v1/guest/chat", json={"content": "1", "language": "en"})
         await client.post(
             "/api/v1/guest/chat",
-            json={"content": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb", "language": "en"}
+            json={
+                "content": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+                "language": "en",
+            },
         )
 
         # Cancel
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "cancel", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "cancel", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -199,26 +221,30 @@ class TestGuestSendMultiStepFlow:
 
         # Step 1
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "send", "language": "es"}
+            "/api/v1/guest/chat", json={"content": "send", "language": "es"}
         )
         assert response.status_code == 200
         data = response.json()
 
         content = data["agent_message"]["content"]
         # Should contain Spanish or English text (fallback)
-        assert any(word in content.lower() for word in ["send", "enviar", "token", "cripto"])
+        assert any(
+            word in content.lower() for word in ["send", "enviar", "token", "cripto"]
+        )
 
     @pytest.mark.asyncio
     async def test_send_security_warnings(self, client):
         """Test that security warnings are displayed."""
 
         # Get to address step
-        await client.post("/api/v1/guest/chat", json={"content": "send", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "ETH", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "send", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
+        )
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "0.5", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "0.5", "language": "en"}
         )
 
         assert response.status_code == 200
@@ -229,7 +255,9 @@ class TestGuestSendMultiStepFlow:
         security_elements = [
             "⚠️" in content or "WARNING" in content.upper(),
             "address" in content.lower(),
-            "cannot" in content.lower() or "permanent" in content.lower() or "irreversible" in content.lower(),
+            "cannot" in content.lower()
+            or "permanent" in content.lower()
+            or "irreversible" in content.lower(),
         ]
         assert any(security_elements), "Missing security warnings"
 
@@ -246,8 +274,7 @@ class TestGuestSendFlowStorytellingQuality:
 
         for step in steps:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": step, "language": "en"}
+                "/api/v1/guest/chat", json={"content": step, "language": "en"}
             )
             content = response.json()["agent_message"]["content"]
 
@@ -260,8 +287,7 @@ class TestGuestSendFlowStorytellingQuality:
         """Test that responses use emojis to enhance communication."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "send", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "send", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -273,12 +299,21 @@ class TestGuestSendFlowStorytellingQuality:
         """Test that confirmation step has clear CTAs."""
 
         # Get to confirmation
-        await client.post("/api/v1/guest/chat", json={"content": "send", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "ETH", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "0.1", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "send", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "0.1", "language": "en"}
+        )
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb", "language": "en"}
+            json={
+                "content": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+                "language": "en",
+            },
         )
 
         content = response.json()["agent_message"]["content"]

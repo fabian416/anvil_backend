@@ -22,10 +22,11 @@ from app.domain.value_objects.updated_at import UpdatedAt
 class Notification(Entity[NotificationId]):
     """
     Notification entity representing a notification in the system.
-    
+
     This is an anemic model following DDD principles where behavior
     is handled by domain services rather than the entity itself.
     """
+
     user_id: UserId
     title: NotificationTitle
     is_read: ReadStatus

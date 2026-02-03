@@ -38,7 +38,7 @@ class TestSQLInjectionPrevention:
 
             # Should return validation error, not SQL error
             assert response.status_code in (400, 401, 422, 500, 503)
-            
+
             # Should not reveal database errors
             if response.status_code == 500:
                 # Check error message doesn't contain SQL details

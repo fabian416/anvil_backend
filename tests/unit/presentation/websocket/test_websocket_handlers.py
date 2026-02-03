@@ -34,13 +34,13 @@ class TestWebSocketConnection:
         """Test invalid token closes WebSocket connection."""
         # WebSocket should close with 4001 code for auth failure
         expected_close_code = 4001
-        
+
         assert expected_close_code == 4001
 
     def test_expired_token_closes_connection(self):
         """Test expired token closes WebSocket connection."""
         expected_close_code = 4001
-        
+
         assert expected_close_code == 4001
 
 

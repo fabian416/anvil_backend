@@ -134,9 +134,7 @@ async def test_different_models(anthropic_adapter):
 async def test_max_tokens_limit(anthropic_adapter):
     """Test max_tokens limit is respected."""
     request = LLMRequest(
-        messages=[
-            LLMMessage(role="user", content="Write a long essay about Python.")
-        ],
+        messages=[LLMMessage(role="user", content="Write a long essay about Python.")],
         model_id="claude-3-haiku-20240307",
         max_tokens=10,  # Very low limit
         temperature=Decimal("0.5"),
@@ -167,9 +165,10 @@ async def test_temperature_zero_deterministic(anthropic_adapter):
     assert response1.content
     assert response2.content
     # At least some overlap in tokens
-    assert response1.output_tokens == response2.output_tokens or abs(
-        response1.output_tokens - response2.output_tokens
-    ) <= 2
+    assert (
+        response1.output_tokens == response2.output_tokens
+        or abs(response1.output_tokens - response2.output_tokens) <= 2
+    )
 
 
 @pytest.mark.integration
@@ -193,7 +192,8 @@ async def test_multiline_response(anthropic_adapter):
     request = LLMRequest(
         messages=[
             LLMMessage(
-                role="user", content="Write a haiku about coding. Use proper formatting."
+                role="user",
+                content="Write a haiku about coding. Use proper formatting.",
             )
         ],
         model_id="claude-3-haiku-20240307",

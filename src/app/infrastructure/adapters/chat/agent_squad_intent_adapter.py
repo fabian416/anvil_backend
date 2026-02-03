@@ -22,7 +22,9 @@ from app.domain.value_objects.agent_squad.conversation_context import (
 
 if TYPE_CHECKING:
     from app.domain.services.agent_squad.intent_classifier import IntentClassifier
-    from app.domain.services.agent_squad.supervisor_coordinator import SupervisorCoordinator
+    from app.domain.services.agent_squad.supervisor_coordinator import (
+        SupervisorCoordinator,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +32,7 @@ logger = logging.getLogger(__name__)
 class AgentSquadIntentAdapter(IntentDetectionPort):
     """
     LLM-based intent detection using Agent Squad's IntentClassifier.
-    
+
     Advantages:
     - Generic: No hardcoded patterns
     - Context-aware: Understands conversation history
@@ -59,7 +61,6 @@ class AgentSquadIntentAdapter(IntentDetectionPort):
         "security_audit": ChatIntent.SPECIALIST_TASK,
         "optimize_gas": ChatIntent.SPECIALIST_TASK,
         "gas_estimation": ChatIntent.SPECIALIST_TASK,
-        
         # Enterprise intents
         "check_compliance": ChatIntent.SPECIALIST_TASK,
         "screen_wallet": ChatIntent.SPECIALIST_TASK,
@@ -116,7 +117,7 @@ class AgentSquadIntentAdapter(IntentDetectionPort):
     ):
         """
         Initialize Agent Squad intent adapter.
-        
+
         Args:
             intent_classifier: Agent Squad's IntentClassifier (LLM-based)
             supervisor_coordinator: Optional supervisor for compound intents
@@ -130,7 +131,7 @@ class AgentSquadIntentAdapter(IntentDetectionPort):
     ) -> IntentDetectionResult:
         """
         Detect intent using Agent Squad's IntentClassifier.
-        
+
         Flow:
         1. Check for compound intents (multiple queries)
         2. If compound → Return COMPLEX_WORKFLOW intent
@@ -140,19 +141,17 @@ class AgentSquadIntentAdapter(IntentDetectionPort):
         try:
             # Build Agent Squad conversation context
             context = self._build_agent_squad_context(request)
-            
+
             # Check for compound intents first
-            is_compound = await self._detect_compound_intent(
-                request.message, context
-            )
-            
+            is_compound = await self._detect_compound_intent(request.message, context)
+
             if is_compound:
                 logger.info(
                     "🔀 Compound intent detected",
                     extra={
                         "query": request.message[:100],
                         "intent": "COMPLEX_WORKFLOW",
-                    }
+                    },
                 )
                 return IntentDetectionResult(
                     intent=ChatIntent.COMPLEX_WORKFLOW,
@@ -161,42 +160,40 @@ class AgentSquadIntentAdapter(IntentDetectionPort):
                     reasoning="Detected multiple intents in query - requires multi-agent workflow",
                     handler="agent_orchestrator",
                 )
-            
+
             # Single intent → Use IntentClassifier
             classification = await self._intent_classifier.classify(
                 message=MessageContent(request.message),
                 conversation_context=context,
             )
-            
+
             # Map Agent Squad intent to ChatIntent
             chat_intent = self._map_to_chat_intent(classification.intent)
-            
+
             # Extract entities using LLM (if needed)
             entities = await self._extract_entities_llm(
                 request.message, chat_intent, context
             )
-            
+
             # Get handler
-            handler = self.INTENT_TO_HANDLER.get(
-                chat_intent, "general_chat"
-            )
-            
+            handler = self.INTENT_TO_HANDLER.get(chat_intent, "general_chat")
+
             # Get suggested agent from classification
             suggested_agent = (
                 classification.agent_type.value
                 if hasattr(classification, "agent_type")
                 else None
             )
-            
+
             logger.debug(
                 "✅ Intent classified",
                 extra={
                     "intent": chat_intent.value,
                     "confidence": classification.confidence,
                     "agent": suggested_agent,
-                }
+                },
             )
-            
+
             return IntentDetectionResult(
                 intent=chat_intent,
                 confidence=classification.confidence,
@@ -205,7 +202,7 @@ class AgentSquadIntentAdapter(IntentDetectionPort):
                 handler=handler,
                 suggested_agent=suggested_agent,
             )
-            
+
         except Exception as e:
             logger.error(
                 "❌ Intent detection failed",
@@ -226,23 +223,25 @@ class AgentSquadIntentAdapter(IntentDetectionPort):
     ) -> AgentSquadContext:
         """Build Agent Squad conversation context from request."""
         conversation_history = []
-        
+
         if request.conversation_history:
             for msg in request.conversation_history[-10:]:  # Last 10 messages
                 role = "user"
                 content = ""
                 if hasattr(msg, "role"):
-                    role = msg.role.value if hasattr(msg.role, "value") else str(msg.role)
+                    role = (
+                        msg.role.value if hasattr(msg.role, "value") else str(msg.role)
+                    )
                 if hasattr(msg, "content"):
                     content = msg.content
                 elif isinstance(msg, str):
                     content = msg
-                
+
                 conversation_history.append({
                     "role": role,
                     "content": content,
                 })
-        
+
         return AgentSquadContext(
             conversation_history=conversation_history,
             user_metadata=request.user_context or {},
@@ -256,7 +255,7 @@ class AgentSquadIntentAdapter(IntentDetectionPort):
     ) -> bool:
         """
         Detect if query contains multiple intents using LLM.
-        
+
         Examples:
         - "what's the price of btc, and what swaps you can make?"
         - "analyze risk and optimize portfolio"
@@ -275,14 +274,16 @@ class AgentSquadIntentAdapter(IntentDetectionPort):
             " and make ",
             " and get ",
         ]
-        
+
         message_lower = message.lower()
-        has_compound_pattern = any(indicator in message_lower for indicator in compound_indicators)
-        
+        has_compound_pattern = any(
+            indicator in message_lower for indicator in compound_indicators
+        )
+
         # If no pattern, likely single intent
         if not has_compound_pattern:
             return False
-        
+
         # Pattern found → Use LLM to confirm it's actually compound (not just "BTC and ETH" in single swap)
         try:
             # Build prompt for compound intent detection
@@ -312,11 +313,11 @@ Guidelines:
 - Compound = Multiple distinct queries/tasks in one message
 - Single intent with multiple entities is NOT compound
 """
-            
+
             # Use IntentClassifier's LLM client for compound detection
             # Access the LLM client safely
             llm_client = getattr(self._intent_classifier, "_llm_client", None)
-            
+
             if llm_client and hasattr(llm_client, "classify_intent"):
                 try:
                     # Use classify_intent method
@@ -324,7 +325,7 @@ Guidelines:
                         prompt=prompt,
                         model=self._intent_classifier._classification_model,
                     )
-                    
+
                     # Parse response
                     if isinstance(llm_response, dict):
                         is_compound = llm_response.get("is_compound", False)
@@ -334,30 +335,48 @@ Guidelines:
                                 extra={
                                     "intents": llm_response.get("intents", []),
                                     "reasoning": llm_response.get("reasoning", ""),
-                                }
+                                },
                             )
                             return True
-                        
+
                         # Check reasoning for compound indicators
                         reasoning = llm_response.get("reasoning", "").lower()
-                        if any(word in reasoning for word in ["multiple", "compound", "two", "both", "separate"]):
+                        if any(
+                            word in reasoning
+                            for word in [
+                                "multiple",
+                                "compound",
+                                "two",
+                                "both",
+                                "separate",
+                            ]
+                        ):
                             logger.info("🔀 LLM reasoning indicates compound intent")
                             return True
-                    
+
                     # LLM didn't confirm compound → Trust LLM (it understands context better)
                     # But if pattern is very clear, still consider it compound
-                    if has_compound_pattern and any(clear_indicator in message_lower for clear_indicator in [", and ", " and what ", " and show "]):
-                        logger.info("🔀 Pattern-based compound detection (LLM unavailable or unclear)")
+                    if has_compound_pattern and any(
+                        clear_indicator in message_lower
+                        for clear_indicator in [", and ", " and what ", " and show "]
+                    ):
+                        logger.info(
+                            "🔀 Pattern-based compound detection (LLM unavailable or unclear)"
+                        )
                         return True
-                    
+
                     return False
                 except Exception as llm_error:
-                    logger.warning(f"LLM compound detection call failed: {llm_error}, using pattern-based")
+                    logger.warning(
+                        f"LLM compound detection call failed: {llm_error}, using pattern-based"
+                    )
                     # Fall through to pattern-based
             else:
                 # LLM client not available or doesn't support classify_intent
-                logger.debug("LLM client not available for compound detection, using pattern-based")
-            
+                logger.debug(
+                    "LLM client not available for compound detection, using pattern-based"
+                )
+
             # Fallback: use pattern-based detection
             # If pattern is clear (has "and" with query words), consider it compound
             if has_compound_pattern:
@@ -372,24 +391,41 @@ Guidelines:
                     ", and show ",
                 ]
                 if any(pattern in message_lower for pattern in clear_compound_patterns):
-                    logger.info("🔀 Pattern-based compound detection (clear compound pattern)")
+                    logger.info(
+                        "🔀 Pattern-based compound detection (clear compound pattern)"
+                    )
                     return True
-                
+
                 # For " and " pattern, be more conservative
                 # Only consider compound if it looks like two distinct queries
                 if " and " in message_lower:
                     # Check if it's likely two queries (has question words or action verbs)
-                    query_indicators = ["what", "how", "show", "tell", "make", "get", "find", "analyze"]
+                    query_indicators = [
+                        "what",
+                        "how",
+                        "show",
+                        "tell",
+                        "make",
+                        "get",
+                        "find",
+                        "analyze",
+                    ]
                     parts = message_lower.split(" and ")
                     if len(parts) == 2:
-                        part1_has_query = any(indicator in parts[0] for indicator in query_indicators)
-                        part2_has_query = any(indicator in parts[1] for indicator in query_indicators)
+                        part1_has_query = any(
+                            indicator in parts[0] for indicator in query_indicators
+                        )
+                        part2_has_query = any(
+                            indicator in parts[1] for indicator in query_indicators
+                        )
                         if part1_has_query and part2_has_query:
-                            logger.info("🔀 Pattern-based compound detection (two distinct query parts)")
+                            logger.info(
+                                "🔀 Pattern-based compound detection (two distinct query parts)"
+                            )
                             return True
-            
+
             return False
-                    
+
         except Exception as e:
             logger.warning(
                 f"LLM compound detection failed: {e}, using pattern-based result",
@@ -397,20 +433,20 @@ Guidelines:
             )
             # Fallback: use pattern-based detection
             return has_compound_pattern
-            
+
             is_compound = result.get("is_compound", False)
-            
+
             if is_compound:
                 logger.info(
                     "🔀 Compound intent detected by LLM",
                     extra={
                         "intents": result.get("intents", []),
                         "reasoning": result.get("reasoning", ""),
-                    }
+                    },
                 )
-            
+
             return is_compound
-            
+
         except Exception as e:
             logger.warning(
                 "⚠️ Compound intent detection failed, using fallback",
@@ -425,13 +461,15 @@ Guidelines:
                 ", then ",
                 ", also ",
             ]
-            return any(indicator in message.lower() for indicator in compound_indicators)
+            return any(
+                indicator in message.lower() for indicator in compound_indicators
+            )
 
     def _format_context(self, context: AgentSquadContext) -> str:
         """Format context for prompt."""
         if not context.has_history:
             return "(No previous context)"
-        
+
         recent = context.last_n_messages(3)
         return "\n".join([
             f"- {msg.get('role', 'user')}: {msg.get('content', '')[:100]}"
@@ -441,7 +479,7 @@ Guidelines:
     def _map_to_chat_intent(self, agent_squad_intent: str) -> ChatIntent:
         """
         Map Agent Squad intent to ChatIntent enum.
-        
+
         Agent Squad uses generic intents like "swap_tokens", "analyze_risk"
         ChatIntent uses specific intents like "SWAP", "RISK_ASSESSMENT"
         """
@@ -449,18 +487,18 @@ Guidelines:
         mapped = self.INTENT_MAP.get(agent_squad_intent)
         if mapped:
             return mapped
-        
+
         # Try case-insensitive match
         intent_lower = agent_squad_intent.lower()
         for key, value in self.INTENT_MAP.items():
             if key.lower() == intent_lower:
                 return value
-        
+
         # Try partial match (e.g., "swap" matches "swap_tokens")
         for key, value in self.INTENT_MAP.items():
             if intent_lower in key.lower() or key.lower() in intent_lower:
                 return value
-        
+
         # Default to general conversation
         logger.warning(
             f"Unknown Agent Squad intent: {agent_squad_intent}, defaulting to GENERAL_CONVERSATION"
@@ -475,13 +513,13 @@ Guidelines:
     ) -> dict:
         """
         Extract entities using LLM.
-        
+
         Entities: protocol names, token symbols, amounts, chains, etc.
         """
         # For now, use simple extraction
         # Can be enhanced with LLM-based extraction if needed
         entities = {}
-        
+
         # Token extraction
         tokens = ["BTC", "ETH", "SOL", "USDC", "USDT", "DAI", "WBTC", "WETH"]
         message_upper = message.upper()
@@ -489,7 +527,7 @@ Guidelines:
             if token in message_upper:
                 entities["token_symbol"] = token
                 break
-        
+
         # Protocol extraction
         protocols = ["Aave", "Uniswap", "Curve", "Compound", "Morpho"]
         message_lower = message.lower()
@@ -497,10 +535,13 @@ Guidelines:
             if protocol.lower() in message_lower:
                 entities["protocol_name"] = protocol
                 break
-        
+
         # Amount extraction
         import re
-        amount_match = re.search(r"\$?\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*(?:k|K)?", message)
+
+        amount_match = re.search(
+            r"\$?\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*(?:k|K)?", message
+        )
         if amount_match:
             amount_str = amount_match.group(1).replace(",", "")
             try:
@@ -510,7 +551,7 @@ Guidelines:
                 entities["amount"] = amount
             except ValueError:
                 pass
-        
+
         return entities
 
     def supports_streaming(self) -> bool:

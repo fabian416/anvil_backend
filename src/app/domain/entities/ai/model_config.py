@@ -1,6 +1,7 @@
 """
 Model Config entity.
 """
+
 from dataclasses import dataclass
 from typing import Optional
 from decimal import Decimal
@@ -12,6 +13,7 @@ from app.domain.enums.ai.llm_provider import LLMProvider
 from app.domain.enums.ai.model_status import ModelStatus
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.updated_at import UpdatedAt
+
 
 @dataclass(eq=False, kw_only=True)
 class ModelConfig(Entity[ModelId]):

@@ -70,7 +70,7 @@ class OrderBook:
     def imbalance(self) -> Decimal:
         """
         Calculate order book imbalance.
-        
+
         Positive = more bids (bullish), Negative = more asks (bearish).
         """
         total = self.bid_depth + self.ask_depth
@@ -102,12 +102,10 @@ class OrderBook:
             timestamp = datetime.now(UTC)
 
         bids = tuple(
-            (Decimal(str(b[0])), Decimal(str(b[1])))
-            for b in data.get("bids", [])
+            (Decimal(str(b[0])), Decimal(str(b[1]))) for b in data.get("bids", [])
         )
         asks = tuple(
-            (Decimal(str(a[0])), Decimal(str(a[1])))
-            for a in data.get("asks", [])
+            (Decimal(str(a[0])), Decimal(str(a[1]))) for a in data.get("asks", [])
         )
 
         return cls(

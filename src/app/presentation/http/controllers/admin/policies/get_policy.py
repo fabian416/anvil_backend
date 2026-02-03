@@ -79,4 +79,3 @@ def create_get_policy_router() -> APIRouter:
         )
 
     return router
-

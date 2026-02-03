@@ -81,7 +81,10 @@ class SwapQuoteResponse(BaseModel):
     expires_at: str = Field(..., description="Quote expiration time (ISO 8601)")
     # New fields for swap execution flow
     signature: str = Field("", description="Encrypted signature for execute_quote API")
-    kyc_required: bool = Field(False, description="True if KYC is required (constraints include KycDataRequired)")
+    kyc_required: bool = Field(
+        False,
+        description="True if KYC is required (constraints include KycDataRequired)",
+    )
 
 
 # ========================================
@@ -186,7 +189,9 @@ class GenerateSwapUrlResponse(BaseModel):
 
     url: str = Field(..., description="Full signed URL to open in browser")
     signature: str = Field(..., description="The signature used")
-    environment: str = Field(..., description="MoonPay environment (sandbox/production)")
+    environment: str = Field(
+        ..., description="MoonPay environment (sandbox/production)"
+    )
 
 
 # ========================================
@@ -524,7 +529,9 @@ widget.show();
             ).digest()
             signature = base64.b64encode(signature_bytes).decode("utf-8")
 
-            logger.info(f"MoonPay URL signed successfully for domain: {parsed_url.netloc}")
+            logger.info(
+                f"MoonPay URL signed successfully for domain: {parsed_url.netloc}"
+            )
 
             return SignUrlResponse(
                 signature=signature,
@@ -935,7 +942,9 @@ In production, transaction signing and submission is handled by Privy SDK.
 
         return DebugSignatureResponse(
             api_key=moonpay_settings.api_key or "NOT_CONFIGURED",
-            secret_key_prefix=api_secret[:20] + "..." if api_secret else "NOT_CONFIGURED",
+            secret_key_prefix=api_secret[:20] + "..."
+            if api_secret
+            else "NOT_CONFIGURED",
             secret_key_length=len(api_secret),
             environment=moonpay_settings.environment,
             is_sandbox=moonpay_settings.is_sandbox,
@@ -956,7 +965,9 @@ In production, transaction signing and submission is handled by Privy SDK.
     class CheckAuthResponse(BaseModel):
         """Response for auth check endpoint."""
 
-        has_valid_tokens: bool = Field(..., description="Whether user has valid MoonPay tokens")
+        has_valid_tokens: bool = Field(
+            ..., description="Whether user has valid MoonPay tokens"
+        )
 
     class SaveTokensRequest(BaseModel):
         """Request to save MoonPay tokens after KYC."""
@@ -973,16 +984,24 @@ In production, transaction signing and submission is handled by Privy SDK.
         """Request to execute a swap."""
 
         signature: str = Field(..., description="Quote signature from /quote endpoint")
-        base_wallet_address: str = Field(..., description="Wallet address for base currency")
-        quote_wallet_address: str = Field(..., description="Wallet address for quote currency")
-        refund_wallet_address: str | None = Field(None, description="Wallet for refunds (optional)")
+        base_wallet_address: str = Field(
+            ..., description="Wallet address for base currency"
+        )
+        quote_wallet_address: str = Field(
+            ..., description="Wallet address for quote currency"
+        )
+        refund_wallet_address: str | None = Field(
+            None, description="Wallet for refunds (optional)"
+        )
 
     class ExecuteSwapResponse(BaseModel):
         """Response from swap execution."""
 
         transaction_id: str = Field(..., description="MoonPay transaction ID")
         status: str = Field(..., description="Transaction status")
-        deposit_wallet_address: str = Field(..., description="Address to send deposit to")
+        deposit_wallet_address: str = Field(
+            ..., description="Address to send deposit to"
+        )
         base_currency_amount: str = Field(..., description="Amount to deposit")
         quote_currency_amount: str = Field(..., description="Amount to receive")
 
@@ -1020,7 +1039,11 @@ open the MoonPayKYCWidget to complete authentication.
         # Extract user_id from JWT
         try:
             # Remove "Bearer " prefix if present
-            token = authorization.replace("Bearer ", "") if authorization.startswith("Bearer ") else authorization
+            token = (
+                authorization.replace("Bearer ", "")
+                if authorization.startswith("Bearer ")
+                else authorization
+            )
             payload = jwt_handler.decode_access_token(token)
             user_id = payload.get("sub")
             if not user_id:
@@ -1029,6 +1052,7 @@ open the MoonPayKYCWidget to complete authentication.
             raise HTTPException(status_code=401, detail="Invalid or expired token")
 
         from uuid import UUID
+
         has_valid = await moonpay_token_repo.has_valid_tokens(UUID(user_id))
         return CheckAuthResponse(has_valid_tokens=has_valid)
 
@@ -1055,7 +1079,11 @@ MoonPayKYCWidget to persist the tokens for future swap executions.
         """Save MoonPay tokens after KYC completion."""
         # Extract user_id from JWT
         try:
-            token = authorization.replace("Bearer ", "") if authorization.startswith("Bearer ") else authorization
+            token = (
+                authorization.replace("Bearer ", "")
+                if authorization.startswith("Bearer ")
+                else authorization
+            )
             payload = jwt_handler.decode_access_token(token)
             user_id = payload.get("sub")
             if not user_id:
@@ -1064,6 +1092,7 @@ MoonPayKYCWidget to persist the tokens for future swap executions.
             raise HTTPException(status_code=401, detail="Invalid or expired token")
 
         from uuid import UUID
+
         await moonpay_token_repo.upsert(
             user_id=UUID(user_id),
             moonpay_token=request.token,
@@ -1103,12 +1132,19 @@ to the returned deposit_wallet_address.
         if not moonpay_settings.is_configured:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail={"error": "MOONPAY_NOT_CONFIGURED", "message": "MoonPay is not configured"},
+                detail={
+                    "error": "MOONPAY_NOT_CONFIGURED",
+                    "message": "MoonPay is not configured",
+                },
             )
 
         # Extract user_id from JWT
         try:
-            token = authorization.replace("Bearer ", "") if authorization.startswith("Bearer ") else authorization
+            token = (
+                authorization.replace("Bearer ", "")
+                if authorization.startswith("Bearer ")
+                else authorization
+            )
             payload = jwt_handler.decode_access_token(token)
             user_id = payload.get("sub")
             if not user_id:
@@ -1118,6 +1154,7 @@ to the returned deposit_wallet_address.
 
         # Get user's MoonPay tokens
         from uuid import UUID
+
         token_data = await moonpay_token_repo.get_by_user_id(UUID(user_id))
         if token_data is None or token_data.is_expired():
             raise HTTPException(
@@ -1186,12 +1223,19 @@ Get the current status of a swap transaction.
         if not moonpay_settings.is_configured:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail={"error": "MOONPAY_NOT_CONFIGURED", "message": "MoonPay is not configured"},
+                detail={
+                    "error": "MOONPAY_NOT_CONFIGURED",
+                    "message": "MoonPay is not configured",
+                },
             )
 
         # Extract user_id from JWT
         try:
-            token = authorization.replace("Bearer ", "") if authorization.startswith("Bearer ") else authorization
+            token = (
+                authorization.replace("Bearer ", "")
+                if authorization.startswith("Bearer ")
+                else authorization
+            )
             payload = jwt_handler.decode_access_token(token)
             user_id = payload.get("sub")
             if not user_id:
@@ -1201,11 +1245,15 @@ Get the current status of a swap transaction.
 
         # Get user's MoonPay tokens
         from uuid import UUID
+
         token_data = await moonpay_token_repo.get_by_user_id(UUID(user_id))
         if token_data is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail={"error": "MOONPAY_AUTH_REQUIRED", "message": "No MoonPay tokens found"},
+                detail={
+                    "error": "MOONPAY_AUTH_REQUIRED",
+                    "message": "No MoonPay tokens found",
+                },
             )
 
         client = MoonPaySwapClient(

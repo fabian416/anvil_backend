@@ -27,20 +27,16 @@ class TestLayerZeroMCPServerStructure:
 
     def test_layerzero_server_has_setup_tools(self):
         """Test server has setup_tools method."""
-        assert hasattr(LayerZeroMCPServer, 'setup_tools')
+        assert hasattr(LayerZeroMCPServer, "setup_tools")
 
     def test_layerzero_server_initialization_enabled(self):
         """Test server can be instantiated when enabled."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(layerzero_enabled=True)
+            enabled=True, servers=MCPServerSettings(layerzero_enabled=True)
         )
         mock_gateway = MagicMock()
 
-        server = LayerZeroMCPServer(
-            layerzero_gateway=mock_gateway,
-            settings=settings
-        )
+        server = LayerZeroMCPServer(layerzero_gateway=mock_gateway, settings=settings)
 
         assert server is not None
         assert server.name == "layerzero"
@@ -53,14 +49,10 @@ class TestLayerZeroTools:
     def test_setup_tools_registers_all_tools(self):
         """Test setup_tools registers all expected tools."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(layerzero_enabled=True)
+            enabled=True, servers=MCPServerSettings(layerzero_enabled=True)
         )
         mock_gateway = MagicMock()
-        server = LayerZeroMCPServer(
-            layerzero_gateway=mock_gateway,
-            settings=settings
-        )
+        server = LayerZeroMCPServer(layerzero_gateway=mock_gateway, settings=settings)
 
         server.setup_tools()
 
@@ -103,13 +95,9 @@ class TestLayerZeroToolHandlers:
         mock_gateway.track_message.return_value = mock_message
 
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(layerzero_enabled=True)
+            enabled=True, servers=MCPServerSettings(layerzero_enabled=True)
         )
-        server = LayerZeroMCPServer(
-            layerzero_gateway=mock_gateway,
-            settings=settings
-        )
+        server = LayerZeroMCPServer(layerzero_gateway=mock_gateway, settings=settings)
         server.setup_tools()
 
         result = await server._track_message_handler(tx_hash="0xtx1")
@@ -117,7 +105,6 @@ class TestLayerZeroToolHandlers:
         assert "message_id" in result
         assert result["message_id"] == "msg123"
         assert result["status"] == "delivered"
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -141,13 +128,9 @@ class TestLayerZeroToolHandlers:
         mock_gateway.get_chains.return_value = [mock_chain1, mock_chain2]
 
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(layerzero_enabled=True)
+            enabled=True, servers=MCPServerSettings(layerzero_enabled=True)
         )
-        server = LayerZeroMCPServer(
-            layerzero_gateway=mock_gateway,
-            settings=settings
-        )
+        server = LayerZeroMCPServer(layerzero_gateway=mock_gateway, settings=settings)
         server.setup_tools()
 
         result = await server._get_chains_handler(mainnet_only=True)

@@ -41,5 +41,3 @@ class JwtHeaderAuthSessionTransport(AuthSessionTransport):
     def remove_current(self) -> None:
         # No-op for header transport
         pass
-
-

@@ -60,7 +60,9 @@ class GetPrivyPolicy:
         current_user = await self._current_user_service.get_current_user()
         authorize(
             CanManageRole(),
-            context=RoleManagementContext(subject=current_user, target_role=UserRole.USER),
+            context=RoleManagementContext(
+                subject=current_user, target_role=UserRole.USER
+            ),
         )
 
         repo = PolicyRepositorySqla(self._session)
@@ -80,7 +82,11 @@ class GetPrivyPolicy:
         try:
             data = await self._privy_client.get_policy(request.policy_id)
             policy = PrivyPolicyDTO.from_api(data)
-            actor_user_id = getattr(current_user, "id_", None).value if getattr(current_user, "id_", None) else None
+            actor_user_id = (
+                getattr(current_user, "id_", None).value
+                if getattr(current_user, "id_", None)
+                else None
+            )
             await repo.upsert_from_privy(
                 policy=policy,
                 privy_raw=data if isinstance(data, dict) else {"raw": data},
@@ -95,7 +101,8 @@ class GetPrivyPolicy:
         except PrivyClientError as e:
             raise PolicyQueryError(str(e)) from e
         except Exception as e:
-            if isinstance(e, (AuthorizationError, PolicyNotFoundError, PolicyQueryError)):
+            if isinstance(
+                e, (AuthorizationError, PolicyNotFoundError, PolicyQueryError)
+            ):
                 raise
             raise PolicyQueryError(str(e)) from e
-

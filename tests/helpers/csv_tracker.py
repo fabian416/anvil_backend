@@ -20,35 +20,37 @@ class TestExecutionData:
     """Test execution data for CSV tracking (11 standard + 12 enhanced fields)."""
 
     # Standard 11 columns (existing)
-    test_id: str                    # Unique test identifier
-    s_multistep: bool               # Is this a multi-turn conversation
-    input: str                      # User query/input
-    output: str                     # Agent response/output
-    test_label_sequence: str        # Agent flow (e.g., "hunter→ultra", "shortcut_swap_step1->step2")
-    output_expected: str            # Expected behavior description
-    status: str                     # PASS/FAIL
-    date: str                       # ISO timestamp
-    quality: Optional[float]        # LLM confidence score (0.0-1.0) / overall_score
-    qa_status: Optional[str]        # LLM validation verdict (PASS/FAIL/WARN/SKIPPED)
-    qa_output: Optional[str]        # LLM reasoning/explanation
+    test_id: str  # Unique test identifier
+    s_multistep: bool  # Is this a multi-turn conversation
+    input: str  # User query/input
+    output: str  # Agent response/output
+    test_label_sequence: (
+        str  # Agent flow (e.g., "hunter→ultra", "shortcut_swap_step1->step2")
+    )
+    output_expected: str  # Expected behavior description
+    status: str  # PASS/FAIL
+    date: str  # ISO timestamp
+    quality: Optional[float]  # LLM confidence score (0.0-1.0) / overall_score
+    qa_status: Optional[str]  # LLM validation verdict (PASS/FAIL/WARN/SKIPPED)
+    qa_output: Optional[str]  # LLM reasoning/explanation
 
     # NEW: Granular scores (4 columns)
-    accuracy_score: Optional[float] = None          # Factual correctness (0.0-1.0)
-    relevance_score: Optional[float] = None         # Query relevance (0.0-1.0)
-    safety_score: Optional[float] = None            # Security/disclaimers (0.0-1.0)
-    coherence_score: Optional[float] = None         # Logical consistency (0.0-1.0)
+    accuracy_score: Optional[float] = None  # Factual correctness (0.0-1.0)
+    relevance_score: Optional[float] = None  # Query relevance (0.0-1.0)
+    safety_score: Optional[float] = None  # Security/disclaimers (0.0-1.0)
+    coherence_score: Optional[float] = None  # Logical consistency (0.0-1.0)
 
     # NEW: Test metadata (4 columns)
-    test_category: Optional[str] = None             # e.g., "hunter", "flows", "errors"
-    test_type: Optional[str] = None                 # e.g., "simple_query", "multi_step"
-    expected_intents: Optional[str] = None          # JSON array as string
-    token_usage: Optional[int] = None               # LLM tokens consumed
+    test_category: Optional[str] = None  # e.g., "hunter", "flows", "errors"
+    test_type: Optional[str] = None  # e.g., "simple_query", "multi_step"
+    expected_intents: Optional[str] = None  # JSON array as string
+    token_usage: Optional[int] = None  # LLM tokens consumed
 
     # NEW: Recommendations (4 columns)
-    improvement_suggestions: Optional[str] = None   # JSON array as string
-    critical_issues: Optional[str] = None           # JSON array as string
-    next_steps: Optional[str] = None                # JSON array as string
-    model_used: Optional[str] = None                # e.g., "meta-llama/Meta-Llama-3.1-70B-Instruct"
+    improvement_suggestions: Optional[str] = None  # JSON array as string
+    critical_issues: Optional[str] = None  # JSON array as string
+    next_steps: Optional[str] = None  # JSON array as string
+    model_used: Optional[str] = None  # e.g., "meta-llama/Meta-Llama-3.1-70B-Instruct"
 
 
 class CSVTestTracker:
@@ -138,7 +140,9 @@ class CSVTestTracker:
         if self.write_enhanced:
             logger.info("Enhanced CSV export ENABLED (23 columns)")
         else:
-            logger.info("Standard CSV export (11 columns) - Set WRITE_ENHANCED_CSV=true for enhanced")
+            logger.info(
+                "Standard CSV export (11 columns) - Set WRITE_ENHANCED_CSV=true for enhanced"
+            )
 
     def track(self, user_type: str, category: str, data: TestExecutionData):
         """
@@ -160,7 +164,9 @@ class CSVTestTracker:
         if self.write_enhanced:
             self._write_enhanced_csv(output_dir, category, data)
 
-    def _write_standard_csv(self, output_dir: Path, category: str, data: TestExecutionData):
+    def _write_standard_csv(
+        self, output_dir: Path, category: str, data: TestExecutionData
+    ):
         """Write to standard 11-column CSV (backward compatible)."""
         output_file = output_dir / f"{category}.csv"
         file_exists = output_file.exists()
@@ -183,7 +189,9 @@ class CSVTestTracker:
         except Exception as e:
             logger.error(f"Failed to track test execution to standard CSV: {e}")
 
-    def _write_enhanced_csv(self, output_dir: Path, category: str, data: TestExecutionData):
+    def _write_enhanced_csv(
+        self, output_dir: Path, category: str, data: TestExecutionData
+    ):
         """Write to enhanced 23-column CSV."""
         output_file = output_dir / f"{category}_enhanced.csv"
         file_exists = output_file.exists()
@@ -238,17 +246,29 @@ class CSVTestTracker:
             "qa_status": data.qa_status or "",
             "qa_output": self._truncate(data.qa_output or "", 200),
             # Granular scores (4 columns)
-            "accuracy_score": f"{data.accuracy_score:.2f}" if data.accuracy_score is not None else "",
-            "relevance_score": f"{data.relevance_score:.2f}" if data.relevance_score is not None else "",
-            "safety_score": f"{data.safety_score:.2f}" if data.safety_score is not None else "",
-            "coherence_score": f"{data.coherence_score:.2f}" if data.coherence_score is not None else "",
+            "accuracy_score": f"{data.accuracy_score:.2f}"
+            if data.accuracy_score is not None
+            else "",
+            "relevance_score": f"{data.relevance_score:.2f}"
+            if data.relevance_score is not None
+            else "",
+            "safety_score": f"{data.safety_score:.2f}"
+            if data.safety_score is not None
+            else "",
+            "coherence_score": f"{data.coherence_score:.2f}"
+            if data.coherence_score is not None
+            else "",
             # Test metadata (4 columns)
             "test_category": data.test_category or "",
             "test_type": data.test_type or "",
             "expected_intents": data.expected_intents or "",
-            "token_usage": str(data.token_usage) if data.token_usage is not None else "",
+            "token_usage": str(data.token_usage)
+            if data.token_usage is not None
+            else "",
             # Recommendations (4 columns)
-            "improvement_suggestions": self._truncate(data.improvement_suggestions or "", 200),
+            "improvement_suggestions": self._truncate(
+                data.improvement_suggestions or "", 200
+            ),
             "critical_issues": self._truncate(data.critical_issues or "", 200),
             "next_steps": self._truncate(data.next_steps or "", 200),
             "model_used": data.model_used or "",
@@ -267,7 +287,7 @@ class CSVTestTracker:
 
         # Truncate if too long
         if len(text) > max_length:
-            return text[:max_length - 3] + "..."
+            return text[: max_length - 3] + "..."
 
         return text
 

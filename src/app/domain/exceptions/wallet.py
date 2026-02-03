@@ -59,7 +59,9 @@ class InvalidWalletAddressError(ApplicationError):
             details["chain"] = chain
         if reason:
             details["reason"] = reason
-        super().__init__(ErrorCode.WALLET_INVALID_ADDRESS, details=details, field="address")
+        super().__init__(
+            ErrorCode.WALLET_INVALID_ADDRESS, details=details, field="address"
+        )
 
 
 class InsufficientBalanceError(ApplicationError):
@@ -141,7 +143,9 @@ class InvalidAmountError(ApplicationError):
             details["max_amount"] = str(max_amount)
         if reason:
             details["reason"] = reason
-        super().__init__(ErrorCode.WALLET_INVALID_AMOUNT, details=details, field="amount")
+        super().__init__(
+            ErrorCode.WALLET_INVALID_AMOUNT, details=details, field="amount"
+        )
 
 
 class WalletRateLimitError(ApplicationError):
@@ -192,10 +196,13 @@ class InvalidSignatureError(ApplicationError):
             details["signature_type"] = signature_type
         if reason:
             details["reason"] = reason
-        super().__init__(ErrorCode.WALLET_SIGNATURE_INVALID, details=details, field="signature")
+        super().__init__(
+            ErrorCode.WALLET_SIGNATURE_INVALID, details=details, field="signature"
+        )
 
 
 # Additional wallet-specific exceptions
+
 
 class WalletConnectionTimeoutError(ApplicationError):
     """Raised when wallet connection times out."""

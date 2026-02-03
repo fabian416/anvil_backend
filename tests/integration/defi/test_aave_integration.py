@@ -23,7 +23,9 @@ class TestAaveComponentsExist:
 
     def test_aave_router_exists(self):
         """Test Aave router can be created."""
-        from app.presentation.http.controllers.defi.aave_router import create_aave_router
+        from app.presentation.http.controllers.defi.aave_router import (
+            create_aave_router,
+        )
 
         router = create_aave_router()
         assert router is not None
@@ -31,7 +33,9 @@ class TestAaveComponentsExist:
 
     def test_aave_router_routes(self):
         """Test Aave router has required routes."""
-        from app.presentation.http.controllers.defi.aave_router import create_aave_router
+        from app.presentation.http.controllers.defi.aave_router import (
+            create_aave_router,
+        )
 
         router = create_aave_router()
         routes = [r.path for r in router.routes]
@@ -303,6 +307,7 @@ class TestAaveRouterRegistration:
         assert provider is not None
         # Verify provider has correct scope
         from dishka import Scope
+
         assert provider.scope == Scope.APP
 
 

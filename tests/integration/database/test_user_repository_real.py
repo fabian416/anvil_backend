@@ -25,14 +25,16 @@ from app.domain.value_objects.language import Language
 from app.infrastructure.persistence_sqla.registry import mapper_registry
 
 
-def create_test_user(**overrides) ->User:
+def create_test_user(**overrides) -> User:
     """
     Factory function to create test users with all required fields.
 
     Provides sensible defaults for all 26 fields, allowing overrides.
     """
     defaults = {
-        "id_": overrides.get("id_", uuid4().int >> 64),  # Generate random ID if not provided
+        "id_": overrides.get(
+            "id_", uuid4().int >> 64
+        ),  # Generate random ID if not provided
         "email": Email(overrides.get("email", f"test-{uuid4().hex[:8]}@example.com")),
         "first_name": FirstName(overrides.get("first_name", "Test")),
         "last_name": LastName(overrides.get("last_name", "User")),
@@ -71,9 +73,7 @@ async def async_test_engine():
     """Create async test database engine."""
     # Use in-memory SQLite for testing
     engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:",
-        poolclass=NullPool,
-        echo=False
+        "sqlite+aiosqlite:///:memory:", poolclass=NullPool, echo=False
     )
 
     # Create all tables
@@ -90,9 +90,7 @@ async def async_test_engine():
 async def async_test_session(async_test_engine):
     """Create async test database session."""
     async_session_factory = async_sessionmaker(
-        async_test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
+        async_test_engine, class_=AsyncSession, expire_on_commit=False
     )
 
     async with async_session_factory() as session:
@@ -101,7 +99,9 @@ async def async_test_session(async_test_engine):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Requires aiosqlite - these tests need PostgreSQL fixtures or mocks")
+@pytest.mark.skip(
+    reason="Requires aiosqlite - these tests need PostgreSQL fixtures or mocks"
+)
 class TestUserRepositoryReal:
     """Real integration tests for User repository."""
 
@@ -139,14 +139,13 @@ class TestUserRepositoryReal:
         )
         async_test_session.add(user)
         await async_test_session.commit()
-        
+
         # Act
         from sqlalchemy import select
-        result = await async_test_session.execute(
-            select(User).where(User.id == 456)
-        )
+
+        result = await async_test_session.execute(select(User).where(User.id == 456))
         found_user = result.scalar_one_or_none()
-        
+
         # Assert
         assert found_user is not None
         assert found_user.email.value == "query@example.com"
@@ -164,12 +163,12 @@ class TestUserRepositoryReal:
         )
         async_test_session.add(user)
         await async_test_session.commit()
-        
+
         # Act
         user.first_name = FirstName("Updated")
         await async_test_session.commit()
         await async_test_session.refresh(user)
-        
+
         # Assert
         assert user.first_name.value == "Updated"
 
@@ -186,25 +185,26 @@ class TestUserRepositoryReal:
         )
         async_test_session.add(user)
         await async_test_session.commit()
-        
+
         # Act
         await async_test_session.delete(user)
         await async_test_session.commit()
-        
+
         # Query to verify deletion
         from sqlalchemy import select
-        result = await async_test_session.execute(
-            select(User).where(User.id == 999)
-        )
+
+        result = await async_test_session.execute(select(User).where(User.id == 999))
         found_user = result.scalar_one_or_none()
-        
+
         # Assert
         assert found_user is None
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Requires aiosqlite - these tests need PostgreSQL fixtures or mocks")
+@pytest.mark.skip(
+    reason="Requires aiosqlite - these tests need PostgreSQL fixtures or mocks"
+)
 class TestUserRepositoryConstraints:
     """Test database constraints and validation."""
 
@@ -227,11 +227,11 @@ class TestUserRepositoryConstraints:
             last_name="Two",
             password="hashed_password",
         )
-        
+
         # Act & Assert
         async_test_session.add(user1)
         await async_test_session.commit()
-        
+
         # This validates the constraint exists
         # In real implementation, this would raise IntegrityError
         # For now, we just verify the first user was created
@@ -242,7 +242,7 @@ class TestUserRepositoryConstraints:
         """Test that email is required field."""
         # This validates email is required
         # In domain layer, Email value object ensures this
-        
+
         email = Email("required@example.com")
         assert email.value == "required@example.com"
 
@@ -257,17 +257,16 @@ class TestUserRepositoryConstraints:
             last_name="User",
             password="hashed_password",
         )
-        
+
         # Act
         async_test_session.add(user)
         # Don't commit - simulate error
         await async_test_session.rollback()
-        
+
         # Query to verify rollback
         from sqlalchemy import select
-        result = await async_test_session.execute(
-            select(User).where(User.id == 2001)
-        )
+
+        result = await async_test_session.execute(select(User).where(User.id == 2001))
         found_user = result.scalar_one_or_none()
-        
+
         # Assert

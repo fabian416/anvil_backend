@@ -45,8 +45,16 @@ llm_providers = Table(
     Column("health_check_interval_seconds", Integer, default=60),
     Column("config", JSONB, nullable=False, server_default="{}"),
     Column("rate_limits", JSONB, server_default="{}"),
-    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
-    Column("updated_at", DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()),
+    Column(
+        "created_at", DateTime(timezone=True), nullable=False, server_default=func.now()
+    ),
+    Column(
+        "updated_at",
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
     CheckConstraint(
         "health_status IN ('healthy', 'degraded', 'down')",
         name="valid_health_status",
@@ -72,7 +80,12 @@ llm_models = Table(
     "llm_models",
     metadata,
     Column("id", UUID(as_uuid=True), primary_key=True, default=uuid4),
-    Column("provider_id", UUID(as_uuid=True), ForeignKey("llm_providers.id", ondelete="CASCADE"), nullable=False),
+    Column(
+        "provider_id",
+        UUID(as_uuid=True),
+        ForeignKey("llm_providers.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
     Column("model_id", String(100), nullable=False),
     Column("display_name", String(100), nullable=False),
     Column("model_family", String(50)),
@@ -87,8 +100,16 @@ llm_models = Table(
     Column("is_enabled", Boolean, default=True),
     Column("carousel_position", Integer, default=1),
     Column("tier", String(20), default="standard"),
-    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
-    Column("updated_at", DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()),
+    Column(
+        "created_at", DateTime(timezone=True), nullable=False, server_default=func.now()
+    ),
+    Column(
+        "updated_at",
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
     CheckConstraint(
         "tier IN ('premium', 'standard', 'economy', 'experimental')",
         name="valid_tier",
@@ -114,7 +135,12 @@ agent_model_rankings = Table(
     metadata,
     Column("id", UUID(as_uuid=True), primary_key=True, default=uuid4),
     Column("agent_type", String(50), nullable=False),
-    Column("model_id", UUID(as_uuid=True), ForeignKey("llm_models.id", ondelete="CASCADE"), nullable=False),
+    Column(
+        "model_id",
+        UUID(as_uuid=True),
+        ForeignKey("llm_models.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
     Column("ranking_score", DECIMAL(5, 4), default=0.5000),
     Column("success_rate", DECIMAL(5, 4), default=0.0000),
     Column("latency_score", DECIMAL(5, 4), default=0.5000),
@@ -129,7 +155,13 @@ agent_model_rankings = Table(
     Column("total_tokens_used", Integer, default=0),
     Column("last_used_at", DateTime(timezone=True)),
     Column("last_recalculated_at", DateTime(timezone=True), default=func.now()),
-    Column("updated_at", DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()),
+    Column(
+        "updated_at",
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
     CheckConstraint(
         "ranking_score >= 0 AND ranking_score <= 1 AND success_rate >= 0 AND success_rate <= 1",
         name="valid_scores",
@@ -154,8 +186,16 @@ ranking_weight_profiles = Table(
     Column("recency_weight", DECIMAL(3, 2), default=0.10),
     Column("min_requests_for_ranking", Integer, default=10),
     Column("recency_decay_hours", Integer, default=24),
-    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
-    Column("updated_at", DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()),
+    Column(
+        "created_at", DateTime(timezone=True), nullable=False, server_default=func.now()
+    ),
+    Column(
+        "updated_at",
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
     CheckConstraint(
         "success_weight + latency_weight + cost_weight + recency_weight = 1.00",
         name="weights_sum_to_one",
@@ -168,11 +208,18 @@ ranking_overrides = Table(
     metadata,
     Column("id", UUID(as_uuid=True), primary_key=True, default=uuid4),
     Column("agent_type", String(50), nullable=False),
-    Column("model_id", UUID(as_uuid=True), ForeignKey("llm_models.id", ondelete="CASCADE"), nullable=False),
+    Column(
+        "model_id",
+        UUID(as_uuid=True),
+        ForeignKey("llm_models.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
     Column("override_score", DECIMAL(5, 4), nullable=False),
     Column("reason", Text),
     Column("created_by", UUID(as_uuid=True)),
-    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column(
+        "created_at", DateTime(timezone=True), nullable=False, server_default=func.now()
+    ),
     Column("expires_at", DateTime(timezone=True)),
     CheckConstraint(
         "override_score >= 0 AND override_score <= 1",
@@ -212,7 +259,9 @@ llm_requests = Table(
     Column("actual_cost_usd", DECIMAL(10, 6)),
     Column("error_code", String(50)),
     Column("error_message", Text),
-    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column(
+        "created_at", DateTime(timezone=True), nullable=False, server_default=func.now()
+    ),
     Column("started_at", DateTime(timezone=True)),
     Column("completed_at", DateTime(timezone=True)),
     CheckConstraint(
@@ -224,15 +273,28 @@ llm_requests = Table(
 Index("idx_requests_status", llm_requests.c.status, llm_requests.c.created_at.desc())
 Index("idx_requests_user", llm_requests.c.user_id, llm_requests.c.created_at.desc())
 Index("idx_requests_agent", llm_requests.c.agent_type, llm_requests.c.created_at.desc())
-Index("idx_requests_model", llm_requests.c.selected_model_id, llm_requests.c.created_at.desc())
-Index("idx_requests_provider", llm_requests.c.selected_provider_id, llm_requests.c.created_at.desc())
+Index(
+    "idx_requests_model",
+    llm_requests.c.selected_model_id,
+    llm_requests.c.created_at.desc(),
+)
+Index(
+    "idx_requests_provider",
+    llm_requests.c.selected_provider_id,
+    llm_requests.c.created_at.desc(),
+)
 
 
 llm_request_attempts = Table(
     "llm_request_attempts",
     metadata,
     Column("id", UUID(as_uuid=True), primary_key=True, default=uuid4),
-    Column("request_id", UUID(as_uuid=True), ForeignKey("llm_requests.id", ondelete="CASCADE"), nullable=False),
+    Column(
+        "request_id",
+        UUID(as_uuid=True),
+        ForeignKey("llm_requests.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
     Column("attempt_number", Integer, nullable=False),
     Column("provider_id", UUID(as_uuid=True), ForeignKey("llm_providers.id")),
     Column("model_id", UUID(as_uuid=True), ForeignKey("llm_models.id")),
@@ -252,7 +314,11 @@ llm_request_attempts = Table(
     ),
 )
 
-Index("idx_attempts_request", llm_request_attempts.c.request_id, llm_request_attempts.c.attempt_number)
+Index(
+    "idx_attempts_request",
+    llm_request_attempts.c.request_id,
+    llm_request_attempts.c.attempt_number,
+)
 
 
 # ============================================================================
@@ -279,14 +345,24 @@ circuit_breakers = Table(
         JSONB,
         server_default='{"failure_threshold": 5, "success_threshold": 3, "timeout_seconds": 60, "half_open_max_requests": 3}',
     ),
-    Column("updated_at", DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()),
+    Column(
+        "updated_at",
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
     CheckConstraint(
         "state IN ('closed', 'open', 'half_open')",
         name="valid_cb_state",
     ),
 )
 
-Index("idx_circuit_breakers_entity", circuit_breakers.c.entity_type, circuit_breakers.c.entity_id)
+Index(
+    "idx_circuit_breakers_entity",
+    circuit_breakers.c.entity_type,
+    circuit_breakers.c.entity_id,
+)
 Index(
     "idx_circuit_breakers_state",
     circuit_breakers.c.state,
@@ -327,11 +403,22 @@ llm_telemetry_hourly = Table(
     Column("avg_time_to_first_token_ms", Integer),
     Column("cache_hit_rate", DECIMAL(5, 4)),
     Column("retry_rate", DECIMAL(5, 4)),
-    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column(
+        "created_at", DateTime(timezone=True), nullable=False, server_default=func.now()
+    ),
 )
 
-Index("idx_telemetry_lookup", llm_telemetry_hourly.c.hour_bucket.desc(), llm_telemetry_hourly.c.provider_id, llm_telemetry_hourly.c.model_id)
-Index("idx_telemetry_agent", llm_telemetry_hourly.c.hour_bucket.desc(), llm_telemetry_hourly.c.agent_type)
+Index(
+    "idx_telemetry_lookup",
+    llm_telemetry_hourly.c.hour_bucket.desc(),
+    llm_telemetry_hourly.c.provider_id,
+    llm_telemetry_hourly.c.model_id,
+)
+Index(
+    "idx_telemetry_agent",
+    llm_telemetry_hourly.c.hour_bucket.desc(),
+    llm_telemetry_hourly.c.agent_type,
+)
 
 
 llm_cost_daily = Table(
@@ -346,7 +433,9 @@ llm_cost_daily = Table(
     Column("premium_cost_usd", DECIMAL(12, 6), default=0),
     Column("standard_cost_usd", DECIMAL(12, 6), default=0),
     Column("economy_cost_usd", DECIMAL(12, 6), default=0),
-    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column(
+        "created_at", DateTime(timezone=True), nullable=False, server_default=func.now()
+    ),
 )
 
 
@@ -367,7 +456,9 @@ llm_business_config = Table(
     Column("previous_value", JSONB),
     Column("change_reason", Text),
     Column("validation_schema", JSONB),
-    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column(
+        "created_at", DateTime(timezone=True), nullable=False, server_default=func.now()
+    ),
 )
 
 
@@ -388,8 +479,16 @@ llm_cost_budgets = Table(
     Column("notify_slack_channel", String(100)),
     Column("last_alert_sent_at", DateTime(timezone=True)),
     Column("created_by", UUID(as_uuid=True)),
-    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
-    Column("updated_at", DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()),
+    Column(
+        "created_at", DateTime(timezone=True), nullable=False, server_default=func.now()
+    ),
+    Column(
+        "updated_at",
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
     CheckConstraint(
         "budget_type IN ('daily', 'weekly', 'monthly')",
         name="valid_budget_type",
@@ -401,7 +500,12 @@ llm_budget_alerts = Table(
     "llm_budget_alerts",
     metadata,
     Column("id", UUID(as_uuid=True), primary_key=True, default=uuid4),
-    Column("budget_id", UUID(as_uuid=True), ForeignKey("llm_cost_budgets.id", ondelete="CASCADE"), nullable=False),
+    Column(
+        "budget_id",
+        UUID(as_uuid=True),
+        ForeignKey("llm_cost_budgets.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
     Column("alert_type", String(20), nullable=False),
     Column("threshold_percent", Integer),
     Column("current_spend_usd", DECIMAL(12, 2)),
@@ -427,11 +531,18 @@ llm_audit_log = Table(
     Column("before_value", JSONB),
     Column("after_value", JSONB),
     Column("change_reason", Text),
-    Column("timestamp", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column(
+        "timestamp", DateTime(timezone=True), nullable=False, server_default=func.now()
+    ),
 )
 
 Index("idx_audit_actor", llm_audit_log.c.actor_id, llm_audit_log.c.timestamp.desc())
-Index("idx_audit_entity", llm_audit_log.c.entity_type, llm_audit_log.c.entity_id, llm_audit_log.c.timestamp.desc())
+Index(
+    "idx_audit_entity",
+    llm_audit_log.c.entity_type,
+    llm_audit_log.c.entity_id,
+    llm_audit_log.c.timestamp.desc(),
+)
 
 
 # ============================================================================
@@ -450,7 +561,9 @@ llm_response_cache = Table(
     Column("response_content", Text),
     Column("output_tokens", Integer),
     Column("hit_count", Integer, default=0),
-    Column("created_at", DateTime(timezone=True), nullable=False, server_default=func.now()),
+    Column(
+        "created_at", DateTime(timezone=True), nullable=False, server_default=func.now()
+    ),
     Column("last_hit_at", DateTime(timezone=True)),
     Column("expires_at", DateTime(timezone=True)),
 )

@@ -19,13 +19,13 @@ Usage:
         InstrumentedHyperliquidClient,
         InstrumentedGasOracleClient,
     )
-    
+
     # Create client with telemetry
     client = InstrumentedCoinGeckoClient(api_key="...", telemetry=telemetry)
-    
+
     # All calls automatically instrumented
     price = await client.get_price("ethereum")
-    
+
     # View metrics
     metrics = telemetry.get_metrics("coingecko")
 """

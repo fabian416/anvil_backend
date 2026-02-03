@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RefinedIntent:
     """Refined intent with confidence and context."""
+
     intent: str
     confidence: float
     requires_clarification: bool = False
@@ -23,14 +24,14 @@ class RefinedIntent:
 class IntentRefiner:
     """
     Context-aware intent refinement system.
-    
+
     Improves intent classification using:
     - Conversation history
     - User preferences
     - Recent patterns
     - Ambiguity detection
     """
-    
+
     # Ambiguous patterns that require clarification
     AMBIGUOUS_PATTERNS = {
         "trade": ["trade_swap", "trade_perp_open", "trade_perp_close"],
@@ -38,7 +39,7 @@ class IntentRefiner:
         "price": ["portfolio_view", "trade_swap"],
         "balance": ["portfolio_view"],
     }
-    
+
     # Intent refinement rules based on context
     REFINEMENT_RULES = {
         # If user recently swapped, "trade" likely means swap
@@ -57,11 +58,11 @@ class IntentRefiner:
             "boost": 0.2,
         },
     }
-    
+
     def __init__(self):
         """Initialize intent refiner."""
         pass
-    
+
     def refine_intent(
         self,
         message: str,
@@ -71,18 +72,18 @@ class IntentRefiner:
     ) -> RefinedIntent:
         """
         Refine intent using context.
-        
+
         Args:
             message: User message
             initial_intent: Initial classified intent
             initial_confidence: Initial confidence score
             context: Conversation context
-        
+
         Returns:
             RefinedIntent with improved classification
         """
         context = context or {}
-        
+
         # Start with initial values
         refined_intent = initial_intent
         confidence = initial_confidence
@@ -90,7 +91,7 @@ class IntentRefiner:
         clarification_question = None
         extracted_entities = {}
         context_used = {}
-        
+
         # Check for ambiguity
         message_lower = message.lower()
         for pattern, possible_intents in self.AMBIGUOUS_PATTERNS.items():
@@ -101,7 +102,7 @@ class IntentRefiner:
                     possible_intents,
                     context,
                 )
-                
+
                 if resolved:
                     refined_intent = resolved["intent"]
                     confidence = resolved["confidence"]
@@ -113,20 +114,20 @@ class IntentRefiner:
                         pattern,
                         possible_intents,
                     )
-                
+
                 break
-        
+
         # Apply refinement rules
         if not requires_clarification and context:
             boost = self._calculate_context_boost(refined_intent, context)
             confidence = min(1.0, confidence + boost)
-            
+
             if boost > 0:
                 context_used["refinement_boost"] = boost
-        
+
         # Extract entities from message
         extracted_entities = self._extract_entities(message, refined_intent)
-        
+
         return RefinedIntent(
             intent=refined_intent,
             confidence=confidence,
@@ -135,7 +136,7 @@ class IntentRefiner:
             extracted_entities=extracted_entities,
             context_used=context_used,
         )
-    
+
     def _resolve_ambiguity(
         self,
         message: str,
@@ -144,12 +145,12 @@ class IntentRefiner:
     ) -> Optional[Dict[str, Any]]:
         """
         Resolve ambiguous intent using context.
-        
+
         Args:
             message: User message
             possible_intents: Possible intent types
             context: Conversation context
-        
+
         Returns:
             Resolved intent or None if can't resolve
         """
@@ -163,7 +164,7 @@ class IntentRefiner:
                         "confidence": 0.8,
                         "context_used": {"recent_intents": recent_intents[-3:]},
                     }
-        
+
         # Check current topic
         current_topic = context.get("current_topic")
         if current_topic:
@@ -172,7 +173,7 @@ class IntentRefiner:
                 "trading": "trade_perp_open",
                 "portfolio": "portfolio_view",
             }
-            
+
             resolved_intent = topic_intent_map.get(current_topic)
             if resolved_intent and resolved_intent in possible_intents:
                 return {
@@ -180,7 +181,7 @@ class IntentRefiner:
                     "confidence": 0.75,
                     "context_used": {"current_topic": current_topic},
                 }
-        
+
         # Check dominant action
         dominant = context.get("dominant_action")
         if dominant and dominant in possible_intents:
@@ -189,9 +190,9 @@ class IntentRefiner:
                 "confidence": 0.7,
                 "context_used": {"dominant_action": dominant},
             }
-        
+
         return None
-    
+
     def _calculate_context_boost(
         self,
         intent: str,
@@ -199,20 +200,20 @@ class IntentRefiner:
     ) -> float:
         """
         Calculate confidence boost from context.
-        
+
         Args:
             intent: Intent to boost
             context: Conversation context
-        
+
         Returns:
             Boost amount (0-0.3)
         """
         if intent not in self.REFINEMENT_RULES:
             return 0.0
-        
+
         rule = self.REFINEMENT_RULES[intent]
         boost = 0.0
-        
+
         # Check recent intents
         if "recent_intents" in rule:
             user_recent = context.get("recent_intents", [])
@@ -220,14 +221,14 @@ class IntentRefiner:
                 if required in user_recent[-5:]:
                     boost += rule["boost"]
                     break
-        
+
         # Check current topic
         if "current_topic" in rule:
             if context.get("current_topic") == rule["current_topic"]:
                 boost += rule["boost"]
-        
+
         return boost
-    
+
     def _generate_clarification(
         self,
         pattern: str,
@@ -235,11 +236,11 @@ class IntentRefiner:
     ) -> str:
         """
         Generate clarification question.
-        
+
         Args:
             pattern: Ambiguous pattern
             possible_intents: Possible intents
-        
+
         Returns:
             Clarification question
         """
@@ -249,15 +250,15 @@ class IntentRefiner:
             "trade_perp_close": "close a position",
             "portfolio_view": "view your portfolio",
         }
-        
+
         options = [intent_questions.get(i, i) for i in possible_intents]
-        
+
         if len(options) == 2:
             return f"Do you want to {options[0]} or {options[1]}?"
         else:
             options_str = ", ".join(options[:-1]) + f", or {options[-1]}"
             return f"Do you want to {options_str}?"
-    
+
     def _extract_entities(
         self,
         message: str,
@@ -265,17 +266,17 @@ class IntentRefiner:
     ) -> Dict[str, Any]:
         """
         Extract entities from message based on intent.
-        
+
         Args:
             message: User message
             intent: Classified intent
-        
+
         Returns:
             Extracted entities
         """
         entities = {}
         message_lower = message.lower()
-        
+
         # Extract common tokens
         common_tokens = ["BTC", "ETH", "USDC", "USDT", "DAI", "WBTC"]
         for token in common_tokens:
@@ -283,7 +284,7 @@ class IntentRefiner:
                 if "tokens" not in entities:
                     entities["tokens"] = []
                 entities["tokens"].append(token)
-        
+
         # Extract amounts (simple regex-like)
         words = message.split()
         for i, word in enumerate(words):
@@ -299,7 +300,7 @@ class IntentRefiner:
                     break
             except ValueError:
                 continue
-        
+
         # Extract leverage for trading
         if intent.startswith("trade_perp"):
             for word in words:
@@ -311,12 +312,12 @@ class IntentRefiner:
                             break
                     except ValueError:
                         continue
-        
+
         # Extract direction for trading
         if intent.startswith("trade_perp"):
             if "long" in message_lower:
                 entities["is_long"] = True
             elif "short" in message_lower:
                 entities["is_long"] = False
-        
+
         return entities

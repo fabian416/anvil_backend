@@ -38,7 +38,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.infrastructure.adapters.external.oneinch_client import OneInchClient
     from app.infrastructure.adapters.external.lifi_client import LiFiClient
-    from app.infrastructure.adapters.external.moonpay_swap_client import MoonPaySwapClient
+    from app.infrastructure.adapters.external.moonpay_swap_client import (
+        MoonPaySwapClient,
+    )
     from app.domain.ports.morpho_gateway import MorphoGateway
     from app.domain.ports.aave_gateway import AaveGateway
 
@@ -51,7 +53,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ActionResult:
     """Result from action execution."""
-    
+
     action_id: UUID
     action_type: str
     status: str
@@ -68,7 +70,7 @@ class ActionResult:
 class ExecuteActionCommand:
     """
     Command to execute recommended actions from chat.
-    
+
     Flow:
     1. Validate user owns conversation
     2. Get user's wallet (Privy)
@@ -77,15 +79,15 @@ class ExecuteActionCommand:
     5. If confirmed: Execute transaction
     6. Return result with transaction hash
     """
-    
+
     # Maximum transaction values (safety limits)
     MAX_SWAP_VALUE_USD = Decimal("50000")
     MAX_DEPOSIT_VALUE_USD = Decimal("100000")
     MAX_TRANSFER_VALUE_USD = Decimal("10000")
-    
+
     # Confirmation expiry
     CONFIRMATION_EXPIRY_MINUTES = 5
-    
+
     def __init__(
         self,
         conversation_repo: ConversationRepository,
@@ -115,7 +117,7 @@ class ExecuteActionCommand:
         self._moonpay_swap = moonpay_swap_client
         self._morpho = morpho_gateway
         self._aave = aave_gateway
-    
+
     async def execute(
         self,
         user_id: int,
@@ -136,25 +138,25 @@ class ExecuteActionCommand:
     ) -> ActionResult:
         """
         Execute or simulate an action.
-        
+
         If not confirmed: Returns simulation result
         If confirmed: Executes and returns transaction hash
         """
         start_time = time.time()
         action_id = uuid4()
-        
+
         # Verify conversation access
         conversation = await self._conversation_repo.get_conversation(conversation_id)
         if not conversation:
             raise ConversationNotFoundError(conversation_id)
         if conversation.user_id != user_id:
             raise ConversationAccessDeniedError(conversation_id, user_id)
-        
+
         # Get user's wallet
         wallet_address = await self._get_user_wallet(user_id)
         if not wallet_address:
             return self._no_wallet_response(action_id, action_type, language)
-        
+
         # Route to appropriate handler
         if action_type == "swap":
             return await self._handle_swap(
@@ -238,22 +240,26 @@ class ExecuteActionCommand:
             )
         else:
             return self._unsupported_action_response(action_id, action_type, language)
-    
+
     async def _get_user_wallet(self, user_id: int) -> Optional[str]:
         """Get user's primary wallet address."""
         if not self._wallet_repository:
             return None
-        
+
         try:
             wallets = await self._wallet_repository.get_by_user_id(UserId(user_id))
             if wallets:
                 # Return first (primary) wallet
-                return wallets[0].address if hasattr(wallets[0], 'address') else str(wallets[0])
+                return (
+                    wallets[0].address
+                    if hasattr(wallets[0], "address")
+                    else str(wallets[0])
+                )
         except Exception as e:
             logger.warning(f"Failed to get wallet for user {user_id}: {e}")
-        
+
         return None
-    
+
     async def _handle_swap(
         self,
         action_id: UUID,
@@ -269,7 +275,7 @@ class ExecuteActionCommand:
     ) -> ActionResult:
         """Handle swap action."""
         is_cross_chain = to_chain and to_chain.lower() != chain.lower()
-        
+
         # Helper functions for token conversion
         def _to_wei(amount_str: str, token: str) -> str:
             """Convert human readable amount to wei."""
@@ -279,16 +285,16 @@ class ExecuteActionCommand:
             elif token.upper() == "WBTC":
                 decimals = 8
             try:
-                value = float(amount_str) * (10 ** decimals)
+                value = float(amount_str) * (10**decimals)
                 return str(int(value))
             except ValueError:
                 return "0"
-        
+
         def _resolve_token_address(token: str, chain_name: str) -> str:
             """Resolve token symbol to address."""
             if token.startswith("0x"):
                 return token
-            
+
             TOKEN_ADDRESSES = {
                 "ethereum": {
                     "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
@@ -307,10 +313,10 @@ class ExecuteActionCommand:
                     "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
                 },
             }
-            
+
             chain_tokens = TOKEN_ADDRESSES.get(chain_name.lower(), {})
             return chain_tokens.get(token.upper(), token)
-        
+
         # Helper functions for token conversion (defined at method level)
         def _to_wei(amount_str: str, token: str) -> str:
             """Convert human readable amount to wei."""
@@ -320,16 +326,16 @@ class ExecuteActionCommand:
             elif token.upper() == "WBTC":
                 decimals = 8
             try:
-                value = float(amount_str) * (10 ** decimals)
+                value = float(amount_str) * (10**decimals)
                 return str(int(value))
             except ValueError:
                 return "0"
-        
+
         def _resolve_token_address(token: str, chain_name: str) -> str:
             """Resolve token symbol to address."""
             if token.startswith("0x"):
                 return token
-            
+
             TOKEN_ADDRESSES = {
                 "ethereum": {
                     "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
@@ -348,10 +354,10 @@ class ExecuteActionCommand:
                     "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
                 },
             }
-            
+
             chain_tokens = TOKEN_ADDRESSES.get(chain_name.lower(), {})
             return chain_tokens.get(token.upper(), token)
-        
+
         # Get quote - STRICT routing, no simulation fallbacks
         # Same-chain → 1inch (required)
         # Cross-chain → LiFi (required)
@@ -359,7 +365,7 @@ class ExecuteActionCommand:
         aggregator_used: str | None = None
         output_amount = "0"
         gas_estimate = 0
-        
+
         if is_cross_chain:
             # Cross-chain: MUST use LiFi
             if not self._lifi:
@@ -369,14 +375,25 @@ class ExecuteActionCommand:
                     status="failed",
                     requires_confirmation=False,
                     confirmation_message=None,
-                    simulation={"success": False, "errors": ["LiFi client not configured. Cross-chain swaps require LiFi."]},
+                    simulation={
+                        "success": False,
+                        "errors": [
+                            "LiFi client not configured. Cross-chain swaps require LiFi."
+                        ],
+                    },
                     transaction=None,
                     summary="Cross-chain swap failed: LiFi not configured",
-                    enrichment={"error": "LIFI_NOT_CONFIGURED", "from_token": from_token, "to_token": to_token, "chain": chain, "to_chain": to_chain},
+                    enrichment={
+                        "error": "LIFI_NOT_CONFIGURED",
+                        "from_token": from_token,
+                        "to_token": to_token,
+                        "chain": chain,
+                        "to_chain": to_chain,
+                    },
                     created_at=datetime.now(UTC),
                     expires_at=None,
                 )
-            
+
             try:
                 amount_wei = _to_wei(amount, from_token)
                 lifi_quote = await self._lifi.get_quote(
@@ -388,7 +405,11 @@ class ExecuteActionCommand:
                     from_address=wallet_address,
                 )
                 output_amount = lifi_quote.to_amount
-                gas_estimate = int(lifi_quote.estimated_gas) if lifi_quote.estimated_gas else 200000
+                gas_estimate = (
+                    int(lifi_quote.estimated_gas)
+                    if lifi_quote.estimated_gas
+                    else 200000
+                )
                 quote = lifi_quote
                 aggregator_used = "lifi"
             except Exception as e:
@@ -399,10 +420,19 @@ class ExecuteActionCommand:
                     status="failed",
                     requires_confirmation=False,
                     confirmation_message=None,
-                    simulation={"success": False, "errors": [f"LiFi quote failed: {str(e)}"]},
+                    simulation={
+                        "success": False,
+                        "errors": [f"LiFi quote failed: {str(e)}"],
+                    },
                     transaction=None,
                     summary=f"Cross-chain swap failed: {str(e)}",
-                    enrichment={"error": str(e), "from_token": from_token, "to_token": to_token, "chain": chain, "to_chain": to_chain},
+                    enrichment={
+                        "error": str(e),
+                        "from_token": from_token,
+                        "to_token": to_token,
+                        "chain": chain,
+                        "to_chain": to_chain,
+                    },
                     created_at=datetime.now(UTC),
                     expires_at=None,
                 )
@@ -415,19 +445,29 @@ class ExecuteActionCommand:
                     status="failed",
                     requires_confirmation=False,
                     confirmation_message=None,
-                    simulation={"success": False, "errors": ["1inch client not configured. Set ONEINCH_API_KEY environment variable. Get your key at https://portal.1inch.dev/"]},
+                    simulation={
+                        "success": False,
+                        "errors": [
+                            "1inch client not configured. Set ONEINCH_API_KEY environment variable. Get your key at https://portal.1inch.dev/"
+                        ],
+                    },
                     transaction=None,
                     summary="Same-chain swap failed: 1inch not configured",
-                    enrichment={"error": "ONEINCH_NOT_CONFIGURED", "from_token": from_token, "to_token": to_token, "chain": chain},
+                    enrichment={
+                        "error": "ONEINCH_NOT_CONFIGURED",
+                        "from_token": from_token,
+                        "to_token": to_token,
+                        "chain": chain,
+                    },
                     created_at=datetime.now(UTC),
                     expires_at=None,
                 )
-            
+
             try:
                 from_token_addr = _resolve_token_address(from_token, chain)
                 to_token_addr = _resolve_token_address(to_token, chain)
                 amount_wei = _to_wei(amount, from_token)
-                
+
                 oneinch_quote = await self._oneinch.get_swap_quote(
                     from_token=from_token_addr,
                     to_token=to_token_addr,
@@ -446,18 +486,28 @@ class ExecuteActionCommand:
                     status="failed",
                     requires_confirmation=False,
                     confirmation_message=None,
-                    simulation={"success": False, "errors": [f"1inch quote failed: {str(e)}"]},
+                    simulation={
+                        "success": False,
+                        "errors": [f"1inch quote failed: {str(e)}"],
+                    },
                     transaction=None,
                     summary=f"Same-chain swap failed: {str(e)}",
-                    enrichment={"error": str(e), "from_token": from_token, "to_token": to_token, "chain": chain},
+                    enrichment={
+                        "error": str(e),
+                        "from_token": from_token,
+                        "to_token": to_token,
+                        "chain": chain,
+                    },
                     created_at=datetime.now(UTC),
                     expires_at=None,
                 )
-        
+
         # Build simulation result - at this point we have a real quote (no simulation)
         simulation = {
             "success": True,
-            "estimated_gas": int(gas_estimate) if isinstance(gas_estimate, (int, str)) else 200000,
+            "estimated_gas": int(gas_estimate)
+            if isinstance(gas_estimate, (int, str))
+            else 200000,
             "estimated_gas_usd": 0.50,  # TODO: Calculate from gas price
             "output_amount": output_amount,
             "price_impact": 0.1,  # TODO: Get from quote
@@ -465,7 +515,7 @@ class ExecuteActionCommand:
             "errors": [],
             "aggregator": aggregator_used,  # "1inch" or "lifi"
         }
-        
+
         # Localized confirmation message
         confirm_msgs = {
             "en": f"Swap {amount} {from_token} → {to_token} on {chain.upper()}?",
@@ -474,7 +524,7 @@ class ExecuteActionCommand:
             "zh": f"在 {chain.upper()} 上将 {amount} {from_token} 兑换为 {to_token}？",
             "pt": f"Trocar {amount} {from_token} → {to_token} em {chain.upper()}?",
         }
-        
+
         if not confirmed:
             # Return simulation, await confirmation
             return ActionResult(
@@ -495,17 +545,20 @@ class ExecuteActionCommand:
                     "aggregator": aggregator_used or "none",
                 },
                 created_at=datetime.now(UTC),
-                expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                expires_at=datetime.now(UTC)
+                + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
-        
+
         # Execute swap (confirmed) - Generate transaction for Privy signing
         # The frontend will use Privy SDK to sign and send this transaction
         transaction_data = None
         tx_to_address = None
         tx_value = "0"
         tx_data_hex = None
-        gas_limit = int(gas_estimate) if isinstance(gas_estimate, (int, str)) else 200000
-        
+        gas_limit = (
+            int(gas_estimate) if isinstance(gas_estimate, (int, str)) else 200000
+        )
+
         try:
             # Helper functions to convert amounts and resolve token addresses
             def _to_wei(amount_str: str, token: str) -> str:
@@ -516,16 +569,16 @@ class ExecuteActionCommand:
                 elif token.upper() == "WBTC":
                     decimals = 8
                 try:
-                    value = float(amount_str) * (10 ** decimals)
+                    value = float(amount_str) * (10**decimals)
                     return str(int(value))
                 except ValueError:
                     return "0"
-            
+
             def _resolve_token_address(token: str, chain_name: str) -> str:
                 """Resolve token symbol to address."""
                 if token.startswith("0x"):
                     return token
-                
+
                 # Common token addresses by chain
                 TOKEN_ADDRESSES = {
                     "ethereum": {
@@ -545,35 +598,39 @@ class ExecuteActionCommand:
                         "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
                     },
                 }
-                
+
                 chain_tokens = TOKEN_ADDRESSES.get(chain_name.lower(), {})
                 return chain_tokens.get(token.upper(), token)
-            
+
             # Convert amount to wei for transaction building
             amount_wei = _to_wei(amount, from_token)
             from_token_addr = _resolve_token_address(from_token, chain)
             to_token_addr = _resolve_token_address(to_token, chain)
-            
+
             if is_cross_chain:
                 # Cross-chain: LiFi provides route data
                 # Use the quote we already obtained to build transaction data
-                if hasattr(quote, 'transaction_request') and quote.transaction_request:
+                if hasattr(quote, "transaction_request") and quote.transaction_request:
                     # LiFi quote includes transaction data
                     tx_req = quote.transaction_request
-                    tx_to_address = tx_req.get('to')
-                    tx_value = str(tx_req.get('value', '0'))
-                    tx_data_hex = tx_req.get('data')
-                    gas_limit = int(tx_req.get('gasLimit', gas_estimate)) if tx_req.get('gasLimit') else gas_estimate
+                    tx_to_address = tx_req.get("to")
+                    tx_value = str(tx_req.get("value", "0"))
+                    tx_data_hex = tx_req.get("data")
+                    gas_limit = (
+                        int(tx_req.get("gasLimit", gas_estimate))
+                        if tx_req.get("gasLimit")
+                        else gas_estimate
+                    )
                 else:
                     # Return route info for frontend to build transaction via LiFi SDK
                     transaction_data = {
-                        "route_id": getattr(quote, 'route_id', None),
+                        "route_id": getattr(quote, "route_id", None),
                         "from_chain": chain,
                         "to_chain": to_chain,
                         "from_token": from_token_addr,
                         "to_token": to_token_addr,
                         "from_amount": amount_wei,
-                        "tool": getattr(quote, 'tool', None),
+                        "tool": getattr(quote, "tool", None),
                     }
             else:
                 # Same-chain: 1inch provides transaction calldata
@@ -617,7 +674,7 @@ class ExecuteActionCommand:
                 created_at=datetime.now(UTC),
                 expires_at=None,
             )
-        
+
         # Return transaction data for Privy signing in frontend
         return ActionResult(
             action_id=action_id,
@@ -650,7 +707,7 @@ class ExecuteActionCommand:
             created_at=datetime.now(UTC),
             expires_at=None,
         )
-    
+
     async def _handle_deposit(
         self,
         action_id: UUID,
@@ -666,7 +723,7 @@ class ExecuteActionCommand:
         """Handle deposit action."""
         # Get vault info
         vault_name = vault_address[:10] + "..." if vault_address else protocol.upper()
-        
+
         # Localized confirmation
         confirm_msgs = {
             "en": f"Deposit {amount} {token} into {protocol.upper()} vault on {chain.upper()}?",
@@ -675,7 +732,7 @@ class ExecuteActionCommand:
             "zh": f"在 {chain.upper()} 的 {protocol.upper()} 金库中存入 {amount} {token}？",
             "pt": f"Depositar {amount} {token} no cofre {protocol.upper()} em {chain.upper()}?",
         }
-        
+
         simulation = {
             "success": True,
             "estimated_gas": 150000,
@@ -684,7 +741,7 @@ class ExecuteActionCommand:
             "warnings": [],
             "errors": [],
         }
-        
+
         if not confirmed:
             return ActionResult(
                 action_id=action_id,
@@ -703,9 +760,10 @@ class ExecuteActionCommand:
                     "chain": chain,
                 },
                 created_at=datetime.now(UTC),
-                expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                expires_at=datetime.now(UTC)
+                + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
-        
+
         # Execute deposit
         return ActionResult(
             action_id=action_id,
@@ -733,7 +791,7 @@ class ExecuteActionCommand:
             created_at=datetime.now(UTC),
             expires_at=None,
         )
-    
+
     async def _handle_withdraw(
         self,
         action_id: UUID,
@@ -754,7 +812,7 @@ class ExecuteActionCommand:
             "zh": f"从 {chain.upper()} 的 {protocol.upper()} 金库中提取 {amount} {token}？",
             "pt": f"Retirar {amount} {token} do cofre {protocol.upper()} em {chain.upper()}?",
         }
-        
+
         simulation = {
             "success": True,
             "estimated_gas": 180000,
@@ -763,7 +821,7 @@ class ExecuteActionCommand:
             "warnings": [],
             "errors": [],
         }
-        
+
         if not confirmed:
             return ActionResult(
                 action_id=action_id,
@@ -782,9 +840,10 @@ class ExecuteActionCommand:
                     "chain": chain,
                 },
                 created_at=datetime.now(UTC),
-                expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                expires_at=datetime.now(UTC)
+                + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
-        
+
         return ActionResult(
             action_id=action_id,
             action_type="withdraw",
@@ -811,7 +870,7 @@ class ExecuteActionCommand:
             created_at=datetime.now(UTC),
             expires_at=None,
         )
-    
+
     async def _handle_transfer(
         self,
         action_id: UUID,
@@ -838,9 +897,11 @@ class ExecuteActionCommand:
                 created_at=datetime.now(UTC),
                 expires_at=None,
             )
-        
-        short_recipient = f"{recipient[:6]}...{recipient[-4:]}" if len(recipient) > 10 else recipient
-        
+
+        short_recipient = (
+            f"{recipient[:6]}...{recipient[-4:]}" if len(recipient) > 10 else recipient
+        )
+
         confirm_msgs = {
             "en": f"Send {amount} {token} to {short_recipient} on {chain.upper()}?",
             "es": f"¿Enviar {amount} {token} a {short_recipient} en {chain.upper()}?",
@@ -848,7 +909,7 @@ class ExecuteActionCommand:
             "zh": f"在 {chain.upper()} 上向 {short_recipient} 发送 {amount} {token}？",
             "pt": f"Enviar {amount} {token} para {short_recipient} em {chain.upper()}?",
         }
-        
+
         simulation = {
             "success": True,
             "estimated_gas": 21000 if token.upper() == "ETH" else 65000,
@@ -857,7 +918,7 @@ class ExecuteActionCommand:
             "warnings": [],
             "errors": [],
         }
-        
+
         if not confirmed:
             return ActionResult(
                 action_id=action_id,
@@ -875,9 +936,10 @@ class ExecuteActionCommand:
                     "chain": chain,
                 },
                 created_at=datetime.now(UTC),
-                expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                expires_at=datetime.now(UTC)
+                + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
-        
+
         return ActionResult(
             action_id=action_id,
             action_type="transfer",
@@ -903,7 +965,7 @@ class ExecuteActionCommand:
             created_at=datetime.now(UTC),
             expires_at=None,
         )
-    
+
     async def _handle_approve(
         self,
         action_id: UUID,
@@ -930,10 +992,12 @@ class ExecuteActionCommand:
                 created_at=datetime.now(UTC),
                 expires_at=None,
             )
-        
-        short_spender = f"{spender[:6]}...{spender[-4:]}" if len(spender) > 10 else spender
+
+        short_spender = (
+            f"{spender[:6]}...{spender[-4:]}" if len(spender) > 10 else spender
+        )
         amount_display = amount or "unlimited"
-        
+
         confirm_msgs = {
             "en": f"Approve {amount_display} {token} for {short_spender} on {chain.upper()}?",
             "es": f"¿Aprobar {amount_display} {token} para {short_spender} en {chain.upper()}?",
@@ -941,7 +1005,7 @@ class ExecuteActionCommand:
             "zh": f"在 {chain.upper()} 上为 {short_spender} 批准 {amount_display} {token}？",
             "pt": f"Aprovar {amount_display} {token} para {short_spender} em {chain.upper()}?",
         }
-        
+
         simulation = {
             "success": True,
             "estimated_gas": 46000,
@@ -949,7 +1013,7 @@ class ExecuteActionCommand:
             "warnings": ["Unlimited approval requested"] if not amount else [],
             "errors": [],
         }
-        
+
         if not confirmed:
             return ActionResult(
                 action_id=action_id,
@@ -967,9 +1031,10 @@ class ExecuteActionCommand:
                     "chain": chain,
                 },
                 created_at=datetime.now(UTC),
-                expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                expires_at=datetime.now(UTC)
+                + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
-        
+
         return ActionResult(
             action_id=action_id,
             action_type="approve",
@@ -995,7 +1060,7 @@ class ExecuteActionCommand:
             created_at=datetime.now(UTC),
             expires_at=None,
         )
-    
+
     async def _handle_bridge(
         self,
         action_id: UUID,
@@ -1015,7 +1080,7 @@ class ExecuteActionCommand:
             "zh": f"将 {amount} {token} 从 {from_chain.upper()} 桥接到 {to_chain.upper()}？",
             "pt": f"Fazer bridge de {amount} {token} de {from_chain.upper()} para {to_chain.upper()}?",
         }
-        
+
         simulation = {
             "success": True,
             "estimated_gas": 250000,
@@ -1024,7 +1089,7 @@ class ExecuteActionCommand:
             "warnings": ["Bridge may take 10-30 minutes to complete"],
             "errors": [],
         }
-        
+
         if not confirmed:
             return ActionResult(
                 action_id=action_id,
@@ -1042,9 +1107,10 @@ class ExecuteActionCommand:
                     "to_chain": to_chain,
                 },
                 created_at=datetime.now(UTC),
-                expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                expires_at=datetime.now(UTC)
+                + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
             )
-        
+
         return ActionResult(
             action_id=action_id,
             action_type="bridge",
@@ -1097,7 +1163,9 @@ class ExecuteActionCommand:
         # Check if MoonPay client is available
         if not self._moonpay_swap:
             logger.warning("MoonPay swap requested but client not available")
-            return self._unsupported_action_response(action_id, "swap_moonpay", language)
+            return self._unsupported_action_response(
+                action_id, "swap_moonpay", language
+            )
 
         try:
             # Build pair name (e.g., "btc-eth")
@@ -1149,15 +1217,18 @@ class ExecuteActionCommand:
                         "output_amount": quote.quote_currency_amount,
                         "exchange_rate": quote.exchange_rate,
                         "network_fee_usd": float(quote.network_fee_amount_usd),
-                        "total_fee_usd": float(quote.network_fee_amount_usd) + float(quote.extra_fee_amount_usd),
-                        "estimated_value_usd": float(quote.quote_currency_price_usd) * float(quote.quote_currency_amount),
+                        "total_fee_usd": float(quote.network_fee_amount_usd)
+                        + float(quote.extra_fee_amount_usd),
+                        "estimated_value_usd": float(quote.quote_currency_price_usd)
+                        * float(quote.quote_currency_amount),
                         "expires_at": quote.expires_at,
                     },
                     transaction=None,
                     summary=f"MoonPay Quote: {quote.base_currency_amount} {from_token.upper()} → {quote.quote_amount} {to_token.upper()}",
                     enrichment=enrichment,
                     created_at=datetime.now(UTC),
-                    expires_at=datetime.now(UTC) + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
+                    expires_at=datetime.now(UTC)
+                    + timedelta(minutes=self.CONFIRMATION_EXPIRY_MINUTES),
                 )
             else:
                 # Second call - user confirmed, prepare for Privy execution
@@ -1238,7 +1309,7 @@ class ExecuteActionCommand:
             "zh": "未连接钱包。请连接您的钱包以执行交易。",
             "pt": "Nenhuma carteira conectada. Por favor conecte sua carteira para executar transações.",
         }
-        
+
         return ActionResult(
             action_id=action_id,
             action_type=action_type,
@@ -1252,7 +1323,7 @@ class ExecuteActionCommand:
             created_at=datetime.now(UTC),
             expires_at=None,
         )
-    
+
     def _unsupported_action_response(
         self,
         action_id: UUID,
@@ -1267,14 +1338,17 @@ class ExecuteActionCommand:
             "zh": f"不支持的操作类型: {action_type}。支持: swap, deposit, withdraw, transfer, approve, bridge。",
             "pt": f"Tipo de ação não suportado: {action_type}. Suportados: swap, deposit, withdraw, transfer, approve, bridge.",
         }
-        
+
         return ActionResult(
             action_id=action_id,
             action_type=action_type,
             status="failed",
             requires_confirmation=False,
             confirmation_message=None,
-            simulation={"success": False, "errors": [f"Unsupported action: {action_type}"]},
+            simulation={
+                "success": False,
+                "errors": [f"Unsupported action: {action_type}"],
+            },
             transaction=None,
             summary=msgs.get(language, msgs["en"]),
             enrichment=None,

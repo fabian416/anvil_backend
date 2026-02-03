@@ -36,10 +36,10 @@ class TestGuestChatHistorialReal:
                 "/api/v1/guest/chat/history",
                 headers={"X-Forwarded-For": "127.0.0.401"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Should return empty history structure
         assert "messages" in data or "is_active" in data
 
@@ -48,7 +48,7 @@ class TestGuestChatHistorialReal:
     async def test_guest_chat_history_with_messages(self, test_app):
         """Test history endpoint returns real messages after conversation."""
         ip = "127.0.0.402"
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=test_app), base_url="http://test"
         ) as ac:
@@ -59,7 +59,7 @@ class TestGuestChatHistorialReal:
                 headers={"X-Forwarded-For": ip},
             )
             assert response1.status_code == 200
-            
+
             # Send second message
             response2 = await ac.post(
                 "/api/v1/guest/chat",
@@ -67,24 +67,24 @@ class TestGuestChatHistorialReal:
                 headers={"X-Forwarded-For": ip},
             )
             assert response2.status_code == 200
-            
+
             # Get history
             response = await ac.get(
                 "/api/v1/guest/chat/history",
                 headers={"X-Forwarded-For": ip},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify structure
         assert "messages" in data
         assert "total_messages" in data
         assert "is_active" in data
-        
+
         # Should have messages
         assert len(data["messages"]) >= 2
-        
+
         # Verify message structure
         for msg in data["messages"]:
             assert "id" in msg
@@ -99,7 +99,7 @@ class TestGuestChatHistorialReal:
     async def test_guest_chat_history_spanish(self, test_app):
         """Test history endpoint with Spanish conversation."""
         ip = "127.0.0.403"
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=test_app), base_url="http://test"
         ) as ac:
@@ -109,16 +109,16 @@ class TestGuestChatHistorialReal:
                 json={"content": "Hola", "language": "es"},
                 headers={"X-Forwarded-For": ip},
             )
-            
+
             # Get history
             response = await ac.get(
                 "/api/v1/guest/chat/history",
                 headers={"X-Forwarded-For": ip},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify language
         if "language" in data:
             assert data["language"] == "es"
@@ -128,7 +128,7 @@ class TestGuestChatHistorialReal:
     async def test_guest_chat_history_portuguese(self, test_app):
         """Test history endpoint with Portuguese conversation."""
         ip = "127.0.0.404"
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=test_app), base_url="http://test"
         ) as ac:
@@ -138,16 +138,16 @@ class TestGuestChatHistorialReal:
                 json={"content": "Olá", "language": "pt"},
                 headers={"X-Forwarded-For": ip},
             )
-            
+
             # Get history
             response = await ac.get(
                 "/api/v1/guest/chat/history",
                 headers={"X-Forwarded-For": ip},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify language
         if "language" in data:
             assert data["language"] == "pt"
@@ -157,7 +157,7 @@ class TestGuestChatHistorialReal:
     async def test_guest_chat_history_chinese(self, test_app):
         """Test history endpoint with Chinese conversation."""
         ip = "127.0.0.405"
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=test_app), base_url="http://test"
         ) as ac:
@@ -167,16 +167,16 @@ class TestGuestChatHistorialReal:
                 json={"content": "你好", "language": "zh"},
                 headers={"X-Forwarded-For": ip},
             )
-            
+
             # Get history
             response = await ac.get(
                 "/api/v1/guest/chat/history",
                 headers={"X-Forwarded-For": ip},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify language
         if "language" in data:
             assert data["language"] == "zh"
@@ -186,7 +186,7 @@ class TestGuestChatHistorialReal:
     async def test_guest_chat_history_limit(self, test_app):
         """Test history endpoint respects limit parameter."""
         ip = "127.0.0.406"
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=test_app), base_url="http://test"
         ) as ac:
@@ -197,16 +197,16 @@ class TestGuestChatHistorialReal:
                     json={"content": f"Message {i}", "language": "en"},
                     headers={"X-Forwarded-For": ip},
                 )
-            
+
             # Get history with limit
             response = await ac.get(
                 "/api/v1/guest/chat/history?limit=3",
                 headers={"X-Forwarded-For": ip},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Should respect limit (may return less if fewer messages)
         assert len(data["messages"]) <= 3
 
@@ -221,10 +221,10 @@ class TestGuestChatHistorialReal:
                 "/api/v1/guest/chat/status",
                 headers={"X-Forwarded-For": "127.0.0.407"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Should return status structure
         assert "has_active_session" in data or "messages_remaining" in data
 
@@ -233,7 +233,7 @@ class TestGuestChatHistorialReal:
     async def test_guest_chat_status_with_session(self, test_app):
         """Test status endpoint returns real session data."""
         ip = "127.0.0.408"
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=test_app), base_url="http://test"
         ) as ac:
@@ -243,22 +243,22 @@ class TestGuestChatHistorialReal:
                 json={"content": "Test", "language": "en"},
                 headers={"X-Forwarded-For": ip},
             )
-            
+
             # Get status
             response = await ac.get(
                 "/api/v1/guest/chat/status",
                 headers={"X-Forwarded-For": ip},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify structure
         assert "has_active_session" in data
         assert "messages_remaining" in data
         assert "messages_this_hour" in data
         assert "is_blocked" in data
-        
+
         # Should have active session
         assert data["has_active_session"] is True
         assert data["messages_remaining"] >= 0
@@ -270,7 +270,7 @@ class TestGuestChatHistorialReal:
     async def test_guest_chat_status_spanish(self, test_app):
         """Test status endpoint with Spanish session."""
         ip = "127.0.0.409"
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=test_app), base_url="http://test"
         ) as ac:
@@ -280,16 +280,16 @@ class TestGuestChatHistorialReal:
                 json={"content": "Hola", "language": "es"},
                 headers={"X-Forwarded-For": ip},
             )
-            
+
             # Get status
             response = await ac.get(
                 "/api/v1/guest/chat/status",
                 headers={"X-Forwarded-For": ip},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify language
         if "language" in data:
             assert data["language"] == "es"
@@ -299,7 +299,7 @@ class TestGuestChatHistorialReal:
     async def test_guest_chat_status_portuguese(self, test_app):
         """Test status endpoint with Portuguese session."""
         ip = "127.0.0.410"
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=test_app), base_url="http://test"
         ) as ac:
@@ -309,16 +309,16 @@ class TestGuestChatHistorialReal:
                 json={"content": "Olá", "language": "pt"},
                 headers={"X-Forwarded-For": ip},
             )
-            
+
             # Get status
             response = await ac.get(
                 "/api/v1/guest/chat/status",
                 headers={"X-Forwarded-For": ip},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify language
         if "language" in data:
             assert data["language"] == "pt"
@@ -328,7 +328,7 @@ class TestGuestChatHistorialReal:
     async def test_guest_chat_status_chinese(self, test_app):
         """Test status endpoint with Chinese session."""
         ip = "127.0.0.411"
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=test_app), base_url="http://test"
         ) as ac:
@@ -338,16 +338,16 @@ class TestGuestChatHistorialReal:
                 json={"content": "你好", "language": "zh"},
                 headers={"X-Forwarded-For": ip},
             )
-            
+
             # Get status
             response = await ac.get(
                 "/api/v1/guest/chat/status",
                 headers={"X-Forwarded-For": ip},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify language
         if "language" in data:
             assert data["language"] == "zh"
@@ -357,7 +357,7 @@ class TestGuestChatHistorialReal:
     async def test_guest_chat_history_message_structure(self, test_app):
         """Test history messages have complete structure."""
         ip = "127.0.0.412"
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=test_app), base_url="http://test"
         ) as ac:
@@ -367,16 +367,16 @@ class TestGuestChatHistorialReal:
                 json={"content": "Test message", "language": "en"},
                 headers={"X-Forwarded-For": ip},
             )
-            
+
             # Get history
             response = await ac.get(
                 "/api/v1/guest/chat/history",
                 headers={"X-Forwarded-For": ip},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify message structure
         if data.get("messages"):
             for msg in data["messages"]:
@@ -385,7 +385,7 @@ class TestGuestChatHistorialReal:
                 assert "content" in msg
                 assert "created_at" in msg
                 assert msg["role"] in ["user", "assistant"]
-                
+
                 # Verify optional fields if present
                 if "intent" in msg:
                     assert isinstance(msg["intent"], str) or msg["intent"] is None
@@ -397,7 +397,7 @@ class TestGuestChatHistorialReal:
     async def test_guest_chat_history_conversation_id(self, test_app):
         """Test history includes conversation_id when active."""
         ip = "127.0.0.413"
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=test_app), base_url="http://test"
         ) as ac:
@@ -409,16 +409,16 @@ class TestGuestChatHistorialReal:
             )
             assert response1.status_code == 200
             conv_id = response1.json()["conversation_id"]
-            
+
             # Get history
             response = await ac.get(
                 "/api/v1/guest/chat/history",
                 headers={"X-Forwarded-For": ip},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Should have conversation_id if active
         if data.get("is_active"):
             assert "conversation_id" in data
@@ -429,7 +429,7 @@ class TestGuestChatHistorialReal:
     async def test_guest_chat_status_rate_limits(self, test_app):
         """Test status endpoint shows accurate rate limit information."""
         ip = "127.0.0.414"
-        
+
         async with AsyncClient(
             transport=ASGITransport(app=test_app), base_url="http://test"
         ) as ac:
@@ -440,16 +440,16 @@ class TestGuestChatHistorialReal:
                     json={"content": f"Message {i}", "language": "en"},
                     headers={"X-Forwarded-For": ip},
                 )
-            
+
             # Get status
             response = await ac.get(
                 "/api/v1/guest/chat/status",
                 headers={"X-Forwarded-For": ip},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify rate limit fields
         assert "messages_remaining" in data
         assert "messages_this_hour" in data

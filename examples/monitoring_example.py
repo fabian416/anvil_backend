@@ -186,9 +186,7 @@ async def example_health_checks():
             "unknown": "❓",
         }
         emoji = status_emoji.get(health["status"], "❓")
-        latency = (
-            f" ({health['latency_ms']:.1f}ms)" if health.get("latency_ms") else ""
-        )
+        latency = f" ({health['latency_ms']:.1f}ms)" if health.get("latency_ms") else ""
         logger.info(f"{emoji} {name}: {health['message']}{latency}")
 
 

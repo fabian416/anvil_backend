@@ -60,7 +60,9 @@ class LZMessage:
             "dst_tx_hash": self.dst_tx_hash,
             "message_type": self.message_type,
             "created_at": self.created_at.isoformat(),
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "nonce": self.nonce,
         }
 

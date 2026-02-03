@@ -30,17 +30,14 @@ __all__ = [
     "aggregate_distillation_telemetry",
     "cleanup_expired_cache",
     "cache_llm_response",
-
     # Projects tasks
     "reindex_knowledge_base",
     "evaluate_auto_assignment_rules",
     "aggregate_project_analytics",
     "check_knowledge_base_health",
-
     # Privy balance tasks
     "sync_wallet_balances",
     "sync_single_wallet_balance",
-
     # Etherscan balance tasks
     "sync_etherscan_balances",
     "sync_single_wallet_etherscan",

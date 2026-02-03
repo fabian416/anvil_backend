@@ -78,7 +78,9 @@ class CreatePolicyRequest(BaseModel):
             owner_user_id = self.owner.get("user_id")
             owner_public_key = self.owner.get("public_key")
             if not owner_user_id and not owner_public_key:
-                raise ValueError("'owner' must include either 'user_id' or 'public_key'")
+                raise ValueError(
+                    "'owner' must include either 'user_id' or 'public_key'"
+                )
 
         return self
 
@@ -145,4 +147,3 @@ def create_create_policy_router() -> APIRouter:
         )
 
     return router
-

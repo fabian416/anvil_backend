@@ -69,7 +69,7 @@ class MCPServerSettings(BaseModel):
 
 class MCPRetrySettings(BaseModel):
     """Settings for MCP server retry behavior."""
-    
+
     enabled: bool = Field(
         default=True,
         description="Enable retry logic for MCP servers",
@@ -94,7 +94,7 @@ class MCPRetrySettings(BaseModel):
 
 class MCPSettings(BaseModel):
     """MCP configuration settings."""
-    
+
     enabled: bool = Field(
         default=True,
         description="Master switch for all MCP servers",
@@ -111,4 +111,5 @@ class MCPSettings(BaseModel):
 
 class MCPServerDisabledError(Exception):
     """Raised when attempting to use a disabled MCP server."""
+
     pass

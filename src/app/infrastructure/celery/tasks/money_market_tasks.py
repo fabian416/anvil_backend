@@ -60,6 +60,7 @@ async def _run_task(coro_factory):
 # TASK 1: CACHE WARMING (High Priority - Every 60s)
 # ============================================================================
 
+
 @shared_task(
     name="money_market.warm_cache",
     bind=True,
@@ -85,6 +86,7 @@ def warm_cache_task(self) -> dict[str, Any]:  # noqa: ARG001 - Required by Celer
     Returns:
         Dictionary with warming summary and timestamp.
     """
+
     async def runner(container):
         from app.domain.ports.money_market.money_market_cache_gateway import (
             MoneyMarketCacheGateway,
@@ -129,9 +131,7 @@ def warm_cache_task(self) -> dict[str, Any]:  # noqa: ARG001 - Required by Celer
                             continue
 
                         # Cache miss or expired - fetch and store
-                        logger.info(
-                            f"Cache warming: {protocol_id}/{asset}/{chain}"
-                        )
+                        logger.info(f"Cache warming: {protocol_id}/{asset}/{chain}")
 
                         # Fetch rates based on protocol
                         if protocol_id == "aave_v3":
@@ -155,14 +155,27 @@ def warm_cache_task(self) -> dict[str, Any]:  # noqa: ARG001 - Required by Celer
                                 asset=asset,
                                 chain=chain,
                                 supply_apy=Decimal(str(rate_data["supply_apy"])),
-                                borrow_apy_variable=Decimal(str(rate_data["borrow_apy"])),
-                                borrow_apy_stable=Decimal(str(rate_data.get("borrow_apy_stable", 0))),
-                                total_supplied_usd=Decimal(str(rate_data.get("total_supplied_usd", 0))),
-                                total_borrowed_usd=Decimal(str(rate_data.get("total_borrowed_usd", 0))),
-                                utilization_rate=Decimal(str(rate_data.get("utilization_rate", 0))),
-                                liquidity_available=Decimal(str(rate_data.get("liquidity_available", 0))),
+                                borrow_apy_variable=Decimal(
+                                    str(rate_data["borrow_apy"])
+                                ),
+                                borrow_apy_stable=Decimal(
+                                    str(rate_data.get("borrow_apy_stable", 0))
+                                ),
+                                total_supplied_usd=Decimal(
+                                    str(rate_data.get("total_supplied_usd", 0))
+                                ),
+                                total_borrowed_usd=Decimal(
+                                    str(rate_data.get("total_borrowed_usd", 0))
+                                ),
+                                utilization_rate=Decimal(
+                                    str(rate_data.get("utilization_rate", 0))
+                                ),
+                                liquidity_available=Decimal(
+                                    str(rate_data.get("liquidity_available", 0))
+                                ),
                                 data_source=rate_data.get("data_source", "on_chain"),
-                                valid_until=datetime.now(timezone.utc) + timedelta(seconds=60),
+                                valid_until=datetime.now(timezone.utc)
+                                + timedelta(seconds=60),
                                 created_at=datetime.now(timezone.utc),
                             )
 
@@ -258,6 +271,7 @@ async def _fetch_compound_rate(gateway, asset: str, chain: str) -> dict | None:
 # TASK 2: RATE ALERTS (Every 5 minutes)
 # ============================================================================
 
+
 @shared_task(
     name="money_market.check_alerts",
     bind=True,
@@ -283,6 +297,7 @@ def check_rate_alerts_task(self) -> dict[str, Any]:  # noqa: ARG001
     Returns:
         Dictionary with alert checking summary and timestamp.
     """
+
     async def runner(container):
         from app.domain.ports.money_market.money_market_preference_gateway import (
             MoneyMarketPreferenceGateway,
@@ -300,7 +315,9 @@ def check_rate_alerts_task(self) -> dict[str, Any]:  # noqa: ARG001
         alert_gateway = await container.get(MoneyMarketAlertGateway)
 
         # Get all users with rate alerts enabled
-        users_with_alerts = await preference_gateway.get_users_with_rate_alerts_enabled()
+        users_with_alerts = (
+            await preference_gateway.get_users_with_rate_alerts_enabled()
+        )
 
         alerts_triggered = 0
         notifications_sent = 0
@@ -448,6 +465,7 @@ def check_rate_alerts_task(self) -> dict[str, Any]:  # noqa: ARG001
 # TASK 3: ANALYTICS AGGREGATION (Every hour)
 # ============================================================================
 
+
 @shared_task(
     name="money_market.aggregate_analytics",
     bind=True,
@@ -472,6 +490,7 @@ def aggregate_analytics_task(self) -> dict[str, Any]:  # noqa: ARG001
     Returns:
         Dictionary with aggregated analytics and timestamp.
     """
+
     async def runner(container):
         from app.domain.ports.money_market.money_market_comparison_gateway import (
             MoneyMarketComparisonGateway,
@@ -530,6 +549,7 @@ def aggregate_analytics_task(self) -> dict[str, Any]:  # noqa: ARG001
 # TASK 4: CACHE CLEANUP (Daily at 3 AM)
 # ============================================================================
 
+
 @shared_task(
     name="money_market.cleanup_cache",
     bind=True,
@@ -553,6 +573,7 @@ def cleanup_cache_task(self) -> dict[str, Any]:  # noqa: ARG001
     Returns:
         Dictionary with cleanup summary and timestamp.
     """
+
     async def runner(container):
         from sqlalchemy import text
         from sqlalchemy.ext.asyncio import AsyncSession

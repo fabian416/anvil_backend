@@ -19,7 +19,12 @@ import pytest
 @pytest.fixture(scope="module")
 def shortcuts_config() -> dict[str, Any]:
     """Load shortcuts.json configuration."""
-    shortcuts_path = Path(__file__).parent.parent.parent.parent.parent / "anvil_knowledge" / "features" / "shortcuts.json"
+    shortcuts_path = (
+        Path(__file__).parent.parent.parent.parent.parent
+        / "anvil_knowledge"
+        / "features"
+        / "shortcuts.json"
+    )
     with open(shortcuts_path, "r") as f:
         return json.load(f)
 
@@ -72,7 +77,9 @@ class TestHealthCheckShortcut:
     """Test LENDING_HEALTH_CHECK shortcut."""
 
     @pytest.fixture
-    def health_check_shortcut(self, lending_shortcuts: dict[str, Any]) -> dict[str, Any]:
+    def health_check_shortcut(
+        self, lending_shortcuts: dict[str, Any]
+    ) -> dict[str, Any]:
         """Get LENDING_HEALTH_CHECK shortcut config."""
         commands = lending_shortcuts["commands"]
         return next(cmd for cmd in commands if cmd["intent"] == "LENDING_HEALTH_CHECK")
@@ -82,7 +89,9 @@ class TestHealthCheckShortcut:
         assert health_check_shortcut["intent"] == "LENDING_HEALTH_CHECK"
         assert health_check_shortcut["category"] == "lending"
 
-    def test_multi_language_descriptions(self, health_check_shortcut: dict[str, Any]) -> None:
+    def test_multi_language_descriptions(
+        self, health_check_shortcut: dict[str, Any]
+    ) -> None:
         """Test that descriptions exist for all 4 languages."""
         descriptions = health_check_shortcut["description"]
         assert "en" in descriptions
@@ -115,8 +124,13 @@ class TestHealthCheckShortcut:
         patterns = health_check_shortcut["patterns"]["pt"]
 
         # Check Portuguese-specific patterns
-        assert any("fator de saúde" in p.lower() or "fator de saude" in p.lower() for p in patterns)
-        assert any("liquidação" in p.lower() or "liquidacao" in p.lower() for p in patterns)
+        assert any(
+            "fator de saúde" in p.lower() or "fator de saude" in p.lower()
+            for p in patterns
+        )
+        assert any(
+            "liquidação" in p.lower() or "liquidacao" in p.lower() for p in patterns
+        )
 
     def test_chinese_patterns(self, health_check_shortcut: dict[str, Any]) -> None:
         """Test Chinese pattern matching."""
@@ -131,7 +145,9 @@ class TestHealthCheckShortcut:
         assert health_check_shortcut["agent"] == "LENDING_WORKFLOW"
         assert health_check_shortcut["parameters"]["action"] == "health_check"
 
-    def test_authentication_requirements(self, health_check_shortcut: dict[str, Any]) -> None:
+    def test_authentication_requirements(
+        self, health_check_shortcut: dict[str, Any]
+    ) -> None:
         """Test authentication and wallet requirements."""
         assert health_check_shortcut["requires_auth"] is True
         assert health_check_shortcut["requires_wallet"] is True
@@ -184,7 +200,9 @@ class TestSupplyShortcut:
         assert re.search(regex, "supply 1 ETH")
         assert re.search(regex, "supply 5000 DAI")
 
-    def test_parameter_extraction_protocol(self, supply_shortcut: dict[str, Any]) -> None:
+    def test_parameter_extraction_protocol(
+        self, supply_shortcut: dict[str, Any]
+    ) -> None:
         """Test protocol parameter extraction configuration."""
         protocol_config = supply_shortcut["parameter_extraction"]["protocol"]
 
@@ -204,8 +222,12 @@ class TestSupplyShortcut:
 
     def test_multi_language_prompts(self, supply_shortcut: dict[str, Any]) -> None:
         """Test that parameter prompts support all languages."""
-        amount_prompts = supply_shortcut["parameter_extraction"]["amount"]["prompt_if_missing"]
-        asset_prompts = supply_shortcut["parameter_extraction"]["asset"]["prompt_if_missing"]
+        amount_prompts = supply_shortcut["parameter_extraction"]["amount"][
+            "prompt_if_missing"
+        ]
+        asset_prompts = supply_shortcut["parameter_extraction"]["asset"][
+            "prompt_if_missing"
+        ]
 
         for prompts in [amount_prompts, asset_prompts]:
             assert "en" in prompts
@@ -228,7 +250,9 @@ class TestBorrowShortcut:
         assert borrow_shortcut["intent"] == "LENDING_BORROW"
         assert borrow_shortcut["category"] == "lending"
 
-    def test_health_factor_validation_config(self, borrow_shortcut: dict[str, Any]) -> None:
+    def test_health_factor_validation_config(
+        self, borrow_shortcut: dict[str, Any]
+    ) -> None:
         """Test health factor validation configuration."""
         validation = borrow_shortcut["validation"]
 
@@ -275,7 +299,9 @@ class TestLeverageLoopShortcut:
         assert loop_shortcut["intent"] == "LENDING_LOOP"
         assert loop_shortcut["category"] == "lending"
 
-    def test_leverage_multiplier_extraction(self, loop_shortcut: dict[str, Any]) -> None:
+    def test_leverage_multiplier_extraction(
+        self, loop_shortcut: dict[str, Any]
+    ) -> None:
         """Test leverage multiplier parameter extraction."""
         multiplier_config = loop_shortcut["parameter_extraction"]["leverage_multiplier"]
 
@@ -383,7 +409,9 @@ class TestPositionShortcut:
         assert position_shortcut["intent"] == "LENDING_POSITION"
         assert position_shortcut["category"] == "lending"
 
-    def test_authentication_requirements(self, position_shortcut: dict[str, Any]) -> None:
+    def test_authentication_requirements(
+        self, position_shortcut: dict[str, Any]
+    ) -> None:
         """Test authentication and wallet requirements."""
         assert position_shortcut["requires_auth"] is True
         assert position_shortcut["requires_wallet"] is True
@@ -462,7 +490,9 @@ class TestAgentRouting:
 class TestImplementationNotes:
     """Test implementation notes for proper guidance."""
 
-    def test_implementation_notes_exist(self, lending_shortcuts: dict[str, Any]) -> None:
+    def test_implementation_notes_exist(
+        self, lending_shortcuts: dict[str, Any]
+    ) -> None:
         """Test that implementation notes exist."""
         assert "implementation_notes" in lending_shortcuts
         notes = lending_shortcuts["implementation_notes"]
@@ -485,7 +515,10 @@ class TestImplementationNotes:
         assert "1.2" in notes["health_factor_validation"]
 
         # No batch processing note
-        assert "NO batch" in notes["leverage_loop_approvals"] or "3+" in notes["leverage_loop_approvals"]
+        assert (
+            "NO batch" in notes["leverage_loop_approvals"]
+            or "3+" in notes["leverage_loop_approvals"]
+        )
 
 
 class TestParameterExtractionRegex:
@@ -493,7 +526,11 @@ class TestParameterExtractionRegex:
 
     def test_amount_regex_patterns(self, lending_shortcuts: dict[str, Any]) -> None:
         """Test that amount regex can extract decimal numbers."""
-        supply_cmd = next(cmd for cmd in lending_shortcuts["commands"] if cmd["intent"] == "LENDING_SUPPLY")
+        supply_cmd = next(
+            cmd
+            for cmd in lending_shortcuts["commands"]
+            if cmd["intent"] == "LENDING_SUPPLY"
+        )
         amount_regex = supply_cmd["parameter_extraction"]["amount"]["regex"]
 
         # Test various amount formats
@@ -511,7 +548,11 @@ class TestParameterExtractionRegex:
 
     def test_asset_regex_patterns(self, lending_shortcuts: dict[str, Any]) -> None:
         """Test that asset regex can extract token symbols."""
-        supply_cmd = next(cmd for cmd in lending_shortcuts["commands"] if cmd["intent"] == "LENDING_SUPPLY")
+        supply_cmd = next(
+            cmd
+            for cmd in lending_shortcuts["commands"]
+            if cmd["intent"] == "LENDING_SUPPLY"
+        )
         asset_regex = supply_cmd["parameter_extraction"]["asset"]["regex"]
 
         # Test various asset symbols
@@ -529,8 +570,14 @@ class TestParameterExtractionRegex:
 
     def test_leverage_multiplier_regex(self, lending_shortcuts: dict[str, Any]) -> None:
         """Test that leverage multiplier regex works."""
-        loop_cmd = next(cmd for cmd in lending_shortcuts["commands"] if cmd["intent"] == "LENDING_LOOP")
-        multiplier_regex = loop_cmd["parameter_extraction"]["leverage_multiplier"]["regex"]
+        loop_cmd = next(
+            cmd
+            for cmd in lending_shortcuts["commands"]
+            if cmd["intent"] == "LENDING_LOOP"
+        )
+        multiplier_regex = loop_cmd["parameter_extraction"]["leverage_multiplier"][
+            "regex"
+        ]
 
         # Test multiplier extraction
         test_cases = [
@@ -550,15 +597,17 @@ class TestMultiLanguageSupport:
 
     @pytest.mark.parametrize("language", ["en", "es", "pt", "zh"])
     def test_all_shortcuts_have_language(
-        self,
-        lending_shortcuts: dict[str, Any],
-        language: str
+        self, lending_shortcuts: dict[str, Any], language: str
     ) -> None:
         """Test that all shortcuts have patterns for all languages."""
         for command in lending_shortcuts["commands"]:
             patterns = command["patterns"]
-            assert language in patterns, f"{command['intent']} missing {language} patterns"
-            assert len(patterns[language]) > 0, f"{command['intent']} has empty {language} patterns"
+            assert language in patterns, (
+                f"{command['intent']} missing {language} patterns"
+            )
+            assert len(patterns[language]) > 0, (
+                f"{command['intent']} has empty {language} patterns"
+            )
 
     def test_chinese_characters(self, lending_shortcuts: dict[str, Any]) -> None:
         """Test that Chinese patterns use proper characters."""
@@ -582,4 +631,6 @@ class TestMultiLanguageSupport:
 
             # Common lending terms that should have accents
             if "prestamo" in patterns_text or "préstamo" in patterns_text:
-                assert "préstamo" in patterns_text, f"{command['intent']} missing Spanish accents"
+                assert "préstamo" in patterns_text, (
+                    f"{command['intent']} missing Spanish accents"
+                )

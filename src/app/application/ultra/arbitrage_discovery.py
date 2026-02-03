@@ -659,9 +659,7 @@ class ArbitrageDiscovery:
                 return opp
         return None
 
-    async def simulate_opportunity(
-        self, opportunity: ArbitrageOpportunity
-    ) -> dict:
+    async def simulate_opportunity(self, opportunity: ArbitrageOpportunity) -> dict:
         """Simulate opportunity execution.
 
         Args:
@@ -671,7 +669,9 @@ class ArbitrageDiscovery:
             Simulation result
         """
         # Simulate execution with slippage
-        slippage_impact = opportunity.expected_profit_usd * opportunity.slippage_tolerance
+        slippage_impact = (
+            opportunity.expected_profit_usd * opportunity.slippage_tolerance
+        )
         simulated_profit = opportunity.expected_profit_usd - slippage_impact
 
         return {

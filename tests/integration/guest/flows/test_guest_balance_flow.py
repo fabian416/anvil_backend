@@ -15,8 +15,7 @@ class TestGuestBalanceFlow:
         """Test balance response has correct structure."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "balance", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "balance", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -37,8 +36,7 @@ class TestGuestBalanceFlow:
         """Test that balance shows demo data for guests."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "balance", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "balance", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -61,8 +59,7 @@ class TestGuestBalanceFlow:
         """Test that balance includes signup CTA for guests."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "balance", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "balance", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -70,7 +67,10 @@ class TestGuestBalanceFlow:
         content = data["agent_message"]["content"]
 
         # Should have signup CTA
-        assert any(phrase in content.lower() for phrase in ["sign up", "signup", "get started", "register"])
+        assert any(
+            phrase in content.lower()
+            for phrase in ["sign up", "signup", "get started", "register"]
+        )
         assert "/signup" in content
 
     @pytest.mark.asyncio
@@ -78,51 +78,54 @@ class TestGuestBalanceFlow:
         """Test balance in Spanish."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "balance", "language": "es"}
+            "/api/v1/guest/chat", json={"content": "balance", "language": "es"}
         )
         assert response.status_code == 200
         data = response.json()
 
         content = data["agent_message"]["content"]
         # Should contain Spanish text or fallback to English
-        assert any(word in content for word in ["Saldo", "Balance", "Portfolio", "Portafolio"])
+        assert any(
+            word in content for word in ["Saldo", "Balance", "Portfolio", "Portafolio"]
+        )
 
     @pytest.mark.asyncio
     async def test_balance_multilingual_portuguese(self, client):
         """Test balance in Portuguese."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "saldo", "language": "pt"}
+            "/api/v1/guest/chat", json={"content": "saldo", "language": "pt"}
         )
         assert response.status_code == 200
         data = response.json()
 
         content = data["agent_message"]["content"]
-        assert any(word in content for word in ["Saldo", "Balance", "Portfólio", "Portfolio"])
+        assert any(
+            word in content for word in ["Saldo", "Balance", "Portfólio", "Portfolio"]
+        )
 
     @pytest.mark.asyncio
     async def test_balance_multilingual_french(self, client):
         """Test balance in French."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "solde", "language": "fr"}
+            "/api/v1/guest/chat", json={"content": "solde", "language": "fr"}
         )
         assert response.status_code == 200
         data = response.json()
 
         content = data["agent_message"]["content"]
-        assert any(word in content for word in ["Solde", "Balance", "Portefeuille", "Portfolio"])
+        assert any(
+            word in content
+            for word in ["Solde", "Balance", "Portefeuille", "Portfolio"]
+        )
 
     @pytest.mark.asyncio
     async def test_balance_multilingual_chinese(self, client):
         """Test balance in Chinese."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "余额", "language": "zh"}
+            "/api/v1/guest/chat", json={"content": "余额", "language": "zh"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -140,8 +143,7 @@ class TestGuestBalanceStorytellingQuality:
         """Test that response uses emojis for visual appeal."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "balance", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "balance", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -155,8 +157,7 @@ class TestGuestBalanceStorytellingQuality:
         """Test that response has clear visual structure."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "balance", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "balance", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -171,8 +172,7 @@ class TestGuestBalanceStorytellingQuality:
         """Test that response has encouraging tone."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "balance", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "balance", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 

@@ -14,7 +14,7 @@ from app.setup.config.agno import AgnoConfig, AgnoRetryConfig
 
 class TestAgnoAgentRetry:
     """Test retry functionality for Agno agents."""
-    
+
     @pytest.fixture
     def mock_agno_config(self):
         """Create mock Agno configuration."""
@@ -27,7 +27,7 @@ class TestAgnoAgentRetry:
                 max_backoff_seconds=0.5,
             ),
         )
-    
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_agent_has_retry_decorator(self, mock_agno_config):
@@ -39,9 +39,9 @@ class TestAgnoAgentRetry:
             config=mock_agno_config,
             mcp_servers=[],
         )
-        
+
         # Assert
-        assert hasattr(agent, '_mcp_retry')
+        assert hasattr(agent, "_mcp_retry")
         assert agent._mcp_retry is not None
 
     @pytest.mark.asyncio
@@ -55,7 +55,7 @@ class TestAgnoAgentRetry:
             config=mock_agno_config,
             mcp_servers=[],
         )
-        
+
         tool_def = MCPToolDefinition(
             server="test_server",
             name="test_tool",
@@ -64,10 +64,10 @@ class TestAgnoAgentRetry:
             parameters={},
             server_url="http://localhost:8080",
         )
-        
+
         # Create the agno function
         agno_func = agent._create_agno_function(tool_def)
-        
+
         # Mock HTTP client to fail once, then succeed
         mock_response_fail = MagicMock()
         mock_response_fail.raise_for_status.side_effect = httpx.HTTPStatusError(
@@ -75,33 +75,33 @@ class TestAgnoAgentRetry:
             request=MagicMock(),
             response=MagicMock(),
         )
-        
+
         mock_response_success = MagicMock()
         mock_response_success.raise_for_status.return_value = None
         mock_response_success.json.return_value = {
             "success": True,
             "result": {"data": "test_result"},
         }
-        
+
         call_count = 0
-        
+
         async def mock_post(*args, **kwargs):
             nonlocal call_count
             call_count += 1
             if call_count == 1:
                 return mock_response_fail
             return mock_response_success
-        
-        with patch('httpx.AsyncClient') as MockClient:
+
+        with patch("httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.post = mock_post
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = None
             MockClient.return_value = mock_client
-            
+
             # Act
             result = await agno_func.entrypoint()
-        
+
         # Assert
         assert call_count == 2  # Retried once
         assert "data" in result
@@ -118,7 +118,7 @@ class TestAgnoAgentRetry:
             config=mock_agno_config,
             mcp_servers=[],
         )
-        
+
         tool_def = MCPToolDefinition(
             server="test_server",
             name="test_tool",
@@ -127,12 +127,12 @@ class TestAgnoAgentRetry:
             parameters={},
             server_url="http://localhost:8080",
         )
-        
+
         agno_func = agent._create_agno_function(tool_def)
-        
+
         # Mock HTTP client to always fail
         call_count = 0
-        
+
         async def mock_post(*args, **kwargs):
             nonlocal call_count
             call_count += 1
@@ -143,17 +143,17 @@ class TestAgnoAgentRetry:
                 response=MagicMock(),
             )
             return mock_fail
-        
-        with patch('httpx.AsyncClient') as MockClient:
+
+        with patch("httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.post = mock_post
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = None
             MockClient.return_value = mock_client
-            
+
             # Act
             result = await agno_func.entrypoint()
-        
+
         # Assert
         assert call_count == 2  # Max attempts = 2
         assert "error" in result
@@ -171,7 +171,7 @@ class TestAgnoAgentRetry:
             config=mock_agno_config,
             mcp_servers=[],
         )
-        
+
         tool_def = MCPToolDefinition(
             server="test_server",
             name="test_tool",
@@ -180,11 +180,11 @@ class TestAgnoAgentRetry:
             parameters={},
             server_url="http://localhost:8080",
         )
-        
+
         agno_func = agent._create_agno_function(tool_def)
-        
+
         call_count = 0
-        
+
         async def mock_post(*args, **kwargs):
             nonlocal call_count
             call_count += 1
@@ -195,17 +195,17 @@ class TestAgnoAgentRetry:
                 "result": {"data": "first_attempt"},
             }
             return mock_success
-        
-        with patch('httpx.AsyncClient') as MockClient:
+
+        with patch("httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.post = mock_post
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = None
             MockClient.return_value = mock_client
-            
+
             # Act
             result = await agno_func.entrypoint()
-        
+
         # Assert
         assert call_count == 1  # No retry
         assert "data" in result
@@ -222,7 +222,7 @@ class TestAgnoAgentRetry:
             config=mock_agno_config,
             mcp_servers=[],
         )
-        
+
         tool_def = MCPToolDefinition(
             server="test_server",
             name="test_tool",
@@ -231,17 +231,17 @@ class TestAgnoAgentRetry:
             parameters={},
             server_url="http://localhost:8080",
         )
-        
+
         agno_func = agent._create_agno_function(tool_def)
-        
+
         call_count = 0
-        
+
         async def mock_post(*args, **kwargs):
             nonlocal call_count
             call_count += 1
             if call_count == 1:
                 raise httpx.TimeoutException("Request timeout")
-            
+
             mock_success = MagicMock()
             mock_success.raise_for_status.return_value = None
             mock_success.json.return_value = {
@@ -249,17 +249,17 @@ class TestAgnoAgentRetry:
                 "result": {"data": "after_timeout"},
             }
             return mock_success
-        
-        with patch('httpx.AsyncClient') as MockClient:
+
+        with patch("httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.post = mock_post
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = None
             MockClient.return_value = mock_client
-            
+
             # Act
             result = await agno_func.entrypoint()
-        
+
         # Assert
         assert call_count == 2  # Retried after timeout
         assert "data" in result
@@ -271,9 +271,9 @@ class TestAgnoAgentRetry:
         """Test AgnoConfig has correct retry defaults."""
         # Arrange & Act
         config = AgnoConfig()
-        
+
         # Assert
-        assert hasattr(config, 'retry')
+        assert hasattr(config, "retry")
         assert config.retry.enabled is True
         assert config.retry.max_attempts == 2
         assert config.retry.initial_backoff_seconds == 1.0
@@ -293,7 +293,7 @@ class TestAgnoAgentRetry:
                 initial_backoff_seconds=0.5,
             )
         )
-        
+
         # Assert
         assert config.retry.max_attempts == 3
         assert config.retry.initial_backoff_seconds == 0.5
@@ -303,10 +303,8 @@ class TestAgnoAgentRetry:
     async def test_legacy_retry_max_attempts_property(self, mock_mcp_manager_http):
         """Test legacy retry_max_attempts property."""
         # Arrange & Act
-        config = AgnoConfig(
-            retry=AgnoRetryConfig(max_attempts=3)
-        )
-        
+        config = AgnoConfig(retry=AgnoRetryConfig(max_attempts=3))
+
         # Assert
         assert config.retry_max_attempts == 3  # Legacy property
         assert config.retry.max_attempts == 3  # New property
@@ -322,7 +320,7 @@ class TestAgnoAgentRetry:
             config=mock_agno_config,
             mcp_servers=[],
         )
-        
+
         tool_def = MCPToolDefinition(
             server="test_server",
             name="test_tool",
@@ -331,12 +329,13 @@ class TestAgnoAgentRetry:
             parameters={},
             server_url="http://localhost:8080",
         )
-        
+
         agno_func = agent._create_agno_function(tool_def)
-        
+
         import time
+
         call_times = []
-        
+
         async def mock_post(*args, **kwargs):
             call_times.append(time.time())
             raise httpx.HTTPStatusError(
@@ -344,17 +343,17 @@ class TestAgnoAgentRetry:
                 request=MagicMock(),
                 response=MagicMock(),
             )
-        
-        with patch('httpx.AsyncClient') as MockClient:
+
+        with patch("httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.post = mock_post
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = None
             MockClient.return_value = mock_client
-            
+
             # Act
             result = await agno_func.entrypoint()
-        
+
         # Assert
         assert len(call_times) == 2  # 2 attempts
         if len(call_times) >= 2:

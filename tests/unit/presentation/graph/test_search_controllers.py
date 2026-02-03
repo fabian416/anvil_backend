@@ -19,25 +19,27 @@ class TestHybridSearchController:
     def mock_hybrid_retrieval_interactor(self):
         """Create mock HybridRetrievalInteractor."""
         interactor = AsyncMock()
-        interactor.search_protocols = AsyncMock(return_value=[
-            MagicMock(
-                protocol_id=str(uuid4()),
-                protocol_name="Aave",
-                score=0.95,
-                vector_similarity=0.92,
-                graph_importance=0.98,
-                context={
-                    "tvl": 10000000000,
-                    "category": "Lending",
-                    "dependent_count": 150,
-                },
-                risk_info={
-                    "risk_score": 3.5,
-                    "direct_risks": ["Smart contract risk"],
-                    "systemic_risks": ["Oracle dependency"],
-                },
-            ),
-        ])
+        interactor.search_protocols = AsyncMock(
+            return_value=[
+                MagicMock(
+                    protocol_id=str(uuid4()),
+                    protocol_name="Aave",
+                    score=0.95,
+                    vector_similarity=0.92,
+                    graph_importance=0.98,
+                    context={
+                        "tvl": 10000000000,
+                        "category": "Lending",
+                        "dependent_count": 150,
+                    },
+                    risk_info={
+                        "risk_score": 3.5,
+                        "direct_risks": ["Smart contract risk"],
+                        "systemic_risks": ["Oracle dependency"],
+                    },
+                ),
+            ]
+        )
         return interactor
 
     def test_hybrid_search_request_structure(self):

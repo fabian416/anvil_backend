@@ -471,9 +471,7 @@ class AuditLogRepositoryAdapter(AuditLogRepository):
                     for event_type in AuditEventType
                     if event_type.requires_retention
                 ]
-                conditions.append(
-                    AuditLogModel.event_type.notin_(critical_event_types)
-                )
+                conditions.append(AuditLogModel.event_type.notin_(critical_event_types))
 
             stmt = select(AuditLogModel).where(and_(*conditions))
             result = await self._session.execute(stmt)
@@ -614,8 +612,12 @@ class AuditLogModel:
     resource_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Additional Data (JSONB for flexible storage)
-    entry_metadata: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
-    ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True, index=True)
+    entry_metadata: Mapped[dict | None] = mapped_column(
+        "metadata", JSONB, nullable=True
+    )
+    ip_address: Mapped[str | None] = mapped_column(
+        String(45), nullable=True, index=True
+    )
     user_agent: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Error details

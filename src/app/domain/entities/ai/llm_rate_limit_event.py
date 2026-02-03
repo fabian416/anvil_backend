@@ -1,6 +1,7 @@
 """
 LLM Rate Limit Event entity.
 """
+
 from dataclasses import dataclass
 from typing import Optional
 from datetime import datetime
@@ -12,9 +13,11 @@ from app.domain.enums.ai.llm_provider import LLMProvider
 from app.domain.enums.ai.rate_limit_event_type import RateLimitEventType
 from app.domain.value_objects.created_at import CreatedAt
 
+
 @dataclass(frozen=True, repr=False)
 class RateLimitEventId(ValueObject):
     value: int
+
 
 @dataclass(eq=False, kw_only=True)
 class LLMRateLimitEvent(Entity[RateLimitEventId]):

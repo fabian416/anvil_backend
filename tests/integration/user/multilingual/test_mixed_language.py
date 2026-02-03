@@ -37,7 +37,6 @@ MIXED_LANGUAGE_TESTS = [
         "subcategory": "mixed_en_es",
         "language": "es",
     },
-    
     # English + Portuguese
     {
         "test_id": "mixed_en_pt_001",
@@ -55,7 +54,6 @@ MIXED_LANGUAGE_TESTS = [
         "subcategory": "mixed_en_pt",
         "language": "pt",
     },
-    
     # English + Chinese
     {
         "test_id": "mixed_en_zh_001",
@@ -65,7 +63,6 @@ MIXED_LANGUAGE_TESTS = [
         "subcategory": "mixed_en_zh",
         "language": "zh",
     },
-    
     # Token Names (Always English)
     {
         "test_id": "mixed_token_es_001",
@@ -91,7 +88,6 @@ MIXED_LANGUAGE_TESTS = [
         "subcategory": "token_names",
         "language": "zh",
     },
-    
     # Protocol Names (Always English)
     {
         "test_id": "mixed_protocol_es_001",
@@ -141,16 +137,20 @@ LANGUAGE_SWITCH_FLOWS = [
 @pytest.mark.llm_validation
 class TestMixedLanguage:
     """Tests for mixed language handling with LLM validation."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
+    async def setup(
+        self, authenticated_client, conversation_id, csv_reporter, llm_validator
+    ):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
         self.llm_validator = llm_validator
-    
-    @pytest.mark.parametrize("test_case", MIXED_LANGUAGE_TESTS, ids=lambda t: t["test_id"])
+
+    @pytest.mark.parametrize(
+        "test_case", MIXED_LANGUAGE_TESTS, ids=lambda t: t["test_id"]
+    )
     async def test_mixed_language(self, test_case: dict):
         """Test mixed language input handling with LLM validation."""
         response_data, response_time_ms = await send_message(
@@ -159,7 +159,7 @@ class TestMixedLanguage:
             test_case["input"],
             language=test_case.get("language", "en"),
         )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -167,15 +167,15 @@ class TestMixedLanguage:
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "")
         agents = parsed.get("agents_used", "")
-        
+
         # Should route to correct agent despite mixed language
         expected = test_case.get("expected_agent")
         if expected:
@@ -186,26 +186,25 @@ class TestMixedLanguage:
 @pytest.mark.integration
 class TestLanguageSwitch:
     """Tests for mid-conversation language switching."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.reporter = csv_reporter
-    
+
     @pytest.mark.parametrize("flow", LANGUAGE_SWITCH_FLOWS, ids=lambda f: f["test_id"])
     async def test_language_switch(self, flow: dict):
         """Test handling of language switches mid-conversation."""
         from ..conftest import create_conversation
-        
+
         conv_id = await create_conversation(
-            self.client,
-            title=f"Language Switch: {flow['name']}"
+            self.client, title=f"Language Switch: {flow['name']}"
         )
-        
+
         steps = flow["steps"]
         total_steps = len(steps)
-        
+
         for step_num, step in enumerate(steps, 1):
             response_data, response_time_ms = await send_message(
                 self.client,
@@ -213,7 +212,7 @@ class TestLanguageSwitch:
                 step["input"],
                 language=step.get("language", "en"),
             )
-            
+
             step_test_case = {
                 "input": step["input"],
                 "expected_agent": "",
@@ -224,7 +223,7 @@ class TestLanguageSwitch:
                 "total_steps": total_steps,
                 "language": step.get("language", "en"),
             }
-            
+
             result = create_test_result(
                 test_id=f"{flow['test_id']}_step{step_num}",
                 test_case=step_test_case,
@@ -232,13 +231,15 @@ class TestLanguageSwitch:
                 response_time_ms=response_time_ms,
                 conversation_id=conv_id,
             )
-            
+
             self.reporter.add_result(result)
-            
-            assert not response_data.get("error"), f"Step {step_num} failed: {response_data}"
-            
+
+            assert not response_data.get("error"), (
+                f"Step {step_num} failed: {response_data}"
+            )
+
             parsed = parse_response(response_data)
             content = parsed.get("content", "")
-            
+
             # Should maintain context despite language switch
             assert len(content) > 20, f"Should respond meaningfully: {content[:200]}"

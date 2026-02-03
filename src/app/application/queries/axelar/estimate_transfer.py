@@ -46,7 +46,9 @@ class EstimateTransfer:
         """Initialize query."""
         self._gateway = gateway
 
-    async def execute(self, request: EstimateTransferRequest) -> TransferEstimateResponse:
+    async def execute(
+        self, request: EstimateTransferRequest
+    ) -> TransferEstimateResponse:
         """Execute query to estimate transfer."""
         # Get standard estimate
         standard = await self._gateway.estimate_transfer(
@@ -87,6 +89,9 @@ class EstimateTransfer:
         cost_diff = express.total_cost_usd - standard.total_cost_usd
 
         # Recommend express if time savings > 10 min and cost < $5
-        if time_savings > self.TIME_SAVINGS_THRESHOLD and cost_diff < self.COST_THRESHOLD:
+        if (
+            time_savings > self.TIME_SAVINGS_THRESHOLD
+            and cost_diff < self.COST_THRESHOLD
+        ):
             return "EXPRESS"
         return "STANDARD"

@@ -3,6 +3,7 @@
 This module defines value objects for the unified chat system that supports
 both guest and authenticated users through context abstraction.
 """
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional

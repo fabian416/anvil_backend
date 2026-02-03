@@ -320,14 +320,16 @@ class FlashLoanEngine:
             return False, f"Amount exceeds max: ${self.config.max_loan_amount_usd}"
 
         # Check receiver address (42 chars with 0x prefix)
-        if not request.receiver_address or not request.receiver_address.startswith("0x") or len(request.receiver_address) != 42:
+        if (
+            not request.receiver_address
+            or not request.receiver_address.startswith("0x")
+            or len(request.receiver_address) != 42
+        ):
             return False, "Invalid receiver address (must be 42 chars with 0x prefix)"
 
         return True, None
 
-    async def simulate_loan(
-        self, request: FlashLoanRequest
-    ) -> FlashLoanResult:
+    async def simulate_loan(self, request: FlashLoanRequest) -> FlashLoanResult:
         """Simulate flash loan execution.
 
         Args:

@@ -3,6 +3,7 @@ Admin Retry System API Schemas.
 
 Request and response models for retry system admin endpoints.
 """
+
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
@@ -10,8 +11,10 @@ from pydantic import BaseModel, Field
 
 # Request Models
 
+
 class DisableServiceRequest(BaseModel):
     """Request to disable a service."""
+
     reason: str = Field(..., description="Reason for disabling the service")
     duration_minutes: Optional[int] = Field(
         None,
@@ -22,18 +25,22 @@ class DisableServiceRequest(BaseModel):
 
 class EnableServiceRequest(BaseModel):
     """Request to enable a service."""
+
     reason: str = Field(..., description="Reason for enabling the service")
 
 
 class ResetCircuitBreakerRequest(BaseModel):
     """Request to reset a circuit breaker."""
+
     reason: str = Field(..., description="Reason for resetting the circuit breaker")
 
 
 # Response Models
 
+
 class ServiceStatusResponse(BaseModel):
     """Response with service status."""
+
     service_name: str
     enabled: bool
     circuit_state: str  # CLOSED, OPEN, HALF_OPEN
@@ -47,11 +54,13 @@ class ServiceStatusResponse(BaseModel):
 
 class ServiceListResponse(BaseModel):
     """Response with list of services."""
+
     services: List[ServiceStatusResponse]
 
 
 class CircuitBreakerStatusResponse(BaseModel):
     """Response with circuit breaker status."""
+
     service_name: str
     state: str  # CLOSED, OPEN, HALF_OPEN
     failure_count: int
@@ -62,6 +71,7 @@ class CircuitBreakerStatusResponse(BaseModel):
 
 class ServiceMetricDay(BaseModel):
     """Metrics for a single day."""
+
     date: str
     total_requests: int
     successful_requests: int
@@ -74,6 +84,7 @@ class ServiceMetricDay(BaseModel):
 
 class ServiceMetricsResponse(BaseModel):
     """Response with service metrics over time."""
+
     service_name: str
     days: int
     metrics: List[ServiceMetricDay]

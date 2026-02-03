@@ -804,9 +804,7 @@ class PrivyClient(EmbeddedWalletProviderPort):
         )
         if response.status_code == 404:
             raise PrivyPolicyNotFoundError(f"Policy not found: {policy_id}")
-        return await self._handle_response(
-            response, f"create_policy_rule({policy_id})"
-        )
+        return await self._handle_response(response, f"create_policy_rule({policy_id})")
 
     async def update_policy_rule(
         self,
@@ -994,7 +992,9 @@ class PrivyClient(EmbeddedWalletProviderPort):
             "chain_type": privy_chain_type,
         }
 
-        logger.info(f"Creating wallet via Privy API: chain={privy_chain_type}, user={user_id}")
+        logger.info(
+            f"Creating wallet via Privy API: chain={privy_chain_type}, user={user_id}"
+        )
 
         response = await client.post(
             "/v1/wallets",

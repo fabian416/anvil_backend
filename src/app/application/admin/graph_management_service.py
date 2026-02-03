@@ -54,7 +54,7 @@ class ValidationIssue:
 class GraphManagementService:
     """
     Service for administrative graph database operations.
-    
+
     Provides CRUD operations for protocols, relationship management,
     data validation, and bulk import/export.
     """
@@ -74,11 +74,11 @@ class GraphManagementService:
     ) -> ProtocolNode:
         """
         Create new protocol node in graph.
-        
+
         Args:
             protocol_data: Protocol information
             admin_user_id: ID of admin user creating protocol
-            
+
         Returns:
             Created protocol node
         """
@@ -88,7 +88,7 @@ class GraphManagementService:
         # - Create node in graph
         # - Generate embeddings
         # - Log audit trail
-        
+
         protocol = ProtocolNode(
             protocol_id=uuid4(),
             protocol_name=protocol_data["name"],
@@ -102,7 +102,7 @@ class GraphManagementService:
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
         )
-        
+
         return protocol
 
     async def update_protocol(
@@ -110,12 +110,12 @@ class GraphManagementService:
     ) -> ProtocolNode:
         """
         Update existing protocol node.
-        
+
         Args:
             protocol_id: Protocol to update
             updates: Fields to update
             admin_user_id: ID of admin user making update
-            
+
         Returns:
             Updated protocol node
         """
@@ -124,19 +124,17 @@ class GraphManagementService:
         # - Apply updates
         # - Regenerate embeddings if needed
         # - Log audit trail
-        
+
         raise NotImplementedError("Protocol update not yet implemented")
 
-    async def delete_protocol(
-        self, protocol_id: UUID, admin_user_id: UUID
-    ) -> bool:
+    async def delete_protocol(self, protocol_id: UUID, admin_user_id: UUID) -> bool:
         """
         Delete protocol node and all its relationships.
-        
+
         Args:
             protocol_id: Protocol to delete
             admin_user_id: ID of admin user deleting protocol
-            
+
         Returns:
             Success status
         """
@@ -145,7 +143,7 @@ class GraphManagementService:
         # - Delete embeddings
         # - Delete node
         # - Log audit trail
-        
+
         return True
 
     async def get_protocol(self, protocol_id: UUID) -> Optional[ProtocolNode]:
@@ -161,12 +159,12 @@ class GraphManagementService:
     ) -> List[ProtocolNode]:
         """
         List protocols with pagination and filtering.
-        
+
         Args:
             limit: Maximum results to return
             offset: Number of results to skip
             filters: Filter criteria (chain, category, etc.)
-            
+
         Returns:
             List of protocol nodes
         """
@@ -185,14 +183,14 @@ class GraphManagementService:
     ) -> ProtocolRelationship:
         """
         Create relationship between two protocols.
-        
+
         Args:
             source_id: Source protocol ID
             target_id: Target protocol ID
             rel_type: Relationship type
             weight: Relationship weight (0-1)
             admin_user_id: ID of admin user creating relationship
-            
+
         Returns:
             Created relationship
         """
@@ -201,7 +199,7 @@ class GraphManagementService:
         # - Check for duplicate relationships
         # - Create edge in graph
         # - Log audit trail
-        
+
         return ProtocolRelationship(
             relationship_id=uuid4(),
             source_protocol_id=source_id,
@@ -230,18 +228,18 @@ class GraphManagementService:
     async def validate_graph_integrity(self) -> Dict:
         """
         Validate entire graph for integrity issues.
-        
+
         Checks for:
         - Orphaned nodes (no relationships)
         - Duplicate protocols
         - Missing embeddings
         - Invalid relationships
-        
+
         Returns:
             Validation report with issues found
         """
         issues: List[ValidationIssue] = []
-        
+
         # TODO: Implement comprehensive validation
         # - Find orphaned nodes
         orphaned = await self._find_orphaned_nodes()
@@ -255,7 +253,7 @@ class GraphManagementService:
                     recommendation="Review and add relationships or delete unused protocols",
                 )
             )
-        
+
         # - Find duplicates
         duplicates = await self._find_duplicate_protocols()
         if duplicates:
@@ -268,10 +266,10 @@ class GraphManagementService:
                     recommendation="Merge duplicate protocols and remove redundant data",
                 )
             )
-        
+
         # - Check for missing embeddings
         # - Validate relationship integrity
-        
+
         return {
             "valid": len(issues) == 0,
             "issues": issues,
@@ -301,26 +299,26 @@ class GraphManagementService:
     ) -> Dict:
         """
         Bulk import protocols from CSV/JSON data.
-        
+
         Args:
             data: Protocol data to import
             format: Data format (csv, json, graphml)
             options: Import options
-            
+
         Returns:
             Import summary (imported, skipped, errors)
         """
         imported = 0
         skipped = 0
         errors = []
-        
+
         # TODO: Implement bulk import
         # - Validate data format
         # - Check for duplicates
         # - Import protocols
         # - Generate embeddings
         # - Create relationships
-        
+
         return {
             "success": True,
             "imported": imported,
@@ -333,11 +331,11 @@ class GraphManagementService:
     ) -> Dict:
         """
         Export entire graph database.
-        
+
         Args:
             format: Export format (csv, json, graphml)
             include_embeddings: Whether to include embedding vectors
-            
+
         Returns:
             Export data
         """
@@ -345,7 +343,7 @@ class GraphManagementService:
         # - Export all protocols
         # - Export all relationships
         # - Optionally include embeddings
-        
+
         return {
             "protocols": [],
             "relationships": [],
@@ -357,7 +355,7 @@ class GraphManagementService:
     async def get_database_stats(self) -> Dict:
         """Get graph database statistics."""
         # TODO: Implement stats collection
-        
+
         return {
             "total_protocols": 450,
             "total_relationships": 3500,

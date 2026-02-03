@@ -26,6 +26,7 @@ from app.setup.config.mcp import MCPSettings, MCPServerSettings, MCPRetrySetting
 # MCP Settings Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def mcp_settings_enabled():
     """Create MCP settings with all servers enabled."""
@@ -78,6 +79,7 @@ def mcp_settings_disabled():
 # Test Data Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def sample_wallet_address():
     """Return a sample wallet address for testing."""
@@ -100,6 +102,7 @@ def sample_chain_ids():
 # =============================================================================
 # Mock Gateway Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def mock_morpho_gateway():
@@ -173,6 +176,7 @@ def mock_layerzero_gateway():
 # HTTP Mock Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def mock_mcp_manager_http(mocker):
     """
@@ -195,9 +199,9 @@ def mock_mcp_manager_http(mocker):
                     "properties": {
                         "protocol": {"type": "string", "description": "Protocol name"}
                     },
-                    "required": ["protocol"]
+                    "required": ["protocol"],
                 },
-                "server_url": "http://localhost:8000"
+                "server_url": "http://localhost:8000",
             },
             {
                 "server": "coingecko",
@@ -209,9 +213,9 @@ def mock_mcp_manager_http(mocker):
                     "properties": {
                         "token_id": {"type": "string", "description": "Token ID"}
                     },
-                    "required": ["token_id"]
+                    "required": ["token_id"],
                 },
-                "server_url": "http://localhost:8000"
+                "server_url": "http://localhost:8000",
             },
             {
                 "server": "oneinch",
@@ -223,11 +227,11 @@ def mock_mcp_manager_http(mocker):
                     "properties": {
                         "from_token": {"type": "string"},
                         "to_token": {"type": "string"},
-                        "amount": {"type": "string"}
+                        "amount": {"type": "string"},
                     },
-                    "required": ["from_token", "to_token", "amount"]
+                    "required": ["from_token", "to_token", "amount"],
                 },
-                "server_url": "http://localhost:8000"
+                "server_url": "http://localhost:8000",
             },
             {
                 "server": "thegraph",
@@ -239,9 +243,9 @@ def mock_mcp_manager_http(mocker):
                     "properties": {
                         "query": {"type": "string", "description": "GraphQL query"}
                     },
-                    "required": ["query"]
+                    "required": ["query"],
                 },
-                "server_url": "http://localhost:8000"
+                "server_url": "http://localhost:8000",
             },
         ]
     }

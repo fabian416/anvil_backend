@@ -207,8 +207,9 @@ class MockLLMGateway:
         for key, expected_value in kwargs.items():
             assert key in last_call, f"Parameter '{key}' not found in call"
             actual_value = last_call[key]
-            assert actual_value == expected_value, \
+            assert actual_value == expected_value, (
                 f"Expected {key}={expected_value}, got {actual_value}"
+            )
 
     def assert_not_called(self):
         """

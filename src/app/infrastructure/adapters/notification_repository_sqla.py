@@ -6,7 +6,9 @@ from app.infrastructure.adapters.constants import DB_QUERY_FAILED
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.exceptions.gateway import DataMapperError
 from app.infrastructure.persistence_sqla.registry import mapping_registry
-from app.infrastructure.persistence_sqla.mappings.notification import map_notifications_table
+from app.infrastructure.persistence_sqla.mappings.notification import (
+    map_notifications_table,
+)
 
 
 class SqlaNotificationRepository(NotificationRepository):
@@ -34,5 +36,3 @@ class SqlaNotificationRepository(NotificationRepository):
             return [dict(r) for r in rows]
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
-
-

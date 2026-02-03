@@ -33,9 +33,7 @@ class GraphEdge(BaseModel):
     source: str = Field(..., description="Source node ID")
     target: str = Field(..., description="Target node ID")
     type: str = Field(..., description="Relationship type")
-    weight: float = Field(
-        1.0, ge=0.0, le=1.0, description="Edge weight/strength (0-1)"
-    )
+    weight: float = Field(1.0, ge=0.0, le=1.0, description="Edge weight/strength (0-1)")
     metadata: Dict[str, Any] = Field(
         default_factory=dict, description="Additional edge metadata"
     )
@@ -100,64 +98,60 @@ def create_graph_visualization_router() -> APIRouter:
 
             # Example nodes (replace with actual query)
             if not node_type or node_type == "protocol":
-                nodes.extend(
-                    [
-                        GraphNode(
-                            id="uniswap",
-                            label="Uniswap",
-                            type="protocol",
-                            importance=0.95,
-                            connections=150,
-                            metadata={
-                                "tvl": "3.2B",
-                                "volume_24h": "1.1B",
-                                "chain": "ethereum",
-                            },
-                        ),
-                        GraphNode(
-                            id="aave",
-                            label="Aave",
-                            type="protocol",
-                            importance=0.92,
-                            connections=120,
-                            metadata={
-                                "tvl": "5.8B",
-                                "volume_24h": "0.8B",
-                                "chain": "ethereum",
-                            },
-                        ),
-                    ]
-                )
+                nodes.extend([
+                    GraphNode(
+                        id="uniswap",
+                        label="Uniswap",
+                        type="protocol",
+                        importance=0.95,
+                        connections=150,
+                        metadata={
+                            "tvl": "3.2B",
+                            "volume_24h": "1.1B",
+                            "chain": "ethereum",
+                        },
+                    ),
+                    GraphNode(
+                        id="aave",
+                        label="Aave",
+                        type="protocol",
+                        importance=0.92,
+                        connections=120,
+                        metadata={
+                            "tvl": "5.8B",
+                            "volume_24h": "0.8B",
+                            "chain": "ethereum",
+                        },
+                    ),
+                ])
 
             if not node_type or node_type == "token":
-                nodes.extend(
-                    [
-                        GraphNode(
-                            id="eth",
-                            label="ETH",
-                            type="token",
-                            importance=1.0,
-                            connections=300,
-                            metadata={
-                                "price": "2450",
-                                "market_cap": "300B",
-                                "symbol": "ETH",
-                            },
-                        ),
-                        GraphNode(
-                            id="usdc",
-                            label="USDC",
-                            type="token",
-                            importance=0.98,
-                            connections=280,
-                            metadata={
-                                "price": "1.0",
-                                "market_cap": "25B",
-                                "symbol": "USDC",
-                            },
-                        ),
-                    ]
-                )
+                nodes.extend([
+                    GraphNode(
+                        id="eth",
+                        label="ETH",
+                        type="token",
+                        importance=1.0,
+                        connections=300,
+                        metadata={
+                            "price": "2450",
+                            "market_cap": "300B",
+                            "symbol": "ETH",
+                        },
+                    ),
+                    GraphNode(
+                        id="usdc",
+                        label="USDC",
+                        type="token",
+                        importance=0.98,
+                        connections=280,
+                        metadata={
+                            "price": "1.0",
+                            "market_cap": "25B",
+                            "symbol": "USDC",
+                        },
+                    ),
+                ])
 
             # Filter by importance
             nodes = [n for n in nodes if n.importance >= min_importance]
@@ -209,44 +203,40 @@ def create_graph_visualization_router() -> APIRouter:
 
             # Example edges (replace with actual query)
             if not edge_type or edge_type == "PROVIDES_LIQUIDITY":
-                edges.extend(
-                    [
-                        GraphEdge(
-                            source="uniswap",
-                            target="eth",
-                            type="PROVIDES_LIQUIDITY",
-                            weight=0.9,
-                            metadata={"pool_size": "500M"},
-                        ),
-                        GraphEdge(
-                            source="uniswap",
-                            target="usdc",
-                            type="PROVIDES_LIQUIDITY",
-                            weight=0.9,
-                            metadata={"pool_size": "400M"},
-                        ),
-                    ]
-                )
+                edges.extend([
+                    GraphEdge(
+                        source="uniswap",
+                        target="eth",
+                        type="PROVIDES_LIQUIDITY",
+                        weight=0.9,
+                        metadata={"pool_size": "500M"},
+                    ),
+                    GraphEdge(
+                        source="uniswap",
+                        target="usdc",
+                        type="PROVIDES_LIQUIDITY",
+                        weight=0.9,
+                        metadata={"pool_size": "400M"},
+                    ),
+                ])
 
             if not edge_type or edge_type == "LENDS_TO":
-                edges.extend(
-                    [
-                        GraphEdge(
-                            source="aave",
-                            target="eth",
-                            type="LENDS_TO",
-                            weight=0.85,
-                            metadata={"apy": "3.5%"},
-                        ),
-                        GraphEdge(
-                            source="aave",
-                            target="usdc",
-                            type="LENDS_TO",
-                            weight=0.85,
-                            metadata={"apy": "5.2%"},
-                        ),
-                    ]
-                )
+                edges.extend([
+                    GraphEdge(
+                        source="aave",
+                        target="eth",
+                        type="LENDS_TO",
+                        weight=0.85,
+                        metadata={"apy": "3.5%"},
+                    ),
+                    GraphEdge(
+                        source="aave",
+                        target="usdc",
+                        type="LENDS_TO",
+                        weight=0.85,
+                        metadata={"apy": "5.2%"},
+                    ),
+                ])
 
             # Filter by weight
             edges = [e for e in edges if e.weight >= min_weight]
@@ -307,7 +297,10 @@ def create_graph_visualization_router() -> APIRouter:
             )
 
             edges = await get_graph_edges(
-                edge_type=edge_type, min_weight=0.0, limit=max_edges, query_service=query_service
+                edge_type=edge_type,
+                min_weight=0.0,
+                limit=max_edges,
+                query_service=query_service,
             )
 
             return GraphVisualizationResponse(
@@ -372,13 +365,25 @@ def create_graph_visualization_router() -> APIRouter:
 
                 nodes = [
                     GraphNode(
-                        id="eth", label="ETH", type="token", importance=1.0, connections=300
+                        id="eth",
+                        label="ETH",
+                        type="token",
+                        importance=1.0,
+                        connections=300,
                     ),
                     GraphNode(
-                        id="usdc", label="USDC", type="token", importance=0.98, connections=280
+                        id="usdc",
+                        label="USDC",
+                        type="token",
+                        importance=0.98,
+                        connections=280,
                     ),
                     GraphNode(
-                        id="uni", label="UNI", type="token", importance=0.85, connections=80
+                        id="uni",
+                        label="UNI",
+                        type="token",
+                        importance=0.85,
+                        connections=80,
                     ),
                 ]
 

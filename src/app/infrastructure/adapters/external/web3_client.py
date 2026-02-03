@@ -548,7 +548,9 @@ class Web3Client:
             ...     print("This address has never sent a transaction!")
         """
         try:
-            result = await self._call_rpc("eth_getTransactionCount", [address, "latest"])
+            result = await self._call_rpc(
+                "eth_getTransactionCount", [address, "latest"]
+            )
             return int(result, 16)
         except Exception as e:
             logger.warning(f"Failed to get tx count for {address[:10]}...: {e}")

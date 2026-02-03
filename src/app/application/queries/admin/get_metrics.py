@@ -14,7 +14,9 @@ from app.domain.enums.chain_type import ChainType
 from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.enums.transaction_type import TransactionType
 from app.domain.enums.wallet_provider import WalletProvider
-from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.ports.transaction.transaction_repository import (
+    TransactionRepository,
+)
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 
 logger = logging.getLogger(__name__)
@@ -154,8 +156,10 @@ class GetAdminMetricsOverviewHandler:
             pending_transactions = await self._transaction_repository.count_by_status(
                 TransactionStatus.PENDING
             )
-            successful_transactions = await self._transaction_repository.count_by_status(
-                TransactionStatus.SUCCESS
+            successful_transactions = (
+                await self._transaction_repository.count_by_status(
+                    TransactionStatus.SUCCESS
+                )
             )
             failed_transactions = await self._transaction_repository.count_by_status(
                 TransactionStatus.FAILED
@@ -183,7 +187,9 @@ class GetAdminMetricsOverviewHandler:
             total_users = 0
 
         try:
-            users_with_transactions = await self._transaction_repository.get_unique_user_count()
+            users_with_transactions = (
+                await self._transaction_repository.get_unique_user_count()
+            )
             active_today = await self._transaction_repository.get_unique_user_count(
                 start_date=today_start, end_date=now
             )
@@ -258,23 +264,26 @@ class GetTransactionTimeSeriesHandler:
                 logger.warning(f"Invalid tx_type filter: {tx_type}")
 
         try:
-            daily_counts = await self._transaction_repository.get_daily_transaction_counts(
-                start_date=from_date,
-                end_date=to_date,
-                chain=chain_enum,
-                tx_type=tx_type_enum,
+            daily_counts = (
+                await self._transaction_repository.get_daily_transaction_counts(
+                    start_date=from_date,
+                    end_date=to_date,
+                    chain=chain_enum,
+                    tx_type=tx_type_enum,
+                )
             )
 
-            total_count = await self._transaction_repository.count_transactions_in_range(
-                start_date=from_date,
-                end_date=to_date,
-                chain=chain_enum,
-                tx_type=tx_type_enum,
+            total_count = (
+                await self._transaction_repository.count_transactions_in_range(
+                    start_date=from_date,
+                    end_date=to_date,
+                    chain=chain_enum,
+                    tx_type=tx_type_enum,
+                )
             )
 
             data_points = [
-                TimeSeriesPoint(date=date, value=count)
-                for date, count in daily_counts
+                TimeSeriesPoint(date=date, value=count) for date, count in daily_counts
             ]
 
             return data_points, total_count
@@ -317,8 +326,7 @@ class GetWalletTimeSeriesHandler:
             )
 
             data_points = [
-                TimeSeriesPoint(date=date, value=count)
-                for date, count in daily_counts
+                TimeSeriesPoint(date=date, value=count) for date, count in daily_counts
             ]
 
             return data_points, total_count
@@ -358,8 +366,7 @@ class GetUserActivityTimeSeriesHandler:
             )
 
             return [
-                TimeSeriesPoint(date=date, value=count)
-                for date, count in daily_counts
+                TimeSeriesPoint(date=date, value=count) for date, count in daily_counts
             ]
 
         except Exception as e:
@@ -381,7 +388,9 @@ class GetWalletDistributionHandler:
             Tuple of (list of DistributionItem, total count).
         """
         try:
-            counts_by_provider = await self._wallet_repository.get_wallet_counts_by_provider()
+            counts_by_provider = (
+                await self._wallet_repository.get_wallet_counts_by_provider()
+            )
             total = sum(counts_by_provider.values())
 
             distribution = []
@@ -410,7 +419,9 @@ class GetTransactionDistributionHandler:
 
     async def execute(
         self,
-    ) -> tuple[list[DistributionItem], list[DistributionItem], list[DistributionItem], int]:
+    ) -> tuple[
+        list[DistributionItem], list[DistributionItem], list[DistributionItem], int
+    ]:
         """
         Get transaction distribution by chain, status, and type.
 
@@ -421,7 +432,9 @@ class GetTransactionDistributionHandler:
             total = await self._transaction_repository.count_all()
 
             # Get by chain
-            counts_by_chain = await self._transaction_repository.get_transaction_counts_by_chain()
+            counts_by_chain = (
+                await self._transaction_repository.get_transaction_counts_by_chain()
+            )
             by_chain = [
                 DistributionItem(
                     name=chain,
@@ -432,7 +445,9 @@ class GetTransactionDistributionHandler:
             ]
 
             # Get by status
-            counts_by_status = await self._transaction_repository.get_transaction_counts_by_status()
+            counts_by_status = (
+                await self._transaction_repository.get_transaction_counts_by_status()
+            )
             by_status = [
                 DistributionItem(
                     name=status,
@@ -443,7 +458,9 @@ class GetTransactionDistributionHandler:
             ]
 
             # Get by type
-            counts_by_type = await self._transaction_repository.get_transaction_counts_by_type()
+            counts_by_type = (
+                await self._transaction_repository.get_transaction_counts_by_type()
+            )
             by_type = [
                 DistributionItem(
                     name=tx_type,

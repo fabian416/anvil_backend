@@ -11,44 +11,44 @@ class ProtocolMetrics:
 
     protocol_id: UUID
     protocol_name: str
-    
+
     # Basic Info
     chain: str
     category: str
     logo_url: Optional[str]
-    
+
     # Risk Metrics (ML-powered)
     risk_score: float  # 0-10
     risk_level: str  # LOW/MEDIUM/HIGH/CRITICAL
     confidence: float  # 0-1
     risk_trend: str  # INCREASING/DECREASING/STABLE
-    
+
     # Financial Metrics
     tvl_usd: float
     tvl_change_24h_percent: float
     tvl_change_7d_percent: float
     volume_24h_usd: Optional[float]
-    
+
     # Yield Metrics
     apy_supply: Optional[float]
     apy_borrow: Optional[float]
     apy_stake: Optional[float]
-    
+
     # Security Metrics
     audit_count: int
     auditor_names: List[str]
     last_audit_date: Optional[str]
     vulnerability_count: int
-    
+
     # Network Metrics
     user_count_24h: Optional[int]
     transaction_count_24h: Optional[int]
     network_centrality: Optional[float]
-    
+
     # Historical
     age_days: int
     incident_count: int
-    
+
     # Governance
     has_governance: bool
     token_symbol: Optional[str]
@@ -100,9 +100,7 @@ class ProtocolComparisonService:
 
         comparison = {
             "protocols": [self._serialize_metrics(p) for p in protocols],
-            "comparison_matrix": self._build_comparison_matrix(
-                protocols, dimensions
-            ),
+            "comparison_matrix": self._build_comparison_matrix(protocols, dimensions),
             "winner_by_dimension": self._determine_winners(protocols, dimensions),
             "trade_offs": self._identify_tradeoffs(protocols),
             "recommendation": await self._generate_recommendation(protocols),
@@ -205,10 +203,7 @@ class ProtocolComparisonService:
         """Compare protocols by yield metrics."""
         # Get max supply APY for each protocol
         max_apys = [
-            max(
-                filter(None, [p.apy_supply, p.apy_borrow, p.apy_stake]),
-                default=0
-            )
+            max(filter(None, [p.apy_supply, p.apy_borrow, p.apy_stake]), default=0)
             for p in protocols
         ]
 
@@ -226,15 +221,15 @@ class ProtocolComparisonService:
                 for p, apy in zip(protocols, max_apys)
             ],
             "best": protocols[max_apys.index(max(max_apys))].protocol_name
-            if max_apys else None,
+            if max_apys
+            else None,
         }
 
     def _compare_security(self, protocols: List[ProtocolMetrics]) -> dict:
         """Compare protocols by security metrics."""
         # Security score: more audits + fewer vulnerabilities = better
         security_scores = [
-            (p.audit_count * 10) - (p.vulnerability_count * 5)
-            for p in protocols
+            (p.audit_count * 10) - (p.vulnerability_count * 5) for p in protocols
         ]
 
         return {
@@ -251,7 +246,8 @@ class ProtocolComparisonService:
                 for p, score in zip(protocols, security_scores)
             ],
             "best": protocols[security_scores.index(max(security_scores))].protocol_name
-            if security_scores else None,
+            if security_scores
+            else None,
         }
 
     def _compare_network(self, protocols: List[ProtocolMetrics]) -> dict:
@@ -277,16 +273,11 @@ class ProtocolComparisonService:
         winners = {}
 
         if "risk" in dimensions:
-            winners["safest"] = min(
-                protocols, key=lambda p: p.risk_score
-            ).protocol_name
+            winners["safest"] = min(protocols, key=lambda p: p.risk_score).protocol_name
 
         if "yield" in dimensions:
             max_apys = [
-                max(
-                    filter(None, [p.apy_supply, p.apy_borrow, p.apy_stake]),
-                    default=0
-                )
+                max(filter(None, [p.apy_supply, p.apy_borrow, p.apy_stake]), default=0)
                 for p in protocols
             ]
             if max_apys:
@@ -301,8 +292,7 @@ class ProtocolComparisonService:
 
         if "network" in dimensions:
             winners["most_active"] = max(
-                protocols,
-                key=lambda p: p.transaction_count_24h or 0
+                protocols, key=lambda p: p.transaction_count_24h or 0
             ).protocol_name
 
         # Overall winner (balanced across all dimensions)
@@ -310,9 +300,7 @@ class ProtocolComparisonService:
 
         return winners
 
-    def _calculate_balanced_winner(
-        self, protocols: List[ProtocolMetrics]
-    ) -> str:
+    def _calculate_balanced_winner(self, protocols: List[ProtocolMetrics]) -> str:
         """Calculate overall best protocol considering all factors."""
         # Scoring: low risk + high yield + high security + high activity
         scores = []
@@ -321,8 +309,7 @@ class ProtocolComparisonService:
             # Normalize scores to 0-100 scale
             risk_score = (10 - p.risk_score) * 10  # Lower is better
             yield_score = max(
-                filter(None, [p.apy_supply, p.apy_borrow, p.apy_stake]),
-                default=0
+                filter(None, [p.apy_supply, p.apy_borrow, p.apy_stake]), default=0
             )
             security_score = (p.audit_count * 10) - (p.vulnerability_count * 5)
             activity_score = (p.transaction_count_24h or 0) / 1000  # Normalized
@@ -344,10 +331,7 @@ class ProtocolComparisonService:
         # Risk vs Yield tradeoff
         risk_scores = [p.risk_score for p in protocols]
         yields = [
-            max(
-                filter(None, [p.apy_supply, p.apy_borrow, p.apy_stake]),
-                default=0
-            )
+            max(filter(None, [p.apy_supply, p.apy_borrow, p.apy_stake]), default=0)
             for p in protocols
         ]
 
@@ -359,7 +343,7 @@ class ProtocolComparisonService:
                 tradeoffs.append({
                     "dimension": "Risk vs Yield",
                     "description": f"{safest.protocol_name} is safest (risk: {safest.risk_score:.1f}) "
-                                   f"but {highest_yield.protocol_name} offers higher yield ({max(yields):.1f}% APY)",
+                    f"but {highest_yield.protocol_name} offers higher yield ({max(yields):.1f}% APY)",
                 })
 
         # TVL vs Risk tradeoff
@@ -370,15 +354,13 @@ class ProtocolComparisonService:
             tradeoffs.append({
                 "dimension": "Size vs Safety",
                 "description": f"{largest_tvl.protocol_name} has largest TVL "
-                               f"(${largest_tvl.tvl_usd/1e9:.1f}B) but "
-                               f"{safest.protocol_name} is safer (risk: {safest.risk_score:.1f})",
+                f"(${largest_tvl.tvl_usd / 1e9:.1f}B) but "
+                f"{safest.protocol_name} is safer (risk: {safest.risk_score:.1f})",
             })
 
         return tradeoffs
 
-    async def _generate_recommendation(
-        self, protocols: List[ProtocolMetrics]
-    ) -> dict:
+    async def _generate_recommendation(self, protocols: List[ProtocolMetrics]) -> dict:
         """Generate AI-powered recommendation."""
         # Calculate balanced winner
         balanced_winner = self._calculate_balanced_winner(protocols)
@@ -387,10 +369,9 @@ class ProtocolComparisonService:
         return {
             "recommended_protocol": balanced_winner,
             "reason": f"Best balance of safety (risk: {winner.risk_score:.1f}), "
-                      f"yield, and security across all compared protocols",
+            f"yield, and security across all compared protocols",
             "confidence": 0.85,  # TODO: Calculate based on data quality
             "alternatives": [
-                p.protocol_name for p in protocols
-                if p.protocol_name != balanced_winner
+                p.protocol_name for p in protocols if p.protocol_name != balanced_winner
             ],
         }

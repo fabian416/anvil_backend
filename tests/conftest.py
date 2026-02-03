@@ -40,7 +40,9 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "chat: Chat/conversation tests")
     config.addinivalue_line("markers", "subscription: Subscription tests")
     config.addinivalue_line("markers", "defi: DeFi protocol tests")
-    config.addinivalue_line("markers", "llm_validation: Tests with optional LLM semantic validation")
+    config.addinivalue_line(
+        "markers", "llm_validation: Tests with optional LLM semantic validation"
+    )
     config.addinivalue_line("markers", "no_db: Tests that don't need database cleanup")
 
 
@@ -107,7 +109,9 @@ async def test_app(test_settings, monkeypatch):
         # System uses Vertex AI (primary) + DeepInfra (fallback)
         monkeypatch.setenv("VERTEX_AI_API_KEY", "test_vertex_key_not_used")
         monkeypatch.setenv("DEEPINFRA_API_KEY", "test_deepinfra_key_not_used")
-        monkeypatch.setenv("OPENAI_API_KEY", "test_openai_key_not_used")  # Some legacy code still checks
+        monkeypatch.setenv(
+            "OPENAI_API_KEY", "test_openai_key_not_used"
+        )  # Some legacy code still checks
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test_anthropic_key_not_used")
 
         # Load original settings
@@ -176,10 +180,15 @@ async def client(test_app):
     """
     try:
         from httpx import AsyncClient, ASGITransport
-        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
             yield ac
     except ImportError as e:
-        pytest.skip(f"AsyncClient not available - install httpx for integration tests: {e}")
+        pytest.skip(
+            f"AsyncClient not available - install httpx for integration tests: {e}"
+        )
 
 
 @pytest.fixture
@@ -210,16 +219,17 @@ def test_db_engine():
 
     # Create PostgreSQL test database engine using environment variables
     import os
+
     db_user = os.getenv("POSTGRES_USER", "postgres")
     db_password = os.getenv("POSTGRES_PASSWORD", "postgres")
     db_host = os.getenv("POSTGRES_HOST", "localhost")
     db_port = os.getenv("POSTGRES_PORT", "5432")
     db_name = os.getenv("POSTGRES_DB", "anvil_test")
-    
+
     engine = create_engine(
         f"postgresql+psycopg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}",
         pool_pre_ping=True,
-        echo=False
+        echo=False,
     )
 
     # Create all tables in PostgreSQL test database
@@ -274,7 +284,7 @@ async def cleanup_database(request, test_db_engine):
     async_engine = create_async_engine(
         "postgresql+asyncpg://anvil:changethis@localhost:5432/anvil_test",
         pool_pre_ping=True,
-        echo=False
+        echo=False,
     )
 
     # Tables to clean (except alembic_version)
@@ -293,7 +303,9 @@ async def cleanup_database(request, test_db_engine):
     async with async_engine.begin() as connection:
         for table in tables:
             try:
-                await connection.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
+                await connection.execute(
+                    text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE")
+                )
             except Exception:
                 # Table might not exist, ignore
                 pass
@@ -304,7 +316,9 @@ async def cleanup_database(request, test_db_engine):
     async with async_engine.begin() as connection:
         for table in tables:
             try:
-                await connection.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
+                await connection.execute(
+                    text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE")
+                )
             except Exception:
                 pass
 
@@ -314,19 +328,21 @@ async def cleanup_database(request, test_db_engine):
 @pytest_asyncio.fixture
 async def async_db_session(test_db_engine):
     """Create async test database session for async repositories."""
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.ext.asyncio import (
+        create_async_engine,
+        async_sessionmaker,
+        AsyncSession,
+    )
 
     # Create async engine using asyncpg driver
     async_engine = create_async_engine(
         "postgresql+asyncpg://anvil:changethis@localhost:5432/anvil_test",
         pool_pre_ping=True,
-        echo=False
+        echo=False,
     )
 
     async_session_maker = async_sessionmaker(
-        async_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
+        async_engine, class_=AsyncSession, expire_on_commit=False
     )
 
     async with async_session_maker() as session:
@@ -343,16 +359,20 @@ def test_user(test_db_session):
 
     # Insert a test user directly using SQL to avoid entity mapping complexity
     # Note: UserRole enum uses lowercase values: 'user', 'admin', 'moderator', 'guest'
-    test_db_session.execute(text("""
+    test_db_session.execute(
+        text("""
         INSERT INTO users (id, email, first_name, last_name, role, is_active, is_blocked, is_verified, retry_count, language)
         VALUES (123, 'test@example.com', 'Test', 'User', 'user', true, false, true, 0, 'en')
         ON CONFLICT (id) DO NOTHING
-    """))
-    test_db_session.execute(text("""
+    """)
+    )
+    test_db_session.execute(
+        text("""
         INSERT INTO users (id, email, first_name, last_name, role, is_active, is_blocked, is_verified, retry_count, language)
         VALUES (456, 'test2@example.com', 'Test2', 'User2', 'user', true, false, true, 0, 'en')
         ON CONFLICT (id) DO NOTHING
-    """))
+    """)
+    )
     test_db_session.commit()
 
     yield 123  # Return the first user ID
@@ -367,16 +387,20 @@ async def async_test_user(async_db_session):
 
     # Insert a test user directly using SQL to avoid entity mapping complexity
     # Note: UserRole enum uses lowercase values: 'user', 'admin', 'moderator', 'guest'
-    await async_db_session.execute(text("""
+    await async_db_session.execute(
+        text("""
         INSERT INTO users (id, email, first_name, last_name, role, is_active, is_blocked, is_verified, retry_count, language)
         VALUES (123, 'test@example.com', 'Test', 'User', 'user', true, false, true, 0, 'en')
         ON CONFLICT (id) DO NOTHING
-    """))
-    await async_db_session.execute(text("""
+    """)
+    )
+    await async_db_session.execute(
+        text("""
         INSERT INTO users (id, email, first_name, last_name, role, is_active, is_blocked, is_verified, retry_count, language)
         VALUES (456, 'test2@example.com', 'Test2', 'User2', 'user', true, false, true, 0, 'en')
         ON CONFLICT (id) DO NOTHING
-    """))
+    """)
+    )
     await async_db_session.commit()
 
     yield 123  # Return the first user ID
@@ -390,9 +414,11 @@ def user_id_generator():
     """Mock user ID generator for UserService tests."""
     generator = MagicMock()
     counter = [0]
+
     def gen():
         counter[0] += 1
         return counter[0]
+
     generator.side_effect = gen
     generator.return_value = 1
     return generator

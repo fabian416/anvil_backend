@@ -119,7 +119,9 @@ class UserChatAnalyticsService:
 
         # Build top agents list
         top_agents = []
-        total_invocations = sum(stats["total_invocations"] for stats in agent_stats.values())
+        total_invocations = sum(
+            stats["total_invocations"] for stats in agent_stats.values()
+        )
 
         for agent_type, stats in sorted(
             agent_stats.items(),
@@ -170,7 +172,9 @@ class UserChatAnalyticsService:
         recent_conversations = []
         for analytics in recent_analytics:
             # Extract agents used from agent_usage
-            agents_used = list(analytics.agent_usage.keys()) if analytics.agent_usage else []
+            agents_used = (
+                list(analytics.agent_usage.keys()) if analytics.agent_usage else []
+            )
 
             # Calculate duration in seconds
             duration_seconds = 0.0
@@ -268,7 +272,9 @@ class UserChatAnalyticsService:
         )
 
         # Calculate total session time and average duration
-        total_session_time_hours = aggregates.get("total_duration_seconds", 0.0) / 3600.0
+        total_session_time_hours = (
+            aggregates.get("total_duration_seconds", 0.0) / 3600.0
+        )
         avg_session_duration_minutes = (
             aggregates.get("avg_duration_seconds", 0.0) / 60.0
         )
@@ -325,9 +331,7 @@ class UserChatAnalyticsService:
             else 0.0
         )
         avg_daily_messages = (
-            aggregates["total_messages"] / days_in_period
-            if days_in_period > 0
-            else 0.0
+            aggregates["total_messages"] / days_in_period if days_in_period > 0 else 0.0
         )
 
         # Get all conversations to find longest
@@ -372,7 +376,10 @@ class UserChatAnalyticsService:
         conversation_growth = 0.0
         if previous_aggregates["total_conversations"] > 0:
             conversation_growth = (
-                (aggregates["total_conversations"] - previous_aggregates["total_conversations"])
+                (
+                    aggregates["total_conversations"]
+                    - previous_aggregates["total_conversations"]
+                )
                 / previous_aggregates["total_conversations"]
                 * 100
             )
@@ -464,15 +471,15 @@ class UserChatAnalyticsService:
                         total_agent_switches += num_agents - 1
 
         avg_agent_switches_per_conversation = (
-            total_agent_switches / len(all_conversations)
-            if all_conversations
-            else 0.0
+            total_agent_switches / len(all_conversations) if all_conversations else 0.0
         )
 
         # Build topic distribution from agent usage (simplified - using agent types as proxies for topics)
         # In a real implementation, this would use NLP/topic modeling
         topic_distribution = []
-        total_invocations = sum(stats["total_invocations"] for stats in agent_stats.values())
+        total_invocations = sum(
+            stats["total_invocations"] for stats in agent_stats.values()
+        )
 
         # Map agent types to topic categories
         agent_topic_map = {
@@ -489,9 +496,15 @@ class UserChatAnalyticsService:
             key=lambda x: x[1]["total_invocations"],
             reverse=True,
         )[:5]:  # Top 5 topics
-            topic_name = agent_topic_map.get(agent_type, agent_type.replace("_", " ").title())
+            topic_name = agent_topic_map.get(
+                agent_type, agent_type.replace("_", " ").title()
+            )
             invocations = stats["total_invocations"]
-            percentage = (invocations / total_invocations * 100) if total_invocations > 0 else 0.0
+            percentage = (
+                (invocations / total_invocations * 100)
+                if total_invocations > 0
+                else 0.0
+            )
 
             # Generate keywords from agent type
             keywords = agent_type.split("_")
@@ -539,7 +552,8 @@ class UserChatAnalyticsService:
             avg_conversation_duration_minutes=avg_conversation_duration_minutes,
             most_discussed_topics=topic_distribution,
             question_types=question_types,
-            avg_time_to_decision_minutes=avg_conversation_duration_minutes * 0.75,  # Estimate
+            avg_time_to_decision_minutes=avg_conversation_duration_minutes
+            * 0.75,  # Estimate
             most_productive_time=most_productive_time,
         )
 
@@ -578,7 +592,7 @@ class UserChatAnalyticsService:
             )
         elif completion_rate > 0.9:
             productivity_tips.append(
-                f"Excellent conversation completion rate ({completion_rate*100:.1f}%) - keep up the focused approach!"
+                f"Excellent conversation completion rate ({completion_rate * 100:.1f}%) - keep up the focused approach!"
             )
 
         if not productivity_tips:
@@ -656,15 +670,11 @@ class UserChatAnalyticsService:
         total_tokens_used = aggregates.get("total_tokens", 0)
 
         avg_cost_per_conversation = (
-            total_cost_usd / total_conversations
-            if total_conversations > 0
-            else 0.0
+            total_cost_usd / total_conversations if total_conversations > 0 else 0.0
         )
 
         avg_cost_per_message = (
-            total_cost_usd / total_messages
-            if total_messages > 0
-            else 0.0
+            total_cost_usd / total_messages if total_messages > 0 else 0.0
         )
 
         # Find most expensive agent
@@ -686,9 +696,8 @@ class UserChatAnalyticsService:
         cost_trend = "stable"
         if previous_aggregates["total_cost_usd"] > 0:
             cost_change = (
-                (total_cost_usd - previous_aggregates["total_cost_usd"])
-                / previous_aggregates["total_cost_usd"]
-            )
+                total_cost_usd - previous_aggregates["total_cost_usd"]
+            ) / previous_aggregates["total_cost_usd"]
             if cost_change > 0.1:
                 cost_trend = "increasing"
             elif cost_change < -0.1:
@@ -745,16 +754,18 @@ class UserChatAnalyticsService:
 
         # Calculate average tokens per conversation
         avg_tokens_per_conversation = (
-            total_tokens_used / total_conversations
-            if total_conversations > 0
-            else 0.0
+            total_tokens_used / total_conversations if total_conversations > 0 else 0.0
         )
 
         # Generate cost-saving tips based on actual usage
         cost_saving_tips = []
 
         # Tip 1: Model selection
-        if cost_by_model.get("gpt-4", 0) / total_cost_usd > 0.8 if total_cost_usd > 0 else False:
+        if (
+            cost_by_model.get("gpt-4", 0) / total_cost_usd > 0.8
+            if total_cost_usd > 0
+            else False
+        ):
             cost_saving_tips.append(
                 "Consider using gpt-3.5-turbo for simpler queries - it's 10x cheaper than gpt-4"
             )
@@ -768,11 +779,13 @@ class UserChatAnalyticsService:
 
         # Tip 3: Agent optimization
         if cost_by_agent and len(cost_by_agent) > 1:
-            sorted_agents = sorted(cost_by_agent.items(), key=lambda x: x[1], reverse=True)
+            sorted_agents = sorted(
+                cost_by_agent.items(), key=lambda x: x[1], reverse=True
+            )
             top_agent, top_cost = sorted_agents[0]
             if top_cost / total_cost_usd > 0.5 if total_cost_usd > 0 else False:
                 cost_saving_tips.append(
-                    f"'{top_agent}' accounts for {(top_cost/total_cost_usd*100):.1f}% of your costs - "
+                    f"'{top_agent}' accounts for {(top_cost / total_cost_usd * 100):.1f}% of your costs - "
                     "explore alternative agents for similar tasks"
                 )
 
@@ -846,7 +859,9 @@ class UserChatAnalyticsService:
         )
 
         # Calculate total invocations
-        total_invocations = sum(stats["total_invocations"] for stats in agent_stats.values())
+        total_invocations = sum(
+            stats["total_invocations"] for stats in agent_stats.values()
+        )
 
         # Build favorite agents list
         favorite_agents = []
@@ -888,9 +903,7 @@ class UserChatAnalyticsService:
                         total_agent_switches += num_agents - 1
 
         agent_switching_frequency = (
-            total_agent_switches / len(all_conversations)
-            if all_conversations
-            else 0.0
+            total_agent_switches / len(all_conversations) if all_conversations else 0.0
         )
 
         # Build preferred_agent_for_task (simplified - using top agents for categories)
@@ -911,8 +924,7 @@ class UserChatAnalyticsService:
             }
             if category_agents:
                 preferred = max(
-                    category_agents.items(),
-                    key=lambda x: x[1]["total_invocations"]
+                    category_agents.items(), key=lambda x: x[1]["total_invocations"]
                 )[0]
                 preferred_agent_for_task[task_category] = preferred
 
@@ -920,16 +932,14 @@ class UserChatAnalyticsService:
         best_performing_agent = "none"
         if agent_stats:
             best_performing_agent = max(
-                agent_stats.items(),
-                key=lambda x: x[1]["avg_success_rate"]
+                agent_stats.items(), key=lambda x: x[1]["avg_success_rate"]
             )[0]
 
         # Find fastest agent (lowest response time)
         fastest_agent = "none"
         if agent_stats:
             fastest_agent = min(
-                agent_stats.items(),
-                key=lambda x: x[1]["avg_execution_time_ms"]
+                agent_stats.items(), key=lambda x: x[1]["avg_execution_time_ms"]
             )[0]
 
         # Find most cost-effective agent (lowest cost per invocation)
@@ -944,21 +954,28 @@ class UserChatAnalyticsService:
 
             if cost_efficiency:
                 most_cost_effective_agent = min(
-                    cost_efficiency.items(),
-                    key=lambda x: x[1]
+                    cost_efficiency.items(), key=lambda x: x[1]
                 )[0]
 
         # Recommend new agents (agents with high success rates that user hasn't used much)
         # For now, simplified recommendation logic
         recommended_new_agents = []
         all_possible_agents = [
-            "risk_analyzer", "security_auditor", "yield_optimizer",
-            "portfolio_manager", "defi_strategist", "market_analyzer",
-            "morpho_analyzer", "bridge_optimizer", "hunter_ai"
+            "risk_analyzer",
+            "security_auditor",
+            "yield_optimizer",
+            "portfolio_manager",
+            "defi_strategist",
+            "market_analyzer",
+            "morpho_analyzer",
+            "bridge_optimizer",
+            "hunter_ai",
         ]
 
         used_agents = set(agent_stats.keys())
-        unused_agents = [agent for agent in all_possible_agents if agent not in used_agents]
+        unused_agents = [
+            agent for agent in all_possible_agents if agent not in used_agents
+        ]
         recommended_new_agents = unused_agents[:2]  # Recommend up to 2 new agents
 
         return FavoriteAgentsResponse(
@@ -992,7 +1009,9 @@ class UserChatAnalyticsService:
         Returns:
             Historical trends
         """
-        logger.info(f"Getting historical trends for user {user_id}, granularity: {granularity}")
+        logger.info(
+            f"Getting historical trends for user {user_id}, granularity: {granularity}"
+        )
 
         # Convert user_id to UUID
         user_uuid = UUID(int=user_id)
@@ -1042,7 +1061,9 @@ class UserChatAnalyticsService:
 
         # Build conversation trend
         total_conversations = aggregates["total_conversations"]
-        avg_conversations = total_conversations / days_in_period if days_in_period > 0 else 0.0
+        avg_conversations = (
+            total_conversations / days_in_period if days_in_period > 0 else 0.0
+        )
 
         conversation_change = 0.0
         conversation_direction = "stable"
@@ -1131,11 +1152,15 @@ class UserChatAnalyticsService:
                 day_totals[day_name] += day_data["message_count"]
 
             # Get top 2 days
-            sorted_days = sorted(day_totals.items(), key=lambda x: x[1], reverse=True)[:2]
+            sorted_days = sorted(day_totals.items(), key=lambda x: x[1], reverse=True)[
+                :2
+            ]
             for day_name, total_messages in sorted_days:
                 # Estimate activity score as percentage of max
                 max_total = sorted_days[0][1] if sorted_days else 1
-                activity_score = int((total_messages / max_total * 100)) if max_total > 0 else 0
+                activity_score = (
+                    int((total_messages / max_total * 100)) if max_total > 0 else 0
+                )
                 peak_usage_times.append({
                     "day": day_name,
                     "hour": 14,  # Default hour (would need hourly data from repository)
@@ -1151,8 +1176,10 @@ class UserChatAnalyticsService:
 
             if avg_messages_per_day > 0:
                 # Calculate coefficient of variation (lower = more consistent)
-                variance = sum((x - avg_messages_per_day) ** 2 for x in message_counts) / len(message_counts)
-                std_dev = variance ** 0.5
+                variance = sum(
+                    (x - avg_messages_per_day) ** 2 for x in message_counts
+                ) / len(message_counts)
+                std_dev = variance**0.5
                 cv = std_dev / avg_messages_per_day
 
                 # Convert to 0-1 score (lower CV = higher score)
@@ -1218,7 +1245,9 @@ class UserChatAnalyticsService:
         # Build conversation summaries
         conversations = []
         for analytics in conversation_analytics[:limit]:
-            agents_used = list(analytics.agent_usage.keys()) if analytics.agent_usage else []
+            agents_used = (
+                list(analytics.agent_usage.keys()) if analytics.agent_usage else []
+            )
 
             duration_seconds = 0.0
             if analytics.first_message_at and analytics.last_message_at:
@@ -1228,7 +1257,9 @@ class UserChatAnalyticsService:
             # Determine primary topic from most used agent (simplified)
             primary_topic = None
             if analytics.agent_usage:
-                primary_agent = max(analytics.agent_usage.items(), key=lambda x: x[1])[0]
+                primary_agent = max(analytics.agent_usage.items(), key=lambda x: x[1])[
+                    0
+                ]
                 primary_topic = primary_agent.replace("_", " ").title()
 
             conversations.append(
@@ -1267,7 +1298,9 @@ class UserChatAnalyticsService:
         )[:3]
 
         for agent_type, _ in sorted_agents:
-            topic = agent_topic_map.get(agent_type, agent_type.replace("_", " ").title())
+            topic = agent_topic_map.get(
+                agent_type, agent_type.replace("_", " ").title()
+            )
             most_common_topics.append(topic)
 
         # Build agent usage distribution
@@ -1411,8 +1444,9 @@ class UserChatAnalyticsService:
 
         # Calculate approximate file size (simplified)
         import json
+
         json_str = json.dumps(export_data)
-        file_size_bytes = len(json_str.encode('utf-8'))
+        file_size_bytes = len(json_str.encode("utf-8"))
 
         return UserExportDataResponse(
             export_format=export_format,

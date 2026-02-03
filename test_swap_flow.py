@@ -17,7 +17,9 @@ import os
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
-from app.application.guest.handlers.moonpay_swap_multistep import MoonPaySwapMultiStepHandler
+from app.application.guest.handlers.moonpay_swap_multistep import (
+    MoonPaySwapMultiStepHandler,
+)
 from app.application.guest.handlers.moonpay_swap import MoonPaySwapHandler
 
 
@@ -51,8 +53,8 @@ async def test_flow():
         content="BTC",
         language="en",
         is_authenticated=False,
-        continuation_step=result.get('pending_action'),
-        previous_swap_info=result.get('swap_info'),
+        continuation_step=result.get("pending_action"),
+        previous_swap_info=result.get("swap_info"),
     )
     print(f"Bot: {result['content'][:100]}...")
     print(f"Pending action: {result.get('pending_action')}")
@@ -64,8 +66,8 @@ async def test_flow():
         content="ETH",
         language="en",
         is_authenticated=False,
-        continuation_step=result.get('pending_action'),
-        previous_swap_info=result.get('swap_info'),
+        continuation_step=result.get("pending_action"),
+        previous_swap_info=result.get("swap_info"),
     )
     print(f"Bot: {result['content'][:100]}...")
     print(f"Pending action: {result.get('pending_action')}")
@@ -77,8 +79,8 @@ async def test_flow():
         content="1",
         language="en",
         is_authenticated=False,
-        continuation_step=result.get('pending_action'),
-        previous_swap_info=result.get('swap_info'),
+        continuation_step=result.get("pending_action"),
+        previous_swap_info=result.get("swap_info"),
     )
     print(f"Bot: {result['content'][:150]}...")
     print(f"Pending action: {result.get('pending_action')}")
@@ -90,8 +92,8 @@ async def test_flow():
         content="confirm",
         language="en",
         is_authenticated=False,
-        continuation_step=result.get('pending_action'),
-        previous_swap_info=result.get('swap_info'),
+        continuation_step=result.get("pending_action"),
+        previous_swap_info=result.get("swap_info"),
     )
     print(f"Bot: {result['content']}")
     print(f"Requires registration: {result.get('requires_registration')}")

@@ -10,7 +10,9 @@ authenticated users:
 import logging
 from dishka import Provider, Scope, provide
 from app.application.chat.services.user_context_service import UserContextService
-from app.application.chat.services.response_template_service import ResponseTemplateService
+from app.application.chat.services.response_template_service import (
+    ResponseTemplateService,
+)
 from app.domain.ports.chat_repository import (
     ChatUserRepository,
     ChatConversationRepository,
@@ -75,7 +77,7 @@ class ChatProvider(Provider):
     ) -> UserContextRepository:
         """
         Provide UserContextRepository implementation.
-        
+
         Used for context-aware agent responses - stores pre-computed
         user classification data (portfolio state, activity level, user type).
         """
@@ -88,7 +90,7 @@ class ChatProvider(Provider):
     ) -> WalletBalancePort:
         """
         Provide WalletBalancePort implementation.
-        
+
         Used for aggregating wallet balances from local DB tables
         (wallets, chain_addresses, portfolio_snapshots) to calculate
         accurate portfolio_state classification.
@@ -102,7 +104,7 @@ class ChatProvider(Provider):
     ) -> AnalyticsRepository:
         """
         Provide AnalyticsRepository implementation.
-        
+
         Used for persisting and querying user context analytics snapshots.
         Supports daily/weekly/monthly snapshots, trends, and cohort analysis.
         """
@@ -120,12 +122,12 @@ class ChatProvider(Provider):
     ) -> UserContextService:
         """
         Provide UserContextService for context-aware agents.
-        
+
         This service:
         1. Creates context for new users (privy-login)
         2. Updates context periodically (Celery task)
         3. Provides context for chat sessions
-        
+
         The wallet_balance_adapter enables accurate portfolio_state
         classification based on real wallet balances.
         """
@@ -144,7 +146,7 @@ class ChatProvider(Provider):
     ) -> UserContextService | None:
         """
         Provide Optional[UserContextService] for backwards compatibility.
-        
+
         Some commands (like PrivyLogin) declare UserContextService as optional
         to maintain backwards compatibility. This provider bridges the gap
         between the required service and the optional type hint.
@@ -158,7 +160,7 @@ class ChatProvider(Provider):
     ) -> ChatUserRepository | None:
         """
         Provide Optional[ChatUserRepository] for backwards compatibility.
-        
+
         Some commands (like PrivyLogin) declare ChatUserRepository as optional
         to maintain backwards compatibility.
         """
@@ -168,12 +170,12 @@ class ChatProvider(Provider):
     def provide_response_template_service(self) -> ResponseTemplateService:
         """
         Provide ResponseTemplateService for context-aware agents.
-        
+
         This service loads and serves pre-defined response templates
-        based on user classification (portfolio state, activity level, 
+        based on user classification (portfolio state, activity level,
         user type). Templates are loaded once at app startup and cached
         in memory.
-        
+
         Benefits:
         - Reduces LLM calls for common scenarios
         - Ensures consistent, localized messaging

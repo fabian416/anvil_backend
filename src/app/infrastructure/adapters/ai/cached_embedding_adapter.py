@@ -290,9 +290,7 @@ class CachedEmbeddingAdapter:
             if self._enable_stats:
                 self._stats.api_calls += 1
 
-            new_embeddings = await self._service.embed_texts(
-                uncached_texts, input_type
-            )
+            new_embeddings = await self._service.embed_texts(uncached_texts, input_type)
 
             # Store new embeddings in cache and update results
             for idx, text, embedding in zip(
@@ -462,9 +460,7 @@ class CachedEmbeddingAdapter:
 
         try:
             while True:
-                cursor, keys = await self._redis.scan(
-                    cursor, match=pattern, count=100
-                )
+                cursor, keys = await self._redis.scan(cursor, match=pattern, count=100)
 
                 if keys:
                     await self._redis.delete(*keys)

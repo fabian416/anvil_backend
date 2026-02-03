@@ -160,7 +160,9 @@ class DeepInfraAdapter:
             payload["tools"] = request.tools
 
         try:
-            async with self._client.stream("POST", "/chat/completions", json=payload) as response:
+            async with self._client.stream(
+                "POST", "/chat/completions", json=payload
+            ) as response:
                 response.raise_for_status()
 
                 async for line in response.aiter_lines():
@@ -236,7 +238,9 @@ class DeepInfraAdapter:
         """
         return [{"role": msg.role, "content": msg.content} for msg in messages]
 
-    def _parse_response(self, data: Dict[str, Any], model_id: str, latency_ms: int) -> LLMResponse:
+    def _parse_response(
+        self, data: Dict[str, Any], model_id: str, latency_ms: int
+    ) -> LLMResponse:
         """
         Parse OpenAI-format response.
 

@@ -88,7 +88,7 @@ class TestGetMyWalletsHandler:
     def mock_wallet_provider(self):
         """Create a mock EmbeddedWalletProviderPort."""
         provider = MagicMock(spec=EmbeddedWalletProviderPort)
-        
+
         # Default: return empty list
         provider.list_user_wallets = AsyncMock(return_value=[])
         return provider
@@ -97,7 +97,7 @@ class TestGetMyWalletsHandler:
     def mock_wallet_repository(self):
         """Create a mock WalletRepository."""
         repo = MagicMock(spec=WalletRepository)
-        
+
         # Default: return empty list for imported wallets
         repo.get_by_user_and_provider = AsyncMock(return_value=[])
         return repo
@@ -110,7 +110,13 @@ class TestGetMyWalletsHandler:
         return settings
 
     @pytest.fixture
-    def handler(self, mock_current_user_service, mock_wallet_provider, mock_wallet_repository, mock_privy_settings):
+    def handler(
+        self,
+        mock_current_user_service,
+        mock_wallet_provider,
+        mock_wallet_repository,
+        mock_privy_settings,
+    ):
         """Create handler instance."""
         return GetMyWalletsHandler(
             current_user_service=mock_current_user_service,
@@ -123,15 +129,17 @@ class TestGetMyWalletsHandler:
     async def test_get_wallets_from_privy_only(self, handler, mock_wallet_provider):
         """Test getting wallets from Privy only."""
         # Setup Privy wallets
-        mock_wallet_provider.list_user_wallets = AsyncMock(return_value=[
-            WalletInfo(
-                wallet_id="wallet_1",
-                address="0x1234567890abcdef1234567890abcdef12345678",
-                chain_type=ProviderChainType.ETHEREUM,
-                wallet_type=WalletType.EMBEDDED,
-                created_at=datetime.utcnow(),
-            ),
-        ])
+        mock_wallet_provider.list_user_wallets = AsyncMock(
+            return_value=[
+                WalletInfo(
+                    wallet_id="wallet_1",
+                    address="0x1234567890abcdef1234567890abcdef12345678",
+                    chain_type=ProviderChainType.ETHEREUM,
+                    wallet_type=WalletType.EMBEDDED,
+                    created_at=datetime.utcnow(),
+                ),
+            ]
+        )
 
         result = await handler.execute()
 
@@ -145,24 +153,32 @@ class TestGetMyWalletsHandler:
 
     @pytest.mark.asyncio
     async def test_get_wallets_from_local_only(
-        self, mock_current_user_service, mock_user_no_privy, 
-        mock_wallet_provider, mock_wallet_repository, mock_privy_settings
+        self,
+        mock_current_user_service,
+        mock_user_no_privy,
+        mock_wallet_provider,
+        mock_wallet_repository,
+        mock_privy_settings,
     ):
         """Test getting wallets from local database only (no Privy)."""
         # User without Privy
-        mock_current_user_service.get_current_user = AsyncMock(return_value=mock_user_no_privy)
-        
+        mock_current_user_service.get_current_user = AsyncMock(
+            return_value=mock_user_no_privy
+        )
+
         handler = GetMyWalletsHandler(
             current_user_service=mock_current_user_service,
             wallet_provider=mock_wallet_provider,
             wallet_repository=mock_wallet_repository,
             privy_settings=mock_privy_settings,
         )
-        
+
         # Setup imported wallet in local DB
-        mock_wallet_repository.get_by_user_and_provider = AsyncMock(return_value=[
-            make_wallet(1, 456, "0ximported123"),
-        ])
+        mock_wallet_repository.get_by_user_and_provider = AsyncMock(
+            return_value=[
+                make_wallet(1, 456, "0ximported123"),
+            ]
+        )
 
         result = await handler.execute()
 
@@ -170,9 +186,11 @@ class TestGetMyWalletsHandler:
         assert result.user_id == 456
         assert result.privy_connected is False
         assert len(result.wallets) >= 1
-        
+
         # Find the imported wallet
-        imported_wallet = next((w for w in result.wallets if w.wallet_type == "imported"), None)
+        imported_wallet = next(
+            (w for w in result.wallets if w.wallet_type == "imported"), None
+        )
         assert imported_wallet is not None
         assert imported_wallet.source == "local"
 
@@ -182,31 +200,35 @@ class TestGetMyWalletsHandler:
     ):
         """Test getting wallets from both Privy and local database."""
         # Setup Privy wallet
-        mock_wallet_provider.list_user_wallets = AsyncMock(return_value=[
-            WalletInfo(
-                wallet_id="wallet_privy",
-                address="0x1234567890abcdef1234567890abcdef12345678",
-                chain_type=ProviderChainType.ETHEREUM,
-                wallet_type=WalletType.EMBEDDED,
-                created_at=datetime.utcnow(),
-            ),
-        ])
-        
+        mock_wallet_provider.list_user_wallets = AsyncMock(
+            return_value=[
+                WalletInfo(
+                    wallet_id="wallet_privy",
+                    address="0x1234567890abcdef1234567890abcdef12345678",
+                    chain_type=ProviderChainType.ETHEREUM,
+                    wallet_type=WalletType.EMBEDDED,
+                    created_at=datetime.utcnow(),
+                ),
+            ]
+        )
+
         # Setup imported wallet in local DB
-        mock_wallet_repository.get_by_user_and_provider = AsyncMock(return_value=[
-            make_wallet(1, 123, "0ximportedwallet", chain=ChainType.BASE),
-        ])
+        mock_wallet_repository.get_by_user_and_provider = AsyncMock(
+            return_value=[
+                make_wallet(1, 123, "0ximportedwallet", chain=ChainType.BASE),
+            ]
+        )
 
         result = await handler.execute()
 
         assert isinstance(result, WalletsResponse)
         assert result.privy_connected is True
         assert len(result.wallets) == 2
-        
+
         # Check wallet types
         types = {w.wallet_type for w in result.wallets}
         assert types == {"embedded", "imported"}
-        
+
         # Check sources
         sources = {w.source for w in result.wallets}
         assert sources == {"privy", "local"}
@@ -218,22 +240,26 @@ class TestGetMyWalletsHandler:
         """Test that wallets are deduplicated by address."""
         # Same address in both Privy and local DB
         duplicate_address = "0x1234567890abcdef1234567890abcdef12345678"
-        
+
         # Setup Privy wallet
-        mock_wallet_provider.list_user_wallets = AsyncMock(return_value=[
-            WalletInfo(
-                wallet_id="wallet_privy",
-                address=duplicate_address,
-                chain_type=ProviderChainType.ETHEREUM,
-                wallet_type=WalletType.EMBEDDED,
-                created_at=datetime.utcnow(),
-            ),
-        ])
-        
+        mock_wallet_provider.list_user_wallets = AsyncMock(
+            return_value=[
+                WalletInfo(
+                    wallet_id="wallet_privy",
+                    address=duplicate_address,
+                    chain_type=ProviderChainType.ETHEREUM,
+                    wallet_type=WalletType.EMBEDDED,
+                    created_at=datetime.utcnow(),
+                ),
+            ]
+        )
+
         # Setup same address as imported in local DB
-        mock_wallet_repository.get_by_user_and_provider = AsyncMock(return_value=[
-            make_wallet(1, 123, duplicate_address),
-        ])
+        mock_wallet_repository.get_by_user_and_provider = AsyncMock(
+            return_value=[
+                make_wallet(1, 123, duplicate_address),
+            ]
+        )
 
         result = await handler.execute()
 
@@ -248,33 +274,35 @@ class TestGetMyWalletsHandler:
     ):
         """Test that primary wallet is correctly identified."""
         primary_address = "0x1234567890abcdef1234567890abcdef12345678"
-        
+
         # Setup multiple wallets
-        mock_wallet_provider.list_user_wallets = AsyncMock(return_value=[
-            WalletInfo(
-                wallet_id="wallet_1",
-                address="0xother1111111111111111111111111111111111",
-                chain_type=ProviderChainType.ETHEREUM,
-                wallet_type=WalletType.EMBEDDED,
-                created_at=datetime.utcnow(),
-            ),
-            WalletInfo(
-                wallet_id="wallet_2",
-                address=primary_address,
-                chain_type=ProviderChainType.ETHEREUM,
-                wallet_type=WalletType.EMBEDDED,
-                created_at=datetime.utcnow(),
-            ),
-        ])
+        mock_wallet_provider.list_user_wallets = AsyncMock(
+            return_value=[
+                WalletInfo(
+                    wallet_id="wallet_1",
+                    address="0xother1111111111111111111111111111111111",
+                    chain_type=ProviderChainType.ETHEREUM,
+                    wallet_type=WalletType.EMBEDDED,
+                    created_at=datetime.utcnow(),
+                ),
+                WalletInfo(
+                    wallet_id="wallet_2",
+                    address=primary_address,
+                    chain_type=ProviderChainType.ETHEREUM,
+                    wallet_type=WalletType.EMBEDDED,
+                    created_at=datetime.utcnow(),
+                ),
+            ]
+        )
 
         result = await handler.execute()
 
         assert len(result.wallets) == 2
-        
+
         # Primary wallet should be first
         assert result.wallets[0].is_primary is True
         assert result.wallets[0].address.lower() == primary_address.lower()
-        
+
         # Other wallet should not be primary
         assert result.wallets[1].is_primary is False
 
@@ -284,16 +312,18 @@ class TestGetMyWalletsHandler:
     ):
         """Test that Privy errors are handled gracefully."""
         from app.domain.ports.wallet.embedded_wallet_provider import WalletProviderError
-        
+
         # Privy fails
         mock_wallet_provider.list_user_wallets = AsyncMock(
             side_effect=WalletProviderError("API error", "privy")
         )
-        
+
         # But we have imported wallets
-        mock_wallet_repository.get_by_user_and_provider = AsyncMock(return_value=[
-            make_wallet(1, 123, "0ximported"),
-        ])
+        mock_wallet_repository.get_by_user_and_provider = AsyncMock(
+            return_value=[
+                make_wallet(1, 123, "0ximported"),
+            ]
+        )
 
         result = await handler.execute()
 
@@ -301,9 +331,11 @@ class TestGetMyWalletsHandler:
         assert result.privy_connected is False
         assert result.message is not None  # Error message
         assert len(result.wallets) >= 1
-        
+
         # Imported wallet should be present
-        imported = next((w for w in result.wallets if w.wallet_type == "imported"), None)
+        imported = next(
+            (w for w in result.wallets if w.wallet_type == "imported"), None
+        )
         assert imported is not None
 
     @pytest.mark.asyncio
@@ -312,18 +344,20 @@ class TestGetMyWalletsHandler:
     ):
         """Test that DataMapperError from database is handled gracefully."""
         from app.infrastructure.exceptions.gateway import DataMapperError
-        
+
         # Privy returns wallets successfully
-        mock_wallet_provider.list_user_wallets = AsyncMock(return_value=[
-            WalletInfo(
-                wallet_id="wallet_privy",
-                address="0x1234567890abcdef1234567890abcdef12345678",
-                chain_type=ProviderChainType.ETHEREUM,
-                wallet_type=WalletType.EMBEDDED,
-                created_at=datetime.utcnow(),
-            ),
-        ])
-        
+        mock_wallet_provider.list_user_wallets = AsyncMock(
+            return_value=[
+                WalletInfo(
+                    wallet_id="wallet_privy",
+                    address="0x1234567890abcdef1234567890abcdef12345678",
+                    chain_type=ProviderChainType.ETHEREUM,
+                    wallet_type=WalletType.EMBEDDED,
+                    created_at=datetime.utcnow(),
+                ),
+            ]
+        )
+
         # But database fails
         mock_wallet_repository.get_by_user_and_provider = AsyncMock(
             side_effect=DataMapperError("Database query failed")
@@ -336,7 +370,7 @@ class TestGetMyWalletsHandler:
         assert result.message is not None  # Error message about DB
         assert "database" in result.message.lower()
         assert len(result.wallets) == 1
-        
+
         # Privy wallet should be present
         assert result.wallets[0].source == "privy"
         assert result.wallets[0].wallet_type == "embedded"
@@ -348,7 +382,7 @@ class TestGetMyWalletsHandler:
         """Test behavior when both Privy and database fail."""
         from app.domain.ports.wallet.embedded_wallet_provider import WalletProviderError
         from app.infrastructure.exceptions.gateway import DataMapperError
-        
+
         # Both fail
         mock_wallet_provider.list_user_wallets = AsyncMock(
             side_effect=WalletProviderError("Privy API error", "privy")
@@ -364,7 +398,7 @@ class TestGetMyWalletsHandler:
         assert result.message is not None
         # The primary wallet should still be included as fallback
         assert len(result.wallets) >= 1
-        
+
         # The primary wallet should be from local source
         assert result.wallets[0].source == "local"
         assert result.wallets[0].is_primary is True

@@ -266,7 +266,11 @@ class SupplyInteractor:
         }
 
         # Calculate USD value (approximate)
-        amount_usd = command.amount * asset_market.price_usd if hasattr(asset_market, "price_usd") else command.amount
+        amount_usd = (
+            command.amount * asset_market.price_usd
+            if hasattr(asset_market, "price_usd")
+            else command.amount
+        )
 
         # Save position to database
         position_id = await self._repository.save_supply_position(

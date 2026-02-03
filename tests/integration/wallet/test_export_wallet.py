@@ -49,10 +49,11 @@ async def export_wallet_logic(
 ) -> ExportWalletResponse:
     """
     Core export wallet logic extracted for testing.
-    
+
     This mirrors the endpoint logic without the Dishka @inject decorator.
     """
     import logging
+
     logger = logging.getLogger(__name__)
 
     # Step 1: Get the current authenticated user
@@ -169,15 +170,17 @@ class TestExportWalletEndpoint:
         """Create a mock EmbeddedWalletProviderPort."""
         provider = MagicMock(spec=EmbeddedWalletProviderPort)
         # Default: return a wallet owned by the user
-        provider.list_user_wallets = AsyncMock(return_value=[
-            WalletInfo(
-                wallet_id="wallet_123",
-                address="0x1234567890abcdef1234567890abcdef12345678",
-                chain_type=ProviderChainType.ETHEREUM,
-                wallet_type=WalletType.EMBEDDED,
-                created_at=datetime.now(UTC),
-            ),
-        ])
+        provider.list_user_wallets = AsyncMock(
+            return_value=[
+                WalletInfo(
+                    wallet_id="wallet_123",
+                    address="0x1234567890abcdef1234567890abcdef12345678",
+                    chain_type=ProviderChainType.ETHEREUM,
+                    wallet_type=WalletType.EMBEDDED,
+                    created_at=datetime.now(UTC),
+                ),
+            ]
+        )
         return provider
 
     @pytest.fixture
@@ -191,12 +194,14 @@ class TestExportWalletEndpoint:
     def mock_export_wallet_cmd(self):
         """Create a mock ExportWallet command."""
         cmd = MagicMock(spec=ExportWallet)
-        cmd.execute = AsyncMock(return_value=ExportWalletResult(
-            wallet_id="wallet_123",
-            address="0x1234567890abcdef1234567890abcdef12345678",
-            private_key="0xdeadbeef...",  # Fake private key for testing
-            chain_type="ethereum",
-        ))
+        cmd.execute = AsyncMock(
+            return_value=ExportWalletResult(
+                wallet_id="wallet_123",
+                address="0x1234567890abcdef1234567890abcdef12345678",
+                private_key="0xdeadbeef...",  # Fake private key for testing
+                chain_type="ethereum",
+            )
+        )
         return cmd
 
     @pytest.mark.asyncio
@@ -272,7 +277,9 @@ class TestExportWalletEndpoint:
         """Test 403 when user doesn't have a Privy account."""
         # Setup user without Privy
         current_user_service = MagicMock(spec=CurrentUserService)
-        current_user_service.get_current_user = AsyncMock(return_value=mock_user_without_privy)
+        current_user_service.get_current_user = AsyncMock(
+            return_value=mock_user_without_privy
+        )
 
         request = ExportWalletRequest(
             wallet_id="wallet_123",
@@ -354,7 +361,9 @@ class TestExportWalletEndpoint:
             )
 
         assert exc_info.value.status_code == 500
-        assert "HPKE" in exc_info.value.detail or "failed" in exc_info.value.detail.lower()
+        assert (
+            "HPKE" in exc_info.value.detail or "failed" in exc_info.value.detail.lower()
+        )
 
     @pytest.mark.asyncio
     async def test_export_wallet_provider_error(

@@ -18,15 +18,15 @@ from app.domain.enums.agent_type import AgentType
 @pytest.mark.asyncio
 class TestContextPreservation:
     """Test conversation context preservation."""
-    
+
     @pytest.mark.llm_validation
     async def test_add_and_retrieve_messages(self, mock_storage):
         """Test adding and retrieving conversation messages."""
         manager = ContextManager(storage=mock_storage)
-        
+
         conversation_id = ConversationId(uuid4())
         message_id = MessageId(uuid4())
-        
+
         # Add message
         await manager.add_message(
             conversation_id=conversation_id,
@@ -34,7 +34,7 @@ class TestContextPreservation:
             role="user",
             content="Hello, how are you?",
         )
-        
+
         # Retrieve context
         mock_storage.get_messages.return_value = [
             ConversationMessage(
@@ -46,9 +46,9 @@ class TestContextPreservation:
                 metadata={},
             )
         ]
-        
+
         context = await manager.get_conversation_context(conversation_id)
-        
+
         assert len(context.conversation_history) > 0
         assert context.conversation_history[0]["content"] == "Hello, how are you?"
 
@@ -72,17 +72,15 @@ class TestContextPreservation:
         )
 
         # Should remove oldest 6 messages (11 - 5 = 6)
-        mock_storage.remove_oldest_messages.assert_called_once_with(
-            conversation_id, 6
-        )
+        mock_storage.remove_oldest_messages.assert_called_once_with(conversation_id, 6)
 
     @pytest.mark.llm_validation
     async def test_multi_turn_context(self, mock_storage):
         """Test multi-turn conversation context."""
         manager = ContextManager(storage=mock_storage)
-        
+
         conversation_id = ConversationId(uuid4())
-        
+
         # Simulate 3-turn conversation
         messages = [
             ConversationMessage(
@@ -110,11 +108,11 @@ class TestContextPreservation:
                 metadata={},
             ),
         ]
-        
+
         mock_storage.get_messages.return_value = messages
-        
+
         context = await manager.get_conversation_context(conversation_id)
-        
+
         assert len(context.conversation_history) == 3
         assert context.last_agent_type == AgentType.RESEARCH
         assert context.has_history is True
@@ -123,9 +121,9 @@ class TestContextPreservation:
     async def test_context_with_agent_metadata(self, mock_storage):
         """Test context includes agent metadata."""
         manager = ContextManager(storage=mock_storage)
-        
+
         conversation_id = ConversationId(uuid4())
-        
+
         # Add message with agent metadata
         await manager.add_message(
             conversation_id=conversation_id,
@@ -139,12 +137,12 @@ class TestContextPreservation:
                 "tools_used": ["openai_api", "coingecko_api"],
             },
         )
-        
+
         # Verify metadata stored
         mock_storage.add_message.assert_called_once()
         call_args = mock_storage.add_message.call_args
         message = call_args[0][1]
-        
+
         assert message.agent_type == AgentType.HUNTER_AI
         assert message.metadata["tokens_used"] == 500
 

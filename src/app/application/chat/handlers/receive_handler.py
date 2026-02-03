@@ -83,7 +83,9 @@ class ReceiveHandler:
         self._wallet_provider = wallet_provider
         self._privy_settings = privy_settings
 
-    async def _resolve_user_wallet_address(self, user_id: int) -> tuple[str | None, dict | None]:
+    async def _resolve_user_wallet_address(
+        self, user_id: int
+    ) -> tuple[str | None, dict | None]:
         """
         Resolve wallet address and optional metadata (e.g. ENS) for receive flow.
 
@@ -240,7 +242,7 @@ class ReceiveHandler:
     ) -> str:
         """Format receive info as chat response with improved formatting."""
         chain_emoji = "🔵" if chain == "base" else "⟠"
-        
+
         receive_msgs = {
             "en": {
                 "title": "Receive Funds",
@@ -253,7 +255,7 @@ class ReceiveHandler:
                 "important_tips": [
                     "Only send tokens on the **correct network** to avoid loss",
                     "This address works for **all EVM chains** listed above",
-                    "Double-check the address before sending"
+                    "Double-check the address before sending",
                 ],
                 "tap_to_copy": "Tap address to copy",
                 "currently_viewing": "Currently viewing",
@@ -269,7 +271,7 @@ class ReceiveHandler:
                 "important_tips": [
                     "Solo envía tokens en la **red correcta** para evitar pérdidas",
                     "Esta dirección funciona para **todas las cadenas EVM** listadas arriba",
-                    "Verifica la dirección antes de enviar"
+                    "Verifica la dirección antes de enviar",
                 ],
                 "tap_to_copy": "Toca la dirección para copiar",
                 "currently_viewing": "Viendo actualmente",
@@ -285,7 +287,7 @@ class ReceiveHandler:
                 "important_tips": [
                     "Envie tokens apenas na **rede correta** para evitar perdas",
                     "Este endereço funciona para **todas as redes EVM** listadas acima",
-                    "Verifique o endereço antes de enviar"
+                    "Verifique o endereço antes de enviar",
                 ],
                 "tap_to_copy": "Toque no endereço para copiar",
                 "currently_viewing": "Visualizando atualmente",
@@ -301,13 +303,13 @@ class ReceiveHandler:
                 "important_tips": [
                     "仅在**正确的网络**上发送代币以避免损失",
                     "此地址适用于上面列出的**所有 EVM 链**",
-                    "发送前请仔细检查地址"
+                    "发送前请仔细检查地址",
                 ],
                 "tap_to_copy": "点击地址以复制",
                 "currently_viewing": "当前查看",
             },
         }
-        
+
         msgs = receive_msgs.get(language, receive_msgs["en"])
 
         ens_section = ""
@@ -337,7 +339,7 @@ class ReceiveHandler:
             response += f"• **{network['name']}** ({network['tokens']})\n"
 
         important_tips = "\n".join([f"• {tip}" for tip in msgs["important_tips"]])
-        
+
         response += f"""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -358,30 +360,62 @@ class ReceiveHandler:
                 "message": "You don't have a wallet set up yet.",
                 "header": "To get started:",
                 "options": [
-                    ("🔗", "Connect your wallet", "Link an existing wallet via the app"),
-                    ("✨", "Create embedded wallet", "Set up a new wallet automatically"),
-                    ("💡", "Get help", "Learn more about wallet setup")
-                ]
+                    (
+                        "🔗",
+                        "Connect your wallet",
+                        "Link an existing wallet via the app",
+                    ),
+                    (
+                        "✨",
+                        "Create embedded wallet",
+                        "Set up a new wallet automatically",
+                    ),
+                    ("💡", "Get help", "Learn more about wallet setup"),
+                ],
             },
             "es": {
                 "title": "Billetera No Encontrada",
                 "message": "Aún no tienes una billetera configurada.",
                 "header": "Para comenzar:",
                 "options": [
-                    ("🔗", "Conectar tu billetera", "Vincula una billetera existente vía la app"),
-                    ("✨", "Crear billetera integrada", "Configura una nueva billetera automáticamente"),
-                    ("💡", "Obtener ayuda", "Aprende más sobre la configuración de billetera")
-                ]
+                    (
+                        "🔗",
+                        "Conectar tu billetera",
+                        "Vincula una billetera existente vía la app",
+                    ),
+                    (
+                        "✨",
+                        "Crear billetera integrada",
+                        "Configura una nueva billetera automáticamente",
+                    ),
+                    (
+                        "💡",
+                        "Obtener ayuda",
+                        "Aprende más sobre la configuración de billetera",
+                    ),
+                ],
             },
             "pt": {
                 "title": "Carteira Não Encontrada",
                 "message": "Você ainda não tem uma carteira configurada.",
                 "header": "Para começar:",
                 "options": [
-                    ("🔗", "Conectar sua carteira", "Vincule uma carteira existente via o app"),
-                    ("✨", "Criar carteira integrada", "Configure uma nova carteira automaticamente"),
-                    ("💡", "Obter ajuda", "Saiba mais sobre a configuração de carteira")
-                ]
+                    (
+                        "🔗",
+                        "Conectar sua carteira",
+                        "Vincule uma carteira existente via o app",
+                    ),
+                    (
+                        "✨",
+                        "Criar carteira integrada",
+                        "Configure uma nova carteira automaticamente",
+                    ),
+                    (
+                        "💡",
+                        "Obter ajuda",
+                        "Saiba mais sobre a configuração de carteira",
+                    ),
+                ],
             },
             "zh": {
                 "title": "未找到钱包",
@@ -390,17 +424,17 @@ class ReceiveHandler:
                 "options": [
                     ("🔗", "连接您的钱包", "通过应用链接现有钱包"),
                     ("✨", "创建嵌入式钱包", "自动设置新钱包"),
-                    ("💡", "获取帮助", "了解更多关于钱包设置的信息")
-                ]
+                    ("💡", "获取帮助", "了解更多关于钱包设置的信息"),
+                ],
             },
         }
-        
+
         msgs = no_wallet_msgs.get(language, no_wallet_msgs["en"])
         options_text = "\n".join([
-            f"**{i}.** {emoji} **{title}**\n   {details}" 
+            f"**{i}.** {emoji} **{title}**\n   {details}"
             for i, (emoji, title, details) in enumerate(msgs["options"], 1)
         ])
-        
+
         return f"""📥 **{msgs["title"]}**
 
 {msgs["message"]}

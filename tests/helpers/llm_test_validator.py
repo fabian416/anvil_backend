@@ -139,10 +139,16 @@ class LLMTestValidator:
             enabled: Whether to enable validation (defaults to ENABLE_LLM_VALIDATION env var)
         """
         # Check if LLM validation is enabled (default: true for Phase 3+)
-        self._enabled = enabled if enabled is not None else os.getenv("ENABLE_LLM_VALIDATION", "true").lower() == "true"
+        self._enabled = (
+            enabled
+            if enabled is not None
+            else os.getenv("ENABLE_LLM_VALIDATION", "true").lower() == "true"
+        )
 
         if not self._enabled:
-            logger.info("LLM test validation is DISABLED (set ENABLE_LLM_VALIDATION=true to enable)")
+            logger.info(
+                "LLM test validation is DISABLED (set ENABLE_LLM_VALIDATION=true to enable)"
+            )
             self._client = None
             self._provider = None
             return
@@ -157,7 +163,12 @@ class LLMTestValidator:
                 import tomllib
                 from pathlib import Path
 
-                secrets_path = Path(__file__).parent.parent.parent / "config" / "local" / ".secrets.toml"
+                secrets_path = (
+                    Path(__file__).parent.parent.parent
+                    / "config"
+                    / "local"
+                    / ".secrets.toml"
+                )
                 if secrets_path.exists():
                     with open(secrets_path, "rb") as f:
                         config = tomllib.load(f)
@@ -180,10 +191,16 @@ class LLMTestValidator:
                 # Vertex AI uses Gemini models, not Llama models
                 # Use gemini-2.0-flash (fast, cost-effective, and reliable for validation)
                 # Note: gemini-2.5-pro is a thinking model that requires special handling
-                vertex_model = "gemini-2.0-flash" if model.startswith("meta-llama") else model
-                self._client = LLMClientVertexAI(api_key=vertex_api_key, default_model=vertex_model)
+                vertex_model = (
+                    "gemini-2.0-flash" if model.startswith("meta-llama") else model
+                )
+                self._client = LLMClientVertexAI(
+                    api_key=vertex_api_key, default_model=vertex_model
+                )
                 self._provider = "vertex_ai"
-                logger.info(f"LLM test validator initialized with Vertex AI (primary) using {vertex_model}")
+                logger.info(
+                    f"LLM test validator initialized with Vertex AI (primary) using {vertex_model}"
+                )
             except Exception as e:
                 logger.warning(f"Failed to initialize Vertex AI client: {e}")
                 self._client = None
@@ -193,7 +210,9 @@ class LLMTestValidator:
             try:
                 self._client = LLMClientDeepInfra(api_key=deepinfra_api_key)
                 self._provider = "deepinfra"
-                logger.info(f"LLM test validator initialized with DeepInfra (fallback) - model={model}")
+                logger.info(
+                    f"LLM test validator initialized with DeepInfra (fallback) - model={model}"
+                )
             except Exception as e:
                 logger.warning(f"Failed to initialize DeepInfra client: {e}")
                 self._client = None
@@ -216,7 +235,9 @@ class LLMTestValidator:
         self._metadata_extractor = TestMetadataExtractor()
         self._prompt_generator = ValidationPromptGenerator()
 
-        logger.info(f"LLM test validator ready with {self._provider} provider and custom prompt generation")
+        logger.info(
+            f"LLM test validator ready with {self._provider} provider and custom prompt generation"
+        )
 
     @property
     def enabled(self) -> bool:
@@ -231,7 +252,9 @@ class LLMTestValidator:
         expected_behavior: str,
         conversation_id: Optional[str] = None,
         additional_context: Optional[dict[str, Any]] = None,
-        test_func: Optional[Any] = None,  # NEW: Pass test function for metadata extraction
+        test_func: Optional[
+            Any
+        ] = None,  # NEW: Pass test function for metadata extraction
         conversation_history: Optional[list[dict]] = None,  # NEW: For multi-step tests
     ) -> ValidationResult:
         """
@@ -341,9 +364,13 @@ class LLMTestValidator:
                     result.metadata = ValidationMetadata(
                         test_category=validation_data["test_metadata"]["test_category"],
                         test_type=validation_data["test_metadata"]["test_type"],
-                        expected_intents=validation_data["test_metadata"]["expected_intents"],
+                        expected_intents=validation_data["test_metadata"][
+                            "expected_intents"
+                        ],
                         token_usage=validation_data["test_metadata"]["token_usage"],
-                        validation_latency_ms=validation_data["test_metadata"]["validation_latency_ms"],
+                        validation_latency_ms=validation_data["test_metadata"][
+                            "validation_latency_ms"
+                        ],
                         model_used=validation_data["test_metadata"]["model_used"],
                     )
                 except (KeyError, TypeError) as e:
@@ -352,8 +379,12 @@ class LLMTestValidator:
             if "recommendations" in validation_data:
                 try:
                     result.recommendations = ActionableRecommendations(
-                        improvement_suggestions=validation_data["recommendations"]["improvement_suggestions"],
-                        critical_issues=validation_data["recommendations"]["critical_issues"],
+                        improvement_suggestions=validation_data["recommendations"][
+                            "improvement_suggestions"
+                        ],
+                        critical_issues=validation_data["recommendations"][
+                            "critical_issues"
+                        ],
                         next_steps=validation_data["recommendations"]["next_steps"],
                     )
                 except (KeyError, TypeError) as e:
@@ -454,14 +485,18 @@ class LLMTestValidator:
             validation_time_ms = int((end_time - start_time).total_seconds() * 1000)
 
             # Calculate total tokens used
-            total_tokens = sum(v.tokens_used for v in step_validations) + response.get("tokens_used", 0)
+            total_tokens = sum(v.tokens_used for v in step_validations) + response.get(
+                "tokens_used", 0
+            )
 
             return MultiStepValidationResult(
                 verdict=ValidationVerdict(flow_data.get("verdict", "FAIL")),
                 confidence=flow_data.get("confidence", 0.0),
                 reasoning=flow_data.get("reasoning", ""),
                 step_validations=step_validations,
-                context_consistency_score=flow_data.get("context_consistency_score", 0.0),
+                context_consistency_score=flow_data.get(
+                    "context_consistency_score", 0.0
+                ),
                 tokens_used=total_tokens,
                 validation_time_ms=validation_time_ms,
             )
@@ -472,8 +507,14 @@ class LLMTestValidator:
             validation_time_ms = int((end_time - start_time).total_seconds() * 1000)
 
             # If flow validation fails, determine verdict from step validations
-            step_failures = sum(1 for v in step_validations if v.verdict == ValidationVerdict.FAIL)
-            overall_verdict = ValidationVerdict.FAIL if step_failures > 0 else ValidationVerdict.WARNING
+            step_failures = sum(
+                1 for v in step_validations if v.verdict == ValidationVerdict.FAIL
+            )
+            overall_verdict = (
+                ValidationVerdict.FAIL
+                if step_failures > 0
+                else ValidationVerdict.WARNING
+            )
 
             return MultiStepValidationResult(
                 verdict=overall_verdict,
@@ -497,7 +538,9 @@ class LLMTestValidator:
         """Build validation prompt for single response."""
         context_str = ""
         if additional_context:
-            context_str = f"\n\nAdditional Context:\n{json.dumps(additional_context, indent=2)}"
+            context_str = (
+                f"\n\nAdditional Context:\n{json.dumps(additional_context, indent=2)}"
+            )
 
         conv_str = f"\nConversation ID: {conversation_id}" if conversation_id else ""
 
@@ -536,12 +579,10 @@ Respond with JSON containing:
         step_validations: list[ValidationResult],
     ) -> str:
         """Build validation prompt for multi-step flow."""
-        steps_str = "\n\n".join(
-            [
-                f"Step {i+1}:\n  User: {step['user_input']}\n  Agent: {step['agent_output']}\n  Step Verdict: {step_validations[i].verdict.value}"
-                for i, step in enumerate(steps)
-            ]
-        )
+        steps_str = "\n\n".join([
+            f"Step {i + 1}:\n  User: {step['user_input']}\n  Agent: {step['agent_output']}\n  Step Verdict: {step_validations[i].verdict.value}"
+            for i, step in enumerate(steps)
+        ])
 
         return f"""Validate this multi-step conversation flow:
 

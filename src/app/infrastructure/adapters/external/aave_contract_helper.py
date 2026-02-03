@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 AAVE_FUNCTION_SELECTORS = {
     "supply": "0x617ba037",  # supply(address,uint256,address,uint16)
     "borrow": "0xa415bcad",  # borrow(address,uint256,uint256,uint16,address)
-    "repay": "0x573ade81",   # repay(address,uint256,uint256,address)
-    "withdraw": "0x69328dec", # withdraw(address,uint256,address)
+    "repay": "0x573ade81",  # repay(address,uint256,uint256,address)
+    "withdraw": "0x69328dec",  # withdraw(address,uint256,address)
     "setUserUseReserveAsCollateral": "0x5a3b74b9",  # setUserUseReserveAsCollateral(address,bool)
 }
 
@@ -133,7 +133,9 @@ def encode_borrow_calldata(
     # Concatenate: selector + params
     calldata = f"{selector}{asset}{amount}{rate_mode}{referral}{behalf}"
 
-    logger.debug(f"Generated borrow calldata for {asset_address}, amount: {amount_wei}, rate mode: {interest_rate_mode}")
+    logger.debug(
+        f"Generated borrow calldata for {asset_address}, amount: {amount_wei}, rate mode: {interest_rate_mode}"
+    )
     return calldata
 
 
@@ -202,7 +204,9 @@ def encode_withdraw_calldata(
     # Concatenate: selector + params
     calldata = f"{selector}{asset}{amount}{to}"
 
-    logger.debug(f"Generated withdraw calldata for {asset_address}, amount: {amount_wei}")
+    logger.debug(
+        f"Generated withdraw calldata for {asset_address}, amount: {amount_wei}"
+    )
     return calldata
 
 
@@ -232,7 +236,9 @@ def encode_set_collateral_calldata(
     # Concatenate: selector + params
     calldata = f"{selector}{asset}{use_collateral}"
 
-    logger.debug(f"Generated setUserUseReserveAsCollateral calldata for {asset_address}: {use_as_collateral}")
+    logger.debug(
+        f"Generated setUserUseReserveAsCollateral calldata for {asset_address}: {use_as_collateral}"
+    )
     return calldata
 
 
@@ -251,7 +257,7 @@ def wei_from_decimal(amount: str | Decimal, decimals: int) -> int:
         amount = Decimal(amount)
 
     # Multiply by 10^decimals
-    wei = int(amount * Decimal(10 ** decimals))
+    wei = int(amount * Decimal(10**decimals))
     return wei
 
 
@@ -326,7 +332,9 @@ def generate_borrow_transaction(
         Transaction dictionary with to, data, value fields
     """
     amount_wei = wei_from_decimal(amount, asset_decimals)
-    interest_rate_mode = INTEREST_RATE_VARIABLE if rate_mode == "variable" else INTEREST_RATE_STABLE
+    interest_rate_mode = (
+        INTEREST_RATE_VARIABLE if rate_mode == "variable" else INTEREST_RATE_STABLE
+    )
 
     calldata = encode_borrow_calldata(
         asset_address=asset_address,
@@ -371,7 +379,9 @@ def generate_repay_transaction(
     else:
         amount_wei = wei_from_decimal(amount, asset_decimals)
 
-    interest_rate_mode = INTEREST_RATE_VARIABLE if rate_mode == "variable" else INTEREST_RATE_STABLE
+    interest_rate_mode = (
+        INTEREST_RATE_VARIABLE if rate_mode == "variable" else INTEREST_RATE_STABLE
+    )
 
     calldata = encode_repay_calldata(
         asset_address=asset_address,

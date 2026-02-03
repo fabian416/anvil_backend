@@ -188,8 +188,12 @@ class TemplateExecutorService:
                 )
 
             # Separate parallel and sequential steps
-            parallel_steps = [(idx, step) for idx, step in ready_steps if step.parallel_execution]
-            sequential_steps = [(idx, step) for idx, step in ready_steps if not step.parallel_execution]
+            parallel_steps = [
+                (idx, step) for idx, step in ready_steps if step.parallel_execution
+            ]
+            sequential_steps = [
+                (idx, step) for idx, step in ready_steps if not step.parallel_execution
+            ]
 
             # Execute parallel steps concurrently
             if parallel_steps:
@@ -203,9 +207,7 @@ class TemplateExecutorService:
 
                 for (idx, _), result in zip(parallel_steps, parallel_results):
                     if isinstance(result, Exception):
-                        raise TemplateExecutionError(
-                            f"Step {idx} failed: {result}"
-                        )
+                        raise TemplateExecutionError(f"Step {idx} failed: {result}")
                     outputs[idx] = result
                     completed.add(idx)
 
@@ -218,9 +220,7 @@ class TemplateExecutorService:
                     outputs[idx] = result
                     completed.add(idx)
                 except Exception as e:
-                    raise TemplateExecutionError(
-                        f"Step {idx} failed: {e}"
-                    )
+                    raise TemplateExecutionError(f"Step {idx} failed: {e}")
 
         return outputs
 

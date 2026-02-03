@@ -144,4 +144,3 @@ class PolicyRepositorySqla:
         )
 
         await self._session.commit()
-

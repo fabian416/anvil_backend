@@ -206,9 +206,7 @@ async def example_multi_turn_conversation():
 
         # Add to conversation
         conversation.append(LLMMessage(role="assistant", content=response.content))
-        conversation.append(
-            LLMMessage(role="user", content="Now multiply that by 3.")
-        )
+        conversation.append(LLMMessage(role="user", content="Now multiply that by 3."))
 
         # Second turn
         request = LLMRequest(

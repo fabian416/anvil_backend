@@ -30,7 +30,8 @@ if config.config_file_name is not None:
 # IMPORTANT: When running migrations, we don't load the models to avoid ENUM duplication issues
 # Only load models for autogenerate (when creating new migrations)
 import os
-if os.environ.get('ALEMBIC_AUTOGENERATE', 'false') == 'true':
+
+if os.environ.get("ALEMBIC_AUTOGENERATE", "false") == "true":
     map_tables()
     target_metadata = mapping_registry.metadata
 else:

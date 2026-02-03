@@ -11,7 +11,11 @@ import os
 # Add src to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
-from app.application.chat.services.intent_detector_v2 import IntentDetectorV2, ChatIntentV2
+from app.application.chat.services.intent_detector_v2 import (
+    IntentDetectorV2,
+    ChatIntentV2,
+)
+
 
 def test_vault_patterns():
     """Test that vault queries route to LENDING intent."""
@@ -23,19 +27,25 @@ def test_vault_patterns():
         ("Top Morpho vaults", ChatIntentV2.LENDING, "top morpho vaults"),
         ("Show me best vaults", ChatIntentV2.LENDING, "show me best vaults"),
         ("Compare vaults", ChatIntentV2.LENDING, "compare vaults"),
-        ("Which vaults have highest APY", ChatIntentV2.LENDING, "which vaults have highest APY"),
+        (
+            "Which vaults have highest APY",
+            ChatIntentV2.LENDING,
+            "which vaults have highest APY",
+        ),
         ("Best vaults", ChatIntentV2.LENDING, "best vaults"),
         ("Highest yield vaults", ChatIntentV2.LENDING, "highest yield vaults"),
         ("Vault comparison", ChatIntentV2.LENDING, "vault comparison"),
         ("List Morpho vaults", ChatIntentV2.LENDING, "list morpho vaults"),
         ("Find best vaults", ChatIntentV2.LENDING, "find best vaults"),
-
         # Existing lending patterns (should still work)
-        ("Best lending rates", ChatIntentV2.MONEY_MARKET, "best lending rates (rate comparison)"),
+        (
+            "Best lending rates",
+            ChatIntentV2.MONEY_MARKET,
+            "best lending rates (rate comparison)",
+        ),
         ("Where to lend USDC", ChatIntentV2.LENDING, "where to lend USDC"),
         ("Earn yield on ETH", ChatIntentV2.LENDING, "earn yield on ETH"),
         ("Deposit 1000 USDC", ChatIntentV2.LENDING, "deposit 1000 USDC"),
-
         # Should NOT match vault patterns (should fall through to general)
         ("What is Bitcoin", ChatIntentV2.PROTOCOL_SEARCH, "token info query"),
         ("Bitcoin price", ChatIntentV2.HUNTER_PRICE_PREDICTION, "price query"),
@@ -78,6 +88,7 @@ def test_vault_patterns():
     print("=" * 80)
 
     return failed == 0
+
 
 if __name__ == "__main__":
     success = test_vault_patterns()

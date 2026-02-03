@@ -76,7 +76,10 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
         return f"{self._prefix}:request_count:{agent}:{period.value}"
 
     def _error_key(
-        self, agent_name: Optional[str], error_type: ErrorType, period: AggregationPeriod
+        self,
+        agent_name: Optional[str],
+        error_type: ErrorType,
+        period: AggregationPeriod,
     ) -> str:
         """Generate key for error tracking."""
         agent = agent_name or "global"
@@ -227,9 +230,10 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
 
             # Record error in sorted set
             key = self._error_key(agent_name, error_type, AggregationPeriod.MINUTE)
-            error_data = json.dumps(
-                {"timestamp": timestamp.isoformat(), "message": error_message}
-            )
+            error_data = json.dumps({
+                "timestamp": timestamp.isoformat(),
+                "message": error_message,
+            })
             await self._redis.zadd(key, {error_data: score})
 
             # Set expiration
@@ -518,9 +522,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
 
             # Query each error type
             for error_type in ErrorType:
-                key = self._error_key(
-                    agent_name, error_type, AggregationPeriod.MINUTE
-                )
+                key = self._error_key(agent_name, error_type, AggregationPeriod.MINUTE)
                 count = await self._redis.zcount(key, start_score, end_score)
                 if count > 0:
                     error_counts[error_type] = count
@@ -703,9 +705,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
             agent_counts: Dict[str, int] = {}
 
             while True:
-                cursor, keys = await self._redis.scan(
-                    cursor, match=pattern, count=100
-                )
+                cursor, keys = await self._redis.scan(cursor, match=pattern, count=100)
 
                 for key_bytes in keys:
                     key = key_bytes.decode()
@@ -748,9 +748,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
             agent_costs: Dict[str, float] = {}
 
             while True:
-                cursor, keys = await self._redis.scan(
-                    cursor, match=pattern, count=100
-                )
+                cursor, keys = await self._redis.scan(cursor, match=pattern, count=100)
 
                 for key_bytes in keys:
                     key = key_bytes.decode()
@@ -790,9 +788,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
             agent_errors: Dict[str, int] = {}
 
             while True:
-                cursor, keys = await self._redis.scan(
-                    cursor, match=pattern, count=100
-                )
+                cursor, keys = await self._redis.scan(cursor, match=pattern, count=100)
 
                 for key_bytes in keys:
                     key = key_bytes.decode()
@@ -838,9 +834,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
             deleted = 0
 
             while True:
-                cursor, keys = await self._redis.scan(
-                    cursor, match=pattern, count=100
-                )
+                cursor, keys = await self._redis.scan(cursor, match=pattern, count=100)
 
                 for key_bytes in keys:
                     key = key_bytes.decode()
@@ -976,9 +970,7 @@ class RedisMetricsCollectorAdapter(MetricsCollector):
             agents: set[str] = set()
 
             while True:
-                cursor, keys = await self._redis.scan(
-                    cursor, match=pattern, count=100
-                )
+                cursor, keys = await self._redis.scan(cursor, match=pattern, count=100)
 
                 for key_bytes in keys:
                     key = key_bytes.decode()

@@ -230,9 +230,7 @@ class GuestRepositorySqla(GuestRepository):
             logger.error(f"Failed to archive conversations: {e}")
             raise DataMapperError("Failed to archive conversations") from e
 
-    async def delete_conversation_for_guest(
-        self, guest_user_id: UUID
-    ) -> bool:
+    async def delete_conversation_for_guest(self, guest_user_id: UUID) -> bool:
         """
         Delete (archive) the active conversation for a guest user and clear all messages.
         Returns True if successful, False if no active conversation found.
@@ -275,7 +273,9 @@ class GuestRepositorySqla(GuestRepository):
             await self._session.execute(archive_conv_stmt)
             await self._session.commit()
 
-            logger.info(f"Deleted conversation {conversation_id} for guest {guest_user_id}")
+            logger.info(
+                f"Deleted conversation {conversation_id} for guest {guest_user_id}"
+            )
             return True
 
         except SQLAlchemyError as e:
@@ -299,7 +299,9 @@ class GuestRepositorySqla(GuestRepository):
             stmt = (
                 select(table)
                 .where(table.c.conversation_id == conversation_id)
-                .order_by(table.c.created_at.desc())  # Changed to DESC to get most recent first
+                .order_by(
+                    table.c.created_at.desc()
+                )  # Changed to DESC to get most recent first
                 .limit(limit)
                 .offset(offset)
             )

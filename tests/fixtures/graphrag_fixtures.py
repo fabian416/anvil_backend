@@ -26,7 +26,7 @@ def mock_graphrag_search_results():
                 "description": "Decentralized lending protocol",
                 "category": "LENDING",
                 "chain": "ethereum",
-                "why_relevant": "High similarity to query, strong fundamentals"
+                "why_relevant": "High similarity to query, strong fundamentals",
             },
             {
                 "protocol_id": str(uuid4()),
@@ -40,7 +40,7 @@ def mock_graphrag_search_results():
                 "description": "Algorithmic money market protocol",
                 "category": "LENDING",
                 "chain": "ethereum",
-                "why_relevant": "Similar lending mechanics"
+                "why_relevant": "Similar lending mechanics",
             },
         ],
         "total": 2,
@@ -65,7 +65,7 @@ def mock_protocol_similarity_results():
                 "similarity_score": 0.92,
                 "risk_score": 2.5,
                 "tvl": 3800000000,
-                "why_similar": "Both are lending protocols with similar risk profiles"
+                "why_similar": "Both are lending protocols with similar risk profiles",
             },
             {
                 "protocol_id": str(uuid4()),
@@ -73,7 +73,7 @@ def mock_protocol_similarity_results():
                 "similarity_score": 0.85,
                 "risk_score": 2.3,
                 "tvl": 1200000000,
-                "why_similar": "Fork of Aave with similar mechanisms"
+                "why_similar": "Fork of Aave with similar mechanisms",
             },
         ],
     }
@@ -106,4 +106,5 @@ def mock_graph_analytics_overview():
 def mock_embedding_vector():
     """Mock embedding vector (384 dimensions for testing)."""
     import random
+
     return [random.random() for _ in range(384)]

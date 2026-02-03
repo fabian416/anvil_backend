@@ -21,27 +21,29 @@ class TestListUsersController:
     def mock_list_users_interactor(self):
         """Create mock ListUsersQueryService."""
         interactor = AsyncMock()
-        interactor.execute = AsyncMock(return_value={
-            "users": [
-                {
-                    "id": str(uuid4()),
-                    "email": "user1@example.com",
-                    "first_name": "User",
-                    "last_name": "One",
-                    "role": "USER",
-                    "is_active": True,
-                },
-                {
-                    "id": str(uuid4()),
-                    "email": "admin@example.com",
-                    "first_name": "Admin",
-                    "last_name": "User",
-                    "role": "ADMIN",
-                    "is_active": True,
-                },
-            ],
-            "total": 2,
-        })
+        interactor.execute = AsyncMock(
+            return_value={
+                "users": [
+                    {
+                        "id": str(uuid4()),
+                        "email": "user1@example.com",
+                        "first_name": "User",
+                        "last_name": "One",
+                        "role": "USER",
+                        "is_active": True,
+                    },
+                    {
+                        "id": str(uuid4()),
+                        "email": "admin@example.com",
+                        "first_name": "Admin",
+                        "last_name": "User",
+                        "role": "ADMIN",
+                        "is_active": True,
+                    },
+                ],
+                "total": 2,
+            }
+        )
         return interactor
 
     def test_list_users_supports_pagination(self):
@@ -302,7 +304,9 @@ class TestAdminChangePasswordController:
 
         assert "new_password" in request_data
 
-    def test_admin_change_password_returns_no_content(self, mock_admin_change_password_interactor):
+    def test_admin_change_password_returns_no_content(
+        self, mock_admin_change_password_interactor
+    ):
         """Test admin change password returns 204 No Content."""
         result = None
         assert result is None

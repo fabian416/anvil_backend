@@ -183,7 +183,7 @@ def map_user_context_aware_table() -> None:
         has_connected_wallet = mapped_column(Boolean, nullable=False, default=False)
         primary_wallet_address = mapped_column(String(255), nullable=True)
         wallet_provider = mapped_column(String(50), nullable=True)
-        
+
         # Wallet balance aggregation (for accurate portfolio_state)
         wallet_total_usd = mapped_column(
             Numeric(20, 2),

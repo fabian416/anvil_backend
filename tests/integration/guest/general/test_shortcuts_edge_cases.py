@@ -41,11 +41,14 @@ ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ
 # FIXTURES
 # ============================================================================
 
+
 @pytest_asyncio.fixture
 async def client():
     """Create test client."""
     app = make_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
@@ -65,20 +68,26 @@ async def user_conversation_id(client: AsyncClient):
 # CATEGORY 1: Case Sensitivity Tests
 # ============================================================================
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
-@pytest.mark.parametrize("message,expected_intent", [
-    ("SEND CRYPTO TO A FRIEND", "send"),
-    ("send crypto to a friend", "send"),
-    ("Send Crypto To A Friend", "send"),
-    ("SeNd CrYpTo To A fRiEnD", "send"),
-    ("BEST LENDING VAULTS", "lending"),
-    ("best lending vaults", "lending"),
-    ("Best Lending Vaults", "lending"),
-    ("BeSt LeNdInG vAuLtS", "lending"),
-])
+@pytest.mark.parametrize(
+    "message,expected_intent",
+    [
+        ("SEND CRYPTO TO A FRIEND", "send"),
+        ("send crypto to a friend", "send"),
+        ("Send Crypto To A Friend", "send"),
+        ("SeNd CrYpTo To A fRiEnD", "send"),
+        ("BEST LENDING VAULTS", "lending"),
+        ("best lending vaults", "lending"),
+        ("Best Lending Vaults", "lending"),
+        ("BeSt LeNdInG vAuLtS", "lending"),
+    ],
+)
 @pytest.mark.llm_validation
-async def test_case_sensitivity_guest(client: AsyncClient, message: str, expected_intent: str):
+async def test_case_sensitivity_guest(
+    client: AsyncClient, message: str, expected_intent: str
+):
     """
     Test that intent detection is case-insensitive.
 
@@ -95,26 +104,33 @@ async def test_case_sensitivity_guest(client: AsyncClient, message: str, expecte
 
     assert response.status_code == 200
     data = response.json()
-    assert data["routing"]["intent"] == expected_intent, \
+    assert data["routing"]["intent"] == expected_intent, (
         f"Case variation '{message}' should detect as '{expected_intent}'"
+    )
 
 
 # ============================================================================
 # CATEGORY 2: Whitespace Tolerance Tests
 # ============================================================================
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
-@pytest.mark.parametrize("message,expected_intent", [
-    ("   send crypto to a friend   ", "send"),  # Leading/trailing spaces
-    ("send  crypto  to  a  friend", "send"),    # Multiple spaces
-    ("send\tcrypto\tto\ta\tfriend", "send"),    # Tabs
-    ("send   crypto      to   a   friend", "send"),  # Irregular spacing
-    ("   best   lending   vaults   ", "lending"),
-    ("swap\t\tETH\t\tto\t\tUSDC", "swap"),
-])
+@pytest.mark.parametrize(
+    "message,expected_intent",
+    [
+        ("   send crypto to a friend   ", "send"),  # Leading/trailing spaces
+        ("send  crypto  to  a  friend", "send"),  # Multiple spaces
+        ("send\tcrypto\tto\ta\tfriend", "send"),  # Tabs
+        ("send   crypto      to   a   friend", "send"),  # Irregular spacing
+        ("   best   lending   vaults   ", "lending"),
+        ("swap\t\tETH\t\tto\t\tUSDC", "swap"),
+    ],
+)
 @pytest.mark.llm_validation
-async def test_whitespace_tolerance_guest(client: AsyncClient, message: str, expected_intent: str):
+async def test_whitespace_tolerance_guest(
+    client: AsyncClient, message: str, expected_intent: str
+):
     """
     Test that whitespace variations don't affect intent detection.
 
@@ -133,28 +149,35 @@ async def test_whitespace_tolerance_guest(client: AsyncClient, message: str, exp
 
     assert response.status_code == 200
     data = response.json()
-    assert data["routing"]["intent"] == expected_intent, \
+    assert data["routing"]["intent"] == expected_intent, (
         f"Whitespace variation should not affect intent detection"
+    )
 
 
 # ============================================================================
 # CATEGORY 3: Punctuation Handling Tests
 # ============================================================================
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
-@pytest.mark.parametrize("message,expected_intent", [
-    ("Send crypto to a friend!", "send"),
-    ("Send crypto to a friend?", "send"),
-    ("Send crypto to a friend.", "send"),
-    ("Send, crypto, to, a, friend", "send"),
-    ("Send crypto to a friend...", "send"),
-    ("Best lending vaults!!!", "lending"),
-    ("What are the best lending vaults?", "lending"),
-    ("Swap ETH to USDC!", "swap"),
-])
+@pytest.mark.parametrize(
+    "message,expected_intent",
+    [
+        ("Send crypto to a friend!", "send"),
+        ("Send crypto to a friend?", "send"),
+        ("Send crypto to a friend.", "send"),
+        ("Send, crypto, to, a, friend", "send"),
+        ("Send crypto to a friend...", "send"),
+        ("Best lending vaults!!!", "lending"),
+        ("What are the best lending vaults?", "lending"),
+        ("Swap ETH to USDC!", "swap"),
+    ],
+)
 @pytest.mark.llm_validation
-async def test_punctuation_handling_guest(client: AsyncClient, message: str, expected_intent: str):
+async def test_punctuation_handling_guest(
+    client: AsyncClient, message: str, expected_intent: str
+):
     """
     Test that punctuation doesn't interfere with intent detection.
 
@@ -180,16 +203,20 @@ async def test_punctuation_handling_guest(client: AsyncClient, message: str, exp
 # CATEGORY 4: Multi-Language Tests
 # ============================================================================
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
-@pytest.mark.parametrize("language,message,expected_intent", [
-    ("en", "Send crypto to a friend", "send"),
-    ("es", "Enviar cripto a un amigo", "send"),
-    ("pt", "Enviar cripto para um amigo", "send"),
-    ("en", "Best lending vaults", "lending"),
-    ("es", "Mejores bóvedas de préstamos", "lending"),
-    ("pt", "Melhores cofres de empréstimo", "lending"),
-])
+@pytest.mark.parametrize(
+    "language,message,expected_intent",
+    [
+        ("en", "Send crypto to a friend", "send"),
+        ("es", "Enviar cripto a un amigo", "send"),
+        ("pt", "Enviar cripto para um amigo", "send"),
+        ("en", "Best lending vaults", "lending"),
+        ("es", "Mejores bóvedas de préstamos", "lending"),
+        ("pt", "Melhores cofres de empréstimo", "lending"),
+    ],
+)
 @pytest.mark.llm_validation
 async def test_multi_language_support_guest(
     client: AsyncClient,
@@ -213,25 +240,32 @@ async def test_multi_language_support_guest(
 
     assert response.status_code == 200
     data = response.json()
-    assert data["routing"]["intent"] == expected_intent, \
+    assert data["routing"]["intent"] == expected_intent, (
         f"Language '{language}' should detect intent correctly"
+    )
 
 
 # ============================================================================
 # CATEGORY 5: Special Characters & Emojis
 # ============================================================================
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
-@pytest.mark.parametrize("message,expected_intent", [
-    ("Send crypto 💰 to a friend 👥", "send"),
-    ("🚀 Best lending vaults 💎", "lending"),
-    ("Swap ETH ➡️ USDC", "swap"),
-    ("Buy crypto 💳", "buy"),
-    ("📊 Portfolio view", "portfolio"),
-])
+@pytest.mark.parametrize(
+    "message,expected_intent",
+    [
+        ("Send crypto 💰 to a friend 👥", "send"),
+        ("🚀 Best lending vaults 💎", "lending"),
+        ("Swap ETH ➡️ USDC", "swap"),
+        ("Buy crypto 💳", "buy"),
+        ("📊 Portfolio view", "portfolio"),
+    ],
+)
 @pytest.mark.llm_validation
-async def test_emojis_handling_guest(client: AsyncClient, message: str, expected_intent: str):
+async def test_emojis_handling_guest(
+    client: AsyncClient, message: str, expected_intent: str
+):
     """
     Test that emojis don't interfere with intent detection.
 
@@ -255,16 +289,22 @@ async def test_emojis_handling_guest(client: AsyncClient, message: str, expected
 # CATEGORY 6: Typos & Common Variations
 # ============================================================================
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
-@pytest.mark.parametrize("message,expected_intent", [
-    ("sen crypto to a friend", "send"),  # Missing 'd' - should still match keyword
-    ("Best lendig vaults", "lending"),   # Typo in 'lending' - should still match
-    ("swp ETH to USDC", "swap"),         # Missing 'a' - should still match
-    ("bi crypto with card", "buy"),      # Missing 'y' - should still match
-])
+@pytest.mark.parametrize(
+    "message,expected_intent",
+    [
+        ("sen crypto to a friend", "send"),  # Missing 'd' - should still match keyword
+        ("Best lendig vaults", "lending"),  # Typo in 'lending' - should still match
+        ("swp ETH to USDC", "swap"),  # Missing 'a' - should still match
+        ("bi crypto with card", "buy"),  # Missing 'y' - should still match
+    ],
+)
 @pytest.mark.llm_validation
-async def test_typo_tolerance_guest(client: AsyncClient, message: str, expected_intent: str):
+async def test_typo_tolerance_guest(
+    client: AsyncClient, message: str, expected_intent: str
+):
     """
     Test graceful handling of common typos.
 
@@ -292,6 +332,7 @@ async def test_typo_tolerance_guest(client: AsyncClient, message: str, expected_
 # ============================================================================
 # CATEGORY 7: Boundary Conditions
 # ============================================================================
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -342,13 +383,15 @@ async def test_very_long_message_guest(client: AsyncClient):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["routing"]["intent"] == "send", \
+    assert data["routing"]["intent"] == "send", (
         "Should detect 'send' intent from long verbose message"
+    )
 
 
 # ============================================================================
 # CATEGORY 8: Ambiguous Inputs
 # ============================================================================
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -375,8 +418,9 @@ async def test_ambiguous_multi_intent_guest(client: AsyncClient):
 
     # Should route to one of the intents (implementation dependent)
     detected = data["routing"]["intent"]
-    assert detected in ["balance", "send"], \
+    assert detected in ["balance", "send"], (
         "Should route to one of the mentioned intents"
+    )
 
 
 @pytest.mark.asyncio
@@ -410,6 +454,7 @@ async def test_unclear_request_guest(client: AsyncClient):
 # NOTE: Skipped - legacy /api/v1/user/chat/conversations endpoint removed
 # ============================================================================
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
@@ -434,7 +479,9 @@ async def test_case_sensitivity_user(client: AsyncClient, user_conversation_id: 
 @pytest.mark.integration
 @pytest.mark.llm_validation
 @pytest.mark.skip(reason="Legacy user chat endpoint removed")
-async def test_whitespace_tolerance_user(client: AsyncClient, user_conversation_id: str):
+async def test_whitespace_tolerance_user(
+    client: AsyncClient, user_conversation_id: str
+):
     """
     Test whitespace handling for authenticated users.
     """
@@ -472,6 +519,7 @@ async def test_emojis_user(client: AsyncClient, user_conversation_id: str):
 # REGRESSION TESTS - Known Issues
 # ============================================================================
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
@@ -497,13 +545,15 @@ async def test_moonpay_routing_regression(client: AsyncClient):
 
         assert response.status_code == 200
         data = response.json()
-        assert data["routing"]["intent"] == expected_intent, \
+        assert data["routing"]["intent"] == expected_intent, (
             f"'{message}' should route to {expected_intent} (MoonPay handler)"
+        )
 
 
 # ============================================================================
 # SUMMARY TEST - Edge Case Coverage Validation
 # ============================================================================
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -523,9 +573,11 @@ async def test_edge_case_coverage_summary():
     8. Ambiguous inputs
     """
     import inspect
+
     current_module = inspect.getmodule(inspect.currentframe())
     test_functions = [
-        name for name, obj in inspect.getmembers(current_module)
+        name
+        for name, obj in inspect.getmembers(current_module)
         if inspect.isfunction(obj) and name.startswith("test_")
     ]
 
@@ -548,4 +600,6 @@ async def test_edge_case_coverage_summary():
         print(f"  - {category}: {len(category_tests)} tests")
         assert len(category_tests) > 0, f"Missing tests for category: {category}"
 
-    print(f"\n📊 Total edge case tests: {len(test_functions) - 1}")  # -1 for this summary test
+    print(
+        f"\n📊 Total edge case tests: {len(test_functions) - 1}"
+    )  # -1 for this summary test

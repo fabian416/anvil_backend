@@ -14,7 +14,7 @@ from app.application.chat.services.knowledge_injector import (
     KnowledgeInjector,
     get_knowledge_injector,
     inject_knowledge,
-    KnowledgeFile
+    KnowledgeFile,
 )
 
 
@@ -76,7 +76,7 @@ class TestKnowledgeExtractionOverview:
         knowledge = injector.get_knowledge_for_intent(
             user_query="what can you do?",
             detected_intent="GENERAL_CONVERSATION",
-            user_type="user"
+            user_type="user",
         )
 
         assert "feature_name" in knowledge
@@ -94,7 +94,7 @@ class TestKnowledgeExtractionOverview:
         knowledge = injector.get_knowledge_for_intent(
             user_query="what can you do?",
             detected_intent="GENERAL_CONVERSATION",
-            user_type="investor"
+            user_type="investor",
         )
 
         assert "feature_name" in knowledge
@@ -119,7 +119,7 @@ class TestKnowledgeExtractionHunterAI:
         knowledge = injector.get_knowledge_for_intent(
             user_query="check sentiment for BTC",
             detected_intent="HUNTER_SENTIMENT",
-            user_type="user"
+            user_type="user",
         )
 
         assert "feature_name" in knowledge
@@ -132,7 +132,7 @@ class TestKnowledgeExtractionHunterAI:
         knowledge = injector.get_knowledge_for_intent(
             user_query="how accurate is sentiment analysis?",
             detected_intent="HUNTER_SENTIMENT",
-            user_type="user"
+            user_type="user",
         )
 
         # Should include accuracy metrics when asked about accuracy
@@ -144,7 +144,7 @@ class TestKnowledgeExtractionHunterAI:
         knowledge = injector.get_knowledge_for_intent(
             user_query="predict ETH price for next week",
             detected_intent="HUNTER_PRICE_PREDICTION",
-            user_type="user"
+            user_type="user",
         )
 
         assert "capability" in knowledge
@@ -155,7 +155,7 @@ class TestKnowledgeExtractionHunterAI:
         knowledge = injector.get_knowledge_for_intent(
             user_query="what is hunter ai?",
             detected_intent="HUNTER_SENTIMENT",
-            user_type="investor"
+            user_type="investor",
         )
 
         # Should include investor-specific sections
@@ -175,7 +175,7 @@ class TestKnowledgeExtractionULTRA:
         knowledge = injector.get_knowledge_for_intent(
             user_query="find arbitrage opportunities with $10k",
             detected_intent="ULTRA_ARBITRAGE",
-            user_type="user"
+            user_type="user",
         )
 
         assert "feature_name" in knowledge
@@ -188,7 +188,7 @@ class TestKnowledgeExtractionULTRA:
         knowledge = injector.get_knowledge_for_intent(
             user_query="tell me about flash loans",
             detected_intent="ULTRA_FLASH_LOANS",
-            user_type="user"
+            user_type="user",
         )
 
         assert "capability" in knowledge
@@ -199,7 +199,7 @@ class TestKnowledgeExtractionULTRA:
         knowledge = injector.get_knowledge_for_intent(
             user_query="protect my swap from MEV",
             detected_intent="ULTRA_MEV_PROTECTION",
-            user_type="user"
+            user_type="user",
         )
 
         assert "capability" in knowledge
@@ -210,7 +210,7 @@ class TestKnowledgeExtractionULTRA:
         knowledge = injector.get_knowledge_for_intent(
             user_query="how accurate is arbitrage detection?",
             detected_intent="ULTRA_ARBITRAGE",
-            user_type="user"
+            user_type="user",
         )
 
         # Should include accuracy metrics when asked
@@ -221,7 +221,7 @@ class TestKnowledgeExtractionULTRA:
         knowledge = injector.get_knowledge_for_intent(
             user_query="what are ultras competitive advantages?",
             detected_intent="ULTRA_ARBITRAGE",
-            user_type="investor"
+            user_type="investor",
         )
 
         # Should include investor-specific sections
@@ -239,9 +239,7 @@ class TestKnowledgeExtractionSwap:
     def test_swap_basic(self, injector):
         """Test swap knowledge extraction"""
         knowledge = injector.get_knowledge_for_intent(
-            user_query="swap 100 USDC to ETH",
-            detected_intent="SWAP",
-            user_type="user"
+            user_query="swap 100 USDC to ETH", detected_intent="SWAP", user_type="user"
         )
 
         assert "feature_name" in knowledge
@@ -254,7 +252,7 @@ class TestKnowledgeExtractionSwap:
         knowledge = injector.get_knowledge_for_intent(
             user_query="what's the best rate for swapping?",
             detected_intent="SWAP",
-            user_type="user"
+            user_type="user",
         )
 
         # Should include rate comparison when asked about rates
@@ -265,7 +263,7 @@ class TestKnowledgeExtractionSwap:
         knowledge = injector.get_knowledge_for_intent(
             user_query="is swapping safe from MEV attacks?",
             detected_intent="SWAP",
-            user_type="user"
+            user_type="user",
         )
 
         # Should include safety features when asked about safety
@@ -285,7 +283,7 @@ class TestKnowledgeExtractionShortcuts:
         knowledge = injector.get_knowledge_for_intent(
             user_query="how do I check bitcoin price?",
             detected_intent="GENERAL_CONVERSATION",
-            user_type="user"
+            user_type="user",
         )
 
         assert "feature_name" in knowledge
@@ -306,13 +304,16 @@ class TestPromptAugmentation:
         enhanced_prompt = injector.augment_system_prompt(
             user_query="what can you do?",
             detected_intent="GENERAL_CONVERSATION",
-            user_type="user"
+            user_type="user",
         )
 
         assert len(enhanced_prompt) > 500  # Should be substantial
         assert "KNOWLEDGE BASE" in enhanced_prompt
         assert "RESPONSE GUIDELINES" in enhanced_prompt
-        assert "ANVIL CAPABILITIES" in enhanced_prompt or "anvil capabilities" in enhanced_prompt.lower()
+        assert (
+            "ANVIL CAPABILITIES" in enhanced_prompt
+            or "anvil capabilities" in enhanced_prompt.lower()
+        )
 
     def test_augment_prompt_with_custom_base(self, injector):
         """Test prompt augmentation with custom base prompt"""
@@ -322,7 +323,7 @@ class TestPromptAugmentation:
             user_query="what can you do?",
             detected_intent="GENERAL_CONVERSATION",
             user_type="user",
-            base_system_prompt=custom_base
+            base_system_prompt=custom_base,
         )
 
         assert custom_base in enhanced_prompt
@@ -333,7 +334,7 @@ class TestPromptAugmentation:
         enhanced_prompt = injector.augment_system_prompt(
             user_query="what are competitive advantages?",
             detected_intent="GENERAL_CONVERSATION",
-            user_type="investor"
+            user_type="investor",
         )
 
         assert "FOR INVESTORS" in enhanced_prompt
@@ -342,9 +343,7 @@ class TestPromptAugmentation:
     def test_augment_prompt_for_user(self, injector):
         """Test prompt augmentation includes user guidelines"""
         enhanced_prompt = injector.augment_system_prompt(
-            user_query="how do i swap?",
-            detected_intent="SWAP",
-            user_type="user"
+            user_query="how do i swap?", detected_intent="SWAP", user_type="user"
         )
 
         assert "FOR USERS" in enhanced_prompt
@@ -358,12 +357,15 @@ class TestConvenienceFunction:
         enhanced_prompt = inject_knowledge(
             user_query="what can you do?",
             detected_intent="GENERAL_CONVERSATION",
-            user_type="user"
+            user_type="user",
         )
 
         assert len(enhanced_prompt) > 500
         assert "KNOWLEDGE BASE" in enhanced_prompt
-        assert "ANVIL CAPABILITIES" in enhanced_prompt or "anvil capabilities" in enhanced_prompt.lower()
+        assert (
+            "ANVIL CAPABILITIES" in enhanced_prompt
+            or "anvil capabilities" in enhanced_prompt.lower()
+        )
 
     def test_inject_knowledge_with_custom_prompt(self):
         """Test inject_knowledge with custom base prompt"""
@@ -373,7 +375,7 @@ class TestConvenienceFunction:
             user_query="swap 100 USDC to ETH",
             detected_intent="SWAP",
             user_type="user",
-            base_system_prompt=custom_base
+            base_system_prompt=custom_base,
         )
 
         assert custom_base in enhanced_prompt
@@ -394,18 +396,21 @@ class TestUserTypeDetection:
             "tell me about the market opportunity",
             "how does anvil make money?",
             "what's your revenue model?",
-            "why should I invest in anvil?"
+            "why should I invest in anvil?",
         ]
 
         for query in investor_queries:
             knowledge = injector.get_knowledge_for_intent(
                 user_query=query,
                 detected_intent="GENERAL_CONVERSATION",
-                user_type="investor"  # Should be detected as investor
+                user_type="investor",  # Should be detected as investor
             )
 
             # Verify investor-specific content is included
-            assert "competitive_advantages" in knowledge or "investor_highlights" in knowledge
+            assert (
+                "competitive_advantages" in knowledge
+                or "investor_highlights" in knowledge
+            )
 
     def test_user_queries(self, injector):
         """Test regular user queries"""
@@ -413,14 +418,14 @@ class TestUserTypeDetection:
             "how do I swap tokens?",
             "what's the price of BTC?",
             "check sentiment for ETH",
-            "find arbitrage opportunities"
+            "find arbitrage opportunities",
         ]
 
         for query in user_queries:
             knowledge = injector.get_knowledge_for_intent(
                 user_query=query,
                 detected_intent="GENERAL_CONVERSATION",
-                user_type="user"
+                user_type="user",
             )
 
             # Verify user-focused content (not investor-specific)
@@ -442,14 +447,12 @@ class TestIntentMapping:
             "HUNTER_RISK_SIGNALS",
             "HUNTER_TRADING_SIGNALS",
             "HUNTER_PATTERNS",
-            "HUNTER_PORTFOLIO"
+            "HUNTER_PORTFOLIO",
         ]
 
         for intent in hunter_intents:
             knowledge = injector.get_knowledge_for_intent(
-                user_query="test query",
-                detected_intent=intent,
-                user_type="user"
+                user_query="test query", detected_intent=intent, user_type="user"
             )
 
             assert "feature_name" in knowledge
@@ -461,14 +464,12 @@ class TestIntentMapping:
             "ULTRA_ARBITRAGE",
             "ULTRA_FLASH_LOANS",
             "ULTRA_MEV_PROTECTION",
-            "ULTRA_AUTO_EXECUTOR"
+            "ULTRA_AUTO_EXECUTOR",
         ]
 
         for intent in ultra_intents:
             knowledge = injector.get_knowledge_for_intent(
-                user_query="test query",
-                detected_intent=intent,
-                user_type="user"
+                user_query="test query", detected_intent=intent, user_type="user"
             )
 
             assert "feature_name" in knowledge
@@ -487,10 +488,7 @@ class TestKnowledgeFormatting:
         test_dict = {
             "name": "Test Feature",
             "description": "Test description",
-            "nested": {
-                "field1": "value1",
-                "field2": "value2"
-            }
+            "nested": {"field1": "value1", "field2": "value2"},
         }
 
         formatted = injector._format_dict(test_dict, indent=0)
@@ -501,11 +499,7 @@ class TestKnowledgeFormatting:
 
     def test_format_list(self, injector):
         """Test list formatting"""
-        test_list = [
-            "item1",
-            "item2",
-            {"name": "dict_item", "value": 123}
-        ]
+        test_list = ["item1", "item2", {"name": "dict_item", "value": 123}]
 
         formatted = injector._format_list(test_list, indent=0)
 
@@ -531,7 +525,7 @@ class TestPerformance:
         knowledge1 = injector.get_knowledge_for_intent(
             user_query="what can you do?",
             detected_intent="GENERAL_CONVERSATION",
-            user_type="user"
+            user_type="user",
         )
         first_load_time = time.time() - start
 
@@ -540,7 +534,7 @@ class TestPerformance:
         knowledge2 = injector.get_knowledge_for_intent(
             user_query="what can you do?",
             detected_intent="GENERAL_CONVERSATION",
-            user_type="user"
+            user_type="user",
         )
         cached_load_time = time.time() - start
 
@@ -557,7 +551,7 @@ class TestPerformance:
         enhanced_prompt = injector.augment_system_prompt(
             user_query="what can you do?",
             detected_intent="GENERAL_CONVERSATION",
-            user_type="user"
+            user_type="user",
         )
         generation_time = time.time() - start
 

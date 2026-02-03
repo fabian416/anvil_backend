@@ -49,7 +49,6 @@ CHAT_TESTS = [
         "category": "agent",
         "subcategory": "chat_greeting",
     },
-    
     # Off-Topic
     {
         "test_id": "chat_offtopic_001",
@@ -72,7 +71,6 @@ CHAT_TESTS = [
         "category": "agent",
         "subcategory": "chat_offtopic",
     },
-    
     # General Queries
     {
         "test_id": "chat_general_001",
@@ -105,30 +103,29 @@ def chat_reporter() -> CSVReporter:
 @pytest.mark.asyncio
 class TestChatAgent:
     """Test Chat agent functionality."""
-    
+
     async def test_chat_queries(self, authenticated_client, chat_reporter):
         """Test chat agent queries."""
         import asyncio
-        
+
         for test_case in CHAT_TESTS:
             conv_id = await create_conversation(
-                authenticated_client,
-                title=f"Test {test_case['test_id']}"
+                authenticated_client, title=f"Test {test_case['test_id']}"
             )
-            
+
             response_data, response_time = await send_message(
                 authenticated_client,
                 conv_id,
                 test_case["input"],
                 timeout=90.0,
             )
-            
+
             parsed = parse_response(response_data)
-            
+
             expected_agent = test_case.get("expected_agent", "")
             actual_agents = parsed.get("agents_used", "")
             has_error = parsed.get("error", False)
-            
+
             if has_error:
                 status = "FAIL"
             elif expected_agent and expected_agent in actual_agents:
@@ -137,7 +134,7 @@ class TestChatAgent:
                 status = "PARTIAL"
             else:
                 status = "FAIL"
-            
+
             result = TestResult(
                 test_id=test_case["test_id"],
                 category=test_case.get("category", ""),
@@ -151,12 +148,16 @@ class TestChatAgent:
                 status=status,
                 conversation_id=conv_id,
             )
-            
+
             chat_reporter.add_result(result)
-            
-            status_emoji = "✅" if status == "PASS" else "⚠️" if status == "PARTIAL" else "❌"
-            print(f"{status_emoji} {test_case['test_id']}: {test_case['input'][:40]}... → {actual_agents} ({response_time}ms)")
-            
+
+            status_emoji = (
+                "✅" if status == "PASS" else "⚠️" if status == "PARTIAL" else "❌"
+            )
+            print(
+                f"{status_emoji} {test_case['test_id']}: {test_case['input'][:40]}... → {actual_agents} ({response_time}ms)"
+            )
+
             await asyncio.sleep(0.5)
 
 

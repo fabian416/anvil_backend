@@ -38,7 +38,9 @@ class TestAdminWorkflow:
         users_data = list_response.json()
 
         # Should have users list
-        users = users_data.get("users", users_data if isinstance(users_data, list) else [])
+        users = users_data.get(
+            "users", users_data if isinstance(users_data, list) else []
+        )
 
         # Step 2: Get first user email if available
         if users:

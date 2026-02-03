@@ -15,7 +15,9 @@ Generated: 2026-01-14
 import pytest
 
 # Skip - tests require specific multi-step flow states
-pytestmark = pytest.mark.skip(reason="Tests require proper LLM mock for multi-step flows")
+pytestmark = pytest.mark.skip(
+    reason="Tests require proper LLM mock for multi-step flows"
+)
 from httpx import AsyncClient
 from fastapi import status
 import json
@@ -40,7 +42,10 @@ class TestXSSMultiStepInjection:
         # Step 1: XSS in initial request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "<script>alert('XSS')</script> Deposit USDC on Morpho", "language": "en"}
+            json={
+                "content": "<script>alert('XSS')</script> Deposit USDC on Morpho",
+                "language": "en",
+            },
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
@@ -48,14 +53,16 @@ class TestXSSMultiStepInjection:
 
         # Verify XSS is sanitized
         assert "<script>" not in agent_content.lower()
-        assert "alert" not in agent_content.lower() or "sanitized" in agent_content.lower()
+        assert (
+            "alert" not in agent_content.lower() or "sanitized" in agent_content.lower()
+        )
 
         conv_id = data["conversation_id"]
 
         # Step 2: Continue normal flow
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "1", "language": "en"}
+            json={"content": "1", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
 
@@ -65,7 +72,7 @@ class TestXSSMultiStepInjection:
         # Step 1: Normal request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Deposit USDC on Morpho", "language": "en"}
+            json={"content": "Deposit USDC on Morpho", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -73,7 +80,7 @@ class TestXSSMultiStepInjection:
         # Step 2: XSS in asset selection
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "1<img src=x onerror=alert('XSS')>", "language": "en"}
+            json={"content": "1<img src=x onerror=alert('XSS')>", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -88,7 +95,7 @@ class TestXSSMultiStepInjection:
         # Step 1: Normal request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Lend USDC on Aave", "language": "en"}
+            json={"content": "Lend USDC on Aave", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -96,7 +103,7 @@ class TestXSSMultiStepInjection:
         # Step 2: XSS in amount field
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "100<svg onload=alert('XSS')>", "language": "en"}
+            json={"content": "100<svg onload=alert('XSS')>", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -111,7 +118,7 @@ class TestXSSMultiStepInjection:
         # Step 1: Normal request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Swap 1 ETH to USDC", "language": "en"}
+            json={"content": "Swap 1 ETH to USDC", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -119,7 +126,10 @@ class TestXSSMultiStepInjection:
         # Step 2: XSS in confirmation
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "yes<iframe src='javascript:alert(\"XSS\")'></iframe>", "language": "en"}
+            json={
+                "content": "yes<iframe src='javascript:alert(\"XSS\")'></iframe>",
+                "language": "en",
+            },
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -133,7 +143,10 @@ class TestXSSMultiStepInjection:
         """Test XSS injection throughout deposit flow."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Deposit USDC on Morpho<script>alert(1)</script>", "language": "en"}
+            json={
+                "content": "Deposit USDC on Morpho<script>alert(1)</script>",
+                "language": "en",
+            },
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -147,7 +160,7 @@ class TestXSSMultiStepInjection:
         # Step 1: Normal request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Lend USDC on Aave", "language": "en"}
+            json={"content": "Lend USDC on Aave", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -155,7 +168,10 @@ class TestXSSMultiStepInjection:
         # Step 2: XSS with event handler
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "<img src=x onerror=alert(document.cookie)>100", "language": "en"}
+            json={
+                "content": "<img src=x onerror=alert(document.cookie)>100",
+                "language": "en",
+            },
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -169,8 +185,7 @@ class TestXSSMultiStepInjection:
         """Test XSS injection in swap flow at step 2."""
         # Step 1: Initiate swap
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "Swap ETH to USDC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "Swap ETH to USDC", "language": "en"}
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -178,7 +193,7 @@ class TestXSSMultiStepInjection:
         # Step 2: XSS in amount field
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "1<svg onload=alert('XSS')>", "language": "en"}
+            json={"content": "1<svg onload=alert('XSS')>", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -192,8 +207,7 @@ class TestXSSMultiStepInjection:
         """Test XSS injection in buy flow at step 2."""
         # Step 1: Initiate buy
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "Buy Bitcoin", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "Buy Bitcoin", "language": "en"}
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -201,7 +215,10 @@ class TestXSSMultiStepInjection:
         # Step 2: XSS with style injection
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "yes<style>body{background:url('javascript:alert(1)')}</style>", "language": "en"}
+            json={
+                "content": "yes<style>body{background:url('javascript:alert(1)')}</style>",
+                "language": "en",
+            },
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -216,7 +233,7 @@ class TestXSSMultiStepInjection:
         # Step 1: Normal request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Deposit USDC on Morpho", "language": "en"}
+            json={"content": "Deposit USDC on Morpho", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -224,7 +241,7 @@ class TestXSSMultiStepInjection:
         # Step 2: Cancel with XSS payload
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "cancel<script>alert('XSS')</script>", "language": "en"}
+            json={"content": "cancel<script>alert('XSS')</script>", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -238,7 +255,7 @@ class TestXSSMultiStepInjection:
         # Step 1: Normal request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Lend USDC on Aave", "language": "en"}
+            json={"content": "Lend USDC on Aave", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -246,14 +263,17 @@ class TestXSSMultiStepInjection:
         # Step 2: Normal amount
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "100", "language": "en"}
+            json={"content": "100", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
 
         # Step 3: Cancel with XSS
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "never mind<img src=x onerror=alert('XSS')>", "language": "en"}
+            json={
+                "content": "never mind<img src=x onerror=alert('XSS')>",
+                "language": "en",
+            },
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -266,7 +286,10 @@ class TestXSSMultiStepInjection:
         """Test XSS injection followed by topic change (implicit cancel)."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Swap ETH to USDC<script>alert(1)</script>", "language": "en"}
+            json={
+                "content": "Swap ETH to USDC<script>alert(1)</script>",
+                "language": "en",
+            },
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -278,7 +301,7 @@ class TestXSSMultiStepInjection:
         # Step 2: Topic change
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "What is Bitcoin price?", "language": "en"}
+            json={"content": "What is Bitcoin price?", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
 
@@ -288,7 +311,7 @@ class TestXSSMultiStepInjection:
         # Step 1: Normal request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Deposit USDC on Morpho", "language": "en"}
+            json={"content": "Deposit USDC on Morpho", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -296,13 +319,19 @@ class TestXSSMultiStepInjection:
         # Step 2: Unicode-encoded XSS
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "1\\u003cscript\\u003ealert('XSS')\\u003c/script\\u003e", "language": "en"}
+            json={
+                "content": "1\\u003cscript\\u003ealert('XSS')\\u003c/script\\u003e",
+                "language": "en",
+            },
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
 
         # Verify unicode XSS is sanitized
-        assert "script" not in agent_content.lower() or "invalid" in agent_content.lower()
+        assert (
+            "script" not in agent_content.lower() or "invalid" in agent_content.lower()
+        )
+
 
 class TestSQLMultiStepInjection:
     """Test SQL injection protection across multi-step conversation flows."""
@@ -312,7 +341,7 @@ class TestSQLMultiStepInjection:
         """Test SQL OR injection at step 1 (initial request)."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "' OR '1'='1 Deposit USDC on Morpho", "language": "en"}
+            json={"content": "' OR '1'='1 Deposit USDC on Morpho", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -324,7 +353,7 @@ class TestSQLMultiStepInjection:
         conv_id = response.json()["conversation_id"]
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "1", "language": "en"}
+            json={"content": "1", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
 
@@ -334,7 +363,7 @@ class TestSQLMultiStepInjection:
         # Step 1: Normal request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Lend USDC on Aave", "language": "en"}
+            json={"content": "Lend USDC on Aave", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -342,7 +371,7 @@ class TestSQLMultiStepInjection:
         # Step 2: SQL UNION injection
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "1' UNION SELECT * FROM users--", "language": "en"}
+            json={"content": "1' UNION SELECT * FROM users--", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -356,8 +385,7 @@ class TestSQLMultiStepInjection:
         """Test SQL DROP TABLE injection at step 3 (amount field)."""
         # Step 1: Normal request
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "Swap ETH to USDC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "Swap ETH to USDC", "language": "en"}
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -365,7 +393,7 @@ class TestSQLMultiStepInjection:
         # Step 2: SQL DROP injection
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "1'; DROP TABLE conversations--", "language": "en"}
+            json={"content": "1'; DROP TABLE conversations--", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -374,32 +402,34 @@ class TestSQLMultiStepInjection:
         assert "drop table" not in agent_content.lower()
 
     @pytest.mark.llm_validation
-    async def test_sql_step4_comment_injection(self, client: AsyncClient, llm_validator):
+    async def test_sql_step4_comment_injection(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test SQL comment injection at step 4 (confirmation)."""
         # Step 1-3: Normal requests
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Deposit USDC on Morpho", "language": "en"}
+            json={"content": "Deposit USDC on Morpho", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
 
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "1", "language": "en"}
+            json={"content": "1", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
 
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "100", "language": "en"}
+            json={"content": "100", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
 
         # Step 4: SQL comment injection
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "yes'--", "language": "en"}
+            json={"content": "yes'--", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -413,7 +443,7 @@ class TestSQLMultiStepInjection:
         # Step 1: Normal request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Deposit USDC on Morpho", "language": "en"}
+            json={"content": "Deposit USDC on Morpho", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -421,7 +451,7 @@ class TestSQLMultiStepInjection:
         # Step 2: SQL injection
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "1' OR '1'='1", "language": "en"}
+            json={"content": "1' OR '1'='1", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -432,7 +462,7 @@ class TestSQLMultiStepInjection:
         # Step 3: Cancel
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "cancel", "language": "en"}
+            json={"content": "cancel", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
 
@@ -442,7 +472,7 @@ class TestSQLMultiStepInjection:
         # Step 1: Normal request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Lend USDC on Aave", "language": "en"}
+            json={"content": "Lend USDC on Aave", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -450,19 +480,24 @@ class TestSQLMultiStepInjection:
         # Step 2: SQL injection with password extraction attempt
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "100' UNION SELECT password FROM users--", "language": "en"}
+            json={
+                "content": "100' UNION SELECT password FROM users--",
+                "language": "en",
+            },
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
 
         # Verify SQL is sanitized
         assert "union select" not in agent_content.lower()
-        assert "password" not in agent_content.lower() or "quote" in agent_content.lower()
+        assert (
+            "password" not in agent_content.lower() or "quote" in agent_content.lower()
+        )
 
         # Step 3: Topic change
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "What is Bitcoin price?", "language": "en"}
+            json={"content": "What is Bitcoin price?", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
 
@@ -471,8 +506,7 @@ class TestSQLMultiStepInjection:
         """Test SQL injection specifically in amount field."""
         # Step 1: Normal request
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "Buy Bitcoin", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "Buy Bitcoin", "language": "en"}
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -480,7 +514,10 @@ class TestSQLMultiStepInjection:
         # Step 2: SQL DELETE injection in amount
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "100'; DELETE FROM chat_conversations WHERE '1'='1'--", "language": "en"}
+            json={
+                "content": "100'; DELETE FROM chat_conversations WHERE '1'='1'--",
+                "language": "en",
+            },
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -493,8 +530,7 @@ class TestSQLMultiStepInjection:
         """Test SQL admin bypass attempt in multi-step flow."""
         # Step 1: Normal request
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "Swap ETH to USDC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "Swap ETH to USDC", "language": "en"}
         )
         assert response.status_code == status.HTTP_200_OK
         conv_id = response.json()["conversation_id"]
@@ -502,7 +538,7 @@ class TestSQLMultiStepInjection:
         # Step 2: Admin bypass attempt
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "admin'--", "language": "en"}
+            json={"content": "admin'--", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK
         agent_content = response.json()["agent_message"]["content"]
@@ -513,6 +549,6 @@ class TestSQLMultiStepInjection:
         # Step 3: Topic change to verify conversation still works
         response = await client.post(
             f"/api/v1/guest/chat?conversation_id={conv_id}",
-            json={"content": "What is gas price?", "language": "en"}
+            json={"content": "What is gas price?", "language": "en"},
         )
         assert response.status_code == status.HTTP_200_OK

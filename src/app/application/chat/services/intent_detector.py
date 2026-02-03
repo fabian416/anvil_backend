@@ -30,7 +30,9 @@ class ChatIntent(Enum):
     SIMILAR_PROTOCOLS = "similar_protocols"
 
     # Hunter AI intents (direct routing to Hunter tools)
-    HUNTER_SENTIMENT = "hunter_sentiment"  # Sentiment analysis (Twitter, Reddit, Discord, News)
+    HUNTER_SENTIMENT = (
+        "hunter_sentiment"  # Sentiment analysis (Twitter, Reddit, Discord, News)
+    )
     HUNTER_PRICE_PREDICTION = "hunter_price_prediction"  # Price forecasting
     HUNTER_RISK_SIGNALS = "hunter_risk_signals"  # Market risk warnings
     HUNTER_TRADING_SIGNALS = "hunter_trading_signals"  # Buy/sell signals
@@ -47,7 +49,9 @@ class ChatIntent(Enum):
     LENDING = "lending"  # Morpho vaults, Aave, Compound - deposit/earn/supply
     MONEY_MARKET = "money_market"  # Compare lending rates across protocols
     SWAP = "swap"  # Token swaps via 1inch, Hyperliquid, UniswapX
-    SWAP_MOONPAY = "swap_moonpay"  # MoonPay crypto-to-crypto swaps (BTC, ETH, SOL, USDC)
+    SWAP_MOONPAY = (
+        "swap_moonpay"  # MoonPay crypto-to-crypto swaps (BTC, ETH, SOL, USDC)
+    )
     BUY = "buy"  # Buy crypto with fiat (on-ramp)
     SEND = "send"  # Send tokens to another wallet
     BALANCE = "balance"  # Show user balance in USDC
@@ -60,7 +64,9 @@ class ChatIntent(Enum):
     COMPLEX_WORKFLOW = "complex_workflow"
 
     # Fallback intents
-    OUT_OF_SCOPE = "out_of_scope"  # For non-Anvil, off-topic queries (weather, jokes, etc.)
+    OUT_OF_SCOPE = (
+        "out_of_scope"  # For non-Anvil, off-topic queries (weather, jokes, etc.)
+    )
     GENERAL_CONVERSATION = "general_conversation"  # Contextual questions about chat history, clarifications
 
 

@@ -51,12 +51,12 @@ class ExportGeneratorAdapter(ExportGenerator):
 
         # PII regex patterns
         self._pii_patterns = {
-            "email": r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-            "phone": r'\b(?:\+?1[-.]?)?\(?([0-9]{3})\)?[-.]?([0-9]{3})[-.]?([0-9]{4})\b',
-            "ssn": r'\b(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b',
-            "credit_card": r'\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|6(?:011|5[0-9]{2})[0-9]{12}|(?:2131|1800|35\d{3})\d{11})\b',
-            "wallet_address": r'\b0x[a-fA-F0-9]{40}\b',
-            "ip_address": r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b',
+            "email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+            "phone": r"\b(?:\+?1[-.]?)?\(?([0-9]{3})\)?[-.]?([0-9]{3})[-.]?([0-9]{4})\b",
+            "ssn": r"\b(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b",
+            "credit_card": r"\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|6(?:011|5[0-9]{2})[0-9]{12}|(?:2131|1800|35\d{3})\d{11})\b",
+            "wallet_address": r"\b0x[a-fA-F0-9]{40}\b",
+            "ip_address": r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b",
         }
 
     async def generate_export(
@@ -190,7 +190,9 @@ class ExportGeneratorAdapter(ExportGenerator):
             Export metadata object
         """
         if not messages:
-            raise ExportGenerationError("Cannot generate metadata for empty conversation")
+            raise ExportGenerationError(
+                "Cannot generate metadata for empty conversation"
+            )
 
         # Calculate hash for digital signature
         hash_value = hashlib.sha256(
@@ -305,7 +307,10 @@ class ExportGeneratorAdapter(ExportGenerator):
             return True
 
         # Check format restrictions
-        if requirements.export_format_restrictions and format not in requirements.export_format_restrictions:
+        if (
+            requirements.export_format_restrictions
+            and format not in requirements.export_format_restrictions
+        ):
             raise ComplianceViolationError(
                 f"Format {format.value} not allowed for {compliance_standard.value} compliance. "
                 f"Allowed formats: {[f.value for f in requirements.export_format_restrictions]}"
@@ -378,7 +383,9 @@ class ExportGeneratorAdapter(ExportGenerator):
                 "conversation_id": str(conversation.id),
                 "user_id": conversation.user_id,
                 "title": conversation.title,
-                "project_id": str(conversation.project_id) if conversation.project_id else None,
+                "project_id": str(conversation.project_id)
+                if conversation.project_id
+                else None,
                 "created_at": conversation.created_at.isoformat(),
                 "updated_at": conversation.updated_at.isoformat(),
                 "export_timestamp": datetime.now(UTC).isoformat(),
@@ -387,7 +394,9 @@ class ExportGeneratorAdapter(ExportGenerator):
 
             # Add compliance metadata
             if compliance_standard:
-                export_data["metadata"]["compliance_standard"] = compliance_standard.value
+                export_data["metadata"]["compliance_standard"] = (
+                    compliance_standard.value
+                )
                 export_data["metadata"]["digitally_signed"] = True
 
         # Add messages
@@ -447,12 +456,18 @@ class ExportGeneratorAdapter(ExportGenerator):
         if include_metadata:
             lines.append("## Metadata\n")
             lines.append(f"- **Conversation ID:** {conversation.id}")
-            lines.append(f"- **Created:** {conversation.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-            lines.append(f"- **Updated:** {conversation.updated_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+            lines.append(
+                f"- **Created:** {conversation.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}"
+            )
+            lines.append(
+                f"- **Updated:** {conversation.updated_at.strftime('%Y-%m-%d %H:%M:%S UTC')}"
+            )
             lines.append(f"- **Message Count:** {len(messages)}")
 
             if compliance_standard:
-                lines.append(f"- **Compliance Standard:** {compliance_standard.value.upper()}")
+                lines.append(
+                    f"- **Compliance Standard:** {compliance_standard.value.upper()}"
+                )
                 lines.append("- **Digitally Signed:** Yes")
 
             lines.append("")
@@ -478,8 +493,12 @@ class ExportGeneratorAdapter(ExportGenerator):
         # Compliance footer
         if compliance_standard:
             lines.append("---")
-            lines.append(f"\n*This export complies with {compliance_standard.value.upper()} standards.*")
-            lines.append(f"*Generated on {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}*")
+            lines.append(
+                f"\n*This export complies with {compliance_standard.value.upper()} standards.*"
+            )
+            lines.append(
+                f"*Generated on {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}*"
+            )
 
         return "\n".join(lines)
 
@@ -654,10 +673,10 @@ class ExportGeneratorAdapter(ExportGenerator):
                 <span class="metadata-label">Conversation ID:</span> {conversation.id}
             </div>
             <div class="metadata-item">
-                <span class="metadata-label">Created:</span> {conversation.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}
+                <span class="metadata-label">Created:</span> {conversation.created_at.strftime("%Y-%m-%d %H:%M:%S UTC")}
             </div>
             <div class="metadata-item">
-                <span class="metadata-label">Updated:</span> {conversation.updated_at.strftime('%Y-%m-%d %H:%M:%S UTC')}
+                <span class="metadata-label">Updated:</span> {conversation.updated_at.strftime("%Y-%m-%d %H:%M:%S UTC")}
             </div>
             <div class="metadata-item">
                 <span class="metadata-label">Message Count:</span> {len(messages)}
@@ -688,7 +707,11 @@ class ExportGeneratorAdapter(ExportGenerator):
                 role_display = f"{role_display} ({msg.agent_type})"
 
             # Escape HTML in content
-            content = msg.content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            content = (
+                msg.content.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+            )
 
             html += f"""
         <div class="message {role_class}">
@@ -698,7 +721,7 @@ class ExportGeneratorAdapter(ExportGenerator):
 """
             if include_timestamps:
                 html += f"""
-            <div class="message-timestamp">{msg.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}</div>
+            <div class="message-timestamp">{msg.created_at.strftime("%Y-%m-%d %H:%M:%S UTC")}</div>
 """
             html += f"""
             <div class="message-content">{content}</div>
@@ -711,7 +734,7 @@ class ExportGeneratorAdapter(ExportGenerator):
         <div class="compliance-footer">
             <div class="compliance-badge">{compliance_standard.value.upper()} Compliant</div>
             <div>This export complies with {compliance_standard.value.upper()} standards.</div>
-            <div>Generated on {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}</div>
+            <div>Generated on {datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")}</div>
         </div>
 """
 
@@ -826,16 +849,18 @@ class ExportGeneratorAdapter(ExportGenerator):
                 ])
 
             metadata_table = Table(metadata_data, colWidths=[2 * inch, 4 * inch])
-            metadata_table.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#f8f9fa")),
-                ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-            ]))
+            metadata_table.setStyle(
+                TableStyle([
+                    ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#f8f9fa")),
+                    ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                    ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 10),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ])
+            )
 
             elements.append(metadata_table)
             elements.append(Spacer(1, 0.3 * inch))
@@ -880,8 +905,7 @@ class ExportGeneratorAdapter(ExportGenerator):
             # Message content
             # Escape XML special characters for reportlab
             content = (
-                msg.content
-                .replace("&", "&amp;")
+                msg.content.replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\n", "<br/>")

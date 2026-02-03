@@ -28,6 +28,7 @@ from typing import Any
 @dataclass
 class TestResult:
     """Test result with LLM analysis."""
+
     test_id: str
     category: str
     scenario: str
@@ -81,7 +82,9 @@ class LLMTestValidator:
             deepinfra_config = config.get("deepinfra", {})
 
             api_key = deepinfra_config.get("API_KEY")
-            base_url = deepinfra_config.get("BASE_URL", "https://api.deepinfra.com/v1/openai")
+            base_url = deepinfra_config.get(
+                "BASE_URL", "https://api.deepinfra.com/v1/openai"
+            )
 
             if not api_key:
                 return False
@@ -252,7 +255,9 @@ class LLMTestValidator:
                 scenario=scenario,
                 input="See test code",
                 expected_output="See test assertions",
-                actual_output="See test logs" if status == "PASS" else error_message[:200],
+                actual_output="See test logs"
+                if status == "PASS"
+                else error_message[:200],
                 status=status,
                 execution_time_ms=duration_ms,
                 error_message=error_message,
@@ -360,8 +365,11 @@ IMPORTANT: Respond ONLY with valid JSON, no markdown formatting."""
             json={
                 "model": "meta-llama/Meta-Llama-3.1-70B-Instruct",
                 "messages": [
-                    {"role": "system", "content": "You are a helpful test analysis assistant. Always respond with valid JSON."},
-                    {"role": "user", "content": prompt}
+                    {
+                        "role": "system",
+                        "content": "You are a helpful test analysis assistant. Always respond with valid JSON.",
+                    },
+                    {"role": "user", "content": prompt},
                 ],
                 "temperature": 0.1,
                 "max_tokens": 1000,
@@ -395,7 +403,10 @@ IMPORTANT: Respond ONLY with valid JSON, no markdown formatting."""
                     break
 
                 # Stop on next test or section marker
-                if context_lines > 5 and any(marker in line for marker in ["PASSED", "FAILED", "ERROR", "::test_"]):
+                if context_lines > 5 and any(
+                    marker in line
+                    for marker in ["PASSED", "FAILED", "ERROR", "::test_"]
+                ):
                     if not test_name in line:
                         break
 
@@ -409,11 +420,23 @@ IMPORTANT: Respond ONLY with valid JSON, no markdown formatting."""
 
         if "guest" in name_lower:
             return "guest_chat"
-        elif any(lang in name_lower for lang in ["french", "spanish", "portuguese", "chinese", "multilang"]):
+        elif any(
+            lang in name_lower
+            for lang in ["french", "spanish", "portuguese", "chinese", "multilang"]
+        ):
             return "multilanguage"
-        elif "performance" in name_lower or "concurrent" in name_lower or "benchmark" in name_lower:
+        elif (
+            "performance" in name_lower
+            or "concurrent" in name_lower
+            or "benchmark" in name_lower
+        ):
             return "performance"
-        elif "security" in name_lower or "xss" in name_lower or "injection" in name_lower or "auth" in name_lower:
+        elif (
+            "security" in name_lower
+            or "xss" in name_lower
+            or "injection" in name_lower
+            or "auth" in name_lower
+        ):
             return "security"
         elif "cross" in name_lower and "chain" in name_lower:
             return "cross_chain"
@@ -479,14 +502,14 @@ IMPORTANT: Respond ONLY with valid JSON, no markdown formatting."""
         errors = sum(1 for r in results if r.status == "ERROR")
         skipped = sum(1 for r in results if r.status == "SKIP")
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Test Summary - {output_file.parent.name.upper()}")
-        print(f"{'='*60}")
-        print(f"✅ PASS:    {passed}/{total} ({passed/total*100:.1f}%)")
-        print(f"❌ FAIL:    {failed}/{total} ({failed/total*100:.1f}%)")
+        print(f"{'=' * 60}")
+        print(f"✅ PASS:    {passed}/{total} ({passed / total * 100:.1f}%)")
+        print(f"❌ FAIL:    {failed}/{total} ({failed / total * 100:.1f}%)")
         print(f"⚠️  ERROR:   {errors}/{total}")
         print(f"⏭️  SKIPPED: {skipped}/{total}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         # Print critical failures
         critical = [r for r in results if r.severity == "critical"]
@@ -499,13 +522,13 @@ IMPORTANT: Respond ONLY with valid JSON, no markdown formatting."""
 
     async def run(self):
         """Execute test validation workflow."""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🧪 LLM-Powered Test Validator")
-        print("="*80)
+        print("=" * 80)
         print(f"Mode: {self.mode.upper()}")
         print(f"Timestamp: {datetime.now().isoformat()}")
         print(f"Output Directory: {self.output_dir}")
-        print("="*80)
+        print("=" * 80)
 
         if self.mode in ["guest", "all"]:
             print("\n🎭 Running GUEST tests...")

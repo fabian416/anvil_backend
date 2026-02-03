@@ -23,8 +23,7 @@ class TestGuestBuyMultiStepFlow:
 
         # Step 1: Initiate buy
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "buy", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "buy", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -43,8 +42,7 @@ class TestGuestBuyMultiStepFlow:
 
         # Step 2: Select crypto (ETH)
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "ETH", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -61,8 +59,7 @@ class TestGuestBuyMultiStepFlow:
 
         # Step 3: Enter amount
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "100", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "100", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -80,15 +77,18 @@ class TestGuestBuyMultiStepFlow:
 
         # Step 4: Confirm buy
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "confirm", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "confirm", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
 
         # Verify step 4 response (execution)
         step4_content = data["agent_message"]["content"]
-        assert "✅" in step4_content or "Confirmed" in step4_content or "🎉" in step4_content
+        assert (
+            "✅" in step4_content
+            or "Confirmed" in step4_content
+            or "🎉" in step4_content
+        )
         assert "sign up" in step4_content.lower() or "signup" in step4_content.lower()
         assert data["enrichment"]["buy_flow"] == "execution"
         assert data["registration_required"]["required"] is True
@@ -98,6 +98,7 @@ class TestGuestBuyMultiStepFlow:
 
         # PHASE 3: LLM validation with multi-step conversation history
         validation = None
+
     @pytest.mark.asyncio
     async def test_complete_buy_flow_btc(self, client):
         """Test complete buy flow with Bitcoin."""
@@ -111,8 +112,7 @@ class TestGuestBuyMultiStepFlow:
 
         for i, (message, expected_flow) in enumerate(steps, 1):
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": message, "language": "en"}
+                "/api/v1/guest/chat", json={"content": message, "language": "en"}
             )
             assert response.status_code == 200
             data = response.json()
@@ -122,21 +122,29 @@ class TestGuestBuyMultiStepFlow:
 
             # Verify final step
             if i == len(steps):
-                assert "🎉" in data["agent_message"]["content"] or "✅" in data["agent_message"]["content"]
+                assert (
+                    "🎉" in data["agent_message"]["content"]
+                    or "✅" in data["agent_message"]["content"]
+                )
 
     @pytest.mark.asyncio
     async def test_buy_flow_cancel(self, client):
         """Test cancelling buy at confirmation."""
 
         # Complete flow to confirmation
-        await client.post("/api/v1/guest/chat", json={"content": "buy", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "ETH", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "200", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "buy", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "200", "language": "en"}
+        )
 
         # Cancel
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "cancel", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "cancel", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -152,12 +160,13 @@ class TestGuestBuyMultiStepFlow:
 
         for crypto in cryptos:
             # Initiate
-            await client.post("/api/v1/guest/chat", json={"content": "buy", "language": "en"})
+            await client.post(
+                "/api/v1/guest/chat", json={"content": "buy", "language": "en"}
+            )
 
             # Select crypto
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": crypto, "language": "en"}
+                "/api/v1/guest/chat", json={"content": crypto, "language": "en"}
             )
             assert response.status_code == 200
             data = response.json()
@@ -171,12 +180,15 @@ class TestGuestBuyMultiStepFlow:
         """Test that buy shows demo pricing."""
 
         # Complete flow to quote
-        await client.post("/api/v1/guest/chat", json={"content": "buy", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "ETH", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "buy", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
+        )
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "100", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "100", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -188,7 +200,11 @@ class TestGuestBuyMultiStepFlow:
         assert "ETH" in content  # Crypto symbol
         assert "Demo" in content or "demo" in content.lower()  # Demo indicator
         # Should show processing fee
-        assert "fee" in content.lower() or "2.99" in content or "processing" in content.lower()
+        assert (
+            "fee" in content.lower()
+            or "2.99" in content
+            or "processing" in content.lower()
+        )
 
     @pytest.mark.asyncio
     async def test_buy_flow_multilingual_spanish(self, client):
@@ -196,26 +212,30 @@ class TestGuestBuyMultiStepFlow:
 
         # Step 1
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "comprar", "language": "es"}
+            "/api/v1/guest/chat", json={"content": "comprar", "language": "es"}
         )
         assert response.status_code == 200
         data = response.json()
 
         content = data["agent_message"]["content"]
         # Should contain Spanish or English text (fallback)
-        assert any(word in content.lower() for word in ["comprar", "buy", "cripto", "crypto"])
+        assert any(
+            word in content.lower() for word in ["comprar", "buy", "cripto", "crypto"]
+        )
 
     @pytest.mark.asyncio
     async def test_buy_security_warnings(self, client):
         """Test that security warnings are displayed."""
 
         # Get to confirmation step
-        await client.post("/api/v1/guest/chat", json={"content": "buy", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "ETH", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "buy", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
+        )
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "100", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "100", "language": "en"}
         )
 
         assert response.status_code == 200
@@ -239,8 +259,7 @@ class TestGuestBuyFlowStorytellingQuality:
 
         for step in steps:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": step, "language": "en"}
+                "/api/v1/guest/chat", json={"content": step, "language": "en"}
             )
             content = response.json()["agent_message"]["content"]
 
@@ -253,8 +272,7 @@ class TestGuestBuyFlowStorytellingQuality:
         """Test that responses use emojis to enhance communication."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "buy", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "buy", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -266,11 +284,14 @@ class TestGuestBuyFlowStorytellingQuality:
         """Test that confirmation step has clear CTAs."""
 
         # Get to confirmation
-        await client.post("/api/v1/guest/chat", json={"content": "buy", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "ETH", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "buy", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
+        )
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "50", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "50", "language": "en"}
         )
 
         content = response.json()["agent_message"]["content"]
@@ -285,11 +306,14 @@ class TestGuestBuyFlowStorytellingQuality:
         """Test that quote step shows clear pricing breakdown."""
 
         # Get to quote step
-        await client.post("/api/v1/guest/chat", json={"content": "buy", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "ETH", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "buy", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
+        )
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "100", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "100", "language": "en"}
         )
 
         content = response.json()["agent_message"]["content"]

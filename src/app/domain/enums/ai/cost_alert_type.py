@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class CostAlertType(Enum):
     DAILY_THRESHOLD = "daily_threshold"
     WEEKLY_THRESHOLD = "weekly_threshold"

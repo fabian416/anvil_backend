@@ -88,16 +88,19 @@ class MoneyMarketProtocolData:
         # Validate APY values (must be >= 0 and <= 100%)
         if self.supply_apy < Decimal("0") or self.supply_apy > Decimal("100"):
             raise ValueError(
-                f"Invalid supply_apy: {self.supply_apy}. "
-                "Must be between 0 and 100%."
+                f"Invalid supply_apy: {self.supply_apy}. Must be between 0 and 100%."
             )
-        if self.borrow_apy_variable < Decimal("0") or self.borrow_apy_variable > Decimal("100"):
+        if self.borrow_apy_variable < Decimal(
+            "0"
+        ) or self.borrow_apy_variable > Decimal("100"):
             raise ValueError(
                 f"Invalid borrow_apy_variable: {self.borrow_apy_variable}. "
                 "Must be between 0 and 100%."
             )
         if self.borrow_apy_stable is not None:
-            if self.borrow_apy_stable < Decimal("0") or self.borrow_apy_stable > Decimal("100"):
+            if self.borrow_apy_stable < Decimal(
+                "0"
+            ) or self.borrow_apy_stable > Decimal("100"):
                 raise ValueError(
                     f"Invalid borrow_apy_stable: {self.borrow_apy_stable}. "
                     "Must be between 0 and 100%."

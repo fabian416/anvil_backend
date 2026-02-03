@@ -76,7 +76,8 @@ class AdminMetricsOverview(BaseModel):
     users: UserOverviewMetrics = Field(..., description="User activity metrics")
     generated_at: datetime = Field(..., description="When these metrics were generated")
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "wallets": {
                     "total_wallets": 1500,
@@ -100,7 +101,8 @@ class AdminMetricsOverview(BaseModel):
                 },
                 "generated_at": "2024-01-15T10:30:00Z",
             }
-        })
+        }
+    )
 
 
 # ============================================================
@@ -111,9 +113,7 @@ class AdminMetricsOverview(BaseModel):
 class TransactionTimeSeriesResponse(BaseModel):
     """Time series data for transactions."""
 
-    data: list[TimeSeriesDataPoint] = Field(
-        ..., description="Time series data points"
-    )
+    data: list[TimeSeriesDataPoint] = Field(..., description="Time series data points")
     from_date: datetime = Field(..., description="Start of the time range")
     to_date: datetime = Field(..., description="End of the time range")
     group_by: str = Field(
@@ -127,9 +127,7 @@ class TransactionTimeSeriesResponse(BaseModel):
 class WalletTimeSeriesResponse(BaseModel):
     """Time series data for wallet creation."""
 
-    data: list[TimeSeriesDataPoint] = Field(
-        ..., description="Time series data points"
-    )
+    data: list[TimeSeriesDataPoint] = Field(..., description="Time series data points")
     from_date: datetime = Field(..., description="Start of the time range")
     to_date: datetime = Field(..., description="End of the time range")
     group_by: str = Field(
@@ -173,12 +171,8 @@ class WalletDistributionResponse(BaseModel):
 class TransactionDistributionResponse(BaseModel):
     """Distribution of transactions by various dimensions."""
 
-    by_chain: list[DistributionItem] = Field(
-        ..., description="Distribution by chain"
-    )
-    by_status: list[DistributionItem] = Field(
-        ..., description="Distribution by status"
-    )
+    by_chain: list[DistributionItem] = Field(..., description="Distribution by chain")
+    by_status: list[DistributionItem] = Field(..., description="Distribution by status")
     by_type: list[DistributionItem] = Field(
         ..., description="Distribution by transaction type"
     )

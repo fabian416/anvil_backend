@@ -1,6 +1,7 @@
 """
 LLM Cost Alert entity.
 """
+
 from dataclasses import dataclass
 from typing import Optional
 from decimal import Decimal
@@ -12,9 +13,11 @@ from app.domain.value_objects.base import ValueObject
 from app.domain.enums.ai.cost_alert_type import CostAlertType
 from app.domain.value_objects.created_at import CreatedAt
 
+
 @dataclass(frozen=True, repr=False)
 class CostAlertId(ValueObject):
     value: int
+
 
 @dataclass(eq=False, kw_only=True)
 class LLMCostAlert(Entity[CostAlertId]):

@@ -152,9 +152,13 @@ class TestFourSourceAggregation:
         discord_analyzer = DiscordSentimentAnalyzer()
         news_analyzer = NewsSentimentAnalyzer()
 
-        twitter_reading = await twitter_analyzer.analyze_token_sentiment("ETH", hours=24)
+        twitter_reading = await twitter_analyzer.analyze_token_sentiment(
+            "ETH", hours=24
+        )
         reddit_reading = await reddit_analyzer.analyze_token_sentiment("ETH", hours=24)
-        discord_reading = await discord_analyzer.analyze_token_sentiment("ETH", hours=24)
+        discord_reading = await discord_analyzer.analyze_token_sentiment(
+            "ETH", hours=24
+        )
         news_reading = await news_analyzer.analyze_token_sentiment("ETH", hours=24)
 
         # Aggregate all sources
@@ -193,7 +197,9 @@ class TestFourSourceAggregation:
 
         # Check weights sum to 1.0 (or close due to floating point)
         total_weight = sum(s["weight"] for s in breakdown.values())
-        assert abs(total_weight - 1.0) < 0.01, f"Weights should sum to 1.0, got {total_weight}"
+        assert abs(total_weight - 1.0) < 0.01, (
+            f"Weights should sum to 1.0, got {total_weight}"
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -219,9 +225,13 @@ class TestFourSourceAggregation:
         discord_analyzer = DiscordSentimentAnalyzer()
         news_analyzer = NewsSentimentAnalyzer()
 
-        twitter_reading = await twitter_analyzer.analyze_token_sentiment(token, hours=24)
+        twitter_reading = await twitter_analyzer.analyze_token_sentiment(
+            token, hours=24
+        )
         reddit_reading = await reddit_analyzer.analyze_token_sentiment(token, hours=24)
-        discord_reading = await discord_analyzer.analyze_token_sentiment(token, hours=24)
+        discord_reading = await discord_analyzer.analyze_token_sentiment(
+            token, hours=24
+        )
         news_reading = await news_analyzer.analyze_token_sentiment(token, hours=24)
 
         # Aggregate
@@ -246,9 +256,12 @@ class TestFourSourceAggregation:
         assert aggregated.classification is not None
 
         # Verify consensus and divergence
-        consensus = aggregator.calculate_consensus(
-            [twitter_reading, reddit_reading, discord_reading, news_reading]
-        )
+        consensus = aggregator.calculate_consensus([
+            twitter_reading,
+            reddit_reading,
+            discord_reading,
+            news_reading,
+        ])
         divergence = aggregator.identify_divergence(aggregated)
 
         assert 0 <= consensus <= 1

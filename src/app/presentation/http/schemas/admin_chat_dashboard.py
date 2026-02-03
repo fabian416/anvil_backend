@@ -25,7 +25,9 @@ class AgentLeaderboardEntry(BaseModel):
     rank: int = Field(..., description="Leaderboard rank")
     total_invocations: int = Field(..., description="Total times invoked")
     success_rate: float = Field(..., ge=0, le=1, description="Success rate (0.0-1.0)")
-    avg_response_time_ms: float = Field(..., description="Average response time in milliseconds")
+    avg_response_time_ms: float = Field(
+        ..., description="Average response time in milliseconds"
+    )
     total_cost_usd: float = Field(..., description="Total cost in USD")
     error_count: int = Field(..., description="Number of errors")
     last_used: Optional[datetime] = Field(None, description="Last time used")
@@ -39,7 +41,9 @@ class CostBreakdownEntry(BaseModel):
     cost_usd: float = Field(..., description="Cost in USD")
     percentage: float = Field(..., ge=0, le=100, description="Percentage of total")
     invocations: int = Field(..., description="Number of invocations")
-    avg_cost_per_invocation: float = Field(..., description="Average cost per invocation")
+    avg_cost_per_invocation: float = Field(
+        ..., description="Average cost per invocation"
+    )
 
 
 class CacheStatistics(BaseModel):
@@ -190,7 +194,9 @@ class CostTrackingResponse(BaseModel):
 
     # Projections
     projected_monthly_cost_usd: float
-    cost_change_percentage: float = Field(..., description="% change from previous period")
+    cost_change_percentage: float = Field(
+        ..., description="% change from previous period"
+    )
 
     # Trends
     daily_cost_trend: List[TimeSeriesDataPoint]
@@ -232,15 +238,12 @@ class ActiveUsersResponse(BaseModel):
 
     # Activity breakdown
     users_by_activity_level: Dict[str, int] = Field(
-        ...,
-        description="Users grouped by activity (power, regular, light, inactive)"
+        ..., description="Users grouped by activity (power, regular, light, inactive)"
     )
 
     # Top users
     most_active_users: List[Dict[str, Any]] = Field(
-        ...,
-        max_length=10,
-        description="Top users by message count (anonymized)"
+        ..., max_length=10, description="Top users by message count (anonymized)"
     )
 
     # Trends
@@ -259,19 +262,15 @@ class ConversationMetricsResponse(BaseModel):
 
     # Topic distribution
     top_topics: List[Dict[str, Any]] = Field(
-        ...,
-        max_length=10,
-        description="Most discussed topics with counts"
+        ..., max_length=10, description="Most discussed topics with counts"
     )
 
     # Engagement patterns
     messages_by_hour: Dict[int, int] = Field(
-        ...,
-        description="Message distribution by hour (0-23)"
+        ..., description="Message distribution by hour (0-23)"
     )
     messages_by_day: Dict[str, int] = Field(
-        ...,
-        description="Message distribution by day of week"
+        ..., description="Message distribution by day of week"
     )
 
     # Trends
@@ -288,10 +287,7 @@ class ExportDataResponse(BaseModel):
     sections_included: List[str]
 
     # Export data
-    data: Dict[str, Any] = Field(
-        ...,
-        description="Exported data in requested format"
-    )
+    data: Dict[str, Any] = Field(..., description="Exported data in requested format")
 
     # Metadata
     generated_at: datetime

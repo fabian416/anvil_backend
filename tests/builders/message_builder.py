@@ -13,6 +13,7 @@ from dataclasses import dataclass
 @dataclass
 class TestMessage:
     """Test message data class."""
+
     id: UUID
     conversation_id: UUID
     role: str
@@ -38,7 +39,7 @@ class TestMessage:
 
 class MessageBuilder:
     """Fluent builder for Message test data."""
-    
+
     def __init__(self):
         """Initialize with default values."""
         self._id: UUID = uuid4()
@@ -48,44 +49,44 @@ class MessageBuilder:
         self._created_at: datetime = datetime.now(timezone.utc)
         self._agent_type: Optional[str] = None
         self._metadata: Optional[dict] = None
-    
-    def with_id(self, id_: UUID) -> 'MessageBuilder':
+
+    def with_id(self, id_: UUID) -> "MessageBuilder":
         """Set message ID."""
         self._id = id_
         return self
-    
-    def with_conversation_id(self, conversation_id: UUID) -> 'MessageBuilder':
+
+    def with_conversation_id(self, conversation_id: UUID) -> "MessageBuilder":
         """Set conversation ID."""
         self._conversation_id = conversation_id
         return self
-    
-    def with_role(self, role: str) -> 'MessageBuilder':
+
+    def with_role(self, role: str) -> "MessageBuilder":
         """Set message role (user, agent, system)."""
         self._role = role
         return self
-    
-    def with_content(self, content: str) -> 'MessageBuilder':
+
+    def with_content(self, content: str) -> "MessageBuilder":
         """Set message content."""
         self._content = content
         return self
-    
-    def with_agent_type(self, agent_type: str) -> 'MessageBuilder':
+
+    def with_agent_type(self, agent_type: str) -> "MessageBuilder":
         """Set agent type (for agent messages)."""
         self._agent_type = agent_type
         return self
 
-    def with_metadata(self, metadata: dict) -> 'MessageBuilder':
+    def with_metadata(self, metadata: dict) -> "MessageBuilder":
         """Set message metadata."""
         self._metadata = metadata
         return self
 
     def with_llm_response(
-        self, 
-        content: Optional[str] = None, 
-        model: str = "gpt-4", 
+        self,
+        content: Optional[str] = None,
+        model: str = "gpt-4",
         tokens: int = 100,
         include_disclaimer: bool = False,
-    ) -> 'MessageBuilder':
+    ) -> "MessageBuilder":
         """Add LLM response metadata and optionally set content."""
         if content:
             self._content = content
@@ -97,25 +98,25 @@ class MessageBuilder:
             "finish_reason": "stop",
         }
         return self
-    
-    def from_user(self) -> 'MessageBuilder':
+
+    def from_user(self) -> "MessageBuilder":
         """Configure as user message."""
         self._role = "user"
         self._agent_type = None
         return self
-    
-    def from_agent(self, agent_type: str = "general") -> 'MessageBuilder':
+
+    def from_agent(self, agent_type: str = "general") -> "MessageBuilder":
         """Configure as agent message."""
         self._role = "agent"
         self._agent_type = agent_type
         return self
-    
-    def from_system(self) -> 'MessageBuilder':
+
+    def from_system(self) -> "MessageBuilder":
         """Configure as system message."""
         self._role = "system"
         self._agent_type = None
         return self
-    
+
     def build_dict(self) -> dict:
         """Build as dictionary."""
         result = {
@@ -141,19 +142,19 @@ class MessageBuilder:
             agent_type=self._agent_type,
             metadata=self._metadata,
         )
-    
+
     @classmethod
-    def a_message(cls) -> 'MessageBuilder':
+    def a_message(cls) -> "MessageBuilder":
         """Start building a message."""
         return cls()
-    
+
     @classmethod
-    def a_user_message(cls) -> 'MessageBuilder':
+    def a_user_message(cls) -> "MessageBuilder":
         """Build a user message."""
         return cls().from_user()
-    
+
     @classmethod
-    def an_agent_message(cls) -> 'MessageBuilder':
+    def an_agent_message(cls) -> "MessageBuilder":
         """Build an agent message."""
         return cls().from_agent()
 

@@ -2,6 +2,7 @@
 
 Provides dependency injection for Agno agents and router.
 """
+
 from dishka import Provider, Scope, provide
 
 from app.infrastructure.agno import AgentRouter
@@ -10,12 +11,12 @@ from app.setup.config.agno import AgnoConfig
 
 class AgnoProvider(Provider):
     """Provider for Agno agents."""
-    
+
     @provide(scope=Scope.APP)
     def get_agno_config(self) -> AgnoConfig:
         """
         Provide Agno configuration.
-        
+
         Returns:
             AgnoConfig instance
         """
@@ -31,15 +32,15 @@ class AgnoProvider(Provider):
             mcp_defillama_url="http://localhost:8084",
             mcp_manager_url="http://localhost:8080",
         )
-    
+
     @provide(scope=Scope.APP)
     async def get_agent_router(self, config: AgnoConfig) -> AgentRouter:
         """
         Provide initialized AgentRouter.
-        
+
         Args:
             config: Agno configuration
-        
+
         Returns:
             Initialized AgentRouter instance
         """

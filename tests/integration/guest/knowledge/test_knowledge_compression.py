@@ -9,7 +9,7 @@ import pytest
 from app.application.chat.services.knowledge_compressor import (
     KnowledgeCompressor,
     CompressionLevel,
-    compress_knowledge
+    compress_knowledge,
 )
 
 
@@ -23,12 +23,11 @@ class TestCompressionLevels:
         """Test no compression returns full knowledge"""
         overview_data = {
             "core_capabilities": {"trading": "description"},
-            "unique_features": {"agents": "18 agents"}
+            "unique_features": {"agents": "18 agents"},
         }
 
         result = KnowledgeCompressor.compress_overview(
-            overview_data,
-            level=CompressionLevel.NONE
+            overview_data, level=CompressionLevel.NONE
         )
 
         # Should be JSON dump (no compression)
@@ -38,12 +37,18 @@ class TestCompressionLevels:
     def test_light_compression_reduces_30_percent(self):
         """Test light compression achieves ~30% token reduction"""
         overview_data = {
-            "core_capabilities": {"trading": "Full trading description with many words"},
-            "unique_features": {"agents": "18 specialized agents"}
+            "core_capabilities": {
+                "trading": "Full trading description with many words"
+            },
+            "unique_features": {"agents": "18 specialized agents"},
         }
 
-        full = KnowledgeCompressor.compress_overview(overview_data, CompressionLevel.NONE)
-        light = KnowledgeCompressor.compress_overview(overview_data, CompressionLevel.LIGHT)
+        full = KnowledgeCompressor.compress_overview(
+            overview_data, CompressionLevel.NONE
+        )
+        light = KnowledgeCompressor.compress_overview(
+            overview_data, CompressionLevel.LIGHT
+        )
 
         full_tokens = KnowledgeCompressor.estimate_tokens(full)
         light_tokens = KnowledgeCompressor.estimate_tokens(light)
@@ -51,7 +56,9 @@ class TestCompressionLevels:
         reduction_percent = ((full_tokens - light_tokens) / full_tokens) * 100
 
         # Should be around 15-20% reduction with minimal data (allow 10-40% range)
-        assert 10 <= reduction_percent <= 40, f"Expected ~15-20% reduction, got {reduction_percent:.1f}%"
+        assert 10 <= reduction_percent <= 40, (
+            f"Expected ~15-20% reduction, got {reduction_percent:.1f}%"
+        )
 
     def test_medium_compression_produces_valid_output(self):
         """Test medium compression produces valid, structured output"""
@@ -59,18 +66,20 @@ class TestCompressionLevels:
             "core_capabilities": {
                 "trading_execution": {
                     "name": "Trading & Swaps",
-                    "description": "Execute token swaps across multiple DEX aggregators with best rate optimization, MEV protection, and gas optimization."
+                    "description": "Execute token swaps across multiple DEX aggregators with best rate optimization, MEV protection, and gas optimization.",
                 }
             },
             "unique_features": {
                 "agent_squad": {
                     "count": 18,
-                    "description": "18 specialized AI agents for comprehensive DeFi operations"
+                    "description": "18 specialized AI agents for comprehensive DeFi operations",
                 }
-            }
+            },
         }
 
-        medium_result = KnowledgeCompressor.compress_overview(overview_data, CompressionLevel.MEDIUM)
+        medium_result = KnowledgeCompressor.compress_overview(
+            overview_data, CompressionLevel.MEDIUM
+        )
 
         # Verify output contains key information (uses hardcoded template)
         assert "ANVIL CAPABILITIES" in medium_result
@@ -84,12 +93,14 @@ class TestCompressionLevels:
             "core_capabilities": {
                 "trading_execution": {
                     "name": "Trading & Swaps",
-                    "description": "Execute token swaps across multiple DEX aggregators"
+                    "description": "Execute token swaps across multiple DEX aggregators",
                 }
             }
         }
 
-        aggressive_result = KnowledgeCompressor.compress_overview(overview_data, CompressionLevel.AGGRESSIVE)
+        aggressive_result = KnowledgeCompressor.compress_overview(
+            overview_data, CompressionLevel.AGGRESSIVE
+        )
 
         # Verify output contains essential information in compact form (uses hardcoded template)
         assert "ANVIL FEATURES" in aggressive_result
@@ -105,14 +116,10 @@ class TestOverviewCompression:
 
     def test_aggressive_overview_includes_key_features(self):
         """Test aggressive overview includes essential features"""
-        overview_data = {
-            "core_capabilities": {},
-            "unique_features": {}
-        }
+        overview_data = {"core_capabilities": {}, "unique_features": {}}
 
         result = KnowledgeCompressor.compress_overview(
-            overview_data,
-            level=CompressionLevel.AGGRESSIVE
+            overview_data, level=CompressionLevel.AGGRESSIVE
         )
 
         # Should mention key features
@@ -128,19 +135,14 @@ class TestOverviewCompression:
             "core_capabilities": {
                 "trading_execution": {
                     "name": "Trading & Swaps",
-                    "description": "Multi-DEX aggregation"
+                    "description": "Multi-DEX aggregation",
                 }
             },
-            "unique_features": {
-                "agent_squad": {
-                    "count": 18
-                }
-            }
+            "unique_features": {"agent_squad": {"count": 18}},
         }
 
         result = KnowledgeCompressor.compress_overview(
-            overview_data,
-            level=CompressionLevel.MEDIUM
+            overview_data, level=CompressionLevel.MEDIUM
         )
 
         result_lower = result.lower()
@@ -159,7 +161,7 @@ class TestHunterAICompression:
             "core_capabilities": [
                 {
                     "name": "Sentiment Analysis",
-                    "data_sources": ["Twitter", "Reddit", "News"]
+                    "data_sources": ["Twitter", "Reddit", "News"],
                 }
             ]
         }
@@ -167,7 +169,7 @@ class TestHunterAICompression:
         result = KnowledgeCompressor.compress_hunter_ai(
             hunter_data,
             level=CompressionLevel.AGGRESSIVE,
-            specific_capability="sentiment"
+            specific_capability="sentiment",
         )
 
         result_lower = result.lower()
@@ -177,14 +179,12 @@ class TestHunterAICompression:
 
     def test_aggressive_prediction_compression(self):
         """Test aggressive compression for prediction capability"""
-        hunter_data = {
-            "core_capabilities": []
-        }
+        hunter_data = {"core_capabilities": []}
 
         result = KnowledgeCompressor.compress_hunter_ai(
             hunter_data,
             level=CompressionLevel.AGGRESSIVE,
-            specific_capability="prediction"
+            specific_capability="prediction",
         )
 
         result_lower = result.lower()
@@ -200,19 +200,18 @@ class TestHunterAICompression:
                     "name": "Sentiment Analysis",
                     "intent": "HUNTER_SENTIMENT",
                     "description": "Multi-source sentiment analysis",
-                    "data_sources": ["Twitter", "Reddit", "News"]
+                    "data_sources": ["Twitter", "Reddit", "News"],
                 },
                 {
                     "name": "Price Prediction",
                     "intent": "HUNTER_PRICE_PREDICTION",
-                    "description": "AI-powered price forecasting"
-                }
+                    "description": "AI-powered price forecasting",
+                },
             ]
         }
 
         result = KnowledgeCompressor.compress_hunter_ai(
-            hunter_data,
-            level=CompressionLevel.MEDIUM
+            hunter_data, level=CompressionLevel.MEDIUM
         )
 
         result_lower = result.lower()
@@ -227,14 +226,12 @@ class TestULTRACompression:
 
     def test_aggressive_arbitrage_compression(self):
         """Test aggressive compression for arbitrage"""
-        ultra_data = {
-            "core_capabilities": []
-        }
+        ultra_data = {"core_capabilities": []}
 
         result = KnowledgeCompressor.compress_ultra(
             ultra_data,
             level=CompressionLevel.AGGRESSIVE,
-            specific_capability="arbitrage"
+            specific_capability="arbitrage",
         )
 
         result_lower = result.lower()
@@ -244,31 +241,27 @@ class TestULTRACompression:
 
     def test_aggressive_flash_loans_compression(self):
         """Test aggressive compression for flash loans"""
-        ultra_data = {
-            "core_capabilities": []
-        }
+        ultra_data = {"core_capabilities": []}
 
         result = KnowledgeCompressor.compress_ultra(
             ultra_data,
             level=CompressionLevel.AGGRESSIVE,
-            specific_capability="flash_loans"
+            specific_capability="flash_loans",
         )
 
         result_lower = result.lower()
         assert "flash loan" in result_lower
-        assert any(protocol in result_lower for protocol in ["aave", "balancer", "uniswap"])
+        assert any(
+            protocol in result_lower for protocol in ["aave", "balancer", "uniswap"]
+        )
         assert "0%" in result or "0.09%" in result  # Fee information
 
     def test_aggressive_mev_compression(self):
         """Test aggressive compression for MEV protection"""
-        ultra_data = {
-            "core_capabilities": []
-        }
+        ultra_data = {"core_capabilities": []}
 
         result = KnowledgeCompressor.compress_ultra(
-            ultra_data,
-            level=CompressionLevel.AGGRESSIVE,
-            specific_capability="mev"
+            ultra_data, level=CompressionLevel.AGGRESSIVE, specific_capability="mev"
         )
 
         result_lower = result.lower()
@@ -282,21 +275,20 @@ class TestULTRACompression:
             "core_capabilities": [
                 {
                     "name": "Arbitrage Discovery",
-                    "description": "Automated arbitrage opportunity discovery"
+                    "description": "Automated arbitrage opportunity discovery",
                 },
                 {
                     "name": "Flash Loan Engine",
                     "protocols_supported": [
                         {"name": "Aave V3", "fee": "0.09%"},
-                        {"name": "Balancer", "fee": "0%"}
-                    ]
-                }
+                        {"name": "Balancer", "fee": "0%"},
+                    ],
+                },
             ]
         }
 
         result = KnowledgeCompressor.compress_ultra(
-            ultra_data,
-            level=CompressionLevel.MEDIUM
+            ultra_data, level=CompressionLevel.MEDIUM
         )
 
         result_lower = result.lower()
@@ -311,15 +303,11 @@ class TestSwapCompression:
     def test_aggressive_swap_compression(self):
         """Test aggressive swap compression"""
         swap_data = {
-            "supported_aggregators": [
-                {"name": "1inch"},
-                {"name": "Hyperliquid"}
-            ]
+            "supported_aggregators": [{"name": "1inch"}, {"name": "Hyperliquid"}]
         }
 
         result = KnowledgeCompressor.compress_swap(
-            swap_data,
-            level=CompressionLevel.AGGRESSIVE
+            swap_data, level=CompressionLevel.AGGRESSIVE
         )
 
         result_lower = result.lower()
@@ -330,16 +318,12 @@ class TestSwapCompression:
     def test_medium_swap_includes_process(self):
         """Test medium swap compression includes process details"""
         swap_data = {
-            "how_it_works": {
-                "step_1": "Query aggregators",
-                "step_2": "Compare rates"
-            },
-            "supported_aggregators": []
+            "how_it_works": {"step_1": "Query aggregators", "step_2": "Compare rates"},
+            "supported_aggregators": [],
         }
 
         result = KnowledgeCompressor.compress_swap(
-            swap_data,
-            level=CompressionLevel.MEDIUM
+            swap_data, level=CompressionLevel.MEDIUM
         )
 
         result_lower = result.lower()
@@ -352,13 +336,10 @@ class TestShortcutsCompression:
 
     def test_aggressive_shortcuts_compression(self):
         """Test aggressive shortcuts compression"""
-        shortcuts_data = {
-            "quick_start_commands": []
-        }
+        shortcuts_data = {"quick_start_commands": []}
 
         result = KnowledgeCompressor.compress_shortcuts(
-            shortcuts_data,
-            level=CompressionLevel.AGGRESSIVE
+            shortcuts_data, level=CompressionLevel.AGGRESSIVE
         )
 
         result_lower = result.lower()
@@ -372,21 +353,17 @@ class TestShortcutsCompression:
                 "trading": {
                     "title": "Trading Commands",
                     "commands": [
-                        {
-                            "name": "swap",
-                            "examples": ["swap 100 USDC to ETH"]
-                        }
-                    ]
+                        {"name": "swap", "examples": ["swap 100 USDC to ETH"]}
+                    ],
                 }
             },
             "quick_start_commands": [
                 {"command": "what's the price of BTC?", "category": "Price Query"}
-            ]
+            ],
         }
 
         result = KnowledgeCompressor.compress_shortcuts(
-            shortcuts_data,
-            level=CompressionLevel.MEDIUM
+            shortcuts_data, level=CompressionLevel.MEDIUM
         )
 
         # Should include command examples
@@ -424,17 +401,13 @@ class TestIntentBasedCompression:
 
     def test_hunter_intent_routes_to_hunter_compression(self):
         """Test HUNTER_* intents use Hunter AI compression"""
-        knowledge = {
-            "core_capabilities": [
-                {"name": "Sentiment Analysis"}
-            ]
-        }
+        knowledge = {"core_capabilities": [{"name": "Sentiment Analysis"}]}
 
         result = KnowledgeCompressor.compress_for_intent(
             knowledge=knowledge,
             intent="HUNTER_SENTIMENT",
             user_query="check sentiment for BTC",
-            level=CompressionLevel.AGGRESSIVE
+            level=CompressionLevel.AGGRESSIVE,
         )
 
         result_lower = result.lower()
@@ -442,17 +415,13 @@ class TestIntentBasedCompression:
 
     def test_ultra_intent_routes_to_ultra_compression(self):
         """Test ULTRA_* intents use ULTRA compression"""
-        knowledge = {
-            "core_capabilities": [
-                {"name": "Arbitrage Discovery"}
-            ]
-        }
+        knowledge = {"core_capabilities": [{"name": "Arbitrage Discovery"}]}
 
         result = KnowledgeCompressor.compress_for_intent(
             knowledge=knowledge,
             intent="ULTRA_ARBITRAGE",
             user_query="find arbitrage opportunities",
-            level=CompressionLevel.AGGRESSIVE
+            level=CompressionLevel.AGGRESSIVE,
         )
 
         result_lower = result.lower()
@@ -460,17 +429,13 @@ class TestIntentBasedCompression:
 
     def test_swap_intent_routes_to_swap_compression(self):
         """Test SWAP intent uses swap compression"""
-        knowledge = {
-            "supported_aggregators": [
-                {"name": "1inch"}
-            ]
-        }
+        knowledge = {"supported_aggregators": [{"name": "1inch"}]}
 
         result = KnowledgeCompressor.compress_for_intent(
             knowledge=knowledge,
             intent="SWAP",
             user_query="swap 100 USDC to ETH",
-            level=CompressionLevel.AGGRESSIVE
+            level=CompressionLevel.AGGRESSIVE,
         )
 
         result_lower = result.lower()
@@ -478,15 +443,13 @@ class TestIntentBasedCompression:
 
     def test_general_intent_routes_to_overview_compression(self):
         """Test general intents use overview compression"""
-        knowledge = {
-            "core_capabilities": {}
-        }
+        knowledge = {"core_capabilities": {}}
 
         result = KnowledgeCompressor.compress_for_intent(
             knowledge=knowledge,
             intent="GENERAL_CONVERSATION",
             user_query="what can you do?",
-            level=CompressionLevel.AGGRESSIVE
+            level=CompressionLevel.AGGRESSIVE,
         )
 
         # Should get overview compression
@@ -499,15 +462,13 @@ class TestSpecificCapabilityExtraction:
 
     def test_sentiment_query_extracts_sentiment_only(self):
         """Test sentiment query extracts only sentiment capability"""
-        knowledge = {
-            "core_capabilities": []
-        }
+        knowledge = {"core_capabilities": []}
 
         result = KnowledgeCompressor.compress_for_intent(
             knowledge=knowledge,
             intent="HUNTER_SENTIMENT",
             user_query="how accurate is sentiment analysis?",
-            level=CompressionLevel.AGGRESSIVE
+            level=CompressionLevel.AGGRESSIVE,
         )
 
         result_lower = result.lower()
@@ -516,15 +477,13 @@ class TestSpecificCapabilityExtraction:
 
     def test_prediction_query_extracts_prediction_only(self):
         """Test prediction query extracts only prediction capability"""
-        knowledge = {
-            "core_capabilities": []
-        }
+        knowledge = {"core_capabilities": []}
 
         result = KnowledgeCompressor.compress_for_intent(
             knowledge=knowledge,
             intent="HUNTER_PRICE_PREDICTION",
             user_query="can you predict ETH price?",
-            level=CompressionLevel.AGGRESSIVE
+            level=CompressionLevel.AGGRESSIVE,
         )
 
         result_lower = result.lower()
@@ -533,15 +492,13 @@ class TestSpecificCapabilityExtraction:
 
     def test_arbitrage_query_extracts_arbitrage_only(self):
         """Test arbitrage query extracts only arbitrage capability"""
-        knowledge = {
-            "core_capabilities": []
-        }
+        knowledge = {"core_capabilities": []}
 
         result = KnowledgeCompressor.compress_for_intent(
             knowledge=knowledge,
             intent="ULTRA_ARBITRAGE",
             user_query="find arbitrage opportunities",
-            level=CompressionLevel.AGGRESSIVE
+            level=CompressionLevel.AGGRESSIVE,
         )
 
         result_lower = result.lower()
@@ -554,16 +511,13 @@ class TestConvenienceFunction:
 
     def test_compress_knowledge_returns_tuple(self):
         """Test compress_knowledge returns (text, tokens) tuple"""
-        knowledge = {
-            "feature_name": "Test",
-            "description": "Test description"
-        }
+        knowledge = {"feature_name": "Test", "description": "Test description"}
 
         compressed, tokens = compress_knowledge(
             knowledge=knowledge,
             intent="GENERAL_CONVERSATION",
             user_query="test",
-            level="medium"
+            level="medium",
         )
 
         assert isinstance(compressed, str)
@@ -573,16 +527,14 @@ class TestConvenienceFunction:
 
     def test_compress_knowledge_with_different_levels(self):
         """Test compress_knowledge works with all compression levels"""
-        knowledge = {
-            "core_capabilities": {}
-        }
+        knowledge = {"core_capabilities": {}}
 
         for level in ["none", "light", "medium", "aggressive"]:
             compressed, tokens = compress_knowledge(
                 knowledge=knowledge,
                 intent="GENERAL_CONVERSATION",
                 user_query="test",
-                level=level
+                level=level,
             )
 
             assert len(compressed) > 0
@@ -594,44 +546,36 @@ class TestEssentialInformationPreservation:
 
     def test_accuracy_metrics_preserved_in_compression(self):
         """Test accuracy metrics are preserved across compression levels"""
-        hunter_data = {
-            "core_capabilities": []
-        }
+        hunter_data = {"core_capabilities": []}
 
         for level in [CompressionLevel.MEDIUM, CompressionLevel.AGGRESSIVE]:
-            result = KnowledgeCompressor.compress_hunter_ai(
-                hunter_data,
-                level=level
-            )
+            result = KnowledgeCompressor.compress_hunter_ai(hunter_data, level=level)
 
             # Should preserve key accuracy metrics
             assert "82%" in result or "73%" in result
 
     def test_protocol_names_preserved_in_compression(self):
         """Test protocol names are preserved"""
-        ultra_data = {
-            "core_capabilities": []
-        }
+        ultra_data = {"core_capabilities": []}
 
         result = KnowledgeCompressor.compress_ultra(
             ultra_data,
             level=CompressionLevel.AGGRESSIVE,
-            specific_capability="flash_loans"
+            specific_capability="flash_loans",
         )
 
         result_lower = result.lower()
         # Should mention at least one protocol
-        assert any(protocol in result_lower for protocol in ["aave", "balancer", "uniswap"])
+        assert any(
+            protocol in result_lower for protocol in ["aave", "balancer", "uniswap"]
+        )
 
     def test_aggregator_names_preserved_in_swap(self):
         """Test aggregator names are preserved in swap compression"""
-        swap_data = {
-            "supported_aggregators": []
-        }
+        swap_data = {"supported_aggregators": []}
 
         result = KnowledgeCompressor.compress_swap(
-            swap_data,
-            level=CompressionLevel.AGGRESSIVE
+            swap_data, level=CompressionLevel.AGGRESSIVE
         )
 
         result_lower = result.lower()

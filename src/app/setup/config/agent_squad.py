@@ -8,6 +8,7 @@ DEFAULT_AGENT_MODEL = "gemini-2.0-flash"
 
 class AgentConfigModel(BaseModel):
     """Individual agent configuration."""
+
     enabled: bool = True
     model: str = DEFAULT_AGENT_MODEL
     temperature: float = 0.7
@@ -16,6 +17,7 @@ class AgentConfigModel(BaseModel):
 
 class AgentSquadAgentsConfig(BaseModel):
     """All 19 agent configurations."""
+
     # Core user-facing agents
     chat: AgentConfigModel = Field(default_factory=AgentConfigModel)
     knowledge: AgentConfigModel = Field(default_factory=AgentConfigModel)
@@ -44,6 +46,7 @@ class AgentSquadAgentsConfig(BaseModel):
 
 class ExternalAPIsConfig(BaseModel):
     """External API feature flags configuration."""
+
     # DeFi Data APIs (Week 1)
     enable_1inch: bool = True
     enable_defillama: bool = True
@@ -52,27 +55,28 @@ class ExternalAPIsConfig(BaseModel):
     enable_uniswap: bool = True
     enable_curve: bool = True
     enable_aave: bool = True
-    
+
     # API Keys (loaded from environment/secrets)
     oneinch_api_key: str = ""  # Optional - loaded from ONEINCH_API_KEY env var
 
     # Enterprise APIs (Week 2)
     enable_chainalysis: bool = False  # Requires paid license
-    enable_trm_labs: bool = False     # Requires paid license
+    enable_trm_labs: bool = False  # Requires paid license
     enable_gnosis_safe: bool = True
     enable_forta: bool = True
-    enable_twilio: bool = False       # Requires paid account
+    enable_twilio: bool = False  # Requires paid account
 
     # Advanced APIs (Week 3)
-    enable_privy: bool = False        # Requires app ID
+    enable_privy: bool = False  # Requires app ID
     enable_axelar: bool = True
     enable_layerzero: bool = True
-    enable_opensea: bool = False      # Requires API key
+    enable_opensea: bool = False  # Requires API key
     enable_snapshot: bool = True
 
 
 class AgentSquadSettings(BaseModel):
     """Agent Squad configuration from TOML."""
+
     # Master toggle
     enabled: bool = True
 
@@ -80,7 +84,9 @@ class AgentSquadSettings(BaseModel):
     enable_intent_classification: bool = True
     log_intent_classification: bool = False
     log_agent_selection: bool = False  # Log agent selection decisions
-    intent_classification_model: str = DEFAULT_AGENT_MODEL  # gemini-2.0-flash (Vertex AI)
+    intent_classification_model: str = (
+        DEFAULT_AGENT_MODEL  # gemini-2.0-flash (Vertex AI)
+    )
     intent_confidence_threshold: float = 0.85
     fallback_agent: str = "chat"
     max_context_messages: int = 10
@@ -113,7 +119,7 @@ class AgentSquadSettings(BaseModel):
 
     # Per-agent configuration
     agents: AgentSquadAgentsConfig = Field(default_factory=AgentSquadAgentsConfig)
-    
+
     # Flag to use agent-squad library vs hand-rolled implementation
     use_agent_squad: bool = False
 
@@ -123,10 +129,14 @@ class AgentSquadSettings(BaseModel):
     # DEMO MODE: Use pre-built demo handlers instead of real LLM calls
     # When enabled, authenticated users get the same responses as /guest/chat
     # This is useful for demos and testing without requiring LLM API costs
-    use_demo_mode: bool = False  # Changed to False to enable real LLM for authenticated users
+    use_demo_mode: bool = (
+        False  # Changed to False to enable real LLM for authenticated users
+    )
 
     # Debug settings
-    debug_agent_timing: bool = False  # Include agent execution timing in responses (for performance analysis)
+    debug_agent_timing: bool = (
+        False  # Include agent execution timing in responses (for performance analysis)
+    )
 
 
 # Alias for backward compatibility
@@ -136,21 +146,22 @@ AgentSquadConfig = AgentSquadSettings
 def load_agent_squad_config(use_agent_squad: bool = False) -> AgentSquadConfig:
     """
     Load Agent Squad configuration.
-    
+
     Args:
         use_agent_squad: Whether to use agent-squad library implementation
-    
+
     Returns:
         AgentSquadConfig instance with default settings
     """
     import os
+
     config = AgentSquadSettings()
-    
+
     # Load API keys from environment
     oneinch_api_key = os.getenv("ONEINCH_API_KEY", "")
     if oneinch_api_key:
         config.external_apis.oneinch_api_key = oneinch_api_key
-    
+
     # Override use_agent_squad if specified
     if use_agent_squad:
         config = config.model_copy(update={"use_agent_squad": True})

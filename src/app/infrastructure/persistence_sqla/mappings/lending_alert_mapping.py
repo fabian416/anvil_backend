@@ -48,9 +48,7 @@ def map_lending_alerts_table() -> None:
             server_default=sa.text("gen_random_uuid()"),
             default=uuid.uuid4,
         )
-        user_id = mapped_column(
-            UUID(as_uuid=True), nullable=False, index=True
-        )
+        user_id = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
         position_id = mapped_column(UUID(as_uuid=True), nullable=True)
         alert_type = mapped_column(
             Enum(
@@ -80,9 +78,7 @@ def map_lending_alerts_table() -> None:
         health_factor = mapped_column(Numeric(10, 2), nullable=True)
         threshold_value = mapped_column(Numeric(18, 2), nullable=True)
         current_value = mapped_column(Numeric(18, 2), nullable=True)
-        is_read = mapped_column(
-            Boolean, nullable=False, server_default="false"
-        )
+        is_read = mapped_column(Boolean, nullable=False, server_default="false")
         sent_at = mapped_column(DateTime(timezone=True), nullable=True)
         metadata_ = mapped_column("metadata", JSONB, nullable=True)
         created_at = mapped_column(

@@ -522,7 +522,9 @@ class TestSentimentIntegration:
         """Test complete sentiment analysis flow."""
         # 1. Analyze Twitter sentiment
         twitter_analyzer = TwitterSentimentAnalyzer()
-        twitter_reading = await twitter_analyzer.analyze_token_sentiment("ETH", hours=24)
+        twitter_reading = await twitter_analyzer.analyze_token_sentiment(
+            "ETH", hours=24
+        )
 
         assert twitter_reading.source == SentimentSource.TWITTER
         assert twitter_reading.token_symbol == "ETH"

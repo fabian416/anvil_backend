@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 class AddressType(str, Enum):
     """Types of addresses based on Etherscan labels."""
+
     EOA = "eoa"  # Externally Owned Account (regular wallet)
     CONTRACT = "contract"  # Smart Contract
     EXCHANGE = "exchange"  # Centralized Exchange
@@ -45,6 +46,7 @@ class AddressType(str, Enum):
 @dataclass
 class AddressLabel:
     """Address label information from Etherscan."""
+
     address: str
     label: str | None
     name_tag: str | None
@@ -58,6 +60,7 @@ class AddressLabel:
 @dataclass
 class TransactionInfo:
     """Basic transaction information."""
+
     tx_hash: str
     block_number: int
     timestamp: datetime
@@ -72,28 +75,28 @@ class TransactionInfo:
 class EtherscanClient:
     """
     Etherscan API V2 client for address labels and transaction history.
-    
+
     Uses Etherscan API V2 unified endpoint that supports 60+ EVM chains
     with a single API key by specifying the chain ID.
-    
+
     Supports multiple networks:
     - Ethereum Mainnet (chainid=1)
     - Base (chainid=8453)
     - Arbitrum (chainid=42161)
     - Optimism (chainid=10)
     - Polygon (chainid=137)
-    
+
     Usage:
         client = EtherscanClient(api_key="your-key", network="base")
         label = await client.get_address_label("0x...")
         print(f"Address: {label.name_tag} ({label.address_type})")
-    
+
     API V2 Documentation: https://docs.etherscan.io/etherscan-v2
     """
-    
+
     # Etherscan API V2 unified endpoint
     API_V2_BASE_URL = "https://api.etherscan.io/v2/api"
-    
+
     # Chain IDs for API V2
     CHAIN_IDS = {
         "ethereum": 1,
@@ -110,7 +113,7 @@ class EtherscanClient:
         "zksync": 324,
         "blast": 81457,
     }
-    
+
     # Legacy network-specific URLs (fallback)
     BASE_URLS = {
         "ethereum": "https://api.etherscan.io/api",
@@ -119,10 +122,10 @@ class EtherscanClient:
         "optimism": "https://api-optimistic.etherscan.io/api",
         "polygon": "https://api.polygonscan.com/api",
     }
-    
+
     # Known label categories that indicate risk
     RISKY_CATEGORIES = {"mixer", "scam", "phishing", "exploit", "hacker"}
-    
+
     # Known exchanges (fallback if API doesn't return label)
     KNOWN_EXCHANGES = {
         # Coinbase
@@ -137,7 +140,7 @@ class EtherscanClient:
         # Other major exchanges
         "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640": "Uniswap V3 USDC/ETH",
     }
-    
+
     # Known DeFi protocols
     KNOWN_DEFI = {
         # Uniswap
@@ -150,7 +153,7 @@ class EtherscanClient:
         # Base-specific
         "0x6131b5fae19ea4f9d964eac0408e4408b66337b5": "Hyperliquid Bridge",
     }
-    
+
     def __init__(
         self,
         api_key: str | None = None,
@@ -160,7 +163,7 @@ class EtherscanClient:
     ):
         """
         Initialize Etherscan client.
-        
+
         Args:
             api_key: Etherscan API key (or set ETHERSCAN_API_KEY env var)
             network: Network to query (ethereum, base, arbitrum, etc.)
@@ -171,27 +174,27 @@ class EtherscanClient:
         self._network = network
         self._chain_id = self.CHAIN_IDS.get(network, 8453)  # Default to Base
         self._use_v2_api = use_v2_api
-        
+
         # Use V2 API or legacy network-specific URL
         if use_v2_api:
             self._base_url = self.API_V2_BASE_URL
         else:
             self._base_url = self.BASE_URLS.get(network, self.BASE_URLS["ethereum"])
-        
+
         self._client = httpx.AsyncClient(timeout=timeout)
         self._cache: dict[str, AddressLabel] = {}  # Simple in-memory cache
-    
+
     def _build_params(self, params: dict) -> dict:
         """Build request params, adding chainid for V2 API."""
         if self._use_v2_api:
             params["chainid"] = self._chain_id
         params["apikey"] = self._api_key
         return params
-    
+
     async def close(self):
         """Close HTTP client."""
         await self._client.aclose()
-    
+
     async def get_address_label(
         self,
         address: str,
@@ -199,31 +202,31 @@ class EtherscanClient:
     ) -> AddressLabel:
         """
         Get label information for an address.
-        
+
         Checks:
         1. Local cache
         2. Known addresses (exchanges, DeFi)
         3. Etherscan API (if API key available)
-        
+
         Args:
             address: Ethereum address (0x...)
             use_cache: Whether to use cached results
-            
+
         Returns:
             AddressLabel with label info
         """
         address_lower = address.lower()
-        
+
         # Check cache first
         if use_cache and address_lower in self._cache:
             return self._cache[address_lower]
-        
+
         # Check known addresses (fallback)
         label = self._check_known_addresses(address_lower)
         if label:
             self._cache[address_lower] = label
             return label
-        
+
         # Try Etherscan API if key available
         if self._api_key:
             try:
@@ -233,7 +236,7 @@ class EtherscanClient:
                     return label
             except Exception as e:
                 logger.warning(f"Etherscan API error for {address[:10]}...: {e}")
-        
+
         # Return unknown label
         unknown_label = AddressLabel(
             address=address_lower,
@@ -246,23 +249,23 @@ class EtherscanClient:
         )
         self._cache[address_lower] = unknown_label
         return unknown_label
-    
+
     async def get_transaction_count(
         self,
         address: str,
     ) -> int:
         """
         Get total transaction count for an address.
-        
+
         Args:
             address: Ethereum address
-            
+
         Returns:
             Number of transactions
         """
         if not self._api_key:
             return -1  # Unknown without API key
-        
+
         try:
             params = self._build_params({
                 "module": "account",
@@ -274,11 +277,11 @@ class EtherscanClient:
                 "offset": 1,  # Just get count, not full list
                 "sort": "desc",
             })
-            
+
             response = await self._client.get(self._base_url, params=params)
             response.raise_for_status()
             data = response.json()
-            
+
             if data.get("status") == "1":
                 # Etherscan doesn't return total count directly
                 # We'd need to paginate, so return estimate
@@ -287,7 +290,7 @@ class EtherscanClient:
         except Exception as e:
             logger.warning(f"Failed to get tx count for {address[:10]}...: {e}")
             return -1
-    
+
     async def get_recent_interactions(
         self,
         from_address: str,
@@ -296,20 +299,20 @@ class EtherscanClient:
     ) -> list[TransactionInfo]:
         """
         Get recent transactions between two addresses.
-        
+
         Useful for checking if sender has previously interacted with recipient.
-        
+
         Args:
             from_address: Sender address
             to_address: Recipient address
             limit: Maximum transactions to return
-            
+
         Returns:
             List of transactions between the addresses
         """
         if not self._api_key:
             return []
-        
+
         try:
             params = self._build_params({
                 "module": "account",
@@ -321,42 +324,44 @@ class EtherscanClient:
                 "offset": 100,  # Get last 100 txs
                 "sort": "desc",
             })
-            
+
             response = await self._client.get(self._base_url, params=params)
             response.raise_for_status()
             data = response.json()
-            
+
             if data.get("status") != "1":
                 return []
-            
+
             # Filter for transactions to the target address
             interactions = []
             to_lower = to_address.lower()
-            
+
             for tx in data.get("result", []):
                 if tx.get("to", "").lower() == to_lower:
-                    interactions.append(TransactionInfo(
-                        tx_hash=tx.get("hash", ""),
-                        block_number=int(tx.get("blockNumber", 0)),
-                        timestamp=datetime.fromtimestamp(
-                            int(tx.get("timeStamp", 0)), tz=UTC
-                        ),
-                        from_address=tx.get("from", ""),
-                        to_address=tx.get("to", ""),
-                        value_wei=int(tx.get("value", 0)),
-                        gas_used=int(tx.get("gasUsed", 0)),
-                        is_error=tx.get("isError") == "1",
-                        function_name=tx.get("functionName"),
-                    ))
-                    
+                    interactions.append(
+                        TransactionInfo(
+                            tx_hash=tx.get("hash", ""),
+                            block_number=int(tx.get("blockNumber", 0)),
+                            timestamp=datetime.fromtimestamp(
+                                int(tx.get("timeStamp", 0)), tz=UTC
+                            ),
+                            from_address=tx.get("from", ""),
+                            to_address=tx.get("to", ""),
+                            value_wei=int(tx.get("value", 0)),
+                            gas_used=int(tx.get("gasUsed", 0)),
+                            is_error=tx.get("isError") == "1",
+                            function_name=tx.get("functionName"),
+                        )
+                    )
+
                     if len(interactions) >= limit:
                         break
-            
+
             return interactions
         except Exception as e:
             logger.warning(f"Failed to get interactions: {e}")
             return []
-    
+
     async def is_contract_verified(self, address: str) -> bool:
         """
         Check if a contract is verified on Etherscan.
@@ -439,7 +444,7 @@ class EtherscanClient:
 
             if data.get("status") == "1" and data.get("result"):
                 raw_balance = int(data["result"])
-                formatted_balance = raw_balance / (10 ** decimals)
+                formatted_balance = raw_balance / (10**decimals)
 
                 logger.debug(
                     f"Token balance for {wallet_address[:10]}...: "
@@ -464,9 +469,7 @@ class EtherscanClient:
                 return None
 
         except httpx.TimeoutException:
-            logger.warning(
-                f"Etherscan API timeout for wallet {wallet_address[:10]}..."
-            )
+            logger.warning(f"Etherscan API timeout for wallet {wallet_address[:10]}...")
             return None
         except ValueError as e:
             logger.error(f"Invalid balance value: {e}")
@@ -476,7 +479,7 @@ class EtherscanClient:
                 f"Etherscan API error for wallet {wallet_address[:10]}...: {e}"
             )
             return None
-    
+
     def _check_known_addresses(self, address: str) -> AddressLabel | None:
         """Check if address is in known addresses list."""
         # Check exchanges
@@ -490,7 +493,7 @@ class EtherscanClient:
                 is_risky=False,
                 category="exchange",
             )
-        
+
         # Check DeFi protocols
         if address in self.KNOWN_DEFI:
             return AddressLabel(
@@ -502,13 +505,13 @@ class EtherscanClient:
                 is_risky=False,
                 category="defi",
             )
-        
+
         return None
-    
+
     async def _fetch_address_label(self, address: str) -> AddressLabel | None:
         """
         Fetch address label from Etherscan API.
-        
+
         Note: Etherscan's public API doesn't directly expose labels.
         This uses a combination of:
         1. Contract source verification check
@@ -517,7 +520,7 @@ class EtherscanClient:
         is_verified = False
         name_tag = None
         address_type = AddressType.UNKNOWN
-        
+
         # Check if it's a verified contract
         try:
             params = self._build_params({
@@ -525,24 +528,27 @@ class EtherscanClient:
                 "action": "getsourcecode",
                 "address": address,
             })
-            
+
             response = await self._client.get(self._base_url, params=params)
             response.raise_for_status()
             data = response.json()
-            
+
             if data.get("status") == "1" and data.get("result"):
                 result = data["result"][0]
                 source_code = result.get("SourceCode", "")
                 contract_name = result.get("ContractName", "")
-                
+
                 if source_code and contract_name:
                     is_verified = True
                     name_tag = contract_name
                     address_type = AddressType.CONTRACT
-                    
+
                     # Try to categorize based on contract name
                     name_lower = contract_name.lower()
-                    if any(x in name_lower for x in ["swap", "router", "pool", "uniswap", "sushi"]):
+                    if any(
+                        x in name_lower
+                        for x in ["swap", "router", "pool", "uniswap", "sushi"]
+                    ):
                         address_type = AddressType.DEX
                     elif any(x in name_lower for x in ["bridge", "portal", "gateway"]):
                         address_type = AddressType.BRIDGE
@@ -550,11 +556,14 @@ class EtherscanClient:
                         address_type = AddressType.TOKEN
                     elif any(x in name_lower for x in ["nft", "erc721", "erc1155"]):
                         address_type = AddressType.NFT
-                    elif any(x in name_lower for x in ["lending", "borrow", "aave", "compound"]):
+                    elif any(
+                        x in name_lower
+                        for x in ["lending", "borrow", "aave", "compound"]
+                    ):
                         address_type = AddressType.DEFI
         except Exception as e:
             logger.debug(f"Contract verification check failed: {e}")
-        
+
         if name_tag:
             return AddressLabel(
                 address=address,
@@ -565,5 +574,5 @@ class EtherscanClient:
                 is_risky=False,
                 category=address_type.value,
             )
-        
+
         return None

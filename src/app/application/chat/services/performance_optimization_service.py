@@ -98,7 +98,9 @@ class PerformanceOptimizationService:
         """
         try:
             # Generate cache key based on strategy
-            cache_key = self._generate_cache_key(query, agent_name, conversation_context, strategy)
+            cache_key = self._generate_cache_key(
+                query, agent_name, conversation_context, strategy
+            )
 
             # Exact match lookup
             cached = await self._cache.get(cache_key)
@@ -238,7 +240,11 @@ class PerformanceOptimizationService:
         predictions: List[PrefetchPrediction] = []
 
         # Analyze conversation context
-        recent_messages = conversation.messages[-5:] if len(conversation.messages) >= 5 else conversation.messages
+        recent_messages = (
+            conversation.messages[-5:]
+            if len(conversation.messages) >= 5
+            else conversation.messages
+        )
 
         # Pattern 1: If user asked about risk, predict they'll ask about yield
         if self._conversation_mentions_risk(recent_messages):
@@ -298,7 +304,9 @@ class PerformanceOptimizationService:
             True if prefetch succeeded
         """
         if not prediction.should_prefetch():
-            logger.debug(f"Skipping prefetch: {prediction.predicted_query[:50]}... (low confidence)")
+            logger.debug(
+                f"Skipping prefetch: {prediction.predicted_query[:50]}... (low confidence)"
+            )
             return False
 
         try:
@@ -309,7 +317,9 @@ class PerformanceOptimizationService:
             )
 
             if cached:
-                logger.debug(f"Prefetch unnecessary (already cached): {prediction.predicted_query[:50]}...")
+                logger.debug(
+                    f"Prefetch unnecessary (already cached): {prediction.predicted_query[:50]}..."
+                )
                 return True
 
             # TODO: Invoke agent with predicted query
@@ -441,7 +451,10 @@ class PerformanceOptimizationService:
 
         # Check response time
         time_status = self._budget.check_response_time(response_time_ms)
-        if time_status in [PerformanceBudgetStatus.CRITICAL, PerformanceBudgetStatus.VIOLATED]:
+        if time_status in [
+            PerformanceBudgetStatus.CRITICAL,
+            PerformanceBudgetStatus.VIOLATED,
+        ]:
             alerts.append(
                 PerformanceAlert(
                     alert_type="response_time",
@@ -449,7 +462,8 @@ class PerformanceOptimizationService:
                     metric_name="Response Time",
                     actual_value=response_time_ms,
                     budget_value=self._budget.max_response_time_ms,
-                    threshold_exceeded_by=response_time_ms - self._budget.max_response_time_ms,
+                    threshold_exceeded_by=response_time_ms
+                    - self._budget.max_response_time_ms,
                     timestamp=datetime.now(UTC),
                     recommendation="Consider enabling more aggressive caching or reducing agent complexity",
                 )
@@ -457,7 +471,10 @@ class PerformanceOptimizationService:
 
         # Check cost
         cost_status = self._budget.check_cost(cost_usd)
-        if cost_status in [PerformanceBudgetStatus.CRITICAL, PerformanceBudgetStatus.VIOLATED]:
+        if cost_status in [
+            PerformanceBudgetStatus.CRITICAL,
+            PerformanceBudgetStatus.VIOLATED,
+        ]:
             alerts.append(
                 PerformanceAlert(
                     alert_type="cost",
@@ -465,7 +482,8 @@ class PerformanceOptimizationService:
                     metric_name="LLM Cost",
                     actual_value=cost_usd,
                     budget_value=self._budget.max_llm_cost_per_query_usd,
-                    threshold_exceeded_by=cost_usd - self._budget.max_llm_cost_per_query_usd,
+                    threshold_exceeded_by=cost_usd
+                    - self._budget.max_llm_cost_per_query_usd,
                     timestamp=datetime.now(UTC),
                     recommendation="Consider using smaller LLM models or increasing cache hit rate",
                 )
@@ -474,7 +492,10 @@ class PerformanceOptimizationService:
         # Check cache hit rate
         cache_stats = await self.get_cache_statistics()
         cache_status = self._budget.check_cache_hit_rate(cache_stats.hit_rate)
-        if cache_status in [PerformanceBudgetStatus.WARNING, PerformanceBudgetStatus.CRITICAL]:
+        if cache_status in [
+            PerformanceBudgetStatus.WARNING,
+            PerformanceBudgetStatus.CRITICAL,
+        ]:
             alerts.append(
                 PerformanceAlert(
                     alert_type="cache_hit_rate",
@@ -482,7 +503,8 @@ class PerformanceOptimizationService:
                     metric_name="Cache Hit Rate",
                     actual_value=cache_stats.hit_rate,
                     budget_value=self._budget.target_cache_hit_rate,
-                    threshold_exceeded_by=self._budget.target_cache_hit_rate - cache_stats.hit_rate,
+                    threshold_exceeded_by=self._budget.target_cache_hit_rate
+                    - cache_stats.hit_rate,
                     timestamp=datetime.now(UTC),
                     recommendation="Enable semantic similarity caching or adjust TTL values",
                 )
@@ -541,19 +563,39 @@ class PerformanceOptimizationService:
 
     def _conversation_mentions_risk(self, messages: List[Message]) -> bool:
         """Check if conversation mentions risk-related topics."""
-        risk_keywords = ["risk", "volatile", "volatility", "exposure", "hedge", "safety"]
+        risk_keywords = [
+            "risk",
+            "volatile",
+            "volatility",
+            "exposure",
+            "hedge",
+            "safety",
+        ]
         content = " ".join(m.content.lower() for m in messages)
         return any(keyword in content for keyword in risk_keywords)
 
     def _conversation_mentions_portfolio_health(self, messages: List[Message]) -> bool:
         """Check if conversation mentions portfolio health."""
-        health_keywords = ["portfolio health", "performance", "allocation", "diversification"]
+        health_keywords = [
+            "portfolio health",
+            "performance",
+            "allocation",
+            "diversification",
+        ]
         content = " ".join(m.content.lower() for m in messages)
         return any(keyword in content for keyword in health_keywords)
 
     def _extract_mentioned_protocols(self, messages: List[Message]) -> List[str]:
         """Extract DeFi protocols mentioned in conversation."""
-        protocols = ["Aave", "Curve", "Morpho", "Uniswap", "Compound", "Lido", "Balancer"]
+        protocols = [
+            "Aave",
+            "Curve",
+            "Morpho",
+            "Uniswap",
+            "Compound",
+            "Lido",
+            "Balancer",
+        ]
         content = " ".join(m.content for m in messages)
 
         mentioned = [p for p in protocols if p in content]

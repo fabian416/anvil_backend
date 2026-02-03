@@ -1,4 +1,5 @@
 """Dependency injection providers for distillation system."""
+
 from dishka import Provider, Scope, provide, from_context
 from typing import Optional, Any
 
@@ -38,7 +39,7 @@ from app.infrastructure.persistence_sqla.repositories.distillation_telemetry_rep
 
 class DistillationProvider(Provider):
     """Provider for distillation system dependencies."""
-    
+
     # Domain services (request-scoped to allow optional LLM client injection)
     @provide(scope=Scope.REQUEST)
     def get_intent_classifier(
@@ -46,34 +47,37 @@ class DistillationProvider(Provider):
     ) -> IntentClassifier:
         """
         Get intent classifier without LLM client (rule-based only for now).
-        
+
         Note: LLM client injection will be handled separately if needed.
         For now, IntentClassifier works in rule-based mode only.
         This avoids DI resolution issues with optional dependencies.
-        
+
         Returns:
             IntentClassifier instance (rule-based only)
         """
         import logging
+
         logger = logging.getLogger(__name__)
-        logger.info("⚠️ IntentClassifier initialized without LLM client (rule-based only)")
-        
+        logger.info(
+            "⚠️ IntentClassifier initialized without LLM client (rule-based only)"
+        )
+
         return IntentClassifier(
             llm_client=None,  # No LLM client for now (rule-based only)
             use_llm_for_ambiguous=False,  # Disable LLM until we fix DI injection
             llm_confidence_threshold=0.85,
         )
-    
+
     @provide(scope=Scope.APP)
     def get_complexity_assessor(self) -> ComplexityAssessor:
         """Get complexity assessor."""
         return ComplexityAssessor()
-    
+
     @provide(scope=Scope.APP)
     def get_entity_extractor(self) -> EntityExtractor:
         """Get entity extractor."""
         return EntityExtractor()
-    
+
     @provide(scope=Scope.REQUEST)
     async def get_router(
         self,
@@ -90,7 +94,7 @@ class DistillationProvider(Provider):
             entity_extractor=entity_extractor,
             config=config,
         )
-    
+
     # Repositories (request-scoped)
     @provide(scope=Scope.REQUEST)
     def get_cache_repository(
@@ -99,7 +103,7 @@ class DistillationProvider(Provider):
     ) -> CacheRepository:
         """Get cache repository."""
         return DistillationCacheRepositorySqla(session)
-    
+
     @provide(scope=Scope.REQUEST)
     def get_config_repository(
         self,
@@ -107,7 +111,7 @@ class DistillationProvider(Provider):
     ) -> DistillationConfigRepository:
         """Get config repository."""
         return DistillationConfigRepositorySqla(session)
-    
+
     @provide(scope=Scope.REQUEST)
     def get_static_response_repository(
         self,
@@ -115,7 +119,7 @@ class DistillationProvider(Provider):
     ) -> StaticResponseRepository:
         """Get static response repository."""
         return DistillationStaticRepositorySqla(session)
-    
+
     @provide(scope=Scope.REQUEST)
     def get_telemetry_repository(
         self,
@@ -123,7 +127,7 @@ class DistillationProvider(Provider):
     ) -> DistillationTelemetryRepository:
         """Get telemetry repository."""
         return DistillationTelemetryRepositorySqla(session)
-    
+
     # Infrastructure services
     @provide(scope=Scope.REQUEST)
     def get_cache_manager(
@@ -136,7 +140,7 @@ class DistillationProvider(Provider):
             cache_repository=cache_repo,
             embedding_service=None,  # Will add later
         )
-    
+
     @provide(scope=Scope.REQUEST)
     def get_static_responder(
         self,
@@ -149,12 +153,12 @@ class DistillationProvider(Provider):
             "gas_api": GasDataFetcher(),
             "portfolio_service": PortfolioDataFetcher(),
         }
-        
+
         return StaticResponder(
             static_response_repo=static_repo,
             data_sources=data_sources,
         )
-    
+
     # Main engine
     @provide(scope=Scope.REQUEST)
     def get_distillation_engine(

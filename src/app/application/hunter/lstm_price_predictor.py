@@ -168,7 +168,9 @@ class LSTMPricePredictor:
             >>> print(f"Training loss: {metrics['final_loss']}")
         """
         # Fetch historical data
-        prices = await self.price_service.fetch_historical_prices(token_symbol, days=days)
+        prices = await self.price_service.fetch_historical_prices(
+            token_symbol, days=days
+        )
 
         # Preprocess for LSTM
         X, y, self.scaler_params = self.price_service.preprocess_for_lstm(
@@ -194,7 +196,9 @@ class LSTMPricePredictor:
 
         # Training setup
         criterion = nn.MSELoss()
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.learning_rate)
+        optimizer = torch.optim.Adam(
+            self.model.parameters(), lr=self.config.learning_rate
+        )
 
         # Training loop
         train_losses = []
@@ -259,20 +263,30 @@ class LSTMPricePredictor:
         # For testing/guest mode: Skip actual training and return mock prediction
         # BUT use real current price from CoinGecko
         import os
+
         # Default to demo mode (use real prices but mock predictions) unless explicitly enabled
-        enable_training = os.getenv("ENABLE_LSTM_TRAINING", "").lower() in ("true", "1", "yes")
+        enable_training = os.getenv("ENABLE_LSTM_TRAINING", "").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
         is_testing = os.getenv("TESTING", "").lower() in ("true", "1", "yes")
-        
+
         if is_testing or not enable_training:
             # Get real current price from CoinGecko
             try:
                 # Fetch latest price from PriceDataService
-                latest_price_point = await self.price_service.get_latest_price(token_symbol)
+                latest_price_point = await self.price_service.get_latest_price(
+                    token_symbol
+                )
                 if latest_price_point:
                     current_price = latest_price_point.close
                 else:
                     # Fallback: try to get from CoinGecko directly
-                    from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
+                    from app.infrastructure.adapters.external.coingecko_client import (
+                        CoinGeckoClient,
+                    )
+
                     client = CoinGeckoClient()
                     try:
                         # Map symbol to CoinGecko ID
@@ -291,8 +305,12 @@ class LSTMPricePredictor:
                             "USDT": "tether",
                             "DAI": "dai",
                         }
-                        coin_id = symbol_to_id.get(token_symbol.upper(), token_symbol.lower())
-                        price_data = await client.get_simple_price(coin_ids=[coin_id], vs_currencies=["usd"])
+                        coin_id = symbol_to_id.get(
+                            token_symbol.upper(), token_symbol.lower()
+                        )
+                        price_data = await client.get_simple_price(
+                            coin_ids=[coin_id], vs_currencies=["usd"]
+                        )
                         if price_data and coin_id in price_data:
                             current_price = price_data[coin_id]["usd"]
                         else:
@@ -304,11 +322,16 @@ class LSTMPricePredictor:
                                 "USDC": 1.0,
                                 "USDT": 1.0,
                             }
-                            current_price = default_prices.get(token_symbol.upper(), 2000.0)
+                            current_price = default_prices.get(
+                                token_symbol.upper(), 2000.0
+                            )
                     finally:
                         await client.close()
             except Exception as e:
-                logger.warning(f"Error fetching real price for {token_symbol}, using fallback: {e}", exc_info=True)
+                logger.warning(
+                    f"Error fetching real price for {token_symbol}, using fallback: {e}",
+                    exc_info=True,
+                )
                 # Fallback: use token-specific defaults
                 default_prices = {
                     "BTC": 90000.0,
@@ -318,8 +341,10 @@ class LSTMPricePredictor:
                     "USDT": 1.0,
                 }
                 current_price = default_prices.get(token_symbol.upper(), 2000.0)
-                logger.info(f"Using fallback price for {token_symbol}: ${current_price}")
-            
+                logger.info(
+                    f"Using fallback price for {token_symbol}: ${current_price}"
+                )
+
             # Return mock prediction with REAL current price
             # Mark as trained to satisfy test expectations
             self.is_trained = True
@@ -336,14 +361,15 @@ class LSTMPricePredictor:
                 horizon_hours=horizon_hours,
                 direction="up" if predicted_change > 0 else "down",
             )
-        
+
         if not self.is_trained:
             # Train on-the-fly if not already trained
             await self.train(token_symbol)
 
         # Get recent data for prediction
         prices = await self.price_service.fetch_historical_prices(
-            token_symbol, days=7  # Recent data
+            token_symbol,
+            days=7,  # Recent data
         )
 
         # Get last sequence
@@ -425,7 +451,9 @@ class LSTMPricePredictor:
             Model info dictionary
         """
         total_params = sum(p.numel() for p in self.model.parameters())
-        trainable_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        trainable_params = sum(
+            p.numel() for p in self.model.parameters() if p.requires_grad
+        )
 
         return {
             "architecture": "LSTM",

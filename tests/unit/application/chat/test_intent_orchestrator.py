@@ -193,10 +193,15 @@ class TestIntentOrchestrator:
         # Verify single intent execution
         assert len(result.intent_results) == 1
         assert result.intent_results[0].success is True
-        assert result.intent_results[0].intent.intent == ChatIntentV2.HUNTER_PRICE_PREDICTION
+        assert (
+            result.intent_results[0].intent.intent
+            == ChatIntentV2.HUNTER_PRICE_PREDICTION
+        )
 
     @pytest.mark.asyncio
-    async def test_execution_order_respects_dependencies(self, orchestrator, base_context):
+    async def test_execution_order_respects_dependencies(
+        self, orchestrator, base_context
+    ):
         """Test that execution order respects dependency graph."""
         # Create 3 intents: 0 and 1 independent, 2 depends on 0
         intents = [

@@ -3,4 +3,3 @@
 # No value objects yet
 
 __all__ = []
-

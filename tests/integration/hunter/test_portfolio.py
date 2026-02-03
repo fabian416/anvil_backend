@@ -39,7 +39,9 @@ class TestPortfolioOptimization:
         """Test balanced portfolio optimization (max Sharpe)."""
         optimizer = PortfolioOptimizer()
 
-        portfolio = await optimizer.optimize_portfolio(["BTC", "ETH"], risk_tolerance=0.5)
+        portfolio = await optimizer.optimize_portfolio(
+            ["BTC", "ETH"], risk_tolerance=0.5
+        )
 
         assert isinstance(portfolio, OptimizedPortfolio)
         assert len(portfolio.weights) == 2
@@ -56,7 +58,9 @@ class TestPortfolioOptimization:
         """Test conservative portfolio (min variance)."""
         optimizer = PortfolioOptimizer()
 
-        portfolio = await optimizer.optimize_portfolio(["BTC", "ETH", "SOL"], risk_tolerance=0.2)
+        portfolio = await optimizer.optimize_portfolio(
+            ["BTC", "ETH", "SOL"], risk_tolerance=0.2
+        )
 
         assert len(portfolio.weights) == 3
         assert sum(portfolio.weights.values()) <= 1.01
@@ -67,12 +71,15 @@ class TestPortfolioOptimization:
         """Test aggressive portfolio (max return)."""
         optimizer = PortfolioOptimizer()
 
-        portfolio = await optimizer.optimize_portfolio(["BTC", "ETH", "SOL"], risk_tolerance=0.9)
+        portfolio = await optimizer.optimize_portfolio(
+            ["BTC", "ETH", "SOL"], risk_tolerance=0.9
+        )
 
         assert len(portfolio.weights) == 3
         # Aggressive portfolio might concentrate in higher-return assets
         max_weight = max(portfolio.weights.values())
         assert max_weight <= 0.40  # Respects max_single_asset constraint
+
 
 class TestPortfolioMetrics:
     """Test portfolio metrics calculation."""
@@ -94,6 +101,7 @@ class TestPortfolioMetrics:
         assert metrics.max_drawdown <= 0  # Should be negative
         assert 0 <= metrics.diversification_score <= 1
         assert metrics.var_95 <= 0  # VaR is negative
+
 
 class TestEfficientFrontier:
     """Test efficient frontier calculation."""
@@ -146,6 +154,7 @@ class TestEfficientFrontier:
         min_vol = min(frontier.risks)
         assert frontier.risks[frontier.min_vol_idx] == min_vol
 
+
 class TestPortfolioAnalysis:
     """Test portfolio analysis."""
 
@@ -162,6 +171,7 @@ class TestPortfolioAnalysis:
         assert isinstance(metrics, PortfolioMetrics)
         assert metrics.expected_return >= 0
         assert metrics.volatility >= 0
+
 
 class TestRebalancing:
     """Test portfolio rebalancing."""
@@ -201,6 +211,7 @@ class TestRebalancing:
             assert "token" in trade
             assert "action" in trade
             assert trade["action"] in ["BUY", "SELL"]
+
 
 class TestPortfolioSerialization:
     """Test portfolio serialization."""

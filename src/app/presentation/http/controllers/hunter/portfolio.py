@@ -20,7 +20,8 @@ class OptimizedPortfolioResponse(BaseModel):
     metrics: Dict = Field(..., description="Portfolio performance metrics")
     timestamp: str = Field(..., description="Optimization timestamp")
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "weights": {"BTC": 40.0, "ETH": 35.0, "SOL": 25.0},
                 "metrics": {
@@ -30,7 +31,8 @@ class OptimizedPortfolioResponse(BaseModel):
                 },
                 "timestamp": "2025-12-03T20:00:00Z",
             }
-        })
+        }
+    )
 
 
 class EfficientFrontierResponse(BaseModel):
@@ -39,25 +41,39 @@ class EfficientFrontierResponse(BaseModel):
     returns: List[float] = Field(..., description="Expected returns")
     risks: List[float] = Field(..., description="Volatilities")
     sharpe_ratios: List[float] = Field(..., description="Sharpe ratios")
-    max_sharpe_portfolio: Dict = Field(..., description="Maximum Sharpe ratio portfolio")
-    min_volatility_portfolio: Dict = Field(..., description="Minimum volatility portfolio")
+    max_sharpe_portfolio: Dict = Field(
+        ..., description="Maximum Sharpe ratio portfolio"
+    )
+    min_volatility_portfolio: Dict = Field(
+        ..., description="Minimum volatility portfolio"
+    )
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "returns": [25.0, 30.0, 35.0],
                 "risks": [20.0, 25.0, 30.0],
                 "sharpe_ratios": [1.1, 1.15, 1.08],
                 "max_sharpe_portfolio": {"return": 30.0, "risk": 25.0, "sharpe": 1.15},
-                "min_volatility_portfolio": {"return": 25.0, "risk": 20.0, "sharpe": 1.1},
+                "min_volatility_portfolio": {
+                    "return": 25.0,
+                    "risk": 20.0,
+                    "sharpe": 1.1,
+                },
             }
-        })
+        }
+    )
 
 
 class RebalancingPlanResponse(BaseModel):
     """Response model for rebalancing plan."""
 
-    current_weights: Dict[str, float] = Field(..., description="Current portfolio weights")
-    target_weights: Dict[str, float] = Field(..., description="Target portfolio weights")
+    current_weights: Dict[str, float] = Field(
+        ..., description="Current portfolio weights"
+    )
+    target_weights: Dict[str, float] = Field(
+        ..., description="Target portfolio weights"
+    )
     changes: Dict[str, float] = Field(..., description="Weight changes needed")
     trades: List[Dict] = Field(..., description="Trade recommendations")
     estimated_cost: float = Field(..., description="Estimated trading cost")
@@ -79,8 +95,15 @@ def create_portfolio_router() -> APIRouter:
         description="Optimize portfolio allocation using Modern Portfolio Theory (MPT)",
     )
     async def optimize_portfolio(
-        tokens: str = Query(..., description="Comma-separated token symbols (e.g., BTC,ETH,SOL)"),
-        risk_tolerance: float = Query(0.5, ge=0.0, le=1.0, description="Risk tolerance (0=conservative, 1=aggressive)"),
+        tokens: str = Query(
+            ..., description="Comma-separated token symbols (e.g., BTC,ETH,SOL)"
+        ),
+        risk_tolerance: float = Query(
+            0.5,
+            ge=0.0,
+            le=1.0,
+            description="Risk tolerance (0=conservative, 1=aggressive)",
+        ),
     ) -> OptimizedPortfolioResponse:
         """Optimize portfolio allocation.
 
@@ -199,7 +222,9 @@ def create_portfolio_router() -> APIRouter:
         description="Analyze existing portfolio allocation and calculate metrics",
     )
     async def analyze_portfolio(
-        portfolio: Dict[str, float] = Body(..., description="Portfolio weights (e.g., {\"BTC\": 0.6, \"ETH\": 0.4})"),
+        portfolio: Dict[str, float] = Body(
+            ..., description='Portfolio weights (e.g., {"BTC": 0.6, "ETH": 0.4})'
+        ),
     ) -> Dict:
         """Analyze existing portfolio.
 
@@ -254,8 +279,12 @@ def create_portfolio_router() -> APIRouter:
         description="Suggest portfolio rebalancing to optimal allocation",
     )
     async def suggest_rebalancing(
-        current_portfolio: Dict[str, float] = Body(..., description="Current portfolio weights"),
-        risk_tolerance: float = Query(0.5, ge=0.0, le=1.0, description="Risk tolerance"),
+        current_portfolio: Dict[str, float] = Body(
+            ..., description="Current portfolio weights"
+        ),
+        risk_tolerance: float = Query(
+            0.5, ge=0.0, le=1.0, description="Risk tolerance"
+        ),
     ) -> RebalancingPlanResponse:
         """Generate rebalancing plan.
 
@@ -293,7 +322,9 @@ def create_portfolio_router() -> APIRouter:
                 )
 
             optimizer = PortfolioOptimizer()
-            plan = await optimizer.suggest_rebalancing(current_portfolio, risk_tolerance)
+            plan = await optimizer.suggest_rebalancing(
+                current_portfolio, risk_tolerance
+            )
 
             return RebalancingPlanResponse(**plan.to_dict())
 

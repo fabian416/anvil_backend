@@ -126,16 +126,18 @@ class LogInHandler:
             raise AuthenticationError(AUTH_ACCOUNT_BLOCKED)
 
         self._user_service.record_successful_login(user)
-        
+
         # Update last_ip on login
         if request_data.ip_address:
             user.last_ip = IpAddress.from_optional(request_data.ip_address)
-        
+
         # Persist last_login/updated_at/last_ip to DB
         await self._user_command_gateway.update(user)
         await self._transaction_manager.commit()
 
-        auth_session, access_token = await self._auth_session_service.create_session(user.id_)
+        auth_session, access_token = await self._auth_session_service.create_session(
+            user.id_
+        )
         # Persist session row similar to baseapi
         await self._session_recorder.add(
             user_id=user.id_.value,
@@ -174,19 +176,19 @@ class LogInHandler:
     async def _ensure_user_context(self, user: User) -> None:
         """
         Ensure user context entry exists for context-aware agents.
-        
+
         This is called on login to create the context if it doesn't exist.
         For existing users, the Celery task will update their context.
         """
         try:
             # Get or create chat user (UUID-based)
             chat_user = await self._chat_user_repository.get_by_user_id(user.id_.value)
-            
+
             if not chat_user:
                 # Create chat user entry
                 from app.domain.chat.entities import ChatUser
                 from uuid import uuid4
-                
+
                 chat_user = ChatUser(
                     id_=uuid4(),
                     user_id=user.id_.value,
@@ -201,7 +203,7 @@ class LogInHandler:
                     updated_at=datetime.now(UTC),
                 )
                 chat_user = await self._chat_user_repository.create(chat_user)
-            
+
             # Check if context already exists
             existing = await self._user_context_service.exists(chat_user.id_)
             if existing:
@@ -211,22 +213,24 @@ class LogInHandler:
                     chat_user.id_,
                 )
                 return
-            
+
             # Create user context with defaults
             await self._user_context_service.create_for_new_user(
                 chat_user_id=chat_user.id_,
                 legacy_user_id=user.id_.value,
-                wallet_address=str(user.primary_wallet_address.value) if user.primary_wallet_address else None,
+                wallet_address=str(user.primary_wallet_address.value)
+                if user.primary_wallet_address
+                else None,
                 wallet_provider="email",  # Regular login is email-based
                 language="en",
             )
-            
+
             log.info(
                 "Created user context for user %s (chat_user_id=%s)",
                 user.id_.value,
                 chat_user.id_,
             )
-            
+
         except Exception as e:
             # Log but don't fail login if context creation fails
             log.warning(

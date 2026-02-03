@@ -1,4 +1,5 @@
 """Admin API endpoints for projects management."""
+
 from typing import List, Optional
 from uuid import UUID
 
@@ -39,6 +40,7 @@ router = APIRouter(prefix="/admin/projects", tags=["Admin - Projects"])
 
 # ==================== Projects CRUD ====================
 
+
 @router.post(
     "/",
     response_model=ProjectResponse,
@@ -52,8 +54,9 @@ async def create_project(
     """Create a new project."""
     # TODO: Get created_by from authenticated user
     from uuid import uuid4
+
     created_by = uuid4()
-    
+
     project = await interactor.execute(
         slug=data.slug,
         name=data.name,
@@ -74,7 +77,7 @@ async def create_project(
         display_order=data.display_order,
         is_featured=data.is_featured,
     )
-    
+
     return ProjectResponse(
         id=project.id,
         slug=project.slug,
@@ -121,7 +124,7 @@ async def list_projects(
         limit=limit,
         offset=offset,
     )
-    
+
     return [
         ProjectResponse(
             id=p.id,
@@ -161,10 +164,10 @@ async def get_project(
 ) -> ProjectResponse:
     """Get project by ID."""
     project = await interactor.execute(project_id=project_id)
-    
+
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
+
     return ProjectResponse(
         id=project.id,
         slug=project.slug,
@@ -218,7 +221,7 @@ async def update_project(
         display_order=data.display_order,
         is_featured=data.is_featured,
     )
-    
+
     return ProjectResponse(
         id=project.id,
         slug=project.slug,
@@ -268,7 +271,7 @@ async def activate_project(
 ) -> ProjectResponse:
     """Activate project."""
     project = await interactor.execute(project_id=project_id)
-    
+
     return ProjectResponse(
         id=project.id,
         slug=project.slug,
@@ -296,6 +299,7 @@ async def activate_project(
 
 # ==================== Knowledge Base ====================
 
+
 @router.post(
     "/{project_id}/knowledge/documents",
     response_model=KnowledgeDocumentResponse,
@@ -312,7 +316,7 @@ async def create_knowledge_document(
     from app.domain.entities.knowledge_base import KnowledgeDocument
     from uuid import uuid4
     from datetime import datetime, UTC
-    
+
     # Create document
     document = KnowledgeDocument(
         id=uuid4(),
@@ -330,9 +334,9 @@ async def create_knowledge_document(
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
-    
+
     await doc_repository.add_document(document)
-    
+
     # Process document asynchronously (for now, synchronous)
     try:
         chunk_count = await processor.process_document(document)
@@ -341,7 +345,7 @@ async def create_knowledge_document(
     except Exception as e:
         document.mark_error(str(e))
         await doc_repository.update_document(document)
-    
+
     return KnowledgeDocumentResponse(
         id=document.id,
         knowledge_base_id=document.knowledge_base_id,
@@ -368,7 +372,7 @@ async def list_knowledge_documents(
 ) -> List[KnowledgeDocumentResponse]:
     """List knowledge documents for a project."""
     documents = await doc_repository.list_documents(knowledge_base_id=project_id)
-    
+
     return [
         KnowledgeDocumentResponse(
             id=d.id,
@@ -389,6 +393,7 @@ async def list_knowledge_documents(
 
 # ==================== Assignment Rules ====================
 
+
 @router.post(
     "/{project_id}/assignment-rules",
     response_model=AssignmentRuleResponse,
@@ -402,7 +407,7 @@ async def create_assignment_rule(
 ) -> AssignmentRuleResponse:
     """Create assignment rule for a project."""
     from app.domain.entities.assignment_rule import AssignmentRule
-    
+
     rule = AssignmentRule.create(
         project_id=project_id,
         rule_name=data.rule_name,
@@ -411,9 +416,9 @@ async def create_assignment_rule(
         priority=data.priority,
         auto_switch=data.auto_switch,
     )
-    
+
     await repository.add_rule(rule)
-    
+
     return AssignmentRuleResponse(
         id=rule.id,
         project_id=rule.project_id,
@@ -439,7 +444,7 @@ async def list_assignment_rules(
 ) -> List[AssignmentRuleResponse]:
     """List assignment rules for a project."""
     rules = await repository.get_rules_by_project(project_id)
-    
+
     return [
         AssignmentRuleResponse(
             id=r.id,
@@ -470,10 +475,10 @@ async def update_assignment_rule(
 ) -> AssignmentRuleResponse:
     """Update assignment rule."""
     rule = await repository.get_rule(rule_id)
-    
+
     if not rule or rule.project_id != project_id:
         raise HTTPException(status_code=404, detail="Assignment rule not found")
-    
+
     if data.rule_name is not None:
         rule.rule_name = data.rule_name
     if data.condition_params is not None:
@@ -484,9 +489,9 @@ async def update_assignment_rule(
         rule.auto_switch = data.auto_switch
     if data.is_active is not None:
         rule.is_active = data.is_active
-    
+
     await repository.update_rule(rule)
-    
+
     return AssignmentRuleResponse(
         id=rule.id,
         project_id=rule.project_id,
@@ -503,6 +508,7 @@ async def update_assignment_rule(
 
 # ==================== User Assignments ====================
 
+
 @router.post(
     "/{project_id}/assignments",
     response_model=UserAssignmentResponse,
@@ -517,16 +523,16 @@ async def assign_user_to_project(
     """Manually assign a user to a project."""
     from app.domain.entities.assignment_rule import UserProjectAssignment
     from datetime import datetime
-    
+
     assignment = UserProjectAssignment.create(
         user_id=data.user_id,
         project_id=project_id,
         assignment_type="manual",
         assignment_reason=data.assignment_reason,
     )
-    
+
     await repository.add_assignment(assignment)
-    
+
     return UserAssignmentResponse(
         id=assignment.id,
         user_id=assignment.user_id,
@@ -550,7 +556,7 @@ async def list_project_assignments(
 ) -> List[UserAssignmentResponse]:
     """List all user assignments for a project."""
     assignments = await repository.get_assignments_by_project(project_id)
-    
+
     return [
         UserAssignmentResponse(
             id=a.id,

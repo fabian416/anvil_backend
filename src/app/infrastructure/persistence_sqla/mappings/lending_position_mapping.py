@@ -29,9 +29,7 @@ def map_lending_positions_table() -> None:
 
         __tablename__ = "lending_positions"
         __table_args__ = (
-            sa.Index(
-                "idx_lending_positions_user_protocol", "user_id", "protocol"
-            ),
+            sa.Index("idx_lending_positions_user_protocol", "user_id", "protocol"),
             sa.Index("idx_lending_positions_status", "status"),
             sa.Index(
                 "idx_lending_positions_user_protocol_status",
@@ -48,9 +46,7 @@ def map_lending_positions_table() -> None:
             server_default=sa.text("gen_random_uuid()"),
             default=uuid.uuid4,
         )
-        user_id = mapped_column(
-            UUID(as_uuid=True), nullable=False, index=True
-        )
+        user_id = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
         protocol = mapped_column(
             Enum(
                 "aave",

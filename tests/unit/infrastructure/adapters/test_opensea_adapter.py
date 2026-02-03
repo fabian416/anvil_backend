@@ -39,24 +39,25 @@ class TestOpenSeaAdapterStructure:
     def test_opensea_adapter_imports(self):
         """Test OpenSeaAdapter can be imported."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
+
         assert OpenSeaAdapter is not None
 
     def test_opensea_adapter_implements_gateway(self):
         """Test OpenSeaAdapter implements NFTMarketplaceGateway protocol."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
-        
+
         # Verify it has all required methods from the protocol
-        assert hasattr(OpenSeaAdapter, 'get_nfts_by_owner')
-        assert hasattr(OpenSeaAdapter, 'get_collection')
-        assert hasattr(OpenSeaAdapter, 'get_collection_stats')
-        assert hasattr(OpenSeaAdapter, 'get_nft')
-        assert hasattr(OpenSeaAdapter, 'get_listings')
-        assert hasattr(OpenSeaAdapter, 'get_floor_price')
+        assert hasattr(OpenSeaAdapter, "get_nfts_by_owner")
+        assert hasattr(OpenSeaAdapter, "get_collection")
+        assert hasattr(OpenSeaAdapter, "get_collection_stats")
+        assert hasattr(OpenSeaAdapter, "get_nft")
+        assert hasattr(OpenSeaAdapter, "get_listings")
+        assert hasattr(OpenSeaAdapter, "get_floor_price")
 
     def test_opensea_adapter_init(self, mock_opensea_client, mock_cache):
         """Test OpenSeaAdapter can be initialized."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
-        
+
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
         assert adapter is not None
 
@@ -66,28 +67,32 @@ class TestOpenSeaAdapterGetNFTsByOwner:
     """Tests for get_nfts_by_owner method."""
 
     @pytest.mark.asyncio
-    async def test_get_nfts_by_owner_validates_address(self, mock_opensea_client, mock_cache):
+    async def test_get_nfts_by_owner_validates_address(
+        self, mock_opensea_client, mock_cache
+    ):
         """Test get_nfts_by_owner validates Ethereum address format."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
         from app.domain.exceptions.nft import InvalidAddressError
-        
+
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
-        
+
         with pytest.raises(InvalidAddressError):
             await adapter.get_nfts_by_owner("invalid-address")
 
     @pytest.mark.asyncio
-    async def test_get_nfts_by_owner_returns_list(self, mock_opensea_client, mock_cache):
+    async def test_get_nfts_by_owner_returns_list(
+        self, mock_opensea_client, mock_cache
+    ):
         """Test get_nfts_by_owner returns a list."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
-        
+
         mock_opensea_client.get_nfts_by_account.return_value = []
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
-        
+
         result = await adapter.get_nfts_by_owner(
             "0x1234567890123456789012345678901234567890"
         )
-        
+
         assert isinstance(result, list)
 
 
@@ -99,7 +104,7 @@ class TestOpenSeaAdapterGetCollection:
     async def test_get_collection_calls_client(self, mock_opensea_client, mock_cache):
         """Test get_collection calls the client."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
-        
+
         mock_opensea_client.get_collection.return_value = MagicMock(
             slug="boredapeyachtclub",
             name="Bored Ape Yacht Club",
@@ -107,21 +112,21 @@ class TestOpenSeaAdapterGetCollection:
             total_supply=10000,
         )
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
-        
+
         await adapter.get_collection("boredapeyachtclub")
-        
+
         mock_opensea_client.get_collection.assert_called()
 
     @pytest.mark.asyncio
     async def test_get_collection_not_found(self, mock_opensea_client, mock_cache):
         """Test get_collection returns None for invalid slug."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
-        
+
         mock_opensea_client.get_collection.return_value = None
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
-        
+
         result = await adapter.get_collection("invalid-collection")
-        
+
         assert result is None
 
 
@@ -130,12 +135,14 @@ class TestOpenSeaAdapterGetCollectionStats:
     """Tests for get_collection_stats method."""
 
     @pytest.mark.asyncio
-    async def test_get_collection_stats_calls_client(self, mock_opensea_client, mock_cache):
+    async def test_get_collection_stats_calls_client(
+        self, mock_opensea_client, mock_cache
+    ):
         """Test get_collection_stats calls the client."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
         from app.infrastructure.adapters.external.opensea_client import CollectionStats
         from decimal import Decimal
-        
+
         # Use proper CollectionStats dataclass with all required fields
         mock_opensea_client.get_collection_stats.return_value = CollectionStats(
             total_supply=10000,
@@ -154,9 +161,9 @@ class TestOpenSeaAdapterGetCollectionStats:
             seven_day_change=Decimal("2.5"),
         )
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
-        
+
         await adapter.get_collection_stats("boredapeyachtclub")
-        
+
         mock_opensea_client.get_collection_stats.assert_called()
 
 
@@ -170,7 +177,7 @@ class TestOpenSeaAdapterGetNFT:
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
         from app.infrastructure.adapters.external.opensea_client import NFTAsset
         from decimal import Decimal
-        
+
         # Use proper NFTAsset dataclass with all fields
         mock_opensea_client.get_nft.return_value = NFTAsset(
             identifier="1234",
@@ -186,24 +193,24 @@ class TestOpenSeaAdapterGetNFT:
             traits=[],
         )
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
-        
+
         await adapter.get_nft(
             "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D",
             "1234",
         )
-        
+
         mock_opensea_client.get_nft.assert_called()
 
     @pytest.mark.asyncio
     async def test_get_nft_not_found(self, mock_opensea_client, mock_cache):
         """Test get_nft returns None for invalid NFT."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
-        
+
         mock_opensea_client.get_nft.return_value = None
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
-        
+
         result = await adapter.get_nft("0x123", "invalid")
-        
+
         assert result is None
 
 
@@ -215,24 +222,24 @@ class TestOpenSeaAdapterGetListings:
     async def test_get_listings_calls_client(self, mock_opensea_client, mock_cache):
         """Test get_listings calls the client."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
-        
+
         mock_opensea_client.get_listings.return_value = []
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
-        
+
         await adapter.get_listings("boredapeyachtclub")
-        
+
         mock_opensea_client.get_listings.assert_called()
 
     @pytest.mark.asyncio
     async def test_get_listings_returns_list(self, mock_opensea_client, mock_cache):
         """Test get_listings returns a list."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
-        
+
         mock_opensea_client.get_listings.return_value = []
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
-        
+
         result = await adapter.get_listings("boredapeyachtclub")
-        
+
         assert isinstance(result, list)
 
 
@@ -246,7 +253,7 @@ class TestOpenSeaAdapterGetFloorPrice:
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
         from app.infrastructure.adapters.external.opensea_client import CollectionStats
         from decimal import Decimal
-        
+
         # get_floor_price internally calls get_collection_stats
         mock_opensea_client.get_collection_stats.return_value = CollectionStats(
             total_supply=10000,
@@ -265,9 +272,9 @@ class TestOpenSeaAdapterGetFloorPrice:
             seven_day_change=Decimal("0"),
         )
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
-        
+
         result = await adapter.get_floor_price("boredapeyachtclub")
-        
+
         # Verify get_collection_stats was called (which get_floor_price uses)
         mock_opensea_client.get_collection_stats.assert_called()
         assert result is not None
@@ -282,10 +289,10 @@ class TestOpenSeaAdapterErrorHandling:
         """Test client errors are wrapped as OpenSeaAPIError."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
         from app.domain.exceptions.nft import OpenSeaAPIError
-        
+
         mock_opensea_client.get_collection.side_effect = Exception("API Error")
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
-        
+
         with pytest.raises(OpenSeaAPIError):
             await adapter.get_collection("test")
 
@@ -294,9 +301,9 @@ class TestOpenSeaAdapterErrorHandling:
         """Test invalid addresses are detected before API call."""
         from app.infrastructure.adapters.external.opensea_adapter import OpenSeaAdapter
         from app.domain.exceptions.nft import InvalidAddressError
-        
+
         adapter = OpenSeaAdapter(client=mock_opensea_client, cache=mock_cache)
-        
+
         with pytest.raises(InvalidAddressError):
             await adapter.get_nfts_by_owner("not-an-address")
 
@@ -311,32 +318,32 @@ class TestNFTExceptions:
     def test_nft_error_has_error_code(self):
         """Test NFTError has error_code."""
         from app.domain.exceptions.nft import NFTError
-        
-        assert hasattr(NFTError, 'error_code')
+
+        assert hasattr(NFTError, "error_code")
 
     def test_collection_not_found_error(self):
         """Test CollectionNotFoundError."""
         from app.domain.exceptions.nft import CollectionNotFoundError
-        
+
         error = CollectionNotFoundError("invalid-collection")
-        
+
         assert error.error_code == "NFT_COLLECTION_NOT_FOUND"
         assert "invalid-collection" in str(error)
 
     def test_invalid_address_error(self):
         """Test InvalidAddressError."""
         from app.domain.exceptions.nft import InvalidAddressError
-        
+
         error = InvalidAddressError("invalid-address")
-        
+
         assert error.error_code == "NFT_INVALID_ADDRESS"
         assert "invalid-address" in str(error)
 
     def test_rate_limit_error(self):
         """Test RateLimitError."""
         from app.domain.exceptions.nft import RateLimitError
-        
+
         error = RateLimitError(retry_after=60)
-        
+
         assert error.error_code == "NFT_RATE_LIMIT"
         assert error.retry_after == 60

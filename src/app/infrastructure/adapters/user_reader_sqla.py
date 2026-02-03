@@ -18,9 +18,19 @@ log = logging.getLogger(__name__)
 
 # Valid sorting fields (column names in the users table)
 VALID_SORTING_FIELDS = {
-    "id", "email", "first_name", "last_name", "role",
-    "is_active", "is_blocked", "is_verified", "created_at", "updated_at",
-    "auth_provider", "privy_user_id", "primary_wallet_address",
+    "id",
+    "email",
+    "first_name",
+    "last_name",
+    "role",
+    "is_active",
+    "is_blocked",
+    "is_verified",
+    "created_at",
+    "updated_at",
+    "auth_provider",
+    "privy_user_id",
+    "primary_wallet_address",
 }
 
 

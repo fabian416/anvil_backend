@@ -1,6 +1,7 @@
 """
 Hyperliquid Position entity.
 """
+
 from dataclasses import dataclass
 from typing import Optional
 from decimal import Decimal
@@ -14,9 +15,11 @@ from app.domain.enums.side import Side
 from app.domain.enums.position_status import PositionStatus
 from app.domain.value_objects.created_at import CreatedAt
 
+
 @dataclass(frozen=True, repr=False)
 class HyperliquidPositionId(ValueObject):
     value: int
+
 
 @dataclass(eq=False, kw_only=True)
 class HyperliquidPosition(Entity[HyperliquidPositionId]):

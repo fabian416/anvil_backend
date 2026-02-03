@@ -1,6 +1,7 @@
 """
 Audit Log entity.
 """
+
 from dataclasses import dataclass
 from typing import Optional, Any
 from datetime import datetime
@@ -10,9 +11,11 @@ from app.domain.value_objects.base import ValueObject
 from app.domain.value_objects.user_id import UserId
 from app.domain.value_objects.created_at import CreatedAt
 
+
 @dataclass(frozen=True, repr=False)
 class AuditLogId(ValueObject):
     value: int
+
 
 @dataclass(eq=False, kw_only=True)
 class AuditLog(Entity[AuditLogId]):

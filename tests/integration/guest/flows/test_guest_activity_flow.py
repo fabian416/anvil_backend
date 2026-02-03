@@ -15,8 +15,7 @@ class TestGuestActivityFlow:
         """Test that activity shows demo transaction history for guests."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "activity", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "activity", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -32,7 +31,9 @@ class TestGuestActivityFlow:
         assert "Demo" in content or "demo" in content.lower()
 
         # Should show transaction types
-        assert any(tx_type in content.upper() for tx_type in ["SWAP", "SEND", "RECEIVE", "BUY"])
+        assert any(
+            tx_type in content.upper() for tx_type in ["SWAP", "SEND", "RECEIVE", "BUY"]
+        )
 
         # Should show transaction statuses
         assert "✅" in content or "Completed" in content or "completed" in content
@@ -54,8 +55,7 @@ class TestGuestActivityFlow:
         """Test that activity shows transaction count."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "show my activity", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "show my activity", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -75,8 +75,7 @@ class TestGuestActivityFlow:
         """Test that activity displays different transaction types."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "activity", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "activity", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -102,8 +101,7 @@ class TestGuestActivityFlow:
         """Test that activity shows detailed transaction information."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "transactions", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "transactions", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -115,7 +113,9 @@ class TestGuestActivityFlow:
         assert "0x" in content or "TX" in content
 
         # Should show timestamps/time info
-        assert any(word in content.lower() for word in ["time", "ago", "hour", "day", "minute"])
+        assert any(
+            word in content.lower() for word in ["time", "ago", "hour", "day", "minute"]
+        )
 
         # Should have detailed transaction data in enrichment
         assert "transactions" in enrichment
@@ -133,8 +133,7 @@ class TestGuestActivityFlow:
         """Test that activity shows swap transaction details."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "activity", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "activity", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -161,8 +160,7 @@ class TestGuestActivityFlow:
         """Test that activity shows send/receive transaction details."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "activity", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "activity", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -175,8 +173,7 @@ class TestGuestActivityFlow:
 
         # Should have send or receive transactions
         send_receive = [
-            tx for tx in enrichment["transactions"]
-            if tx["type"] in ["send", "receive"]
+            tx for tx in enrichment["transactions"] if tx["type"] in ["send", "receive"]
         ]
         assert len(send_receive) > 0
 
@@ -190,8 +187,7 @@ class TestGuestActivityFlow:
         """Test that activity shows time in relative format."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "activity", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "activity", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -199,17 +195,17 @@ class TestGuestActivityFlow:
         content = data["agent_message"]["content"]
 
         # Should show relative time
-        assert any(phrase in content.lower() for phrase in [
-            "ago", "hour", "day", "minute", "time"
-        ])
+        assert any(
+            phrase in content.lower()
+            for phrase in ["ago", "hour", "day", "minute", "time"]
+        )
 
     @pytest.mark.asyncio
     async def test_activity_multilingual_spanish(self, client):
         """Test activity in Spanish."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "actividad", "language": "es"}
+            "/api/v1/guest/chat", json={"content": "actividad", "language": "es"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -217,17 +213,17 @@ class TestGuestActivityFlow:
         content = data["agent_message"]["content"]
 
         # Should contain Spanish or English text (fallback)
-        assert any(word in content.lower() for word in [
-            "transacc", "historial", "activity", "transaction"
-        ])
+        assert any(
+            word in content.lower()
+            for word in ["transacc", "historial", "activity", "transaction"]
+        )
 
     @pytest.mark.asyncio
     async def test_activity_multilingual_portuguese(self, client):
         """Test activity in Portuguese."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "atividade", "language": "pt"}
+            "/api/v1/guest/chat", json={"content": "atividade", "language": "pt"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -235,17 +231,17 @@ class TestGuestActivityFlow:
         content = data["agent_message"]["content"]
 
         # Should contain Portuguese or English text (fallback)
-        assert any(word in content.lower() for word in [
-            "transaç", "histórico", "activity", "transaction"
-        ])
+        assert any(
+            word in content.lower()
+            for word in ["transaç", "histórico", "activity", "transaction"]
+        )
 
     @pytest.mark.asyncio
     async def test_activity_multilingual_chinese(self, client):
         """Test activity in Chinese."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "交易历史", "language": "zh"}
+            "/api/v1/guest/chat", json={"content": "交易历史", "language": "zh"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -253,9 +249,9 @@ class TestGuestActivityFlow:
         content = data["agent_message"]["content"]
 
         # Should contain Chinese or English text (fallback)
-        assert any(word in content for word in [
-            "交易", "历史", "Activity", "Transaction"
-        ])
+        assert any(
+            word in content for word in ["交易", "历史", "Activity", "Transaction"]
+        )
 
 
 class TestGuestActivityStorytellingQuality:
@@ -266,8 +262,7 @@ class TestGuestActivityStorytellingQuality:
         """Test that activity uses emojis to enhance communication."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "activity", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "activity", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -282,24 +277,23 @@ class TestGuestActivityStorytellingQuality:
         """Test that activity has clear signup call-to-action."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "activity", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "activity", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
         # Should have clear signup CTA
         assert "sign up" in content.lower() or "signup" in content.lower()
-        assert any(phrase in content.lower() for phrase in [
-            "real transactions", "your real", "actual"
-        ])
+        assert any(
+            phrase in content.lower()
+            for phrase in ["real transactions", "your real", "actual"]
+        )
 
     @pytest.mark.asyncio
     async def test_activity_shows_clear_formatting(self, client):
         """Test that activity has clear visual formatting."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "activity", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "activity", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -315,8 +309,7 @@ class TestGuestActivityStorytellingQuality:
         """Test that activity shows transactions in logical order."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "activity", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "activity", "language": "en"}
         )
         data = response.json()
 
@@ -335,13 +328,14 @@ class TestGuestActivityStorytellingQuality:
         """Test that activity groups transaction information clearly."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "activity", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "activity", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
         # Should show numbered or bulleted lists
-        assert any(marker in content for marker in ["**1.**", "**2.**", "•", "1.", "2."])
+        assert any(
+            marker in content for marker in ["**1.**", "**2.**", "•", "1.", "2."]
+        )
 
         # Should have section headers
         assert "Recent" in content or "History" in content or "Activity" in content

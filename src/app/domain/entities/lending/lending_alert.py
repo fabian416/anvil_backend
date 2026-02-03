@@ -77,15 +77,13 @@ class LendingAlert:
         )
         if self.alert_type not in valid_types:
             raise ValueError(
-                f"Invalid alert_type: {self.alert_type}. "
-                f"Must be one of {valid_types}."
+                f"Invalid alert_type: {self.alert_type}. Must be one of {valid_types}."
             )
 
         valid_severities = ("info", "warning", "critical")
         if self.severity not in valid_severities:
             raise ValueError(
-                f"Invalid severity: {self.severity}. "
-                f"Must be one of {valid_severities}."
+                f"Invalid severity: {self.severity}. Must be one of {valid_severities}."
             )
 
         if not self.title or len(self.title.strip()) == 0:

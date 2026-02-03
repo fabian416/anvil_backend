@@ -20,12 +20,14 @@ class TestSignUpController:
     def mock_sign_up_handler(self):
         """Create mock SignUpHandler."""
         handler = AsyncMock()
-        handler.execute = AsyncMock(return_value={
-            "id": str(uuid4()),
-            "email": "newuser@example.com",
-            "access_token": "mock_access_token",
-            "refresh_token": "mock_refresh_token",
-        })
+        handler.execute = AsyncMock(
+            return_value={
+                "id": str(uuid4()),
+                "email": "newuser@example.com",
+                "access_token": "mock_access_token",
+                "refresh_token": "mock_refresh_token",
+            }
+        )
         return handler
 
     def test_valid_signup_request_structure(self):
@@ -75,6 +77,7 @@ class TestSignUpController:
         ]
 
         import re
+
         email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
         for email in valid_emails:
@@ -137,15 +140,17 @@ class TestLogInController:
     def mock_login_handler(self):
         """Create mock LogInHandler."""
         handler = AsyncMock()
-        handler.execute = AsyncMock(return_value={
-            "access_token": "mock_access_token",
-            "refresh_token": "mock_refresh_token",
-            "user": {
-                "id": str(uuid4()),
-                "email": "user@example.com",
-                "role": "USER",
-            },
-        })
+        handler.execute = AsyncMock(
+            return_value={
+                "access_token": "mock_access_token",
+                "refresh_token": "mock_refresh_token",
+                "user": {
+                    "id": str(uuid4()),
+                    "email": "user@example.com",
+                    "role": "USER",
+                },
+            }
+        )
         return handler
 
     def test_valid_login_request_structure(self):
@@ -249,10 +254,12 @@ class TestRefreshTokenController:
     def mock_refresh_handler(self):
         """Create mock RefreshTokenHandler."""
         handler = AsyncMock()
-        handler.execute = AsyncMock(return_value={
-            "access_token": "new_access_token",
-            "refresh_token": "new_refresh_token",
-        })
+        handler.execute = AsyncMock(
+            return_value={
+                "access_token": "new_access_token",
+                "refresh_token": "new_refresh_token",
+            }
+        )
         return handler
 
     def test_valid_refresh_request_structure(self):

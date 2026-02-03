@@ -27,20 +27,16 @@ class TestHyperliquidMCPServerStructure:
 
     def test_hyperliquid_server_has_setup_tools(self):
         """Test server has setup_tools method."""
-        assert hasattr(HyperliquidMCPServer, 'setup_tools')
+        assert hasattr(HyperliquidMCPServer, "setup_tools")
 
     def test_hyperliquid_server_initialization_enabled(self):
         """Test server can be instantiated when enabled."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(hyperliquid_enabled=True)
+            enabled=True, servers=MCPServerSettings(hyperliquid_enabled=True)
         )
         mock_gateway = MagicMock()
 
-        server = HyperliquidMCPServer(
-            perpetual_gateway=mock_gateway,
-            settings=settings
-        )
+        server = HyperliquidMCPServer(perpetual_gateway=mock_gateway, settings=settings)
 
         assert server is not None
         assert server.name == "hyperliquid"
@@ -53,14 +49,10 @@ class TestHyperliquidTools:
     def test_setup_tools_registers_all_tools(self):
         """Test setup_tools registers all expected tools."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(hyperliquid_enabled=True)
+            enabled=True, servers=MCPServerSettings(hyperliquid_enabled=True)
         )
         mock_gateway = MagicMock()
-        server = HyperliquidMCPServer(
-            perpetual_gateway=mock_gateway,
-            settings=settings
-        )
+        server = HyperliquidMCPServer(perpetual_gateway=mock_gateway, settings=settings)
 
         server.setup_tools()
 
@@ -101,13 +93,9 @@ class TestHyperliquidToolHandlers:
         mock_gateway.get_markets.return_value = [mock_market]
 
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(hyperliquid_enabled=True)
+            enabled=True, servers=MCPServerSettings(hyperliquid_enabled=True)
         )
-        server = HyperliquidMCPServer(
-            perpetual_gateway=mock_gateway,
-            settings=settings
-        )
+        server = HyperliquidMCPServer(perpetual_gateway=mock_gateway, settings=settings)
         server.setup_tools()
 
         result = await server._get_markets_handler(sort_by="volume", limit=20)
@@ -115,7 +103,6 @@ class TestHyperliquidToolHandlers:
         assert "markets" in result
         assert len(result["markets"]) == 1
         assert result["markets"][0]["symbol"] == "ETH"
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -125,19 +112,13 @@ class TestHyperliquidToolHandlers:
         mock_gateway.calculate_liquidation_price.return_value = Decimal("1800")
 
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(hyperliquid_enabled=True)
+            enabled=True, servers=MCPServerSettings(hyperliquid_enabled=True)
         )
-        server = HyperliquidMCPServer(
-            perpetual_gateway=mock_gateway,
-            settings=settings
-        )
+        server = HyperliquidMCPServer(perpetual_gateway=mock_gateway, settings=settings)
         server.setup_tools()
 
         result = await server._calculate_liquidation_price_handler(
-            entry_price="2000",
-            leverage="10",
-            side="long"
+            entry_price="2000", leverage="10", side="long"
         )
 
         assert "liquidation_price" in result

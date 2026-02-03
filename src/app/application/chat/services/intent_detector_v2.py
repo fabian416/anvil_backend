@@ -11,14 +11,16 @@ from enum import Enum
 from typing import Any, Dict, List
 
 from app.application.chat.services.conversation_memory import ConversationContext
-from app.application.chat.services.conversation_state_manager import ConversationStateManager
+from app.application.chat.services.conversation_state_manager import (
+    ConversationStateManager,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class ChatIntentV2(str, Enum):
     """Chat intent types."""
-    
+
     # Hunter AI
     HUNTER_SENTIMENT = "HUNTER_SENTIMENT"
     HUNTER_PRICE_PREDICTION = "HUNTER_PRICE_PREDICTION"
@@ -26,28 +28,30 @@ class ChatIntentV2(str, Enum):
     HUNTER_TRADING_SIGNALS = "HUNTER_TRADING_SIGNALS"
     HUNTER_PATTERNS = "HUNTER_PATTERNS"
     HUNTER_PORTFOLIO = "HUNTER_PORTFOLIO"
-    
+
     # ULTRA
     ULTRA_ARBITRAGE = "ULTRA_ARBITRAGE"
     ULTRA_FLASH_LOANS = "ULTRA_FLASH_LOANS"
     ULTRA_MEV_PROTECTION = "ULTRA_MEV_PROTECTION"
     ULTRA_AUTO_EXECUTOR = "ULTRA_AUTO_EXECUTOR"
-    
+
     # GraphRAG
     PROTOCOL_SEARCH = "PROTOCOL_SEARCH"
     RISK_ASSESSMENT = "RISK_ASSESSMENT"
     SIMILAR_PROTOCOLS = "SIMILAR_PROTOCOLS"
-    
+
     # DeFi Actions
     SWAP = "SWAP"
     SWAP_CONTINUE = "SWAP_CONTINUE"  # Multi-turn continuation
     MOONPAY_SWAP = "MOONPAY_SWAP"  # MoonPay swap flow
-    MOONPAY_SWAP_CONTINUE = "MOONPAY_SWAP_CONTINUE"  # MoonPay swap multi-turn continuation
+    MOONPAY_SWAP_CONTINUE = (
+        "MOONPAY_SWAP_CONTINUE"  # MoonPay swap multi-turn continuation
+    )
     LENDING = "LENDING"
     MONEY_MARKET = "MONEY_MARKET"
     BUY = "BUY"  # On-ramp crypto purchase
     BUY_CONTINUE = "BUY_CONTINUE"  # Multi-turn continuation for buy flow
-    
+
     # Restricted (require registration)
     BALANCE = "BALANCE"
     PORTFOLIO = "PORTFOLIO"
@@ -55,7 +59,7 @@ class ChatIntentV2(str, Enum):
     RECEIVE = "RECEIVE"
     TRANSFER = "TRANSFER"
     SEND = "SEND"  # Send tokens to another wallet
-    
+
     # General
     GENERAL_CONVERSATION = "GENERAL_CONVERSATION"
 
@@ -64,346 +68,749 @@ class ChatIntentV2(str, Enum):
 INTENT_KEYWORDS: dict[str, dict[str, list[str]]] = {
     "sentiment": {
         "en": [
-            "sentiment", "feeling", "mood", "bullish", "bearish", "opinion",
-            "what do people think", "market mood", "community sentiment",
-            "twitter", "reddit", "social", "news", "hype",
+            "sentiment",
+            "feeling",
+            "mood",
+            "bullish",
+            "bearish",
+            "opinion",
+            "what do people think",
+            "market mood",
+            "community sentiment",
+            "twitter",
+            "reddit",
+            "social",
+            "news",
+            "hype",
         ],
         "es": [
-            "sentimiento", "opinión", "opiniones", "alcista", "bajista",
-            "qué opina", "qué piensan", "clima del mercado", "percepción",
-            "sentimiento de mercado", "sentimiento para",
+            "sentimiento",
+            "opinión",
+            "opiniones",
+            "alcista",
+            "bajista",
+            "qué opina",
+            "qué piensan",
+            "clima del mercado",
+            "percepción",
+            "sentimiento de mercado",
+            "sentimiento para",
         ],
         "pt": [
-            "sentimento", "opinião", "humor", "altista", "baixista",
-            "o que as pessoas pensam", "clima do mercado",
+            "sentimento",
+            "opinião",
+            "humor",
+            "altista",
+            "baixista",
+            "o que as pessoas pensam",
+            "clima do mercado",
         ],
     },
     "price": {
         "en": [
-            "price", "cost", "value", "worth", "how much is",
-            "what's the price", "current price", "price of",
+            "price",
+            "cost",
+            "value",
+            "worth",
+            "how much is",
+            "what's the price",
+            "current price",
+            "price of",
         ],
         "es": [
-            "precio", "valor", "costo", "cuánto vale", "cuánto cuesta",
-            "cuál es el precio", "precio de", "precio actual",
+            "precio",
+            "valor",
+            "costo",
+            "cuánto vale",
+            "cuánto cuesta",
+            "cuál es el precio",
+            "precio de",
+            "precio actual",
         ],
         "pt": [
-            "preço", "valor", "custo", "quanto vale", "quanto custa",
+            "preço",
+            "valor",
+            "custo",
+            "quanto vale",
+            "quanto custa",
         ],
     },
     "prediction": {
         "en": [
-            "predict", "prediction", "forecast", "will go", "go up", "go down",
-            "next week", "tomorrow", "price target", "where will", "future price",
-            "will rise", "will fall", "will increase", "will decrease",
-            "going up", "going down", "bullish", "bearish",
+            "predict",
+            "prediction",
+            "forecast",
+            "will go",
+            "go up",
+            "go down",
+            "next week",
+            "tomorrow",
+            "price target",
+            "where will",
+            "future price",
+            "will rise",
+            "will fall",
+            "will increase",
+            "will decrease",
+            "going up",
+            "going down",
+            "bullish",
+            "bearish",
         ],
         "es": [
-            "predecir", "predicción", "pronóstico", "mañana", "próxima semana",
-            "objetivo de precio", "a dónde irá", "va a subir", "va a bajar",
+            "predecir",
+            "predicción",
+            "pronóstico",
+            "mañana",
+            "próxima semana",
+            "objetivo de precio",
+            "a dónde irá",
+            "va a subir",
+            "va a bajar",
         ],
         "pt": [
-            "prever", "previsão", "amanhã", "próxima semana",
-            "vai subir", "vai cair",
+            "prever",
+            "previsão",
+            "amanhã",
+            "próxima semana",
+            "vai subir",
+            "vai cair",
         ],
     },
     "token_info": {
         "en": [
-            "what is bitcoin", "what is ethereum", "what is btc", "what is eth",
-            "what is usdc", "what is usdt", "what is solana", "what is sol",
-            "what is bnb", "what is cardano", "what is ada", "what is polygon",
-            "what is matic", "what is avalanche", "what is avax", "what is chainlink",
-            "what is link", "what is uniswap", "what is uni", "what is aave",
-            "tell me about bitcoin", "tell me about ethereum", "tell me about",
-            "what is defi", "what is nft", "what is dao", "what is stablecoin",
-            "explain bitcoin", "explain ethereum", "explain defi",
+            "what is bitcoin",
+            "what is ethereum",
+            "what is btc",
+            "what is eth",
+            "what is usdc",
+            "what is usdt",
+            "what is solana",
+            "what is sol",
+            "what is bnb",
+            "what is cardano",
+            "what is ada",
+            "what is polygon",
+            "what is matic",
+            "what is avalanche",
+            "what is avax",
+            "what is chainlink",
+            "what is link",
+            "what is uniswap",
+            "what is uni",
+            "what is aave",
+            "tell me about bitcoin",
+            "tell me about ethereum",
+            "tell me about",
+            "what is defi",
+            "what is nft",
+            "what is dao",
+            "what is stablecoin",
+            "explain bitcoin",
+            "explain ethereum",
+            "explain defi",
             # Additional variations for better detection
-            "bitcoin explained", "what does btc mean", "bitcoin definition",
-            "what is crypto", "what is cryptocurrency", "what is blockchain",
-            "bitcoin basics", "bitcoin for beginners", "learn about bitcoin",
-            "ethereum explained", "what does eth mean", "ethereum definition",
-            "tell me about btc", "explain btc", "what's bitcoin", "what's btc",
+            "bitcoin explained",
+            "what does btc mean",
+            "bitcoin definition",
+            "what is crypto",
+            "what is cryptocurrency",
+            "what is blockchain",
+            "bitcoin basics",
+            "bitcoin for beginners",
+            "learn about bitcoin",
+            "ethereum explained",
+            "what does eth mean",
+            "ethereum definition",
+            "tell me about btc",
+            "explain btc",
+            "what's bitcoin",
+            "what's btc",
         ],
         "es": [
-            "qué es bitcoin", "qué es ethereum", "qué es btc", "qué es eth",
-            "qué es usdc", "qué es usdt", "qué es solana", "qué es defi",
-            "cuéntame sobre bitcoin", "háblame de ethereum", "explica bitcoin",
+            "qué es bitcoin",
+            "qué es ethereum",
+            "qué es btc",
+            "qué es eth",
+            "qué es usdc",
+            "qué es usdt",
+            "qué es solana",
+            "qué es defi",
+            "cuéntame sobre bitcoin",
+            "háblame de ethereum",
+            "explica bitcoin",
             # Additional variations
-            "qué es cripto", "qué es criptomoneda", "qué es blockchain",
-            "bitcoin explicado", "qué significa btc", "definición de bitcoin",
-            "cuéntame sobre btc", "explica btc", "qué es el bitcoin",
+            "qué es cripto",
+            "qué es criptomoneda",
+            "qué es blockchain",
+            "bitcoin explicado",
+            "qué significa btc",
+            "definición de bitcoin",
+            "cuéntame sobre btc",
+            "explica btc",
+            "qué es el bitcoin",
         ],
         "pt": [
-            "o que é bitcoin", "o que é ethereum", "o que é btc", "o que é eth",
-            "o que é usdc", "o que é usdt", "o que é solana", "o que é defi",
-            "fale sobre bitcoin", "me conte sobre ethereum", "explique bitcoin",
+            "o que é bitcoin",
+            "o que é ethereum",
+            "o que é btc",
+            "o que é eth",
+            "o que é usdc",
+            "o que é usdt",
+            "o que é solana",
+            "o que é defi",
+            "fale sobre bitcoin",
+            "me conte sobre ethereum",
+            "explique bitcoin",
             # Additional variations
-            "o que é cripto", "o que é criptomoeda", "o que é blockchain",
-            "bitcoin explicado", "o que significa btc", "definição de bitcoin",
-            "fale sobre btc", "explique btc", "o que é o bitcoin",
+            "o que é cripto",
+            "o que é criptomoeda",
+            "o que é blockchain",
+            "bitcoin explicado",
+            "o que significa btc",
+            "definição de bitcoin",
+            "fale sobre btc",
+            "explique btc",
+            "o que é o bitcoin",
         ],
         "zh": [
-            "什么是比特币", "什么是以太坊", "什么是btc", "什么是eth",
-            "告诉我关于比特币", "解释比特币",
+            "什么是比特币",
+            "什么是以太坊",
+            "什么是btc",
+            "什么是eth",
+            "告诉我关于比特币",
+            "解释比特币",
         ],
     },
     "swap": {
         "en": [
-            "swap", "exchange", "convert", "trade", "change",
-            "swap from", "swap to", "exchange for",
+            "swap",
+            "exchange",
+            "convert",
+            "trade",
+            "change",
+            "swap from",
+            "swap to",
+            "exchange for",
         ],
         "es": [
-            "swap", "cambiar", "intercambiar", "convertir", "canjear",
-            "quiero swap", "hacer swap", "swap de",
+            "swap",
+            "cambiar",
+            "intercambiar",
+            "convertir",
+            "canjear",
+            "quiero swap",
+            "hacer swap",
+            "swap de",
         ],
         "pt": [
-            "swap", "trocar", "converter", "cambiar",
-            "quero swap", "fazer swap",
+            "swap",
+            "trocar",
+            "converter",
+            "cambiar",
+            "quero swap",
+            "fazer swap",
         ],
     },
     "balance": {
         "en": [
-            "balance", "my wallet", "my funds", "how much do i have",
-            "show balance", "check balance", "wallet balance",
+            "balance",
+            "my wallet",
+            "my funds",
+            "how much do i have",
+            "show balance",
+            "check balance",
+            "wallet balance",
         ],
         "es": [
-            "saldo", "mi billetera", "mis fondos", "cuánto tengo",
-            "mi saldo", "ver saldo", "mostrar saldo",
+            "saldo",
+            "mi billetera",
+            "mis fondos",
+            "cuánto tengo",
+            "mi saldo",
+            "ver saldo",
+            "mostrar saldo",
         ],
         "pt": [
-            "saldo", "minha carteira", "meus fundos",
-            "meu saldo", "ver saldo",
+            "saldo",
+            "minha carteira",
+            "meus fundos",
+            "meu saldo",
+            "ver saldo",
         ],
     },
     "portfolio": {
         "en": [
-            "portfolio", "my positions", "my holdings", "my investments",
-            "show portfolio", "portfolio performance",
-            "my tokens", "what tokens", "list my tokens", "tokens i have",
-            "tokens i own", "what do i own", "what do i have",
+            "portfolio",
+            "my positions",
+            "my holdings",
+            "my investments",
+            "show portfolio",
+            "portfolio performance",
+            "my tokens",
+            "what tokens",
+            "list my tokens",
+            "tokens i have",
+            "tokens i own",
+            "what do i own",
+            "what do i have",
         ],
         "es": [
-            "portafolio", "mis posiciones", "mis inversiones",
-            "mi portafolio", "ver portafolio",
-            "mis tokens", "qué tokens tengo", "listar mis tokens",
+            "portafolio",
+            "mis posiciones",
+            "mis inversiones",
+            "mi portafolio",
+            "ver portafolio",
+            "mis tokens",
+            "qué tokens tengo",
+            "listar mis tokens",
         ],
         "pt": [
-            "portfólio", "minhas posições", "meus investimentos",
-            "meus tokens", "quais tokens", "listar meus tokens",
-            "meu portfólio", "ver portfólio",
+            "portfólio",
+            "minhas posições",
+            "meus investimentos",
+            "meus tokens",
+            "quais tokens",
+            "listar meus tokens",
+            "meu portfólio",
+            "ver portfólio",
         ],
     },
     "protocol_search": {
         "en": [
-            "find protocol", "search protocol", "list protocols",
-            "staking protocols", "best protocols", "top protocols",
-            "protocols on ethereum", "lending protocols", "dex protocols",
+            "find protocol",
+            "search protocol",
+            "list protocols",
+            "staking protocols",
+            "best protocols",
+            "top protocols",
+            "protocols on ethereum",
+            "lending protocols",
+            "dex protocols",
         ],
         "es": [
-            "buscar protocolo", "protocolos de staking", "listar protocolos",
-            "mejores protocolos", "protocolos de préstamo",
+            "buscar protocolo",
+            "protocolos de staking",
+            "listar protocolos",
+            "mejores protocolos",
+            "protocolos de préstamo",
         ],
         "pt": [
-            "buscar protocolo", "protocolos de staking",
-            "melhores protocolos", "listar protocolos",
+            "buscar protocolo",
+            "protocolos de staking",
+            "melhores protocolos",
+            "listar protocolos",
         ],
     },
     "risk_assessment": {
         "en": [
-            "is it safe", "how safe", "safe to use", "is safe", "safe?",
-            "what are the risks", "risks of", "risk assessment",
-            "is aave safe", "is uniswap safe", "is compound safe",
+            "is it safe",
+            "how safe",
+            "safe to use",
+            "is safe",
+            "safe?",
+            "what are the risks",
+            "risks of",
+            "risk assessment",
+            "is aave safe",
+            "is uniswap safe",
+            "is compound safe",
         ],
         "es": [
-            "es seguro", "es seguro usar", "qué tan seguro",
-            "cuáles son los riesgos", "riesgos de", "seguro?",
+            "es seguro",
+            "es seguro usar",
+            "qué tan seguro",
+            "cuáles son los riesgos",
+            "riesgos de",
+            "seguro?",
         ],
         "pt": [
-            "é seguro", "é seguro usar", "quais são os riscos", "seguro?",
+            "é seguro",
+            "é seguro usar",
+            "quais são os riscos",
+            "seguro?",
         ],
     },
     "arbitrage": {
         "en": [
-            "arbitrage", "arb", "price difference", "spread",
-            "profit opportunity", "cross dex",
+            "arbitrage",
+            "arb",
+            "price difference",
+            "spread",
+            "profit opportunity",
+            "cross dex",
         ],
         "es": [
-            "arbitraje", "diferencia de precio", "oportunidad de ganancia",
+            "arbitraje",
+            "diferencia de precio",
+            "oportunidad de ganancia",
         ],
         "pt": [
-            "arbitragem", "diferença de preço", "oportunidade",
+            "arbitragem",
+            "diferença de preço",
+            "oportunidade",
         ],
     },
     "flash_loans": {
         "en": [
-            "flash loan", "flashloan", "flash borrow",
-            "instant loan", "uncollateralized",
+            "flash loan",
+            "flashloan",
+            "flash borrow",
+            "instant loan",
+            "uncollateralized",
         ],
         "es": [
-            "préstamo flash", "préstamo instantáneo", "sin colateral",
+            "préstamo flash",
+            "préstamo instantáneo",
+            "sin colateral",
         ],
         "pt": [
-            "empréstimo flash", "empréstimo instantâneo",
+            "empréstimo flash",
+            "empréstimo instantâneo",
         ],
     },
     "trading_signals": {
         "en": [
-            "trading signal", "trading signals", "buy signal", "sell signal",
-            "should i buy", "should i sell", "entry point", "signals",
-            "buy signals", "sell signals", "trade signals",
+            "trading signal",
+            "trading signals",
+            "buy signal",
+            "sell signal",
+            "should i buy",
+            "should i sell",
+            "entry point",
+            "signals",
+            "buy signals",
+            "sell signals",
+            "trade signals",
         ],
         "es": [
-            "señal de trading", "señal de compra", "señal de venta",
-            "debería comprar", "debería vender",
+            "señal de trading",
+            "señal de compra",
+            "señal de venta",
+            "debería comprar",
+            "debería vender",
         ],
         "pt": [
-            "sinal de trading", "sinal de compra", "sinal de venda",
-            "devo comprar", "devo vender",
+            "sinal de trading",
+            "sinal de compra",
+            "sinal de venda",
+            "devo comprar",
+            "devo vender",
         ],
     },
     "buy": {
         "en": [
-            "buy", "buy tokens", "buy token", "buy crypto", "buy bitcoin", "buy eth", "buy usdc",
-            "buy with card", "purchase crypto", "i want to buy crypto",
-            "i want to buy", "buy cryptocurrency", "on-ramp",
-            "fund wallet", "add funds", "deposit fiat", "purchase tokens",
+            "buy",
+            "buy tokens",
+            "buy token",
+            "buy crypto",
+            "buy bitcoin",
+            "buy eth",
+            "buy usdc",
+            "buy with card",
+            "purchase crypto",
+            "i want to buy crypto",
+            "i want to buy",
+            "buy cryptocurrency",
+            "on-ramp",
+            "fund wallet",
+            "add funds",
+            "deposit fiat",
+            "purchase tokens",
         ],
         "es": [
-            "comprar", "comprar tokens", "comprar token", "comprar cripto", "comprar bitcoin", "comprar eth", "comprar usdc",
-            "comprar con tarjeta", "quiero comprar cripto", "quiero comprar",
-            "comprar criptomoneda", "fondear wallet", "agregar fondos",
+            "comprar",
+            "comprar tokens",
+            "comprar token",
+            "comprar cripto",
+            "comprar bitcoin",
+            "comprar eth",
+            "comprar usdc",
+            "comprar con tarjeta",
+            "quiero comprar cripto",
+            "quiero comprar",
+            "comprar criptomoneda",
+            "fondear wallet",
+            "agregar fondos",
         ],
         "pt": [
-            "comprar", "comprar tokens", "comprar token", "comprar cripto", "comprar bitcoin", "comprar eth", "comprar usdc",
-            "comprar com cartão", "quero comprar cripto", "quero comprar",
-            "comprar criptomoeda", "fundear carteira", "adicionar fundos",
+            "comprar",
+            "comprar tokens",
+            "comprar token",
+            "comprar cripto",
+            "comprar bitcoin",
+            "comprar eth",
+            "comprar usdc",
+            "comprar com cartão",
+            "quero comprar cripto",
+            "quero comprar",
+            "comprar criptomoeda",
+            "fundear carteira",
+            "adicionar fundos",
         ],
         "zh": [
-            "购买", "购买代币", "购买加密货币", "购买比特币", "购买以太坊", "购买USDC",
-            "用卡购买", "我想购买加密货币", "我想购买",
+            "购买",
+            "购买代币",
+            "购买加密货币",
+            "购买比特币",
+            "购买以太坊",
+            "购买USDC",
+            "用卡购买",
+            "我想购买加密货币",
+            "我想购买",
         ],
     },
     "hunter_risk_signals": {
         "en": [
-            "risk signal", "risk signals", "risk signals for", "show risks",
-            "risk analysis", "security risk", "vulnerabilities", "threats",
-            "risk score", "danger signals", "warning signs",
+            "risk signal",
+            "risk signals",
+            "risk signals for",
+            "show risks",
+            "risk analysis",
+            "security risk",
+            "vulnerabilities",
+            "threats",
+            "risk score",
+            "danger signals",
+            "warning signs",
         ],
         "es": [
-            "señal de riesgo", "señales de riesgo", "mostrar riesgos",
-            "análisis de riesgo", "vulnerabilidades", "amenazas",
+            "señal de riesgo",
+            "señales de riesgo",
+            "mostrar riesgos",
+            "análisis de riesgo",
+            "vulnerabilidades",
+            "amenazas",
         ],
         "pt": [
-            "sinal de risco", "sinais de risco", "mostrar riscos",
-            "análise de risco", "vulnerabilidades", "ameaças",
+            "sinal de risco",
+            "sinais de risco",
+            "mostrar riscos",
+            "análise de risco",
+            "vulnerabilidades",
+            "ameaças",
         ],
     },
     "hunter_patterns": {
         "en": [
-            "pattern", "patterns", "pattern recognition", "trading patterns",
-            "market patterns", "behavior patterns", "pattern analysis",
-            "detect patterns", "find patterns", "pattern for",
+            "pattern",
+            "patterns",
+            "pattern recognition",
+            "trading patterns",
+            "market patterns",
+            "behavior patterns",
+            "pattern analysis",
+            "detect patterns",
+            "find patterns",
+            "pattern for",
         ],
         "es": [
-            "patrón", "patrones", "reconocimiento de patrones", "patrones de trading",
-            "patrones de mercado", "análisis de patrones",
+            "patrón",
+            "patrones",
+            "reconocimiento de patrones",
+            "patrones de trading",
+            "patrones de mercado",
+            "análisis de patrones",
         ],
         "pt": [
-            "padrão", "padrões", "reconhecimento de padrões", "padrões de trading",
-            "padrões de mercado", "análise de padrões",
+            "padrão",
+            "padrões",
+            "reconhecimento de padrões",
+            "padrões de trading",
+            "padrões de mercado",
+            "análise de padrões",
         ],
     },
     "ultra_mev": {
         "en": [
-            "mev", "mev protection", "protect from mev", "prevent mev",
-            "mev shield", "frontrunning protection", "sandwich attack",
-            "maximal extractable value", "miner extractable value",
-            "flashbots", "execute with flashbots", "use flashbots",
+            "mev",
+            "mev protection",
+            "protect from mev",
+            "prevent mev",
+            "mev shield",
+            "frontrunning protection",
+            "sandwich attack",
+            "maximal extractable value",
+            "miner extractable value",
+            "flashbots",
+            "execute with flashbots",
+            "use flashbots",
         ],
         "es": [
-            "protección mev", "proteger de mev", "prevenir mev",
-            "ataque sandwich", "valor extraíble máximo", "flashbots",
+            "protección mev",
+            "proteger de mev",
+            "prevenir mev",
+            "ataque sandwich",
+            "valor extraíble máximo",
+            "flashbots",
         ],
         "pt": [
-            "proteção mev", "proteger de mev", "prevenir mev",
-            "ataque sandwich", "valor extraível máximo", "flashbots",
+            "proteção mev",
+            "proteger de mev",
+            "prevenir mev",
+            "ataque sandwich",
+            "valor extraível máximo",
+            "flashbots",
         ],
     },
     "ultra_auto_executor": {
         "en": [
-            "auto executor", "auto execute", "automatic execution",
-            "auto trade", "automated trading", "execute automatically",
-            "smart execution", "intelligent execution",
-            "trading bot", "start trading bot", "bot", "trading algorithm",
+            "auto executor",
+            "auto execute",
+            "automatic execution",
+            "auto trade",
+            "automated trading",
+            "execute automatically",
+            "smart execution",
+            "intelligent execution",
+            "trading bot",
+            "start trading bot",
+            "bot",
+            "trading algorithm",
         ],
         "es": [
-            "ejecución automática", "ejecutar automáticamente", "trading automatizado",
-            "ejecutar auto", "ejecución inteligente", "bot de trading",
+            "ejecución automática",
+            "ejecutar automáticamente",
+            "trading automatizado",
+            "ejecutar auto",
+            "ejecución inteligente",
+            "bot de trading",
         ],
         "pt": [
-            "execução automática", "executar automaticamente", "trading automatizado",
-            "executar auto", "execução inteligente", "bot de trading",
+            "execução automática",
+            "executar automaticamente",
+            "trading automatizado",
+            "executar auto",
+            "execução inteligente",
+            "bot de trading",
         ],
     },
     "graphrag_similar": {
         "en": [
-            "similar protocol", "similar protocols", "protocols like",
-            "alternatives to", "comparable protocols", "similar to",
-            "other protocols like", "protocols similar to",
+            "similar protocol",
+            "similar protocols",
+            "protocols like",
+            "alternatives to",
+            "comparable protocols",
+            "similar to",
+            "other protocols like",
+            "protocols similar to",
         ],
         "es": [
-            "protocolo similar", "protocolos similares", "protocolos como",
-            "alternativas a", "protocolos comparables",
+            "protocolo similar",
+            "protocolos similares",
+            "protocolos como",
+            "alternativas a",
+            "protocolos comparables",
         ],
         "pt": [
-            "protocolo similar", "protocolos similares", "protocolos como",
-            "alternativas a", "protocolos comparáveis",
+            "protocolo similar",
+            "protocolos similares",
+            "protocolos como",
+            "alternativas a",
+            "protocolos comparáveis",
         ],
     },
     "agent_squad_specialist": {
         "en": [
-            "specialist", "specialist task", "agent squad", "specialized agent",
-            "expert agent", "domain expert", "specialist agent",
-            "yield strategy", "yield", "best yield", "defi yield",
+            "specialist",
+            "specialist task",
+            "agent squad",
+            "specialized agent",
+            "expert agent",
+            "domain expert",
+            "specialist agent",
+            "yield strategy",
+            "yield",
+            "best yield",
+            "defi yield",
         ],
         "es": [
-            "especialista", "tarea especializada", "agente especializado",
-            "agente experto", "escuadrón de agentes", "estrategia de rendimiento",
+            "especialista",
+            "tarea especializada",
+            "agente especializado",
+            "agente experto",
+            "escuadrón de agentes",
+            "estrategia de rendimiento",
         ],
         "pt": [
-            "especialista", "tarefa especializada", "agente especializado",
-            "agente especialista", "esquadrão de agentes", "estratégia de rendimento",
+            "especialista",
+            "tarefa especializada",
+            "agente especializado",
+            "agente especialista",
+            "esquadrão de agentes",
+            "estratégia de rendimento",
         ],
     },
     "agent_squad_workflow": {
         "en": [
-            "complex workflow", "multi-step", "coordinated tasks",
-            "workflow automation", "multi agent", "agent coordination",
-            "orchestrated workflow", "complex task",
-            "portfolio strategy", "balanced portfolio", "create portfolio",
+            "complex workflow",
+            "multi-step",
+            "coordinated tasks",
+            "workflow automation",
+            "multi agent",
+            "agent coordination",
+            "orchestrated workflow",
+            "complex task",
+            "portfolio strategy",
+            "balanced portfolio",
+            "create portfolio",
         ],
         "es": [
-            "flujo complejo", "multi-paso", "tareas coordinadas",
-            "automatización de flujo", "multi agente", "estrategia de portafolio",
+            "flujo complejo",
+            "multi-paso",
+            "tareas coordinadas",
+            "automatización de flujo",
+            "multi agente",
+            "estrategia de portafolio",
         ],
         "pt": [
-            "fluxo complexo", "multi-etapa", "tarefas coordenadas",
-            "automação de fluxo", "multi agente", "estratégia de portfólio",
+            "fluxo complexo",
+            "multi-etapa",
+            "tarefas coordenadas",
+            "automação de fluxo",
+            "multi agente",
+            "estratégia de portfólio",
         ],
     },
     "lending": {
         "en": [
-            "lending", "lend", "deposit", "earn yield", "supply", "provide liquidity",
-            "lending rates", "deposit rates", "best apy", "earn on", "stake",
-            "lending protocol", "deposit protocol", "where to lend",
+            "lending",
+            "lend",
+            "deposit",
+            "earn yield",
+            "supply",
+            "provide liquidity",
+            "lending rates",
+            "deposit rates",
+            "best apy",
+            "earn on",
+            "stake",
+            "lending protocol",
+            "deposit protocol",
+            "where to lend",
         ],
         "es": [
-            "préstamo", "prestar", "depositar", "ganar rendimiento", "proveer liquidez",
-            "tasas de préstamo", "mejores apy", "ganar con", "protocolo de préstamo",
+            "préstamo",
+            "prestar",
+            "depositar",
+            "ganar rendimiento",
+            "proveer liquidez",
+            "tasas de préstamo",
+            "mejores apy",
+            "ganar con",
+            "protocolo de préstamo",
         ],
         "pt": [
-            "empréstimo", "emprestar", "depositar", "ganhar rendimento", "prover liquidez",
-            "taxas de empréstimo", "melhores apy", "ganhar com", "protocolo de empréstimo",
+            "empréstimo",
+            "emprestar",
+            "depositar",
+            "ganhar rendimento",
+            "prover liquidez",
+            "taxas de empréstimo",
+            "melhores apy",
+            "ganhar com",
+            "protocolo de empréstimo",
         ],
     },
 }
@@ -422,13 +829,13 @@ RESTRICTED_INTENTS = {
 @dataclass
 class IntentResult:
     """Result of intent detection."""
-    
+
     intent: ChatIntentV2
     confidence: float
     handler: str | None = None
     is_restricted: bool = False
     metadata: dict[str, Any] | None = None
-    
+
     def __post_init__(self):
         self.is_restricted = self.intent in RESTRICTED_INTENTS
 
@@ -436,14 +843,14 @@ class IntentResult:
 class IntentDetectorV2:
     """
     Enhanced intent detector with multi-language and context support.
-    
+
     Features:
     - Multi-language keywords (EN, ES, PT)
     - Conversational context awareness
     - Multi-turn flow handling (e.g., swap continuation)
     - Follow-up question detection
     """
-    
+
     def __init__(self):
         # Initialize conversation state manager for auto-clearing flows
         self.state_manager = ConversationStateManager()
@@ -478,7 +885,7 @@ class IntentDetectorV2:
             ChatIntentV2.SEND: "send_handler",  # Send tokens handler
             ChatIntentV2.GENERAL_CONVERSATION: "general_handler",
         }
-    
+
     def detect(
         self,
         message: str,
@@ -487,23 +894,25 @@ class IntentDetectorV2:
     ) -> IntentResult:
         """
         Detect intent from message with context awareness.
-        
+
         Args:
             message: User message
             language: Language code (en, es, pt)
             context: Optional conversation context
-            
+
         Returns:
             IntentResult with intent, confidence, and metadata
         """
         message_lower = message.lower().strip()
-        
+
         # [BUY_DEBUG] Log incoming message and context
         logger.info(f"[BUY_DEBUG] detect() called with message: '{message}'")
         logger.info(f"[BUY_DEBUG] Language: {language}")
         if context:
             logger.info(f"[BUY_DEBUG] Context pending_intent: {context.pending_intent}")
-            logger.info(f"[BUY_DEBUG] Context pending_buy_info: {context.pending_buy_info}")
+            logger.info(
+                f"[BUY_DEBUG] Context pending_buy_info: {context.pending_buy_info}"
+            )
 
         # 0. AUTO-CLEARING STATE MANAGEMENT (Preventive Layer)
         # Check if pending flow should be automatically cleared due to:
@@ -535,9 +944,24 @@ class IntentDetectorV2:
             if swap_info.get("is_complete"):
                 # Check if user is confirming execution
                 confirmation_keywords = [
-                    "1", "confirm", "yes", "sí", "sim", "execute", "ejecutar", "executar",
-                    "proceed", "proceder", "go", "vamos", "vamos lá", "best rate", "best rates",
-                    "execute swap", "ejecutar swap", "proceed with swap"
+                    "1",
+                    "confirm",
+                    "yes",
+                    "sí",
+                    "sim",
+                    "execute",
+                    "ejecutar",
+                    "executar",
+                    "proceed",
+                    "proceder",
+                    "go",
+                    "vamos",
+                    "vamos lá",
+                    "best rate",
+                    "best rates",
+                    "execute swap",
+                    "ejecutar swap",
+                    "proceed with swap",
                 ]
                 if any(keyword in message_lower for keyword in confirmation_keywords):
                     # User confirmed, return SWAP_CONTINUE with confirmation metadata
@@ -547,19 +971,19 @@ class IntentDetectorV2:
                         handler=self._handler_map[ChatIntentV2.SWAP_CONTINUE],
                         metadata={"step": "confirm_execution", "value": message},
                     )
-        
+
         # 2. Check for pending flow continuation
         if context and context.pending_intent:
             continuation_result = self._handle_continuation(message, context)
             if continuation_result:
                 return continuation_result
-        
+
         # 3. Check for follow-up questions using context
         if context and context.has_context:
             follow_up_result = self._detect_follow_up(message_lower, context)
             if follow_up_result:
                 return follow_up_result
-        
+
         # 4. Check restricted intents first (security)
         restricted_result = self._detect_restricted(message_lower, language)
         if restricted_result:
@@ -568,23 +992,33 @@ class IntentDetectorV2:
         # 5. Check analysis intents first (price/sentiment/etc.)
         # Enterprise fix: prevents action keywords (e.g. "cambiar") from hijacking clear questions
         # like "¿Cuál es el precio de Bitcoin?"
-        logger.info(f"[INTENT_DEBUG] Step 5: Checking analysis intents for: '{message_lower[:50]}'")
+        logger.info(
+            f"[INTENT_DEBUG] Step 5: Checking analysis intents for: '{message_lower[:50]}'"
+        )
         analysis_result = self._detect_analysis_intent(message_lower, language)
         if analysis_result:
-            logger.info(f"[INTENT_DEBUG] ✅ Analysis intent found: {analysis_result.intent.value}")
+            logger.info(
+                f"[INTENT_DEBUG] ✅ Analysis intent found: {analysis_result.intent.value}"
+            )
             return analysis_result
-        logger.info(f"[INTENT_DEBUG] ❌ No analysis intent found, continuing to action intents")
+        logger.info(
+            f"[INTENT_DEBUG] ❌ No analysis intent found, continuing to action intents"
+        )
 
         # 6. Check action intents (swap, lending, etc.)
         action_result = self._detect_action_intent(message_lower, language)
         if action_result:
-            logger.info(f"[BUY_DEBUG] Action intent detected: {action_result.intent.value}, handler: {action_result.handler}")
+            logger.info(
+                f"[BUY_DEBUG] Action intent detected: {action_result.intent.value}, handler: {action_result.handler}"
+            )
             return action_result
 
         # 7. Check exploration intents (protocol search, risk, etc.)
         exploration_result = self._detect_exploration_intent(message_lower, language)
         if exploration_result:
-            logger.info(f"[BUY_DEBUG] Exploration intent detected: {exploration_result.intent.value}")
+            logger.info(
+                f"[BUY_DEBUG] Exploration intent detected: {exploration_result.intent.value}"
+            )
             return exploration_result
 
         # 8. Fallback to general conversation
@@ -594,7 +1028,7 @@ class IntentDetectorV2:
             confidence=0.5,
             handler=self._handler_map[ChatIntentV2.GENERAL_CONVERSATION],
         )
-    
+
     def _handle_continuation(
         self,
         message: str,
@@ -603,13 +1037,15 @@ class IntentDetectorV2:
         """Handle continuation of pending flow (e.g., swap multi-turn)."""
         pending = context.pending_intent
         message_lower = message.lower().strip()
-        
+
         # Check if the message indicates a completely different intent
         # If so, break out of the pending flow and return None to allow normal detection
         if self._is_new_intent(message_lower):
-            logger.debug(f"Breaking out of pending flow '{pending}' for new intent in: {message}")
+            logger.debug(
+                f"Breaking out of pending flow '{pending}' for new intent in: {message}"
+            )
             return None
-        
+
         # Swap flow continuations
         if pending == "swap_awaiting_from_token":
             return IntentResult(
@@ -618,7 +1054,7 @@ class IntentDetectorV2:
                 handler=self._handler_map[ChatIntentV2.SWAP_CONTINUE],
                 metadata={"step": "from_token", "value": message},
             )
-        
+
         if pending == "swap_awaiting_to_token":
             return IntentResult(
                 intent=ChatIntentV2.SWAP_CONTINUE,
@@ -626,7 +1062,7 @@ class IntentDetectorV2:
                 handler=self._handler_map[ChatIntentV2.SWAP_CONTINUE],
                 metadata={"step": "to_token", "value": message},
             )
-        
+
         if pending == "swap_awaiting_amount":
             return IntentResult(
                 intent=ChatIntentV2.SWAP_CONTINUE,
@@ -662,7 +1098,9 @@ class IntentDetectorV2:
 
         # Buy flow continuations
         if pending == "buy_awaiting_amount":
-            logger.info(f"[BUY_DEBUG] Detected buy_awaiting_amount continuation, returning BUY_CONTINUE")
+            logger.info(
+                f"[BUY_DEBUG] Detected buy_awaiting_amount continuation, returning BUY_CONTINUE"
+            )
             return IntentResult(
                 intent=ChatIntentV2.BUY_CONTINUE,
                 confidence=0.95,
@@ -671,7 +1109,9 @@ class IntentDetectorV2:
             )
 
         if pending == "buy_awaiting_crypto":
-            logger.info(f"[BUY_DEBUG] Detected buy_awaiting_crypto continuation, returning BUY_CONTINUE")
+            logger.info(
+                f"[BUY_DEBUG] Detected buy_awaiting_crypto continuation, returning BUY_CONTINUE"
+            )
             return IntentResult(
                 intent=ChatIntentV2.BUY_CONTINUE,
                 confidence=0.95,
@@ -708,6 +1148,7 @@ class IntentDetectorV2:
         if pending == "lending_no_vaults":
             # Check if user selected a numbered option (1, 2, 3)
             import re
+
             number_match = re.search(r"^(\d+)", message_lower)
             if number_match:
                 option_num = int(number_match.group(1))
@@ -741,7 +1182,7 @@ class IntentDetectorV2:
                 confidence=0.85,
                 handler=self._handler_map[ChatIntentV2.LENDING],
             )
-        
+
         # Lending awaiting asset selection
         if pending == "lending_awaiting_asset":
             return IntentResult(
@@ -777,10 +1218,11 @@ class IntentDetectorV2:
                 handler=self._handler_map[ChatIntentV2.LENDING],
                 metadata={"step": "lending_awaiting_chain", "value": message},
             )
-        
+
         # Portfolio flow continuations (when no portfolio found)
         if pending == "portfolio_no_portfolio":
             import re
+
             number_match = re.search(r"^(\d+)", message_lower)
             if number_match:
                 option_num = int(number_match.group(1))
@@ -807,10 +1249,11 @@ class IntentDetectorV2:
                         handler=self._handler_map[ChatIntentV2.PORTFOLIO],
                         metadata={"step": "check_later", "value": message},
                     )
-        
+
         # Activity flow continuations (when no activity found)
         if pending == "activity_no_activity":
             import re
+
             number_match = re.search(r"^(\d+)", message_lower)
             if number_match:
                 option_num = int(number_match.group(1))
@@ -835,10 +1278,11 @@ class IntentDetectorV2:
                         confidence=0.90,
                         handler=self._handler_map[ChatIntentV2.LENDING],
                     )
-        
+
         # Money market flow continuations (when no rates found)
         if pending == "money_market_no_rates":
             import re
+
             number_match = re.search(r"^(\d+)", message_lower)
             if number_match:
                 option_num = int(number_match.group(1))
@@ -866,13 +1310,13 @@ class IntentDetectorV2:
                         handler=self._handler_map[ChatIntentV2.MONEY_MARKET],
                         metadata={"step": "check_later", "value": message},
                     )
-        
+
         return None
-    
+
     def _is_new_intent(self, message: str) -> bool:
         """
         Check if message clearly indicates a new, different intent.
-        
+
         This prevents pending swap flows from "contaminating" other intents.
         Returns True if the message looks like a new question/command rather
         than a continuation of the pending swap.
@@ -958,13 +1402,13 @@ class IntentDetectorV2:
             r"^(qué|cómo|por qué|cuándo|dónde|quién|cuál|puedes|dime)\b",
             r"^(o que|como|por que|quando|onde|quem|qual|pode|me fala)\b",
         ]
-        
+
         for pattern in new_intent_patterns:
             if re.search(pattern, message, re.IGNORECASE):
                 return True
-        
+
         return False
-    
+
     def _detect_follow_up(
         self,
         message: str,
@@ -982,7 +1426,7 @@ class IntentDetectorV2:
             r"^y para\s+",  # Spanish
             r"^e sobre\s+",  # Portuguese
         ]
-        
+
         for pattern in follow_up_patterns:
             if re.match(pattern, message, re.IGNORECASE):
                 # Check previous intent from context
@@ -993,16 +1437,20 @@ class IntentDetectorV2:
                             return IntentResult(
                                 intent=ChatIntentV2.HUNTER_SENTIMENT,
                                 confidence=0.85,
-                                handler=self._handler_map[ChatIntentV2.HUNTER_SENTIMENT],
+                                handler=self._handler_map[
+                                    ChatIntentV2.HUNTER_SENTIMENT
+                                ],
                             )
                         if "PREDICTION" in prev_intent or "PRICE" in prev_intent:
                             return IntentResult(
                                 intent=ChatIntentV2.HUNTER_PRICE_PREDICTION,
                                 confidence=0.85,
-                                handler=self._handler_map[ChatIntentV2.HUNTER_PRICE_PREDICTION],
+                                handler=self._handler_map[
+                                    ChatIntentV2.HUNTER_PRICE_PREDICTION
+                                ],
                             )
                         break
-        
+
         # Check for partial swap commands in context
         context_text = context.summary.lower()
         swap_keywords = ["swap", "cambiar", "intercambiar", "exchange", "trocar"]
@@ -1011,19 +1459,48 @@ class IntentDetectorV2:
             # ⚠️ IMPORTANT: Check for off-topic intent keywords FIRST
             # If user is asking for information (not continuing swap), don't treat as swap
             off_topic_keywords = [
-                "price", "precio", "preço", "价格",
-                "what is", "qué es", "o que é", "什么是",
-                "tell me", "cuéntame", "me fale", "告诉我",
-                "explain", "explica", "explicar", "解释",
-                "how does", "cómo funciona", "como funciona", "如何",
+                "price",
+                "precio",
+                "preço",
+                "价格",
+                "what is",
+                "qué es",
+                "o que é",
+                "什么是",
+                "tell me",
+                "cuéntame",
+                "me fale",
+                "告诉我",
+                "explain",
+                "explica",
+                "explicar",
+                "解释",
+                "how does",
+                "cómo funciona",
+                "como funciona",
+                "如何",
             ]
 
             # If message contains off-topic keywords, it's NOT a swap continuation
             if any(keyword in message for keyword in off_topic_keywords):
-                return None  # Let it be detected as fresh intent (price prediction, etc.)
+                return (
+                    None  # Let it be detected as fresh intent (price prediction, etc.)
+                )
 
             # Check if message is a token or amount
-            tokens = ["eth", "usdc", "usdt", "dai", "wbtc", "weth", "btc", "sol", "matic", "arb", "op"]
+            tokens = [
+                "eth",
+                "usdc",
+                "usdt",
+                "dai",
+                "wbtc",
+                "weth",
+                "btc",
+                "sol",
+                "matic",
+                "arb",
+                "op",
+            ]
 
             # Token mentioned
             if any(token in message for token in tokens):
@@ -1053,9 +1530,9 @@ class IntentDetectorV2:
                         confidence=0.90,
                         handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
                     )
-        
+
         return None
-    
+
     def _detect_restricted(
         self,
         message: str,
@@ -1066,10 +1543,20 @@ class IntentDetectorV2:
 
         # Receive address patterns (check before balance - more specific)
         receive_patterns = [
-            "receive", "receive address", "my address", "deposit address", "wallet address",
-            "show address", "qr code", "qr", "código qr", "código qr",
-            "dirección de recepción", "mi dirección",
-            "endereço de recebimento", "meu endereço",
+            "receive",
+            "receive address",
+            "my address",
+            "deposit address",
+            "wallet address",
+            "show address",
+            "qr code",
+            "qr",
+            "código qr",
+            "código qr",
+            "dirección de recepción",
+            "mi dirección",
+            "endereço de recebimento",
+            "meu endereço",
         ]
         for pattern in receive_patterns:
             if pattern in message:
@@ -1081,13 +1568,25 @@ class IntentDetectorV2:
 
         # Activity patterns (check before balance - more specific)
         activity_patterns = [
-            "activity", "transaction history", "my transactions",
-            "recent activity", "show activity", "wallet activity",
-            "my trades", "what did i do", "what i did",  # Casual activity queries
-            "mi actividad", "historial de transacciones", "mis operaciones",
-            "qué hice", "lo que hice",
-            "minha atividade", "histórico de transações", "minhas operações",
-            "o que fiz", "o que eu fiz",
+            "activity",
+            "transaction history",
+            "my transactions",
+            "recent activity",
+            "show activity",
+            "wallet activity",
+            "my trades",
+            "what did i do",
+            "what i did",  # Casual activity queries
+            "mi actividad",
+            "historial de transacciones",
+            "mis operaciones",
+            "qué hice",
+            "lo que hice",
+            "minha atividade",
+            "histórico de transações",
+            "minhas operações",
+            "o que fiz",
+            "o que eu fiz",
         ]
         for pattern in activity_patterns:
             if pattern in message:
@@ -1129,7 +1628,7 @@ class IntentDetectorV2:
                 )
 
         return None
-    
+
     def _detect_action_intent(
         self,
         message: str,
@@ -1163,6 +1662,7 @@ class IntentDetectorV2:
         # Money Market: Rate comparison queries (MUST be checked BEFORE lending_keywords)
         # "Compare lending rates" should go to MONEY_MARKET, not LENDING
         import re
+
         money_market_rate_patterns = [
             r"\bcompare\s+(?:lending\s+)?rates?\b",
             r"\b(?:lending|borrow)\s+rates?\s+for\b",
@@ -1197,7 +1697,9 @@ class IntentDetectorV2:
         # This reduces false positives on questions like "¿Cuál es el precio de Bitcoin?"
         import re
 
-        token_pattern = r"(ETH|USDC|USDT|DAI|WBTC|WETH|BTC|SOL|MATIC|ARB|OP|LINK|UNI|AAVE|CRV|MKR)"
+        token_pattern = (
+            r"(ETH|USDC|USDT|DAI|WBTC|WETH|BTC|SOL|MATIC|ARB|OP|LINK|UNI|AAVE|CRV|MKR)"
+        )
         chain_pattern = r"(ethereum|base|arbitrum|optimism|polygon|avalanche|bsc|binance|solana|fantom|avax)"
         amount_pattern = r"(\d+\.?\d*)"
 
@@ -1209,7 +1711,7 @@ class IntentDetectorV2:
             rf"\b(best|top|highest|mejor|melhor)\s+(?:swap\s+)?(?:rate|price)\s+(?:for|para|por)\s+{token_pattern}\s+(?:to|for|a|para)\s+{token_pattern}\b",
             rf"\b(?:find|show|get|buscar|mostrar|obtener)\s+(?:the\s+)?(?:best|top|highest|mejor|melhor)\s+(?:swap\s+)?rate(?:s)?\s+(?:for|para|por)?\s*{token_pattern}\s+(?:to|for|a|para)\s+{token_pattern}\b",
         ]
-        
+
         for pattern in best_rate_patterns:
             if re.search(pattern, message, flags=re.IGNORECASE):
                 return IntentResult(
@@ -1234,7 +1736,7 @@ class IntentDetectorV2:
             # Portuguese: trocar/enviar quantidade token de cadeia para cadeia
             rf"\b(swap|trocar|enviar|transferir|bridge)\b\s*{amount_pattern}\s*{token_pattern}\s*(?:de|desde|em)\s*{chain_pattern}\s*(?:para|a|em)\s*{chain_pattern}\b",
         ]
-        
+
         for pattern in cross_chain_patterns:
             if re.search(pattern, message, flags=re.IGNORECASE):
                 return IntentResult(
@@ -1311,7 +1813,7 @@ class IntentDetectorV2:
                     confidence=0.80,
                     handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
                 )
-        
+
         # Money market patterns (Aave / Compound / Morpho comparisons & rate queries)
         # NOTE: This intent is handled by MoneyMarketHandler and MUST be checked BEFORE lending.
         # These patterns match rate comparisons and protocol comparisons.
@@ -1347,7 +1849,7 @@ class IntentDetectorV2:
                     confidence=0.88,
                     handler=self._handler_map[ChatIntentV2.MONEY_MARKET],
                 )
-        
+
         # Send/Transfer patterns (send tokens to another wallet)
         # Must be checked before lending to catch "send USDC to..." properly
         send_patterns = [
@@ -1430,9 +1932,9 @@ class IntentDetectorV2:
                     intent=ChatIntentV2.LENDING,
                     confidence=0.90,
                     handler=self._handler_map[ChatIntentV2.LENDING],
-                    metadata={"pattern_type": "vault_comparison"}
+                    metadata={"pattern_type": "vault_comparison"},
                 )
-        
+
         # Buy crypto patterns (on-ramp purchase)
         buy_keywords = self._get_all_keywords("buy")
         for kw in buy_keywords:
@@ -1442,9 +1944,9 @@ class IntentDetectorV2:
                     confidence=0.90,
                     handler=self._handler_map[ChatIntentV2.BUY],
                 )
-        
+
         return None
-    
+
     def _match_keyword_with_word_boundary(self, keyword: str, message: str) -> bool:
         """
         Match keyword with word boundary to prevent false positives.
@@ -1456,8 +1958,9 @@ class IntentDetectorV2:
         - "liquid" does NOT match "hyperliquid" ✗
         """
         import re
+
         # Use word boundary \b to match complete words only
-        pattern = r'\b' + re.escape(keyword) + r'\b'
+        pattern = r"\b" + re.escape(keyword) + r"\b"
         return bool(re.search(pattern, message, re.IGNORECASE))
 
     def _detect_analysis_intent(
@@ -1487,20 +1990,24 @@ class IntentDetectorV2:
                     confidence=0.85,
                     handler=self._handler_map[ChatIntentV2.HUNTER_SENTIMENT],
                 )
-        
+
         # Price/Prediction keywords - use word boundary matching
         price_keywords = self._get_all_keywords("price")
         prediction_keywords = self._get_all_keywords("prediction")
         all_price = price_keywords + prediction_keywords
 
         # DEBUG: Log price keyword detection
-        logger.debug(f"[PRICE_DEBUG] Checking price keywords in message: '{message[:50]}'")
+        logger.debug(
+            f"[PRICE_DEBUG] Checking price keywords in message: '{message[:50]}'"
+        )
         logger.debug(f"[PRICE_DEBUG] Price keywords: {price_keywords}")
 
         for kw in all_price:
             # Price keywords often contain phrases like "price of", so keep substring matching
             if kw in message:
-                logger.info(f"[PRICE_DEBUG] ✅ PRICE keyword matched: '{kw}' in message")
+                logger.info(
+                    f"[PRICE_DEBUG] ✅ PRICE keyword matched: '{kw}' in message"
+                )
                 return IntentResult(
                     intent=ChatIntentV2.HUNTER_PRICE_PREDICTION,
                     confidence=0.85,
@@ -1568,7 +2075,7 @@ class IntentDetectorV2:
                     confidence=0.80,
                     handler=self._handler_map[ChatIntentV2.ULTRA_ARBITRAGE],
                 )
-        
+
         # Flash loans
         flash_keywords = self._get_all_keywords("flash_loans")
         for kw in flash_keywords:
@@ -1578,9 +2085,9 @@ class IntentDetectorV2:
                     confidence=0.80,
                     handler=self._handler_map[ChatIntentV2.ULTRA_FLASH_LOANS],
                 )
-        
+
         return None
-    
+
     def _detect_exploration_intent(
         self,
         message: str,
@@ -1596,7 +2103,7 @@ class IntentDetectorV2:
                     confidence=0.90,
                     handler=self._handler_map[ChatIntentV2.PROTOCOL_SEARCH],
                 )
-        
+
         # Risk assessment
         risk_keywords = self._get_all_keywords("risk_assessment")
         for kw in risk_keywords:
@@ -1606,13 +2113,13 @@ class IntentDetectorV2:
                     confidence=0.90,
                     handler=self._handler_map[ChatIntentV2.RISK_ASSESSMENT],
                 )
-        
+
         # Note: GraphRAG similar protocols and Agent Squad checks
         # are now handled earlier in _detect_restricted and _detect_action_intent
         # to prevent false matches with more generic patterns
 
         return None
-    
+
     def _get_all_keywords(self, category: str) -> list[str]:
         """Get all keywords for a category across all languages."""
         all_keywords = []
@@ -1678,7 +2185,9 @@ class IntentDetectorV2:
             domain_intent = DomainIntentResult(
                 intent=app_intent.intent,
                 confidence=app_intent.confidence,
-                entities=app_intent.metadata.get("entities", []) if app_intent.metadata else [],
+                entities=app_intent.metadata.get("entities", [])
+                if app_intent.metadata
+                else [],
                 metadata=app_intent.metadata or {},
             )
             domain_intents.append(domain_intent)
@@ -1728,7 +2237,9 @@ class IntentDetectorV2:
         # Extract token symbols
         token_pattern = r"\b(btc|bitcoin|eth|ethereum|usdc|usdt|dai|wbtc|weth|sol|solana|matic|polygon|arb|arbitrum|op|optimism|ada|cardano|dot|polkadot|link|chainlink|uni|uniswap|aave|crv|curve|mkr|maker|comp|compound|avax|avalanche|bnb|binance)\b"
         tokens = re.findall(token_pattern, message, re.IGNORECASE)
-        entities["tokens"] = list(dict.fromkeys(tokens))  # Remove duplicates, preserve order
+        entities["tokens"] = list(
+            dict.fromkeys(tokens)
+        )  # Remove duplicates, preserve order
 
         # Extract amounts (numbers)
         amount_pattern = r"\b\d+(?:\.\d+)?\b"
@@ -1772,7 +2283,13 @@ class IntentDetectorV2:
 
         # Price/sentiment multi-entity expansion
         price_keywords = ["price", "precio", "preço", "cost", "value", "worth"]
-        sentiment_keywords = ["sentiment", "sentimiento", "sentimento", "mood", "feeling"]
+        sentiment_keywords = [
+            "sentiment",
+            "sentimiento",
+            "sentimento",
+            "mood",
+            "feeling",
+        ]
 
         has_price_keyword = any(kw in message for kw in price_keywords)
         has_sentiment_keyword = any(kw in message for kw in sentiment_keywords)
@@ -1811,7 +2328,13 @@ class IntentDetectorV2:
         has_swap = any(kw in message for kw in swap_keywords)
         has_balance = any(kw in message for kw in balance_keywords)
 
-        if has_swap and has_balance and " and " in message or " y " in message or " e " in message:
+        if (
+            has_swap
+            and has_balance
+            and " and " in message
+            or " y " in message
+            or " e " in message
+        ):
             # Sequential: swap first, then balance
             detected_intents.append(
                 IntentResult(
@@ -1874,8 +2397,12 @@ class IntentDetectorV2:
 
         # Check for sequential keywords
         sequential_keywords = [
-            " and then ", " y luego ", " e então ",
-            " después ", " depois ", " then ",
+            " and then ",
+            " y luego ",
+            " e então ",
+            " después ",
+            " depois ",
+            " then ",
         ]
         has_sequential = any(kw in message for kw in sequential_keywords)
 
@@ -1884,7 +2411,10 @@ class IntentDetectorV2:
         for i, intent in enumerate(intents):
             for j, prev_intent in enumerate(intents[:i]):
                 # BALANCE depends on SWAP
-                if intent.intent.value == "BALANCE" and prev_intent.intent.value == "SWAP":
+                if (
+                    intent.intent.value == "BALANCE"
+                    and prev_intent.intent.value == "SWAP"
+                ):
                     dependencies.append(
                         IntentDependency(
                             dependent_index=i,
@@ -1941,7 +2471,9 @@ class IntentDetectorV2:
         Returns:
             OrchestrationStrategy enum value
         """
-        from app.domain.value_objects.chat.multi_intent_result import OrchestrationStrategy
+        from app.domain.value_objects.chat.multi_intent_result import (
+            OrchestrationStrategy,
+        )
 
         # Single intent → PARALLEL (no orchestration needed)
         if len(intents) <= 1:
@@ -1957,8 +2489,12 @@ class IntentDetectorV2:
         # Check if any dependencies exist
         if len(dependencies) > 0:
             # Check dependency types
-            has_data_flow = any(dep.dependency_type == "data_flow" for dep in dependencies)
-            has_conditional_dep = any(dep.dependency_type == "conditional" for dep in dependencies)
+            has_data_flow = any(
+                dep.dependency_type == "data_flow" for dep in dependencies
+            )
+            has_conditional_dep = any(
+                dep.dependency_type == "conditional" for dep in dependencies
+            )
 
             if has_conditional_dep:
                 return OrchestrationStrategy.CONDITIONAL
@@ -1969,4 +2505,3 @@ class IntentDetectorV2:
 
         # No dependencies → PARALLEL execution
         return OrchestrationStrategy.PARALLEL
-

@@ -55,7 +55,7 @@ def mock_feature_flags(mocker):
 def mock_intent_classifier(mocker):
     """Mock intent classifier for testing."""
     from app.domain.enums.agent_type import AgentType
-    
+
     classifier = mocker.AsyncMock()
     classifier.classify.return_value = mocker.Mock(
         agent_type=AgentType.CHAT,

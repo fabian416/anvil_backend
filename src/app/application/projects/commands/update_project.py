@@ -1,4 +1,5 @@
 """Update project command."""
+
 from typing import Dict, List, Optional, Any
 from uuid import UUID
 
@@ -9,25 +10,25 @@ from app.domain.projects.ports.project_repository import ProjectRepository
 class UpdateProject:
     """
     Update an existing project.
-    
+
     This orchestrates:
     1. Load project
     2. Update fields
     3. Save changes
     """
-    
+
     def __init__(
         self,
         repository: ProjectRepository,
     ):
         """
         Initialize interactor.
-        
+
         Args:
             repository: Project repository
         """
         self._repository = repository
-    
+
     async def execute(
         self,
         project_id: UUID,
@@ -48,7 +49,7 @@ class UpdateProject:
     ) -> Project:
         """
         Execute the command.
-        
+
         Args:
             project_id: Project identifier
             name: New name
@@ -65,10 +66,10 @@ class UpdateProject:
             max_users: New max users
             display_order: New display order
             is_featured: New featured flag
-        
+
         Returns:
             Updated project entity
-        
+
         Raises:
             ValueError: If project not found
         """
@@ -76,7 +77,7 @@ class UpdateProject:
         project = await self._repository.get_project(project_id)
         if not project:
             raise ValueError(f"Project {project_id} not found")
-        
+
         # Update fields
         project.update(
             name=name,
@@ -94,8 +95,8 @@ class UpdateProject:
             display_order=display_order,
             is_featured=is_featured,
         )
-        
+
         # Save changes
         await self._repository.update_project(project)
-        
+
         return project

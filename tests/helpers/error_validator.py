@@ -25,7 +25,11 @@ from httpx import Response as HttpxResponse
 
 # Import error codes - handle import gracefully for standalone testing
 try:
-    from app.domain.exceptions.error_codes import ErrorCode, ErrorDefinition, get_error_code
+    from app.domain.exceptions.error_codes import (
+        ErrorCode,
+        ErrorDefinition,
+        get_error_code,
+    )
 except ImportError:
     ErrorCode = None
     ErrorDefinition = None
@@ -101,9 +105,7 @@ class ErrorValidator:
         # Get error dict
         error = data.get("error") if isinstance(data, dict) else None
         if error is None:
-            raise ErrorValidationError(
-                f"Response missing 'error' field. Got: {data}"
-            )
+            raise ErrorValidationError(f"Response missing 'error' field. Got: {data}")
 
         # Validate structure
         self._validate_structure(error)
@@ -128,9 +130,7 @@ class ErrorValidator:
 
         # Validate i18n key
         if not self.validate_i18n_key(error):
-            raise ErrorValidationError(
-                f"Invalid i18n key: {error.get('i18n_key')}"
-            )
+            raise ErrorValidationError(f"Invalid i18n key: {error.get('i18n_key')}")
 
         return error
 
@@ -182,7 +182,7 @@ class ErrorValidator:
         for prefix in self.VALID_I18N_PREFIXES:
             if i18n_key.startswith(prefix):
                 # Additional check: key should have content after prefix
-                suffix = i18n_key[len(prefix):]
+                suffix = i18n_key[len(prefix) :]
                 return len(suffix) > 0 and "_" not in suffix[:1]
 
         return False

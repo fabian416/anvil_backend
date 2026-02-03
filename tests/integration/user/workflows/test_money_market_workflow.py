@@ -63,7 +63,6 @@ MONEY_MARKET_TESTS = [
         "category": "workflow",
         "subcategory": "money_market_compare",
     },
-    
     # Protocol-Specific Queries
     {
         "test_id": "mm_protocol_001",
@@ -86,7 +85,6 @@ MONEY_MARKET_TESTS = [
         "category": "workflow",
         "subcategory": "money_market_protocol",
     },
-    
     # Asset-Specific
     {
         "test_id": "mm_asset_001",
@@ -117,16 +115,20 @@ MONEY_MARKET_TESTS = [
 @pytest.mark.llm_validation
 class TestMoneyMarketWorkflow:
     """Tests for Money Market workflow agent with LLM validation."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
+    async def setup(
+        self, authenticated_client, conversation_id, csv_reporter, llm_validator
+    ):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
         self.llm_validator = llm_validator
-    
-    @pytest.mark.parametrize("test_case", MONEY_MARKET_TESTS, ids=lambda t: t["test_id"])
+
+    @pytest.mark.parametrize(
+        "test_case", MONEY_MARKET_TESTS, ids=lambda t: t["test_id"]
+    )
     async def test_money_market(self, test_case: dict):
         """Test money market workflow routing and response with LLM validation."""
         response_data, response_time_ms = await send_message(
@@ -134,7 +136,7 @@ class TestMoneyMarketWorkflow:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         # LLM Validation
         llm_validation = None
         if not response_data.get("error"):
@@ -145,9 +147,13 @@ class TestMoneyMarketWorkflow:
                 user_input=test_case["input"],
                 agent_output=parsed.get("content", ""),
                 expected_behavior="Response should compare lending rates across protocols (Aave, Compound, Morpho) with APY percentages.",
-                additional_context={"test_category": "money_market_workflow", "subcategory": test_case.get("subcategory", ""), "user_type": "authenticated"}
+                additional_context={
+                    "test_category": "money_market_workflow",
+                    "subcategory": test_case.get("subcategory", ""),
+                    "user_type": "authenticated",
+                },
             )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -156,22 +162,31 @@ class TestMoneyMarketWorkflow:
             conversation_id=self.conversation_id,
             llm_validation=llm_validation,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         # Assertions
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "").lower()
         agents = parsed.get("agents_used", "")
-        
+
         # Verify money market response contains rate data
         assert any(
             indicator in content or indicator in agents.lower()
-            for indicator in ["rate", "apy", "%", "compare", "aave", "compound", "morpho", "money_market"]
+            for indicator in [
+                "rate",
+                "apy",
+                "%",
+                "compare",
+                "aave",
+                "compound",
+                "morpho",
+                "money_market",
+            ]
         ), f"Money market query should return rate comparison: {content[:200]}"
-    
+
     async def test_money_market_then_deposit(self, authenticated_client, csv_reporter):
         """Test complete money market flow: compare then deposit."""
         # Create fresh conversation
@@ -181,14 +196,14 @@ class TestMoneyMarketWorkflow:
         )
         assert response.status_code in (200, 201)
         conv_id = response.json().get("id")
-        
+
         # Step 1: Compare rates
         response_data, time1 = await send_message(
             authenticated_client,
             conv_id,
             "compare USDC rates",
         )
-        
+
         result1 = create_test_result(
             test_id="mm_flow_step1",
             test_case={
@@ -205,25 +220,24 @@ class TestMoneyMarketWorkflow:
             conversation_id=conv_id,
         )
         csv_reporter.add_result(result1)
-        
+
         assert not response_data.get("error")
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "").lower()
-        
+
         # Should show rate comparison
-        assert any(
-            proto in content
-            for proto in ["aave", "compound", "morpho", "%"]
-        ), "Should show protocol rates"
-        
+        assert any(proto in content for proto in ["aave", "compound", "morpho", "%"]), (
+            "Should show protocol rates"
+        )
+
         # Step 2: Select protocol
         response_data, time2 = await send_message(
             authenticated_client,
             conv_id,
             "morpho",
         )
-        
+
         result2 = create_test_result(
             test_id="mm_flow_step2",
             test_case={

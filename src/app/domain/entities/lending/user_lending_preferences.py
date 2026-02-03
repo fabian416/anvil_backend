@@ -67,7 +67,9 @@ class UserLendingPreferences:
                 "Must be 'conservative', 'moderate', or 'aggressive'."
             )
 
-        if self.min_health_factor < Decimal("1.0") or self.min_health_factor > Decimal("10.0"):
+        if self.min_health_factor < Decimal("1.0") or self.min_health_factor > Decimal(
+            "10.0"
+        ):
             raise ValueError(
                 f"Invalid min_health_factor: {self.min_health_factor}. "
                 "Must be between 1.0 and 10.0."
@@ -79,7 +81,10 @@ class UserLendingPreferences:
                 "Must be between 1.0 and 10.0."
             )
 
-        if self.preferred_protocol and self.preferred_protocol not in ("aave", "morpho"):
+        if self.preferred_protocol and self.preferred_protocol not in (
+            "aave",
+            "morpho",
+        ):
             raise ValueError(
                 f"Invalid preferred_protocol: {self.preferred_protocol}. "
                 "Must be 'aave' or 'morpho'."
@@ -108,4 +113,6 @@ class UserLendingPreferences:
     @property
     def should_notify_health_issues(self) -> bool:
         """Check if user should receive health factor notifications."""
-        return self.notification_enabled and self.notification_health_threshold is not None
+        return (
+            self.notification_enabled and self.notification_health_threshold is not None
+        )

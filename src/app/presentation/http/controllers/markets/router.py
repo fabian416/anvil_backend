@@ -26,7 +26,7 @@ def create_markets_router() -> APIRouter:
     ):
         """
         Get comprehensive market overview.
-        
+
         Returns:
         - Top tokens by market cap with ML risk scores
         - Trending protocols
@@ -35,10 +35,10 @@ def create_markets_router() -> APIRouter:
         """
         chain_list = chains.split(",") if chains else None
         risk_list = risk_filter.split(",") if risk_filter else None
-        
+
         # TODO: Extract user_id from authorization token
         user_id = None
-        
+
         overview = await markets_service.get_market_overview(
             user_id=user_id,
             chains=chain_list,
@@ -58,18 +58,18 @@ def create_markets_router() -> APIRouter:
     ):
         """
         Get aggregated protocol yields across chains.
-        
+
         Query Parameters:
         - chains: Comma-separated chain names
         - categories: Comma-separated categories (lending, staking, farming)
         - min_apy: Minimum APY threshold
         - max_risk: Maximum risk score threshold
-        
+
         Returns list of protocol yields with risk-adjusted metrics.
         """
         chain_list = chains.split(",") if chains else None
         category_list = categories.split(",") if categories else None
-        
+
         yields = await markets_service.get_protocol_yields(
             chains=chain_list,
             categories=category_list,
@@ -87,17 +87,17 @@ def create_markets_router() -> APIRouter:
     ):
         """
         Get detailed market data for specific token.
-        
+
         Path Parameters:
         - token_symbol: Token symbol (e.g., ETH, BTC, USDC)
-        
+
         Returns detailed token data with ML risk analysis.
         """
         token_data = await markets_service.get_token_details(token_symbol.upper())
-        
+
         if not token_data:
             return {"error": "Token not found"}, 404
-        
+
         return token_data
 
     @router.get("/tokens/{token_symbol}/history")
@@ -110,13 +110,13 @@ def create_markets_router() -> APIRouter:
     ):
         """
         Get historical price data for token.
-        
+
         Path Parameters:
         - token_symbol: Token symbol
-        
+
         Query Parameters:
         - timeframe: Time range (1h, 24h, 7d, 30d)
-        
+
         Returns historical price points.
         """
         history = await markets_service.get_historical_prices(

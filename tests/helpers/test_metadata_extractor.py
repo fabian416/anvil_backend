@@ -96,7 +96,9 @@ class TestMetadataExtractor:
                 assertions=assertions,
                 expected_status_code=self._extract_status_code(assertions),
                 required_keywords=self._extract_keywords(assertions),
-                expected_intents=self._extract_intents(test_func, source_code, assertions),
+                expected_intents=self._extract_intents(
+                    test_func, source_code, assertions
+                ),
                 expected_json_fields=self._extract_json_fields(assertions),
                 is_slow_test=self._has_slow_marker(test_func),
                 requires_external_api=self._requires_external_api(source_code),
@@ -147,13 +149,17 @@ class TestMetadataExtractor:
 
             # Determine assertion type and extract details
             if isinstance(test_expr, ast.Compare):
-                return self._parse_compare_assertion(test_expr, full_assertion, node.lineno)
+                return self._parse_compare_assertion(
+                    test_expr, full_assertion, node.lineno
+                )
             elif isinstance(test_expr, ast.Compare) and any(
                 isinstance(op, ast.In) for op in test_expr.ops
             ):
                 return self._parse_in_assertion(test_expr, full_assertion, node.lineno)
             elif isinstance(test_expr, ast.Call):
-                return self._parse_call_assertion(test_expr, full_assertion, node.lineno)
+                return self._parse_call_assertion(
+                    test_expr, full_assertion, node.lineno
+                )
             else:
                 # Generic assertion
                 return ExtractedAssertion(
@@ -191,7 +197,7 @@ class TestMetadataExtractor:
                 return ExtractedAssertion(
                     line_number=lineno,
                     assertion_type="content_keyword",
-                    expected_value=left.strip('"\''),
+                    expected_value=left.strip("\"'"),
                     actual_expression=comparators[0],
                     full_assertion=full_assertion,
                 )
@@ -212,7 +218,7 @@ class TestMetadataExtractor:
             return ExtractedAssertion(
                 line_number=lineno,
                 assertion_type="json_field",
-                expected_value=comparators[0].strip('"\'') if comparators else "",
+                expected_value=comparators[0].strip("\"'") if comparators else "",
                 actual_expression=left,
                 full_assertion=full_assertion,
             )
@@ -245,7 +251,7 @@ class TestMetadataExtractor:
         return ExtractedAssertion(
             line_number=lineno,
             assertion_type="content_keyword",
-            expected_value=left.strip('"\''),
+            expected_value=left.strip("\"'"),
             actual_expression=comparators[0] if comparators else "",
             full_assertion=full_assertion,
         )
@@ -274,7 +280,10 @@ class TestMetadataExtractor:
         )
 
     def _classify_test_type(
-        self, test_func: Callable, source_code: str, assertions: list[ExtractedAssertion]
+        self,
+        test_func: Callable,
+        source_code: str,
+        assertions: list[ExtractedAssertion],
     ) -> TestType:
         """Classify test based on patterns.
 
@@ -296,7 +305,14 @@ class TestMetadataExtractor:
             return TestType.INTENT_DETECTION
 
         # Security: has XSS/injection patterns
-        security_patterns = ["<script>", "DROP TABLE", "OR 1=1", "'; DROP", "../", "..\\"]
+        security_patterns = [
+            "<script>",
+            "DROP TABLE",
+            "OR 1=1",
+            "'; DROP",
+            "../",
+            "..\\",
+        ]
         if any(pattern in source_code for pattern in security_patterns):
             return TestType.SECURITY
 
@@ -356,7 +372,9 @@ class TestMetadataExtractor:
         except Exception:
             return "general"
 
-    def _extract_status_code(self, assertions: list[ExtractedAssertion]) -> Optional[int]:
+    def _extract_status_code(
+        self, assertions: list[ExtractedAssertion]
+    ) -> Optional[int]:
         """Extract expected status code from assertions.
 
         Args:
@@ -394,7 +412,10 @@ class TestMetadataExtractor:
         return keywords
 
     def _extract_intents(
-        self, test_func: Callable, source_code: str, assertions: list[ExtractedAssertion]
+        self,
+        test_func: Callable,
+        source_code: str,
+        assertions: list[ExtractedAssertion],
     ) -> list[str]:
         """Extract expected intents from test.
 
@@ -416,7 +437,7 @@ class TestMetadataExtractor:
                 if intent_match:
                     intents.append(intent_match.group(1))
                 elif assertion.expected_value:
-                    intents.append(assertion.expected_value.strip('"\''))
+                    intents.append(assertion.expected_value.strip("\"'"))
 
         # Extract from test name
         test_name = test_func.__name__
@@ -487,9 +508,13 @@ class TestMetadataExtractor:
             "https://",
         ]
 
-        return any(indicator in source_code.lower() for indicator in external_indicators)
+        return any(
+            indicator in source_code.lower() for indicator in external_indicators
+        )
 
-    def _create_fallback_metadata(self, test_func: Callable, error: str) -> TestMetadata:
+    def _create_fallback_metadata(
+        self, test_func: Callable, error: str
+    ) -> TestMetadata:
         """Create fallback metadata when extraction fails.
 
         Args:
@@ -501,7 +526,9 @@ class TestMetadataExtractor:
         """
         return TestMetadata(
             test_name=test_func.__name__,
-            test_file=inspect.getfile(test_func) if hasattr(test_func, "__code__") else "unknown",
+            test_file=inspect.getfile(test_func)
+            if hasattr(test_func, "__code__")
+            else "unknown",
             test_type=TestType.SIMPLE_QUERY,
             test_category=self._extract_category(test_func),
             assertions=[],

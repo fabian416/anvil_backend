@@ -36,7 +36,9 @@ class TestSubscriptionWorkflow:
             return
 
         plans_data = plans_response.json()
-        plans = plans_data.get("plans", plans_data if isinstance(plans_data, list) else [])
+        plans = plans_data.get(
+            "plans", plans_data if isinstance(plans_data, list) else []
+        )
 
         # Step 2: Create subscription (if plans available)
         if plans:
@@ -49,7 +51,17 @@ class TestSubscriptionWorkflow:
             )
 
             # May return checkout URL or error
-            assert subscribe_response.status_code in (200, 201, 400, 401, 402, 404, 422, 500, 503)
+            assert subscribe_response.status_code in (
+                200,
+                201,
+                400,
+                401,
+                402,
+                404,
+                422,
+                500,
+                503,
+            )
 
     def test_cancel_subscription_journey(self, client):
         """

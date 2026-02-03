@@ -11,13 +11,13 @@ Usage:
         TelemetryFeatureFlags,
         get_feature_flags,
     )
-    
+
     flags = get_feature_flags()
-    
+
     # Check if API telemetry is enabled
     if flags.api_telemetry_enabled:
         # ... instrument API call
-    
+
     # Check if specific API is enabled
     if flags.is_api_enabled("coingecko"):
         # ... instrument CoinGecko call
@@ -32,7 +32,7 @@ from typing import Any, Optional, Set
 class TelemetryFeatureFlags:
     """
     Granular feature flags for telemetry components.
-    
+
     Attributes:
         global_enabled: Master switch for all telemetry
         api_telemetry_enabled: Enable external API telemetry
@@ -40,194 +40,198 @@ class TelemetryFeatureFlags:
         db_telemetry_enabled: Enable database query telemetry
         tracing_enabled: Enable distributed tracing
         metrics_export_enabled: Enable Prometheus metrics export
-        
+
         # Per-API flags
         enabled_apis: Set of API names to instrument (empty = all)
         disabled_apis: Set of API names to skip instrumentation
-        
+
         # Per-LLM provider flags
         enabled_llm_providers: Set of LLM providers to instrument (empty = all)
         disabled_llm_providers: Set of LLM providers to skip
-        
+
         # Database telemetry flags
         db_slow_query_logging: Log slow queries
         db_query_patterns: Track query patterns
         db_connection_pool: Track connection pool stats
-        
+
         # Per-endpoint flags (for admin routes)
         endpoint_telemetry_enabled: Enable HTTP endpoint telemetry
         disabled_endpoints: Set of endpoint paths to skip
         admin_telemetry_enabled: Enable telemetry for /admin/* routes
     """
-    
+
     # Master switch
     global_enabled: bool = True
-    
+
     # Component-level flags
     api_telemetry_enabled: bool = True
     llm_telemetry_enabled: bool = True
     db_telemetry_enabled: bool = True
     tracing_enabled: bool = True
     metrics_export_enabled: bool = True
-    
+
     # Per-API granular control
     enabled_apis: Set[str] = field(default_factory=set)  # Empty = all enabled
     disabled_apis: Set[str] = field(default_factory=set)
-    
+
     # Per-LLM provider control
     enabled_llm_providers: Set[str] = field(default_factory=set)  # Empty = all enabled
     disabled_llm_providers: Set[str] = field(default_factory=set)
-    
+
     # Database telemetry sub-flags
     db_slow_query_logging: bool = True
     db_query_patterns: bool = True
     db_connection_pool: bool = True
-    
+
     # Sampling rates (0.0 - 1.0)
     api_sample_rate: float = 1.0
     llm_sample_rate: float = 1.0
     db_sample_rate: float = 1.0
     trace_sample_rate: float = 1.0
-    
+
     # Per-endpoint control (for HTTP routes)
     endpoint_telemetry_enabled: bool = True
     admin_telemetry_enabled: bool = True  # /admin/* routes
-    disabled_endpoints: Set[str] = field(default_factory=set)  # Explicit endpoint paths to skip
+    disabled_endpoints: Set[str] = field(
+        default_factory=set
+    )  # Explicit endpoint paths to skip
     enabled_endpoint_prefixes: Set[str] = field(default_factory=set)  # Empty = all
-    disabled_endpoint_prefixes: Set[str] = field(default_factory=set)  # Explicit prefixes to skip
-    
+    disabled_endpoint_prefixes: Set[str] = field(
+        default_factory=set
+    )  # Explicit prefixes to skip
+
     def is_enabled(self) -> bool:
         """Check if telemetry is globally enabled."""
         return self.global_enabled
-    
+
     def is_api_telemetry_enabled(self) -> bool:
         """Check if API telemetry is enabled."""
         return self.global_enabled and self.api_telemetry_enabled
-    
+
     def is_llm_telemetry_enabled(self) -> bool:
         """Check if LLM telemetry is enabled."""
         return self.global_enabled and self.llm_telemetry_enabled
-    
+
     def is_db_telemetry_enabled(self) -> bool:
         """Check if database telemetry is enabled."""
         return self.global_enabled and self.db_telemetry_enabled
-    
+
     def is_tracing_enabled(self) -> bool:
         """Check if distributed tracing is enabled."""
         return self.global_enabled and self.tracing_enabled
-    
+
     def is_api_enabled(self, api_name: str) -> bool:
         """
         Check if telemetry is enabled for a specific API.
-        
+
         Logic:
         1. If global or API telemetry disabled, return False
         2. If api_name in disabled_apis, return False
         3. If enabled_apis is empty (default), return True
         4. If api_name in enabled_apis, return True
         5. Otherwise, return False
-        
+
         Args:
             api_name: Name of the API (e.g., "coingecko", "uniswap")
-            
+
         Returns:
             True if telemetry should be collected for this API
         """
         if not self.is_api_telemetry_enabled():
             return False
-        
+
         api_lower = api_name.lower()
-        
+
         # Explicit disable takes precedence
         if api_lower in self.disabled_apis:
             return False
-        
+
         # If no explicit whitelist, all are enabled
         if not self.enabled_apis:
             return True
-        
+
         # Check whitelist
         return api_lower in self.enabled_apis
-    
+
     def is_llm_provider_enabled(self, provider: str) -> bool:
         """
         Check if telemetry is enabled for a specific LLM provider.
-        
+
         Args:
             provider: Name of the provider (e.g., "vertex_ai", "openai")
-            
+
         Returns:
             True if telemetry should be collected for this provider
         """
         if not self.is_llm_telemetry_enabled():
             return False
-        
+
         provider_lower = provider.lower()
-        
+
         # Explicit disable takes precedence
         if provider_lower in self.disabled_llm_providers:
             return False
-        
+
         # If no explicit whitelist, all are enabled
         if not self.enabled_llm_providers:
             return True
-        
+
         # Check whitelist
         return provider_lower in self.enabled_llm_providers
-    
+
     def is_endpoint_telemetry_enabled(self) -> bool:
         """Check if HTTP endpoint telemetry is enabled."""
         return self.global_enabled and self.endpoint_telemetry_enabled
-    
+
     def is_endpoint_enabled(self, path: str) -> bool:
         """
         Check if telemetry is enabled for a specific HTTP endpoint.
-        
+
         Args:
             path: HTTP endpoint path (e.g., "/api/v1/admin/users", "/api/v1/user/chat")
-            
+
         Returns:
             True if telemetry should be collected for this endpoint
         """
         if not self.is_endpoint_telemetry_enabled():
             return False
-        
+
         path_lower = path.lower()
-        
+
         # Check admin routes - matches /api/v1/admin/*
         if self.is_admin_endpoint(path_lower) and not self.admin_telemetry_enabled:
             return False
-        
+
         # Explicit disable takes precedence
         if path_lower in self.disabled_endpoints:
             return False
-        
+
         # Check disabled prefixes
         for prefix in self.disabled_endpoint_prefixes:
             if path_lower.startswith(prefix.lower()):
                 return False
-        
+
         # If no whitelist, all enabled
         if not self.enabled_endpoint_prefixes:
             return True
-        
+
         # Check whitelist prefixes
         for prefix in self.enabled_endpoint_prefixes:
             if path_lower.startswith(prefix.lower()):
                 return True
-        
+
         return False
-    
+
     def is_admin_endpoint(self, path: str) -> bool:
         """Check if path is an admin endpoint (/api/v1/admin/*)."""
         path_lower = path.lower()
         return "/admin/" in path_lower
-    
+
     def is_user_endpoint(self, path: str) -> bool:
         """Check if path is a user endpoint (/api/v1/user/*)."""
         path_lower = path.lower()
         return "/user/" in path_lower
-    
+
     def should_sample_api(self, api_name: str) -> bool:
         """Check if an API call should be sampled based on rate."""
         if not self.is_api_enabled(api_name):
@@ -237,8 +241,9 @@ class TelemetryFeatureFlags:
         if self.api_sample_rate <= 0.0:
             return False
         import random
+
         return random.random() < self.api_sample_rate
-    
+
     def should_sample_llm(self, provider: str) -> bool:
         """Check if an LLM call should be sampled based on rate."""
         if not self.is_llm_provider_enabled(provider):
@@ -248,8 +253,9 @@ class TelemetryFeatureFlags:
         if self.llm_sample_rate <= 0.0:
             return False
         import random
+
         return random.random() < self.llm_sample_rate
-    
+
     def should_sample_db(self) -> bool:
         """Check if a database query should be sampled based on rate."""
         if not self.is_db_telemetry_enabled():
@@ -259,8 +265,9 @@ class TelemetryFeatureFlags:
         if self.db_sample_rate <= 0.0:
             return False
         import random
+
         return random.random() < self.db_sample_rate
-    
+
     def should_sample_trace(self) -> bool:
         """Check if a trace should be sampled based on rate."""
         if not self.is_tracing_enabled():
@@ -270,8 +277,9 @@ class TelemetryFeatureFlags:
         if self.trace_sample_rate <= 0.0:
             return False
         import random
+
         return random.random() < self.trace_sample_rate
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
         return {
@@ -318,7 +326,7 @@ class TelemetryFeatureFlags:
 def load_feature_flags_from_env() -> TelemetryFeatureFlags:
     """
     Load feature flags from environment variables.
-    
+
     Environment variables:
         TELEMETRY_ENABLED: Master switch (default: true)
         TELEMETRY_API_ENABLED: API telemetry (default: true)
@@ -326,29 +334,30 @@ def load_feature_flags_from_env() -> TelemetryFeatureFlags:
         TELEMETRY_DB_ENABLED: Database telemetry (default: true)
         TELEMETRY_TRACING_ENABLED: Distributed tracing (default: true)
         TELEMETRY_METRICS_ENABLED: Prometheus export (default: true)
-        
+
         TELEMETRY_ENABLED_APIS: Comma-separated list of APIs to enable
         TELEMETRY_DISABLED_APIS: Comma-separated list of APIs to disable
         TELEMETRY_ENABLED_LLM_PROVIDERS: Comma-separated providers
         TELEMETRY_DISABLED_LLM_PROVIDERS: Comma-separated providers
-        
+
         TELEMETRY_API_SAMPLE_RATE: API sampling rate (0.0-1.0)
         TELEMETRY_LLM_SAMPLE_RATE: LLM sampling rate (0.0-1.0)
         TELEMETRY_DB_SAMPLE_RATE: Database sampling rate (0.0-1.0)
         TELEMETRY_TRACE_SAMPLE_RATE: Trace sampling rate (0.0-1.0)
-        
+
         TELEMETRY_DB_SLOW_QUERY_LOGGING: Log slow queries (default: true)
         TELEMETRY_DB_QUERY_PATTERNS: Track query patterns (default: true)
         TELEMETRY_DB_CONNECTION_POOL: Track pool stats (default: true)
-    
+
     Returns:
         TelemetryFeatureFlags configured from environment
     """
+
     def parse_bool(value: str, default: bool = True) -> bool:
         if not value:
             return default
         return value.lower() in ("true", "1", "yes", "on")
-    
+
     def parse_float(value: str, default: float = 1.0) -> float:
         if not value:
             return default
@@ -356,48 +365,60 @@ def load_feature_flags_from_env() -> TelemetryFeatureFlags:
             return max(0.0, min(1.0, float(value)))
         except ValueError:
             return default
-    
+
     def parse_set(value: str) -> Set[str]:
         if not value:
             return set()
         return {v.strip().lower() for v in value.split(",") if v.strip()}
-    
+
     return TelemetryFeatureFlags(
         # Master switch
         global_enabled=parse_bool(os.getenv("TELEMETRY_ENABLED", "true")),
-        
         # Component flags
         api_telemetry_enabled=parse_bool(os.getenv("TELEMETRY_API_ENABLED", "true")),
         llm_telemetry_enabled=parse_bool(os.getenv("TELEMETRY_LLM_ENABLED", "true")),
         db_telemetry_enabled=parse_bool(os.getenv("TELEMETRY_DB_ENABLED", "true")),
         tracing_enabled=parse_bool(os.getenv("TELEMETRY_TRACING_ENABLED", "true")),
-        metrics_export_enabled=parse_bool(os.getenv("TELEMETRY_METRICS_ENABLED", "true")),
-        
+        metrics_export_enabled=parse_bool(
+            os.getenv("TELEMETRY_METRICS_ENABLED", "true")
+        ),
         # Per-API config
         enabled_apis=parse_set(os.getenv("TELEMETRY_ENABLED_APIS", "")),
         disabled_apis=parse_set(os.getenv("TELEMETRY_DISABLED_APIS", "")),
-        
         # Per-LLM provider config
-        enabled_llm_providers=parse_set(os.getenv("TELEMETRY_ENABLED_LLM_PROVIDERS", "")),
-        disabled_llm_providers=parse_set(os.getenv("TELEMETRY_DISABLED_LLM_PROVIDERS", "")),
-        
+        enabled_llm_providers=parse_set(
+            os.getenv("TELEMETRY_ENABLED_LLM_PROVIDERS", "")
+        ),
+        disabled_llm_providers=parse_set(
+            os.getenv("TELEMETRY_DISABLED_LLM_PROVIDERS", "")
+        ),
         # Database sub-flags
-        db_slow_query_logging=parse_bool(os.getenv("TELEMETRY_DB_SLOW_QUERY_LOGGING", "true")),
+        db_slow_query_logging=parse_bool(
+            os.getenv("TELEMETRY_DB_SLOW_QUERY_LOGGING", "true")
+        ),
         db_query_patterns=parse_bool(os.getenv("TELEMETRY_DB_QUERY_PATTERNS", "true")),
-        db_connection_pool=parse_bool(os.getenv("TELEMETRY_DB_CONNECTION_POOL", "true")),
-        
+        db_connection_pool=parse_bool(
+            os.getenv("TELEMETRY_DB_CONNECTION_POOL", "true")
+        ),
         # Sample rates
         api_sample_rate=parse_float(os.getenv("TELEMETRY_API_SAMPLE_RATE", "1.0")),
         llm_sample_rate=parse_float(os.getenv("TELEMETRY_LLM_SAMPLE_RATE", "1.0")),
         db_sample_rate=parse_float(os.getenv("TELEMETRY_DB_SAMPLE_RATE", "1.0")),
         trace_sample_rate=parse_float(os.getenv("TELEMETRY_TRACE_SAMPLE_RATE", "1.0")),
-        
         # Endpoint/route config
-        endpoint_telemetry_enabled=parse_bool(os.getenv("TELEMETRY_ENDPOINT_ENABLED", "true")),
-        admin_telemetry_enabled=parse_bool(os.getenv("TELEMETRY_ADMIN_ENABLED", "true")),
+        endpoint_telemetry_enabled=parse_bool(
+            os.getenv("TELEMETRY_ENDPOINT_ENABLED", "true")
+        ),
+        admin_telemetry_enabled=parse_bool(
+            os.getenv("TELEMETRY_ADMIN_ENABLED", "true")
+        ),
         disabled_endpoints=parse_set(os.getenv("TELEMETRY_DISABLED_ENDPOINTS", "")),
-        enabled_endpoint_prefixes=parse_set(os.getenv("TELEMETRY_ENABLED_ENDPOINT_PREFIXES", "")),
-        disabled_endpoint_prefixes=parse_set(os.getenv("TELEMETRY_DISABLED_ENDPOINT_PREFIXES", "")),
+        enabled_endpoint_prefixes=parse_set(
+            os.getenv("TELEMETRY_ENABLED_ENDPOINT_PREFIXES", "")
+        ),
+        disabled_endpoint_prefixes=parse_set(
+            os.getenv("TELEMETRY_DISABLED_ENDPOINT_PREFIXES", "")
+        ),
     )
 
 
@@ -419,11 +440,11 @@ async def save_flags_to_redis(
 ) -> bool:
     """
     Persist feature flags to Redis.
-    
+
     Args:
         flags: Feature flags to save
         redis_client: Redis async client
-        
+
     Returns:
         True if saved successfully
     """
@@ -466,10 +487,10 @@ async def load_flags_from_redis(
 ) -> Optional[TelemetryFeatureFlags]:
     """
     Load feature flags from Redis.
-    
+
     Args:
         redis_client: Redis async client
-        
+
     Returns:
         Feature flags if found, None otherwise
     """
@@ -477,9 +498,9 @@ async def load_flags_from_redis(
         data = await redis_client.get(REDIS_KEY)
         if data is None:
             return None
-        
+
         parsed = json.loads(data)
-        
+
         return TelemetryFeatureFlags(
             global_enabled=parsed.get("global_enabled", True),
             api_telemetry_enabled=parsed.get("api_telemetry_enabled", True),
@@ -503,7 +524,9 @@ async def load_flags_from_redis(
             admin_telemetry_enabled=parsed.get("admin_telemetry_enabled", True),
             disabled_endpoints=set(parsed.get("disabled_endpoints", [])),
             enabled_endpoint_prefixes=set(parsed.get("enabled_endpoint_prefixes", [])),
-            disabled_endpoint_prefixes=set(parsed.get("disabled_endpoint_prefixes", [])),
+            disabled_endpoint_prefixes=set(
+                parsed.get("disabled_endpoint_prefixes", [])
+            ),
         )
     except Exception as e:
         logger.warning(f"Failed to load feature flags from Redis: {e}")
@@ -513,12 +536,12 @@ async def load_flags_from_redis(
 async def delete_flags_from_redis(redis_client: Any) -> bool:
     """
     Delete persisted feature flags from Redis.
-    
+
     This will cause the system to fall back to environment-based flags on restart.
-    
+
     Args:
         redis_client: Redis async client
-        
+
     Returns:
         True if deleted successfully
     """
@@ -559,23 +582,25 @@ def reset_feature_flags() -> None:
     _feature_flags = None
 
 
-async def initialize_feature_flags(redis_client: Optional[Any] = None) -> TelemetryFeatureFlags:
+async def initialize_feature_flags(
+    redis_client: Optional[Any] = None,
+) -> TelemetryFeatureFlags:
     """
     Initialize feature flags, loading from Redis if available.
-    
+
     Priority:
     1. Redis (if connected and has saved flags)
     2. Environment variables
     3. Defaults
-    
+
     Args:
         redis_client: Optional Redis client for persistence
-        
+
     Returns:
         Initialized feature flags
     """
     global _feature_flags
-    
+
     # Try to load from Redis first
     if redis_client is not None:
         try:
@@ -586,7 +611,7 @@ async def initialize_feature_flags(redis_client: Optional[Any] = None) -> Teleme
                 return _feature_flags
         except Exception as e:
             logger.warning(f"Could not load flags from Redis: {e}")
-    
+
     # Fall back to environment
     _feature_flags = load_feature_flags_from_env()
     logger.info("Loaded telemetry feature flags from environment")

@@ -125,7 +125,9 @@ def create_axelar_router() -> APIRouter:
         token: str,
         amount: str,
         query: FromDishka[EstimateTransfer],
-        include_express: bool = Query(default=True, description="Include express estimate"),
+        include_express: bool = Query(
+            default=True, description="Include express estimate"
+        ),
     ) -> TransferEstimateResponse:
         """Estimate transfer costs."""
         request = EstimateTransferRequest(

@@ -10,6 +10,7 @@ import redis.asyncio as aioredis
 from dishka import Provider, Scope, provide
 
 from app.domain.ports.ai.embedding_service import EmbeddingService
+
 # OpenAI removed - using only Cohere and DeepInfra for embeddings
 # from app.infrastructure.adapters.ai.openai_embedding_adapter import (
 #     OpenAIEmbeddingAdapter,
@@ -89,9 +90,9 @@ class EmbeddingProvider(Provider):
         import logging
         from app.infrastructure.embeddings import DeepInfraEmbeddingService
         from app.setup.config.loader import load_full_config, get_current_env
-        
+
         logger = logging.getLogger(__name__)
-        
+
         # Select base service
         base_service = None
         if cohere_service is not None:
@@ -104,13 +105,15 @@ class EmbeddingProvider(Provider):
                 deepinfra_key = raw_config.get("deepinfra", {}).get("API_KEY", "")
             except Exception as e:
                 logger.debug(f"Could not load config from .secrets.toml: {e}")
-            
+
             # Fallback to environment variable
             if not deepinfra_key:
                 deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
-            
+
             if deepinfra_key:
-                logger.info("DeepInfra embedding service configured from .secrets.toml or env var")
+                logger.info(
+                    "DeepInfra embedding service configured from .secrets.toml or env var"
+                )
                 base_service = DeepInfraEmbeddingService(api_key=deepinfra_key)
             else:
                 raise ValueError(

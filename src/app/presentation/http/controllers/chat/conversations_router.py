@@ -17,20 +17,31 @@ from app.application.chat.services.conversation_service import ConversationServi
 from app.application.chat.services.user_service import UserService
 from app.application.chat.services.rate_limit_service import RateLimitService
 from app.application.chat.services.conversation_memory import ConversationMemory
-from app.application.chat.services.intent_detector_v2 import IntentDetectorV2, RESTRICTED_INTENTS
+from app.application.chat.services.intent_detector_v2 import (
+    IntentDetectorV2,
+    RESTRICTED_INTENTS,
+)
 from app.application.chat.services.user_context_service import UserContextService
 from app.application.chat.handlers.swap_handler_v2 import SwapHandlerV2
-from app.application.chat.commands.send_message_with_supervisor import SendMessageWithSupervisor
-from app.application.chat.handlers.moonpay_swap_flow_handler import MoonPaySwapFlowHandler
+from app.application.chat.commands.send_message_with_supervisor import (
+    SendMessageWithSupervisor,
+)
+from app.application.chat.handlers.moonpay_swap_flow_handler import (
+    MoonPaySwapFlowHandler,
+)
 from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandler
 from app.application.chat.handlers.restricted_handler import RestrictedActionHandler
 from app.application.guest.handlers.guest_handler_service import GuestHandlerService
 from app.domain.ports.ai.llm_gateway import LLMGateway
-from app.infrastructure.adapters.chat_unified_repository_sqla import ChatMessageRepositorySqla
+from app.infrastructure.adapters.chat_unified_repository_sqla import (
+    ChatMessageRepositorySqla,
+)
 from app.application.common.services.current_user import CurrentUserService
 from app.application.common.exceptions.authorization import AuthorizationError
 from app.infrastructure.auth.exceptions import AuthenticationError
-from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.ports.transaction.transaction_repository import (
+    TransactionRepository,
+)
 from app.domain.transactions.entities.transaction import Transaction, TransactionId
 from app.domain.entities.wallet import WalletId
 from app.domain.enums.chain_type import ChainType
@@ -48,27 +59,29 @@ from decimal import Decimal
 
 class CreateConversationRequest(BaseModel):
     """Request to create a new conversation."""
-    
+
     title: str | None = Field(None, max_length=255)
     language: str = Field(default="en", pattern="^(en|es|pt|zh)$")
 
 
 class SendMessageRequest(BaseModel):
     """Request to send a message."""
-    
+
     content: str = Field(..., min_length=1, max_length=2000)
     language: str = Field(default="en", pattern="^(en|es|pt|zh)$")
 
 
 class UpdateConversationRequest(BaseModel):
     """Request to update a conversation."""
-    
-    title: str | None = Field(None, max_length=255, description="New title for the conversation")
+
+    title: str | None = Field(
+        None, max_length=255, description="New title for the conversation"
+    )
 
 
 class ConversationResponse(BaseModel):
     """Response for a conversation."""
-    
+
     id: str
     title: str | None = None
     status: str
@@ -81,7 +94,7 @@ class ConversationResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     """Response for a message."""
-    
+
     id: str
     role: str
     content: str
@@ -93,97 +106,172 @@ class MessageResponse(BaseModel):
 
 class ConversationWithMessagesResponse(BaseModel):
     """Response for conversation with messages."""
-    
+
     conversation: ConversationResponse
     messages: list[MessageResponse]
 
 
 class ExecuteActionData(BaseModel):
     """Execute action data for executable intents (swap, deposit, withdraw, etc.)."""
-    
+
     model_config = {"extra": "ignore"}  # Ignore unknown fields from workflows
 
-    action_type: str = Field(..., description="Type of action: swap, deposit, withdraw, transfer, approve, bridge")
-    provider: str | None = Field(default=None, description="Execution provider: privy_0x for Privy + 0x swaps")
+    action_type: str = Field(
+        ...,
+        description="Type of action: swap, deposit, withdraw, transfer, approve, bridge",
+    )
+    provider: str | None = Field(
+        default=None, description="Execution provider: privy_0x for Privy + 0x swaps"
+    )
     chain: str = Field(default="base", description="Blockchain to execute on")
-    from_token: str | None = Field(default=None, description="Source token symbol or address")
-    to_token: str | None = Field(default=None, description="Destination token symbol (for swap)")
-    amount: str | None = Field(default=None, description="Amount to execute (human readable)")
-    
-    @field_validator("amount", "quote_amount", "exchange_rate", "network_fee_usd", 
-                     "min_amount_out", "price_impact", "gas_estimate",
-                     "from_token_price_usd", "to_token_price_usd", 
-                     "from_token_24h_change", "value_usd", mode="before")
+    from_token: str | None = Field(
+        default=None, description="Source token symbol or address"
+    )
+    to_token: str | None = Field(
+        default=None, description="Destination token symbol (for swap)"
+    )
+    amount: str | None = Field(
+        default=None, description="Amount to execute (human readable)"
+    )
+
+    @field_validator(
+        "amount",
+        "quote_amount",
+        "exchange_rate",
+        "network_fee_usd",
+        "min_amount_out",
+        "price_impact",
+        "gas_estimate",
+        "from_token_price_usd",
+        "to_token_price_usd",
+        "from_token_24h_change",
+        "value_usd",
+        mode="before",
+    )
     @classmethod
     def coerce_to_str(cls, v):
         """Coerce numeric values to string (workflows may return int/float)."""
         if v is not None:
             return str(v)
         return v
-    
-    protocol: str | None = Field(default=None, description="Protocol name (for deposit/withdraw)")
-    vault_address: str | None = Field(default=None, description="Vault address (for Morpho deposits)")
-    asset_address: str | None = Field(default=None, description="Underlying asset address (for Morpho deposits)")
-    asset_symbol: str | None = Field(default=None, description="Underlying asset symbol (for Morpho deposits)")
+
+    protocol: str | None = Field(
+        default=None, description="Protocol name (for deposit/withdraw)"
+    )
+    vault_address: str | None = Field(
+        default=None, description="Vault address (for Morpho deposits)"
+    )
+    asset_address: str | None = Field(
+        default=None, description="Underlying asset address (for Morpho deposits)"
+    )
+    asset_symbol: str | None = Field(
+        default=None, description="Underlying asset symbol (for Morpho deposits)"
+    )
 
     # Aave V3 specific fields
     pool_address: str | None = Field(default=None, description="Aave V3 Pool address")
-    referral_code: int | None = Field(default=None, description="Aave referral code (default 0)")
+    referral_code: int | None = Field(
+        default=None, description="Aave referral code (default 0)"
+    )
     supply_apy: float | None = Field(default=None, description="Aave supply APY")
-    available_liquidity_usd: float | None = Field(default=None, description="Available liquidity in USD")
+    available_liquidity_usd: float | None = Field(
+        default=None, description="Available liquidity in USD"
+    )
 
-    recipient: str | None = Field(default=None, description="Recipient address (for transfer)")
+    recipient: str | None = Field(
+        default=None, description="Recipient address (for transfer)"
+    )
     slippage: float = Field(default=1.0, description="Slippage tolerance in percent")
-    to_chain: str | None = Field(default=None, description="Destination chain (for cross-chain swap/bridge)")
+    to_chain: str | None = Field(
+        default=None, description="Destination chain (for cross-chain swap/bridge)"
+    )
 
     # Quote preview fields (for display before execution)
     quote_id: str | None = Field(default=None, description="Quote identifier")
-    quote_amount: str | None = Field(default=None, description="Estimated output amount")
-    min_amount_out: str | None = Field(default=None, description="Minimum output amount with slippage")
-    exchange_rate: str | None = Field(default=None, description="Exchange rate for the swap")
-    network_fee_usd: str | None = Field(default=None, description="Estimated network fee in USD")
-    expires_at: str | None = Field(default=None, description="Quote expiration timestamp")
-    
+    quote_amount: str | None = Field(
+        default=None, description="Estimated output amount"
+    )
+    min_amount_out: str | None = Field(
+        default=None, description="Minimum output amount with slippage"
+    )
+    exchange_rate: str | None = Field(
+        default=None, description="Exchange rate for the swap"
+    )
+    network_fee_usd: str | None = Field(
+        default=None, description="Estimated network fee in USD"
+    )
+    expires_at: str | None = Field(
+        default=None, description="Quote expiration timestamp"
+    )
+
     # Price impact and gas fields
-    price_impact: str | None = Field(default=None, description="Price impact percentage")
+    price_impact: str | None = Field(
+        default=None, description="Price impact percentage"
+    )
     gas_estimate: str | None = Field(default=None, description="Estimated gas units")
-    
+
     # Token address fields
-    from_token_address: str | None = Field(default=None, description="Source token contract address")
-    to_token_address: str | None = Field(default=None, description="Destination token contract address")
-    
+    from_token_address: str | None = Field(
+        default=None, description="Source token contract address"
+    )
+    to_token_address: str | None = Field(
+        default=None, description="Destination token contract address"
+    )
+
     # Market data fields
-    from_token_price_usd: str | None = Field(default=None, description="Source token price in USD")
-    to_token_price_usd: str | None = Field(default=None, description="Destination token price in USD")
-    from_token_24h_change: str | None = Field(default=None, description="Source token 24h price change %")
-    value_usd: str | None = Field(default=None, description="Total transaction value in USD")
-    
+    from_token_price_usd: str | None = Field(
+        default=None, description="Source token price in USD"
+    )
+    to_token_price_usd: str | None = Field(
+        default=None, description="Destination token price in USD"
+    )
+    from_token_24h_change: str | None = Field(
+        default=None, description="Source token 24h price change %"
+    )
+    value_usd: str | None = Field(
+        default=None, description="Total transaction value in USD"
+    )
+
     # ========================================
     # Multi-step execution fields (Hyperliquid)
     # ========================================
-    execution_mode: str | None = Field(default=None, description="Execution mode: 'multi_step' for Hyperliquid")
-    steps: list[dict[str, Any]] | None = Field(default=None, description="Array of execution steps for multi-step swaps")
-    current_step: int | None = Field(default=None, description="Current step number (1-indexed)")
+    execution_mode: str | None = Field(
+        default=None, description="Execution mode: 'multi_step' for Hyperliquid"
+    )
+    steps: list[dict[str, Any]] | None = Field(
+        default=None, description="Array of execution steps for multi-step swaps"
+    )
+    current_step: int | None = Field(
+        default=None, description="Current step number (1-indexed)"
+    )
     total_steps: int | None = Field(default=None, description="Total number of steps")
-    
+
     # Hyperliquid balance info
-    hyperliquid_balances: dict[str, Any] | None = Field(default=None, description="User's Hyperliquid Perps/Spot balances")
-    requires_deposit: bool | None = Field(default=None, description="Whether user needs to deposit to Hyperliquid")
-    requires_transfer: bool | None = Field(default=None, description="Whether user needs to transfer from Perps to Spot")
-    
+    hyperliquid_balances: dict[str, Any] | None = Field(
+        default=None, description="User's Hyperliquid Perps/Spot balances"
+    )
+    requires_deposit: bool | None = Field(
+        default=None, description="Whether user needs to deposit to Hyperliquid"
+    )
+    requires_transfer: bool | None = Field(
+        default=None, description="Whether user needs to transfer from Perps to Spot"
+    )
+
     # Bridge configuration
-    bridge_config: dict[str, Any] | None = Field(default=None, description="Hyperliquid bridge contract addresses")
-    
+    bridge_config: dict[str, Any] | None = Field(
+        default=None, description="Hyperliquid bridge contract addresses"
+    )
+
     # LiFi bridge configuration (for Hyperliquid swaps via LiFi)
     lifi_config: dict[str, Any] | None = Field(
-        default=None, 
-        description="LiFi bridge config with token_balances (can_pay_gas, usdc, weth per chain)"
+        default=None,
+        description="LiFi bridge config with token_balances (can_pay_gas, usdc, weth per chain)",
     )
 
 
 class ChatResponse(BaseModel):
     """Response from sending a message."""
-    
+
     conversation_id: str
     message_id: str
     user_message: dict[str, Any]
@@ -194,13 +282,13 @@ class ChatResponse(BaseModel):
     rate_limit_status: dict[str, Any] | None = None
     execute: ExecuteActionData | None = Field(
         default=None,
-        description="Execute action data for executable intents (swap, deposit, withdraw, etc.)"
+        description="Execute action data for executable intents (swap, deposit, withdraw, etc.)",
     )
 
 
 class RateLimitErrorResponse(BaseModel):
     """Response for rate limit error."""
-    
+
     error: str = "rate_limit_exceeded"
     reason: str
     limit: int
@@ -216,7 +304,7 @@ class RateLimitErrorResponse(BaseModel):
 
 def create_conversations_router() -> APIRouter:
     """Create the conversations router."""
-    
+
     router = APIRouter(
         prefix="/conversations",
         tags=["Conversations"],
@@ -231,14 +319,16 @@ def create_conversations_router() -> APIRouter:
     ):
         """
         Resolve the ChatUser for this request.
-        
+
         Priority:
         1) Backend JWT (Authorization Bearer anvil_access_token) -> authenticated ChatUser
         2) Privy access token -> authenticated ChatUser (if Privy client configured)
         3) IP-based guest ChatUser
         """
         ip_address = http_request.client.host if http_request.client else "unknown"
-        bearer_token = http_request.headers.get("Authorization", "").replace("Bearer ", "")
+        bearer_token = http_request.headers.get("Authorization", "").replace(
+            "Bearer ", ""
+        )
 
         authenticated_user_id: str | None = None
         authenticated_email: str | None = None
@@ -261,14 +351,14 @@ def create_conversations_router() -> APIRouter:
     async def _strip_signup_prompt_for_authenticated(content: str) -> str:
         """
         Remove signup CTA blocks from responses when the caller is authenticated.
-        
+
         /api/v1/conversations supports both guest and authenticated flows. Some demo
         handlers include "/signup" CTA text which is correct for guests, but confusing
         for authenticated users (already registered/logged in).
         """
         if not content:
             return content
-        
+
         # Remove lines containing signup CTAs
         lines = content.splitlines()
         filtered_lines = []
@@ -276,26 +366,29 @@ def create_conversations_router() -> APIRouter:
             # Skip lines with signup CTAs
             if "/signup" in line.lower() or "👉" in line or "sign up" in line.lower():
                 # Check if this is a standalone CTA line (not part of main content)
-                if any(marker in line.lower() for marker in ["sign up", "signup", "👉", "→", "->"]):
+                if any(
+                    marker in line.lower()
+                    for marker in ["sign up", "signup", "👉", "→", "->"]
+                ):
                     continue  # Skip this line
             filtered_lines.append(line)
-        
+
         result = "\n".join(filtered_lines).strip()
-        
+
         # Also remove any trailing signup URLs or CTAs
         result = result.split("👉")[0].strip() if "👉" in result else result
         result = result.split("/signup")[0].strip() if "/signup" in result else result
-        
+
         # Remove empty lines at the end
         while result.endswith("\n\n"):
             result = result.rstrip("\n")
-        
+
         return result if result else content
-    
+
     # ------------------------------------------
     # CRUD Endpoints
     # ------------------------------------------
-    
+
     @router.post(
         "",
         response_model=ConversationResponse,
@@ -318,25 +411,27 @@ def create_conversations_router() -> APIRouter:
             current_user=current_user,
             language=request_body.language,
         )
-        
+
         # Create conversation
         conversation = await conversation_service.create(
             user_id=user.id,
             title=request_body.title,
             language=request_body.language,
         )
-        
+
         return ConversationResponse(
             id=str(conversation.id),
             title=conversation.title,
             status=conversation.status.value,
             created_at=conversation.created_at.isoformat(),
             updated_at=conversation.updated_at.isoformat(),
-            last_message_at=conversation.last_message_at.isoformat() if conversation.last_message_at else None,
+            last_message_at=conversation.last_message_at.isoformat()
+            if conversation.last_message_at
+            else None,
             message_count=conversation.message_count,
             language=conversation.language,
         )
-    
+
     @router.get(
         "",
         response_model=list[ConversationResponse],
@@ -360,7 +455,7 @@ def create_conversations_router() -> APIRouter:
             user_service=user_service,
             current_user=current_user,
         )
-        
+
         # List conversations
         conversations = await conversation_service.list(
             user_id=user.id,
@@ -368,7 +463,7 @@ def create_conversations_router() -> APIRouter:
             limit=limit,
             offset=offset,
         )
-        
+
         return [
             ConversationResponse(
                 id=conv["id"],
@@ -382,7 +477,7 @@ def create_conversations_router() -> APIRouter:
             )
             for conv in conversations
         ]
-    
+
     @router.get(
         "/{conversation_id}",
         response_model=ConversationWithMessagesResponse,
@@ -432,18 +527,18 @@ def create_conversations_router() -> APIRouter:
             user_id=user.id,
             message_limit=limit,
         )
-        
+
         if not result:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found",
             )
-        
+
         return ConversationWithMessagesResponse(
             conversation=ConversationResponse(**result["conversation"]),
             messages=[MessageResponse(**msg) for msg in result["messages"]],
         )
-    
+
     @router.patch(
         "/{conversation_id}",
         response_model=ConversationResponse,
@@ -467,24 +562,25 @@ def create_conversations_router() -> APIRouter:
     ) -> ConversationResponse:
         """
         Update a conversation.
-        
+
         Currently supports updating the title only.
         """
         import logging
+
         logger = logging.getLogger(__name__)
-        
+
         user = await _resolve_chat_user(
             http_request=http_request,
             user_service=user_service,
             current_user=current_user,
         )
-        
+
         logger.debug(
             f"Update conversation request: conversation_id={conversation_id}, "
             f"user_id={user.id}, user_type={user.user_type.value}, "
             f"identifier={user.identifier}, title={request.title}"
         )
-        
+
         if request.title is not None:
             conversation = await conversation_service.update_title(
                 conversation_id=conversation_id,
@@ -497,7 +593,7 @@ def create_conversations_router() -> APIRouter:
                 conversation_id=conversation_id,
                 user_id=user.id,
             )
-        
+
         if not conversation:
             logger.warning(
                 f"Conversation not found: conversation_id={conversation_id}, "
@@ -507,18 +603,20 @@ def create_conversations_router() -> APIRouter:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found",
             )
-        
+
         return ConversationResponse(
             id=str(conversation.id),
             title=conversation.title,
             status=conversation.status.value,
             created_at=conversation.created_at.isoformat(),
             updated_at=conversation.updated_at.isoformat(),
-            last_message_at=conversation.last_message_at.isoformat() if conversation.last_message_at else None,
+            last_message_at=conversation.last_message_at.isoformat()
+            if conversation.last_message_at
+            else None,
             message_count=conversation.message_count,
             language=conversation.language,
         )
-    
+
     @router.delete(
         "/{conversation_id}",
         response_model=ConversationResponse,
@@ -542,7 +640,7 @@ def create_conversations_router() -> APIRouter:
     ) -> ConversationResponse:
         """
         Archive a conversation.
-        
+
         This endpoint archives the conversation instead of permanently deleting it.
         Archived conversations are excluded from the default conversation list
         (which filters by status='active').
@@ -552,30 +650,32 @@ def create_conversations_router() -> APIRouter:
             user_service=user_service,
             current_user=current_user,
         )
-        
+
         # Archive conversation (instead of deleting)
         conversation = await conversation_service.archive(
             conversation_id=conversation_id,
             user_id=user.id,
         )
-        
+
         if not conversation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found",
             )
-        
+
         return ConversationResponse(
             id=str(conversation.id),
             title=conversation.title,
             status=conversation.status.value,
             created_at=conversation.created_at.isoformat(),
             updated_at=conversation.updated_at.isoformat(),
-            last_message_at=conversation.last_message_at.isoformat() if conversation.last_message_at else None,
+            last_message_at=conversation.last_message_at.isoformat()
+            if conversation.last_message_at
+            else None,
             message_count=conversation.message_count,
             language=conversation.language,
         )
-    
+
     @router.post(
         "/{conversation_id}/archive",
         response_model=ConversationResponse,
@@ -597,34 +697,36 @@ def create_conversations_router() -> APIRouter:
             user_service=user_service,
             current_user=current_user,
         )
-        
+
         # Archive conversation
         conversation = await conversation_service.archive(
             conversation_id=conversation_id,
             user_id=user.id,
         )
-        
+
         if not conversation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found",
             )
-        
+
         return ConversationResponse(
             id=str(conversation.id),
             title=conversation.title,
             status=conversation.status.value,
             created_at=conversation.created_at.isoformat(),
             updated_at=conversation.updated_at.isoformat(),
-            last_message_at=conversation.last_message_at.isoformat() if conversation.last_message_at else None,
+            last_message_at=conversation.last_message_at.isoformat()
+            if conversation.last_message_at
+            else None,
             message_count=conversation.message_count,
             language=conversation.language,
         )
-    
+
     # ------------------------------------------
     # Message Endpoint
     # ------------------------------------------
-    
+
     @router.post(
         "/{conversation_id}/messages",
         response_model=ChatResponse,
@@ -660,12 +762,16 @@ def create_conversations_router() -> APIRouter:
         llm_gateway: FromDishka[LLMGateway],
         moonpay_swap_handler: FromDishka[MoonPaySwapHandler],
         swap_handler_v2: FromDishka[SwapHandlerV2],  # Hyperliquid spot swap handler
-        supervisor_command: FromDishka[SendMessageWithSupervisor] = None,  # Supervisor for authenticated users
-        user_context_service: FromDishka[UserContextService] = None,  # Context-aware agents
+        supervisor_command: FromDishka[
+            SendMessageWithSupervisor
+        ] = None,  # Supervisor for authenticated users
+        user_context_service: FromDishka[
+            UserContextService
+        ] = None,  # Context-aware agents
     ) -> ChatResponse:
         """Send a message to a conversation."""
         from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
-        
+
         user = await _resolve_chat_user(
             http_request=http_request,
             user_service=user_service,
@@ -690,7 +796,7 @@ def create_conversations_router() -> APIRouter:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User is blocked",
             )
-        
+
         # Check rate limit
         rate_result = await rate_limit_service.check_and_increment(user)
         if not rate_result.allowed:
@@ -709,25 +815,26 @@ def create_conversations_router() -> APIRouter:
                     },
                 },
             )
-        
+
         # Get conversation (verify ownership)
         conversation = await conversation_service.get(
             conversation_id=conversation_id,
             user_id=user.id,
         )
-        
+
         if not conversation:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found",
             )
-        
+
         # Get conversation context for memory
         context = await conversation_memory.get_context(conversation_id)
-        
+
         import logging
+
         logger = logging.getLogger(__name__)
-        
+
         # ============================================================
         # ✨ AUTHENTICATED SUPERVISOR PATH (LLM-based Multi-Agent) ✨
         # ============================================================
@@ -742,10 +849,12 @@ def create_conversations_router() -> APIRouter:
                     extra={
                         "conversation_id": str(conversation_id),
                         "message_preview": request_body.content[:100],
-                        "wallet_address": wallet_address[:10] + "..." if wallet_address else None,
-                    }
+                        "wallet_address": wallet_address[:10] + "..."
+                        if wallet_address
+                        else None,
+                    },
                 )
-                
+
                 # Build conversation history from context
                 # Note: context.messages is returned NEWEST-FIRST from the repository
                 # We need the most recent messages for workflow continuation detection
@@ -756,23 +865,29 @@ def create_conversations_router() -> APIRouter:
                     recent_messages = context.messages[:10]
                     for msg in reversed(recent_messages):  # Oldest-first for history
                         # ChatMessage objects have role and content attributes
-                        role = msg.role.value if hasattr(msg.role, 'value') else str(msg.role)
+                        role = (
+                            msg.role.value
+                            if hasattr(msg.role, "value")
+                            else str(msg.role)
+                        )
                         msg_dict = {
                             "role": role,
-                            "content": msg.content if hasattr(msg, 'content') else str(msg),
+                            "content": msg.content
+                            if hasattr(msg, "content")
+                            else str(msg),
                         }
                         # Include metadata for workflow continuation detection
-                        if hasattr(msg, 'metadata') and msg.metadata:
+                        if hasattr(msg, "metadata") and msg.metadata:
                             msg_dict["metadata"] = msg.metadata
                         conversation_history.append(msg_dict)
-                
+
                 # Build user context for supervisor
                 user_context = {
                     "user_id": user.identifier,
                     "wallet_address": wallet_address,
                     "is_authenticated": True,
                 }
-                
+
                 # Load context-aware data for personalized responses
                 if user_context_service and not user.is_guest:
                     try:
@@ -783,43 +898,57 @@ def create_conversations_router() -> APIRouter:
                                 f"Loaded context-aware data: portfolio={context_aware.portfolio_state}, "
                                 f"activity={context_aware.activity_level}, type={context_aware.user_type}"
                             )
-                            
+
                             # If context_aware shows zero balance but user has wallet,
                             # try to fetch real-time portfolio data as fallback
                             # This handles cases where Celery task hasn't synced balance yet
                             if (
                                 wallet_address
                                 and float(context_aware.total_balance_usd or 0) == 0
-                                and hasattr(handler_service, '_portfolio_service')
+                                and hasattr(handler_service, "_portfolio_service")
                                 and handler_service._portfolio_service
                             ):
                                 try:
                                     from app.domain.enums.chain_type import ChainType
                                     from decimal import Decimal
-                                    
-                                    logger.info(f"Context-aware shows $0, fetching real-time balance for {wallet_address[:10]}...")
+
+                                    logger.info(
+                                        f"Context-aware shows $0, fetching real-time balance for {wallet_address[:10]}..."
+                                    )
                                     portfolio = await handler_service._portfolio_service.get_portfolio_by_address(
                                         address=wallet_address,
                                         chain=ChainType.BASE,
                                     )
-                                    
+
                                     if portfolio and portfolio.total_usd > 0:
                                         # Update context_aware with real-time balance
-                                        context_aware.total_balance_usd = Decimal(str(portfolio.total_usd))
-                                        context_aware.token_count = len(portfolio.tokens) if portfolio.tokens else 0
+                                        context_aware.total_balance_usd = Decimal(
+                                            str(portfolio.total_usd)
+                                        )
+                                        context_aware.token_count = (
+                                            len(portfolio.tokens)
+                                            if portfolio.tokens
+                                            else 0
+                                        )
                                         context_aware.primary_chain = portfolio.chain
-                                        logger.info(f"Updated context with real-time balance: ${portfolio.total_usd:.2f}")
+                                        logger.info(
+                                            f"Updated context with real-time balance: ${portfolio.total_usd:.2f}"
+                                        )
                                 except Exception as portfolio_err:
-                                    logger.debug(f"Real-time portfolio fetch failed (non-critical): {portfolio_err}")
+                                    logger.debug(
+                                        f"Real-time portfolio fetch failed (non-critical): {portfolio_err}"
+                                    )
                     except Exception as ctx_err:
                         logger.warning(f"Failed to load context-aware data: {ctx_err}")
-                
+
                 # Check for fast-path greeting
                 if supervisor_command.is_simple_greeting(request_body.content):
-                    supervisor_result = await supervisor_command.execute_fast_path_greeting(
-                        conversation_id=conversation_id,
-                        message=request_body.content,
-                        language=request_body.language,
+                    supervisor_result = (
+                        await supervisor_command.execute_fast_path_greeting(
+                            conversation_id=conversation_id,
+                            message=request_body.content,
+                            language=request_body.language,
+                        )
                     )
                 else:
                     # Full supervisor workflow
@@ -830,11 +959,11 @@ def create_conversations_router() -> APIRouter:
                         conversation_history=conversation_history,
                         user_context=user_context,
                     )
-                
+
                 # Create user message (timedelta already imported at module level)
                 user_timestamp = datetime.now(UTC)
                 from app.domain.chat.entities.chat_message import ChatMessage
-                
+
                 user_message = ChatMessage.create_user_message(
                     conversation_id=conversation_id,
                     content=request_body.content,
@@ -842,10 +971,10 @@ def create_conversations_router() -> APIRouter:
                     created_at=user_timestamp,
                 )
                 await message_repository.save(user_message)
-                
+
                 # Create assistant message
                 assistant_timestamp = user_timestamp + timedelta(milliseconds=1)
-                
+
                 # Build message metadata including workflow state for multi-step continuation
                 message_metadata = {
                     "agents_used": supervisor_result.agents_used,
@@ -853,14 +982,18 @@ def create_conversations_router() -> APIRouter:
                     "task_count": supervisor_result.task_count,
                     "total_time_ms": supervisor_result.total_time_ms,
                 }
-                
+
                 # Include workflow state from supervisor result (for multi-step workflows)
                 if supervisor_result.metadata:
                     if supervisor_result.metadata.get("workflow_state"):
-                        message_metadata["workflow_state"] = supervisor_result.metadata["workflow_state"]
+                        message_metadata["workflow_state"] = supervisor_result.metadata[
+                            "workflow_state"
+                        ]
                     if supervisor_result.metadata.get("workflow_name"):
-                        message_metadata["workflow_name"] = supervisor_result.metadata["workflow_name"]
-                
+                        message_metadata["workflow_name"] = supervisor_result.metadata[
+                            "workflow_name"
+                        ]
+
                 assistant_message = ChatMessage.create_assistant_message(
                     conversation_id=conversation_id,
                     content=supervisor_result.content,
@@ -872,7 +1005,7 @@ def create_conversations_router() -> APIRouter:
                     created_at=assistant_timestamp,
                 )
                 await message_repository.save(assistant_message)
-                
+
                 # Build response
                 routing = {
                     "intent": "SUPERVISOR_WORKFLOW",
@@ -882,13 +1015,13 @@ def create_conversations_router() -> APIRouter:
                     "user_type": user.user_type.value,
                     "agents_used": supervisor_result.agents_used,
                 }
-                
+
                 rate_limit_status = {
                     "user_type": user.user_type.value,
                     "remaining_hourly": rate_result.remaining_hourly,
                     "remaining_daily": rate_result.remaining_daily,
                 }
-                
+
                 enrichment = {
                     "agent_squad": True,
                     "workflow_type": supervisor_result.workflow_type,
@@ -898,15 +1031,17 @@ def create_conversations_router() -> APIRouter:
                     "sources": supervisor_result.sources,
                     "total_time_ms": supervisor_result.total_time_ms,
                 }
-                
+
                 # Extract execute_data from supervisor result (workflow agents like swap_workflow)
                 execute_action_data = None
                 if supervisor_result.execute_data:
                     try:
-                        execute_action_data = ExecuteActionData(**supervisor_result.execute_data)
+                        execute_action_data = ExecuteActionData(
+                            **supervisor_result.execute_data
+                        )
                     except Exception as ed_err:
                         logger.warning(f"Failed to parse execute_data: {ed_err}")
-                
+
                 return ChatResponse(
                     conversation_id=str(conversation_id),
                     message_id=str(assistant_message.id),
@@ -929,9 +1064,10 @@ def create_conversations_router() -> APIRouter:
                     rate_limit_status=rate_limit_status,
                     execute=execute_action_data,  # Execute data from workflow agents (swap, lending, etc.)
                 )
-                
+
             except Exception as e:
                 import traceback
+
                 logger.warning(
                     f"Authenticated Supervisor failed, falling back to legacy flow: {e}",
                     extra={
@@ -944,12 +1080,12 @@ def create_conversations_router() -> APIRouter:
                 print(f"[SUPERVISOR ERROR] {e}")
                 traceback.print_exc()
                 # Fall through to legacy flow below
-        
+
         # ============================================================
         # LEGACY FLOW (Keyword-based Intent Detection)
         # Used for: Guests, or when Supervisor fails/unavailable
         # ============================================================
-        
+
         # Detect intent with context
         intent_detector = IntentDetectorV2()
         intent_result = intent_detector.detect(
@@ -957,7 +1093,7 @@ def create_conversations_router() -> APIRouter:
             language=request_body.language,
             context=context,
         )
-        
+
         # Debug logging for intent detection
         logger.debug(
             f"Intent detected: {intent_result.intent.value} "
@@ -970,7 +1106,9 @@ def create_conversations_router() -> APIRouter:
         # ✨ MULTI-STEP FLOW CANCELLATION DETECTION ✨
         # Detect if user is asking an unrelated question during a multi-step flow
         # If detected, automatically cancel the flow and process the new question
-        from app.application.chat.services.flow_cancellation_detector import FlowCancellationDetector
+        from app.application.chat.services.flow_cancellation_detector import (
+            FlowCancellationDetector,
+        )
 
         # Check if there's a pending multi-step flow
         if context.pending_intent:
@@ -998,8 +1136,10 @@ def create_conversations_router() -> APIRouter:
                         "from_flow": cancelled_flow,
                         "to_intent": current_intent_str,
                         "reason": reason,
-                        "user_message": request_body.content[:100],  # Changed from "message" to avoid LogRecord conflict
-                    }
+                        "user_message": request_body.content[
+                            :100
+                        ],  # Changed from "message" to avoid LogRecord conflict
+                    },
                 )
 
                 # Clear all flow-related state from context
@@ -1027,15 +1167,28 @@ def create_conversations_router() -> APIRouter:
 
                 # If the cancellation was triggered by an explicit keyword (cancel, stop, etc.),
                 # check for compound intent (e.g., "cancel, tell me what is bitcoin")
-                if "keyword_match:" in reason and any(kw in reason for kw in ["cancel", "stop", "abort", "forget", "never mind", "cancelar", "parar"]):
+                if "keyword_match:" in reason and any(
+                    kw in reason
+                    for kw in [
+                        "cancel",
+                        "stop",
+                        "abort",
+                        "forget",
+                        "never mind",
+                        "cancelar",
+                        "parar",
+                    ]
+                ):
                     # Extract the matched keyword from reason
                     keyword = reason.split(":")[1]
 
                     # Check if there's additional content after cancellation keyword
-                    remaining_content = FlowCancellationDetector.extract_post_cancellation_content(
-                        request_body.content,
-                        keyword,
-                        request_body.language,
+                    remaining_content = (
+                        FlowCancellationDetector.extract_post_cancellation_content(
+                            request_body.content,
+                            keyword,
+                            request_body.language,
+                        )
                     )
 
                     if remaining_content:
@@ -1049,7 +1202,7 @@ def create_conversations_router() -> APIRouter:
                                 "extracted_content": remaining_content[:100],
                                 "cancelled_flow": cancelled_flow,
                                 "keyword": keyword,
-                            }
+                            },
                         )
 
                         # Update request content to the extracted query
@@ -1071,14 +1224,17 @@ def create_conversations_router() -> APIRouter:
                                 "new_intent": intent_result.intent.value,
                                 "confidence": intent_result.confidence,
                                 "handler": intent_result.handler,
-                            }
+                            },
                         )
 
                         # Continue to normal flow processing below with corrected intent
                         # The flow state is already cleared, so this will process as a fresh query
                     else:
                         # Simple cancellation: show confirmation
-                        from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
+                        from app.domain.chat.entities.chat_message import (
+                            ChatMessage,
+                            MessageRole,
+                        )
 
                         # Create user message
                         user_timestamp = datetime.now(UTC)
@@ -1098,7 +1254,9 @@ def create_conversations_router() -> APIRouter:
                             "zh": "✓ 已取消。我还能帮您什么？",
                             "fr": "✓ Annulé. Comment puis-je vous aider?",
                         }
-                        cancellation_content = cancellation_messages.get(request_body.language, cancellation_messages["en"])
+                        cancellation_content = cancellation_messages.get(
+                            request_body.language, cancellation_messages["en"]
+                        )
 
                         # Create assistant message
                         assistant_timestamp = user_timestamp + timedelta(milliseconds=1)
@@ -1109,7 +1267,10 @@ def create_conversations_router() -> APIRouter:
                             handler="flow_cancellation",
                             is_restricted_action=False,
                             language=request_body.language,
-                            metadata={"flow_cancelled": True, "cancelled_flow": cancelled_flow},
+                            metadata={
+                                "flow_cancelled": True,
+                                "cancelled_flow": cancelled_flow,
+                            },
                             created_at=assistant_timestamp,
                         )
                         await message_repository.save(assistant_message)
@@ -1158,8 +1319,10 @@ def create_conversations_router() -> APIRouter:
         execute_data = None  # Execute action data for /execute endpoint
         used_agent_gateway = False  # Flag for when AgentGateway (LLM) was used
         handler_result = {}  # Default empty handler result for metadata extraction
-        workflow_metadata = None  # Workflow metadata from BuyWorkflowAgent for state persistence
-        
+        workflow_metadata = (
+            None  # Workflow metadata from BuyWorkflowAgent for state persistence
+        )
+
         # Handle based on intent
         if intent_result.is_restricted:
             # Restricted actions should only show signup CTA to guests.
@@ -1176,7 +1339,7 @@ def create_conversations_router() -> APIRouter:
                 # These intents are handled through SendMessageUnified for real data
                 # Use guest handler service which already has the handlers configured
                 from app.application.chat.services.intent_detector import ChatIntent
-                
+
                 # Map restricted intent to ChatIntent
                 intent_map = {
                     "PORTFOLIO": ChatIntent.PORTFOLIO,
@@ -1185,8 +1348,10 @@ def create_conversations_router() -> APIRouter:
                     "RECEIVE": ChatIntent.RECEIVE,
                     "SEND": ChatIntent.SEND,
                 }
-                mapped_intent = intent_map.get(intent_result.intent.value, ChatIntent.GENERAL_CONVERSATION)
-                
+                mapped_intent = intent_map.get(
+                    intent_result.intent.value, ChatIntent.GENERAL_CONVERSATION
+                )
+
                 context_str = conversation_memory.build_context_string(context)
                 handler_result = await handler_service.handle_intent(
                     intent=mapped_intent,
@@ -1201,7 +1366,7 @@ def create_conversations_router() -> APIRouter:
                 enrichment = handler_result.get("enrichment")
                 pending_action = handler_result.get("pending_action")
                 registration_required = None
-        
+
         elif intent_result.intent.value.startswith("MOONPAY_SWAP"):
             # MOONPAY_SWAP: Uses Privy + 0x Protocol for major tokens (ETH, BTC, SOL, etc.)
             # This MUST be checked BEFORE generic SWAP to avoid routing to wrong handler
@@ -1248,11 +1413,16 @@ def create_conversations_router() -> APIRouter:
             except Exception as e:
                 # Log the error for debugging
                 import logging
+
                 logger = logging.getLogger(__name__)
-                logger.error(f"MoonPaySwapFlowHandler error for message '{request_body.content}': {e}", exc_info=True)
+                logger.error(
+                    f"MoonPaySwapFlowHandler error for message '{request_body.content}': {e}",
+                    exc_info=True,
+                )
 
                 # Fallback to guest handler service for swap
                 from app.application.chat.services.intent_detector import ChatIntent
+
                 context_str = conversation_memory.build_context_string(context)
                 handler_result = await handler_service.handle_intent(
                     intent=ChatIntent.SWAP,
@@ -1276,17 +1446,17 @@ def create_conversations_router() -> APIRouter:
             try:
                 # Use injected swap_handler_v2 with Hyperliquid integration
                 swap_handler = swap_handler_v2
-                
+
                 # Check for continuation metadata
                 continuation_step = None
                 continuation_value = None
                 if intent_result.metadata:
                     continuation_step = intent_result.metadata.get("step")
                     continuation_value = intent_result.metadata.get("value")
-                
+
                 # Get previous swap info from context for multi-turn flow
                 previous_swap_info = context.pending_swap_info
-                
+
                 # Get user context-aware data for balance checking
                 # Note: user_context is only defined for authenticated users with supervisor_command
                 swap_user_context = None
@@ -1296,14 +1466,20 @@ def create_conversations_router() -> APIRouter:
                 except NameError:
                     # user_context not defined (guest user without supervisor)
                     pass
-                
+
                 # Try to load context if not already available
-                if swap_user_context is None and user_context_service and not user.is_guest:
+                if (
+                    swap_user_context is None
+                    and user_context_service
+                    and not user.is_guest
+                ):
                     try:
-                        swap_user_context = await user_context_service.get_context(user.id)
+                        swap_user_context = await user_context_service.get_context(
+                            user.id
+                        )
                     except Exception:
                         pass  # Silently ignore - balance recommendation is not critical
-                
+
                 handler_result = await swap_handler.handle(
                     message=request_body.content,
                     context=context,
@@ -1316,13 +1492,13 @@ def create_conversations_router() -> APIRouter:
                 agent_content = handler_result.content
                 enrichment = handler_result.enrichment
                 pending_action = handler_result.pending_action
-                
+
                 # Extract execute data if swap is complete (no pending_action means ready to execute)
                 execute_data = None
                 if handler_result.execute_data and not pending_action:
                     # Swap is complete and ready for execution
                     execute_data = ExecuteActionData(**handler_result.execute_data)
-                
+
                 if user.is_guest and handler_result.requires_registration:
                     registration_required = {
                         "required": True,
@@ -1332,11 +1508,16 @@ def create_conversations_router() -> APIRouter:
             except Exception as e:
                 # Log the error for debugging
                 import logging
+
                 logger = logging.getLogger(__name__)
-                logger.error(f"SwapHandlerV2 error for message '{request_body.content}': {e}", exc_info=True)
-                
+                logger.error(
+                    f"SwapHandlerV2 error for message '{request_body.content}': {e}",
+                    exc_info=True,
+                )
+
                 # Fallback to guest handler service for swap
                 from app.application.chat.services.intent_detector import ChatIntent
+
                 context_str = conversation_memory.build_context_string(context)
                 handler_result = await handler_service.handle_intent(
                     intent=ChatIntent.SWAP,
@@ -1400,15 +1581,15 @@ def create_conversations_router() -> APIRouter:
         elif intent_result.intent.value == "MONEY_MARKET":
             # Handle MONEY_MARKET intent (not restricted, uses guest handler service)
             from app.application.chat.services.intent_detector import ChatIntent
-            
+
             # Check for continuation metadata
             continuation_step = None
             if intent_result.metadata:
                 continuation_step = intent_result.metadata.get("step")
-            
+
             # Get previous money market info from context
             previous_money_market_info = context.pending_money_market_info
-            
+
             context_str = conversation_memory.build_context_string(context)
             handler_result = await handler_service.handle_intent(
                 intent=ChatIntent.MONEY_MARKET,
@@ -1426,7 +1607,7 @@ def create_conversations_router() -> APIRouter:
                     "reason": "action_required",
                     "signup_url": "/signup",
                 }
-        
+
         elif intent_result.intent.value.startswith("BUY"):
             # Handle BUY and BUY_CONTINUE intents (on-ramp crypto purchase with multi-turn flow)
 
@@ -1439,6 +1620,7 @@ def create_conversations_router() -> APIRouter:
             # For guests, use the informative handler (legacy flow)
             if user.is_guest:
                 from app.application.chat.services.intent_detector import ChatIntent
+
                 context_str = conversation_memory.build_context_string(context)
                 handler_result = await handler_service.handle_intent(
                     intent=ChatIntent.BUY,
@@ -1468,6 +1650,7 @@ def create_conversations_router() -> APIRouter:
                     f"Using informational handler as fallback."
                 )
                 from app.application.chat.services.intent_detector import ChatIntent
+
                 context_str = conversation_memory.build_context_string(context)
                 handler_result = await handler_service.handle_intent(
                     intent=ChatIntent.BUY,
@@ -1480,19 +1663,20 @@ def create_conversations_router() -> APIRouter:
                 agent_content = handler_result.get("content", "")
                 enrichment = handler_result.get("enrichment")
                 pending_action = handler_result.get("pending_action")
-        
+
         else:
             # Use existing handler service for other intents
             from app.application.chat.services.intent_detector import ChatIntent
             import logging
+
             logger = logging.getLogger(__name__)
-            
+
             # Map intent
             try:
                 mapped_intent = ChatIntent[intent_result.intent.value]
             except KeyError:
                 mapped_intent = ChatIntent.GENERAL_CONVERSATION
-            
+
             # For authenticated users with informational intents (GENERAL_CONVERSATION, PROTOCOL_SEARCH, etc.),
             # use LLMGateway directly for real LLM response instead of demo data
             llm_intents = [
@@ -1505,7 +1689,7 @@ def create_conversations_router() -> APIRouter:
                 try:
                     # Build context from conversation memory
                     context_str = conversation_memory.build_context_string(context)
-                    
+
                     # Build messages for LLM
                     system_prompt = """You are Anvil, a specialized DeFi assistant focused EXCLUSIVELY on decentralized finance, crypto trading, and blockchain technology.
 
@@ -1533,17 +1717,17 @@ Response Guidelines:
 - If you don't know something, say so
 - Respond in the same language the user uses
 - Use conversation history for context ONLY for DeFi-related exchanges"""
-                    
+
                     # Build user message with context if available
                     user_prompt = request_body.content
                     if context_str:
                         user_prompt = f"Previous conversation:\n{context_str}\n\nUser: {request_body.content}"
-                    
+
                     messages = [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt},
                     ]
-                    
+
                     # Using 3B model because 70B is frequently overloaded ("Model busy")
                     raw_response = await llm_gateway.generate(
                         model="meta-llama/Llama-3.2-3B-Instruct",
@@ -1551,20 +1735,23 @@ Response Guidelines:
                         temperature=0.7,
                         max_tokens=500,
                     )
-                    
+
                     # Normalize response - extract text if tuple/dict returned
                     if isinstance(raw_response, tuple):
                         agent_content = str(raw_response[0]) if raw_response else ""
                     elif isinstance(raw_response, dict):
-                        agent_content = raw_response.get("content", raw_response.get("text", str(raw_response)))
+                        agent_content = raw_response.get(
+                            "content", raw_response.get("text", str(raw_response))
+                        )
                     else:
                         agent_content = str(raw_response) if raw_response else ""
-                    
+
                     enrichment = None
                     pending_action = None
-                    
+
                 except Exception as e:
                     import logging
+
                     logging.getLogger(__name__).error(f"LLM call failed: {e}")
                     # Fallback to handler
                     context_str = conversation_memory.build_context_string(context)
@@ -1604,7 +1791,7 @@ Response Guidelines:
         if not user.is_guest:
             agent_content = await _strip_signup_prompt_for_authenticated(agent_content)
             registration_required = None
-        
+
         # Create user message with explicit timestamp
         user_timestamp = datetime.now(UTC)
         user_message = ChatMessage.create_user_message(
@@ -1613,22 +1800,26 @@ Response Guidelines:
             language=request_body.language,
             created_at=user_timestamp,
         )
-        
+
         # Create assistant message with timestamp 1ms after user message
         # This ensures correct chronological ordering in the database
         assistant_timestamp = user_timestamp + timedelta(milliseconds=1)
-        
+
         # Prepare metadata for assistant message
         metadata = {}
         if pending_action:
             metadata["pending_action"] = pending_action
         # Store swap info for multi-turn swap flow persistence
-        if intent_result.intent.value.startswith("SWAP") and hasattr(handler_result, "metadata"):
+        if intent_result.intent.value.startswith("SWAP") and hasattr(
+            handler_result, "metadata"
+        ):
             swap_info = handler_result.metadata
             if swap_info:
                 metadata["swap_info"] = swap_info
         # Store MoonPay swap info for multi-turn flow persistence
-        if intent_result.intent.value.startswith("MOONPAY_SWAP") and hasattr(handler_result, "metadata"):
+        if intent_result.intent.value.startswith("MOONPAY_SWAP") and hasattr(
+            handler_result, "metadata"
+        ):
             moonpay_swap_info = handler_result.metadata
             if moonpay_swap_info:
                 metadata["moonpay_swap_info"] = moonpay_swap_info
@@ -1644,36 +1835,50 @@ Response Guidelines:
                     "chain": handler_result.get("enrichment", {}).get("chain", "base"),
                     "asset": handler_result.get("enrichment", {}).get("asset", "USDC"),
                 }
-        
+
         # Store portfolio info for multi-turn portfolio flow persistence
-        if intent_result.intent.value == "PORTFOLIO" and pending_action and pending_action.startswith("portfolio_"):
+        if (
+            intent_result.intent.value == "PORTFOLIO"
+            and pending_action
+            and pending_action.startswith("portfolio_")
+        ):
             metadata["portfolio_info"] = {
                 "chain": handler_result.get("enrichment", {}).get("chain", "base"),
             }
-        
+
         # Store activity info for multi-turn activity flow persistence
-        if intent_result.intent.value == "ACTIVITY" and pending_action and pending_action.startswith("activity_"):
+        if (
+            intent_result.intent.value == "ACTIVITY"
+            and pending_action
+            and pending_action.startswith("activity_")
+        ):
             metadata["activity_info"] = {
                 "chain": handler_result.get("enrichment", {}).get("chain"),
             }
-        
+
         # Store money market info for multi-turn money market flow persistence
-        if intent_result.intent.value == "MONEY_MARKET" and pending_action and pending_action.startswith("money_market_"):
+        if (
+            intent_result.intent.value == "MONEY_MARKET"
+            and pending_action
+            and pending_action.startswith("money_market_")
+        ):
             metadata["money_market_info"] = {
                 "chain": handler_result.get("enrichment", {}).get("chain", "ethereum"),
                 "asset": handler_result.get("enrichment", {}).get("asset", "USDC"),
             }
-        
+
         # Store buy info for multi-turn buy flow persistence
         # For authenticated users using BuyWorkflowAgent, store workflow_state
         # For guests using BuyHandler, store buy_info
         if intent_result.intent.value.startswith("BUY"):
             # Check if we have workflow_metadata from BuyWorkflowAgent (authenticated users)
-            if 'workflow_metadata' in locals() and workflow_metadata:
+            if "workflow_metadata" in locals() and workflow_metadata:
                 # Store workflow state from BuyWorkflowAgent
                 if workflow_metadata.get("workflow_state"):
                     metadata["workflow_state"] = workflow_metadata["workflow_state"]
-                    logger.info(f"[BUY_DEBUG] Saving workflow_state to message metadata")
+                    logger.info(
+                        f"[BUY_DEBUG] Saving workflow_state to message metadata"
+                    )
                 if workflow_metadata.get("workflow_name"):
                     metadata["workflow_name"] = workflow_metadata["workflow_name"]
                 if workflow_metadata.get("current_step"):
@@ -1683,10 +1888,12 @@ Response Guidelines:
                 buy_info = handler_result.metadata
                 if buy_info:
                     metadata["buy_info"] = buy_info
-        
+
         # Determine handler name for routing info
-        handler_name = "agent_gateway_llm" if used_agent_gateway else intent_result.handler
-        
+        handler_name = (
+            "agent_gateway_llm" if used_agent_gateway else intent_result.handler
+        )
+
         assistant_message = ChatMessage.create_assistant_message(
             conversation_id=conversation_id,
             content=agent_content,
@@ -1698,22 +1905,22 @@ Response Guidelines:
             metadata=metadata,
             created_at=assistant_timestamp,
         )
-        
+
         # CRITICAL: Save messages to database for multi-turn flow persistence
         await message_repository.save(user_message)
         await message_repository.save(assistant_message)
-        
+
         # Update conversation message count
         conversation.increment_messages()
         conversation.increment_messages()  # Both user and assistant
-        
+
         # Auto-generate title if needed
         if not conversation.title:
             conversation.auto_generate_title(request_body.content)
-        
+
         # Note: Conversation updates (message_count, title) are handled by the repository
         # when messages are saved. The conversation entity is updated in memory for response.
-        
+
         # Build routing info
         routing = {
             "intent": intent_result.intent.value,
@@ -1726,32 +1933,34 @@ Response Guidelines:
         # Only include demo mode flag for guest users
         if user.is_guest:
             routing["is_demo_mode"] = True
-        
+
         # Build rate limit status
         rate_limit_status = {
             "user_type": user.user_type.value,
             "remaining_hourly": rate_result.remaining_hourly,
             "remaining_daily": rate_result.remaining_daily,
         }
-        
+
         # Normalize enrichment to always include agent_timings and sources
         # This ensures consistent response structure for frontend
         if enrichment is None:
             enrichment = {}
-        
+
         # Ensure agent_timings is always present
         if "agent_timings" not in enrichment:
-            enrichment["agent_timings"] = [{
-                "agent_type": handler_name or "handler",
-                "task_description": f"Handle {intent_result.intent.value} intent",
-                "execution_time_ms": 0,  # Not tracked in legacy flow
-                "status": "completed",
-            }]
-        
+            enrichment["agent_timings"] = [
+                {
+                    "agent_type": handler_name or "handler",
+                    "task_description": f"Handle {intent_result.intent.value} intent",
+                    "execution_time_ms": 0,  # Not tracked in legacy flow
+                    "status": "completed",
+                }
+            ]
+
         # Ensure sources is always present
         if "sources" not in enrichment:
             enrichment["sources"] = []
-        
+
         # Build agent_message with sources included (match supervisor format)
         agent_message_response = {
             "id": str(assistant_message.id),
@@ -1760,7 +1969,7 @@ Response Guidelines:
             "created_at": assistant_message.created_at.isoformat(),
             "sources": enrichment.get("sources", []),
         }
-        
+
         return ChatResponse(
             conversation_id=str(conversation_id),
             message_id=str(assistant_message.id),
@@ -1777,46 +1986,47 @@ Response Guidelines:
             rate_limit_status=rate_limit_status,
             execute=execute_data,
         )
-    
+
     # ========================================
     # Swap Quote Persistence Endpoint
     # ========================================
-    
+
     class SaveSwapQuoteRequest(BaseModel):
         """Request to save swap quote data to a message."""
-        
+
         swap_quote: dict[str, Any] = Field(
             ...,
-            description="MoonPay swap quote data including fromToken, toToken, amount, rate, etc."
+            description="MoonPay swap quote data including fromToken, toToken, amount, rate, etc.",
         )
         status: str = Field(
             default="pending",
-            description="Swap status: pending, executed, cancelled, expired"
+            description="Swap status: pending, executed, cancelled, expired",
         )
-    
+
     # ========================================
     # System Message Endpoint (Skip LLM)
     # ========================================
-    
+
     class CreateSystemMessageRequest(BaseModel):
         """Request to create a system/assistant message without triggering LLM."""
-        
-        content: str = Field(..., min_length=1, max_length=5000, description="Message content")
+
+        content: str = Field(
+            ..., min_length=1, max_length=5000, description="Message content"
+        )
         metadata: dict[str, Any] | None = Field(
-            default=None,
-            description="Optional metadata (type, transaction_id, etc.)"
+            default=None, description="Optional metadata (type, transaction_id, etc.)"
         )
         language: str = Field(default="en", pattern="^(en|es|pt|zh)$")
-    
+
     class SystemMessageResponse(BaseModel):
         """Response for a created system message."""
-        
+
         id: str
         role: str
         content: str
         created_at: str
         metadata: dict[str, Any] | None = None
-    
+
     @router.post(
         "/{conversation_id}/system-message",
         response_model=SystemMessageResponse,
@@ -1854,14 +2064,15 @@ Response Guidelines:
     ) -> SystemMessageResponse:
         """
         Create an assistant message without triggering LLM.
-        
+
         This endpoint is used for transaction confirmations and system notifications
         that should appear as assistant messages but don't need LLM processing.
         """
         from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
         import logging
+
         logger = logging.getLogger(__name__)
-        
+
         # Resolve user
         user = await _resolve_chat_user(
             http_request=http_request,
@@ -1869,7 +2080,7 @@ Response Guidelines:
             current_user=current_user,
             language=request_body.language,
         )
-        
+
         # Verify conversation belongs to user
         conversation = await conversation_service.get(
             conversation_id=conversation_id,
@@ -1880,12 +2091,12 @@ Response Guidelines:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found",
             )
-        
+
         # Build metadata
         metadata = request_body.metadata or {}
         metadata["system_message"] = True  # Mark as system-generated
         metadata["skip_llm"] = True  # Indicate LLM was not used
-        
+
         # Create assistant message directly (no LLM invocation)
         assistant_message = ChatMessage.create_assistant_message(
             conversation_id=conversation_id,
@@ -1897,18 +2108,18 @@ Response Guidelines:
             language=request_body.language,
             metadata=metadata,
         )
-        
+
         # Save to database
         await message_repository.save(assistant_message)
-        
+
         # Update conversation message count
         conversation.increment_messages()
-        
+
         logger.info(
             f"Created system message {assistant_message.id} in conversation {conversation_id} "
             f"for user {user.id} (type: {metadata.get('type', 'unknown')})"
         )
-        
+
         return SystemMessageResponse(
             id=str(assistant_message.id),
             role=assistant_message.role.value,
@@ -1916,13 +2127,13 @@ Response Guidelines:
             created_at=assistant_message.created_at.isoformat(),
             metadata=assistant_message.metadata,
         )
-    
+
     class SaveSwapQuoteResponse(BaseModel):
         """Response after saving swap quote."""
-        
+
         message_id: str
         metadata: dict[str, Any]
-    
+
     @router.patch(
         "/{conversation_id}/messages/{message_id}/swap-quote",
         response_model=SaveSwapQuoteResponse,
@@ -1954,15 +2165,16 @@ Response Guidelines:
     ) -> SaveSwapQuoteResponse:
         """Save swap quote data to a message."""
         import logging
+
         logger = logging.getLogger(__name__)
-        
+
         # Resolve user
         user = await _resolve_chat_user(
             http_request=http_request,
             user_service=user_service,
             current_user=current_user,
         )
-        
+
         # Verify conversation belongs to user
         conversation = await conversation_service.get(
             conversation_id=conversation_id,
@@ -1973,7 +2185,7 @@ Response Guidelines:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found",
             )
-        
+
         # Build swap metadata
         swap_metadata = {
             "swap_info": {
@@ -1982,24 +2194,24 @@ Response Guidelines:
                 "saved_at": datetime.now(UTC).isoformat(),
             }
         }
-        
+
         # Update message metadata
         updated_message = await message_repository.update_metadata(
             message_id=message_id,
             metadata=swap_metadata,
             merge=True,
         )
-        
+
         if not updated_message:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Message not found",
             )
-        
+
         logger.info(
             f"Saved swap quote for message {message_id} in conversation {conversation_id}"
         )
-        
+
         return SaveSwapQuoteResponse(
             message_id=str(message_id),
             metadata=updated_message.metadata,
@@ -2012,15 +2224,23 @@ Response Guidelines:
     class ExecuteRequest(BaseModel):
         """Request to execute a transaction step."""
 
-        transaction_hash: str = Field(..., description="Transaction hash of completed step")
-        metadata: dict[str, Any] | None = Field(None, description="Additional metadata (e.g., loop_id for leverage loops)")
+        transaction_hash: str = Field(
+            ..., description="Transaction hash of completed step"
+        )
+        metadata: dict[str, Any] | None = Field(
+            None, description="Additional metadata (e.g., loop_id for leverage loops)"
+        )
 
     class ExecuteResponse(BaseModel):
         """Response from executing a transaction step."""
 
         message: str = Field(..., description="Status message")
-        execute_data: dict[str, Any] | None = Field(None, description="Next step execute data (if any)")
-        metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+        execute_data: dict[str, Any] | None = Field(
+            None, description="Next step execute data (if any)"
+        )
+        metadata: dict[str, Any] = Field(
+            default_factory=dict, description="Additional metadata"
+        )
 
     @router.post(
         "/{conversation_id}/execute",
@@ -2055,7 +2275,9 @@ Response Guidelines:
         from app.domain.ports.morpho_gateway import MorphoGateway
         from app.domain.ports.balance_checker import IBalanceChecker
         from app.domain.ports.lending_repository import ILendingRepository
-        from app.application.lending.interactors.leverage_loop_interactor import LeverageLoopInteractor
+        from app.application.lending.interactors.leverage_loop_interactor import (
+            LeverageLoopInteractor,
+        )
 
         logger = logging.getLogger(__name__)
 
@@ -2070,13 +2292,20 @@ Response Guidelines:
         # LENDING OPERATIONS (Leverage Loops, Supply, Borrow, etc.)
         # ============================================================
         LENDING_ACTIONS = {
-            "supply", "withdraw", "borrow", "repay", "liquidate",
-            "leverage_loop", "loop_supply", "loop_borrow", "loop_swap"
+            "supply",
+            "withdraw",
+            "borrow",
+            "repay",
+            "liquidate",
+            "leverage_loop",
+            "loop_supply",
+            "loop_borrow",
+            "loop_swap",
         }
 
         if request.metadata and (
-            request.metadata.get("loop_id") or
-            request.metadata.get("action") in LENDING_ACTIONS
+            request.metadata.get("loop_id")
+            or request.metadata.get("action") in LENDING_ACTIONS
         ):
             action = request.metadata.get("action", "leverage_loop")
             tx_hash = request.transaction_hash
@@ -2105,7 +2334,9 @@ Response Guidelines:
                         app_user = await current_user.get_current_user()
                         user_id_value = app_user.id_.value
                     except (AuthenticationError, AuthorizationError):
-                        user_id_value = int(user.identifier) if user.identifier.isdigit() else 0
+                        user_id_value = (
+                            int(user.identifier) if user.identifier.isdigit() else 0
+                        )
 
                     # Parse chain
                     try:
@@ -2181,7 +2412,10 @@ Response Guidelines:
                         f"action={action}, protocol={protocol}, tx_hash={tx_hash[:10]}..."
                     )
                 except Exception as save_error:
-                    logger.error(f"Failed to persist lending transaction: {save_error}", exc_info=True)
+                    logger.error(
+                        f"Failed to persist lending transaction: {save_error}",
+                        exc_info=True,
+                    )
 
             # Build response message
             action_messages = {
@@ -2195,7 +2429,9 @@ Response Guidelines:
                 "loop_swap": "Loop swap completed.",
             }
 
-            message = action_messages.get(action, f"Lending operation {action} completed.")
+            message = action_messages.get(
+                action, f"Lending operation {action} completed."
+            )
             is_complete = step_completed >= total_steps
 
             if not is_complete:
@@ -2216,7 +2452,7 @@ Response Guidelines:
                     "total_steps": total_steps,
                     "status": "complete" if is_complete else "in_progress",
                     "saved_to_db": transaction_id is not None,
-                }
+                },
             )
 
         # Handle swap workflow step confirmations
@@ -2299,11 +2535,15 @@ Response Guidelines:
                     except (AuthenticationError, AuthorizationError):
                         # For guest users or auth failures, use identifier from chat_user
                         # Note: This is a fallback - ideally we should have user_id
-                        user_id_value = int(user.identifier) if user.identifier.isdigit() else 0
+                        user_id_value = (
+                            int(user.identifier) if user.identifier.isdigit() else 0
+                        )
 
                     # Parse chain
                     try:
-                        chain_enum = ChainType[chain.upper()] if chain else ChainType.BASE
+                        chain_enum = (
+                            ChainType[chain.upper()] if chain else ChainType.BASE
+                        )
                     except (KeyError, AttributeError):
                         chain_mapping = {
                             "ethereum": ChainType.ETHEREUM,
@@ -2312,7 +2552,9 @@ Response Guidelines:
                             "arbitrum": ChainType.ARBITRUM,
                             "optimism": ChainType.OPTIMISM,
                         }
-                        chain_enum = chain_mapping.get(chain.lower() if chain else "base", ChainType.BASE)
+                        chain_enum = chain_mapping.get(
+                            chain.lower() if chain else "base", ChainType.BASE
+                        )
 
                     # Parse amounts (if available)
                     amount_in = None
@@ -2331,7 +2573,9 @@ Response Guidelines:
                         "total_steps": total_steps,
                         "source_chain": source_chain,
                         "destination_chain": destination_chain,
-                        "workflow_type": "multi_step" if total_steps > 1 else "single_step",
+                        "workflow_type": "multi_step"
+                        if total_steps > 1
+                        else "single_step",
                     }
 
                     # Create transaction entity
@@ -2375,7 +2619,7 @@ Response Guidelines:
                     # Log error but don't fail the request
                     logger.error(
                         f"Failed to persist transaction (non-critical): {save_error}",
-                        exc_info=True
+                        exc_info=True,
                     )
 
             return ExecuteResponse(
@@ -2399,15 +2643,17 @@ Response Guidelines:
                     "source_chain": source_chain,
                     "destination_chain": destination_chain,
                     "saved_to_db": transaction_id is not None,  # Confirmation flag
-                }
+                },
             )
 
         # ============================================================
         # MONEY MARKET OPERATIONS (Rate Comparisons, Deposits, etc.)
         # ============================================================
         MONEY_MARKET_ACTIONS = {
-            "money_market_deposit", "money_market_withdraw",
-            "rate_comparison", "yield_optimization"
+            "money_market_deposit",
+            "money_market_withdraw",
+            "rate_comparison",
+            "yield_optimization",
         }
 
         if request.metadata and request.metadata.get("action") in MONEY_MARKET_ACTIONS:
@@ -2433,7 +2679,9 @@ Response Guidelines:
                         app_user = await current_user.get_current_user()
                         user_id_value = app_user.id_.value
                     except (AuthenticationError, AuthorizationError):
-                        user_id_value = int(user.identifier) if user.identifier.isdigit() else 0
+                        user_id_value = (
+                            int(user.identifier) if user.identifier.isdigit() else 0
+                        )
 
                     # Parse chain
                     try:
@@ -2450,7 +2698,11 @@ Response Guidelines:
                             pass
 
                     # Determine transaction type
-                    tx_type = TransactionType.FUND if "deposit" in action else TransactionType.SEND
+                    tx_type = (
+                        TransactionType.FUND
+                        if "deposit" in action
+                        else TransactionType.SEND
+                    )
 
                     # Build metadata
                     tx_metadata = {
@@ -2497,7 +2749,10 @@ Response Guidelines:
                         f"action={action}, protocol={protocol}"
                     )
                 except Exception as save_error:
-                    logger.error(f"Failed to persist money market transaction: {save_error}", exc_info=True)
+                    logger.error(
+                        f"Failed to persist money market transaction: {save_error}",
+                        exc_info=True,
+                    )
 
             # Build response
             action_messages = {
@@ -2507,7 +2762,9 @@ Response Guidelines:
                 "yield_optimization": f"Yield optimization executed on {protocol}.",
             }
 
-            message = action_messages.get(action, f"Money market operation {action} completed.")
+            message = action_messages.get(
+                action, f"Money market operation {action} completed."
+            )
 
             return ExecuteResponse(
                 message=message,
@@ -2520,15 +2777,16 @@ Response Guidelines:
                     "apy": apy,
                     "status": "complete",
                     "saved_to_db": transaction_id is not None,
-                }
+                },
             )
 
         # Handle unknown execution types
-        logger.warning(f"Unknown execution type for conversation {conversation_id}, metadata={request.metadata}")
+        logger.warning(
+            f"Unknown execution type for conversation {conversation_id}, metadata={request.metadata}"
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Unknown execution type. Supported: swap actions, lending operations, money_market operations.",
         )
 
     return router
-

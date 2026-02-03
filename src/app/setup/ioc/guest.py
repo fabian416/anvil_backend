@@ -36,11 +36,14 @@ from app.infrastructure.adapters.external.moonpay_swap_client import MoonPaySwap
 # Dishka needs actual types at runtime, not string literals
 try:
     from app.domain.services.agent_squad.intent_classifier import IntentClassifier
-    from app.domain.services.agent_squad.guest_supervisor import GuestSupervisorCoordinator
+    from app.domain.services.agent_squad.guest_supervisor import (
+        GuestSupervisorCoordinator,
+    )
     from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
 except ImportError:
     # Agent Squad not available - create dummy types for type hints
     from typing import Any
+
     IntentClassifier = Any  # type: ignore
     GuestSupervisorCoordinator = Any  # type: ignore
     AgentOrchestrator = Any  # type: ignore
@@ -64,7 +67,7 @@ class GuestProvider(Provider):
     ) -> LendingHandler:
         """
         Provide lending handler for Morpho vault operations.
-        
+
         Uses real Morpho GraphQL API for vault data.
         """
         return LendingHandler(morpho_gateway=morpho_gateway)
@@ -75,46 +78,51 @@ class GuestProvider(Provider):
     ) -> SwapHandler | None:
         """
         Provide SwapHandler with real 1inch/LiFi clients if API keys are available.
-        
+
         Returns None if no API keys configured (falls back to demo mode).
         """
         import os
         from app.setup.config.loader import load_full_config, get_current_env
-        
+
         # Try to get 1inch API key
         oneinch_api_key = os.getenv("ONEINCH_API_KEY", "").strip()
         if not oneinch_api_key:
             try:
                 raw_config = load_full_config(env=get_current_env())
-                if 'external_apis' in raw_config and isinstance(raw_config['external_apis'], dict):
-                    oneinch_key = raw_config['external_apis'].get('ONEINCH_API_KEY', '')
+                if "external_apis" in raw_config and isinstance(
+                    raw_config["external_apis"], dict
+                ):
+                    oneinch_key = raw_config["external_apis"].get("ONEINCH_API_KEY", "")
                     if oneinch_key:
                         oneinch_api_key = str(oneinch_key).strip()
             except Exception:
                 pass
-        
+
         # Only create handler if we have at least one API key
         if not oneinch_api_key:
             return None
-        
+
         try:
-            from app.infrastructure.adapters.external.oneinch_client import OneInchClient
-            
+            from app.infrastructure.adapters.external.oneinch_client import (
+                OneInchClient,
+            )
+
             # OneInchClient uses chain name (not chain_id)
             oneinch_client = OneInchClient(
                 api_key=oneinch_api_key,
                 chain="ethereum",  # Default to Ethereum mainnet
             )
-            
+
             # LiFi doesn't require API key - always try to create it
             lifi_client = None
             try:
                 from app.infrastructure.adapters.external.lifi_client import LiFiClient
+
                 lifi_client = LiFiClient()
                 logger.info("LiFi client created successfully")
             except Exception as e:
                 logger.debug(f"LiFi client not available: {e}")
-            
+
             logger.info("SwapHandler created with real 1inch client")
             return SwapHandler(
                 oneinch_client=oneinch_client,
@@ -185,7 +193,9 @@ class GuestProvider(Provider):
         - Hunter AI and ULTRA handlers don't require DI as they are stateless.
         """
         from app.application.portfolio.portfolio_service import PortfolioService
-        from app.domain.portfolio.ports.portfolio.portfolio_repository import PortfolioRepository
+        from app.domain.portfolio.ports.portfolio.portfolio_repository import (
+            PortfolioRepository,
+        )
         from app.domain.ports.wallet.wallet_repository import WalletRepository
         from dishka import FromDishka
         import dishka
@@ -198,8 +208,12 @@ class GuestProvider(Provider):
             # Note: This is a workaround since we can't directly inject PortfolioService here
             # because Dishka requires explicit parameter declaration
             # TODO: Refactor to use proper DI injection when restructuring providers
-            from app.infrastructure.adapters.portfolio_repository_sqla import SqlaPortfolioRepository
-            from app.infrastructure.adapters.wallet_repository_sqla import SqlaWalletRepository
+            from app.infrastructure.adapters.portfolio_repository_sqla import (
+                SqlaPortfolioRepository,
+            )
+            from app.infrastructure.adapters.wallet_repository_sqla import (
+                SqlaWalletRepository,
+            )
             from app.infrastructure.adapters.types import MainAsyncSession
 
             # We'll create it inline with proper dependencies for now
@@ -261,23 +275,23 @@ class GuestProvider(Provider):
     ) -> SendGuestMessage:
         """
         Provide SendGuestMessage command with GuestSupervisorCoordinator as PRIMARY handler.
-        
+
         GuestSupervisorCoordinator is the PRIMARY handler - it routes ALL queries
         to appropriate agents with guest-specific prompts and routing.
-        
+
         ARCHITECTURE NOTE:
         - GuestSupervisorCoordinator is ISOLATED from AuthenticatedSupervisorCoordinator
         - Changes to guest prompts do NOT affect authenticated users
         - Changes to authenticated prompts do NOT affect guests
-        
+
         GuestSupervisorCoordinator is injected from AgentSquadDomainProvider if available.
         If not available (None), falls back to normal intent detection flow.
         """
         distillation_engine = None
-        
+
         # GuestSupervisorCoordinator is PRIMARY - handles all routing intelligently
         # If None, command will fall back to normal flow gracefully
-        
+
         return SendGuestMessage(
             guest_repository=guest_repository,
             intent_detector=intent_detector,

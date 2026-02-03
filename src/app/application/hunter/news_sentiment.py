@@ -246,9 +246,7 @@ class NewsSentimentAnalyzer:
             },
         )
 
-    async def _fetch_articles(
-        self, token_symbol: str, hours: int
-    ) -> List[Dict]:
+    async def _fetch_articles(self, token_symbol: str, hours: int) -> List[Dict]:
         """Fetch news articles mentioning token.
 
         Uses real RSS feeds from crypto news sources.
@@ -291,8 +289,10 @@ class NewsSentimentAnalyzer:
                 # Filter by time window
                 cutoff_time = utc_now() - timedelta(hours=hours)
                 recent_articles = [
-                    a for a in articles
-                    if a.published.replace(tzinfo=None) > cutoff_time.replace(tzinfo=None)
+                    a
+                    for a in articles
+                    if a.published.replace(tzinfo=None)
+                    > cutoff_time.replace(tzinfo=None)
                 ]
 
                 # Convert to dict format for analysis
@@ -405,9 +405,7 @@ class NewsSentimentAnalyzer:
 
         return weighted_sum / total_weight if total_weight > 0 else 50.0
 
-    def _calculate_confidence(
-        self, articles: List[Dict], scores: List[float]
-    ) -> float:
+    def _calculate_confidence(self, articles: List[Dict], scores: List[float]) -> float:
         """Calculate confidence in sentiment analysis.
 
         Args:
@@ -458,9 +456,7 @@ class NewsSentimentAnalyzer:
             },
         )
 
-    async def get_top_headlines(
-        self, limit: int = 10
-    ) -> List[Dict]:
+    async def get_top_headlines(self, limit: int = 10) -> List[Dict]:
         """Get top cryptocurrency news headlines.
 
         Args:

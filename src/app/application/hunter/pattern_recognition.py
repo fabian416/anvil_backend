@@ -181,9 +181,7 @@ class PatternRecognizer:
         self.config = config or PatternConfig()
         self.price_service = price_service or PriceDataService()
 
-    async def detect_chart_patterns(
-        self, token_symbol: str
-    ) -> List[DetectedPattern]:
+    async def detect_chart_patterns(self, token_symbol: str) -> List[DetectedPattern]:
         """Detect chart patterns.
 
         Args:
@@ -316,7 +314,9 @@ class PatternRecognizer:
         # Find peaks
         peaks = []
         for i in range(5, len(highs) - 5):
-            if highs[i] > max(highs[i-5:i]) and highs[i] > max(highs[i+1:i+6]):
+            if highs[i] > max(highs[i - 5 : i]) and highs[i] > max(
+                highs[i + 1 : i + 6]
+            ):
                 peaks.append((i, highs[i]))
 
         # Look for H&S pattern in peaks
@@ -329,33 +329,39 @@ class PatternRecognizer:
                 # Head should be higher than shoulders
                 if head[1] > left_shoulder[1] and head[1] > right_shoulder[1]:
                     # Shoulders should be roughly equal
-                    shoulder_diff = abs(left_shoulder[1] - right_shoulder[1]) / left_shoulder[1]
+                    shoulder_diff = (
+                        abs(left_shoulder[1] - right_shoulder[1]) / left_shoulder[1]
+                    )
 
                     if shoulder_diff < 0.05:  # Within 5%
                         # Neckline is the low between shoulders
-                        neckline = min(closes[left_shoulder[0]:right_shoulder[0]])
+                        neckline = min(closes[left_shoulder[0] : right_shoulder[0]])
 
                         confidence = 0.7 - (shoulder_diff * 2)  # Adjust for symmetry
 
-                        patterns.append(DetectedPattern(
-                            pattern_type=PatternType.HEAD_SHOULDERS,
-                            signal=SignalDirection.BEARISH,
-                            confidence=confidence,
-                            start_date=prices[left_shoulder[0]].timestamp,
-                            end_date=prices[right_shoulder[0]].timestamp,
-                            key_levels={
-                                "left_shoulder": left_shoulder[1],
-                                "head": head[1],
-                                "right_shoulder": right_shoulder[1],
-                                "neckline": neckline,
-                                "target": neckline - (head[1] - neckline),
-                            },
-                            description="Head and shoulders pattern indicates bearish reversal",
-                        ))
+                        patterns.append(
+                            DetectedPattern(
+                                pattern_type=PatternType.HEAD_SHOULDERS,
+                                signal=SignalDirection.BEARISH,
+                                confidence=confidence,
+                                start_date=prices[left_shoulder[0]].timestamp,
+                                end_date=prices[right_shoulder[0]].timestamp,
+                                key_levels={
+                                    "left_shoulder": left_shoulder[1],
+                                    "head": head[1],
+                                    "right_shoulder": right_shoulder[1],
+                                    "neckline": neckline,
+                                    "target": neckline - (head[1] - neckline),
+                                },
+                                description="Head and shoulders pattern indicates bearish reversal",
+                            )
+                        )
 
         return patterns
 
-    def _detect_double_patterns(self, prices: List[PricePoint]) -> List[DetectedPattern]:
+    def _detect_double_patterns(
+        self, prices: List[PricePoint]
+    ) -> List[DetectedPattern]:
         """Detect double top/bottom patterns."""
         patterns = []
 
@@ -368,7 +374,9 @@ class PatternRecognizer:
         # Find peaks for double top
         peaks = []
         for i in range(3, len(highs) - 3):
-            if highs[i] > max(highs[i-3:i]) and highs[i] > max(highs[i+1:i+4]):
+            if highs[i] > max(highs[i - 3 : i]) and highs[i] > max(
+                highs[i + 1 : i + 4]
+            ):
                 peaks.append((i, highs[i]))
 
         # Check for double top
@@ -380,27 +388,31 @@ class PatternRecognizer:
                 price_diff = abs(peak1[1] - peak2[1]) / peak1[1]
 
                 if price_diff < 0.03:  # Within 3%
-                    neckline = min(lows[peak1[0]:peak2[0]])
+                    neckline = min(lows[peak1[0] : peak2[0]])
                     confidence = 0.75 - (price_diff * 5)
 
-                    patterns.append(DetectedPattern(
-                        pattern_type=PatternType.DOUBLE_TOP,
-                        signal=SignalDirection.BEARISH,
-                        confidence=confidence,
-                        start_date=prices[peak1[0]].timestamp,
-                        end_date=prices[peak2[0]].timestamp,
-                        key_levels={
-                            "peak1": peak1[1],
-                            "peak2": peak2[1],
-                            "neckline": neckline,
-                            "target": neckline - (peak1[1] - neckline),
-                        },
-                        description="Double top pattern indicates bearish reversal",
-                    ))
+                    patterns.append(
+                        DetectedPattern(
+                            pattern_type=PatternType.DOUBLE_TOP,
+                            signal=SignalDirection.BEARISH,
+                            confidence=confidence,
+                            start_date=prices[peak1[0]].timestamp,
+                            end_date=prices[peak2[0]].timestamp,
+                            key_levels={
+                                "peak1": peak1[1],
+                                "peak2": peak2[1],
+                                "neckline": neckline,
+                                "target": neckline - (peak1[1] - neckline),
+                            },
+                            description="Double top pattern indicates bearish reversal",
+                        )
+                    )
 
         return patterns
 
-    def _detect_triple_patterns(self, prices: List[PricePoint]) -> List[DetectedPattern]:
+    def _detect_triple_patterns(
+        self, prices: List[PricePoint]
+    ) -> List[DetectedPattern]:
         """Detect triple top/bottom patterns."""
         # Similar to double patterns but with 3 peaks/troughs
         # Simplified for now
@@ -423,49 +435,55 @@ class PatternRecognizer:
 
         # Ascending triangle: flat resistance, rising support
         if abs(upper_slope) < 0.01 and lower_slope > 0.02:
-            patterns.append(DetectedPattern(
-                pattern_type=PatternType.ASCENDING_TRIANGLE,
-                signal=SignalDirection.BULLISH,
-                confidence=0.7,
-                start_date=prices[-30].timestamp,
-                end_date=prices[-1].timestamp,
-                key_levels={
-                    "resistance": max(highs),
-                    "support_start": lows[0],
-                    "support_end": lows[-1],
-                },
-                description="Ascending triangle indicates bullish breakout potential",
-            ))
+            patterns.append(
+                DetectedPattern(
+                    pattern_type=PatternType.ASCENDING_TRIANGLE,
+                    signal=SignalDirection.BULLISH,
+                    confidence=0.7,
+                    start_date=prices[-30].timestamp,
+                    end_date=prices[-1].timestamp,
+                    key_levels={
+                        "resistance": max(highs),
+                        "support_start": lows[0],
+                        "support_end": lows[-1],
+                    },
+                    description="Ascending triangle indicates bullish breakout potential",
+                )
+            )
 
         # Descending triangle: falling resistance, flat support
         elif upper_slope < -0.02 and abs(lower_slope) < 0.01:
-            patterns.append(DetectedPattern(
-                pattern_type=PatternType.DESCENDING_TRIANGLE,
-                signal=SignalDirection.BEARISH,
-                confidence=0.7,
-                start_date=prices[-30].timestamp,
-                end_date=prices[-1].timestamp,
-                key_levels={
-                    "support": min(lows),
-                    "resistance_start": highs[0],
-                    "resistance_end": highs[-1],
-                },
-                description="Descending triangle indicates bearish breakdown potential",
-            ))
+            patterns.append(
+                DetectedPattern(
+                    pattern_type=PatternType.DESCENDING_TRIANGLE,
+                    signal=SignalDirection.BEARISH,
+                    confidence=0.7,
+                    start_date=prices[-30].timestamp,
+                    end_date=prices[-1].timestamp,
+                    key_levels={
+                        "support": min(lows),
+                        "resistance_start": highs[0],
+                        "resistance_end": highs[-1],
+                    },
+                    description="Descending triangle indicates bearish breakdown potential",
+                )
+            )
 
         # Symmetrical triangle: converging trend lines
         elif upper_slope < -0.01 and lower_slope > 0.01:
-            patterns.append(DetectedPattern(
-                pattern_type=PatternType.SYMMETRICAL_TRIANGLE,
-                signal=SignalDirection.NEUTRAL,
-                confidence=0.65,
-                start_date=prices[-30].timestamp,
-                end_date=prices[-1].timestamp,
-                key_levels={
-                    "apex": (highs[-1] + lows[-1]) / 2,
-                },
-                description="Symmetrical triangle indicates potential breakout in either direction",
-            ))
+            patterns.append(
+                DetectedPattern(
+                    pattern_type=PatternType.SYMMETRICAL_TRIANGLE,
+                    signal=SignalDirection.NEUTRAL,
+                    confidence=0.65,
+                    start_date=prices[-30].timestamp,
+                    end_date=prices[-1].timestamp,
+                    key_levels={
+                        "apex": (highs[-1] + lows[-1]) / 2,
+                    },
+                    description="Symmetrical triangle indicates potential breakout in either direction",
+                )
+            )
 
         return patterns
 
@@ -479,7 +497,9 @@ class PatternRecognizer:
         # Simplified implementation
         return []
 
-    def _detect_doji_patterns(self, prices: List[PricePoint]) -> List[CandlestickSignal]:
+    def _detect_doji_patterns(
+        self, prices: List[PricePoint]
+    ) -> List[CandlestickSignal]:
         """Detect doji candlestick patterns."""
         signals = []
 
@@ -500,40 +520,48 @@ class PatternRecognizer:
 
                 # Dragonfly doji: long lower shadow
                 if lower_shadow > 2 * upper_shadow:
-                    signals.append(CandlestickSignal(
-                        pattern=CandlestickPattern.DRAGONFLY_DOJI,
-                        signal=SignalDirection.BULLISH,
-                        confidence=0.7,
-                        date=candle.timestamp,
-                        price=candle.close,
-                        description="Dragonfly doji indicates potential bullish reversal",
-                    ))
+                    signals.append(
+                        CandlestickSignal(
+                            pattern=CandlestickPattern.DRAGONFLY_DOJI,
+                            signal=SignalDirection.BULLISH,
+                            confidence=0.7,
+                            date=candle.timestamp,
+                            price=candle.close,
+                            description="Dragonfly doji indicates potential bullish reversal",
+                        )
+                    )
 
                 # Gravestone doji: long upper shadow
                 elif upper_shadow > 2 * lower_shadow:
-                    signals.append(CandlestickSignal(
-                        pattern=CandlestickPattern.GRAVESTONE_DOJI,
-                        signal=SignalDirection.BEARISH,
-                        confidence=0.7,
-                        date=candle.timestamp,
-                        price=candle.close,
-                        description="Gravestone doji indicates potential bearish reversal",
-                    ))
+                    signals.append(
+                        CandlestickSignal(
+                            pattern=CandlestickPattern.GRAVESTONE_DOJI,
+                            signal=SignalDirection.BEARISH,
+                            confidence=0.7,
+                            date=candle.timestamp,
+                            price=candle.close,
+                            description="Gravestone doji indicates potential bearish reversal",
+                        )
+                    )
 
                 # Standard doji
                 else:
-                    signals.append(CandlestickSignal(
-                        pattern=CandlestickPattern.DOJI,
-                        signal=SignalDirection.NEUTRAL,
-                        confidence=0.6,
-                        date=candle.timestamp,
-                        price=candle.close,
-                        description="Doji indicates market indecision",
-                    ))
+                    signals.append(
+                        CandlestickSignal(
+                            pattern=CandlestickPattern.DOJI,
+                            signal=SignalDirection.NEUTRAL,
+                            confidence=0.6,
+                            date=candle.timestamp,
+                            price=candle.close,
+                            description="Doji indicates market indecision",
+                        )
+                    )
 
         return signals
 
-    def _detect_hammer_patterns(self, prices: List[PricePoint]) -> List[CandlestickSignal]:
+    def _detect_hammer_patterns(
+        self, prices: List[PricePoint]
+    ) -> List[CandlestickSignal]:
         """Detect hammer and hanging man patterns."""
         signals = []
 
@@ -551,21 +579,25 @@ class PatternRecognizer:
             # Hammer: small body, long lower shadow, small upper shadow
             if lower_shadow > 2 * body_size and upper_shadow < body_size * 0.5:
                 # Context matters: hammer at bottom, hanging man at top
-                is_downtrend = i > 5 and prices[i-5].close > candle.close
+                is_downtrend = i > 5 and prices[i - 5].close > candle.close
 
                 if is_downtrend:
-                    signals.append(CandlestickSignal(
-                        pattern=CandlestickPattern.HAMMER,
-                        signal=SignalDirection.BULLISH,
-                        confidence=0.75,
-                        date=candle.timestamp,
-                        price=candle.close,
-                        description="Hammer indicates potential bullish reversal",
-                    ))
+                    signals.append(
+                        CandlestickSignal(
+                            pattern=CandlestickPattern.HAMMER,
+                            signal=SignalDirection.BULLISH,
+                            confidence=0.75,
+                            date=candle.timestamp,
+                            price=candle.close,
+                            description="Hammer indicates potential bullish reversal",
+                        )
+                    )
 
         return signals
 
-    def _detect_engulfing_patterns(self, prices: List[PricePoint]) -> List[CandlestickSignal]:
+    def _detect_engulfing_patterns(
+        self, prices: List[PricePoint]
+    ) -> List[CandlestickSignal]:
         """Detect engulfing patterns."""
         signals = []
 
@@ -580,31 +612,37 @@ class PatternRecognizer:
             if prev.close < prev.open and curr.close > curr.open:
                 if curr.open <= prev.close and curr.close >= prev.open:
                     if curr_body > prev_body * 1.5:
-                        signals.append(CandlestickSignal(
-                            pattern=CandlestickPattern.BULLISH_ENGULFING,
-                            signal=SignalDirection.BULLISH,
-                            confidence=0.8,
-                            date=curr.timestamp,
-                            price=curr.close,
-                            description="Bullish engulfing indicates strong buying pressure",
-                        ))
+                        signals.append(
+                            CandlestickSignal(
+                                pattern=CandlestickPattern.BULLISH_ENGULFING,
+                                signal=SignalDirection.BULLISH,
+                                confidence=0.8,
+                                date=curr.timestamp,
+                                price=curr.close,
+                                description="Bullish engulfing indicates strong buying pressure",
+                            )
+                        )
 
             # Bearish engulfing: small green candle followed by large red
             elif prev.close > prev.open and curr.close < curr.open:
                 if curr.open >= prev.close and curr.close <= prev.open:
                     if curr_body > prev_body * 1.5:
-                        signals.append(CandlestickSignal(
-                            pattern=CandlestickPattern.BEARISH_ENGULFING,
-                            signal=SignalDirection.BEARISH,
-                            confidence=0.8,
-                            date=curr.timestamp,
-                            price=curr.close,
-                            description="Bearish engulfing indicates strong selling pressure",
-                        ))
+                        signals.append(
+                            CandlestickSignal(
+                                pattern=CandlestickPattern.BEARISH_ENGULFING,
+                                signal=SignalDirection.BEARISH,
+                                confidence=0.8,
+                                date=curr.timestamp,
+                                price=curr.close,
+                                description="Bearish engulfing indicates strong selling pressure",
+                            )
+                        )
 
         return signals
 
-    def _detect_harami_patterns(self, prices: List[PricePoint]) -> List[CandlestickSignal]:
+    def _detect_harami_patterns(
+        self, prices: List[PricePoint]
+    ) -> List[CandlestickSignal]:
         """Detect harami patterns."""
         signals = []
 
@@ -621,29 +659,35 @@ class PatternRecognizer:
             if curr_body_top < prev_body_top and curr_body_bottom > prev_body_bottom:
                 # Bullish harami: large red followed by small green
                 if prev.close < prev.open and curr.close > curr.open:
-                    signals.append(CandlestickSignal(
-                        pattern=CandlestickPattern.BULLISH_HARAMI,
-                        signal=SignalDirection.BULLISH,
-                        confidence=0.7,
-                        date=curr.timestamp,
-                        price=curr.close,
-                        description="Bullish harami indicates potential reversal",
-                    ))
+                    signals.append(
+                        CandlestickSignal(
+                            pattern=CandlestickPattern.BULLISH_HARAMI,
+                            signal=SignalDirection.BULLISH,
+                            confidence=0.7,
+                            date=curr.timestamp,
+                            price=curr.close,
+                            description="Bullish harami indicates potential reversal",
+                        )
+                    )
 
                 # Bearish harami: large green followed by small red
                 elif prev.close > prev.open and curr.close < curr.open:
-                    signals.append(CandlestickSignal(
-                        pattern=CandlestickPattern.BEARISH_HARAMI,
-                        signal=SignalDirection.BEARISH,
-                        confidence=0.7,
-                        date=curr.timestamp,
-                        price=curr.close,
-                        description="Bearish harami indicates potential reversal",
-                    ))
+                    signals.append(
+                        CandlestickSignal(
+                            pattern=CandlestickPattern.BEARISH_HARAMI,
+                            signal=SignalDirection.BEARISH,
+                            confidence=0.7,
+                            date=curr.timestamp,
+                            price=curr.close,
+                            description="Bearish harami indicates potential reversal",
+                        )
+                    )
 
         return signals
 
-    def _detect_star_patterns(self, prices: List[PricePoint]) -> List[CandlestickSignal]:
+    def _detect_star_patterns(
+        self, prices: List[PricePoint]
+    ) -> List[CandlestickSignal]:
         """Detect morning and evening star patterns."""
         signals = []
 
@@ -657,62 +701,82 @@ class PatternRecognizer:
             third_body = abs(third.close - third.open)
 
             # Morning star: large red, small body (gap down), large green
-            if (first.close < first.open and
-                star_body < first_body * 0.3 and
-                third.close > third.open and
-                third_body > first_body * 0.8):
-
-                signals.append(CandlestickSignal(
-                    pattern=CandlestickPattern.MORNING_STAR,
-                    signal=SignalDirection.BULLISH,
-                    confidence=0.85,
-                    date=third.timestamp,
-                    price=third.close,
-                    description="Morning star indicates strong bullish reversal",
-                ))
+            if (
+                first.close < first.open
+                and star_body < first_body * 0.3
+                and third.close > third.open
+                and third_body > first_body * 0.8
+            ):
+                signals.append(
+                    CandlestickSignal(
+                        pattern=CandlestickPattern.MORNING_STAR,
+                        signal=SignalDirection.BULLISH,
+                        confidence=0.85,
+                        date=third.timestamp,
+                        price=third.close,
+                        description="Morning star indicates strong bullish reversal",
+                    )
+                )
 
             # Evening star: large green, small body (gap up), large red
-            elif (first.close > first.open and
-                  star_body < first_body * 0.3 and
-                  third.close < third.open and
-                  third_body > first_body * 0.8):
-
-                signals.append(CandlestickSignal(
-                    pattern=CandlestickPattern.EVENING_STAR,
-                    signal=SignalDirection.BEARISH,
-                    confidence=0.85,
-                    date=third.timestamp,
-                    price=third.close,
-                    description="Evening star indicates strong bearish reversal",
-                ))
+            elif (
+                first.close > first.open
+                and star_body < first_body * 0.3
+                and third.close < third.open
+                and third_body > first_body * 0.8
+            ):
+                signals.append(
+                    CandlestickSignal(
+                        pattern=CandlestickPattern.EVENING_STAR,
+                        signal=SignalDirection.BEARISH,
+                        confidence=0.85,
+                        date=third.timestamp,
+                        price=third.close,
+                        description="Evening star indicates strong bearish reversal",
+                    )
+                )
 
         return signals
 
-    def _detect_soldier_crow_patterns(self, prices: List[PricePoint]) -> List[CandlestickSignal]:
+    def _detect_soldier_crow_patterns(
+        self, prices: List[PricePoint]
+    ) -> List[CandlestickSignal]:
         """Detect three white soldiers and three black crows."""
         # Simplified implementation
         return []
 
-    def _find_local_maxima(self, prices: List[PricePoint]) -> List[Tuple[datetime, float]]:
+    def _find_local_maxima(
+        self, prices: List[PricePoint]
+    ) -> List[Tuple[datetime, float]]:
         """Find local maxima (peaks) in price data."""
         maxima = []
         highs = [p.high for p in prices]
 
         for i in range(2, len(highs) - 2):
-            if highs[i] > highs[i-1] and highs[i] > highs[i-2] and \
-               highs[i] > highs[i+1] and highs[i] > highs[i+2]:
+            if (
+                highs[i] > highs[i - 1]
+                and highs[i] > highs[i - 2]
+                and highs[i] > highs[i + 1]
+                and highs[i] > highs[i + 2]
+            ):
                 maxima.append((prices[i].timestamp, highs[i]))
 
         return maxima
 
-    def _find_local_minima(self, prices: List[PricePoint]) -> List[Tuple[datetime, float]]:
+    def _find_local_minima(
+        self, prices: List[PricePoint]
+    ) -> List[Tuple[datetime, float]]:
         """Find local minima (troughs) in price data."""
         minima = []
         lows = [p.low for p in prices]
 
         for i in range(2, len(lows) - 2):
-            if lows[i] < lows[i-1] and lows[i] < lows[i-2] and \
-               lows[i] < lows[i+1] and lows[i] < lows[i+2]:
+            if (
+                lows[i] < lows[i - 1]
+                and lows[i] < lows[i - 2]
+                and lows[i] < lows[i + 1]
+                and lows[i] < lows[i + 2]
+            ):
                 minima.append((prices[i].timestamp, lows[i]))
 
         return minima
@@ -733,7 +797,7 @@ class PatternRecognizer:
 
             # Find nearby prices (within tolerance)
             cluster = [(date1, price1)]
-            for j, (date2, price2) in enumerate(extrema[i+1:], start=i+1):
+            for j, (date2, price2) in enumerate(extrema[i + 1 :], start=i + 1):
                 if abs(price2 - price1) / price1 < self.config.price_tolerance:
                     cluster.append((date2, price2))
                     used.add(j)
@@ -746,14 +810,16 @@ class PatternRecognizer:
                 # Strength based on number of touches
                 strength = min(len(cluster) / 5.0, 1.0)
 
-                levels.append(SupportResistanceLevel(
-                    level=float(avg_price),
-                    level_type=level_type,
-                    strength=strength,
-                    touches=len(cluster),
-                    first_touch=first_date,
-                    last_touch=last_date,
-                ))
+                levels.append(
+                    SupportResistanceLevel(
+                        level=float(avg_price),
+                        level_type=level_type,
+                        strength=strength,
+                        touches=len(cluster),
+                        first_touch=first_date,
+                        last_touch=last_date,
+                    )
+                )
 
         # Sort by strength
         levels.sort(key=lambda x: x.strength, reverse=True)

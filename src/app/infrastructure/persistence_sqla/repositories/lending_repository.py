@@ -96,9 +96,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
             await self._session.commit()
         except SQLAlchemyError as e:
             await self._session.rollback()
-            raise RepositoryError(
-                f"Failed to save lending position: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to save lending position: {str(e)}") from e
 
     async def save_supply(self, supply: SupplyPosition) -> None:
         """Save a supply position."""
@@ -137,9 +135,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
             await self._session.commit()
         except SQLAlchemyError as e:
             await self._session.rollback()
-            raise RepositoryError(
-                f"Failed to save supply position: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to save supply position: {str(e)}") from e
 
     async def save_borrow(self, borrow: BorrowPosition) -> None:
         """Save a borrow position."""
@@ -181,9 +177,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
             await self._session.commit()
         except SQLAlchemyError as e:
             await self._session.rollback()
-            raise RepositoryError(
-                f"Failed to save borrow position: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to save borrow position: {str(e)}") from e
 
     async def save_transaction(self, transaction: LendingTransaction) -> None:
         """Save a lending transaction."""
@@ -271,13 +265,9 @@ class SQLAlchemyLendingRepository(ILendingRepository):
                 for row in rows
             ]
         except SQLAlchemyError as e:
-            raise RepositoryError(
-                f"Failed to fetch user positions: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to fetch user positions: {str(e)}") from e
 
-    async def get_position_by_id(
-        self, position_id: UUID
-    ) -> Optional[LendingPosition]:
+    async def get_position_by_id(self, position_id: UUID) -> Optional[LendingPosition]:
         """Get a lending position by ID."""
         try:
             query = """
@@ -288,9 +278,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
                 WHERE id = :position_id
             """
 
-            result = await self._session.execute(
-                query, {"position_id": position_id}
-            )
+            result = await self._session.execute(query, {"position_id": position_id})
             row = result.fetchone()
 
             if not row:
@@ -313,9 +301,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
                 updated_at=row[13],
             )
         except SQLAlchemyError as e:
-            raise RepositoryError(
-                f"Failed to fetch position by ID: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to fetch position by ID: {str(e)}") from e
 
     async def get_user_transactions(
         self,
@@ -362,12 +348,8 @@ class SQLAlchemyLendingRepository(ILendingRepository):
                     amount=Decimal(str(row[7])),
                     transaction_hash=row[8],
                     status=row[9],
-                    health_factor_before=Decimal(str(row[10]))
-                    if row[10]
-                    else None,
-                    health_factor_after=Decimal(str(row[11]))
-                    if row[11]
-                    else None,
+                    health_factor_before=Decimal(str(row[10])) if row[10] else None,
+                    health_factor_after=Decimal(str(row[11])) if row[11] else None,
                     metadata=row[12],
                     created_at=row[13],
                     confirmed_at=row[14],
@@ -375,9 +357,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
                 for row in rows
             ]
         except SQLAlchemyError as e:
-            raise RepositoryError(
-                f"Failed to fetch user transactions: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to fetch user transactions: {str(e)}") from e
 
     async def update_transaction_status(
         self,
@@ -413,9 +393,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
     # USER PREFERENCES
     # =========================================================================
 
-    async def save_user_preferences(
-        self, preferences: UserLendingPreferences
-    ) -> None:
+    async def save_user_preferences(self, preferences: UserLendingPreferences) -> None:
         """Save or update user lending preferences."""
         try:
             query = """
@@ -461,9 +439,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
             await self._session.commit()
         except SQLAlchemyError as e:
             await self._session.rollback()
-            raise RepositoryError(
-                f"Failed to save user preferences: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to save user preferences: {str(e)}") from e
 
     async def get_user_preferences(
         self, user_id: UUID
@@ -492,18 +468,14 @@ class SQLAlchemyLendingRepository(ILendingRepository):
                 max_leverage=Decimal(str(row[4])),
                 preferred_protocol=row[5],
                 auto_rebalance=row[6],
-                notification_health_threshold=Decimal(str(row[7]))
-                if row[7]
-                else None,
+                notification_health_threshold=Decimal(str(row[7])) if row[7] else None,
                 notification_email=row[8],
                 notification_enabled=row[9],
                 created_at=row[10],
                 updated_at=row[11],
             )
         except SQLAlchemyError as e:
-            raise RepositoryError(
-                f"Failed to fetch user preferences: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to fetch user preferences: {str(e)}") from e
 
     # =========================================================================
     # HEALTH CHECKS
@@ -544,9 +516,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
             await self._session.commit()
         except SQLAlchemyError as e:
             await self._session.rollback()
-            raise RepositoryError(
-                f"Failed to save health check: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to save health check: {str(e)}") from e
 
     async def get_recent_health_checks(
         self, user_id: UUID, protocol: Optional[str] = None, limit: int = 10
@@ -580,9 +550,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
                     health_factor_level=row[5],
                     total_collateral_usd=Decimal(str(row[6])),
                     total_debt_usd=Decimal(str(row[7])),
-                    available_to_borrow_usd=Decimal(str(row[8]))
-                    if row[8]
-                    else None,
+                    available_to_borrow_usd=Decimal(str(row[8])) if row[8] else None,
                     liquidation_price=Decimal(str(row[9])) if row[9] else None,
                     checked_at=row[10],
                 )
@@ -648,9 +616,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
             await self._session.commit()
         except SQLAlchemyError as e:
             await self._session.rollback()
-            raise RepositoryError(
-                f"Failed to save loop execution: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to save loop execution: {str(e)}") from e
 
     async def get_loop_execution(
         self, loop_id: UUID
@@ -699,9 +665,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
                 completed_at=row[22],
             )
         except SQLAlchemyError as e:
-            raise RepositoryError(
-                f"Failed to fetch loop execution: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to fetch loop execution: {str(e)}") from e
 
     async def update_loop_execution(self, execution: LeverageLoopExecution) -> None:
         """Update a leverage loop execution (progress, status, results)."""
@@ -746,9 +710,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
             await self._session.commit()
         except SQLAlchemyError as e:
             await self._session.rollback()
-            raise RepositoryError(
-                f"Failed to update loop execution: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to update loop execution: {str(e)}") from e
 
     async def get_user_loop_executions(
         self,
@@ -793,9 +755,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
                     steps_completed=row[11] or [],
                     status=row[12],
                     final_health_factor=Decimal(str(row[13])) if row[13] else None,
-                    final_collateral_usd=Decimal(str(row[14]))
-                    if row[14]
-                    else None,
+                    final_collateral_usd=Decimal(str(row[14])) if row[14] else None,
                     final_debt_usd=Decimal(str(row[15])) if row[15] else None,
                     total_gas_used=Decimal(str(row[16])) if row[16] else None,
                     total_cost_usd=Decimal(str(row[17])) if row[17] else None,
@@ -897,9 +857,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
                 for row in rows
             ]
         except SQLAlchemyError as e:
-            raise RepositoryError(
-                f"Failed to fetch unread alerts: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to fetch unread alerts: {str(e)}") from e
 
     async def mark_alert_as_read(self, alert_id: UUID) -> None:
         """Mark an alert as read."""
@@ -914,9 +872,7 @@ class SQLAlchemyLendingRepository(ILendingRepository):
             await self._session.commit()
         except SQLAlchemyError as e:
             await self._session.rollback()
-            raise RepositoryError(
-                f"Failed to mark alert as read: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to mark alert as read: {str(e)}") from e
 
     async def get_user_alerts(
         self,
@@ -967,6 +923,4 @@ class SQLAlchemyLendingRepository(ILendingRepository):
                 for row in rows
             ]
         except SQLAlchemyError as e:
-            raise RepositoryError(
-                f"Failed to fetch user alerts: {str(e)}"
-            ) from e
+            raise RepositoryError(f"Failed to fetch user alerts: {str(e)}") from e

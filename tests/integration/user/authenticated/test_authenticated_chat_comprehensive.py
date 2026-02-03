@@ -57,7 +57,7 @@ class TestAuthenticatedChatEndpoint:
                 VALUES (:user_id, :user_email, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
             """),
-            {"user_id": user.id, "user_email": user.email}
+            {"user_id": user.id, "user_email": user.email},
         )
 
         # Create conversation
@@ -72,8 +72,8 @@ class TestAuthenticatedChatEndpoint:
                 "user_id": user.id,
                 "title": "Test Conversation",
                 "status": "active",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
         await async_db_session.commit()
 
@@ -84,7 +84,7 @@ class TestAuthenticatedChatEndpoint:
         """Test that authenticated endpoint requires authentication."""
         response = await client.post(
             "/api/v1/conversations/test_conv_123/messages",
-            json={"content": "What's my balance?", "language": "en"}
+            json={"content": "What's my balance?", "language": "en"},
         )
         # Should return 401, 403 (unauthorized), or 422 (validation error for non-existent conversation)
         assert response.status_code in [401, 403, 422]
@@ -97,11 +97,13 @@ class TestAuthenticatedChatEndpoint:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "What's my balance?", "language": "en"}
+            json={"content": "What's my balance?", "language": "en"},
         )
 
         # Should succeed (200 or 201)
-        assert response.status_code in [200, 201], f"Unexpected status: {response.status_code}"
+        assert response.status_code in [200, 201], (
+            f"Unexpected status: {response.status_code}"
+        )
 
 
 @pytest.mark.integration
@@ -138,7 +140,7 @@ class TestAuthenticatedMultiStepFlows:
                 VALUES (:user_id, :user_email, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
             """),
-            {"user_id": user.id, "user_email": user.email}
+            {"user_id": user.id, "user_email": user.email},
         )
 
         # Create conversation
@@ -153,8 +155,8 @@ class TestAuthenticatedMultiStepFlows:
                 "user_id": user.id,
                 "title": "Test Flows",
                 "status": "active",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
         await async_db_session.commit()
 
@@ -176,7 +178,7 @@ class TestAuthenticatedMultiStepFlows:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Deposit USDC", "language": "en"}
+            json={"content": "Deposit USDC", "language": "en"},
         )
 
         # Should succeed
@@ -189,9 +191,13 @@ class TestAuthenticatedMultiStepFlows:
             assert "agent_message" in data or "message" in data
 
             # Should NOT require registration (authenticated user)
-            requires_reg = data.get("registration_required") or data.get("requires_registration")
+            requires_reg = data.get("registration_required") or data.get(
+                "requires_registration"
+            )
             if requires_reg is not None:
-                assert requires_reg is False, "Authenticated users shouldn't require registration"
+                assert requires_reg is False, (
+                    "Authenticated users shouldn't require registration"
+                )
 
     @pytest.mark.asyncio
     async def test_authenticated_swap_flow(
@@ -207,7 +213,7 @@ class TestAuthenticatedMultiStepFlows:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Swap 100 USDC to ETH", "language": "en"}
+            json={"content": "Swap 100 USDC to ETH", "language": "en"},
         )
 
         assert response.status_code in [200, 201], f"Status: {response.status_code}"
@@ -225,7 +231,8 @@ class TestAuthenticatedMultiStepFlows:
 
             # Verify swap context (flexible assertions)
             assert any(
-                word in content.lower() for word in ["swap", "exchange", "usdc", "eth", "trade"]
+                word in content.lower()
+                for word in ["swap", "exchange", "usdc", "eth", "trade"]
             ), f"No swap context in response: {content[:200]}"
 
 
@@ -263,7 +270,7 @@ class TestAuthenticatedVsGuestBehavior:
                 VALUES (:user_id, :user_email, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
             """),
-            {"user_id": user.id, "user_email": user.email}
+            {"user_id": user.id, "user_email": user.email},
         )
 
         # Create conversation
@@ -278,8 +285,8 @@ class TestAuthenticatedVsGuestBehavior:
                 "user_id": user.id,
                 "title": "Auth vs Guest Test",
                 "status": "active",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
         await async_db_session.commit()
 
@@ -300,7 +307,7 @@ class TestAuthenticatedVsGuestBehavior:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "What's my balance?", "language": "en"}
+            json={"content": "What's my balance?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -320,13 +327,19 @@ class TestAuthenticatedVsGuestBehavior:
 
             # Should NOT have signup prompts
             signup_phrases = [
-                "sign up", "signup", "create an account", "register now",
-                "get started", "join now"
+                "sign up",
+                "signup",
+                "create an account",
+                "register now",
+                "get started",
+                "join now",
             ]
             has_signup = any(phrase in content_lower for phrase in signup_phrases)
 
             # If signup prompt exists, fail test
-            assert not has_signup, f"Authenticated user received signup prompt: {content[:200]}"
+            assert not has_signup, (
+                f"Authenticated user received signup prompt: {content[:200]}"
+            )
 
     @pytest.mark.asyncio
     async def test_authenticated_real_data_not_demo(
@@ -344,7 +357,7 @@ class TestAuthenticatedVsGuestBehavior:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Show my balance", "language": "en"}
+            json={"content": "Show my balance", "language": "en"},
         )
 
         if response.status_code in [200, 201]:
@@ -362,8 +375,9 @@ class TestAuthenticatedVsGuestBehavior:
             assert "$21,525" not in content, "Authenticated user saw demo portfolio"
 
             # Should NOT have demo disclaimers
-            assert "demo" not in content.lower() or "demon" in content.lower(), \
+            assert "demo" not in content.lower() or "demon" in content.lower(), (
                 "Authenticated user saw demo disclaimer"
+            )
 
     @pytest.mark.asyncio
     async def test_authenticated_higher_rate_limits(
@@ -384,12 +398,14 @@ class TestAuthenticatedVsGuestBehavior:
             response = await client.post(
                 f"/api/v1/conversations/{conversation_id}/messages",
                 headers=auth_headers,
-                json={"content": f"Test message {i}", "language": "en"}
+                json={"content": f"Test message {i}", "language": "en"},
             )
 
             if response.status_code == 429:  # Rate limit hit
                 # If we hit rate limit, verify it's higher than guest limit
-                assert i > 20, f"Authenticated user hit rate limit at {i} requests (guest limit: 20)"
+                assert i > 20, (
+                    f"Authenticated user hit rate limit at {i} requests (guest limit: 20)"
+                )
                 break
             elif response.status_code in [200, 201]:
                 request_count += 1
@@ -435,7 +451,7 @@ class TestAuthenticatedIntents:
                 VALUES (:user_id, :user_email, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
             """),
-            {"user_id": user.id, "user_email": user.email}
+            {"user_id": user.id, "user_email": user.email},
         )
 
         # Create conversation
@@ -450,8 +466,8 @@ class TestAuthenticatedIntents:
                 "user_id": user.id,
                 "title": "Test Intents",
                 "status": "active",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
         await async_db_session.commit()
 
@@ -465,7 +481,7 @@ class TestAuthenticatedIntents:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "What's my balance?", "language": "en"}
+            json={"content": "What's my balance?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -477,7 +493,9 @@ class TestAuthenticatedIntents:
             routing = data.get("routing", {})
             if routing:
                 intent = routing.get("intent", "").lower()
-                assert "balance" in intent or routing.get("handler") == "balance_handler"
+                assert (
+                    "balance" in intent or routing.get("handler") == "balance_handler"
+                )
 
     @pytest.mark.asyncio
     async def test_portfolio_intent(
@@ -487,7 +505,7 @@ class TestAuthenticatedIntents:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Show my portfolio", "language": "en"}
+            json={"content": "Show my portfolio", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -499,7 +517,10 @@ class TestAuthenticatedIntents:
             routing = data.get("routing", {})
             if routing:
                 intent = routing.get("intent", "").lower()
-                assert "portfolio" in intent or routing.get("handler") == "portfolio_handler"
+                assert (
+                    "portfolio" in intent
+                    or routing.get("handler") == "portfolio_handler"
+                )
 
     @pytest.mark.asyncio
     async def test_activity_intent(
@@ -509,7 +530,7 @@ class TestAuthenticatedIntents:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Show my recent activity", "language": "en"}
+            json={"content": "Show my recent activity", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -521,7 +542,9 @@ class TestAuthenticatedIntents:
             routing = data.get("routing", {})
             if routing:
                 intent = routing.get("intent", "").lower()
-                assert "activity" in intent or routing.get("handler") == "activity_handler"
+                assert (
+                    "activity" in intent or routing.get("handler") == "activity_handler"
+                )
 
     @pytest.mark.asyncio
     async def test_receive_intent(
@@ -531,7 +554,7 @@ class TestAuthenticatedIntents:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Show my wallet address", "language": "en"}
+            json={"content": "Show my wallet address", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -543,7 +566,9 @@ class TestAuthenticatedIntents:
             routing = data.get("routing", {})
             if routing:
                 intent = routing.get("intent", "").lower()
-                assert "receive" in intent or routing.get("handler") == "receive_handler"
+                assert (
+                    "receive" in intent or routing.get("handler") == "receive_handler"
+                )
 
 
 @pytest.mark.integration
@@ -580,7 +605,7 @@ class TestAuthenticatedMultiLanguage:
                 VALUES (:user_id, :user_email, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
             """),
-            {"user_id": user.id, "user_email": user.email}
+            {"user_id": user.id, "user_email": user.email},
         )
 
         # Create conversation
@@ -595,8 +620,8 @@ class TestAuthenticatedMultiLanguage:
                 "user_id": user.id,
                 "title": "Test Multi-Language",
                 "status": "active",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
         await async_db_session.commit()
 
@@ -610,7 +635,7 @@ class TestAuthenticatedMultiLanguage:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "¿Cuál es mi saldo?", "language": "es"}
+            json={"content": "¿Cuál es mi saldo?", "language": "es"},
         )
 
         assert response.status_code in [200, 201]
@@ -623,7 +648,7 @@ class TestAuthenticatedMultiLanguage:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Qual é o meu saldo?", "language": "pt"}
+            json={"content": "Qual é o meu saldo?", "language": "pt"},
         )
 
         assert response.status_code in [200, 201]
@@ -636,7 +661,7 @@ class TestAuthenticatedMultiLanguage:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "我的余额是多少？", "language": "zh"}
+            json={"content": "我的余额是多少？", "language": "zh"},
         )
 
         assert response.status_code in [200, 201]
@@ -665,7 +690,11 @@ class TestAuthenticatedDatabasePersistence:
 
     @pytest.mark.asyncio
     async def test_conversation_created_in_database(
-        self, client: AsyncClient, auth_headers, test_user, async_db_session: AsyncSession
+        self,
+        client: AsyncClient,
+        auth_headers,
+        test_user,
+        async_db_session: AsyncSession,
     ):
         """
         Test that authenticated conversations are created in database.
@@ -685,7 +714,7 @@ class TestAuthenticatedDatabasePersistence:
                 VALUES (:user_id, :user_email, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
             """),
-            {"user_id": user.id, "user_email": user.email}
+            {"user_id": user.id, "user_email": user.email},
         )
 
         # Create conversation
@@ -700,8 +729,8 @@ class TestAuthenticatedDatabasePersistence:
                 "user_id": user.id,
                 "title": "DB Test Conversation",
                 "status": "active",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
         await async_db_session.commit()
 
@@ -709,7 +738,7 @@ class TestAuthenticatedDatabasePersistence:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Test message", "language": "en"}
+            json={"content": "Test message", "language": "en"},
         )
 
         if response.status_code in [200, 201]:
@@ -719,7 +748,7 @@ class TestAuthenticatedDatabasePersistence:
                     SELECT user_id FROM chat_conversations
                     WHERE id = :conv_id
                 """),
-                {"conv_id": conversation_id}
+                {"conv_id": conversation_id},
             )
             row = result.fetchone()
 
@@ -728,7 +757,11 @@ class TestAuthenticatedDatabasePersistence:
 
     @pytest.mark.asyncio
     async def test_messages_stored_with_user_id(
-        self, client: AsyncClient, auth_headers, test_user, async_db_session: AsyncSession
+        self,
+        client: AsyncClient,
+        auth_headers,
+        test_user,
+        async_db_session: AsyncSession,
     ):
         """
         Test that messages are stored with correct user_id.
@@ -749,7 +782,7 @@ class TestAuthenticatedDatabasePersistence:
                 VALUES (:user_id, :user_email, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
             """),
-            {"user_id": user.id, "user_email": user.email}
+            {"user_id": user.id, "user_email": user.email},
         )
 
         # Create conversation
@@ -764,8 +797,8 @@ class TestAuthenticatedDatabasePersistence:
                 "user_id": user.id,
                 "title": "Message DB Test",
                 "status": "active",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
         await async_db_session.commit()
 
@@ -774,7 +807,7 @@ class TestAuthenticatedDatabasePersistence:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": message_content, "language": "en"}
+            json={"content": message_content, "language": "en"},
         )
 
         if response.status_code in [200, 201]:
@@ -785,7 +818,7 @@ class TestAuthenticatedDatabasePersistence:
                     WHERE conversation_id = :conv_id
                     AND created_at >= NOW() - INTERVAL '1 minute'
                 """),
-                {"conv_id": conversation_id}
+                {"conv_id": conversation_id},
             )
             message_count = result.scalar()
 
@@ -827,7 +860,7 @@ class TestAuthenticatedErrorHandling:
                 VALUES (:user_id, :user_email, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
             """),
-            {"user_id": user.id, "user_email": user.email}
+            {"user_id": user.id, "user_email": user.email},
         )
 
         # Create conversation
@@ -842,8 +875,8 @@ class TestAuthenticatedErrorHandling:
                 "user_id": user.id,
                 "title": "Error Test",
                 "status": "active",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
         await async_db_session.commit()
 
@@ -857,7 +890,7 @@ class TestAuthenticatedErrorHandling:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "", "language": "en"}
+            json={"content": "", "language": "en"},
         )
 
         # Should return validation error (422)
@@ -871,7 +904,7 @@ class TestAuthenticatedErrorHandling:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Test message", "language": "invalid"}
+            json={"content": "Test message", "language": "invalid"},
         )
 
         # Should return validation error (422)
@@ -885,7 +918,7 @@ class TestAuthenticatedErrorHandling:
         response = await client.post(
             "/api/v1/conversations/nonexistent_conv_123/messages",
             headers=auth_headers,
-            json={"content": "Test message", "language": "en"}
+            json={"content": "Test message", "language": "en"},
         )
 
         # Should return 404 or handle gracefully
@@ -930,7 +963,7 @@ class TestAuthenticatedHunterAI:
                 VALUES (:user_id, :user_email, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
             """),
-            {"user_id": user.id, "user_email": user.email}
+            {"user_id": user.id, "user_email": user.email},
         )
 
         # Create conversation
@@ -945,8 +978,8 @@ class TestAuthenticatedHunterAI:
                 "user_id": user.id,
                 "title": "Hunter AI Test",
                 "status": "active",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
         await async_db_session.commit()
 
@@ -960,7 +993,7 @@ class TestAuthenticatedHunterAI:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "What's the sentiment for BTC?", "language": "en"}
+            json={"content": "What's the sentiment for BTC?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -982,7 +1015,7 @@ class TestAuthenticatedHunterAI:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Predict ETH price", "language": "en"}
+            json={"content": "Predict ETH price", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1002,7 +1035,7 @@ class TestAuthenticatedHunterAI:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Risk signals for SOL", "language": "en"}
+            json={"content": "Risk signals for SOL", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1022,7 +1055,7 @@ class TestAuthenticatedHunterAI:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Should I buy BTC?", "language": "en"}
+            json={"content": "Should I buy BTC?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1042,7 +1075,7 @@ class TestAuthenticatedHunterAI:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Chart patterns for ETH", "language": "en"}
+            json={"content": "Chart patterns for ETH", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1062,7 +1095,7 @@ class TestAuthenticatedHunterAI:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Optimize my portfolio", "language": "en"}
+            json={"content": "Optimize my portfolio", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1108,7 +1141,7 @@ class TestAuthenticatedULTRA:
                 VALUES (:user_id, :user_email, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
             """),
-            {"user_id": user.id, "user_email": user.email}
+            {"user_id": user.id, "user_email": user.email},
         )
 
         # Create conversation
@@ -1123,8 +1156,8 @@ class TestAuthenticatedULTRA:
                 "user_id": user.id,
                 "title": "ULTRA Test",
                 "status": "active",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
         await async_db_session.commit()
 
@@ -1138,7 +1171,7 @@ class TestAuthenticatedULTRA:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Find arbitrage opportunities", "language": "en"}
+            json={"content": "Find arbitrage opportunities", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1158,7 +1191,7 @@ class TestAuthenticatedULTRA:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Best flash loan for USDC", "language": "en"}
+            json={"content": "Best flash loan for USDC", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1178,7 +1211,7 @@ class TestAuthenticatedULTRA:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Execute with Flashbots", "language": "en"}
+            json={"content": "Execute with Flashbots", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1198,7 +1231,7 @@ class TestAuthenticatedULTRA:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Start trading bot", "language": "en"}
+            json={"content": "Start trading bot", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1208,7 +1241,12 @@ class TestAuthenticatedULTRA:
             routing = data.get("routing", {})
             if routing:
                 intent = routing.get("intent", "").lower()
-                assert "ultra" in intent or "auto" in intent or "executor" in intent or "bot" in intent
+                assert (
+                    "ultra" in intent
+                    or "auto" in intent
+                    or "executor" in intent
+                    or "bot" in intent
+                )
 
 
 @pytest.mark.integration
@@ -1244,7 +1282,7 @@ class TestAuthenticatedGraphRAG:
                 VALUES (:user_id, :user_email, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
             """),
-            {"user_id": user.id, "user_email": user.email}
+            {"user_id": user.id, "user_email": user.email},
         )
 
         # Create conversation
@@ -1259,8 +1297,8 @@ class TestAuthenticatedGraphRAG:
                 "user_id": user.id,
                 "title": "GraphRAG Test",
                 "status": "active",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
         await async_db_session.commit()
 
@@ -1274,7 +1312,7 @@ class TestAuthenticatedGraphRAG:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Find low-risk staking protocols", "language": "en"}
+            json={"content": "Find low-risk staking protocols", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1294,7 +1332,7 @@ class TestAuthenticatedGraphRAG:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Is Aave safe?", "language": "en"}
+            json={"content": "Is Aave safe?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1304,7 +1342,11 @@ class TestAuthenticatedGraphRAG:
             routing = data.get("routing", {})
             if routing:
                 intent = routing.get("intent", "").lower()
-                assert "risk" in intent or "assessment" in intent or "safe" in intent.lower()
+                assert (
+                    "risk" in intent
+                    or "assessment" in intent
+                    or "safe" in intent.lower()
+                )
 
     @pytest.mark.asyncio
     async def test_similar_protocols(
@@ -1314,7 +1356,7 @@ class TestAuthenticatedGraphRAG:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Protocols like Uniswap", "language": "en"}
+            json={"content": "Protocols like Uniswap", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1324,7 +1366,11 @@ class TestAuthenticatedGraphRAG:
             routing = data.get("routing", {})
             if routing:
                 intent = routing.get("intent", "").lower()
-                assert "similar" in intent or "protocol" in intent or "alternative" in intent
+                assert (
+                    "similar" in intent
+                    or "protocol" in intent
+                    or "alternative" in intent
+                )
 
 
 @pytest.mark.integration
@@ -1360,7 +1406,7 @@ class TestAuthenticatedAgentSquad:
                 VALUES (:user_id, :user_email, NOW(), NOW())
                 ON CONFLICT (id) DO NOTHING
             """),
-            {"user_id": user.id, "user_email": user.email}
+            {"user_id": user.id, "user_email": user.email},
         )
 
         # Create conversation
@@ -1375,8 +1421,8 @@ class TestAuthenticatedAgentSquad:
                 "user_id": user.id,
                 "title": "Agent Squad Test",
                 "status": "active",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
         await async_db_session.commit()
 
@@ -1390,7 +1436,7 @@ class TestAuthenticatedAgentSquad:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Best USDC yield strategy", "language": "en"}
+            json={"content": "Best USDC yield strategy", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1402,7 +1448,10 @@ class TestAuthenticatedAgentSquad:
                 # Should route to specialist or yield-related handler
                 intent = routing.get("intent", "").lower()
                 handler = routing.get("handler", "").lower()
-                assert any(word in intent + handler for word in ["specialist", "yield", "defi", "lending"])
+                assert any(
+                    word in intent + handler
+                    for word in ["specialist", "yield", "defi", "lending"]
+                )
 
     @pytest.mark.asyncio
     async def test_complex_workflow(
@@ -1412,7 +1461,7 @@ class TestAuthenticatedAgentSquad:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "Create balanced portfolio strategy", "language": "en"}
+            json={"content": "Create balanced portfolio strategy", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -1424,4 +1473,7 @@ class TestAuthenticatedAgentSquad:
                 # Should route to complex workflow or portfolio handler
                 intent = routing.get("intent", "").lower()
                 handler = routing.get("handler", "").lower()
-                assert any(word in intent + handler for word in ["portfolio", "complex", "workflow", "strategy"])
+                assert any(
+                    word in intent + handler
+                    for word in ["portfolio", "complex", "workflow", "strategy"]
+                )

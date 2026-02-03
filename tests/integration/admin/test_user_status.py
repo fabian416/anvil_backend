@@ -21,9 +21,7 @@ class TestActivateUser:
         WHEN admin activates an inactive user
         THEN system SHALL activate user (or 401 if not authenticated)
         """
-        response = await client.patch(
-            "/api/v1/admin/users/test@example.com/activate"
-        )
+        response = await client.patch("/api/v1/admin/users/test@example.com/activate")
 
         # Without admin auth, expect 401/403
         # With admin auth, expect 200 or 404 (user not found)
@@ -34,9 +32,7 @@ class TestActivateUser:
         WHEN admin tries to activate already active user
         THEN system SHALL handle gracefully
         """
-        response = await client.patch(
-            "/api/v1/admin/users/active@example.com/activate"
-        )
+        response = await client.patch("/api/v1/admin/users/active@example.com/activate")
 
         assert response.status_code in (200, 204, 400, 401, 403, 404)
 
@@ -62,9 +58,7 @@ class TestDeactivateUser:
         WHEN admin deactivates an active user
         THEN system SHALL deactivate user (or 401 if not authenticated)
         """
-        response = await client.patch(
-            "/api/v1/admin/users/test@example.com/deactivate"
-        )
+        response = await client.patch("/api/v1/admin/users/test@example.com/deactivate")
 
         assert response.status_code in (200, 204, 401, 403, 404)
 
@@ -105,7 +99,7 @@ class TestAdminPasswordChange:
         """
         response = await client.patch(
             "/api/v1/admin/users/test@example.com/password",
-            json={"password": "NewSecurePassword123!"}
+            json={"password": "NewSecurePassword123!"},
         )
 
         # Without admin auth, expect 401/403
@@ -118,7 +112,7 @@ class TestAdminPasswordChange:
         """
         response = await client.patch(
             "/api/v1/admin/users/test@example.com/password",
-            json={"password": "NewSecurePassword123!"}
+            json={"password": "NewSecurePassword123!"},
         )
 
         # Without admin auth, should return 401 or 403
@@ -131,7 +125,7 @@ class TestAdminPasswordChange:
         """
         response = await client.patch(
             f"/api/v1/admin/users/nonexistent_{uuid4().hex[:8]}@example.com/password",
-            json={"password": "NewSecurePassword123!"}
+            json={"password": "NewSecurePassword123!"},
         )
 
         assert response.status_code in (401, 403, 404)
@@ -142,8 +136,7 @@ class TestAdminPasswordChange:
         THEN system SHALL return validation error
         """
         response = await client.patch(
-            "/api/v1/admin/users/test@example.com/password",
-            json={"password": "weak"}
+            "/api/v1/admin/users/test@example.com/password", json={"password": "weak"}
         )
 
         # Should return 400/422 for weak password, or 401/403 if not authenticated

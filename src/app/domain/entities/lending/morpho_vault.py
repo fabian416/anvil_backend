@@ -20,7 +20,7 @@ class MorphoVault:
 
     Represents a lending vault that allocates funds
     across multiple Morpho Blue markets.
-    
+
     Supports multiple chains:
     - Ethereum (chain_id: 1)
     - Base (chain_id: 8453)
@@ -91,8 +91,7 @@ class MorphoVault:
             created_at = datetime.fromisoformat(created_at)
 
         allocations = [
-            MarketAllocation.from_dict(a)
-            for a in data.get("market_allocations", [])
+            MarketAllocation.from_dict(a) for a in data.get("market_allocations", [])
         ]
 
         return cls(

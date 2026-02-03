@@ -57,14 +57,18 @@ def test_admin_data():
 def mock_stripe():
     """Mock Stripe client."""
     stripe = MagicMock()
-    stripe.checkout.Session.create = MagicMock(return_value=MagicMock(
-        id="cs_test_123",
-        url="https://checkout.stripe.com/test",
-    ))
-    stripe.Subscription.retrieve = MagicMock(return_value=MagicMock(
-        id="sub_test_123",
-        status="active",
-    ))
+    stripe.checkout.Session.create = MagicMock(
+        return_value=MagicMock(
+            id="cs_test_123",
+            url="https://checkout.stripe.com/test",
+        )
+    )
+    stripe.Subscription.retrieve = MagicMock(
+        return_value=MagicMock(
+            id="sub_test_123",
+            status="active",
+        )
+    )
     return stripe
 
 

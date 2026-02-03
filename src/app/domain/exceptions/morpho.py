@@ -31,9 +31,7 @@ class VaultNotFoundError(MorphoError):
     def __init__(self, vault_address: str, chain: str = "ethereum"):
         self.vault_address = vault_address
         self.chain = chain
-        super().__init__(
-            f"Vault not found: {vault_address} on {chain}"
-        )
+        super().__init__(f"Vault not found: {vault_address} on {chain}")
 
 
 class InvalidVaultAddressError(MorphoError):
@@ -49,9 +47,7 @@ class InvalidVaultAddressError(MorphoError):
 
     def __init__(self, address: str, message: str | None = None):
         self.address = address
-        super().__init__(
-            message or f"Invalid vault address: {address}"
-        )
+        super().__init__(message or f"Invalid vault address: {address}")
 
 
 class MorphoAPIError(MorphoError):
@@ -99,6 +95,4 @@ class InvalidAddressError(MorphoError):
 
     def __init__(self, address: str, message: str | None = None):
         self.address = address
-        super().__init__(
-            message or f"Invalid address format: {address}"
-        )
+        super().__init__(message or f"Invalid address format: {address}")

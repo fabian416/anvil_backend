@@ -76,9 +76,17 @@ class LoadTestResult:
             },
             "status_code_distribution": dict(
                 sorted(
-                    ((code, count) for code, count in
-                     defaultdict(int, ((c, self.status_codes.count(c)) for c in set(self.status_codes))).items()),
-                    key=lambda x: x[0]
+                    (
+                        (code, count)
+                        for code, count in defaultdict(
+                            int,
+                            (
+                                (c, self.status_codes.count(c))
+                                for c in set(self.status_codes)
+                            ),
+                        ).items()
+                    ),
+                    key=lambda x: x[0],
                 )
             ),
             "error_count": len(self.errors),
@@ -89,17 +97,19 @@ class LoadTestResult:
         """Print formatted test summary."""
         stats = self.get_statistics()
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"LOAD TEST RESULTS: {stats['scenario']}")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
         print(f"\n📊 Overall Performance:")
         print(f"  Duration: {stats['duration_seconds']}s")
         print(f"  Total Requests: {stats['total_requests']}")
-        print(f"  Successful: {stats['successful_requests']} ({stats['success_rate']}%)")
+        print(
+            f"  Successful: {stats['successful_requests']} ({stats['success_rate']}%)"
+        )
         print(f"  Failed: {stats['failed_requests']}")
         print(f"  Requests/sec: {stats['requests_per_second']}")
 
-        rt = stats['response_times']
+        rt = stats["response_times"]
         print(f"\n⏱️  Response Times:")
         print(f"  Min: {rt['min_ms']}ms")
         print(f"  Avg: {rt['avg_ms']}ms")
@@ -109,29 +119,31 @@ class LoadTestResult:
         print(f"  Max: {rt['max_ms']}ms")
 
         print(f"\n📈 Status Codes:")
-        for code, count in stats['status_code_distribution'].items():
+        for code, count in stats["status_code_distribution"].items():
             print(f"  {code}: {count} requests")
 
-        if stats['error_count'] > 0:
+        if stats["error_count"] > 0:
             print(f"\n❌ Errors:")
             print(f"  Total: {stats['error_count']}")
             print(f"  Unique: {stats['unique_errors']}")
 
         # Performance verdict
         print(f"\n🎯 Performance Verdict:")
-        if rt['p95_ms'] < 500 and stats['success_rate'] > 99:
+        if rt["p95_ms"] < 500 and stats["success_rate"] > 99:
             print(f"  ✅ EXCELLENT - P95 < 500ms and >99% success rate")
-        elif rt['p95_ms'] < 1000 and stats['success_rate'] > 95:
+        elif rt["p95_ms"] < 1000 and stats["success_rate"] > 95:
             print(f"  ✅ GOOD - P95 < 1000ms and >95% success rate")
-        elif rt['p95_ms'] < 2000 and stats['success_rate'] > 90:
+        elif rt["p95_ms"] < 2000 and stats["success_rate"] > 90:
             print(f"  ⚠️  ACCEPTABLE - P95 < 2000ms and >90% success rate")
         else:
             print(f"  ❌ NEEDS IMPROVEMENT - High latency or low success rate")
 
-        print(f"\n{'='*80}\n")
+        print(f"\n{'=' * 80}\n")
 
 
-async def make_request(client: httpx.AsyncClient, request_data: Dict[str, Any]) -> tuple[float, int, str]:
+async def make_request(
+    client: httpx.AsyncClient, request_data: Dict[str, Any]
+) -> tuple[float, int, str]:
     """Make a single HTTP request and measure response time."""
     start_time = time.time()
     try:
@@ -259,9 +271,9 @@ async def scenario_burst_traffic() -> LoadTestResult:
 
 async def main():
     """Run all load test scenarios."""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("ANVIL CHAT API LOAD TESTING")
-    print("="*80)
+    print("=" * 80)
     print(f"\nTarget API: {API_BASE_URL}")
     print(f"Test Endpoint: {GUEST_CHAT_ENDPOINT}")
     print(f"Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -291,7 +303,11 @@ async def main():
         elif scenario_arg == "burst":
             scenarios = [scenario_burst_traffic]
         elif scenario_arg == "all":
-            scenarios = [scenario_normal_load, scenario_peak_load, scenario_burst_traffic]
+            scenarios = [
+                scenario_normal_load,
+                scenario_peak_load,
+                scenario_burst_traffic,
+            ]
         else:
             print(f"❌ Unknown scenario: {scenario_arg}")
             print("Usage: python load_test.py [normal|peak|burst|all]")
@@ -313,11 +329,12 @@ async def main():
         except Exception as e:
             print(f"\n❌ Error running scenario: {e}")
             import traceback
+
             traceback.print_exc()
 
     print(f"\n✅ Load testing complete")
     print(f"End Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("="*80 + "\n")
+    print("=" * 80 + "\n")
 
 
 if __name__ == "__main__":

@@ -29,7 +29,9 @@ class SwapQuote:
     fee_amount: Decimal
     exchange_rate: Decimal
     pool_address: str = ""
-    warnings: tuple[str, ...] = field(default_factory=tuple)  # Immutable tuple for frozen dataclass
+    warnings: tuple[str, ...] = field(
+        default_factory=tuple
+    )  # Immutable tuple for frozen dataclass
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize quote to dictionary."""

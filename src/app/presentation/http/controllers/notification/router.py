@@ -37,8 +37,8 @@ def create_notification_router() -> APIRouter:
     ) -> list[dict]:
         current_user = await current_user_service.get_current_user()
         offset = (page - 1) * per_page
-        return await repo.read_by_user_paginated(user_id=current_user.id_.value, offset=offset, limit=per_page)
+        return await repo.read_by_user_paginated(
+            user_id=current_user.id_.value, offset=offset, limit=per_page
+        )
 
     return router
-
-

@@ -39,10 +39,20 @@ from ..conftest import (
 # Output Directory Configuration
 # ============================================================
 
-CONTEXT_OUTPUT_DIR = Path(__file__).parent.parent.parent.parent / "output" / "user" / "context_aware"
+CONTEXT_OUTPUT_DIR = (
+    Path(__file__).parent.parent.parent.parent / "output" / "user" / "context_aware"
+)
 
 # Ensure all output directories exist
-for subdir in ["portfolio_state", "activity_level", "user_type", "templates", "analytics", "routing", "workflows"]:
+for subdir in [
+    "portfolio_state",
+    "activity_level",
+    "user_type",
+    "templates",
+    "analytics",
+    "routing",
+    "workflows",
+]:
     (CONTEXT_OUTPUT_DIR / subdir).mkdir(parents=True, exist_ok=True)
 
 
@@ -50,28 +60,29 @@ for subdir in ["portfolio_state", "activity_level", "user_type", "templates", "a
 # Context-Aware Test Result
 # ============================================================
 
+
 @dataclass
 class ContextAwareTestResult(TestResult):
     """Extended test result with context-aware fields."""
-    
+
     # Context fields
     portfolio_state: str = ""
     activity_level: str = ""
     user_type: str = ""
     total_balance_usd: str = ""
-    
+
     # Template fields
     template_used: str = ""
     template_key: str = ""
-    
+
     # Workflow blocking fields
     workflow_blocked: str = "NO"
     block_reason: str = ""
-    
+
     # Context routing fields
     context_enhanced_prompt: str = "NO"
     response_style: str = ""
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for CSV writing."""
         return asdict(self)
@@ -81,20 +92,27 @@ class ContextAwareTestResult(TestResult):
 # Context-Aware CSV Reporter
 # ============================================================
 
+
 class ContextAwareCSVReporter(CSVReporter):
     """CSV reporter with context-aware fields."""
-    
+
     CSV_FIELDS = CSVReporter.CSV_FIELDS + [
-        "portfolio_state", "activity_level", "user_type", "total_balance_usd",
-        "template_used", "template_key",
-        "workflow_blocked", "block_reason",
-        "context_enhanced_prompt", "response_style",
+        "portfolio_state",
+        "activity_level",
+        "user_type",
+        "total_balance_usd",
+        "template_used",
+        "template_key",
+        "workflow_blocked",
+        "block_reason",
+        "context_enhanced_prompt",
+        "response_style",
     ]
-    
+
     def __init__(self, category: str, subcategory: str = ""):
         """
         Initialize context-aware CSV reporter.
-        
+
         Args:
             category: Test category (portfolio_state, activity_level, etc.)
             subcategory: Optional subcategory
@@ -108,10 +126,11 @@ class ContextAwareCSVReporter(CSVReporter):
 # Mock User Context Data Classes (for test assertions)
 # ============================================================
 
+
 @dataclass
 class MockUserContext:
     """Mock user context for testing."""
-    
+
     id: str = field(default_factory=lambda: str(uuid4()))
     chat_user_id: str = field(default_factory=lambda: str(uuid4()))
     portfolio_state: str = "empty"
@@ -136,6 +155,7 @@ class MockUserContext:
 # ============================================================
 # User Context Fixtures (Mock Data for Assertions)
 # ============================================================
+
 
 @pytest.fixture
 def empty_user_context() -> MockUserContext:
@@ -217,6 +237,7 @@ def inactive_user_context() -> MockUserContext:
 # CSV Reporter Fixtures
 # ============================================================
 
+
 @pytest.fixture
 def portfolio_state_reporter() -> ContextAwareCSVReporter:
     """CSV reporter for portfolio state tests."""
@@ -287,6 +308,7 @@ def _finalize_reporter(reporter: ContextAwareCSVReporter):
 # Helper Functions
 # ============================================================
 
+
 def create_context_test_result(
     test_id: str,
     test_case: dict[str, Any],
@@ -299,7 +321,7 @@ def create_context_test_result(
 ) -> ContextAwareTestResult:
     """
     Create a ContextAwareTestResult from test case and response data.
-    
+
     Args:
         test_id: Unique test identifier
         test_case: Test case definition
@@ -309,7 +331,7 @@ def create_context_test_result(
         template_info: Template usage info
         workflow_info: Workflow blocking info
         conversation_id: Conversation ID
-        
+
     Returns:
         ContextAwareTestResult instance
     """
@@ -321,31 +343,31 @@ def create_context_test_result(
         response_time_ms=response_time_ms,
         conversation_id=conversation_id,
     )
-    
+
     # Create context-aware result
     result = ContextAwareTestResult(
         **base_result.to_dict(),
     )
-    
+
     # Add context fields
     if user_context:
         result.portfolio_state = user_context.portfolio_state
         result.activity_level = user_context.activity_level
         result.user_type = user_context.user_type
         result.total_balance_usd = str(user_context.total_balance_usd)
-    
+
     # Add template fields
     if template_info:
         result.template_used = "YES" if template_info.get("used") else "NO"
         result.template_key = template_info.get("key", "")
-    
+
     # Add workflow fields
     if workflow_info:
         result.workflow_blocked = "YES" if workflow_info.get("blocked") else "NO"
         result.block_reason = workflow_info.get("reason", "")
-    
+
     # Add routing fields
     result.context_enhanced_prompt = test_case.get("context_enhanced", "NO")
     result.response_style = test_case.get("response_style", "")
-    
+
     return result

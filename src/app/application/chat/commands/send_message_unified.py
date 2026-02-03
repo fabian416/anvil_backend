@@ -42,6 +42,7 @@ from app.application.chat.services.intent_detector import (
     ChatIntent,
     IntentDetectorService,
 )
+
 # Demo mode imports
 from app.application.guest.handlers.guest_handler_service import GuestHandlerService
 from app.setup.config.agent_squad import AgentSquadSettings
@@ -191,7 +192,9 @@ class UnifiedChatOrchestrator:
     ) -> dict:
         """Build routing metadata with language support."""
         return {
-            "intent": intent_result.intent.value if hasattr(intent_result.intent, "value") else str(intent_result.intent),
+            "intent": intent_result.intent.value
+            if hasattr(intent_result.intent, "value")
+            else str(intent_result.intent),
             "confidence": intent_result.confidence,
             "handler": handler,
             "agent_used": agent_used,
@@ -234,14 +237,16 @@ class UnifiedChatOrchestrator:
 
         # Get conversation for verification
         conversation = await self._conversation_repo.get_conversation(conversation_id)
-        
+
         # Auto-create conversation if it doesn't exist (similar to guest endpoint behavior)
         # This allows users to send messages without explicitly creating conversation first
         if not conversation:
-            logger.info(f"Conversation {conversation_id} not found, creating new conversation for user {user_id}")
+            logger.info(
+                f"Conversation {conversation_id} not found, creating new conversation for user {user_id}"
+            )
             from app.domain.chat.entities.conversation import Conversation
             from uuid import UUID as UUIDType
-            
+
             # Create new conversation with the provided ID
             conversation = Conversation(
                 id=conversation_id,
@@ -250,15 +255,19 @@ class UnifiedChatOrchestrator:
             )
             await self._conversation_repo.add_conversation(conversation)
             # Re-fetch to ensure it's properly loaded
-            conversation = await self._conversation_repo.get_conversation(conversation_id)
+            conversation = await self._conversation_repo.get_conversation(
+                conversation_id
+            )
             if not conversation:
                 raise ConversationNotFoundError(conversation_id)
-        
+
         # ========================================
         # DEMO MODE: Use GuestHandlerService instead of real LLM
         # ========================================
         if self._settings.use_demo_mode:
-            logger.info(f"[DEMO MODE] Handling message with demo handlers for user {user_id}")
+            logger.info(
+                f"[DEMO MODE] Handling message with demo handlers for user {user_id}"
+            )
             return await self._execute_demo_mode(
                 user_id=user_id,
                 conversation_id=conversation_id,
@@ -406,10 +415,10 @@ class UnifiedChatOrchestrator:
     ) -> dict:
         """
         Execute demo mode using GuestHandlerService.
-        
+
         This provides the same responses as /guest/chat but for authenticated users.
         Useful for demos and testing without requiring LLM API costs.
-        
+
         Args:
             user_id: User ID
             conversation_id: Conversation ID
@@ -417,7 +426,7 @@ class UnifiedChatOrchestrator:
             content: User message
             language: Response language code
             start_time: Start time for latency calculation
-            
+
         Returns:
             Unified response with routing metadata and enrichment
         """
@@ -432,7 +441,7 @@ class UnifiedChatOrchestrator:
             conversation_id=conversation_id,
             limit=10,
         )
-        
+
         # Build context string from messages for multi-turn support
         context = self._build_context_from_messages(messages)
 
@@ -443,26 +452,28 @@ class UnifiedChatOrchestrator:
             context=context,
             language=language,
         )
-        
+
         # Create a simple intent result for handler
         from dataclasses import dataclass
-        
+
         @dataclass
         class DemoIntentResult:
             intent: ChatIntent
             confidence: float
             handler: str
             reasoning: str
-            
+
         intent_result = DemoIntentResult(
             intent=intent,
             confidence=confidence,
             handler=handler,
             reasoning="Keyword-based detection (demo mode)",
         )
-        
-        logger.info(f"[DEMO MODE] Detected intent: {intent.value} with confidence {confidence}")
-        
+
+        logger.info(
+            f"[DEMO MODE] Detected intent: {intent.value} with confidence {confidence}"
+        )
+
         # Use GuestHandlerService to handle the intent
         handler_result = await self._guest_handler_service.handle_intent(
             intent=intent_result.intent,
@@ -470,16 +481,16 @@ class UnifiedChatOrchestrator:
             language=language,
             context=context,
         )
-        
+
         # Extract response data
         agent_content = handler_result.get("content", "")
         enrichment = handler_result.get("enrichment")
         sources = handler_result.get("sources", [])
         requires_registration = handler_result.get("requires_registration", False)
-        
+
         # Get handler name
         handler_name = self._get_demo_handler_name(intent_result.intent)
-        
+
         # Save messages to conversation history
         user_msg, agent_msg = await self._save_messages(
             conversation_id=conversation_id,
@@ -487,16 +498,18 @@ class UnifiedChatOrchestrator:
             agent_content=agent_content,
             sources=sources if sources else None,
         )
-        
+
         # Calculate latency
         total_latency = int((time.time() - start_time) * 1000)
-        
+
         # Build response in the unified format
         response = {
             "user_message": self._message_to_dict(user_msg),
             "agent_message": self._message_to_dict(agent_msg),
             "routing": {
-                "intent": intent_result.intent.value if hasattr(intent_result.intent, "value") else str(intent_result.intent),
+                "intent": intent_result.intent.value
+                if hasattr(intent_result.intent, "value")
+                else str(intent_result.intent),
                 "confidence": intent_result.confidence,
                 "handler": handler_name,
                 "reasoning": intent_result.reasoning,
@@ -505,13 +518,13 @@ class UnifiedChatOrchestrator:
                 "is_demo_mode": True,
             },
         }
-        
+
         # Add enrichment if present
         if enrichment:
             response["enrichment"] = enrichment
         else:
             response["enrichment"] = {}
-        
+
         # For RECEIVE intent in demo mode, add the real wallet address
         if intent_result.intent == ChatIntent.RECEIVE:
             try:
@@ -520,36 +533,44 @@ class UnifiedChatOrchestrator:
                     response["enrichment"]["wallet_address"] = wallet_address
                     response["enrichment"]["chain"] = "base"
                     response["enrichment"]["supported_networks"] = [
-                        "Ethereum", "Base", "Arbitrum", "Polygon", "Optimism"
+                        "Ethereum",
+                        "Base",
+                        "Arbitrum",
+                        "Polygon",
+                        "Optimism",
                     ]
             except Exception as e:
-                logger.warning(f"[DEMO MODE] Failed to get wallet for receive enrichment: {e}")
-            
+                logger.warning(
+                    f"[DEMO MODE] Failed to get wallet for receive enrichment: {e}"
+                )
+
         # Add sources if present
         if sources:
             response["sources"] = sources
-            
+
         # Add registration_required info if needed (for wallet-dependent actions)
         if requires_registration:
             response["enrichment"] = response.get("enrichment", {})
             response["enrichment"]["requires_wallet_connection"] = True
-            
+
         return response
-    
+
     def _build_context_from_messages(self, messages: list) -> str:
         """Build context string from message history for multi-turn support."""
         if not messages:
             return ""
-        
+
         context_lines = []
         for msg in messages:
             role = "User" if msg.role.value == "user" else "Assistant"
             # Truncate long messages in context
-            content = msg.content[:200] + "..." if len(msg.content) > 200 else msg.content
+            content = (
+                msg.content[:200] + "..." if len(msg.content) > 200 else msg.content
+            )
             context_lines.append(f"{role}: {content}")
-        
+
         return "\n".join(context_lines)
-    
+
     def _get_demo_handler_name(self, intent: ChatIntent) -> str:
         """Get handler name for demo mode routing metadata."""
         handler_map = {
@@ -593,14 +614,14 @@ class UnifiedChatOrchestrator:
     ) -> tuple[ChatIntent, float, str]:
         """
         Keyword-based intent detection for demo mode.
-        
+
         No LLM calls - provides instant, reliable intent detection.
         Supports English, Spanish, Portuguese, and Chinese keywords.
-        
+
         Based on SendGuestMessage._detect_intent_by_keywords_with_context()
         """
         import re
-        
+
         content_lower = content.lower()
         context_lower = context.lower() if context else ""
 
@@ -610,63 +631,150 @@ class UnifiedChatOrchestrator:
         hunter_patterns = {
             ChatIntent.HUNTER_SENTIMENT: [
                 # English
-                "sentiment", "feeling", "mood", "bullish", "bearish",
-                "twitter", "reddit", "social", "news", "hype",
-                "what do people think", "market mood", "community sentiment",
+                "sentiment",
+                "feeling",
+                "mood",
+                "bullish",
+                "bearish",
+                "twitter",
+                "reddit",
+                "social",
+                "news",
+                "hype",
+                "what do people think",
+                "market mood",
+                "community sentiment",
                 # Spanish
-                "sentimiento", "opinión", "opiniones", "alcista", "bajista",
-                "qué opina", "qué piensan", "clima del mercado", "percepción",
-                "sentimiento de mercado", "sentimiento para",
+                "sentimiento",
+                "opinión",
+                "opiniones",
+                "alcista",
+                "bajista",
+                "qué opina",
+                "qué piensan",
+                "clima del mercado",
+                "percepción",
+                "sentimiento de mercado",
+                "sentimiento para",
                 # Portuguese
-                "sentimento", "altista", "baixista", "humor do mercado",
+                "sentimento",
+                "altista",
+                "baixista",
+                "humor do mercado",
             ],
             ChatIntent.HUNTER_PRICE_PREDICTION: [
                 # English
-                "predict", "prediction", "forecast", "price target",
-                "will go", "where will", "price tomorrow", "future price",
-                "price of", "what's the price", "current price", "how much is",
-                "what is the price", "price for",
+                "predict",
+                "prediction",
+                "forecast",
+                "price target",
+                "will go",
+                "where will",
+                "price tomorrow",
+                "future price",
+                "price of",
+                "what's the price",
+                "current price",
+                "how much is",
+                "what is the price",
+                "price for",
                 # Spanish
-                "predecir", "predicción", "pronóstico", "objetivo de precio",
-                "a dónde irá", "precio de", "cuál es el precio", "precio actual",
-                "precio futuro", "va a subir", "va a bajar", "cuánto vale",
+                "predecir",
+                "predicción",
+                "pronóstico",
+                "objetivo de precio",
+                "a dónde irá",
+                "precio de",
+                "cuál es el precio",
+                "precio actual",
+                "precio futuro",
+                "va a subir",
+                "va a bajar",
+                "cuánto vale",
                 "cuánto cuesta",
                 # Portuguese
-                "prever", "previsão", "preço de", "qual é o preço", "preço atual",
+                "prever",
+                "previsão",
+                "preço de",
+                "qual é o preço",
+                "preço atual",
             ],
             ChatIntent.HUNTER_RISK_SIGNALS: [
                 # English
-                "risk signal", "market risk", "whale", "liquidation",
-                "danger", "warning", "alert", "crash",
+                "risk signal",
+                "market risk",
+                "whale",
+                "liquidation",
+                "danger",
+                "warning",
+                "alert",
+                "crash",
                 # Spanish
-                "señal de riesgo", "riesgo de mercado", "ballena", "liquidación",
-                "peligro", "advertencia", "alerta", "caída",
+                "señal de riesgo",
+                "riesgo de mercado",
+                "ballena",
+                "liquidación",
+                "peligro",
+                "advertencia",
+                "alerta",
+                "caída",
             ],
             ChatIntent.HUNTER_TRADING_SIGNALS: [
                 # English
-                "trading signal", "buy signal", "sell signal",
-                "should i buy", "should i sell", "entry point", "exit point",
+                "trading signal",
+                "buy signal",
+                "sell signal",
+                "should i buy",
+                "should i sell",
+                "entry point",
+                "exit point",
                 # Spanish
-                "señal de trading", "señal de compra", "señal de venta",
-                "debería comprar", "debería vender", "punto de entrada", "punto de salida",
+                "señal de trading",
+                "señal de compra",
+                "señal de venta",
+                "debería comprar",
+                "debería vender",
+                "punto de entrada",
+                "punto de salida",
             ],
             ChatIntent.HUNTER_PATTERNS: [
                 # English
-                "chart pattern", "head and shoulders", "double bottom",
-                "flag pattern", "triangle", "breakout", "technical analysis",
+                "chart pattern",
+                "head and shoulders",
+                "double bottom",
+                "flag pattern",
+                "triangle",
+                "breakout",
+                "technical analysis",
                 # Spanish
-                "patrón de gráfico", "hombro cabeza hombro", "doble suelo",
-                "patrón de bandera", "triángulo", "ruptura", "análisis técnico",
+                "patrón de gráfico",
+                "hombro cabeza hombro",
+                "doble suelo",
+                "patrón de bandera",
+                "triángulo",
+                "ruptura",
+                "análisis técnico",
             ],
             ChatIntent.HUNTER_PORTFOLIO: [
                 # English
-                "optimize portfolio", "optimize my portfolio", "portfolio allocation",
-                "rebalance", "diversify", "risk adjusted", "sharpe ratio",
-                "portfolio optimization", "best allocation",
+                "optimize portfolio",
+                "optimize my portfolio",
+                "portfolio allocation",
+                "rebalance",
+                "diversify",
+                "risk adjusted",
+                "sharpe ratio",
+                "portfolio optimization",
+                "best allocation",
                 # Spanish
-                "optimizar portafolio", "optimizar mi portafolio", "asignación de portafolio",
-                "rebalancear", "diversificar", "ajustado al riesgo",
-                "optimización de portafolio", "mejor asignación",
+                "optimizar portafolio",
+                "optimizar mi portafolio",
+                "asignación de portafolio",
+                "rebalancear",
+                "diversificar",
+                "ajustado al riesgo",
+                "optimización de portafolio",
+                "mejor asignación",
             ],
         }
 
@@ -675,24 +783,49 @@ class UnifiedChatOrchestrator:
         # ========================================
         ultra_patterns = {
             ChatIntent.ULTRA_ARBITRAGE: [
-                "arbitrage", "arb", "price difference", "spread",
-                "profit opportunity", "cross dex",
-                "arbitraje", "diferencia de precio", "oportunidad de ganancia",
+                "arbitrage",
+                "arb",
+                "price difference",
+                "spread",
+                "profit opportunity",
+                "cross dex",
+                "arbitraje",
+                "diferencia de precio",
+                "oportunidad de ganancia",
             ],
             ChatIntent.ULTRA_FLASH_LOANS: [
-                "flash loan", "flashloan", "flash borrow",
-                "instant loan", "uncollateralized",
-                "préstamo flash", "préstamo instantáneo", "sin colateral",
+                "flash loan",
+                "flashloan",
+                "flash borrow",
+                "instant loan",
+                "uncollateralized",
+                "préstamo flash",
+                "préstamo instantáneo",
+                "sin colateral",
             ],
             ChatIntent.ULTRA_MEV_PROTECTION: [
-                "mev", "front run", "frontrun", "sandwich",
-                "flashbots", "private transaction", "protected",
-                "protección mev", "transacción privada", "protegido",
+                "mev",
+                "front run",
+                "frontrun",
+                "sandwich",
+                "flashbots",
+                "private transaction",
+                "protected",
+                "protección mev",
+                "transacción privada",
+                "protegido",
             ],
             ChatIntent.ULTRA_AUTO_EXECUTOR: [
-                "auto execute", "automated trading", "trading bot",
-                "dca", "limit order", "stop loss", "auto trade",
-                "ejecución automática", "trading automatizado", "bot de trading",
+                "auto execute",
+                "automated trading",
+                "trading bot",
+                "dca",
+                "limit order",
+                "stop loss",
+                "auto trade",
+                "ejecución automática",
+                "trading automatizado",
+                "bot de trading",
             ],
         }
 
@@ -701,23 +834,50 @@ class UnifiedChatOrchestrator:
         # ========================================
         graphrag_patterns = {
             ChatIntent.PROTOCOL_SEARCH: [
-                "find protocols", "find defi", "list protocols", "show protocols",
-                "search protocols", "discover protocols", "explore protocols",
-                "best protocols", "top protocols", "safest protocols",
-                "compare protocols", "protocols on", "lending protocols",
-                "dex protocols", "staking protocols", "bridge protocols",
-                "buscar protocolos", "encontrar protocolos", "mejores protocolos",
+                "find protocols",
+                "find defi",
+                "list protocols",
+                "show protocols",
+                "search protocols",
+                "discover protocols",
+                "explore protocols",
+                "best protocols",
+                "top protocols",
+                "safest protocols",
+                "compare protocols",
+                "protocols on",
+                "lending protocols",
+                "dex protocols",
+                "staking protocols",
+                "bridge protocols",
+                "buscar protocolos",
+                "encontrar protocolos",
+                "mejores protocolos",
             ],
             ChatIntent.RISK_ASSESSMENT: [
-                "is it safe", "how safe", "safe to use",
-                "what are the risks", "risks of", "risk assessment",
-                "es seguro", "es seguro usar", "qué tan seguro",
-                "cuáles son los riesgos", "riesgos de", "evaluación de riesgo",
+                "is it safe",
+                "how safe",
+                "safe to use",
+                "what are the risks",
+                "risks of",
+                "risk assessment",
+                "es seguro",
+                "es seguro usar",
+                "qué tan seguro",
+                "cuáles son los riesgos",
+                "riesgos de",
+                "evaluación de riesgo",
             ],
             ChatIntent.SIMILAR_PROTOCOLS: [
-                "similar to", "like", "alternative to", "alternatives for",
-                "protocols like", "similar protocols",
-                "similar a", "parecido a", "alternativa a",
+                "similar to",
+                "like",
+                "alternative to",
+                "alternatives for",
+                "protocols like",
+                "similar protocols",
+                "similar a",
+                "parecido a",
+                "alternativa a",
             ],
         }
 
@@ -726,30 +886,61 @@ class UnifiedChatOrchestrator:
         # ========================================
         defi_patterns = {
             ChatIntent.LENDING: [
-                "deposit usdc", "deposit eth", "earn on morpho",
-                "supply to aave", "lend my", "earn yield",
-                "depositar usdc", "depositar eth", "ganar en morpho",
-                "prestar en aave", "prestar mi", "ganar rendimiento",
+                "deposit usdc",
+                "deposit eth",
+                "earn on morpho",
+                "supply to aave",
+                "lend my",
+                "earn yield",
+                "depositar usdc",
+                "depositar eth",
+                "ganar en morpho",
+                "prestar en aave",
+                "prestar mi",
+                "ganar rendimiento",
             ],
             ChatIntent.MONEY_MARKET: [
-                "money market", "compare aave", "compound vs aave",
-                "borrow rate", "lending rate",
-                "mercado de dinero", "comparar aave",
+                "money market",
+                "compare aave",
+                "compound vs aave",
+                "borrow rate",
+                "lending rate",
+                "mercado de dinero",
+                "comparar aave",
             ],
             ChatIntent.SWAP: [
-                "swap", "exchange", "trade", "convert",
-                "1inch", "uniswap",
-                "cambiar", "intercambiar", "convertir", "canjear",
-                "quiero swap", "hacer swap", "swap de",
+                "swap",
+                "exchange",
+                "trade",
+                "convert",
+                "1inch",
+                "uniswap",
+                "cambiar",
+                "intercambiar",
+                "convertir",
+                "canjear",
+                "quiero swap",
+                "hacer swap",
+                "swap de",
             ],
             ChatIntent.SWAP_MOONPAY: [
-                "moonpay swap", "swap via moonpay", "crypto to crypto swap",
-                "swap btc to eth", "swap eth to usdc", "swap sol to btc",
-                "exchange btc for eth", "convert btc to usdc",
-                "intercambio moonpay", "swap cripto a cripto",
-                "cambiar btc por eth", "convertir btc a usdc",
-                "troca moonpay", "trocar cripto por cripto",
-                "échange moonpay", "moonpay交换", "加密货币互换",
+                "moonpay swap",
+                "swap via moonpay",
+                "crypto to crypto swap",
+                "swap btc to eth",
+                "swap eth to usdc",
+                "swap sol to btc",
+                "exchange btc for eth",
+                "convert btc to usdc",
+                "intercambio moonpay",
+                "swap cripto a cripto",
+                "cambiar btc por eth",
+                "convertir btc a usdc",
+                "troca moonpay",
+                "trocar cripto por cripto",
+                "échange moonpay",
+                "moonpay交换",
+                "加密货币互换",
             ],
         }
 
@@ -758,26 +949,50 @@ class UnifiedChatOrchestrator:
         # ========================================
         wallet_patterns = {
             ChatIntent.BALANCE: [
-                "my balance", "show balance", "check balance", "wallet balance",
-                "mi saldo", "ver saldo", "mostrar saldo", "mi balance",
+                "my balance",
+                "show balance",
+                "check balance",
+                "wallet balance",
+                "mi saldo",
+                "ver saldo",
+                "mostrar saldo",
+                "mi balance",
             ],
             ChatIntent.PORTFOLIO: [
-                "my portfolio", "show portfolio", "portfolio performance",
-                "mi portafolio", "ver portafolio", "mis posiciones",
+                "my portfolio",
+                "show portfolio",
+                "portfolio performance",
+                "mi portafolio",
+                "ver portafolio",
+                "mis posiciones",
             ],
             ChatIntent.ACTIVITY: [
-                "my activity", "transaction history", "my transactions",
-                "mi actividad", "historial de transacciones",
+                "my activity",
+                "transaction history",
+                "my transactions",
+                "mi actividad",
+                "historial de transacciones",
             ],
             ChatIntent.RECEIVE: [
-                "receive address", "my address", "deposit address",
-                "dirección de recepción", "mi dirección",
+                "receive address",
+                "my address",
+                "deposit address",
+                "dirección de recepción",
+                "mi dirección",
             ],
             ChatIntent.BUY: [
-                "buy crypto", "buy bitcoin", "buy eth", "buy usdc",
-                "buy with card", "purchase crypto", "i want to buy crypto",
-                "comprar cripto", "comprar bitcoin", "comprar eth",
-                "quiero comprar cripto", "comprar con tarjeta",
+                "buy crypto",
+                "buy bitcoin",
+                "buy eth",
+                "buy usdc",
+                "buy with card",
+                "purchase crypto",
+                "i want to buy crypto",
+                "comprar cripto",
+                "comprar bitcoin",
+                "comprar eth",
+                "quiero comprar cripto",
+                "comprar con tarjeta",
             ],
         }
 
@@ -819,15 +1034,32 @@ class UnifiedChatOrchestrator:
         # Context-based follow-up detection (if previous messages mentioned price/sentiment)
         if context_lower:
             follow_up_patterns = [
-                "and what about", "what about", "how about", "and for",
-                "y qué hay de", "qué tal", "y para", "y sobre",
+                "and what about",
+                "what about",
+                "how about",
+                "and for",
+                "y qué hay de",
+                "qué tal",
+                "y para",
+                "y sobre",
             ]
             for pattern in follow_up_patterns:
                 if pattern in content_lower:
                     if any(kw in context_lower for kw in ["sentiment", "sentimiento"]):
-                        return ChatIntent.HUNTER_SENTIMENT, 0.80, "demo_hunter_sentiment_handler"
-                    if any(kw in context_lower for kw in ["price", "precio", "predict", "predecir"]):
-                        return ChatIntent.HUNTER_PRICE_PREDICTION, 0.80, "demo_hunter_prediction_handler"
+                        return (
+                            ChatIntent.HUNTER_SENTIMENT,
+                            0.80,
+                            "demo_hunter_sentiment_handler",
+                        )
+                    if any(
+                        kw in context_lower
+                        for kw in ["price", "precio", "predict", "predecir"]
+                    ):
+                        return (
+                            ChatIntent.HUNTER_PRICE_PREDICTION,
+                            0.80,
+                            "demo_hunter_prediction_handler",
+                        )
 
         # Default to general conversation
         return ChatIntent.GENERAL_CONVERSATION, 0.65, "demo_general_handler"
@@ -865,21 +1097,23 @@ class UnifiedChatOrchestrator:
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_database_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add GraphRAG database source
-        sources.append(create_database_source(
-            source_name="GraphRAG Knowledge Base",
-            citation_text="Protocol search results from Anvil's GraphRAG knowledge base",
-            fetched_at=fetched_at,
-            data_points_used=len(search_results.results),
-            metadata={
-                "search_type": "protocol_search",
-                "protocols_found": len(search_results.results),
-            },
-        ))
+        sources.append(
+            create_database_source(
+                source_name="GraphRAG Knowledge Base",
+                citation_text="Protocol search results from Anvil's GraphRAG knowledge base",
+                fetched_at=fetched_at,
+                data_points_used=len(search_results.results),
+                metadata={
+                    "search_type": "protocol_search",
+                    "protocols_found": len(search_results.results),
+                },
+            )
+        )
 
         # Save to conversation history (with sources)
         user_msg, agent_msg = await self._save_messages(
@@ -887,7 +1121,9 @@ class UnifiedChatOrchestrator:
         )
 
         # Convert sources to dict for response
-        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
+        sources_response = [
+            s.to_dict() if hasattr(s, "to_dict") else s for s in sources
+        ]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -947,21 +1183,23 @@ class UnifiedChatOrchestrator:
             create_database_source,
             create_api_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add GraphRAG database source
-        sources.append(create_database_source(
-            source_name="GraphRAG Knowledge Base",
-            citation_text=f"Risk analysis for {entities['protocol_name']} from Anvil's GraphRAG knowledge base",
-            fetched_at=fetched_at,
-            metadata={
-                "search_type": "risk_assessment",
-                "protocol_name": entities["protocol_name"],
-            },
-        ))
-        
+        sources.append(
+            create_database_source(
+                source_name="GraphRAG Knowledge Base",
+                citation_text=f"Risk analysis for {entities['protocol_name']} from Anvil's GraphRAG knowledge base",
+                fetched_at=fetched_at,
+                metadata={
+                    "search_type": "risk_assessment",
+                    "protocol_name": entities["protocol_name"],
+                },
+            )
+        )
+
         # TODO: Add DeFiLlama source when integrated
         # sources.append(create_api_source(
         #     source_name="DeFiLlama",
@@ -974,8 +1212,10 @@ class UnifiedChatOrchestrator:
         user_msg, agent_msg = await self._save_messages(
             conversation_id, content, response_content, sources=sources
         )
-        
-        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
+
+        sources_response = [
+            s.to_dict() if hasattr(s, "to_dict") else s for s in sources
+        ]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -1031,7 +1271,9 @@ class UnifiedChatOrchestrator:
 
         if not base_search.results:
             # Protocol not found - fallback to general chat
-            response_content = not_found_messages.get(language, not_found_messages["en"])
+            response_content = not_found_messages.get(
+                language, not_found_messages["en"]
+            )
             user_msg, agent_msg = await self._save_messages(
                 conversation_id, content, response_content
             )
@@ -1058,7 +1300,8 @@ class UnifiedChatOrchestrator:
 
         # Filter out base protocol
         similar_protocols = [
-            r for r in similar_search.results
+            r
+            for r in similar_search.results
             if r.protocol_id != base_protocol.protocol_id
         ][:5]
 
@@ -1072,29 +1315,33 @@ class UnifiedChatOrchestrator:
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_database_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add GraphRAG database source
-        sources.append(create_database_source(
-            source_name="GraphRAG Knowledge Base",
-            citation_text=f"Similar protocols to {protocol_name} from Anvil's GraphRAG knowledge base",
-            fetched_at=fetched_at,
-            data_points_used=len(similar_protocols) + 1,  # Base + similar
-            metadata={
-                "search_type": "similar_protocols",
-                "base_protocol": protocol_name,
-                "similar_count": len(similar_protocols),
-            },
-        ))
+        sources.append(
+            create_database_source(
+                source_name="GraphRAG Knowledge Base",
+                citation_text=f"Similar protocols to {protocol_name} from Anvil's GraphRAG knowledge base",
+                fetched_at=fetched_at,
+                data_points_used=len(similar_protocols) + 1,  # Base + similar
+                metadata={
+                    "search_type": "similar_protocols",
+                    "base_protocol": protocol_name,
+                    "similar_count": len(similar_protocols),
+                },
+            )
+        )
 
         # Save to conversation (with sources)
         user_msg, agent_msg = await self._save_messages(
             conversation_id, content, response_content, sources=sources
         )
-        
-        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
+
+        sources_response = [
+            s.to_dict() if hasattr(s, "to_dict") else s for s in sources
+        ]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -1121,8 +1368,8 @@ class UnifiedChatOrchestrator:
                         "tvl": p.tvl,
                     }
                     for p in similar_protocols
-                ]
-            }
+                ],
+            },
         }
 
     async def _handle_specialist_task(
@@ -1141,7 +1388,9 @@ class UnifiedChatOrchestrator:
         # In production, messages are saved by agent_squad.execute
         # Try to retrieve messages, fall back to manual construction if not found
         user_msg = await self._conversation_repo.get_message(result["user_message_id"])
-        agent_msg = await self._conversation_repo.get_message(result["agent_message_id"])
+        agent_msg = await self._conversation_repo.get_message(
+            result["agent_message_id"]
+        )
 
         # Extract sources from agent response if available
         sources = []
@@ -1151,16 +1400,21 @@ class UnifiedChatOrchestrator:
             # Fallback: create basic sources from tools_used
             from app.domain.value_objects.chat.source_info import SourceInfo, SourceType
             from datetime import datetime
+
             fetched_at = datetime.now(UTC)
             for tool in result["tools_used"]:
                 if tool != "openai_api":  # Skip LLM as it's implicit
-                    sources.append(SourceInfo(
-                        source_type=SourceType.API,
-                        source_name=tool.replace("_api", "").replace("_", " ").title(),
-                        citation_text=f"Data from {tool}",
-                        fetched_at=fetched_at,
-                        provider=tool,
-                    ))
+                    sources.append(
+                        SourceInfo(
+                            source_type=SourceType.API,
+                            source_name=tool.replace("_api", "")
+                            .replace("_", " ")
+                            .title(),
+                            citation_text=f"Data from {tool}",
+                            fetched_at=fetched_at,
+                            provider=tool,
+                        )
+                    )
 
         if user_msg and agent_msg:
             # Production: messages were saved by agent_squad.execute
@@ -1169,6 +1423,7 @@ class UnifiedChatOrchestrator:
         else:
             # Test/Mock: construct message dicts manually with all required fields
             from app.domain.common.datetime_utils import utc_now
+
             user_message_dict = {
                 "id": str(result["user_message_id"]),
                 "conversation_id": str(conversation_id),
@@ -1188,16 +1443,14 @@ class UnifiedChatOrchestrator:
             # Add sources to agent message dict if available
             if sources:
                 agent_message_dict["sources"] = [
-                    s.to_dict() if hasattr(s, "to_dict") else s
-                    for s in sources
+                    s.to_dict() if hasattr(s, "to_dict") else s for s in sources
                 ]
 
         # Convert sources to dict format for response
         sources_response = []
         if sources:
             sources_response = [
-                s.to_dict() if hasattr(s, "to_dict") else s
-                for s in sources
+                s.to_dict() if hasattr(s, "to_dict") else s for s in sources
             ]
 
         return {
@@ -1218,7 +1471,7 @@ class UnifiedChatOrchestrator:
                 "tokens_consumed": result.get("tokens_used"),
                 "latency_ms": result.get("latency_ms"),
                 "intent_classification": result.get("intent_classification"),
-            }
+            },
         }
 
     async def _handle_complex_workflow(
@@ -1256,7 +1509,7 @@ class UnifiedChatOrchestrator:
                 "total_latency_ms": result.get("total_latency_ms"),
                 "workflow_type": result.get("workflow_type"),
                 "capital": result.get("capital"),
-            }
+            },
         }
 
     async def _handle_general_conversation(
@@ -1291,21 +1544,21 @@ class UnifiedChatOrchestrator:
     ) -> tuple[Message, Message]:
         """
         Save user and agent messages to conversation.
-        
+
         Args:
             conversation_id: Conversation ID
             user_content: User message content
             agent_content: Agent message content
             agent_type: Optional agent type
             sources: Optional list of SourceInfo objects or dicts
-        
+
         Note:
             Agent message is created with a timestamp 1ms after the user message
             to ensure correct chronological ordering in the database.
         """
         from datetime import timedelta
         from app.domain.common.datetime_utils import utc_now
-        
+
         # Create user message with explicit timestamp
         user_timestamp = utc_now()
         user_message = Message(
@@ -1350,14 +1603,16 @@ class UnifiedChatOrchestrator:
             await self._conversation_repo.update_conversation(conversation)
         else:
             # This shouldn't happen, but log if it does
-            logger.warning(f"Conversation {conversation_id} not found after saving messages")
+            logger.warning(
+                f"Conversation {conversation_id} not found after saving messages"
+            )
 
         return user_message, agent_message
 
     def _message_to_dict(self, message: Message) -> dict:
         """Convert Message entity to dict for response."""
         from app.domain.value_objects.chat.source_info import SourceInfo
-        
+
         # Map 'agent' role to 'assistant' for OpenAI API compatibility
         role = "assistant" if message.role.value == "agent" else message.role.value
 
@@ -1380,11 +1635,11 @@ class UnifiedChatOrchestrator:
             "agent_type": message.agent_type,
             "created_at": message.created_at.isoformat(),
         }
-        
+
         # Add sources if present
         if sources:
             result["sources"] = sources
-        
+
         return result
 
     def _format_search_results(self, search_results) -> str:
@@ -1453,7 +1708,9 @@ class UnifiedChatOrchestrator:
         output += f"- Category: {base.category}\n\n"
 
         if not similar_list:
-            output += "No similar protocols found. Try exploring other categories or chains."
+            output += (
+                "No similar protocols found. Try exploring other categories or chains."
+            )
             return output
 
         output += "**Similar Protocols:**\n\n"
@@ -1543,9 +1800,13 @@ class UnifiedChatOrchestrator:
             # Format response
             response_content = f"📊 **Sentiment Analysis for {token_symbol}**\n\n"
             response_content += f"**Overall Sentiment:** {aggregated.classification.value.title()} ({aggregated.overall_score:.1f}/100)\n"
-            response_content += f"**Confidence:** {aggregated.overall_confidence * 100:.0f}%\n"
+            response_content += (
+                f"**Confidence:** {aggregated.overall_confidence * 100:.0f}%\n"
+            )
             response_content += f"**Signal Strength:** {aggregated.signal_strength}\n"
-            response_content += f"**Consensus:** {divergence['consensus'] * 100:.0f}%\n\n"
+            response_content += (
+                f"**Consensus:** {divergence['consensus'] * 100:.0f}%\n\n"
+            )
 
             response_content += "**Source Breakdown:**\n"
             for source_name, data in source_breakdown.items():
@@ -1560,7 +1821,9 @@ class UnifiedChatOrchestrator:
             # Fallback to placeholder response on error
             response_content = f"📊 **Sentiment Analysis for {token_symbol}**\n\n"
             response_content += f"⚠️ Unable to fetch real-time sentiment data: {e!s}\n\n"
-            response_content += "This feature routes to Hunter AI sentiment analysis tools:\n"
+            response_content += (
+                "This feature routes to Hunter AI sentiment analysis tools:\n"
+            )
             response_content += "- Twitter sentiment\n"
             response_content += "- Reddit discussions\n"
             response_content += "- Discord communities\n"
@@ -1614,7 +1877,9 @@ class UnifiedChatOrchestrator:
             response_content += f"**Predicted Price ({time_horizon}):** ${prediction.predicted_price:,.2f}\n"
             response_content += f"**Change:** {prediction.change_percent:+.2f}%\n"
             response_content += f"**Direction:** {prediction.direction.upper()} {'📈' if prediction.direction == 'up' else '📉' if prediction.direction == 'down' else '➡️'}\n"
-            response_content += f"**Confidence:** {prediction.confidence * 100:.0f}%\n\n"
+            response_content += (
+                f"**Confidence:** {prediction.confidence * 100:.0f}%\n\n"
+            )
 
             response_content += "**Analysis:**\n"
             if prediction.direction == "up":
@@ -1622,7 +1887,9 @@ class UnifiedChatOrchestrator:
             elif prediction.direction == "down":
                 response_content += f"- Bearish trend detected with {prediction.change_percent:.1f}% expected downside\n"
             else:
-                response_content += "- Sideways movement expected with minimal price action\n"
+                response_content += (
+                    "- Sideways movement expected with minimal price action\n"
+                )
 
             response_content += "\n*LSTM forecast based on historical price patterns. Not financial advice.*"
 
@@ -1630,7 +1897,9 @@ class UnifiedChatOrchestrator:
             # Fallback to placeholder response on error
             response_content = f"📈 **Price Prediction for {token_symbol}**\n\n"
             response_content += f"⚠️ Unable to generate price prediction: {e!s}\n\n"
-            response_content += "This feature routes to Hunter AI LSTM price prediction:\n"
+            response_content += (
+                "This feature routes to Hunter AI LSTM price prediction:\n"
+            )
             response_content += "- Historical price analysis\n"
             response_content += "- Machine learning forecasting\n"
             response_content += "- Confidence intervals\n"
@@ -1675,7 +1944,13 @@ class UnifiedChatOrchestrator:
 
             response_content += "**Risk Factors:**\n"
             for factor_name, factor in assessment.risk_factors.items():
-                emoji = "🔴" if factor.level == "high" or factor.level == "extreme" else "🟡" if factor.level == "medium" else "🟢"
+                emoji = (
+                    "🔴"
+                    if factor.level == "high" or factor.level == "extreme"
+                    else "🟡"
+                    if factor.level == "medium"
+                    else "🟢"
+                )
                 response_content += f"{emoji} **{factor_name.replace('_', ' ').title()}:** {factor.level.upper()} ({factor.score:.1f}/100)\n"
 
             response_content += f"\n**Recommendation:**\n{assessment.recommendation}\n"
@@ -1724,8 +1999,16 @@ class UnifiedChatOrchestrator:
             signal = await generator.generate_signal(token_symbol, Timeframe.DAY_1)
 
             # Format response
-            signal_emoji = "🟢" if "BUY" in signal.signal_type.value else "🔴" if "SELL" in signal.signal_type.value else "🟡"
-            response_content = f"{signal_emoji} **Trading Signal for {token_symbol}**\n\n"
+            signal_emoji = (
+                "🟢"
+                if "BUY" in signal.signal_type.value
+                else "🔴"
+                if "SELL" in signal.signal_type.value
+                else "🟡"
+            )
+            response_content = (
+                f"{signal_emoji} **Trading Signal for {token_symbol}**\n\n"
+            )
             response_content += f"**Signal:** {signal.signal_type.value} (Strength: {signal.signal_strength:.1f}/100)\n"
             response_content += f"**Confidence:** {signal.confidence * 100:.0f}%\n\n"
 
@@ -1734,11 +2017,15 @@ class UnifiedChatOrchestrator:
             if signal.stop_loss_price:
                 response_content += f"**Stop Loss:** ${signal.stop_loss_price:,.2f}\n"
             if signal.take_profit_price:
-                response_content += f"**Take Profit:** ${signal.take_profit_price:,.2f}\n"
+                response_content += (
+                    f"**Take Profit:** ${signal.take_profit_price:,.2f}\n"
+                )
 
             response_content += "\n**Component Scores:**\n"
             response_content += f"- Sentiment: {signal.sentiment_score:.1f}/100\n"
-            response_content += f"- Price Prediction: {signal.prediction_score:.1f}/100\n"
+            response_content += (
+                f"- Price Prediction: {signal.prediction_score:.1f}/100\n"
+            )
             response_content += f"- Risk-Adjusted: {signal.risk_score:.1f}/100\n"
 
             response_content += f"\n**Recommendation:**\n{signal.recommendation}\n"
@@ -1784,8 +2071,12 @@ class UnifiedChatOrchestrator:
         try:
             # Get pattern analysis
             recognizer = PatternRecognizer()
-            chart_patterns = await recognizer.detect_chart_patterns(token_symbol.upper())
-            candlestick_patterns = await recognizer.detect_candlestick_patterns(token_symbol.upper())
+            chart_patterns = await recognizer.detect_chart_patterns(
+                token_symbol.upper()
+            )
+            candlestick_patterns = await recognizer.detect_candlestick_patterns(
+                token_symbol.upper()
+            )
             levels = await recognizer.find_support_resistance(token_symbol.upper())
 
             # Format response
@@ -1795,7 +2086,13 @@ class UnifiedChatOrchestrator:
             if chart_patterns:
                 response_content += "**Chart Patterns:**\n"
                 for pattern in chart_patterns[:3]:  # Top 3 patterns
-                    emoji = "🔴" if pattern.signal == "bearish" else "🟢" if pattern.signal == "bullish" else "🟡"
+                    emoji = (
+                        "🔴"
+                        if pattern.signal == "bearish"
+                        else "🟢"
+                        if pattern.signal == "bullish"
+                        else "🟡"
+                    )
                     response_content += f"{emoji} {pattern.pattern_type.replace('_', ' ').title()} ({pattern.confidence * 100:.0f}% confidence)\n"
                 response_content += "\n"
 
@@ -1803,7 +2100,13 @@ class UnifiedChatOrchestrator:
             if candlestick_patterns:
                 response_content += "**Recent Candlestick Patterns:**\n"
                 for pattern in candlestick_patterns[:3]:  # Top 3 patterns
-                    emoji = "🔴" if pattern.signal == "bearish" else "🟢" if pattern.signal == "bullish" else "🟡"
+                    emoji = (
+                        "🔴"
+                        if pattern.signal == "bearish"
+                        else "🟢"
+                        if pattern.signal == "bullish"
+                        else "🟡"
+                    )
                     response_content += f"{emoji} {pattern.pattern.replace('_', ' ').title()} ({pattern.confidence * 100:.0f}% confidence)\n"
                 response_content += "\n"
 
@@ -1817,7 +2120,9 @@ class UnifiedChatOrchestrator:
                 for level in levels["resistance"][:2]:  # Top 2
                     response_content += f"- ${level.level:,.2f} (strength: {level.strength * 100:.0f}%, {level.touches} touches)\n"
 
-            response_content += "\n*Technical pattern analysis using historical price data*"
+            response_content += (
+                "\n*Technical pattern analysis using historical price data*"
+            )
 
         except Exception as e:
             # Fallback to placeholder response on error
@@ -1863,7 +2168,13 @@ class UnifiedChatOrchestrator:
             portfolio = await optimizer.optimize_portfolio(tokens, risk_tolerance)
 
             # Format response
-            risk_level = "Conservative" if risk_tolerance < 0.33 else "Balanced" if risk_tolerance < 0.67 else "Aggressive"
+            risk_level = (
+                "Conservative"
+                if risk_tolerance < 0.33
+                else "Balanced"
+                if risk_tolerance < 0.67
+                else "Aggressive"
+            )
             response_content = f"💼 **Portfolio Optimization ({risk_level})**\n\n"
 
             response_content += "**Optimal Allocation:**\n"
@@ -1872,11 +2183,17 @@ class UnifiedChatOrchestrator:
 
             response_content += "\n**Performance Metrics:**\n"
             response_content += f"- Expected Return: {portfolio.metrics.get('expected_return', 0):.1f}%\n"
-            response_content += f"- Volatility (Risk): {portfolio.metrics.get('volatility', 0):.1f}%\n"
-            response_content += f"- Sharpe Ratio: {portfolio.metrics.get('sharpe_ratio', 0):.2f}\n"
+            response_content += (
+                f"- Volatility (Risk): {portfolio.metrics.get('volatility', 0):.1f}%\n"
+            )
+            response_content += (
+                f"- Sharpe Ratio: {portfolio.metrics.get('sharpe_ratio', 0):.2f}\n"
+            )
 
             response_content += f"\n**Strategy:** {risk_level} risk profile optimized using Modern Portfolio Theory (MPT)\n"
-            response_content += "*Allocation maximizes risk-adjusted returns for your risk tolerance*"
+            response_content += (
+                "*Allocation maximizes risk-adjusted returns for your risk tolerance*"
+            )
 
         except Exception as e:
             # Fallback to placeholder response on error
@@ -1917,7 +2234,9 @@ class UnifiedChatOrchestrator:
         """Handle arbitrage discovery intent via ULTRA."""
         entities = intent_result.extracted_entities
         capital = Decimal(str(entities.get("capital", 10000)))
-        arb_type = entities.get("arb_type")  # "2hop", "3hop", "triangle", or None for all
+        arb_type = entities.get(
+            "arb_type"
+        )  # "2hop", "3hop", "triangle", or None for all
 
         try:
             # Discover arbitrage opportunities
@@ -1928,16 +2247,22 @@ class UnifiedChatOrchestrator:
             elif arb_type == "3hop":
                 opportunities = await discovery.discover_3hop_arbitrage(capital)
             elif arb_type == "triangle":
-                opportunities = await discovery.discover_triangle_arbitrage(capital=capital)
+                opportunities = await discovery.discover_triangle_arbitrage(
+                    capital=capital
+                )
             else:
                 # Discover all types - returns a list directly
                 opportunities = await discovery.discover_all_opportunities(capital)
 
             # Format response
-            response_content = f"🔍 **Arbitrage Opportunities** (${capital:,.2f} capital)\n\n"
+            response_content = (
+                f"🔍 **Arbitrage Opportunities** (${capital:,.2f} capital)\n\n"
+            )
 
             if not opportunities:
-                response_content += "❌ No profitable arbitrage opportunities found at this time.\n\n"
+                response_content += (
+                    "❌ No profitable arbitrage opportunities found at this time.\n\n"
+                )
                 response_content += "**Reasons:**\n"
                 response_content += "- Markets are currently efficient\n"
                 response_content += "- Gas fees exceed potential profits\n"
@@ -1955,14 +2280,20 @@ class UnifiedChatOrchestrator:
                     response_content += f"**{i}. {opp.type.value.upper()} Arbitrage**\n"
                     response_content += f"- Route: {path_str}\n"
                     response_content += f"- Expected Profit: ${float(opp.expected_profit_usd):,.2f} ({float(opp.profit_percentage * 100):.2f}%)\n"
-                    response_content += f"- Gas Cost: ${float(opp.estimated_gas_cost):,.2f}\n"
+                    response_content += (
+                        f"- Gas Cost: ${float(opp.estimated_gas_cost):,.2f}\n"
+                    )
                     response_content += f"- Opportunity ID: {opp.opportunity_id}\n\n"
 
                 if len(opportunities) > 5:
-                    response_content += f"*+ {len(opportunities) - 5} more opportunities available*\n\n"
+                    response_content += (
+                        f"*+ {len(opportunities) - 5} more opportunities available*\n\n"
+                    )
 
             response_content += "💡 **Next Steps:**\n"
-            response_content += "- Use `/ultra/mev-protection` to execute with Flashbots\n"
+            response_content += (
+                "- Use `/ultra/mev-protection` to execute with Flashbots\n"
+            )
             response_content += "- Check gas prices before execution\n"
             response_content += "- Monitor liquidity depth for slippage\n"
 
@@ -1983,26 +2314,30 @@ class UnifiedChatOrchestrator:
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_api_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add 1inch source (used by ArbitrageDiscovery)
-        sources.append(create_api_source(
-            source_name="1inch",
-            url="https://app.1inch.io/",
-            citation_text="DEX price data from 1inch aggregator for arbitrage discovery",
-            fetched_at=fetched_at,
-            provider="1inch Aggregator API",
-        ))
-        
+        sources.append(
+            create_api_source(
+                source_name="1inch",
+                url="https://app.1inch.io/",
+                citation_text="DEX price data from 1inch aggregator for arbitrage discovery",
+                fetched_at=fetched_at,
+                provider="1inch Aggregator API",
+            )
+        )
+
         # TODO: Add other DEX sources when integrated (Uniswap, Curve, etc.)
 
         user_msg, agent_msg = await self._save_messages(
             conversation_id, content, response_content, sources=sources
         )
-        
-        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
+
+        sources_response = [
+            s.to_dict() if hasattr(s, "to_dict") else s for s in sources
+        ]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -2039,16 +2374,26 @@ class UnifiedChatOrchestrator:
                 # Get specific protocol info
                 protocol_enum = FlashLoanProtocol[protocol.upper()]
                 protocols = await engine.get_protocols()
-                protocol_info = next((p for p in protocols if p.protocol == protocol_enum), None)
+                protocol_info = next(
+                    (p for p in protocols if p.protocol == protocol_enum), None
+                )
 
                 response_content = f"⚡ **{protocol.title()} Flash Loans**\n\n"
                 if protocol_info:
                     response_content += "**Protocol Details:**\n"
-                    response_content += f"- Fee: {protocol_info.fee_percentage * 100:.3f}%\n"
-                    response_content += f"- Max Loan: ${protocol_info.max_loan_usd:,.0f}\n"
-                    response_content += f"- Supported Tokens: {len(protocol_info.supported_tokens)}\n\n"
+                    response_content += (
+                        f"- Fee: {protocol_info.fee_percentage * 100:.3f}%\n"
+                    )
+                    response_content += (
+                        f"- Max Loan: ${protocol_info.max_loan_usd:,.0f}\n"
+                    )
+                    response_content += (
+                        f"- Supported Tokens: {len(protocol_info.supported_tokens)}\n\n"
+                    )
 
-                    response_content += f"**For {token_symbol} loan of ${amount:,.2f}:**\n"
+                    response_content += (
+                        f"**For {token_symbol} loan of ${amount:,.2f}:**\n"
+                    )
                     fee = amount * Decimal(str(protocol_info.fee_percentage))
                     response_content += f"- Fee: ${fee:,.2f}\n"
                     response_content += f"- Total Repayment: ${amount + fee:,.2f}\n"
@@ -2062,7 +2407,9 @@ class UnifiedChatOrchestrator:
                     best_info = engine.get_protocol_info(best_protocol)
                     best_fee = amount * best_info.fee_percentage
                     response_content += f"**Best Protocol:** {best_info.name}\n"
-                    response_content += f"- Fee: {float(best_info.fee_percentage * 100):.3f}%\n"
+                    response_content += (
+                        f"- Fee: {float(best_info.fee_percentage * 100):.3f}%\n"
+                    )
                     response_content += f"- Total Cost: ${float(best_fee):,.2f}\n\n"
 
                 response_content += "**All Protocols:**\n"
@@ -2091,50 +2438,60 @@ class UnifiedChatOrchestrator:
             create_mcp_source,
             create_api_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add protocol sources based on what was queried
         if protocol:
             protocol_name = protocol.title()
             if protocol.lower() == "aave":
-                sources.append(create_mcp_source(
+                sources.append(
+                    create_mcp_source(
+                        mcp_server_name="Aave",
+                        tool_name="get_flash_loan_info",
+                        url="https://app.aave.com/",
+                        citation_text=f"{protocol_name} flash loan protocol information",
+                        fetched_at=fetched_at,
+                    )
+                )
+            elif protocol.lower() == "balancer":
+                sources.append(
+                    create_api_source(
+                        source_name="Balancer",
+                        url="https://balancer.fi/",
+                        citation_text="Balancer flash loan protocol information",
+                        fetched_at=fetched_at,
+                    )
+                )
+            elif protocol.lower() == "uniswap":
+                sources.append(
+                    create_api_source(
+                        source_name="Uniswap",
+                        url="https://app.uniswap.org/",
+                        citation_text="Uniswap V3 flash loan protocol information",
+                        fetched_at=fetched_at,
+                    )
+                )
+        else:
+            # All protocols queried
+            sources.append(
+                create_mcp_source(
                     mcp_server_name="Aave",
                     tool_name="get_flash_loan_info",
                     url="https://app.aave.com/",
-                    citation_text=f"{protocol_name} flash loan protocol information",
+                    citation_text="Flash loan protocol comparison data",
                     fetched_at=fetched_at,
-                ))
-            elif protocol.lower() == "balancer":
-                sources.append(create_api_source(
-                    source_name="Balancer",
-                    url="https://balancer.fi/",
-                    citation_text="Balancer flash loan protocol information",
-                    fetched_at=fetched_at,
-                ))
-            elif protocol.lower() == "uniswap":
-                sources.append(create_api_source(
-                    source_name="Uniswap",
-                    url="https://app.uniswap.org/",
-                    citation_text="Uniswap V3 flash loan protocol information",
-                    fetched_at=fetched_at,
-                ))
-        else:
-            # All protocols queried
-            sources.append(create_mcp_source(
-                mcp_server_name="Aave",
-                tool_name="get_flash_loan_info",
-                url="https://app.aave.com/",
-                citation_text="Flash loan protocol comparison data",
-                fetched_at=fetched_at,
-            ))
+                )
+            )
 
         user_msg, agent_msg = await self._save_messages(
             conversation_id, content, response_content, sources=sources
         )
-        
-        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
+
+        sources_response = [
+            s.to_dict() if hasattr(s, "to_dict") else s for s in sources
+        ]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -2221,32 +2578,38 @@ class UnifiedChatOrchestrator:
             create_api_source,
             create_blockchain_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add Flashbots source
-        sources.append(create_api_source(
-            source_name="Flashbots",
-            url="https://www.flashbots.net/",
-            citation_text="MEV protection via Flashbots private relay",
-            fetched_at=fetched_at,
-            provider="Flashbots Relay API",
-        ))
-        
+        sources.append(
+            create_api_source(
+                source_name="Flashbots",
+                url="https://www.flashbots.net/",
+                citation_text="MEV protection via Flashbots private relay",
+                fetched_at=fetched_at,
+                provider="Flashbots Relay API",
+            )
+        )
+
         # Add blockchain source (for transaction execution)
-        sources.append(create_blockchain_source(
-            chain="Ethereum",
-            citation_text="MEV-protected transaction on Ethereum",
-            fetched_at=fetched_at,
-            metadata={"mev_protection": True, "flashbots": True},
-        ))
+        sources.append(
+            create_blockchain_source(
+                chain="Ethereum",
+                citation_text="MEV-protected transaction on Ethereum",
+                fetched_at=fetched_at,
+                metadata={"mev_protection": True, "flashbots": True},
+            )
+        )
 
         user_msg, agent_msg = await self._save_messages(
             conversation_id, content, response_content, sources=sources
         )
-        
-        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
+
+        sources_response = [
+            s.to_dict() if hasattr(s, "to_dict") else s for s in sources
+        ]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -2298,7 +2661,9 @@ class UnifiedChatOrchestrator:
                 await executor.pause()
                 response_content = "🤖 **Trading Bot Paused**\n\n"
                 response_content += "⏸️ Auto-executor is paused\n\n"
-                response_content += "Current trades will complete, but new trades are suspended.\n"
+                response_content += (
+                    "Current trades will complete, but new trades are suspended.\n"
+                )
                 response_content += "Use `resume` to continue automated trading."
 
             elif action == "resume":
@@ -2310,21 +2675,33 @@ class UnifiedChatOrchestrator:
             else:  # status
                 status = executor.get_status()  # sync method
                 response_content = "🤖 **Trading Bot Status**\n\n"
-                response_content += f"**State:** {status.get('status', 'Unknown').upper()}\n"
-                response_content += f"**Total Executions:** {status.get('total_executions', 0)}\n\n"
+                response_content += (
+                    f"**State:** {status.get('status', 'Unknown').upper()}\n"
+                )
+                response_content += (
+                    f"**Total Executions:** {status.get('total_executions', 0)}\n\n"
+                )
 
                 response_content += "**Configuration:**\n"
                 config = status.get("config", {})
-                response_content += f"- Scan Interval: {config.get('scan_interval', 0)}s\n"
+                response_content += (
+                    f"- Scan Interval: {config.get('scan_interval', 0)}s\n"
+                )
                 response_content += f"- Min Profit: ${config.get('min_profit', '0')}\n"
                 response_content += f"- MEV Protection: {'Enabled' if config.get('mev_protection') else 'Disabled'}\n\n"
 
                 metrics = status.get("metrics", {})
                 response_content += "**Metrics:**\n"
-                response_content += f"- Success Rate: {metrics.get('success_rate', 0):.1f}%\n"
-                response_content += f"- Risk Score: {status.get('risk_score', 0):.1f}/100\n\n"
+                response_content += (
+                    f"- Success Rate: {metrics.get('success_rate', 0):.1f}%\n"
+                )
+                response_content += (
+                    f"- Risk Score: {status.get('risk_score', 0):.1f}/100\n\n"
+                )
 
-                response_content += "💡 **Commands:** `start`, `stop`, `pause`, `resume`"
+                response_content += (
+                    "💡 **Commands:** `start`, `stop`, `pause`, `resume`"
+                )
 
         except Exception as e:
             # Fallback to placeholder response on error
@@ -2344,39 +2721,47 @@ class UnifiedChatOrchestrator:
             create_api_source,
             create_blockchain_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add 1inch source (used for arbitrage discovery)
-        sources.append(create_api_source(
-            source_name="1inch",
-            url="https://app.1inch.io/",
-            citation_text="DEX price data for automated arbitrage scanning",
-            fetched_at=fetched_at,
-        ))
-        
+        sources.append(
+            create_api_source(
+                source_name="1inch",
+                url="https://app.1inch.io/",
+                citation_text="DEX price data for automated arbitrage scanning",
+                fetched_at=fetched_at,
+            )
+        )
+
         # Add Flashbots source (for MEV protection)
-        sources.append(create_api_source(
-            source_name="Flashbots",
-            url="https://www.flashbots.net/",
-            citation_text="MEV protection for automated execution",
-            fetched_at=fetched_at,
-        ))
-        
+        sources.append(
+            create_api_source(
+                source_name="Flashbots",
+                url="https://www.flashbots.net/",
+                citation_text="MEV protection for automated execution",
+                fetched_at=fetched_at,
+            )
+        )
+
         # Add blockchain source
-        sources.append(create_blockchain_source(
-            chain="Ethereum",
-            citation_text="Automated transaction execution on Ethereum",
-            fetched_at=fetched_at,
-            metadata={"auto_executor": True, "mev_protection": True},
-        ))
+        sources.append(
+            create_blockchain_source(
+                chain="Ethereum",
+                citation_text="Automated transaction execution on Ethereum",
+                fetched_at=fetched_at,
+                metadata={"auto_executor": True, "mev_protection": True},
+            )
+        )
 
         user_msg, agent_msg = await self._save_messages(
             conversation_id, content, response_content, sources=sources
         )
-        
-        sources_response = [s.to_dict() if hasattr(s, "to_dict") else s for s in sources]
+
+        sources_response = [
+            s.to_dict() if hasattr(s, "to_dict") else s for s in sources
+        ]
 
         return {
             "user_message": self._message_to_dict(user_msg),
@@ -2404,7 +2789,7 @@ class UnifiedChatOrchestrator:
     ) -> dict:
         """
         Handle lending intent - Morpho vault deposits and yield earning.
-        
+
         Uses real data from Morpho GraphQL API (supports Ethereum + Base).
         Responses are localized based on user language preference.
         """
@@ -2436,9 +2821,10 @@ class UnifiedChatOrchestrator:
             keyword in message_lower
             for keyword in ["deposit", "supply", "lend", "put", "add"]
         )
-        
+
         # Extract amount if present
         import re
+
         amount_match = re.search(r"(\d+\.?\d*)", content)
         amount = amount_match.group(1) if amount_match else None
 
@@ -2460,17 +2846,21 @@ class UnifiedChatOrchestrator:
                     "best_apy": result.best_apy,
                     "latency_ms": result.latency_ms,
                 }
-                
+
                 # Generate execute data if deposit intent and we have vaults
                 if is_deposit_intent and result.vaults and len(result.vaults) > 0:
                     # Use best vault (first in list, highest APY)
                     best_vault = result.vaults[0]
                     vault_address = None
                     if isinstance(best_vault, dict):
-                        vault_address = best_vault.get("address") or best_vault.get("vault_address")
+                        vault_address = best_vault.get("address") or best_vault.get(
+                            "vault_address"
+                        )
                     else:
-                        vault_address = getattr(best_vault, "address", None) or getattr(best_vault, "vault_address", None)
-                    
+                        vault_address = getattr(best_vault, "address", None) or getattr(
+                            best_vault, "vault_address", None
+                        )
+
                     if vault_address:
                         execute_data = {
                             "action_type": "deposit",
@@ -2485,7 +2875,9 @@ class UnifiedChatOrchestrator:
                 response_content = self._get_lending_fallback_response(chain, asset)
                 enrichment = {"chain": chain, "asset": asset, "fallback": True}
         except Exception as e:
-            response_content = f"⚠️ Error fetching vault data: {e!s}\n\nPlease try again later."
+            response_content = (
+                f"⚠️ Error fetching vault data: {e!s}\n\nPlease try again later."
+            )
             enrichment = {"error": str(e)}
 
         user_msg, agent_msg = await self._save_messages(
@@ -2613,7 +3005,9 @@ Try: "deposit USDC on Morpho" for direct vault access.
             # ============================================================================
             # Parse swap details from message (using existing parser for compatibility)
             if self._swap_handler:
-                amount, from_token, to_token, chain, to_chain = self._swap_handler.parse_swap_from_message(content)
+                amount, from_token, to_token, chain, to_chain = (
+                    self._swap_handler.parse_swap_from_message(content)
+                )
             else:
                 # Fallback parsing if no handler
                 amount = "100"
@@ -2986,15 +3380,24 @@ Your transactions are recorded when you use the app.
                     "chain": result.chain,
                     "latency_ms": result.latency_ms,
                 }
-                pending_action = result.pending_action if hasattr(result, "pending_action") else None
+                pending_action = (
+                    result.pending_action if hasattr(result, "pending_action") else None
+                )
             else:
                 # Fallback - try to get wallet address directly
                 wallet_address = await self._get_user_wallet_address(user_id)
                 if wallet_address:
-                    response_content = self._format_receive_response(wallet_address, chain)
+                    response_content = self._format_receive_response(
+                        wallet_address, chain
+                    )
                     enrichment = {
                         "wallet_address": wallet_address,
-                        "supported_networks": ["ethereum", "base", "arbitrum", "polygon"],
+                        "supported_networks": [
+                            "ethereum",
+                            "base",
+                            "arbitrum",
+                            "polygon",
+                        ],
                     }
                 else:
                     response_content = self._get_receive_no_wallet_response()
@@ -3044,7 +3447,9 @@ Your transactions are recorded when you use the app.
             else:
                 # Fallback - provide basic buy info
                 wallet_address = await self._get_user_wallet_address(user_id)
-                response_content = self._format_buy_fallback_response(language, wallet_address)
+                response_content = self._format_buy_fallback_response(
+                    language, wallet_address
+                )
                 enrichment = {
                     "wallet_address": wallet_address,
                     "requires_privy_modal": wallet_address is not None,
@@ -3063,6 +3468,7 @@ Your transactions are recorded when you use the app.
             # If there was a database error, we need to rollback the transaction
             # before attempting to save messages
             from sqlalchemy.exc import SQLAlchemyError
+
             if isinstance(e, SQLAlchemyError):
                 try:
                     # Try to get session and rollback if possible
@@ -3085,7 +3491,7 @@ Your transactions are recorded when you use the app.
             from app.domain.chat.entities.message import Message
             from app.domain.value_objects.message_role import MessageRole
             from app.domain.common.datetime_utils import utc_now
-            
+
             user_timestamp = utc_now()
             user_msg = Message(
                 id=uuid4(),
@@ -3125,7 +3531,9 @@ Your transactions are recorded when you use the app.
             if self._moonpay_swap_handler:
                 # Check if user is asking for available pairs or a quote
                 # For now, show available pairs (future: parse swap details from message)
-                result = await self._moonpay_swap_handler.get_available_pairs(language=language)
+                result = await self._moonpay_swap_handler.get_available_pairs(
+                    language=language
+                )
                 response_content = result.content
                 enrichment = {
                     "pairs": result.pairs,
@@ -3142,7 +3550,9 @@ Your transactions are recorded when you use the app.
                     "action": None,
                 }
         except Exception as e:
-            logger.error(f"Error in _handle_moonpay_swap for user {user_id}: {e}", exc_info=True)
+            logger.error(
+                f"Error in _handle_moonpay_swap for user {user_id}: {e}", exc_info=True
+            )
             # Provide fallback response
             response_content = self._format_moonpay_swap_fallback_response(language)
             enrichment = {
@@ -3157,14 +3567,16 @@ Your transactions are recorded when you use the app.
                 conversation_id, content, response_content
             )
         except Exception as e:
-            logger.error(f"Error saving messages in _handle_moonpay_swap: {e}", exc_info=True)
+            logger.error(
+                f"Error saving messages in _handle_moonpay_swap: {e}", exc_info=True
+            )
             # Create message objects in memory even if save fails
             # Use explicit timestamps to ensure correct ordering
             from datetime import timedelta
             from app.domain.chat.entities.message import Message
             from app.domain.value_objects.message_role import MessageRole
             from app.domain.common.datetime_utils import utc_now
-            
+
             user_timestamp = utc_now()
             user_msg = Message(
                 id=uuid4(),
@@ -3266,7 +3678,9 @@ Le service de swap MoonPay est temporairement indisponible. Veuillez réessayer 
         }
         return translations.get(language, translations["en"])
 
-    def _format_buy_fallback_response(self, language: str, wallet_address: str | None) -> str:
+    def _format_buy_fallback_response(
+        self, language: str, wallet_address: str | None
+    ) -> str:
         """Format fallback buy response when handler not available."""
         if language == "es":
             if wallet_address:
@@ -3342,13 +3756,13 @@ Once connected, you'll get:
     async def _get_user_wallet_address(self, user_id: int) -> str | None:
         """
         Get user's primary wallet address from Privy/WalletRepository.
-        
+
         Looks up the user's wallet from the database (synced from Privy).
         Returns the first available wallet address, preferring embedded wallets.
-        
+
         Args:
             user_id: User's database ID
-            
+
         Returns:
             Wallet address (0x...) or None if no wallet found
         """
@@ -3364,8 +3778,10 @@ Once connected, you'll get:
 
             # Prefer embedded wallets (managed by Privy)
             embedded_wallets = [
-                w for w in wallets
-                if hasattr(w, "wallet_type") and str(w.wallet_type).lower() == "embedded"
+                w
+                for w in wallets
+                if hasattr(w, "wallet_type")
+                and str(w.wallet_type).lower() == "embedded"
             ]
 
             if embedded_wallets:

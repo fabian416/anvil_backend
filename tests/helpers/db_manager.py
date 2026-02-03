@@ -133,7 +133,9 @@ class DatabaseTestManager:
             List of created objects/records
         """
         if self._session is None:
-            raise ValueError("Database session not initialized. Call setup_test_db() first.")
+            raise ValueError(
+                "Database session not initialized. Call setup_test_db() first."
+            )
 
         results = []
         for fixture in fixtures:
@@ -165,7 +167,9 @@ class DatabaseTestManager:
             Query result
         """
         if self._session is None:
-            raise ValueError("Database session not initialized. Call setup_test_db() first.")
+            raise ValueError(
+                "Database session not initialized. Call setup_test_db() first."
+            )
 
         result = await self._session.execute(text(sql), params or {})
         return result
@@ -178,7 +182,9 @@ class DatabaseTestManager:
             table_name: Name of table to clear
         """
         if self._session is None:
-            raise ValueError("Database session not initialized. Call setup_test_db() first.")
+            raise ValueError(
+                "Database session not initialized. Call setup_test_db() first."
+            )
 
         await self._session.execute(text(f"DELETE FROM {table_name}"))
         await self._session.flush()
@@ -195,7 +201,9 @@ class DatabaseTestManager:
             Model instance or None
         """
         if self._session is None:
-            raise ValueError("Database session not initialized. Call setup_test_db() first.")
+            raise ValueError(
+                "Database session not initialized. Call setup_test_db() first."
+            )
 
         return await self._session.get(model_class, id)
 
@@ -208,7 +216,9 @@ class DatabaseTestManager:
             AsyncSession within a savepoint
         """
         if self._session is None:
-            raise ValueError("Database session not initialized. Call setup_test_db() first.")
+            raise ValueError(
+                "Database session not initialized. Call setup_test_db() first."
+            )
 
         async with self._session.begin_nested():
             yield self._session

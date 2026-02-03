@@ -15,6 +15,7 @@ Adapters:
 """
 
 from .feature_flags_config import FeatureFlagsConfig
+
 # OpenAI removed - using only Vertex AI and DeepInfra
 # from .llm_client_openai import LLMClientGateway
 from .llm_client_vertex_ai import LLMClientVertexAI

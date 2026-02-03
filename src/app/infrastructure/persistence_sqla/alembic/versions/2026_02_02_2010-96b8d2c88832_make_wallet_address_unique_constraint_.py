@@ -29,10 +29,10 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     # Step 1: Normalize all existing addresses to lowercase
     op.execute("UPDATE wallets SET address = LOWER(address)")
-    
+
     # Step 2: Drop the old case-sensitive unique constraint
     op.drop_constraint("unique_user_wallet_address", "wallets", type_="unique")
-    
+
     # Step 3: Create a new case-insensitive unique index
     # Using a functional index with LOWER() ensures case-insensitive uniqueness
     op.create_index(
@@ -46,7 +46,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     # Drop the case-insensitive index
     op.drop_index("unique_user_wallet_address_ci", table_name="wallets")
-    
+
     # Recreate the original case-sensitive constraint
     op.create_unique_constraint(
         "unique_user_wallet_address",

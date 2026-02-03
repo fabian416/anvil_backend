@@ -153,9 +153,7 @@ class RegisterVertexAIModel:
             agent_types_registered=agent_types,
         )
 
-    async def _get_or_create_provider(
-        self, name: str, display_name: str
-    ) -> UUID:
+    async def _get_or_create_provider(self, name: str, display_name: str) -> UUID:
         """Get or create provider."""
         # This would query llm_providers table
         # For now, return a placeholder
@@ -305,9 +303,7 @@ class RegisterDeepInfraModel:
             agent_types_registered=agent_types,
         )
 
-    async def _get_or_create_provider(
-        self, name: str, display_name: str
-    ) -> UUID:
+    async def _get_or_create_provider(self, name: str, display_name: str) -> UUID:
         """Get or create provider."""
         # Same as Vertex AI implementation
         return uuid4()

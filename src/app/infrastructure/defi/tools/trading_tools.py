@@ -20,14 +20,14 @@ async def get_position_info_tool(
 ) -> str:
     """
     Get information about opening a position.
-    
+
     Args:
         symbol: Trading pair (BTC, ETH, etc.)
         leverage: Leverage multiplier (1-100)
         collateral: Collateral amount in USD
         is_long: True for long, False for short
         hyperliquid_client: Hyperliquid API client
-    
+
     Returns:
         Position information string
     """
@@ -36,24 +36,24 @@ async def get_position_info_tool(
         price_data = await hyperliquid_client.get_market_price(symbol)
         # Simplified - in production would parse actual orderbook
         current_price = Decimal("50000")  # Mock price
-        
+
         # Calculate position size
         collateral_dec = Decimal(collateral)
         position_size = collateral_dec * Decimal(leverage)
-        
+
         # Calculate liquidation price
         liq_price = await hyperliquid_client.calculate_liquidation_price(
             entry_price=current_price,
             leverage=leverage,
             is_long=is_long,
         )
-        
+
         # Get funding rate
         funding = await hyperliquid_client.get_funding_rate(symbol)
         funding_rate = funding.get("funding_rate", "0")
-        
+
         direction = "LONG" if is_long else "SHORT"
-        
+
         return (
             f"Position Preview: {leverage}x {direction} {symbol}\n"
             f"\n"
@@ -75,7 +75,7 @@ async def get_position_info_tool(
             f"• Always use stop losses\n"
             f"• Don't trade more than you can afford to lose\n"
         )
-    
+
     except Exception as e:
         logger.error(f"Error getting position info: {e}")
         return f"Error: {str(e)}"
@@ -86,10 +86,10 @@ async def explain_perp_trading_tool(
 ) -> str:
     """
     Explain perpetual futures trading.
-    
+
     Args:
         symbol: Trading pair symbol
-    
+
     Returns:
         Explanation string
     """
@@ -147,13 +147,13 @@ async def calculate_pnl_tool(
 ) -> str:
     """
     Calculate profit/loss for a position.
-    
+
     Args:
         entry_price: Entry price
         current_price: Current market price
         position_size: Position size in USD
         is_long: True for long, False for short
-    
+
     Returns:
         PnL calculation string
     """
@@ -161,19 +161,19 @@ async def calculate_pnl_tool(
         entry = Decimal(entry_price)
         current = Decimal(current_price)
         size = Decimal(position_size)
-        
+
         # Calculate PnL
         price_change_pct = ((current - entry) / entry) * 100
-        
+
         if not is_long:
             price_change_pct = -price_change_pct
-        
+
         pnl_usd = size * (price_change_pct / 100)
         pnl_pct = price_change_pct
-        
+
         direction = "LONG" if is_long else "SHORT"
         status = "✅ PROFIT" if pnl_usd > 0 else "❌ LOSS"
-        
+
         return (
             f"PnL Calculation: {direction} Position\n"
             f"\n"
@@ -188,7 +188,7 @@ async def calculate_pnl_tool(
             f"• PnL: {'+' if pnl_usd > 0 else ''}{pnl_pct:.2f}% (${pnl_usd:,.2f})\n"
             f"• Status: {status}\n"
         )
-    
+
     except Exception as e:
         logger.error(f"Error calculating PnL: {e}")
         return f"Error: {str(e)}"

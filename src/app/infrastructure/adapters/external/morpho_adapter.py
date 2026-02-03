@@ -109,7 +109,7 @@ class MorphoAdapter(MorphoGateway):
     ) -> list[MorphoVault]:
         """
         Get MetaMorpho vaults with caching.
-        
+
         Args:
             asset: Filter by underlying asset symbol (e.g., "USDC")
             chain: Blockchain ("ethereum" or "base")
@@ -145,10 +145,7 @@ class MorphoAdapter(MorphoGateway):
 
         # Filter by asset if specified
         if asset:
-            vaults = [
-                v for v in vaults
-                if v.asset.upper() == asset.upper()
-            ]
+            vaults = [v for v in vaults if v.asset.upper() == asset.upper()]
 
         return vaults
 
@@ -275,10 +272,7 @@ class MorphoAdapter(MorphoGateway):
             raw_positions = await self._client.get_user_positions(
                 address, chain_id=chain_id
             )
-            positions = [
-                self._transform_position(p, address)
-                for p in raw_positions
-            ]
+            positions = [self._transform_position(p, address) for p in raw_positions]
 
             await self._cache.set(
                 "morpho",
@@ -314,7 +308,10 @@ class MorphoAdapter(MorphoGateway):
         """Calculate risk tier based on vault allocations."""
         if max_lltv >= Decimal("0.90") and avg_utilization >= Decimal("0.85"):
             return RiskTier.VERY_HIGH
-        elif max_lltv >= self.LLTV_HIGH_THRESHOLD or avg_utilization >= self.UTILIZATION_HIGH_THRESHOLD:
+        elif (
+            max_lltv >= self.LLTV_HIGH_THRESHOLD
+            or avg_utilization >= self.UTILIZATION_HIGH_THRESHOLD
+        ):
             return RiskTier.HIGH
         elif max_lltv >= Decimal("0.75") or avg_utilization >= Decimal("0.60"):
             return RiskTier.MEDIUM
@@ -331,21 +328,21 @@ class MorphoAdapter(MorphoGateway):
             total_assets_raw = Decimal(str(raw.total_assets))
             # Handle already-scaled values from new API (no 1e18 scaling needed)
             if total_assets_raw > Decimal("1e12"):
-                total_assets = total_assets_raw / Decimal(10 ** raw.asset_decimals)
+                total_assets = total_assets_raw / Decimal(10**raw.asset_decimals)
             else:
                 total_assets = total_assets_raw
         except (ValueError, TypeError):
             total_assets = Decimal("0")
-            
+
         try:
             total_shares_raw = Decimal(str(raw.total_supply))
             if total_shares_raw > Decimal("1e12"):
-                total_shares = total_shares_raw / Decimal(10 ** raw.asset_decimals)
+                total_shares = total_shares_raw / Decimal(10**raw.asset_decimals)
             else:
                 total_shares = total_shares_raw
         except (ValueError, TypeError):
             total_shares = Decimal("0")
-        
+
         # Fee is typically in basis points (1e4) or decimal (0.05)
         try:
             fee = Decimal(str(raw.performance_fee))
@@ -355,10 +352,7 @@ class MorphoAdapter(MorphoGateway):
             fee = Decimal("0")
 
         # Transform allocations
-        allocations = [
-            self._transform_allocation(a)
-            for a in raw.allocations
-        ]
+        allocations = [self._transform_allocation(a) for a in raw.allocations]
 
         # Calculate risk tier
         max_lltv = Decimal("0")
@@ -367,7 +361,7 @@ class MorphoAdapter(MorphoGateway):
                 max_lltv = alloc.lltv
 
         risk_tier = self._calculate_risk_tier(max_lltv, Decimal("0.5"))
-        
+
         # Parse APY from new API (already a decimal like 0.0452 = 4.52%)
         try:
             apy = Decimal(str(raw.net_apy))
@@ -385,7 +379,7 @@ class MorphoAdapter(MorphoGateway):
         asset_symbol_upper = raw.asset_symbol.upper()
         correct_asset_address = ASSET_ADDRESSES.get(chain_name, {}).get(
             asset_symbol_upper,
-            raw.asset_address  # Fallback to API value if not in mapping
+            raw.asset_address,  # Fallback to API value if not in mapping
         )
 
         # Log if we corrected the address
@@ -417,12 +411,13 @@ class MorphoAdapter(MorphoGateway):
     def _transform_allocation(self, raw: dict) -> MarketAllocation:
         """Transform allocation data to domain value object."""
         market = raw.get("market", {})
-        
+
         return MarketAllocation(
             market_id=market.get("id", ""),
             collateral_asset=market.get("collateralAsset", {}).get("symbol", ""),
             loan_asset="",  # Not always available
-            allocation_percentage=Decimal(str(raw.get("assets", "0"))) / Decimal("1e18"),
+            allocation_percentage=Decimal(str(raw.get("assets", "0")))
+            / Decimal("1e18"),
             lltv=Decimal(str(market.get("lltv", "0"))) / Decimal("1e18"),
             supply_apy=Decimal("0"),
         )
@@ -432,11 +427,11 @@ class MorphoAdapter(MorphoGateway):
         # Parse amounts
         total_supply = Decimal(raw.total_supply_assets)
         total_borrow = Decimal(raw.total_borrow_assets)
-        
+
         # Parse APY (typically in percentage already)
         supply_apy = Decimal(raw.supply_rate)
         borrow_apy = Decimal(raw.borrow_rate)
-        
+
         # Parse LLTV (typically 1e18 scaled)
         lltv = Decimal(raw.lltv)
         if lltv > 1:

@@ -27,89 +27,268 @@ from tests.helpers.auth_helper import AuthHelper
 
 AGENT_SQUAD_TEST_CASES = {
     "core_agents": [
-        {"id": "squad_chat_001", "input": {"content": "Hello! What can you help me with?"}},
+        {
+            "id": "squad_chat_001",
+            "input": {"content": "Hello! What can you help me with?"},
+        },
         {"id": "squad_chat_002", "input": {"content": "What features do you offer?"}},
-        {"id": "squad_hunter_001", "input": {"content": "What's the current market sentiment for Ethereum?"}},
-        {"id": "squad_hunter_002", "input": {"content": "Predict Bitcoin price for the next week"}},
-        {"id": "squad_research_001", "input": {"content": "Do a deep research analysis on Aave V3 protocol"}},
-        {"id": "squad_research_002", "input": {"content": "Research the tokenomics of Uniswap UNI token"}},
-        {"id": "squad_exec_001", "input": {"content": "Execute a swap of 1 ETH for USDC on Uniswap"}},
-        {"id": "squad_risk_001", "input": {"content": "Analyze the risk of my current DeFi positions"}},
-        {"id": "squad_risk_002", "input": {"content": "What are the risks of using Curve Finance?"}},
-        {"id": "squad_portfolio_001", "input": {"content": "Optimize my crypto portfolio for maximum Sharpe ratio"}},
-        {"id": "squad_portfolio_002", "input": {"content": "Suggest rebalancing for my BTC, ETH, SOL holdings"}},
-        {"id": "squad_tax_001", "input": {"content": "Find tax loss harvesting opportunities in my portfolio"}},
-        {"id": "squad_yield_001", "input": {"content": "Find the best yield farming opportunities on Ethereum"}},
-        {"id": "squad_security_001", "input": {"content": "Check if Compound protocol has any known security issues"}},
-        {"id": "squad_gas_001", "input": {"content": "When is the best time to send transactions for low gas?"}},
+        {
+            "id": "squad_hunter_001",
+            "input": {"content": "What's the current market sentiment for Ethereum?"},
+        },
+        {
+            "id": "squad_hunter_002",
+            "input": {"content": "Predict Bitcoin price for the next week"},
+        },
+        {
+            "id": "squad_research_001",
+            "input": {"content": "Do a deep research analysis on Aave V3 protocol"},
+        },
+        {
+            "id": "squad_research_002",
+            "input": {"content": "Research the tokenomics of Uniswap UNI token"},
+        },
+        {
+            "id": "squad_exec_001",
+            "input": {"content": "Execute a swap of 1 ETH for USDC on Uniswap"},
+        },
+        {
+            "id": "squad_risk_001",
+            "input": {"content": "Analyze the risk of my current DeFi positions"},
+        },
+        {
+            "id": "squad_risk_002",
+            "input": {"content": "What are the risks of using Curve Finance?"},
+        },
+        {
+            "id": "squad_portfolio_001",
+            "input": {
+                "content": "Optimize my crypto portfolio for maximum Sharpe ratio"
+            },
+        },
+        {
+            "id": "squad_portfolio_002",
+            "input": {"content": "Suggest rebalancing for my BTC, ETH, SOL holdings"},
+        },
+        {
+            "id": "squad_tax_001",
+            "input": {
+                "content": "Find tax loss harvesting opportunities in my portfolio"
+            },
+        },
+        {
+            "id": "squad_yield_001",
+            "input": {
+                "content": "Find the best yield farming opportunities on Ethereum"
+            },
+        },
+        {
+            "id": "squad_security_001",
+            "input": {
+                "content": "Check if Compound protocol has any known security issues"
+            },
+        },
+        {
+            "id": "squad_gas_001",
+            "input": {
+                "content": "When is the best time to send transactions for low gas?"
+            },
+        },
     ],
     "advanced_agents": [
-        {"id": "squad_bridge_001", "input": {"content": "Bridge 100 USDC from Ethereum to Arbitrum"}},
-        {"id": "squad_bridge_002", "input": {"content": "Find the cheapest bridge route from Polygon to Optimism"}},
-        {"id": "squad_lending_001", "input": {"content": "Create a 2x leveraged position on ETH using Aave"}},
-        {"id": "squad_lending_002", "input": {"content": "Optimize my collateral ratio on Compound"}},
-        {"id": "squad_nft_001", "input": {"content": "Value my NFT portfolio and suggest which to hold or sell"}},
-        {"id": "squad_dao_001", "input": {"content": "Show me active governance proposals on Uniswap DAO"}},
+        {
+            "id": "squad_bridge_001",
+            "input": {"content": "Bridge 100 USDC from Ethereum to Arbitrum"},
+        },
+        {
+            "id": "squad_bridge_002",
+            "input": {
+                "content": "Find the cheapest bridge route from Polygon to Optimism"
+            },
+        },
+        {
+            "id": "squad_lending_001",
+            "input": {"content": "Create a 2x leveraged position on ETH using Aave"},
+        },
+        {
+            "id": "squad_lending_002",
+            "input": {"content": "Optimize my collateral ratio on Compound"},
+        },
+        {
+            "id": "squad_nft_001",
+            "input": {
+                "content": "Value my NFT portfolio and suggest which to hold or sell"
+            },
+        },
+        {
+            "id": "squad_dao_001",
+            "input": {"content": "Show me active governance proposals on Uniswap DAO"},
+        },
     ],
     "enterprise_agents": [
-        {"id": "squad_compliance_001", "input": {"content": "Screen wallet 0xabc123 for AML compliance"}},
-        {"id": "squad_multisig_001", "input": {"content": "Create a multi-sig proposal to transfer 10 ETH from treasury"}},
-        {"id": "squad_alert_001", "input": {"content": "Set an alert when ETH drops below $2000"}},
-        {"id": "squad_crisis_001", "input": {"content": "There's a potential exploit on the protocol I'm using, what should I do?"}},
+        {
+            "id": "squad_compliance_001",
+            "input": {"content": "Screen wallet 0xabc123 for AML compliance"},
+        },
+        {
+            "id": "squad_multisig_001",
+            "input": {
+                "content": "Create a multi-sig proposal to transfer 10 ETH from treasury"
+            },
+        },
+        {
+            "id": "squad_alert_001",
+            "input": {"content": "Set an alert when ETH drops below $2000"},
+        },
+        {
+            "id": "squad_crisis_001",
+            "input": {
+                "content": "There's a potential exploit on the protocol I'm using, what should I do?"
+            },
+        },
     ],
 }
 
 ULTRA_TEST_CASES = {
     "arbitrage": [
-        {"id": "ultra_arb_001", "input": {"content": "Find arbitrage opportunities with $10,000 capital"}},
-        {"id": "ultra_arb_002", "input": {"content": "Search for 2-hop arbitrage between Uniswap and SushiSwap"}},
-        {"id": "ultra_arb_003", "input": {"content": "Find triangle arbitrage opportunities on ETH/USDC/WBTC"}},
-        {"id": "ultra_arb_004", "input": {"content": "Discover cross-chain arbitrage between Ethereum and Arbitrum"}},
+        {
+            "id": "ultra_arb_001",
+            "input": {"content": "Find arbitrage opportunities with $10,000 capital"},
+        },
+        {
+            "id": "ultra_arb_002",
+            "input": {
+                "content": "Search for 2-hop arbitrage between Uniswap and SushiSwap"
+            },
+        },
+        {
+            "id": "ultra_arb_003",
+            "input": {
+                "content": "Find triangle arbitrage opportunities on ETH/USDC/WBTC"
+            },
+        },
+        {
+            "id": "ultra_arb_004",
+            "input": {
+                "content": "Discover cross-chain arbitrage between Ethereum and Arbitrum"
+            },
+        },
     ],
     "flash_loans": [
-        {"id": "ultra_flash_001", "input": {"content": "Best flash loan protocol for 100k USDC"}},
-        {"id": "ultra_flash_002", "input": {"content": "Get a flash loan from Aave for 50 ETH"}},
-        {"id": "ultra_flash_003", "input": {"content": "Execute flash loan on Balancer for WBTC"}},
-        {"id": "ultra_flash_004", "input": {"content": "Use flash loan to create 3x leverage on ETH"}},
+        {
+            "id": "ultra_flash_001",
+            "input": {"content": "Best flash loan protocol for 100k USDC"},
+        },
+        {
+            "id": "ultra_flash_002",
+            "input": {"content": "Get a flash loan from Aave for 50 ETH"},
+        },
+        {
+            "id": "ultra_flash_003",
+            "input": {"content": "Execute flash loan on Balancer for WBTC"},
+        },
+        {
+            "id": "ultra_flash_004",
+            "input": {"content": "Use flash loan to create 3x leverage on ETH"},
+        },
     ],
     "mev_protection": [
-        {"id": "ultra_mev_001", "input": {"content": "Execute ARB-001 with Flashbots protection"}},
-        {"id": "ultra_mev_002", "input": {"content": "Send this transaction privately to avoid frontrunning"}},
-        {"id": "ultra_mev_003", "input": {"content": "Protect my large swap from sandwich attacks"}},
+        {
+            "id": "ultra_mev_001",
+            "input": {"content": "Execute ARB-001 with Flashbots protection"},
+        },
+        {
+            "id": "ultra_mev_002",
+            "input": {
+                "content": "Send this transaction privately to avoid frontrunning"
+            },
+        },
+        {
+            "id": "ultra_mev_003",
+            "input": {"content": "Protect my large swap from sandwich attacks"},
+        },
     ],
     "auto_executor": [
         {"id": "ultra_ae_001", "input": {"content": "Start the automated trading bot"}},
-        {"id": "ultra_ae_002", "input": {"content": "Stop the trading bot immediately"}},
-        {"id": "ultra_ae_003", "input": {"content": "Show me the current bot status and performance"}},
+        {
+            "id": "ultra_ae_002",
+            "input": {"content": "Stop the trading bot immediately"},
+        },
+        {
+            "id": "ultra_ae_003",
+            "input": {"content": "Show me the current bot status and performance"},
+        },
     ],
 }
 
 HUNTER_TEST_CASES = {
     "sentiment": [
-        {"id": "hunter_sent_001", "input": {"content": "What's the ETH sentiment on Twitter and Reddit?"}},
-        {"id": "hunter_sent_002", "input": {"content": "Show me BTC social media sentiment from last 7 days"}},
-        {"id": "hunter_sent_003", "input": {"content": "Compare sentiment between ETH, SOL, and AVAX"}},
+        {
+            "id": "hunter_sent_001",
+            "input": {"content": "What's the ETH sentiment on Twitter and Reddit?"},
+        },
+        {
+            "id": "hunter_sent_002",
+            "input": {"content": "Show me BTC social media sentiment from last 7 days"},
+        },
+        {
+            "id": "hunter_sent_003",
+            "input": {"content": "Compare sentiment between ETH, SOL, and AVAX"},
+        },
     ],
     "price_prediction": [
-        {"id": "hunter_pp_001", "input": {"content": "Predict BTC price for next 7 days"}},
-        {"id": "hunter_pp_002", "input": {"content": "Forecast ETH price for next 30 days"}},
-        {"id": "hunter_pp_003", "input": {"content": "What will SOL price be next week?"}},
+        {
+            "id": "hunter_pp_001",
+            "input": {"content": "Predict BTC price for next 7 days"},
+        },
+        {
+            "id": "hunter_pp_002",
+            "input": {"content": "Forecast ETH price for next 30 days"},
+        },
+        {
+            "id": "hunter_pp_003",
+            "input": {"content": "What will SOL price be next week?"},
+        },
     ],
     "patterns": [
-        {"id": "hunter_pat_001", "input": {"content": "What chart patterns do you see for BTC?"}},
-        {"id": "hunter_pat_002", "input": {"content": "Detect technical formations for ETH"}},
+        {
+            "id": "hunter_pat_001",
+            "input": {"content": "What chart patterns do you see for BTC?"},
+        },
+        {
+            "id": "hunter_pat_002",
+            "input": {"content": "Detect technical formations for ETH"},
+        },
     ],
     "portfolio": [
-        {"id": "hunter_port_001", "input": {"content": "Analyze my crypto portfolio performance"}},
-        {"id": "hunter_port_002", "input": {"content": "What are the correlations in my portfolio?"}},
+        {
+            "id": "hunter_port_001",
+            "input": {"content": "Analyze my crypto portfolio performance"},
+        },
+        {
+            "id": "hunter_port_002",
+            "input": {"content": "What are the correlations in my portfolio?"},
+        },
     ],
     "risk_signals": [
-        {"id": "hunter_risk_001", "input": {"content": "Any risk signals for my BTC position?"}},
-        {"id": "hunter_risk_002", "input": {"content": "Detect early warning signs in my portfolio"}},
+        {
+            "id": "hunter_risk_001",
+            "input": {"content": "Any risk signals for my BTC position?"},
+        },
+        {
+            "id": "hunter_risk_002",
+            "input": {"content": "Detect early warning signs in my portfolio"},
+        },
     ],
     "trading_signals": [
-        {"id": "hunter_ts_001", "input": {"content": "Generate trading signals for ETH"}},
-        {"id": "hunter_ts_002", "input": {"content": "What are the entry and exit points for BTC today?"}},
+        {
+            "id": "hunter_ts_001",
+            "input": {"content": "Generate trading signals for ETH"},
+        },
+        {
+            "id": "hunter_ts_002",
+            "input": {"content": "What are the entry and exit points for BTC today?"},
+        },
     ],
 }
 
@@ -168,7 +347,9 @@ async def test_conversation(authenticated_client):
         json={"title": "Integration Test Conversation"},
     )
 
-    assert response.status_code == 201, f"Failed to create conversation: {response.text}"
+    assert response.status_code == 201, (
+        f"Failed to create conversation: {response.text}"
+    )
     conversation_data = response.json()
     return conversation_data["id"]
 
@@ -216,10 +397,14 @@ class TestAgentSquadCoreAgents:
 
         routing = data["routing"]
         assert "intent" in routing, f"Missing intent in routing for {test_case['id']}"
-        assert "confidence" in routing, f"Missing confidence in routing for {test_case['id']}"
+        assert "confidence" in routing, (
+            f"Missing confidence in routing for {test_case['id']}"
+        )
 
         agent_msg = data["agent_message"]
-        assert len(agent_msg["content"]) > 0, f"Empty agent response for {test_case['id']}"
+        assert len(agent_msg["content"]) > 0, (
+            f"Empty agent response for {test_case['id']}"
+        )
         assert routing["confidence"] >= 0.5
 
 
@@ -656,7 +841,9 @@ class TestFullSystemIntegration:
                 failed.append(f"{case['id']}: Status {response.status_code}")
 
         total = len(all_cases)
-        assert passed == total, f"Agent Squad: {passed}/{total} passed. Failed: {failed[:5]}..."
+        assert passed == total, (
+            f"Agent Squad: {passed}/{total} passed. Failed: {failed[:5]}..."
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -686,7 +873,9 @@ class TestFullSystemIntegration:
                 failed.append(f"{case['id']}: Status {response.status_code}")
 
         total = len(all_cases)
-        assert passed == total, f"Ultra: {passed}/{total} passed. Failed: {failed[:5]}..."
+        assert passed == total, (
+            f"Ultra: {passed}/{total} passed. Failed: {failed[:5]}..."
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -716,7 +905,9 @@ class TestFullSystemIntegration:
                 failed.append(f"{case['id']}: Status {response.status_code}")
 
         total = len(all_cases)
-        assert passed == total, f"Hunter: {passed}/{total} passed. Failed: {failed[:5]}..."
+        assert passed == total, (
+            f"Hunter: {passed}/{total} passed. Failed: {failed[:5]}..."
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation

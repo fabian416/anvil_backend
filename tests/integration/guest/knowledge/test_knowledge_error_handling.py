@@ -20,14 +20,20 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.knowledge_injection]
+pytestmark = [
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.knowledge_injection,
+]
 
 
 class TestKnowledgeInjectionErrors:
     """Test error handling in knowledge injection system."""
 
     @pytest.mark.llm_validation
-    async def test_invalid_token_symbol_handling(self, client: AsyncClient, llm_validator):
+    async def test_invalid_token_symbol_handling(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test handling of invalid/unknown token symbols.
 
@@ -35,10 +41,7 @@ class TestKnowledgeInjectionErrors:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What's the price of INVALIDTOKEN999?",
-                "language": "en"
-            }
+            json={"content": "What's the price of INVALIDTOKEN999?", "language": "en"},
         )
 
         # Should succeed even with invalid token
@@ -50,10 +53,14 @@ class TestKnowledgeInjectionErrors:
 
         # Agent should provide helpful response even without data
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 0, "Should provide helpful response for invalid token"
+        assert len(agent_response) > 0, (
+            "Should provide helpful response for invalid token"
+        )
 
     @pytest.mark.llm_validation
-    async def test_malformed_api_response_handling(self, client: AsyncClient, llm_validator):
+    async def test_malformed_api_response_handling(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test handling of malformed external API responses.
 
@@ -63,8 +70,8 @@ class TestKnowledgeInjectionErrors:
             "/api/v1/guest/chat",
             json={
                 "content": "What's happening with cryptocurrency markets?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         # Should succeed even if some APIs return malformed data
@@ -89,8 +96,8 @@ class TestKnowledgeInjectionErrors:
             "/api/v1/guest/chat",
             json={
                 "content": "Tell me about Polkadot token metrics and recent news",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         # Should succeed with partial data
@@ -113,10 +120,7 @@ class TestKnowledgeInjectionErrors:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What's the latest price of Chainlink?",
-                "language": "en"
-            }
+            json={"content": "What's the latest price of Chainlink?", "language": "en"},
         )
 
         # Should succeed with fresh or refreshed data
@@ -131,26 +135,20 @@ class TestKnowledgeInjectionErrors:
         assert len(agent_response) > 50, "Should provide current information"
 
     @pytest.mark.llm_validation
-    async def test_rate_limit_on_knowledge_apis(self, client: AsyncClient, llm_validator):
+    async def test_rate_limit_on_knowledge_apis(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test handling rate limits from external APIs.
 
         Multiple rapid queries should handle rate limiting gracefully.
         """
         # Make multiple rapid queries
-        queries = [
-            "What's BTC price?",
-            "What's ETH price?",
-            "What's SOL price?"
-        ]
+        queries = ["What's BTC price?", "What's ETH price?", "What's SOL price?"]
 
         for query in queries:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={
-                    "content": query,
-                    "language": "en"
-                }
+                "/api/v1/guest/chat", json={"content": query, "language": "en"}
             )
 
             # All should succeed even with potential rate limiting
@@ -175,8 +173,8 @@ class TestKnowledgeInjectionErrors:
             "/api/v1/guest/chat",
             json={
                 "content": "Give me comprehensive data on all major DeFi protocols",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         # Should succeed without timeout issues

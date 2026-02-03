@@ -35,9 +35,7 @@ class BedrockConfig(BaseModel):
     """AWS Bedrock configuration."""
 
     region: str = Field(default="us-east-1", description="AWS region")
-    aws_access_key_id: Optional[str] = Field(
-        default=None, description="AWS access key"
-    )
+    aws_access_key_id: Optional[str] = Field(default=None, description="AWS access key")
     aws_secret_access_key: Optional[str] = Field(
         default=None, description="AWS secret key"
     )
@@ -82,9 +80,7 @@ class OrchestratorConfig(BaseModel):
         default=2, description="Max retries per provider"
     )
     max_total_retries: int = Field(default=6, description="Max total retries")
-    initial_delay_ms: int = Field(
-        default=100, description="Initial retry delay (ms)"
-    )
+    initial_delay_ms: int = Field(default=100, description="Initial retry delay (ms)")
     max_delay_ms: int = Field(default=5000, description="Max retry delay (ms)")
     backoff_multiplier: float = Field(default=2.0, description="Backoff multiplier")
     jitter: bool = Field(default=True, description="Add jitter to retry delays")
@@ -103,9 +99,7 @@ class OrchestratorConfig(BaseModel):
     # Feature flags
     enable_caching: bool = Field(default=True, description="Enable response caching")
     enable_streaming: bool = Field(default=True, description="Enable streaming")
-    enable_cost_tracking: bool = Field(
-        default=True, description="Enable cost tracking"
-    )
+    enable_cost_tracking: bool = Field(default=True, description="Enable cost tracking")
     enable_ranking: bool = Field(default=True, description="Enable adaptive ranking")
 
     # Circuit breaker settings
@@ -124,7 +118,8 @@ class OrchestratorConfig(BaseModel):
         default=True, description="Use cheaper models on fallback"
     )
     primary_chat_provider: str = Field(
-        default="vertex_ai", description="Primary chat provider (vertex_ai, deepinfra, or anthropic)"
+        default="vertex_ai",
+        description="Primary chat provider (vertex_ai, deepinfra, or anthropic)",
     )
 
 
@@ -144,7 +139,9 @@ class LLMOrchestrationConfig(BaseModel):
 # ============================================================================
 
 
-def _get_config_value(raw_config: dict, section: str, key: str, env_var: str, default: str = "") -> str:
+def _get_config_value(
+    raw_config: dict, section: str, key: str, env_var: str, default: str = ""
+) -> str:
     """
     Get configuration value with priority:
     1. .secrets.toml (raw_config)
@@ -152,12 +149,12 @@ def _get_config_value(raw_config: dict, section: str, key: str, env_var: str, de
     3. Default value
     """
     import os
-    
+
     # Try .secrets.toml first
     value = raw_config.get(section, {}).get(key, "")
     if value:
         return value
-    
+
     # Fallback to environment variable
     return os.getenv(env_var, default)
 
@@ -173,13 +170,14 @@ def load_llm_orchestration_config() -> LLMOrchestrationConfig:
     """
     import os
     import logging
-    
+
     logger = logging.getLogger(__name__)
-    
+
     # Load raw config from .secrets.toml
     raw_config: dict = {}
     try:
         from app.setup.config.loader import load_full_config, get_current_env
+
         raw_config = load_full_config(env=get_current_env())
         logger.debug("Loaded LLM config from .secrets.toml")
     except Exception as e:
@@ -189,7 +187,9 @@ def load_llm_orchestration_config() -> LLMOrchestrationConfig:
     openai_config = None
 
     # Load Anthropic config if API key is present
-    anthropic_key = _get_config_value(raw_config, "anthropic", "API_KEY", "ANTHROPIC_API_KEY")
+    anthropic_key = _get_config_value(
+        raw_config, "anthropic", "API_KEY", "ANTHROPIC_API_KEY"
+    )
     anthropic_config = None
     if anthropic_key:
         anthropic_config = AnthropicConfig(
@@ -201,18 +201,29 @@ def load_llm_orchestration_config() -> LLMOrchestrationConfig:
         )
 
     # Load Vertex AI config
-    vertex_api_key = _get_config_value(raw_config, "vertex_ai", "API_KEY", "VERTEX_AI_API_KEY")
-    vertex_project_id = _get_config_value(raw_config, "vertex_ai", "PROJECT_ID", "VERTEX_AI_PROJECT_ID")
-    
-    # Load DeepInfra config - this is the key fix!
-    deepinfra_api_key = _get_config_value(raw_config, "deepinfra", "API_KEY", "DEEPINFRA_API_KEY")
-    deepinfra_base_url = _get_config_value(
-        raw_config, "deepinfra", "BASE_URL", "DEEPINFRA_BASE_URL", 
-        "https://api.deepinfra.com/v1/openai"
+    vertex_api_key = _get_config_value(
+        raw_config, "vertex_ai", "API_KEY", "VERTEX_AI_API_KEY"
     )
-    
+    vertex_project_id = _get_config_value(
+        raw_config, "vertex_ai", "PROJECT_ID", "VERTEX_AI_PROJECT_ID"
+    )
+
+    # Load DeepInfra config - this is the key fix!
+    deepinfra_api_key = _get_config_value(
+        raw_config, "deepinfra", "API_KEY", "DEEPINFRA_API_KEY"
+    )
+    deepinfra_base_url = _get_config_value(
+        raw_config,
+        "deepinfra",
+        "BASE_URL",
+        "DEEPINFRA_BASE_URL",
+        "https://api.deepinfra.com/v1/openai",
+    )
+
     if deepinfra_api_key:
-        logger.info("DeepInfra LLM configured with API key from .secrets.toml or env var")
+        logger.info(
+            "DeepInfra LLM configured with API key from .secrets.toml or env var"
+        )
     else:
         logger.warning("DeepInfra API key not found in .secrets.toml or environment")
 

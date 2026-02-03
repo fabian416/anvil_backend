@@ -80,7 +80,9 @@ class InvalidFormatError(ApplicationError):
             details["expected_format"] = expected_format
         if example:
             details["example"] = example
-        super().__init__(ErrorCode.VAL_INVALID_FORMAT, details=details, field=field_name)
+        super().__init__(
+            ErrorCode.VAL_INVALID_FORMAT, details=details, field=field_name
+        )
 
 
 class InvalidEmailFormatError(ApplicationError):
@@ -188,10 +190,13 @@ class ArrayTooLongError(ApplicationError):
             details["actual"] = actual_count
         if max_count is not None:
             details["max"] = max_count
-        super().__init__(ErrorCode.VAL_ARRAY_TOO_LONG, details=details, field=field_name)
+        super().__init__(
+            ErrorCode.VAL_ARRAY_TOO_LONG, details=details, field=field_name
+        )
 
 
 # Additional validation-specific exceptions
+
 
 class InvalidPhoneNumberError(ApplicationError):
     """Raised when a phone number is invalid."""

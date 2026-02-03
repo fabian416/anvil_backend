@@ -16,7 +16,11 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
-from app.application.chat.services.intent_detector_v2 import IntentDetectorV2, ChatIntentV2
+from app.application.chat.services.intent_detector_v2 import (
+    IntentDetectorV2,
+    ChatIntentV2,
+)
+
 
 def test_p0_fix():
     """Test the exact user query from the problem statement."""
@@ -54,6 +58,7 @@ def test_p0_fix():
         print(f"  Got:      {result.intent.value} intent with {result.handler}")
         print("=" * 80)
         return False
+
 
 if __name__ == "__main__":
     success = test_p0_fix()

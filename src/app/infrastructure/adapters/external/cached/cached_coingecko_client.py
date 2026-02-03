@@ -25,22 +25,22 @@ from app.infrastructure.cache.external_api_cache import ExternalAPICache
 class CachedCoinGeckoClient(CoinGeckoClient):
     """
     CoinGecko client with Redis caching.
-    
+
     Reduces API calls significantly for frequently requested data.
-    
+
     Example:
         >>> cache = ExternalAPICache(redis_client)
         >>> client = CachedCoinGeckoClient(api_key="...", cache=cache)
-        >>> 
+        >>>
         >>> # First call hits API
         >>> price = await client.get_price("ethereum")
-        >>> 
+        >>>
         >>> # Subsequent calls within TTL hit cache
         >>> price = await client.get_price("ethereum")  # From cache!
     """
-    
+
     API_NAME = "coingecko"
-    
+
     def __init__(
         self,
         api_key: str | None = None,
@@ -48,14 +48,14 @@ class CachedCoinGeckoClient(CoinGeckoClient):
     ):
         """
         Initialize cached CoinGecko client.
-        
+
         Args:
             api_key: CoinGecko API key (optional)
             cache: External API cache instance
         """
         super().__init__(api_key)
         self._cache = cache
-    
+
     async def get_price(
         self,
         coin_id: str,
@@ -75,7 +75,7 @@ class CachedCoinGeckoClient(CoinGeckoClient):
             )
             if cached:
                 return Price(**cached)
-        
+
         # Fetch from API
         result = await super().get_price(
             coin_id,
@@ -84,7 +84,7 @@ class CachedCoinGeckoClient(CoinGeckoClient):
             include_24hr_vol,
             include_24hr_change,
         )
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -94,9 +94,9 @@ class CachedCoinGeckoClient(CoinGeckoClient):
                 coin_id=coin_id,
                 vs_currency=vs_currency,
             )
-        
+
         return result
-    
+
     async def get_prices_bulk(
         self,
         coin_ids: list[str],
@@ -114,10 +114,10 @@ class CachedCoinGeckoClient(CoinGeckoClient):
             )
             if cached:
                 return {k: Price(**v) for k, v in cached.items()}
-        
+
         # Fetch from API
         result = await super().get_prices_bulk(coin_ids, vs_currency)
-        
+
         # Cache result
         if self._cache:
             cache_data = {k: asdict(v) for k, v in result.items()}
@@ -128,9 +128,9 @@ class CachedCoinGeckoClient(CoinGeckoClient):
                 coin_ids=ids_key,
                 vs_currency=vs_currency,
             )
-        
+
         return result
-    
+
     async def get_market_chart(
         self,
         coin_id: str,
@@ -150,13 +150,17 @@ class CachedCoinGeckoClient(CoinGeckoClient):
                 return MarketChart(
                     coin_id=cached["coin_id"],
                     prices=[(int(ts), float(p)) for ts, p in cached["prices"]],
-                    market_caps=[(int(ts), float(mc)) for ts, mc in cached["market_caps"]],
-                    total_volumes=[(int(ts), float(v)) for ts, v in cached["total_volumes"]],
+                    market_caps=[
+                        (int(ts), float(mc)) for ts, mc in cached["market_caps"]
+                    ],
+                    total_volumes=[
+                        (int(ts), float(v)) for ts, v in cached["total_volumes"]
+                    ],
                 )
-        
+
         # Fetch from API
         result = await super().get_market_chart(coin_id, vs_currency, days)
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -167,9 +171,9 @@ class CachedCoinGeckoClient(CoinGeckoClient):
                 vs_currency=vs_currency,
                 days=days,
             )
-        
+
         return result
-    
+
     async def get_coin_details(self, coin_id: str) -> CoinDetails:
         """Get detailed coin info with caching (15min TTL)."""
         if self._cache:
@@ -180,10 +184,10 @@ class CachedCoinGeckoClient(CoinGeckoClient):
             )
             if cached:
                 return CoinDetails(**cached)
-        
+
         # Fetch from API
         result = await super().get_coin_details(coin_id)
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -192,9 +196,9 @@ class CachedCoinGeckoClient(CoinGeckoClient):
                 asdict(result),
                 coin_id=coin_id,
             )
-        
+
         return result
-    
+
     async def get_trending_coins(self) -> list[TrendingCoin]:
         """Get trending coins with caching (5min TTL)."""
         if self._cache:
@@ -204,10 +208,10 @@ class CachedCoinGeckoClient(CoinGeckoClient):
             )
             if cached:
                 return [TrendingCoin(**c) for c in cached]
-        
+
         # Fetch from API
         result = await super().get_trending_coins()
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -215,9 +219,9 @@ class CachedCoinGeckoClient(CoinGeckoClient):
                 "trending",
                 [asdict(c) for c in result],
             )
-        
+
         return result
-    
+
     async def search_coins(self, query: str) -> list[dict]:
         """Search coins with caching (15min TTL)."""
         if self._cache:
@@ -228,10 +232,10 @@ class CachedCoinGeckoClient(CoinGeckoClient):
             )
             if cached:
                 return cached
-        
+
         # Fetch from API
         result = await super().search_coins(query)
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -240,9 +244,9 @@ class CachedCoinGeckoClient(CoinGeckoClient):
                 result,
                 query=query,
             )
-        
+
         return result
-    
+
     async def get_global_data(self) -> dict[str, Any]:
         """Get global market data with caching (2min TTL)."""
         if self._cache:
@@ -252,10 +256,10 @@ class CachedCoinGeckoClient(CoinGeckoClient):
             )
             if cached:
                 return cached
-        
+
         # Fetch from API
         result = await super().get_global_data()
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -263,5 +267,5 @@ class CachedCoinGeckoClient(CoinGeckoClient):
                 "global",
                 result,
             )
-        
+
         return result

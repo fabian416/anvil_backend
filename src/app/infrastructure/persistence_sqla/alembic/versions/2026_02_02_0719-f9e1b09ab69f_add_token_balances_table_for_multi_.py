@@ -36,7 +36,9 @@ def upgrade() -> None:
         # Token info
         sa.Column("token_symbol", sa.String(50), nullable=False, index=True),
         sa.Column("token_name", sa.String(255), nullable=True),
-        sa.Column("token_address", sa.String(255), nullable=True),  # NULL for native tokens
+        sa.Column(
+            "token_address", sa.String(255), nullable=True
+        ),  # NULL for native tokens
         sa.Column("token_decimals", sa.Integer(), default=18),
         # Balance
         sa.Column("balance_raw", sa.String(78), nullable=True),  # Raw balance as string
@@ -44,9 +46,15 @@ def upgrade() -> None:
         sa.Column("balance_usd", sa.Numeric(20, 2), default=0),  # USD value
         sa.Column("price_usd", sa.Numeric(20, 8), nullable=True),  # Token price
         # Flags
-        sa.Column("is_native", sa.Boolean(), default=False),  # True for ETH, MATIC, etc.
-        sa.Column("can_pay_gas", sa.Boolean(), default=False),  # True only for native tokens
-        sa.Column("is_stablecoin", sa.Boolean(), default=False),  # True for USDC, USDT, DAI
+        sa.Column(
+            "is_native", sa.Boolean(), default=False
+        ),  # True for ETH, MATIC, etc.
+        sa.Column(
+            "can_pay_gas", sa.Boolean(), default=False
+        ),  # True only for native tokens
+        sa.Column(
+            "is_stablecoin", sa.Boolean(), default=False
+        ),  # True for USDC, USDT, DAI
         # Metadata
         sa.Column("portfolio_pct", sa.Numeric(5, 2), nullable=True),  # Portfolio %
         sa.Column("last_balance_update", sa.DateTime(timezone=True), nullable=True),
@@ -56,9 +64,11 @@ def upgrade() -> None:
             server_default=sa.text("CURRENT_TIMESTAMP"),
         ),
         # Unique constraint: one entry per wallet/chain/token
-        sa.UniqueConstraint("wallet_id", "chain", "token_symbol", name="unique_wallet_chain_token"),
+        sa.UniqueConstraint(
+            "wallet_id", "chain", "token_symbol", name="unique_wallet_chain_token"
+        ),
     )
-    
+
     # Add index for common queries
     op.create_index(
         "idx_token_balances_can_pay_gas",
@@ -66,7 +76,7 @@ def upgrade() -> None:
         ["wallet_id", "can_pay_gas"],
         postgresql_where=sa.text("can_pay_gas = true"),
     )
-    
+
     op.execute(
         "COMMENT ON TABLE token_balances IS "
         "'Multi-token balance tracking per wallet/chain. Includes native tokens, stablecoins, and wrapped tokens.'"

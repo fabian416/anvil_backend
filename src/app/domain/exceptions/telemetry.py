@@ -86,6 +86,7 @@ class InvalidMetricError(ApplicationError):
 
 # Additional telemetry-specific exceptions
 
+
 class MetricNotFoundError(ApplicationError):
     """Raised when a metric is not found."""
 

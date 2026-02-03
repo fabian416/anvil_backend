@@ -20,6 +20,7 @@ import httpx
 @dataclass
 class SwapQuote:
     """Swap quote from 1inch."""
+
     from_token: str
     to_token: str
     from_amount: str
@@ -32,6 +33,7 @@ class SwapQuote:
 @dataclass
 class SwapTransaction:
     """Swap transaction data."""
+
     from_token: str
     to_token: str
     to_amount: str
@@ -44,6 +46,7 @@ class SwapTransaction:
 @dataclass
 class Token:
     """Token information."""
+
     address: str
     symbol: str
     name: str
@@ -54,16 +57,16 @@ class Token:
 class OneInchClient:
     """
     1inch API client for DEX aggregation.
-    
+
     Features:
     - Multi-DEX swap quotes
     - Optimal routing
     - Token information
     - Swap execution
     """
-    
+
     BASE_URL = "https://api.1inch.dev"
-    
+
     # Supported chains
     CHAINS = {
         "ethereum": 1,
@@ -76,11 +79,11 @@ class OneInchClient:
         "fantom": 250,
         "base": 8453,
     }
-    
+
     def __init__(self, api_key: str, chain: str = "ethereum"):
         """
         Initialize 1inch client.
-        
+
         Args:
             api_key: 1inch API key
             chain: Blockchain name (default: "ethereum")
@@ -96,11 +99,11 @@ class OneInchClient:
                 "Accept": "application/json",
             },
         )
-    
+
     async def close(self):
         """Close HTTP client."""
         await self._client.aclose()
-    
+
     async def get_swap_quote(
         self,
         from_token: str,
@@ -110,16 +113,16 @@ class OneInchClient:
     ) -> SwapQuote:
         """
         Get swap quote without gas estimation.
-        
+
         Args:
             from_token: Source token address
             to_token: Destination token address
             amount: Amount in wei
             slippage: Slippage tolerance (percent, default: 1.0)
-            
+
         Returns:
             SwapQuote with expected output amount
-            
+
         Example:
             >>> quote = await client.get_swap_quote(
             ...     from_token="0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",  # ETH
@@ -136,11 +139,11 @@ class OneInchClient:
                 "amount": amount,
                 "includeProtocols": "true",
                 "includeGas": "true",
-            }
+            },
         )
         response.raise_for_status()
         data = response.json()
-        
+
         return SwapQuote(
             from_token=from_token,
             to_token=to_token,
@@ -150,7 +153,7 @@ class OneInchClient:
             protocols=data.get("protocols", []),
             price_impact=float(data.get("priceImpact", 0)),
         )
-    
+
     async def get_swap_data(
         self,
         from_token: str,
@@ -162,7 +165,7 @@ class OneInchClient:
     ) -> SwapTransaction:
         """
         Get swap transaction data for execution.
-        
+
         Args:
             from_token: Source token address
             to_token: Destination token address
@@ -170,10 +173,10 @@ class OneInchClient:
             from_address: User's wallet address
             slippage: Slippage tolerance (percent, default: 1.0)
             disable_estimate: Skip gas estimation (default: False)
-            
+
         Returns:
             SwapTransaction with transaction data
-            
+
         Example:
             >>> swap_tx = await client.get_swap_data(
             ...     from_token="0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
@@ -192,11 +195,11 @@ class OneInchClient:
                 "from": from_address,
                 "slippage": slippage,
                 "disableEstimate": str(disable_estimate).lower(),
-            }
+            },
         )
         response.raise_for_status()
         data = response.json()
-        
+
         tx = data["tx"]
         return SwapTransaction(
             from_token=from_token,
@@ -207,14 +210,14 @@ class OneInchClient:
             tx_value=tx["value"],
             gas_price=tx.get("gasPrice", "0"),
         )
-    
+
     async def get_tokens(self) -> list[Token]:
         """
         Get list of supported tokens.
-        
+
         Returns:
             List of tokens with metadata
-            
+
         Example:
             >>> tokens = await client.get_tokens()
             >>> usdc = next(t for t in tokens if t.symbol == "USDC")
@@ -223,7 +226,7 @@ class OneInchClient:
         response = await self._client.get("/tokens")
         response.raise_for_status()
         data = response.json()
-        
+
         tokens = []
         for address, token_data in data["tokens"].items():
             tokens.append(
@@ -235,9 +238,9 @@ class OneInchClient:
                     logo_uri=token_data.get("logoURI"),
                 )
             )
-        
+
         return tokens
-    
+
     async def get_token_price(
         self,
         token_address: str,
@@ -245,14 +248,14 @@ class OneInchClient:
     ) -> float:
         """
         Get current token price.
-        
+
         Args:
             token_address: Token contract address
             vs_currency: Quote currency (default: "USD")
-            
+
         Returns:
             Token price in quote currency
-            
+
         Example:
             >>> eth_price = await client.get_token_price(
             ...     "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
@@ -261,28 +264,28 @@ class OneInchClient:
         """
         # Use quote API to get price (1 token to USD)
         one_token = "1" + "0" * 18  # 1 token in wei
-        
+
         usdc_address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"  # USDC on Ethereum
-        
+
         quote = await self.get_swap_quote(
             from_token=token_address,
             to_token=usdc_address,
             amount=one_token,
         )
-        
+
         # Convert to USD (USDC has 6 decimals)
         price_usd = int(quote.to_amount) / 1e6
         return price_usd
-    
+
     async def get_protocols(self) -> list[dict]:
         """
         Get list of supported DEX protocols.
-        
+
         Returns:
             List of protocol names and IDs
         """
         response = await self._client.get("/liquidity-sources")
         response.raise_for_status()
         data = response.json()
-        
+
         return data["protocols"]

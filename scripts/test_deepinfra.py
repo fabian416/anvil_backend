@@ -7,6 +7,7 @@ Tests:
 2. List available models
 3. Distillation integration test
 """
+
 import asyncio
 import os
 import sys
@@ -22,9 +23,9 @@ os.environ["APP_ENV"] = "local"
 
 async def test_deepinfra_direct():
     """Test DeepInfra API directly with httpx."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 1: Direct DeepInfra API Call")
-    print("="*60)
+    print("=" * 60)
 
     try:
         import httpx
@@ -35,7 +36,9 @@ async def test_deepinfra_direct():
         with open(secrets_path, "rb") as f:
             secrets = tomli.load(f)
             api_key = secrets.get("deepinfra", {}).get("API_KEY", "")
-            base_url = secrets.get("deepinfra", {}).get("BASE_URL", "https://api.deepinfra.com/v1/openai")
+            base_url = secrets.get("deepinfra", {}).get(
+                "BASE_URL", "https://api.deepinfra.com/v1/openai"
+            )
 
         if not api_key:
             print("❌ No API key found in .secrets.toml")
@@ -66,7 +69,12 @@ async def test_deepinfra_direct():
                     print(f"✅ Found {len(model_list)} models")
 
                     # Show some Llama models
-                    llama_models = [m.get("id", m) for m in model_list if isinstance(m, dict) and "llama" in str(m.get("id", "")).lower()][:5]
+                    llama_models = [
+                        m.get("id", m)
+                        for m in model_list
+                        if isinstance(m, dict)
+                        and "llama" in str(m.get("id", "")).lower()
+                    ][:5]
                     if llama_models:
                         print(f"   Llama models: {', '.join(llama_models)}")
                 else:
@@ -85,7 +93,7 @@ async def test_deepinfra_direct():
                 "messages": [
                     {
                         "role": "user",
-                        "content": 'Say "Hello from DeepInfra!" in exactly 5 words.'
+                        "content": 'Say "Hello from DeepInfra!" in exactly 5 words.',
                     }
                 ],
                 "temperature": 0.7,
@@ -128,19 +136,22 @@ async def test_deepinfra_direct():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
 
 async def test_distillation_integration():
     """Test distillation system with DeepInfra."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 2: Distillation System Integration")
-    print("="*60)
+    print("=" * 60)
 
     try:
         from app.setup.config.settings import load_settings
-        from app.infrastructure.distillation.providers.deepinfra_distillator import DeepInfraDistillator
+        from app.infrastructure.distillation.providers.deepinfra_distillator import (
+            DeepInfraDistillator,
+        )
         from app.domain.entities.distillation import DistillationRequest
 
         # Load settings
@@ -150,6 +161,7 @@ async def test_distillation_integration():
         if not settings.distillation.deepinfra.api_key:
             try:
                 import tomli
+
                 secrets_path = project_root / "config" / "local" / ".secrets.toml"
                 with open(secrets_path, "rb") as f:
                     secrets = tomli.load(f)
@@ -211,15 +223,16 @@ async def test_distillation_integration():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
 
 async def main():
     """Run all tests."""
-    print("\n" + "🧪 "*30)
+    print("\n" + "🧪 " * 30)
     print("DEEPINFRA API TEST SUITE")
-    print("🧪 "*30)
+    print("🧪 " * 30)
 
     results = []
 
@@ -240,9 +253,9 @@ async def main():
         results.append(("Distillation Integration", False))
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST SUMMARY")
-    print("="*60)
+    print("=" * 60)
 
     for name, passed in results:
         status = "✅ PASSED" if passed else "❌ FAILED"

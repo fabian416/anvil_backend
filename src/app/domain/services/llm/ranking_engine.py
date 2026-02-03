@@ -190,12 +190,12 @@ class RankingEngine:
 
         # Normalized: 1 - (avg / max)
         # Lower latency = higher score
-        score = 1 - min(Decimal(avg_latency_ms) / Decimal(max_latency_ms), Decimal("1.0"))
+        score = 1 - min(
+            Decimal(avg_latency_ms) / Decimal(max_latency_ms), Decimal("1.0")
+        )
         return Decimal(str(score))
 
-    def calculate_cost_score(
-        self, avg_cost: Decimal, max_cost: Decimal
-    ) -> Decimal:
+    def calculate_cost_score(self, avg_cost: Decimal, max_cost: Decimal) -> Decimal:
         """
         Calculate cost score.
 

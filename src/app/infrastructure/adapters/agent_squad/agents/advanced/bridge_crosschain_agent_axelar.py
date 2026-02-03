@@ -9,7 +9,9 @@ from decimal import Decimal
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
-from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.domain.value_objects.agent_squad.conversation_context import (
+    ConversationContext,
+)
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentResponse
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
@@ -17,11 +19,11 @@ from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 class BridgeCrosschainAgentAxelar:
     """
     Bridge Crosschain Agent Axelar implementation.
-    
+
     Implements: AgentGateway
-    
+
     Purpose: Layer 2 & cross-chain asset transfers
-    
+
     Capabilities:
     - Layer 2 bridging (Arbitrum, Optimism, Base, Polygon)
     - Cross-chain asset transfers (via Axelar, LayerZero)
@@ -29,30 +31,30 @@ class BridgeCrosschainAgentAxelar:
     - Bridge time estimation
     - Security risk assessment (bridge exploits)
     - Historical bridge analytics
-    
+
     Supported Chains:
     - Ethereum Mainnet (L1)
     - Arbitrum, Optimism, Base (Optimistic Rollups)
     - Polygon, zkSync (Sidechains/zkRollups)
     - Avalanche, BSC (Alt L1s)
-    
+
     Bridge Providers:
     - Axelar (General Messaging Protocol)
     - LayerZero (Omnichain Protocol)
     - Native Bridges (Arbitrum Bridge, etc.)
     - Hop Protocol (L2-L2 direct)
-    
+
     Features:
     - Automatic best-route selection
     - Gas cost comparison
     - Time estimation (5min - 7 days)
     - Security scoring (0-100)
     - Slippage protection
-    
+
     Model: gpt-4o (bridge reasoning)
     Temperature: 0.2 (factual)
     """
-    
+
     def __init__(
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
@@ -67,12 +69,12 @@ class BridgeCrosschainAgentAxelar:
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
-    
+
     @property
     def agent_type(self) -> AgentType:
         """Get agent type."""
         return AgentType.BRIDGE_CROSSCHAIN
-    
+
     async def execute(
         self,
         conversation_id: ConversationId,
@@ -81,58 +83,64 @@ class BridgeCrosschainAgentAxelar:
     ) -> AgentResponse:
         """Execute bridge crosschain agent."""
         start_time = time.time()
-        
+
         # Parse bridge request
         bridge_request = await self._parse_bridge_request(message)
-        
+
         if not bridge_request["valid"]:
             return self._build_error_response(
                 "Please specify: token, amount, source chain, and destination chain.",
-                start_time
+                start_time,
             )
-        
+
         # Get bridge routes
         routes = await self._get_bridge_routes(bridge_request)
-        
+
         # Generate comparison
         comparison = await self._generate_bridge_comparison(routes)
-        
+
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         # Collect sources
         from datetime import datetime, UTC
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_llm_source,
             create_api_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add Axelar source
-        sources.append(create_api_source(
-            source_name="Axelar",
-            url="https://axelar.network/",
-            citation_text="Cross-chain bridge routes from Axelar",
-            fetched_at=fetched_at,
-            provider="Axelar API",
-        ))
-        
+        sources.append(
+            create_api_source(
+                source_name="Axelar",
+                url="https://axelar.network/",
+                citation_text="Cross-chain bridge routes from Axelar",
+                fetched_at=fetched_at,
+                provider="Axelar API",
+            )
+        )
+
         # Add LayerZero source
-        sources.append(create_api_source(
-            source_name="LayerZero",
-            url="https://layerzero.network/",
-            citation_text="Cross-chain bridge routes from LayerZero",
-            fetched_at=fetched_at,
-            provider="LayerZero API",
-        ))
-        
+        sources.append(
+            create_api_source(
+                source_name="LayerZero",
+                url="https://layerzero.network/",
+                citation_text="Cross-chain bridge routes from LayerZero",
+                fetched_at=fetched_at,
+                provider="LayerZero API",
+            )
+        )
+
         # Add LLM source
-        sources.append(create_llm_source(
-            model=self._model,
-            fetched_at=fetched_at,
-        ))
-        
+        sources.append(
+            create_llm_source(
+                model=self._model,
+                fetched_at=fetched_at,
+            )
+        )
+
         return AgentResponse(
             content=comparison,
             agent_type=self.agent_type,
@@ -144,11 +152,11 @@ class BridgeCrosschainAgentAxelar:
                 "best_route": routes[0]["provider"] if routes else None,
             },
         )
-    
+
     async def is_available(self) -> bool:
         """Check if agent is available."""
         return True
-    
+
     async def _parse_bridge_request(self, message: MessageContent) -> dict:
         """Parse bridge request from message."""
         prompt = f"""Parse the bridge/cross-chain request:
@@ -170,7 +178,7 @@ Respond with JSON:
     "to_chain": "arbitrum"
 }}
 """
-        
+
         try:
             response = await self._llm_client.classify_intent(
                 prompt=prompt,
@@ -179,17 +187,17 @@ Respond with JSON:
             return response
         except Exception:
             return {"valid": False}
-    
+
     async def _get_bridge_routes(self, bridge_request: dict) -> list[dict]:
         """Get available bridge routes."""
         # TODO: Implement real bridge API integration
-        
+
         # Mock routes
         token = bridge_request.get("token", "ETH")
         amount = Decimal(bridge_request.get("amount", "1.0"))
         from_chain = bridge_request.get("from_chain", "ethereum")
         to_chain = bridge_request.get("to_chain", "arbitrum")
-        
+
         routes = [
             {
                 "provider": "Arbitrum Native Bridge",
@@ -222,23 +230,23 @@ Respond with JSON:
                 "to_chain": to_chain,
             },
         ]
-        
+
         # Sort by cost
         routes.sort(key=lambda r: r["cost_usd"])
-        
+
         return routes
-    
+
     async def _generate_bridge_comparison(self, routes: list[dict]) -> str:
         """Generate bridge route comparison."""
         if not routes:
             return "No bridge routes found for this token/chain combination."
-        
+
         best_route = routes[0]
         token = best_route["token"]
         amount = best_route["amount"]
         from_chain = best_route["from_chain"].capitalize()
         to_chain = best_route["to_chain"].capitalize()
-        
+
         comparison = f"""🌉 **BRIDGE ROUTE COMPARISON**
 
 **Transfer**: {amount} {token}
@@ -249,13 +257,13 @@ Respond with JSON:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 """
-        
+
         for i, route in enumerate(routes, 1):
             emoji = "⭐" if i == 1 else f"{i}️⃣"
             cost = route["cost_usd"]
             time_min = route["time_minutes"]
             security = route["security_score"]
-            
+
             # Format time
             if time_min < 60:
                 time_str = f"{time_min}m"
@@ -263,7 +271,7 @@ Respond with JSON:
                 time_str = f"{time_min // 60}h"
             else:
                 time_str = f"{time_min // 1440}d"
-            
+
             # Security emoji
             if security >= 90:
                 security_emoji = "🟢"
@@ -271,7 +279,7 @@ Respond with JSON:
                 security_emoji = "🟡"
             else:
                 security_emoji = "🔴"
-            
+
             comparison += f"""
 {emoji} **{route["provider"]}**
   💰 Cost: ${cost:.2f}
@@ -279,13 +287,13 @@ Respond with JSON:
   {security_emoji} Security: {security}/100
   
 """
-        
+
         comparison += """━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **RECOMMENDATION**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 """
-        
+
         best = routes[0]
         comparison += f"""⭐ **{best["provider"]}** (Best Overall)
 
@@ -308,13 +316,15 @@ destination address and chain before confirming.
 **Bridge Provider**: {best["provider"]}
 **Estimated Total Cost**: ${best["cost_usd"]:.2f} (gas + bridge fee)
 """
-        
+
         return comparison.strip()
-    
-    def _build_error_response(self, error_message: str, start_time: float) -> AgentResponse:
+
+    def _build_error_response(
+        self, error_message: str, start_time: float
+    ) -> AgentResponse:
         """Build error response."""
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         return AgentResponse(
             content=error_message,
             agent_type=self.agent_type,

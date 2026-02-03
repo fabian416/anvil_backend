@@ -44,7 +44,9 @@ class ChatNotification(Entity[ChatNotificationId]):
     notification_type: NotificationType
     payload: NotificationPayload
     channels: Set[NotificationChannel]
-    delivery_status: Dict[NotificationChannel, DeliveryStatus] = field(default_factory=dict)
+    delivery_status: Dict[NotificationChannel, DeliveryStatus] = field(
+        default_factory=dict
+    )
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     sent_at: Optional[datetime] = None
     delivered_at: Optional[datetime] = None

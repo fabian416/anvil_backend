@@ -45,7 +45,7 @@ async def notify_user_of_agent_response(
     # Determine channels based on importance
     channels = {
         NotificationChannel.WEBSOCKET,  # Always real-time
-        NotificationChannel.IN_APP,     # Always in history
+        NotificationChannel.IN_APP,  # Always in history
     }
 
     if is_important:
@@ -115,7 +115,7 @@ async def send_daily_conversation_summary(
             action_url="/analytics",
         ),
         channels={
-            NotificationChannel.EMAIL,   # Email digest
+            NotificationChannel.EMAIL,  # Email digest
             NotificationChannel.IN_APP,  # Also store in app
         },
     )
@@ -177,9 +177,9 @@ async def send_budget_alert(
             action_url="/settings/billing",
         ),
         channels={
-            NotificationChannel.EMAIL,      # Email for important alerts
+            NotificationChannel.EMAIL,  # Email for important alerts
             NotificationChannel.WEBSOCKET,  # Real-time notification
-            NotificationChannel.IN_APP,     # Store for reference
+            NotificationChannel.IN_APP,  # Store for reference
         },
     )
 
@@ -214,7 +214,9 @@ async def send_template_execution_update(
     """
     if step_status == "success":
         title = f"Template Step Completed: {step_name}"
-        body = f"Step '{step_name}' in template '{template_name}' completed successfully."
+        body = (
+            f"Step '{step_name}' in template '{template_name}' completed successfully."
+        )
     else:
         title = f"Template Step Failed: {step_name}"
         body = f"Step '{step_name}' in template '{template_name}' failed."
@@ -240,7 +242,7 @@ async def send_template_execution_update(
         ),
         channels={
             NotificationChannel.WEBSOCKET,  # Real-time progress
-            NotificationChannel.IN_APP,     # Store for history
+            NotificationChannel.IN_APP,  # Store for history
         },
     )
 

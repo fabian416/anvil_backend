@@ -18,7 +18,12 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Intent detection varies; requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.intent_detection]
+pytestmark = [
+    pytest.mark.skip(reason="Intent detection varies; requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.intent_detection,
+]
 
 
 class TestComplexMultiIntentScenarios:
@@ -36,8 +41,8 @@ class TestComplexMultiIntentScenarios:
             "/api/v1/guest/chat",
             json={
                 "content": "Check ETH price, swap to USDC, then lend on Aave",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -52,17 +57,25 @@ class TestComplexMultiIntentScenarios:
         agent_response = data["agent_message"]["content"].lower()
 
         # Should mention price/query aspect
-        price_mentioned = any(keyword in agent_response for keyword in ["price", "eth", "ethereum"])
+        price_mentioned = any(
+            keyword in agent_response for keyword in ["price", "eth", "ethereum"]
+        )
 
         # Should mention swap aspect
-        swap_mentioned = any(keyword in agent_response for keyword in ["swap", "exchange", "trade"])
+        swap_mentioned = any(
+            keyword in agent_response for keyword in ["swap", "exchange", "trade"]
+        )
 
         # Should mention lending aspect
-        lend_mentioned = any(keyword in agent_response for keyword in ["lend", "aave", "supply"])
+        lend_mentioned = any(
+            keyword in agent_response for keyword in ["lend", "aave", "supply"]
+        )
 
         # At least 2 of the 3 intents should be acknowledged
         intents_acknowledged = sum([price_mentioned, swap_mentioned, lend_mentioned])
-        assert intents_acknowledged >= 2, "Agent should acknowledge multiple intents in query"
+        assert intents_acknowledged >= 2, (
+            "Agent should acknowledge multiple intents in query"
+        )
 
     @pytest.mark.llm_validation
     async def test_nested_intent_query(self, client: AsyncClient, llm_validator):
@@ -76,8 +89,8 @@ class TestComplexMultiIntentScenarios:
             "/api/v1/guest/chat",
             json={
                 "content": "If ETH price is above $3000, swap 1 ETH to USDC",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -91,14 +104,17 @@ class TestComplexMultiIntentScenarios:
 
         # Should handle conditional nature of query
         # Agent might check price first, or explain the conditional logic
-        conditional_handling = any(keyword in agent_response for keyword in [
-            "if", "when", "price", "eth", "3000", "swap", "conditional"
-        ])
+        conditional_handling = any(
+            keyword in agent_response
+            for keyword in ["if", "when", "price", "eth", "3000", "swap", "conditional"]
+        )
 
         assert conditional_handling, "Agent should handle conditional intent logic"
 
     @pytest.mark.llm_validation
-    async def test_sequential_dependent_intents(self, client: AsyncClient, llm_validator):
+    async def test_sequential_dependent_intents(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test intents that depend on previous results.
 
@@ -109,8 +125,8 @@ class TestComplexMultiIntentScenarios:
             "/api/v1/guest/chat",
             json={
                 "content": "Swap ETH to USDC, then use half to lend on Aave",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -123,11 +139,24 @@ class TestComplexMultiIntentScenarios:
         agent_response = data["agent_message"]["content"].lower()
 
         # Should acknowledge sequential nature or multi-step flow
-        sequential_understanding = any(keyword in agent_response for keyword in [
-            "swap", "lend", "then", "after", "half", "aave", "usdc", "step"
-        ])
+        sequential_understanding = any(
+            keyword in agent_response
+            for keyword in [
+                "swap",
+                "lend",
+                "then",
+                "after",
+                "half",
+                "aave",
+                "usdc",
+                "step",
+            ]
+        )
 
-        assert sequential_understanding, "Agent should understand sequential dependent intents"
+        assert sequential_understanding, (
+            "Agent should understand sequential dependent intents"
+        )
+
 
 class TestMultilingualIntentDetection:
     """Test intent detection across multiple languages."""
@@ -142,10 +171,7 @@ class TestMultilingualIntentDetection:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "以太坊价格是多少?",
-                "language": "zh"
-            }
+            json={"content": "以太坊价格是多少?", "language": "zh"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -160,7 +186,9 @@ class TestMultilingualIntentDetection:
         assert len(agent_response) > 0
 
     @pytest.mark.llm_validation
-    async def test_portuguese_language_support(self, client: AsyncClient, llm_validator):
+    async def test_portuguese_language_support(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test Portuguese language query handling.
 
@@ -169,10 +197,7 @@ class TestMultilingualIntentDetection:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Qual é o preço do Ethereum?",
-                "language": "pt"
-            }
+            json={"content": "Qual é o preço do Ethereum?", "language": "pt"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -196,10 +221,7 @@ class TestMultilingualIntentDetection:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What is the ETH 价格?",
-                "language": "en"
-            }
+            json={"content": "What is the ETH 价格?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -213,11 +235,14 @@ class TestMultilingualIntentDetection:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0
 
+
 class TestIntentConfidenceBoundaries:
     """Test confidence threshold boundary behavior."""
 
     @pytest.mark.llm_validation
-    async def test_intent_confidence_boundary_70_percent(self, client: AsyncClient, llm_validator):
+    async def test_intent_confidence_boundary_70_percent(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test behavior at confidence threshold.
 
@@ -225,11 +250,7 @@ class TestIntentConfidenceBoundaries:
         Expected: Either processes or asks for clarification
         """
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "token thing",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "token thing", "language": "en"}
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -244,7 +265,9 @@ class TestIntentConfidenceBoundaries:
         assert len(agent_response) > 0
 
     @pytest.mark.llm_validation
-    async def test_low_confidence_clarification_flow(self, client: AsyncClient, llm_validator):
+    async def test_low_confidence_clarification_flow(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test clarification flow for low confidence intents.
 
@@ -253,11 +276,7 @@ class TestIntentConfidenceBoundaries:
         """
         # First message: very ambiguous
         response1 = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "what about it",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "what about it", "language": "en"}
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -277,8 +296,8 @@ class TestIntentConfidenceBoundaries:
             json={
                 "content": "I mean the Ethereum price",
                 "language": "en",
-                "conversation_id": conversation_id
-            }
+                "conversation_id": conversation_id,
+            },
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -289,16 +308,20 @@ class TestIntentConfidenceBoundaries:
 
         # Agent should now understand and respond to price query
         agent_response2 = data2["agent_message"]["content"].lower()
-        price_response = any(keyword in agent_response2 for keyword in [
-            "price", "eth", "ethereum", "market", "value"
-        ])
+        price_response = any(
+            keyword in agent_response2
+            for keyword in ["price", "eth", "ethereum", "market", "value"]
+        )
         assert price_response, "Agent should understand clarified intent"
+
 
 class TestProtocolSpecificIntents:
     """Test protocol-specific intent routing."""
 
     @pytest.mark.llm_validation
-    async def test_protocol_specific_routing_aave(self, client: AsyncClient, llm_validator):
+    async def test_protocol_specific_routing_aave(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test query that mentions Aave specifically.
 
@@ -307,10 +330,7 @@ class TestProtocolSpecificIntents:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What's the APY on Aave for USDC?",
-                "language": "en"
-            }
+            json={"content": "What's the APY on Aave for USDC?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -323,9 +343,10 @@ class TestProtocolSpecificIntents:
         agent_response = data["agent_message"]["content"].lower()
 
         # Should mention Aave or APY information
-        protocol_mentioned = any(keyword in agent_response for keyword in [
-            "aave", "apy", "usdc", "rate", "yield", "interest"
-        ])
+        protocol_mentioned = any(
+            keyword in agent_response
+            for keyword in ["aave", "apy", "usdc", "rate", "yield", "interest"]
+        )
 
         assert protocol_mentioned, "Agent should address protocol-specific query"
 
@@ -341,8 +362,8 @@ class TestProtocolSpecificIntents:
             "/api/v1/guest/chat",
             json={
                 "content": "Which is better, Aave or Compound for lending?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -359,4 +380,6 @@ class TestProtocolSpecificIntents:
         compound_mentioned = "compound" in agent_response
 
         # At least one protocol should be mentioned in comparison
-        comparison_handling = aave_mentioned or compound_mentioned or "compar" in agent_response
+        comparison_handling = (
+            aave_mentioned or compound_mentioned or "compar" in agent_response
+        )

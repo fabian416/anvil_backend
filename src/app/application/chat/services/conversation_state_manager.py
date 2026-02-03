@@ -98,16 +98,34 @@ class ConversationStateManager:
         # 1b. Check for explicit off-topic intent keywords
         # These indicate user wants information, not to continue an action flow
         off_topic_intent_keywords = [
-            "price", "precio", "preço", "价格",
-            "what is", "qué es", "o que é", "什么是",
-            "tell me", "cuéntame", "me fale", "告诉我",
-            "how does", "cómo funciona", "como funciona", "如何",
-            "explain", "explica", "explicar", "解释",
+            "price",
+            "precio",
+            "preço",
+            "价格",
+            "what is",
+            "qué es",
+            "o que é",
+            "什么是",
+            "tell me",
+            "cuéntame",
+            "me fale",
+            "告诉我",
+            "how does",
+            "cómo funciona",
+            "como funciona",
+            "如何",
+            "explain",
+            "explica",
+            "explicar",
+            "解释",
         ]
 
         # Only check these for action flows (swap, buy, lend, send)
         # Don't clear if user is in an information flow
-        if any(action in context.pending_intent for action in ["swap", "buy", "lend", "send", "moonpay"]):
+        if any(
+            action in context.pending_intent
+            for action in ["swap", "buy", "lend", "send", "moonpay"]
+        ):
             for keyword in off_topic_intent_keywords:
                 if keyword in message_lower:
                     logger.info(
@@ -121,7 +139,10 @@ class ConversationStateManager:
                     return True, f"off_topic_intent:{keyword}"
 
         # 2. Check for flow timeout
-        if hasattr(context, "pending_intent_timestamp") and context.pending_intent_timestamp:
+        if (
+            hasattr(context, "pending_intent_timestamp")
+            and context.pending_intent_timestamp
+        ):
             elapsed = datetime.now() - context.pending_intent_timestamp
             if elapsed > self.FLOW_TIMEOUT:
                 logger.info(
@@ -135,7 +156,10 @@ class ConversationStateManager:
                 return True, f"timeout:{elapsed.total_seconds():.0f}s"
 
         # 3. Check for consecutive off-topic messages
-        if hasattr(context, "off_topic_message_count") and context.off_topic_message_count:
+        if (
+            hasattr(context, "off_topic_message_count")
+            and context.off_topic_message_count
+        ):
             if context.off_topic_message_count >= self.MAX_OFF_TOPIC_MESSAGES:
                 logger.info(
                     f"Auto-clearing flow: too many off-topic messages ({context.off_topic_message_count})",
@@ -221,22 +245,51 @@ class ConversationStateManager:
         # Messages about price, sentiment, general questions are NOT relevant to action flows
         off_topic_keywords = [
             # Price/analysis queries
-            "price", "precio", "preço", "价格", "cost", "value", "worth",
-            "sentiment", "analysis", "prediction", "forecast",
+            "price",
+            "precio",
+            "preço",
+            "价格",
+            "cost",
+            "value",
+            "worth",
+            "sentiment",
+            "analysis",
+            "prediction",
+            "forecast",
             # General questions
-            "what is", "qué es", "o que é", "什么是",
-            "tell me about", "cuéntame", "me fale sobre", "告诉我",
-            "explain", "explica", "explicar", "解释",
-            "how does", "cómo funciona", "como funciona", "如何",
+            "what is",
+            "qué es",
+            "o que é",
+            "什么是",
+            "tell me about",
+            "cuéntame",
+            "me fale sobre",
+            "告诉我",
+            "explain",
+            "explica",
+            "explicar",
+            "解释",
+            "how does",
+            "cómo funciona",
+            "como funciona",
+            "如何",
             # Information requests
-            "information", "info", "details", "detalles", "detalhes", "信息",
+            "information",
+            "info",
+            "details",
+            "detalles",
+            "detalhes",
+            "信息",
         ]
 
         for off_topic_kw in off_topic_keywords:
             if off_topic_kw in message_lower:
                 logger.debug(
                     f"Message is off-topic: contains '{off_topic_kw}' (not relevant to {base_flow} flow)",
-                    extra={"user_message": message[:50], "pending_intent": pending_intent}
+                    extra={
+                        "user_message": message[:50],
+                        "pending_intent": pending_intent,
+                    },
                 )
                 return False  # ← Message is asking for information, not continuing flow
 
@@ -272,8 +325,21 @@ class ConversationStateManager:
         """
         # Common crypto tokens
         crypto_tokens = [
-            "btc", "eth", "usdt", "usdc", "bnb", "ada", "sol", "xrp",
-            "dot", "doge", "avax", "matic", "link", "uni", "dai",
+            "btc",
+            "eth",
+            "usdt",
+            "usdc",
+            "bnb",
+            "ada",
+            "sol",
+            "xrp",
+            "dot",
+            "doge",
+            "avax",
+            "matic",
+            "link",
+            "uni",
+            "dai",
         ]
 
         # Check for token names
@@ -283,6 +349,7 @@ class ConversationStateManager:
 
         # Check for numeric amounts (e.g., "100", "1000", "0.5")
         import re
+
         if re.search(r"\b\d+\.?\d*\b", message):
             return True
 
@@ -312,7 +379,9 @@ class ConversationStateManager:
             extra={
                 "pending_intent": context.pending_intent,
                 "had_swap_info": bool(getattr(context, "pending_swap_info", None)),
-                "had_lending_info": bool(getattr(context, "pending_lending_info", None)),
+                "had_lending_info": bool(
+                    getattr(context, "pending_lending_info", None)
+                ),
             },
         )
 

@@ -25,10 +25,11 @@ from app.domain.value_objects.created_at import CreatedAt
 class Session(Entity[SessionId]):
     """
     Session entity representing a user session in the system.
-    
+
     This is an anemic model following DDD principles where behavior
     is handled by domain services rather than the entity itself.
     """
+
     user_id: UserId
     access_token: AccessToken
     refresh_token: RefreshToken

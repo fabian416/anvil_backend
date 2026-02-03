@@ -37,5 +37,3 @@ def create_subscription_init_router() -> APIRouter:
         return await handler.execute(None)
 
     return router
-
-

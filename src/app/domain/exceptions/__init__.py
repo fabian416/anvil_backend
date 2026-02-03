@@ -13,7 +13,7 @@ from .auth import (
 __all__ = [
     "DomainError",
     "InvalidAuthorizationHeaderError",
-    "UnauthorizedAccessError", 
+    "UnauthorizedAccessError",
     "InsufficientPermissionsError",
     "RoleChangeNotAllowedError",
 ]

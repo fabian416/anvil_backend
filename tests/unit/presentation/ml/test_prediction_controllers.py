@@ -20,18 +20,20 @@ class TestRiskPredictionController:
     def mock_predict_risk_interactor(self):
         """Create mock PredictRiskInteractor."""
         interactor = AsyncMock()
-        interactor.execute = AsyncMock(return_value=MagicMock(
-            protocol_id=uuid4(),
-            protocol_name="Aave",
-            predicted_risk_score=3.5,
-            confidence=0.85,
-            risk_level=MagicMock(value="MEDIUM"),
-            risk_trend=MagicMock(value="STABLE"),
-            contributing_factors=["TVL change", "Oracle dependency"],
-            recommendations=["Monitor liquidity"],
-            prediction_timestamp=datetime.utcnow(),
-            model_version="1.0.0",
-        ))
+        interactor.execute = AsyncMock(
+            return_value=MagicMock(
+                protocol_id=uuid4(),
+                protocol_name="Aave",
+                predicted_risk_score=3.5,
+                confidence=0.85,
+                risk_level=MagicMock(value="MEDIUM"),
+                risk_trend=MagicMock(value="STABLE"),
+                contributing_factors=["TVL change", "Oracle dependency"],
+                recommendations=["Monitor liquidity"],
+                prediction_timestamp=datetime.utcnow(),
+                model_version="1.0.0",
+            )
+        )
         return interactor
 
     def test_risk_prediction_response_structure(self, mock_predict_risk_interactor):
@@ -130,7 +132,7 @@ class TestAnomalyDetectionController:
     def test_anomaly_detection_lookback_validation(self):
         """Test lookback_days validation (1-90)."""
         valid_lookback = 7
-        
+
         assert 1 <= valid_lookback <= 90
 
 
@@ -155,7 +157,7 @@ class TestRiskForecastController:
     def test_forecast_days_validation(self):
         """Test forecast_days validation (1-30)."""
         valid_forecast_days = 7
-        
+
         assert 1 <= valid_forecast_days <= 30
 
 
@@ -165,25 +167,25 @@ class TestMLPredictionValidation:
     def test_risk_score_range(self):
         """Test risk score is within valid range."""
         risk_score = 3.5
-        
+
         assert 0 <= risk_score <= 10
 
     def test_confidence_range(self):
         """Test confidence is within valid range."""
         confidence = 0.85
-        
+
         assert 0 <= confidence <= 1
 
     def test_risk_levels(self):
         """Test valid risk levels."""
         valid_levels = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
         risk_level = "MEDIUM"
-        
+
         assert risk_level in valid_levels
 
     def test_risk_trends(self):
         """Test valid risk trends."""
         valid_trends = ["DECREASING", "STABLE", "INCREASING"]
         risk_trend = "STABLE"
-        
+
         assert risk_trend in valid_trends

@@ -72,6 +72,7 @@ class TestProtocolInfo:
         for protocol in protocols:
             assert protocol.max_loan_usd > 0
 
+
 class TestBestProtocolSelection:
     """Test best protocol selection logic."""
 
@@ -107,6 +108,7 @@ class TestBestProtocolSelection:
 
         assert protocol == FlashLoanProtocol.UNISWAP_V3
 
+
 class TestFeeCalculation:
     """Test fee calculation."""
 
@@ -128,10 +130,13 @@ class TestFeeCalculation:
         """Test Balancer fee calculation (gas only)."""
         engine = FlashLoanEngine()
 
-        fees = await engine.calculate_fees(FlashLoanProtocol.BALANCER, Decimal("100000"))
+        fees = await engine.calculate_fees(
+            FlashLoanProtocol.BALANCER, Decimal("100000")
+        )
 
         # Only gas cost (~$5)
         assert fees <= Decimal("10")
+
 
 class TestGasEstimation:
     """Test gas estimation."""
@@ -159,6 +164,7 @@ class TestGasEstimation:
         # Gas should scale with complexity
         assert gas3 > gas1
         assert cost3 > cost1
+
 
 class TestLoanValidation:
     """Test loan request validation."""
@@ -220,6 +226,7 @@ class TestLoanValidation:
         assert is_valid is False
         assert "exceeds" in error.lower()
 
+
 class TestLoanSimulation:
     """Test loan simulation."""
 
@@ -262,6 +269,7 @@ class TestLoanSimulation:
 
         assert result.status == LoanStatus.FAILED
         assert "threshold" in result.error_message.lower()
+
 
 class TestLoanExecution:
     """Test loan execution."""
@@ -315,6 +323,7 @@ class TestLoanExecution:
         for result in results:
             assert result.status == LoanStatus.SUCCESS
 
+
 class TestProtocolLiquidity:
     """Test protocol liquidity queries."""
 
@@ -342,6 +351,7 @@ class TestProtocolLiquidity:
 
         assert liquidity == Decimal("0")
 
+
 class TestProtocolComparison:
     """Test protocol comparison."""
 
@@ -357,6 +367,7 @@ class TestProtocolComparison:
 
         # Balancer should be cheaper (no protocol fee)
         assert balancer_fees < aave_fees
+
 
 class TestSerialization:
     """Test data serialization."""

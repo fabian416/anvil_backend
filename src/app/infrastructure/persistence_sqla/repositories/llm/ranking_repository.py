@@ -58,9 +58,7 @@ class SqlaLLMRankingRepository:
 
         return [row[0] for row in rows]
 
-    async def get_rankings_for_agent(
-        self, agent_type: str
-    ) -> List[ModelRankingData]:
+    async def get_rankings_for_agent(self, agent_type: str) -> List[ModelRankingData]:
         """Get current rankings for an agent type."""
         query = (
             select(
@@ -106,9 +104,7 @@ class SqlaLLMRankingRepository:
             for row in rows
         ]
 
-    async def get_weight_profile(
-        self, agent_type: str
-    ) -> Optional[WeightProfileData]:
+    async def get_weight_profile(self, agent_type: str) -> Optional[WeightProfileData]:
         """Get weight profile for agent type."""
         query = select(ranking_weight_profiles).where(
             ranking_weight_profiles.c.agent_type == agent_type
@@ -143,10 +139,12 @@ class SqlaLLMRankingRepository:
                 func.sum(llm_telemetry_hourly.c.successful_requests).label(
                     "successful_requests"
                 ),
-                func.sum(llm_telemetry_hourly.c.failed_requests).label("failed_requests"),
-                func.round(
-                    func.avg(llm_telemetry_hourly.c.avg_latency_ms), 0
-                ).label("avg_latency_ms"),
+                func.sum(llm_telemetry_hourly.c.failed_requests).label(
+                    "failed_requests"
+                ),
+                func.round(func.avg(llm_telemetry_hourly.c.avg_latency_ms), 0).label(
+                    "avg_latency_ms"
+                ),
                 func.round(
                     func.avg(llm_telemetry_hourly.c.avg_cost_per_request), 6
                 ).label("avg_cost_per_request"),
@@ -300,9 +298,8 @@ class SqlaLLMRankingRepository:
 
     async def get_max_latency(self, agent_type: str) -> int:
         """Get maximum latency for normalization."""
-        query = (
-            select(func.max(agent_model_rankings.c.avg_latency_ms))
-            .where(agent_model_rankings.c.agent_type == agent_type)
+        query = select(func.max(agent_model_rankings.c.avg_latency_ms)).where(
+            agent_model_rankings.c.agent_type == agent_type
         )
 
         result = await self._session.execute(query)
@@ -312,9 +309,8 @@ class SqlaLLMRankingRepository:
 
     async def get_max_cost(self, agent_type: str) -> Decimal:
         """Get maximum cost for normalization."""
-        query = (
-            select(func.max(agent_model_rankings.c.avg_cost_per_request))
-            .where(agent_model_rankings.c.agent_type == agent_type)
+        query = select(func.max(agent_model_rankings.c.avg_cost_per_request)).where(
+            agent_model_rankings.c.agent_type == agent_type
         )
 
         result = await self._session.execute(query)

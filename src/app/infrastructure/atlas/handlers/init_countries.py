@@ -43,7 +43,13 @@ class InitCountriesHandler:
                 csv_path = csv_candidate
             else:
                 # Fallback to old location
-                csv_path = base.parents[3] / "infrastructure" / "persistence_sqla" / "dump" / "countries.csv"
+                csv_path = (
+                    base.parents[3]
+                    / "infrastructure"
+                    / "persistence_sqla"
+                    / "dump"
+                    / "countries.csv"
+                )
 
         if not csv_path.exists():
             raise FileNotFoundError(f"Countries data file not found: {csv_path}")
@@ -68,7 +74,11 @@ class InitCountriesHandler:
                         name = str(row[1])
                         iso3 = str(row[2]) if row[2] else None
                         raw_iso2 = (row[3] or "").strip().upper()
-                        iso2 = raw_iso2 if len(raw_iso2) == 2 and raw_iso2.isalpha() else None
+                        iso2 = (
+                            raw_iso2
+                            if len(raw_iso2) == 2 and raw_iso2.isalpha()
+                            else None
+                        )
                         # numeric_code formatted to 3 digits if numeric
                         raw_numeric = row[4]
                         numeric_code = None
@@ -104,7 +114,11 @@ class InitCountriesHandler:
                                 # Unescape JSON-style slashes
                                 s = s.replace("\\/", "/")
                                 # Quote bare object keys: {zoneName: ...} -> {"zoneName": ...}
-                                s = re.sub(r"([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:", r'\1"\2":', s)
+                                s = re.sub(
+                                    r"([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:",
+                                    r'\1"\2":',
+                                    s,
+                                )
                                 # Replace single quotes with double quotes
                                 s = s.replace("'", '"')
                                 # Final attempt to parse
@@ -113,12 +127,14 @@ class InitCountriesHandler:
                                     print(timezones)
                                 except json.JSONDecodeError:
                                     timezones = None
+
                         # coordinates
                         def parse_float(v):
                             try:
                                 return float(v)
                             except Exception:
                                 return None
+
                         latitude = parse_float(row[18]) if len(row) > 18 else None
                         longitude = parse_float(row[19]) if len(row) > 19 else None
                         emoji = str(row[20]) if len(row) > 20 and row[20] else None
@@ -197,5 +213,3 @@ class InitCountriesHandler:
             updated_countries=updated,
             error_countries=errors,
         )
-
-

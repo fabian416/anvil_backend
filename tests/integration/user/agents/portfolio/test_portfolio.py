@@ -72,15 +72,17 @@ PORTFOLIO_TESTS = [
 @pytest.mark.llm_validation
 class TestPortfolio:
     """Tests for Portfolio agent with LLM validation."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
+    async def setup(
+        self, authenticated_client, conversation_id, csv_reporter, llm_validator
+    ):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
         self.llm_validator = llm_validator
-    
+
     @pytest.mark.parametrize("test_case", PORTFOLIO_TESTS, ids=lambda t: t["test_id"])
     async def test_portfolio(self, test_case: dict):
         """Test portfolio queries with LLM validation."""
@@ -89,7 +91,7 @@ class TestPortfolio:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         # LLM Validation
         llm_validation = None
         if not response_data.get("error"):
@@ -103,9 +105,9 @@ class TestPortfolio:
                 additional_context={
                     "test_category": "portfolio",
                     "user_type": "authenticated",
-                }
+                },
             )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -114,14 +116,14 @@ class TestPortfolio:
             conversation_id=self.conversation_id,
             llm_validation=llm_validation,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "").lower()
-        
+
         # Portfolio responses should mention holdings or wallet
         assert any(
             word in content

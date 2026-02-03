@@ -175,9 +175,7 @@ class DiscordSentimentAnalyzer:
             },
         )
 
-    async def _fetch_messages(
-        self, token_symbol: str, hours: int
-    ) -> List[Dict]:
+    async def _fetch_messages(self, token_symbol: str, hours: int) -> List[Dict]:
         """Fetch Discord messages mentioning token.
 
         In production, this would call Discord API.
@@ -345,9 +343,7 @@ class DiscordSentimentAnalyzer:
 
         return weighted_sum / total_weight if total_weight > 0 else 50.0
 
-    def _calculate_confidence(
-        self, messages: List[Dict], scores: List[float]
-    ) -> float:
+    def _calculate_confidence(self, messages: List[Dict], scores: List[float]) -> float:
         """Calculate confidence in sentiment analysis.
 
         Args:
@@ -395,9 +391,7 @@ class DiscordSentimentAnalyzer:
             },
         )
 
-    async def get_server_activity(
-        self, server_id: str = None
-    ) -> Dict:
+    async def get_server_activity(self, server_id: str = None) -> Dict:
         """Get activity metrics for Discord servers.
 
         Args:

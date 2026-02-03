@@ -109,7 +109,9 @@ class VotingRound:
         """Simple majority vote - most votes wins."""
         vote_counts: Dict[str, int] = {}
         for vote in self.votes:
-            vote_counts[vote.response_option] = vote_counts.get(vote.response_option, 0) + 1
+            vote_counts[vote.response_option] = (
+                vote_counts.get(vote.response_option, 0) + 1
+            )
 
         if not vote_counts:
             return None
@@ -171,7 +173,9 @@ class VotingRound:
         """Break voting tie by selecting response with highest confidence."""
         confidence_by_response: Dict[str, float] = {}
         for response in tied_responses:
-            votes_for_response = [v for v in self.votes if v.response_option == response]
+            votes_for_response = [
+                v for v in self.votes if v.response_option == response
+            ]
             avg_confidence = sum(v.confidence for v in votes_for_response) / len(
                 votes_for_response
             )
@@ -353,7 +357,9 @@ class FallbackChain:
 
         return None  # No more agents available
 
-    def record_attempt(self, agent_name: str, reason: Optional[FallbackReason] = None) -> None:
+    def record_attempt(
+        self, agent_name: str, reason: Optional[FallbackReason] = None
+    ) -> None:
         """Record agent attempt and fallback reason."""
         self.attempts.append(agent_name)
         if reason:
@@ -430,13 +436,17 @@ class AgentPerformanceMetrics:
                 self.avg_confidence, confidence, self.total_requests
             )
 
-        self.avg_cost_usd = self._update_average(self.avg_cost_usd, cost_usd, self.total_requests)
+        self.avg_cost_usd = self._update_average(
+            self.avg_cost_usd, cost_usd, self.total_requests
+        )
         self.total_cost_usd += cost_usd
 
         self.uptime_percentage = (self.successful_requests / self.total_requests) * 100
         self.updated_at = datetime.now(UTC)
 
-    def _update_average(self, current_avg: float, new_value: float, count: int) -> float:
+    def _update_average(
+        self, current_avg: float, new_value: float, count: int
+    ) -> float:
         """Update rolling average with new value."""
         return ((current_avg * (count - 1)) + new_value) / count
 
@@ -456,7 +466,9 @@ class AgentPerformanceMetrics:
             return 0.0
 
         success_score = self.get_success_rate()
-        speed_score = max(0, 100 - (self.avg_response_time_ms / 100))  # Penalty for slow responses
+        speed_score = max(
+            0, 100 - (self.avg_response_time_ms / 100)
+        )  # Penalty for slow responses
         confidence_score = self.avg_confidence * 100
 
         return (success_score * 0.4) + (speed_score * 0.3) + (confidence_score * 0.3)
@@ -495,7 +507,9 @@ class CustomAgentConfig:
     capabilities: List[AgentCapability] = field(default_factory=list)
     temperature: float = 0.7
     max_tokens: int = 1000
-    personality_traits: Dict[str, float] = field(default_factory=dict)  # e.g., {"formal": 0.8}
+    personality_traits: Dict[str, float] = field(
+        default_factory=dict
+    )  # e.g., {"formal": 0.8}
     expertise_areas: List[str] = field(default_factory=list)
     response_style: str = "balanced"  # concise, balanced, detailed
     preferred_llm_provider: str = "openai"
@@ -514,11 +528,14 @@ class CustomAgentConfig:
         prompt_parts = [f"You are {self.name}.", f"{self.description}"]
 
         if self.expertise_areas:
-            prompt_parts.append(f"Your areas of expertise: {', '.join(self.expertise_areas)}")
+            prompt_parts.append(
+                f"Your areas of expertise: {', '.join(self.expertise_areas)}"
+            )
 
         if self.personality_traits:
             traits_str = ", ".join(
-                f"{trait} ({score:.1%})" for trait, score in self.personality_traits.items()
+                f"{trait} ({score:.1%})"
+                for trait, score in self.personality_traits.items()
             )
             prompt_parts.append(f"Personality traits: {traits_str}")
 

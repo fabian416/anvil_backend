@@ -28,8 +28,15 @@ class TestGuestChatShortcuts:
 
         # Verify all expected intents are present
         expected_intents = {
-            "lending", "money_market", "swap", "portfolio",
-            "balance", "activity", "receive", "buy", "send"
+            "lending",
+            "money_market",
+            "swap",
+            "portfolio",
+            "balance",
+            "activity",
+            "receive",
+            "buy",
+            "send",
         }
         actual_intents = {s["intent"] for s in data["shortcuts"]}
         assert actual_intents == expected_intents
@@ -46,15 +53,16 @@ class TestGuestChatShortcuts:
 
         for example in examples:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": example, "language": "en"}
+                "/api/v1/guest/chat", json={"content": example, "language": "en"}
             )
 
             assert response.status_code == 200
             data = response.json()
 
             # Should detect lending intent
-            assert data["routing"]["intent"]  # Intent detected (may vary based on model)
+            assert data["routing"][
+                "intent"
+            ]  # Intent detected (may vary based on model)
             assert "agent_message" in data
             assert data["agent_message"]["content"]
 
@@ -70,15 +78,16 @@ class TestGuestChatShortcuts:
 
         for example in examples:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": example, "language": "en"}
+                "/api/v1/guest/chat", json={"content": example, "language": "en"}
             )
 
             assert response.status_code == 200
             data = response.json()
 
             # Should detect money_market intent
-            assert data["routing"]["intent"]  # Intent detected (may vary based on model)
+            assert data["routing"][
+                "intent"
+            ]  # Intent detected (may vary based on model)
             assert "agent_message" in data
             assert data["agent_message"]["content"]
 
@@ -95,8 +104,7 @@ class TestGuestChatShortcuts:
 
         for example in examples:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": example, "language": "en"}
+                "/api/v1/guest/chat", json={"content": example, "language": "en"}
             )
 
             assert response.status_code == 200
@@ -110,7 +118,9 @@ class TestGuestChatShortcuts:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_portfolio_shortcut_requires_registration(self, client: AsyncClient, llm_validator):
+    async def test_portfolio_shortcut_requires_registration(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test portfolio shortcut requires registration (restricted)."""
         examples = [
             "Show my portfolio",
@@ -120,15 +130,16 @@ class TestGuestChatShortcuts:
 
         for example in examples:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": example, "language": "en"}
+                "/api/v1/guest/chat", json={"content": example, "language": "en"}
             )
 
             assert response.status_code == 200
             data = response.json()
 
             # Should detect portfolio intent
-            assert data["routing"]["intent"]  # Intent detected (may vary based on model)
+            assert data["routing"][
+                "intent"
+            ]  # Intent detected (may vary based on model)
 
             # Response should have agent message
             assert "agent_message" in data
@@ -136,7 +147,9 @@ class TestGuestChatShortcuts:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_balance_shortcut_requires_registration(self, client: AsyncClient, llm_validator):
+    async def test_balance_shortcut_requires_registration(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test balance shortcut requires registration (restricted)."""
         examples = [
             "What's my balance?",
@@ -146,15 +159,16 @@ class TestGuestChatShortcuts:
 
         for example in examples:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": example, "language": "en"}
+                "/api/v1/guest/chat", json={"content": example, "language": "en"}
             )
 
             assert response.status_code == 200
             data = response.json()
 
             # Should detect balance intent
-            assert data["routing"]["intent"]  # Intent detected (may vary based on model)
+            assert data["routing"][
+                "intent"
+            ]  # Intent detected (may vary based on model)
 
             # Response should have agent message
             assert "agent_message" in data
@@ -162,7 +176,9 @@ class TestGuestChatShortcuts:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_activity_shortcut_requires_registration(self, client: AsyncClient, llm_validator):
+    async def test_activity_shortcut_requires_registration(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test activity shortcut requires registration (restricted)."""
         examples = [
             "Show my transactions",
@@ -172,15 +188,16 @@ class TestGuestChatShortcuts:
 
         for example in examples:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": example, "language": "en"}
+                "/api/v1/guest/chat", json={"content": example, "language": "en"}
             )
 
             assert response.status_code == 200
             data = response.json()
 
             # Should detect activity intent
-            assert data["routing"]["intent"]  # Intent detected (may vary based on model)
+            assert data["routing"][
+                "intent"
+            ]  # Intent detected (may vary based on model)
 
             # Response should have agent message
             assert "agent_message" in data
@@ -188,7 +205,9 @@ class TestGuestChatShortcuts:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_receive_shortcut_requires_registration(self, client: AsyncClient, llm_validator):
+    async def test_receive_shortcut_requires_registration(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test receive shortcut requires registration (restricted)."""
         examples = [
             "I want to receive crypto",
@@ -198,15 +217,16 @@ class TestGuestChatShortcuts:
 
         for example in examples:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": example, "language": "en"}
+                "/api/v1/guest/chat", json={"content": example, "language": "en"}
             )
 
             assert response.status_code == 200
             data = response.json()
 
             # Should detect receive intent
-            assert data["routing"]["intent"]  # Intent detected (may vary based on model)
+            assert data["routing"][
+                "intent"
+            ]  # Intent detected (may vary based on model)
 
             # Response should have agent message
             assert "agent_message" in data
@@ -214,7 +234,9 @@ class TestGuestChatShortcuts:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_buy_shortcut_requires_registration(self, client: AsyncClient, llm_validator):
+    async def test_buy_shortcut_requires_registration(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test buy shortcut requires registration (restricted)."""
         examples = [
             "I want to buy crypto",
@@ -224,15 +246,16 @@ class TestGuestChatShortcuts:
 
         for example in examples:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": example, "language": "en"}
+                "/api/v1/guest/chat", json={"content": example, "language": "en"}
             )
 
             assert response.status_code == 200
             data = response.json()
 
             # Should detect buy intent
-            assert data["routing"]["intent"]  # Intent detected (may vary based on model)
+            assert data["routing"][
+                "intent"
+            ]  # Intent detected (may vary based on model)
 
             # Response should have agent message
             assert "agent_message" in data
@@ -240,7 +263,9 @@ class TestGuestChatShortcuts:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_send_shortcut_requires_registration(self, client: AsyncClient, llm_validator):
+    async def test_send_shortcut_requires_registration(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test send shortcut requires registration (restricted)."""
         examples = [
             "Send crypto to a friend",
@@ -250,15 +275,16 @@ class TestGuestChatShortcuts:
 
         for example in examples:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": example, "language": "en"}
+                "/api/v1/guest/chat", json={"content": example, "language": "en"}
             )
 
             assert response.status_code == 200
             data = response.json()
 
             # Should detect send intent
-            assert data["routing"]["intent"]  # Intent detected (may vary based on model)
+            assert data["routing"][
+                "intent"
+            ]  # Intent detected (may vary based on model)
 
             # Response should have agent message
             assert "agent_message" in data
@@ -266,7 +292,9 @@ class TestGuestChatShortcuts:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_multilingual_shortcuts_spanish(self, client: AsyncClient, llm_validator):
+    async def test_multilingual_shortcuts_spanish(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test Spanish shortcuts."""
         response = await client.get("/api/v1/chat/shortcuts?lang=es")
         assert response.status_code == 200
@@ -278,7 +306,7 @@ class TestGuestChatShortcuts:
         # Test a Spanish example
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Depositar USDC en Morpho", "language": "es"}
+            json={"content": "Depositar USDC en Morpho", "language": "es"},
         )
 
         assert response.status_code == 200
@@ -287,7 +315,9 @@ class TestGuestChatShortcuts:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_multilingual_shortcuts_portuguese(self, client: AsyncClient, llm_validator):
+    async def test_multilingual_shortcuts_portuguese(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test Portuguese shortcuts."""
         response = await client.get("/api/v1/chat/shortcuts?lang=pt")
         assert response.status_code == 200
@@ -299,7 +329,7 @@ class TestGuestChatShortcuts:
         # Test a Portuguese example
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Trocar 100 USDC por ETH", "language": "pt"}
+            json={"content": "Trocar 100 USDC por ETH", "language": "pt"},
         )
 
         assert response.status_code == 200
@@ -309,7 +339,9 @@ class TestGuestChatShortcuts:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_multilingual_shortcuts_chinese(self, client: AsyncClient, llm_validator):
+    async def test_multilingual_shortcuts_chinese(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test Mandarin Chinese shortcuts."""
         response = await client.get("/api/v1/chat/shortcuts?lang=zh")
         assert response.status_code == 200
@@ -320,8 +352,7 @@ class TestGuestChatShortcuts:
 
         # Test a Chinese example
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "显示我的投资组合", "language": "zh"}
+            "/api/v1/guest/chat", json={"content": "显示我的投资组合", "language": "zh"}
         )
 
         assert response.status_code == 200
@@ -340,8 +371,7 @@ class TestGuestChatShortcuts:
 
         for content, expected_keyword in hunter_examples:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": content, "language": "en"}
+                "/api/v1/guest/chat", json={"content": content, "language": "en"}
             )
 
             assert response.status_code == 200
@@ -350,7 +380,7 @@ class TestGuestChatShortcuts:
             # Should detect some intent (may be hunter or llm_workflow depending on model)
             intent = data["routing"]["intent"].lower()
             assert intent  # Intent should be detected
-            
+
             # Should have agent_message
             assert "agent_message" in data
             assert data["agent_message"]["content"]
@@ -367,8 +397,7 @@ class TestGuestChatShortcuts:
 
         for content in graphrag_examples:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": content, "language": "en"}
+                "/api/v1/guest/chat", json={"content": content, "language": "en"}
             )
 
             assert response.status_code == 200
@@ -390,8 +419,7 @@ class TestGuestChatShortcuts:
 
         for content in ultra_examples:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": content, "language": "en"}
+                "/api/v1/guest/chat", json={"content": content, "language": "en"}
             )
 
             assert response.status_code == 200
@@ -407,7 +435,7 @@ class TestGuestChatShortcuts:
         """Test that rate limiting info is returned."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What's BTC price?", "language": "en"}
+            json={"content": "What's BTC price?", "language": "en"},
         )
 
         assert response.status_code == 200
@@ -420,17 +448,23 @@ class TestGuestChatShortcuts:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_all_shortcuts_have_examples(self, client: AsyncClient, llm_validator):
+    async def test_all_shortcuts_have_examples(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test that all shortcuts have at least one example."""
         response = await client.get("/api/v1/chat/shortcuts?lang=en")
         assert response.status_code == 200
         data = response.json()
 
         for shortcut in data["shortcuts"]:
-            assert len(shortcut["examples"]) > 0, f"Shortcut {shortcut['intent']} has no examples"
+            assert len(shortcut["examples"]) > 0, (
+                f"Shortcut {shortcut['intent']} has no examples"
+            )
             assert shortcut["icon"], f"Shortcut {shortcut['intent']} has no icon"
             assert shortcut["command"], f"Shortcut {shortcut['intent']} has no command"
-            assert shortcut["description"], f"Shortcut {shortcut['intent']} has no description"
+            assert shortcut["description"], (
+                f"Shortcut {shortcut['intent']} has no description"
+            )
 
 
 # ========================================
@@ -444,14 +478,18 @@ class TestGuestChatShortcutsAdvanced:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_multi_step_portfolio_analysis(self, test_app, llm_validator, csv_tracker):
+    async def test_shortcuts_multi_step_portfolio_analysis(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """Test chained shortcut workflow for portfolio analysis."""
-        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
                 json={
                     "content": "Show me top DeFi protocols and analyze their risks",
-                    "language": "en"
+                    "language": "en",
                 },
                 headers={"X-Forwarded-For": "127.0.0.900"},
             )
@@ -463,16 +501,21 @@ class TestGuestChatShortcutsAdvanced:
         assert len(content) > 0, "Should provide some response"
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_conditional_execution_logic(self, test_app, llm_validator, csv_tracker):
+    async def test_shortcuts_conditional_execution_logic(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """Test if-then shortcut behaviors."""
-        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
                 json={
                     "content": "Check ETH price and tell me if it's a good buy opportunity",
-                    "language": "en"
+                    "language": "en",
                 },
                 headers={"X-Forwarded-For": "127.0.0.901"},
             )
@@ -484,17 +527,19 @@ class TestGuestChatShortcutsAdvanced:
         assert len(content) > 50, "Should provide conditional analysis"
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_parameter_validation_edge_cases(self, test_app, llm_validator, csv_tracker):
+    async def test_shortcuts_parameter_validation_edge_cases(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """Test invalid input handling in shortcuts."""
-        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={
-                    "content": "Swap -100 ETH for BTC",
-                    "language": "en"
-                },
+                json={"content": "Swap -100 ETH for BTC", "language": "en"},
                 headers={"X-Forwarded-For": "127.0.0.902"},
             )
 
@@ -505,22 +550,27 @@ class TestGuestChatShortcutsAdvanced:
         assert len(content) > 30, "Should provide error guidance"
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_output_format_consistency(self, test_app, llm_validator, csv_tracker):
+    async def test_shortcuts_output_format_consistency(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """Test standardized response structures across shortcuts."""
-        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
             # Test multiple shortcuts to verify consistent formatting
             responses = []
             for i, query in enumerate([
                 "What's BTC price?",
                 "Analyze ETH trends",
-                "Show DeFi yields"
+                "Show DeFi yields",
             ]):
                 resp = await ac.post(
                     "/api/v1/guest/chat",
                     json={"content": query, "language": "en"},
-                    headers={"X-Forwarded-For": f"127.0.0.{903+i}"},
+                    headers={"X-Forwarded-For": f"127.0.0.{903 + i}"},
                 )
                 assert resp.status_code == 200
                 responses.append(resp.json())
@@ -534,11 +584,16 @@ class TestGuestChatShortcutsAdvanced:
 
         validation = None
         combined_content = ""
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_internationalization_parity(self, test_app, llm_validator, csv_tracker):
+    async def test_shortcuts_internationalization_parity(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """Test multi-language quality consistency."""
-        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
             # Test same query in different languages
             languages = ["en", "es", "pt", "zh"]
             responses = {}
@@ -547,7 +602,7 @@ class TestGuestChatShortcutsAdvanced:
                 resp = await ac.post(
                     "/api/v1/guest/chat",
                     json={"content": "What is DeFi?", "language": lang},
-                    headers={"X-Forwarded-For": f"127.0.0.{910+i}"},
+                    headers={"X-Forwarded-For": f"127.0.0.{910 + i}"},
                 )
                 assert resp.status_code == 200
                 responses[lang] = resp.json()
@@ -556,21 +611,25 @@ class TestGuestChatShortcutsAdvanced:
         for lang, data in responses.items():
             content = data["agent_message"]["content"]
             assert len(content) > 20, f"Language {lang} should get substantive response"
-            assert data["routing"]["language"] == lang, f"Language routing should match {lang}"
+            assert data["routing"]["language"] == lang, (
+                f"Language routing should match {lang}"
+            )
 
         validation = None
         en_content = responses["en"]["agent_message"]["content"]
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_accessibility_considerations(self, test_app, llm_validator, csv_tracker):
+    async def test_shortcuts_accessibility_considerations(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """Test screen reader friendly responses."""
-        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={
-                    "content": "Explain current market conditions",
-                    "language": "en"
-                },
+                json={"content": "Explain current market conditions", "language": "en"},
                 headers={"X-Forwarded-For": "127.0.0.920"},
             )
 
@@ -582,17 +641,19 @@ class TestGuestChatShortcutsAdvanced:
         assert len(content) > 50, "Should provide detailed explanation"
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_shortcuts_mobile_optimization_responses(self, test_app, llm_validator, csv_tracker):
+    async def test_shortcuts_mobile_optimization_responses(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """Test concise mobile-friendly output."""
-        async with AsyncClient(transport=ASGITransport(app=test_app), base_url="http://test") as ac:
+        async with AsyncClient(
+            transport=ASGITransport(app=test_app), base_url="http://test"
+        ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={
-                    "content": "Quick ETH update",
-                    "language": "en"
-                },
+                json={"content": "Quick ETH update", "language": "en"},
                 headers={"X-Forwarded-For": "127.0.0.921"},
             )
 

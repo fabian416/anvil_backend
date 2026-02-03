@@ -56,4 +56,3 @@ class DeleteConversation:
             await self._tx.commit()
 
         return deleted
-

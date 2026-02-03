@@ -45,22 +45,24 @@ class MoneyMarketCacheAdapterSqla(MoneyMarketCacheGateway):
         now = datetime.now(timezone.utc)
 
         # Query for valid cache entry
-        query = select(self._table).where(
-            and_(
-                self._table.c.protocol_id == protocol,
-                self._table.c.asset_symbol == asset,
-                self._table.c.chain == chain,
-                self._table.c.valid_until > now,  # TTL check
+        query = (
+            select(self._table)
+            .where(
+                and_(
+                    self._table.c.protocol_id == protocol,
+                    self._table.c.asset_symbol == asset,
+                    self._table.c.chain == chain,
+                    self._table.c.valid_until > now,  # TTL check
+                )
             )
-        ).order_by(self._table.c.created_at.desc())
+            .order_by(self._table.c.created_at.desc())
+        )
 
         result = await self._session.execute(query)
         row = result.fetchone()
 
         if not row:
-            logger.debug(
-                f"Cache miss for {protocol}/{asset}/{chain}"
-            )
+            logger.debug(f"Cache miss for {protocol}/{asset}/{chain}")
             return None
 
         logger.debug(
@@ -88,7 +90,8 @@ class MoneyMarketCacheAdapterSqla(MoneyMarketCacheGateway):
             "stable_borrow_apy": protocol_data.borrow_apy_stable,
             "total_supply_usd": protocol_data.total_supplied_usd,
             "total_borrow_usd": protocol_data.total_borrowed_usd,
-            "utilization_rate": protocol_data.utilization_rate * Decimal("100"),  # Convert to percentage
+            "utilization_rate": protocol_data.utilization_rate
+            * Decimal("100"),  # Convert to percentage
             "liquidity_usd": protocol_data.liquidity_available,
             "reward_tokens": None,  # Optional
             "total_incentive_apy": Decimal("0"),
@@ -163,9 +166,7 @@ class MoneyMarketCacheAdapterSqla(MoneyMarketCacheGateway):
         rows = result.fetchall()
 
         rates = [self._row_to_entity(row) for row in rows]
-        logger.debug(
-            f"Found {len(rates)} valid cached rates for {asset}/{chain}"
-        )
+        logger.debug(f"Found {len(rates)} valid cached rates for {asset}/{chain}")
         return rates
 
     async def is_cache_valid(
@@ -177,12 +178,16 @@ class MoneyMarketCacheAdapterSqla(MoneyMarketCacheGateway):
         """Check if cache exists and is valid."""
         now = datetime.now(timezone.utc)
 
-        query = select(func.count()).select_from(self._table).where(
-            and_(
-                self._table.c.protocol_id == protocol,
-                self._table.c.asset_symbol == asset,
-                self._table.c.chain == chain,
-                self._table.c.valid_until > now,
+        query = (
+            select(func.count())
+            .select_from(self._table)
+            .where(
+                and_(
+                    self._table.c.protocol_id == protocol,
+                    self._table.c.asset_symbol == asset,
+                    self._table.c.chain == chain,
+                    self._table.c.valid_until > now,
+                )
             )
         )
 
@@ -200,30 +205,26 @@ class MoneyMarketCacheAdapterSqla(MoneyMarketCacheGateway):
         total_entries = total_result.scalar()
 
         # Valid entries
-        valid_query = select(func.count()).select_from(self._table).where(
-            self._table.c.valid_until > now
+        valid_query = (
+            select(func.count())
+            .select_from(self._table)
+            .where(self._table.c.valid_until > now)
         )
         valid_result = await self._session.execute(valid_query)
         valid_entries = valid_result.scalar()
 
         # Unique protocols
-        protocols_query = select(
-            func.count(func.distinct(self._table.c.protocol_id))
-        )
+        protocols_query = select(func.count(func.distinct(self._table.c.protocol_id)))
         protocols_result = await self._session.execute(protocols_query)
         protocols_cached = protocols_result.scalar()
 
         # Unique assets
-        assets_query = select(
-            func.count(func.distinct(self._table.c.asset_symbol))
-        )
+        assets_query = select(func.count(func.distinct(self._table.c.asset_symbol)))
         assets_result = await self._session.execute(assets_query)
         assets_cached = assets_result.scalar()
 
         # Unique chains
-        chains_query = select(
-            func.count(func.distinct(self._table.c.chain))
-        )
+        chains_query = select(func.count(func.distinct(self._table.c.chain)))
         chains_result = await self._session.execute(chains_query)
         chains_cached = chains_result.scalar()
 
@@ -252,7 +253,9 @@ class MoneyMarketCacheAdapterSqla(MoneyMarketCacheGateway):
             borrow_apy_stable=row.stable_borrow_apy,
             total_supplied_usd=row.total_supply_usd or Decimal("0"),
             total_borrowed_usd=row.total_borrow_usd or Decimal("0"),
-            utilization_rate=row.utilization_rate / Decimal("100") if row.utilization_rate else Decimal("0"),  # Convert from percentage
+            utilization_rate=row.utilization_rate / Decimal("100")
+            if row.utilization_rate
+            else Decimal("0"),  # Convert from percentage
             liquidity_available=row.liquidity_usd or Decimal("0"),
             data_source=row.data_source,
             valid_until=row.valid_until,

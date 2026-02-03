@@ -9,7 +9,9 @@ from decimal import Decimal
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
-from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.domain.value_objects.agent_squad.conversation_context import (
+    ConversationContext,
+)
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentResponse
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
@@ -17,11 +19,11 @@ from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 class CrisisManagerAgentForta:
     """
     Crisis Manager Agent Forta implementation.
-    
+
     Implements: AgentGateway
-    
+
     Purpose: Emergency response & automated crisis handling
-    
+
     Capabilities:
     - Protocol exploit detection (real-time)
     - Automated emergency response
@@ -30,7 +32,7 @@ class CrisisManagerAgentForta:
     - Crisis event logging
     - Post-mortem analysis
     - User notification (multi-channel)
-    
+
     Crisis Types:
     - Smart contract exploits
     - Flash loan attacks
@@ -38,7 +40,7 @@ class CrisisManagerAgentForta:
     - Governance attacks
     - Bridge hacks
     - Depeg events
-    
+
     Response Actions (Automated):
     - Withdraw from affected protocol
     - Revoke token approvals
@@ -46,18 +48,18 @@ class CrisisManagerAgentForta:
     - Pause automated strategies
     - Notify user immediately
     - Log detailed crisis events
-    
+
     Safety Features:
     - User confirmation (for large amounts)
     - Dry-run simulation
     - Rollback support
     - Manual override
     - Rate limiting (prevent panic)
-    
+
     Model: gpt-4o (crisis reasoning)
     Temperature: 0.1 (precision critical)
     """
-    
+
     def __init__(
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
@@ -70,7 +72,7 @@ class CrisisManagerAgentForta:
     ):
         """
         Initialize crisis manager agent.
-        
+
         Args:
             llm_client: OpenAI LLM client
             forta_client: Forta network client
@@ -87,12 +89,12 @@ class CrisisManagerAgentForta:
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
-    
+
     @property
     def agent_type(self) -> AgentType:
         """Get agent type."""
         return AgentType.CRISIS_MANAGER
-    
+
     async def execute(
         self,
         conversation_id: ConversationId,
@@ -101,7 +103,7 @@ class CrisisManagerAgentForta:
     ) -> AgentResponse:
         """
         Execute crisis manager agent.
-        
+
         Provides:
         - Recent crisis events
         - User exposure to affected protocols
@@ -109,52 +111,58 @@ class CrisisManagerAgentForta:
         - Manual crisis response options
         """
         start_time = time.time()
-        
+
         # Check for active crises
         active_crises = await self._check_active_crises()
-        
+
         # Generate crisis report
         report = await self._generate_crisis_report(
             active_crises,
             conversation_context,
         )
-        
+
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         # Collect sources
         from datetime import datetime, UTC
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_llm_source,
             create_api_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add Forta source
-        sources.append(create_api_source(
-            source_name="Forta",
-            url="https://forta.org/",
-            citation_text="Crisis detection from Forta Network",
-            fetched_at=fetched_at,
-            provider="Forta API",
-            data_points_used=len(active_crises),
-        ))
-        
+        sources.append(
+            create_api_source(
+                source_name="Forta",
+                url="https://forta.org/",
+                citation_text="Crisis detection from Forta Network",
+                fetched_at=fetched_at,
+                provider="Forta API",
+                data_points_used=len(active_crises),
+            )
+        )
+
         # Add Privy source (for wallet operations)
-        sources.append(create_api_source(
-            source_name="Privy",
-            url="https://privy.io/",
-            citation_text="Wallet operations via Privy",
-            fetched_at=fetched_at,
-        ))
-        
+        sources.append(
+            create_api_source(
+                source_name="Privy",
+                url="https://privy.io/",
+                citation_text="Wallet operations via Privy",
+                fetched_at=fetched_at,
+            )
+        )
+
         # Add LLM source
-        sources.append(create_llm_source(
-            model=self._model,
-            fetched_at=fetched_at,
-        ))
-        
+        sources.append(
+            create_llm_source(
+                model=self._model,
+                fetched_at=fetched_at,
+            )
+        )
+
         return AgentResponse(
             content=report,
             agent_type=self.agent_type,
@@ -166,15 +174,15 @@ class CrisisManagerAgentForta:
                 "user_affected": any(c["user_exposure_usd"] > 0 for c in active_crises),
             },
         )
-    
+
     async def is_available(self) -> bool:
         """Check if agent is available."""
         return True
-    
+
     async def _check_active_crises(self) -> list[dict]:
         """Check for active protocol crises."""
         # TODO: Implement real Forta API integration
-        
+
         # Mock crisis events
         return [
             {
@@ -187,7 +195,11 @@ class CrisisManagerAgentForta:
                 "status": "ACTIVE",
                 "response_time_ms": 2500,
                 "actions_taken": [
-                    {"action": "WITHDRAW_ALL", "amount_usd": 48000, "status": "COMPLETED"},
+                    {
+                        "action": "WITHDRAW_ALL",
+                        "amount_usd": 48000,
+                        "status": "COMPLETED",
+                    },
                     {"action": "REVOKE_APPROVALS", "count": 3, "status": "COMPLETED"},
                 ],
                 "positions_saved": [
@@ -197,7 +209,7 @@ class CrisisManagerAgentForta:
                 "timestamp": time.time() - 3600,
             },
         ]
-    
+
     async def _generate_crisis_report(
         self,
         active_crises: list[dict],
@@ -225,10 +237,10 @@ No active protocol crises detected.
 
 Your funds are safe. We're watching 24/7.
 """
-        
+
         # Active crisis detected
         crisis = active_crises[0]  # Most recent
-        
+
         report = f"""🚨 **CRISIS ALERT - AUTOMATED RESPONSE ACTIVE**
 
 **Crisis ID**: {crisis["crisis_id"]}
@@ -251,7 +263,7 @@ Your funds are safe. We're watching 24/7.
 **AUTOMATED ACTIONS TAKEN** ✅
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
-        
+
         for action in crisis["actions_taken"]:
             status_emoji = "✅" if action["status"] == "COMPLETED" else "⏳"
             if action["action"] == "WITHDRAW_ALL":
@@ -268,19 +280,19 @@ Your funds are safe. We're watching 24/7.
   Status: {action["status"]}
   Protection: No further exposure
 """
-        
+
         report += f"""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **POSITIONS SAVED** 💰
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
-        
+
         for position in crisis["positions_saved"]:
             report += f"""
 ✅ {position["protocol"]} - {position["token"]}
   Amount Saved: ${position["amount"]:,.0f} USD
 """
-        
+
         report += f"""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **FINANCIAL OUTCOME**
@@ -310,5 +322,5 @@ Your funds are safe. We're watching 24/7.
 *Your funds are now safe. Crisis management protocol executed
 successfully. No further action required.*
 """
-        
+
         return report.strip()

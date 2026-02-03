@@ -3,7 +3,7 @@ Unified Chat Repository SQLAlchemy Adapter.
 
 Implements repositories for the unified chat system:
 - ChatUserRepository
-- ChatConversationRepository  
+- ChatConversationRepository
 - ChatMessageRepository
 - RateLimitRepository
 """
@@ -16,12 +16,17 @@ from sqlalchemy import func, select, update, delete
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.domain.chat.entities.chat_user import ChatUser, UserType
-from app.domain.chat.entities.chat_conversation import ChatConversation, ConversationStatus
+from app.domain.chat.entities.chat_conversation import (
+    ChatConversation,
+    ConversationStatus,
+)
 from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
 from app.domain.chat.entities.rate_limit import RateLimit, WindowType
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.exceptions.gateway import DataMapperError
-from app.infrastructure.persistence_sqla.mappings.chat_unified import map_unified_chat_tables
+from app.infrastructure.persistence_sqla.mappings.chat_unified import (
+    map_unified_chat_tables,
+)
 from app.infrastructure.persistence_sqla.registry import mapping_registry
 
 logger = logging.getLogger(__name__)
@@ -29,11 +34,11 @@ logger = logging.getLogger(__name__)
 
 class ChatUserRepositorySqla:
     """SQLAlchemy implementation of ChatUserRepository."""
-    
+
     def __init__(self, session: MainAsyncSession):
         self._session = session
         map_unified_chat_tables()
-    
+
     async def get_by_id(self, user_id: UUID) -> ChatUser | None:
         """Get user by ID."""
         try:
@@ -45,7 +50,7 @@ class ChatUserRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to get user by ID: {e}")
             raise DataMapperError("Failed to get user") from e
-    
+
     async def get_by_privy_id(self, privy_id: str) -> ChatUser | None:
         """Get user by Privy ID."""
         try:
@@ -57,14 +62,15 @@ class ChatUserRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to get user by Privy ID: {e}")
             raise DataMapperError("Failed to get user") from e
-    
-    async def get_by_identifier(self, user_type: str, identifier: str) -> ChatUser | None:
+
+    async def get_by_identifier(
+        self, user_type: str, identifier: str
+    ) -> ChatUser | None:
         """Get user by type and identifier."""
         try:
             table = mapping_registry.metadata.tables["chat_users"]
             stmt = select(table).where(
-                (table.c.user_type == user_type) &
-                (table.c.identifier == identifier)
+                (table.c.user_type == user_type) & (table.c.identifier == identifier)
             )
             result = await self._session.execute(stmt)
             row = result.mappings().first()
@@ -72,7 +78,7 @@ class ChatUserRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to get user by identifier: {e}")
             raise DataMapperError("Failed to get user") from e
-    
+
     async def save(self, user: ChatUser) -> ChatUser:
         """Save a new user."""
         try:
@@ -102,7 +108,7 @@ class ChatUserRepositorySqla:
             await self._session.rollback()
             logger.error(f"Failed to save user: {e}")
             raise DataMapperError("Failed to save user") from e
-    
+
     async def update(self, user: ChatUser) -> ChatUser:
         """Update an existing user."""
         try:
@@ -128,7 +134,7 @@ class ChatUserRepositorySqla:
             await self._session.rollback()
             logger.error(f"Failed to update user: {e}")
             raise DataMapperError("Failed to update user") from e
-    
+
     @staticmethod
     def _row_to_user(row: dict) -> ChatUser:
         """Convert DB row to ChatUser entity."""
@@ -148,11 +154,11 @@ class ChatUserRepositorySqla:
 
 class ChatConversationRepositorySqla:
     """SQLAlchemy implementation of ChatConversationRepository."""
-    
+
     def __init__(self, session: MainAsyncSession):
         self._session = session
         map_unified_chat_tables()
-    
+
     async def get_by_id(self, conversation_id: UUID) -> ChatConversation | None:
         """Get conversation by ID."""
         try:
@@ -164,7 +170,7 @@ class ChatConversationRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to get conversation: {e}")
             raise DataMapperError("Failed to get conversation") from e
-    
+
     async def get_by_id_and_user(
         self,
         conversation_id: UUID,
@@ -174,8 +180,7 @@ class ChatConversationRepositorySqla:
         try:
             table = mapping_registry.metadata.tables["chat_conversations"]
             stmt = select(table).where(
-                (table.c.id == conversation_id) &
-                (table.c.user_id == user_id)
+                (table.c.id == conversation_id) & (table.c.user_id == user_id)
             )
             result = await self._session.execute(stmt)
             row = result.mappings().first()
@@ -183,7 +188,7 @@ class ChatConversationRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to get conversation: {e}")
             raise DataMapperError("Failed to get conversation") from e
-    
+
     async def get_active_for_user(self, user_id: UUID) -> ChatConversation | None:
         """Get active conversation for user (most recent)."""
         try:
@@ -201,7 +206,7 @@ class ChatConversationRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to get active conversation: {e}")
             raise DataMapperError("Failed to get conversation") from e
-    
+
     async def list_for_user(
         self,
         user_id: UUID,
@@ -226,7 +231,7 @@ class ChatConversationRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to list conversations: {e}")
             raise DataMapperError("Failed to list conversations") from e
-    
+
     async def count_for_user(self, user_id: UUID, status: str = "active") -> int:
         """Count conversations for user."""
         try:
@@ -241,7 +246,7 @@ class ChatConversationRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to count conversations: {e}")
             return 0
-    
+
     async def save(self, conversation: ChatConversation) -> ChatConversation:
         """Save a new conversation."""
         try:
@@ -271,7 +276,7 @@ class ChatConversationRepositorySqla:
             await self._session.rollback()
             logger.error(f"Failed to save conversation: {e}")
             raise DataMapperError("Failed to save conversation") from e
-    
+
     async def update(self, conversation: ChatConversation) -> ChatConversation:
         """Update an existing conversation."""
         try:
@@ -296,7 +301,7 @@ class ChatConversationRepositorySqla:
             await self._session.rollback()
             logger.error(f"Failed to update conversation: {e}")
             raise DataMapperError("Failed to update conversation") from e
-    
+
     async def delete_for_user(self, conversation_id: UUID, user_id: UUID) -> bool:
         """Soft delete conversation (mark as deleted)."""
         try:
@@ -317,7 +322,7 @@ class ChatConversationRepositorySqla:
             await self._session.rollback()
             logger.error(f"Failed to delete conversation: {e}")
             raise DataMapperError("Failed to delete conversation") from e
-    
+
     async def archive_inactive(self, older_than: datetime) -> int:
         """Archive inactive conversations."""
         try:
@@ -338,7 +343,7 @@ class ChatConversationRepositorySqla:
             await self._session.rollback()
             logger.error(f"Failed to archive conversations: {e}")
             raise DataMapperError("Failed to archive conversations") from e
-    
+
     @staticmethod
     def _row_to_conversation(row: dict) -> ChatConversation:
         """Convert DB row to ChatConversation entity."""
@@ -358,11 +363,11 @@ class ChatConversationRepositorySqla:
 
 class ChatMessageRepositorySqla:
     """SQLAlchemy implementation of ChatMessageRepository."""
-    
+
     def __init__(self, session: MainAsyncSession):
         self._session = session
         map_unified_chat_tables()
-    
+
     async def get_by_id(self, message_id: UUID) -> ChatMessage | None:
         """Get message by ID."""
         try:
@@ -374,7 +379,7 @@ class ChatMessageRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to get message: {e}")
             raise DataMapperError("Failed to get message") from e
-    
+
     async def get_recent_messages(
         self,
         conversation_id: UUID,
@@ -398,7 +403,7 @@ class ChatMessageRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to get messages: {e}")
             raise DataMapperError("Failed to get messages") from e
-    
+
     async def list_for_conversation(
         self,
         conversation_id: UUID,
@@ -421,7 +426,7 @@ class ChatMessageRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to list messages: {e}")
             raise DataMapperError("Failed to list messages") from e
-    
+
     async def save(self, message: ChatMessage) -> ChatMessage:
         """Save a new message."""
         try:
@@ -453,7 +458,7 @@ class ChatMessageRepositorySqla:
             await self._session.rollback()
             logger.error(f"Failed to save message: {e}")
             raise DataMapperError("Failed to save message") from e
-    
+
     async def count_for_conversation(self, conversation_id: UUID) -> int:
         """Count messages in conversation."""
         try:
@@ -466,7 +471,7 @@ class ChatMessageRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to count messages: {e}")
             return 0
-    
+
     async def update_metadata(
         self,
         message_id: UUID,
@@ -475,18 +480,18 @@ class ChatMessageRepositorySqla:
     ) -> ChatMessage | None:
         """
         Update message metadata.
-        
+
         Args:
             message_id: Message ID to update
             metadata: New metadata dict
             merge: If True, merge with existing metadata; if False, replace entirely
-            
+
         Returns:
             Updated ChatMessage or None if not found
         """
         try:
             table = mapping_registry.metadata.tables["chat_messages"]
-            
+
             if merge:
                 # Get existing metadata first
                 select_stmt = select(table.c.metadata).where(table.c.id == message_id)
@@ -498,7 +503,7 @@ class ChatMessageRepositorySqla:
                 merged_metadata = {**(existing or {}), **metadata}
             else:
                 merged_metadata = metadata
-            
+
             # Update the metadata
             update_stmt = (
                 table.update()
@@ -508,17 +513,17 @@ class ChatMessageRepositorySqla:
             )
             result = await self._session.execute(update_stmt)
             row = result.fetchone()
-            
+
             if not row:
                 return None
-            
+
             await self._session.commit()  # Persist metadata update to database
             return self._row_to_message(dict(row._mapping))
         except SQLAlchemyError as e:
             await self._session.rollback()
             logger.error(f"Failed to update message metadata: {e}")
             raise DataMapperError("Failed to update message metadata") from e
-    
+
     async def get_by_id(self, message_id: UUID) -> ChatMessage | None:
         """Get a message by ID."""
         try:
@@ -532,7 +537,7 @@ class ChatMessageRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to get message: {e}")
             return None
-    
+
     @staticmethod
     def _row_to_message(row: dict) -> ChatMessage:
         """Convert DB row to ChatMessage entity."""
@@ -553,21 +558,21 @@ class ChatMessageRepositorySqla:
 
 class RateLimitRepositorySqla:
     """SQLAlchemy implementation of RateLimitRepository."""
-    
+
     def __init__(self, session: MainAsyncSession):
         self._session = session
         map_unified_chat_tables()
-    
+
     async def get_hourly_count(self, user_id: UUID) -> int:
         """Get message count for current hour."""
         try:
             table = mapping_registry.metadata.tables["chat_rate_limits"]
             hour_start = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
-            
+
             stmt = select(table.c.message_count).where(
-                (table.c.user_id == user_id) &
-                (table.c.window_type == "hourly") &
-                (table.c.window_start == hour_start)
+                (table.c.user_id == user_id)
+                & (table.c.window_type == "hourly")
+                & (table.c.window_start == hour_start)
             )
             result = await self._session.execute(stmt)
             row = result.scalar()
@@ -575,17 +580,19 @@ class RateLimitRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to get hourly count: {e}")
             return 0
-    
+
     async def get_daily_count(self, user_id: UUID) -> int:
         """Get message count for current day."""
         try:
             table = mapping_registry.metadata.tables["chat_rate_limits"]
-            day_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
-            
+            day_start = datetime.now(UTC).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+
             stmt = select(table.c.message_count).where(
-                (table.c.user_id == user_id) &
-                (table.c.window_type == "daily") &
-                (table.c.window_start == day_start)
+                (table.c.user_id == user_id)
+                & (table.c.window_type == "daily")
+                & (table.c.window_start == day_start)
             )
             result = await self._session.execute(stmt)
             row = result.scalar()
@@ -593,7 +600,7 @@ class RateLimitRepositorySqla:
         except SQLAlchemyError as e:
             logger.error(f"Failed to get daily count: {e}")
             return 0
-    
+
     async def increment(self, user_id: UUID) -> None:
         """Increment message counts for hourly and daily windows."""
         try:
@@ -601,18 +608,18 @@ class RateLimitRepositorySqla:
             now = datetime.now(UTC)
             hour_start = now.replace(minute=0, second=0, microsecond=0)
             day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            
+
             # Upsert hourly
             await self._upsert_count(table, user_id, "hourly", hour_start)
-            
+
             # Upsert daily
             await self._upsert_count(table, user_id, "daily", day_start)
-            
+
             await self._session.commit()
         except SQLAlchemyError as e:
             await self._session.rollback()
             logger.error(f"Failed to increment rate limit: {e}")
-    
+
     async def _upsert_count(
         self,
         table,
@@ -622,7 +629,7 @@ class RateLimitRepositorySqla:
     ) -> None:
         """Upsert rate limit count."""
         from sqlalchemy.dialects.postgresql import insert
-        
+
         stmt = insert(table).values(
             user_id=user_id,
             window_type=window_type,
@@ -634,4 +641,3 @@ class RateLimitRepositorySqla:
             set_={"message_count": table.c.message_count + 1},
         )
         await self._session.execute(stmt)
-

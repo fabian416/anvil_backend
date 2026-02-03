@@ -11,7 +11,9 @@ from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
 from app.domain.value_objects.wallet_address import WalletAddress
-from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.domain.value_objects.agent_squad.conversation_context import (
+    ConversationContext,
+)
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentResponse
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
@@ -19,11 +21,11 @@ from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 class MultiSigCoordinatorAgentGnosis:
     """
     Multi-Sig Coordinator Agent Gnosis implementation.
-    
+
     Implements: AgentGateway
-    
+
     Purpose: Multi-signature treasury management
-    
+
     Capabilities:
     - Multi-sig transaction creation (Gnosis Safe)
     - Approval workflow management
@@ -32,18 +34,18 @@ class MultiSigCoordinatorAgentGnosis:
     - Transaction simulation (pre-flight)
     - Automatic notifications (email, Slack, SMS)
     - Audit trail (immutable logs)
-    
+
     Treasury Features:
     - Budget codes (marketing, engineering, operations)
     - Spending limits (daily, monthly, per-transaction)
     - Role-based approvals (CFO, CEO, Board)
     - Emergency override (super admin only)
     - Multi-currency support
-    
+
     Model: gpt-4o (treasury reasoning)
     Temperature: 0.1 (precision critical)
     """
-    
+
     def __init__(
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
@@ -60,12 +62,12 @@ class MultiSigCoordinatorAgentGnosis:
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
-    
+
     @property
     def agent_type(self) -> AgentType:
         """Get agent type."""
         return AgentType.MULTISIG_COORDINATOR
-    
+
     async def execute(
         self,
         conversation_id: ConversationId,
@@ -74,7 +76,7 @@ class MultiSigCoordinatorAgentGnosis:
     ) -> AgentResponse:
         """
         Execute multi-sig coordinator agent.
-        
+
         Process:
         1. Parse transaction request (amount, destination, purpose)
         2. Validate against budget and policy
@@ -84,52 +86,56 @@ class MultiSigCoordinatorAgentGnosis:
         6. Return proposal details
         """
         start_time = time.time()
-        
+
         # Parse transaction request
         transaction_intent = await self._parse_transaction_intent(message)
-        
+
         if not transaction_intent["valid"]:
             return self._build_error_response(
                 "Invalid transaction request. Please specify amount, destination, and purpose.",
-                start_time
+                start_time,
             )
-        
+
         # Create multi-sig proposal
         proposal = await self._create_multisig_proposal(
             transaction_intent,
             conversation_context,
         )
-        
+
         # Generate proposal summary
         summary = await self._generate_proposal_summary(proposal)
-        
+
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         # Collect sources
         from datetime import datetime, UTC
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_llm_source,
             create_api_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add Gnosis Safe source
-        sources.append(create_api_source(
-            source_name="Gnosis Safe",
-            url="https://app.safe.global/",
-            citation_text="Multi-sig wallet coordination via Gnosis Safe",
-            fetched_at=fetched_at,
-            provider="Gnosis Safe API",
-        ))
-        
+        sources.append(
+            create_api_source(
+                source_name="Gnosis Safe",
+                url="https://app.safe.global/",
+                citation_text="Multi-sig wallet coordination via Gnosis Safe",
+                fetched_at=fetched_at,
+                provider="Gnosis Safe API",
+            )
+        )
+
         # Add LLM source
-        sources.append(create_llm_source(
-            model=self._model,
-            fetched_at=fetched_at,
-        ))
-        
+        sources.append(
+            create_llm_source(
+                model=self._model,
+                fetched_at=fetched_at,
+            )
+        )
+
         return AgentResponse(
             content=summary,
             agent_type=self.agent_type,
@@ -143,12 +149,14 @@ class MultiSigCoordinatorAgentGnosis:
                 "approvals_required": proposal["approvals_required"],
             },
         )
-    
+
     async def is_available(self) -> bool:
         """Check if agent is available."""
         return True
-    
-    async def _parse_transaction_intent(self, message: MessageContent) -> dict[str, Any]:
+
+    async def _parse_transaction_intent(
+        self, message: MessageContent
+    ) -> dict[str, Any]:
         """Parse transaction intent from message."""
         prompt = f"""Parse the multi-sig transaction request from this message:
 
@@ -171,7 +179,7 @@ Respond with JSON:
     "budget_code": "marketing"
 }}
 """
-        
+
         try:
             response = await self._llm_client.classify_intent(
                 prompt=prompt,
@@ -180,7 +188,7 @@ Respond with JSON:
             return response
         except Exception:
             return {"valid": False}
-    
+
     async def _create_multisig_proposal(
         self,
         transaction_intent: dict,
@@ -188,11 +196,11 @@ Respond with JSON:
     ) -> dict[str, Any]:
         """Create Gnosis Safe multi-sig proposal."""
         # TODO: Implement real Gnosis Safe API integration
-        
+
         # Mock proposal
         proposal_id = str(uuid4())
         amount_usd = Decimal(transaction_intent.get("amount", "0"))
-        
+
         # Determine approval policy based on amount
         if amount_usd < 10000:
             approvals_required = 2  # 2-of-3
@@ -203,7 +211,7 @@ Respond with JSON:
         else:
             approvals_required = 4  # 4-of-7 (Board approval)
             approvers = ["CFO", "CEO", "COO", "Board Member 1"]
-        
+
         return {
             "proposal_id": proposal_id,
             "safe_address": "0x1234...5678",  # Mock
@@ -219,7 +227,7 @@ Respond with JSON:
             "approvers": approvers,
             "created_at": time.time(),
         }
-    
+
     async def _generate_proposal_summary(self, proposal: dict) -> str:
         """Generate proposal summary."""
         amount = proposal["amount"]
@@ -228,7 +236,7 @@ Respond with JSON:
         purpose = proposal["purpose"]
         approvals_required = proposal["approvals_required"]
         approvers = proposal["approvers"]
-        
+
         summary = f"""🏦 **MULTI-SIG PROPOSAL CREATED**
 
 **Proposal ID**: `{proposal["proposal_id"]}`
@@ -253,10 +261,10 @@ Respond with JSON:
 
 **Approvers Notified**:
 """
-        
+
         for approver in approvers:
             summary += f"  ⏳ {approver} - Pending\n"
-        
+
         summary += """
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **NEXT STEPS**
@@ -279,13 +287,15 @@ compliance database for regulatory reporting.
 **Compliance**: SOC 2 Type II
 **Insurance**: $10M coverage (Nexus Mutual)
 """
-        
+
         return summary.strip()
-    
-    def _build_error_response(self, error_message: str, start_time: float) -> AgentResponse:
+
+    def _build_error_response(
+        self, error_message: str, start_time: float
+    ) -> AgentResponse:
         """Build error response."""
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         return AgentResponse(
             content=error_message,
             agent_type=self.agent_type,

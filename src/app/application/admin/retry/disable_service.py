@@ -3,6 +3,7 @@ Disable Service Interactor.
 
 Manually disables a service in the retry system.
 """
+
 from typing import Optional
 from uuid import UUID
 
@@ -11,22 +12,22 @@ from app.domain.services.retry import ServiceRegistry
 
 class DisableService:
     """Interactor to disable a service manually."""
-    
+
     # Default admin user ID (should be from auth context in production)
     DEFAULT_ADMIN_ID = UUID("00000000-0000-0000-0000-000000000001")
-    
+
     def __init__(
         self,
         service_registry: ServiceRegistry,
     ):
         """
         Initialize interactor.
-        
+
         Args:
             service_registry: Service registry
         """
         self.service_registry = service_registry
-    
+
     async def execute(
         self,
         service_name: str,
@@ -36,7 +37,7 @@ class DisableService:
     ) -> None:
         """
         Execute interactor.
-        
+
         Args:
             service_name: Name of the service to disable
             reason: Reason for disabling

@@ -24,8 +24,12 @@ from app.domain.ports.audit_log_repository import AuditLogRepository
 from app.domain.chat.ports.export_repository import ExportRepository
 from app.domain.ports.export_generator import ExportGenerator
 from app.domain.chat.ports.template_repository import TemplateRepository
-from app.domain.chat.ports.template_execution_repository import TemplateExecutionRepository
-from app.domain.preferences.ports.user_preferences_repository import UserPreferencesRepository
+from app.domain.chat.ports.template_execution_repository import (
+    TemplateExecutionRepository,
+)
+from app.domain.preferences.ports.user_preferences_repository import (
+    UserPreferencesRepository,
+)
 
 # Domain Ports - External Services
 from app.domain.ports.chat_llm_provider import ChatLLMProvider
@@ -41,14 +45,30 @@ from app.domain.ports.offline_queue_adapter import OfflineQueueAdapter
 from app.domain.ports.session_store import SessionStore
 
 # Infrastructure Adapters - Repositories
-from app.infrastructure.adapters.chat.analytics_repository_adapter import AnalyticsRepositoryAdapter
-from app.infrastructure.adapters.chat.agent_orchestration_repository_adapter import AgentOrchestrationRepositoryAdapter
-from app.infrastructure.adapters.chat.audit_log_repository_adapter import AuditLogRepositoryAdapter
-from app.infrastructure.adapters.chat.export_repository_adapter import ExportRepositoryAdapter
-from app.infrastructure.adapters.chat.export_generator_adapter import ExportGeneratorAdapter
-from app.infrastructure.adapters.chat.template_repository_adapter import TemplateRepositoryAdapter
-from app.infrastructure.adapters.chat.template_execution_repository_adapter import TemplateExecutionRepositoryAdapter
-from app.infrastructure.adapters.chat.preferences_repository_adapter import UserPreferencesRepositoryAdapter
+from app.infrastructure.adapters.chat.analytics_repository_adapter import (
+    AnalyticsRepositoryAdapter,
+)
+from app.infrastructure.adapters.chat.agent_orchestration_repository_adapter import (
+    AgentOrchestrationRepositoryAdapter,
+)
+from app.infrastructure.adapters.chat.audit_log_repository_adapter import (
+    AuditLogRepositoryAdapter,
+)
+from app.infrastructure.adapters.chat.export_repository_adapter import (
+    ExportRepositoryAdapter,
+)
+from app.infrastructure.adapters.chat.export_generator_adapter import (
+    ExportGeneratorAdapter,
+)
+from app.infrastructure.adapters.chat.template_repository_adapter import (
+    TemplateRepositoryAdapter,
+)
+from app.infrastructure.adapters.chat.template_execution_repository_adapter import (
+    TemplateExecutionRepositoryAdapter,
+)
+from app.infrastructure.adapters.chat.preferences_repository_adapter import (
+    UserPreferencesRepositoryAdapter,
+)
 
 # Infrastructure Adapters - External Services
 # OpenAI removed - using only Vertex AI and DeepInfra
@@ -62,8 +82,12 @@ from app.application.chat.commands.send_message import SendMessage
 from app.application.chat.commands.execute_action import ExecuteActionCommand
 from app.application.chat.graph_search_handler import ChatGraphSearchHandler
 from app.application.chat.risk_insights_handler import ChatRiskInsightsHandler
-from app.application.agent_squad.commands.send_agent_squad_message import SendAgentSquadMessage
-from app.application.agent_squad.commands.execute_supervisor_workflow import ExecuteSupervisorWorkflow
+from app.application.agent_squad.commands.send_agent_squad_message import (
+    SendAgentSquadMessage,
+)
+from app.application.agent_squad.commands.execute_supervisor_workflow import (
+    ExecuteSupervisorWorkflow,
+)
 from app.application.common.services.current_user import CurrentUserService
 
 # Demo mode service (same handlers as /guest/chat)
@@ -99,18 +123,31 @@ from app.infrastructure.adapters.chat.hybrid_intent_detection_adapter import (
 
 # Optional: DeepL translation adapter (requires deepl package)
 try:
-    from app.infrastructure.adapters.external.deepl_translation_adapter import DeepLTranslationAdapter
+    from app.infrastructure.adapters.external.deepl_translation_adapter import (
+        DeepLTranslationAdapter,
+    )
+
     DEEPL_AVAILABLE = True
 except ImportError:
     DEEPL_AVAILABLE = False
 
 # Infrastructure Adapters - Redis
 from app.infrastructure.adapters.chat.redis_cache_adapter import RedisCacheAdapter
-from app.infrastructure.adapters.chat.redis_intent_cache_adapter import RedisIntentCacheAdapter
-from app.infrastructure.adapters.chat.redis_session_store_adapter import RedisSessionStoreAdapter
-from app.infrastructure.adapters.chat.redis_offline_queue_adapter import RedisOfflineQueueAdapter
-from app.infrastructure.adapters.chat.redis_translation_cache_adapter import RedisTranslationCacheAdapter
-from app.infrastructure.adapters.chat.notification_adapter import NotificationAdapter as NotificationAdapterImpl
+from app.infrastructure.adapters.chat.redis_intent_cache_adapter import (
+    RedisIntentCacheAdapter,
+)
+from app.infrastructure.adapters.chat.redis_session_store_adapter import (
+    RedisSessionStoreAdapter,
+)
+from app.infrastructure.adapters.chat.redis_offline_queue_adapter import (
+    RedisOfflineQueueAdapter,
+)
+from app.infrastructure.adapters.chat.redis_translation_cache_adapter import (
+    RedisTranslationCacheAdapter,
+)
+from app.infrastructure.adapters.chat.notification_adapter import (
+    NotificationAdapter as NotificationAdapterImpl,
+)
 
 # WebSocket Handlers
 from app.presentation.http.websocket.connection_manager import ConnectionManager
@@ -118,30 +155,45 @@ from app.presentation.http.websocket.connection_manager import ConnectionManager
 # Optional: WebSocket handlers (may not be fully implemented)
 try:
     from app.presentation.http.websocket.chat_websocket import ChatWebSocketHandler
+
     CHAT_WEBSOCKET_AVAILABLE = True
 except (ImportError, AttributeError):
     CHAT_WEBSOCKET_AVAILABLE = False
 
 try:
-    from app.presentation.http.websocket.analytics_handler import AnalyticsWebSocketHandler
+    from app.presentation.http.websocket.analytics_handler import (
+        AnalyticsWebSocketHandler,
+    )
+
     ANALYTICS_WEBSOCKET_AVAILABLE = True
 except (ImportError, AttributeError):
     ANALYTICS_WEBSOCKET_AVAILABLE = False
 
 # Import JwtAccessTokenProcessor for type hints (always available)
-from app.presentation.http.auth.access_token_processor_jwt import JwtAccessTokenProcessor
+from app.presentation.http.auth.access_token_processor_jwt import (
+    JwtAccessTokenProcessor,
+)
 
 try:
-    from app.presentation.http.websocket.template_handler import TemplateExecutionWebSocketHandler
+    from app.presentation.http.websocket.template_handler import (
+        TemplateExecutionWebSocketHandler,
+    )
+
     TEMPLATE_WEBSOCKET_AVAILABLE = True
 except (ImportError, AttributeError):
     TEMPLATE_WEBSOCKET_AVAILABLE = False
     TemplateExecutionWebSocketHandler = None  # type: ignore
 
 # Application Services
-from app.application.chat.services.advanced_intent_detector import AdvancedIntentDetector
-from app.application.chat.services.user_analytics_service import UserChatAnalyticsService
-from app.application.chat.services.admin_analytics_service import AdminChatAnalyticsService
+from app.application.chat.services.advanced_intent_detector import (
+    AdvancedIntentDetector,
+)
+from app.application.chat.services.user_analytics_service import (
+    UserChatAnalyticsService,
+)
+from app.application.chat.services.admin_analytics_service import (
+    AdminChatAnalyticsService,
+)
 from app.domain.chat.ports.conversation_repository import ConversationRepository
 
 # DeFi Shortcut Handlers
@@ -171,12 +223,16 @@ from app.domain.ports.money_market.money_market_comparison_gateway import (
 from app.domain.ports.balance_checker import IBalanceChecker
 from app.infrastructure.adapters.external.compound_client import CompoundClient
 from app.infrastructure.adapters.external.compound_adapter import CompoundAdapter
-from app.infrastructure.adapters.balance.portfolio_balance_checker import PortfolioBalanceChecker
+from app.infrastructure.adapters.balance.portfolio_balance_checker import (
+    PortfolioBalanceChecker,
+)
 from app.infrastructure.adapters.external.oneinch_client import OneInchClient
 from app.infrastructure.adapters.external.lifi_client import LiFiClient
 from app.infrastructure.adapters.external.moonpay_swap_client import MoonPaySwapClient
 from app.application.portfolio.portfolio_service import PortfolioService
-from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.ports.transaction.transaction_repository import (
+    TransactionRepository,
+)
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.ports.wallet.embedded_wallet_provider import EmbeddedWalletProviderPort
 from app.setup.config.privy import PrivySettings
@@ -226,7 +282,9 @@ class ChatPhase2Provider(Provider):
 
         Dedicated client with binary support for vector caching.
         """
-        redis_url = os.getenv("REDIS_CACHE_URL", os.getenv("REDIS_URL", "redis://localhost:6379/2"))
+        redis_url = os.getenv(
+            "REDIS_CACHE_URL", os.getenv("REDIS_URL", "redis://localhost:6379/2")
+        )
 
         pool = ConnectionPool.from_url(
             redis_url,
@@ -463,7 +521,9 @@ class ChatPhase2Provider(Provider):
 
         Uses PostgreSQL with array operations for vector storage.
         """
-        from app.infrastructure.persistence_sqla.repositories.vector_repository_sqla import VectorRepositorySqla
+        from app.infrastructure.persistence_sqla.repositories.vector_repository_sqla import (
+            VectorRepositorySqla,
+        )
 
         return VectorRepositorySqla(session=session)
 
@@ -712,7 +772,7 @@ class ChatPhase2Provider(Provider):
         Provide swap handler for token exchange quotes.
 
         Per CEO spec: Hyperliquid + LiFi + 1inch for swaps.
-        
+
         Currently returns handler with no clients configured.
         To enable real quotes, configure API keys in settings and
         inject OneInchClient, LiFiClient, HyperliquidClient.
@@ -731,13 +791,14 @@ class ChatPhase2Provider(Provider):
     def provide_hyperliquid_client(self) -> HyperliquidClient | None:
         """
         Provide HyperliquidClient for spot swap quotes.
-        
+
         Returns:
             HyperliquidClient configured for mainnet, or None if disabled.
         """
         import logging
+
         logger = logging.getLogger(__name__)
-        
+
         try:
             client = HyperliquidClient(testnet=False)
             logger.info("✅ HyperliquidClient enabled for SwapHandlerV2")
@@ -753,25 +814,30 @@ class ChatPhase2Provider(Provider):
     ) -> SwapHandlerV2:
         """
         Provide SwapHandlerV2 with Hyperliquid spot (ONLY provider).
-        
+
         Features:
         - Real-time Hyperliquid spot quotes
         - Zero gas fees
         - High-speed execution (20,000+ TPS)
         - 0.02% trading fee
-        
+
         Supported tokens (16):
         ETH, USDC, USDT, DAI, WBTC, WETH, BTC, SOL,
         MATIC, ARB, OP, LINK, UNI, AAVE, CRV, MKR
         """
         import logging
+
         logger = logging.getLogger(__name__)
-        
+
         if hyperliquid_client:
-            logger.info("🔵 SwapHandlerV2 initialized with Hyperliquid spot (ONLY provider)")
+            logger.info(
+                "🔵 SwapHandlerV2 initialized with Hyperliquid spot (ONLY provider)"
+            )
         else:
-            logger.error("❌ SwapHandlerV2: Hyperliquid client not available - swaps will fail")
-        
+            logger.error(
+                "❌ SwapHandlerV2: Hyperliquid client not available - swaps will fail"
+            )
+
         return SwapHandlerV2(hyperliquid_client=hyperliquid_client)
 
     @provide
@@ -942,7 +1008,7 @@ class ChatPhase2Provider(Provider):
         - ULTRA (arbitrage, flash loans, MEV)
         - DeFi Shortcuts (lending, swap, balance, portfolio)
         - Agent Squad (specialist tasks, complex workflows)
-        
+
         DEMO MODE (use_demo_mode=True in config):
         - Uses GuestHandlerService instead of real LLM calls
         - Provides same responses as /guest/chat endpoint
@@ -1026,9 +1092,13 @@ class ChatPhase2Provider(Provider):
                 api_key=oneinch_api_key,
                 chain="base",  # Default chain, request will specify actual chain
             )
-            logger.info("OneInchClient created for ExecuteActionCommand (same-chain swaps)")
+            logger.info(
+                "OneInchClient created for ExecuteActionCommand (same-chain swaps)"
+            )
 
-        logger.info("MoonPaySwapClient injected into ExecuteActionCommand (crypto-to-crypto swaps)")
+        logger.info(
+            "MoonPaySwapClient injected into ExecuteActionCommand (crypto-to-crypto swaps)"
+        )
 
         return ExecuteActionCommand(
             conversation_repo=conversation_repository,

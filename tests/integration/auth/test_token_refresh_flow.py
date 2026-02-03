@@ -26,10 +26,7 @@ class TestTokenRefreshFlow:
             "refresh_token": "valid-refresh-token",
         }
 
-        response = await client.post(
-            "/api/v1/account/refresh-token",
-            json=refresh_data
-        )
+        response = await client.post("/api/v1/account/refresh-token", json=refresh_data)
 
         # Token likely invalid in test - expect 400/401
         if response.status_code == 200:
@@ -47,10 +44,7 @@ class TestTokenRefreshFlow:
             "refresh_token": "invalid-refresh-token-12345",
         }
 
-        response = await client.post(
-            "/api/v1/account/refresh-token",
-            json=refresh_data
-        )
+        response = await client.post("/api/v1/account/refresh-token", json=refresh_data)
 
         assert response.status_code in (400, 401)
 
@@ -63,10 +57,7 @@ class TestTokenRefreshFlow:
             "refresh_token": "expired-refresh-token",
         }
 
-        response = await client.post(
-            "/api/v1/account/refresh-token",
-            json=refresh_data
-        )
+        response = await client.post("/api/v1/account/refresh-token", json=refresh_data)
 
         assert response.status_code in (400, 401)
 
@@ -75,10 +66,7 @@ class TestTokenRefreshFlow:
         WHEN user doesn't provide refresh token
         THEN system SHALL return validation error
         """
-        response = await client.post(
-            "/api/v1/account/refresh-token",
-            json={}
-        )
+        response = await client.post("/api/v1/account/refresh-token", json={})
 
         assert response.status_code == 422
 
@@ -91,10 +79,7 @@ class TestTokenRefreshFlow:
             "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access.token",
         }
 
-        response = await client.post(
-            "/api/v1/account/refresh-token",
-            json=refresh_data
-        )
+        response = await client.post("/api/v1/account/refresh-token", json=refresh_data)
 
         assert response.status_code in (400, 401)
 
@@ -137,10 +122,7 @@ class TestTokenRefreshErrorResponses:
             "refresh_token": "invalid-token",
         }
 
-        response = await client.post(
-            "/api/v1/account/refresh-token",
-            json=refresh_data
-        )
+        response = await client.post("/api/v1/account/refresh-token", json=refresh_data)
 
         if response.status_code in (400, 401):
             data = response.json()

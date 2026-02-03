@@ -101,13 +101,16 @@ def create_morpho_router() -> APIRouter:
         query: FromDishka[GetVaults],
         asset: str | None = Query(default=None, description="Filter by asset"),
         risk_tier: str | None = Query(
-            default=None, description="Filter by risk tier (low, medium, high, very_high)"
+            default=None,
+            description="Filter by risk tier (low, medium, high, very_high)",
         ),
         min_apy: float | None = Query(default=None, description="Minimum APY filter"),
         sort_by: Literal["apy", "tvl", "risk"] = Query(
             default="apy", description="Sort field"
         ),
-        chain: str = Query(default="ethereum", description="Blockchain (ethereum, base)"),
+        chain: str = Query(
+            default="ethereum", description="Blockchain (ethereum, base)"
+        ),
         limit: int = Query(default=50, ge=1, le=100, description="Max results"),
     ) -> VaultsResponse:
         """Get MetaMorpho vaults."""
@@ -149,7 +152,9 @@ def create_morpho_router() -> APIRouter:
     async def get_vault_details(
         vault_address: str,
         query: FromDishka[GetVaultDetails],
-        chain: str = Query(default="ethereum", description="Blockchain (ethereum, base)"),
+        chain: str = Query(
+            default="ethereum", description="Blockchain (ethereum, base)"
+        ),
     ) -> VaultResponse:
         """Get vault details."""
         request = GetVaultDetailsRequest(vault_address=vault_address, chain=chain)
@@ -169,7 +174,9 @@ def create_morpho_router() -> APIRouter:
     async def get_vault_apy(
         vault_address: str,
         query: FromDishka[GetVaultAPY],
-        chain: str = Query(default="ethereum", description="Blockchain (ethereum, base)"),
+        chain: str = Query(
+            default="ethereum", description="Blockchain (ethereum, base)"
+        ),
     ) -> VaultAPYResponse:
         """Get vault APY breakdown."""
         request = GetVaultAPYRequest(vault_address=vault_address, chain=chain)
@@ -193,11 +200,15 @@ def create_morpho_router() -> APIRouter:
         collateral_asset: str | None = Query(
             default=None, description="Filter by collateral asset"
         ),
-        loan_asset: str | None = Query(default=None, description="Filter by loan asset"),
+        loan_asset: str | None = Query(
+            default=None, description="Filter by loan asset"
+        ),
         sort_by: Literal["supply_apy", "tvl", "utilization"] = Query(
             default="supply_apy", description="Sort field"
         ),
-        chain: str = Query(default="ethereum", description="Blockchain (ethereum, base)"),
+        chain: str = Query(
+            default="ethereum", description="Blockchain (ethereum, base)"
+        ),
         limit: int = Query(default=50, ge=1, le=100, description="Max results"),
     ) -> MarketsResponse:
         """Get Morpho Blue markets."""
@@ -228,7 +239,9 @@ def create_morpho_router() -> APIRouter:
     async def get_positions(
         user_address: str,
         query: FromDishka[GetUserPositions],
-        chain: str = Query(default="ethereum", description="Blockchain (ethereum, base)"),
+        chain: str = Query(
+            default="ethereum", description="Blockchain (ethereum, base)"
+        ),
     ) -> UserPositionsResponse:
         """Get user positions."""
         request = GetUserPositionsRequest(user_address=user_address, chain=chain)
@@ -258,7 +271,9 @@ def create_morpho_router() -> APIRouter:
     async def compare_yields(
         asset: str,
         query: FromDishka[CompareYields],
-        chain: str = Query(default="ethereum", description="Blockchain (ethereum, base)"),
+        chain: str = Query(
+            default="ethereum", description="Blockchain (ethereum, base)"
+        ),
     ) -> YieldComparisonListResponse:
         """Compare yields across protocols."""
         request = CompareYieldsRequest(

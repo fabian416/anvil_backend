@@ -116,8 +116,12 @@ def create_admin_metrics_router() -> APIRouter:
             default_factory=lambda: datetime.now(UTC),
             description="End date (defaults to now)",
         ),
-        chain: str | None = Query(None, description="Filter by chain (e.g., ethereum, polygon)"),
-        tx_type: str | None = Query(None, description="Filter by transaction type (e.g., SEND, SWAP)"),
+        chain: str | None = Query(
+            None, description="Filter by chain (e.g., ethereum, polygon)"
+        ),
+        tx_type: str | None = Query(
+            None, description="Filter by transaction type (e.g., SEND, SWAP)"
+        ),
         group_by: str = Query("day", description="Grouping interval: day, week, month"),
     ) -> TransactionTimeSeriesResponse:
         """
@@ -152,8 +156,7 @@ def create_admin_metrics_router() -> APIRouter:
         status_code=status.HTTP_200_OK,
         summary="Get wallet creation time series",
         description=(
-            "Get wallet creation counts over time. "
-            "Data is grouped by day by default."
+            "Get wallet creation counts over time. Data is grouped by day by default."
         ),
         dependencies=[Security(bearer_scheme)],
     )

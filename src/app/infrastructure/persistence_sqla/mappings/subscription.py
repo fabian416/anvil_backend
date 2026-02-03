@@ -35,6 +35,8 @@ def map_subscriptions_table() -> None:
 
         # Timestamps
         created_at = mapped_column(DateTime, default=datetime.utcnow)
-        updated_at = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+        updated_at = mapped_column(
+            DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        )
 
     # Keep only table metadata for create_all

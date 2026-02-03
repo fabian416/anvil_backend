@@ -20,14 +20,21 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Historical chat requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.historical_chat]
+pytestmark = [
+    pytest.mark.skip(reason="Historical chat requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.historical_chat,
+]
 
 
 class TestHistoricalChatAdvancedScenarios:
     """Test advanced historical chat scenarios."""
 
     @pytest.mark.llm_validation
-    async def test_conversation_history_pagination(self, client: AsyncClient, llm_validator):
+    async def test_conversation_history_pagination(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test pagination through conversation history.
 
@@ -36,11 +43,7 @@ class TestHistoricalChatAdvancedScenarios:
         """
         # Start conversation
         response1 = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "What is Bitcoin?",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "What is Bitcoin?", "language": "en"}
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -53,8 +56,8 @@ class TestHistoricalChatAdvancedScenarios:
                 f"/api/v1/guest/chat?conversation_id={conversation_id}",
                 json={
                     "content": f"Tell me more about crypto topic {i}",
-                    "language": "en"
-                }
+                    "language": "en",
+                },
             )
             assert response.status_code == status.HTTP_200_OK
 
@@ -72,10 +75,7 @@ class TestHistoricalChatAdvancedScenarios:
         # Start conversation
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "I want to learn about DeFi",
-                "language": "en"
-            }
+            json={"content": "I want to learn about DeFi", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -88,8 +88,8 @@ class TestHistoricalChatAdvancedScenarios:
                 f"/api/v1/guest/chat?conversation_id={conversation_id}",
                 json={
                     "content": f"Question {i}: What about aspect {i}?",
-                    "language": "en"
-                }
+                    "language": "en",
+                },
             )
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -101,8 +101,8 @@ class TestHistoricalChatAdvancedScenarios:
             f"/api/v1/guest/chat?conversation_id={conversation_id}",
             json={
                 "content": "Can you summarize what we've discussed?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response_final.status_code == status.HTTP_200_OK
@@ -120,10 +120,7 @@ class TestHistoricalChatAdvancedScenarios:
         # Create first message
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Tell me about Ethereum",
-                "language": "en"
-            }
+            json={"content": "Tell me about Ethereum", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -135,10 +132,7 @@ class TestHistoricalChatAdvancedScenarios:
         # Add follow-up message to same conversation
         response2 = await client.post(
             f"/api/v1/guest/chat?conversation_id={conversation_id1}",
-            json={
-                "content": "What about Ethereum 2.0?",
-                "language": "en"
-            }
+            json={"content": "What about Ethereum 2.0?", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -149,10 +143,7 @@ class TestHistoricalChatAdvancedScenarios:
         # Add third message continuing conversation
         response3 = await client.post(
             f"/api/v1/guest/chat?conversation_id={conversation_id1}",
-            json={
-                "content": "Compare Ethereum 1.0 and 2.0",
-                "language": "en"
-            }
+            json={"content": "Compare Ethereum 1.0 and 2.0", "language": "en"},
         )
 
         assert response3.status_code == status.HTTP_200_OK
@@ -161,7 +152,9 @@ class TestHistoricalChatAdvancedScenarios:
         assert len(data3["agent_message"]["content"]) > 50
 
     @pytest.mark.llm_validation
-    async def test_conversation_metadata_filtering(self, client: AsyncClient, llm_validator):
+    async def test_conversation_metadata_filtering(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test language metadata preservation in conversations.
 
@@ -171,10 +164,7 @@ class TestHistoricalChatAdvancedScenarios:
         # Create English conversation
         response_en = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Hello, tell me about crypto",
-                "language": "en"
-            }
+            json={"content": "Hello, tell me about crypto", "language": "en"},
         )
 
         assert response_en.status_code == status.HTTP_200_OK
@@ -190,8 +180,8 @@ class TestHistoricalChatAdvancedScenarios:
             f"/api/v1/guest/chat?conversation_id={conversation_id}",
             json={
                 "content": "Tell me more about Bitcoin specifically",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response_follow.status_code == status.HTTP_200_OK
@@ -213,10 +203,7 @@ class TestHistoricalChatAdvancedScenarios:
         # Start conversation
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "I want to invest $1000 in crypto",
-                "language": "en"
-            }
+            json={"content": "I want to invest $1000 in crypto", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -226,10 +213,7 @@ class TestHistoricalChatAdvancedScenarios:
         # "Edit" by sending clarification
         response2 = await client.post(
             f"/api/v1/guest/chat?conversation_id={conversation_id}",
-            json={
-                "content": "Actually, I meant $2000",
-                "language": "en"
-            }
+            json={"content": "Actually, I meant $2000", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -248,10 +232,7 @@ class TestHistoricalChatAdvancedScenarios:
         # Create conversation with multiple messages
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Explain DeFi lending",
-                "language": "en"
-            }
+            json={"content": "Explain DeFi lending", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -262,16 +243,13 @@ class TestHistoricalChatAdvancedScenarios:
         messages = [
             "What are the risks?",
             "Which protocols are safest?",
-            "How do I start?"
+            "How do I start?",
         ]
 
         for msg in messages:
             response = await client.post(
                 f"/api/v1/guest/chat?conversation_id={conversation_id}",
-                json={
-                    "content": msg,
-                    "language": "en"
-                }
+                json={"content": msg, "language": "en"},
             )
             assert response.status_code == status.HTTP_200_OK
             data = response.json()

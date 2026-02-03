@@ -91,6 +91,7 @@ class BorrowCommand:
         # Warn if health factor below recommended threshold
         if self.min_health_factor < Decimal("1.5"):
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning(
                 f"Minimum health factor {self.min_health_factor} is below "
@@ -98,7 +99,14 @@ class BorrowCommand:
             )
 
         # Validate chain
-        supported_chains = {"ethereum", "base", "arbitrum", "polygon", "optimism", "avalanche"}
+        supported_chains = {
+            "ethereum",
+            "base",
+            "arbitrum",
+            "polygon",
+            "optimism",
+            "avalanche",
+        }
         if self.chain.lower() not in supported_chains:
             raise ValueError(
                 f"Unsupported chain: {self.chain}. Supported: {supported_chains}"
@@ -182,7 +190,9 @@ class BorrowResult:
                 "current": str(self.health_factor_current),
                 "projected": str(self.health_factor_projected),
                 "risk_level": self.risk_level,
-                "liquidation_price": str(self.liquidation_price) if self.liquidation_price else None,
+                "liquidation_price": str(self.liquidation_price)
+                if self.liquidation_price
+                else None,
                 "max_safe_borrow_usd": str(self.max_safe_borrow_usd),
             },
             "execute_data": self.execute_data,

@@ -66,11 +66,14 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.metrics = get_metrics_collector()
         self.enable_correlation_ids = enable_correlation_ids
-        self.skip_paths = skip_paths or ["/health", "/metrics", "/docs", "/openapi.json"]
+        self.skip_paths = skip_paths or [
+            "/health",
+            "/metrics",
+            "/docs",
+            "/openapi.json",
+        ]
 
-    async def dispatch(
-        self, request: Request, call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request and collect metrics."""
         # Skip metrics for certain paths
         if request.url.path in self.skip_paths:
@@ -243,9 +246,7 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
         self.log_response_body = log_response_body
         self.skip_paths = skip_paths or ["/health", "/metrics"]
 
-    async def dispatch(
-        self, request: Request, call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with structured logging."""
         # Skip logging for certain paths
         if request.url.path in self.skip_paths:
@@ -281,25 +282,21 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
 
             # Add to log context
-            log_context.update(
-                {
-                    "status_code": response.status_code,
-                    "duration_ms": (time.time() - start_time) * 1000,
-                }
-            )
+            log_context.update({
+                "status_code": response.status_code,
+                "duration_ms": (time.time() - start_time) * 1000,
+            })
 
             logger.info("Request completed", extra=log_context)
 
             return response
 
         except Exception as e:
-            log_context.update(
-                {
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                    "duration_ms": (time.time() - start_time) * 1000,
-                }
-            )
+            log_context.update({
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "duration_ms": (time.time() - start_time) * 1000,
+            })
 
             logger.error("Request failed", extra=log_context, exc_info=True)
             raise
@@ -335,9 +332,7 @@ class CostTrackingMiddleware(BaseHTTPMiddleware):
         self.warn_cost_threshold_usd = warn_cost_threshold_usd
         self.skip_paths = skip_paths or ["/health", "/metrics"]
 
-    async def dispatch(
-        self, request: Request, call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request and track costs."""
         # Skip for certain paths
         if request.url.path in self.skip_paths:

@@ -129,7 +129,14 @@ Always provide specific bridge recommendations, fee comparisons, and clear secur
 AGENT_METADATA = {
     "category": "technical_expert",
     "domain": "infrastructure",
-    "tags": ["bridges", "cross-chain", "multichain", "transfers", "layer2", "interoperability"],
+    "tags": [
+        "bridges",
+        "cross-chain",
+        "multichain",
+        "transfers",
+        "layer2",
+        "interoperability",
+    ],
     "use_cases": [
         "Bridge selection and comparison",
         "Cross-chain transfer security",

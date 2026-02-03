@@ -46,7 +46,9 @@ class NFTListing:
             "currency": self.currency,
             "seller": self.seller,
             "created_date": self.created_date.isoformat(),
-            "expiration_date": self.expiration_date.isoformat() if self.expiration_date else None,
+            "expiration_date": self.expiration_date.isoformat()
+            if self.expiration_date
+            else None,
         }
 
     @classmethod

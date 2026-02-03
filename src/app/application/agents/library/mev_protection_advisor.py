@@ -121,7 +121,14 @@ Provide specific protection recommendations with implementation steps and cost-b
 AGENT_METADATA = {
     "category": "technical_expert",
     "domain": "security",
-    "tags": ["mev", "frontrunning", "flashbots", "sandwich-attack", "transaction-privacy", "protection"],
+    "tags": [
+        "mev",
+        "frontrunning",
+        "flashbots",
+        "sandwich-attack",
+        "transaction-privacy",
+        "protection",
+    ],
     "use_cases": [
         "MEV risk assessment",
         "Transaction protection strategies",

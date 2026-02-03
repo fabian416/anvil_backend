@@ -109,9 +109,15 @@ class MultiIntentResponseFormatter:
         # Format based on strategy
         if orchestrated_result.orchestration_strategy == OrchestrationStrategy.PARALLEL:
             return self._format_parallel(orchestrated_result, language)
-        elif orchestrated_result.orchestration_strategy == OrchestrationStrategy.SEQUENTIAL:
+        elif (
+            orchestrated_result.orchestration_strategy
+            == OrchestrationStrategy.SEQUENTIAL
+        ):
             return self._format_sequential(orchestrated_result, language)
-        elif orchestrated_result.orchestration_strategy == OrchestrationStrategy.CONDITIONAL:
+        elif (
+            orchestrated_result.orchestration_strategy
+            == OrchestrationStrategy.CONDITIONAL
+        ):
             return self._format_conditional(orchestrated_result, language)
         else:
             # Fallback to simple formatting
@@ -205,11 +211,15 @@ class MultiIntentResponseFormatter:
                 # Add error message
                 intent_name = result.intent.intent.value
                 if language == "es":
-                    error_msg = f"❌ Error en {intent_name}: {result.error or 'Unknown error'}"
+                    error_msg = (
+                        f"❌ Error en {intent_name}: {result.error or 'Unknown error'}"
+                    )
                 elif language == "pt":
                     error_msg = f"❌ Erro em {intent_name}: {result.error or 'Erro desconhecido'}"
                 else:
-                    error_msg = f"❌ Error in {intent_name}: {result.error or 'Unknown error'}"
+                    error_msg = (
+                        f"❌ Error in {intent_name}: {result.error or 'Unknown error'}"
+                    )
                 formatted_steps.append(error_msg)
 
         # Join steps with newlines
@@ -260,16 +270,24 @@ class MultiIntentResponseFormatter:
             aggregated_data["condition"] = condition_formatted["data"]
         else:
             if language == "es":
-                formatted_parts.append(f"❌ Error verificando condición: {condition_result.error}")
+                formatted_parts.append(
+                    f"❌ Error verificando condición: {condition_result.error}"
+                )
             elif language == "pt":
-                formatted_parts.append(f"❌ Erro verificando condição: {condition_result.error}")
+                formatted_parts.append(
+                    f"❌ Erro verificando condição: {condition_result.error}"
+                )
             else:
-                formatted_parts.append(f"❌ Error checking condition: {condition_result.error}")
+                formatted_parts.append(
+                    f"❌ Error checking condition: {condition_result.error}"
+                )
 
         # Dependent result
         if dependent_result.success:
             # Check if skipped
-            if isinstance(dependent_result.result, dict) and dependent_result.result.get("skipped"):
+            if isinstance(
+                dependent_result.result, dict
+            ) and dependent_result.result.get("skipped"):
                 if language == "es":
                     formatted_parts.append("⏭️ Condición no cumplida. Acción omitida.")
                 elif language == "pt":
@@ -277,16 +295,24 @@ class MultiIntentResponseFormatter:
                 else:
                     formatted_parts.append("⏭️ Condition not met. Action skipped.")
             else:
-                dependent_formatted = self._format_single_result(dependent_result, language)
+                dependent_formatted = self._format_single_result(
+                    dependent_result, language
+                )
                 formatted_parts.append(dependent_formatted["message"])
                 aggregated_data["action"] = dependent_formatted["data"]
         else:
             if language == "es":
-                formatted_parts.append(f"❌ Error ejecutando acción: {dependent_result.error}")
+                formatted_parts.append(
+                    f"❌ Error ejecutando acción: {dependent_result.error}"
+                )
             elif language == "pt":
-                formatted_parts.append(f"❌ Erro executando ação: {dependent_result.error}")
+                formatted_parts.append(
+                    f"❌ Erro executando ação: {dependent_result.error}"
+                )
             else:
-                formatted_parts.append(f"❌ Error executing action: {dependent_result.error}")
+                formatted_parts.append(
+                    f"❌ Error executing action: {dependent_result.error}"
+                )
 
         message = "\n\n".join(formatted_parts)
 
@@ -372,7 +398,11 @@ class MultiIntentResponseFormatter:
         if "PRICE" in intent_type:
             entity = entities[0] if entities else "Token"
             # Simulated result formatting
-            message = f"{entity}: $95,000" if result_data.get("simulated") else str(result_data)
+            message = (
+                f"{entity}: $95,000"
+                if result_data.get("simulated")
+                else str(result_data)
+            )
             return {"message": message, "data": result_data}
 
         elif "SENTIMENT" in intent_type:

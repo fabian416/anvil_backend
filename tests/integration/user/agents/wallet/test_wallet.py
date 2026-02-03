@@ -65,7 +65,6 @@ WALLET_TESTS = [
         "category": "agent",
         "subcategory": "wallet_address",
     },
-    
     # Multi-Language: Spanish
     {
         "test_id": "wallet_es_001",
@@ -81,7 +80,6 @@ WALLET_TESTS = [
         "category": "agent",
         "subcategory": "wallet_spanish",
     },
-    
     # Multi-Language: Portuguese
     {
         "test_id": "wallet_pt_001",
@@ -90,7 +88,6 @@ WALLET_TESTS = [
         "category": "agent",
         "subcategory": "wallet_portuguese",
     },
-    
     # Multi-Language: Chinese
     {
         "test_id": "wallet_zh_001",
@@ -99,7 +96,6 @@ WALLET_TESTS = [
         "category": "agent",
         "subcategory": "wallet_chinese",
     },
-    
     # Wallet vs Portfolio Distinction (should NOT go to wallet)
     {
         "test_id": "wallet_distinction_001",
@@ -130,15 +126,17 @@ WALLET_TESTS = [
 @pytest.mark.llm_validation
 class TestWallet:
     """Tests for Wallet agent with LLM validation."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
+    async def setup(
+        self, authenticated_client, conversation_id, csv_reporter, llm_validator
+    ):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
         self.llm_validator = llm_validator
-    
+
     @pytest.mark.parametrize("test_case", WALLET_TESTS, ids=lambda t: t["test_id"])
     async def test_wallet(self, test_case: dict):
         """Test wallet queries with LLM validation."""
@@ -147,7 +145,7 @@ class TestWallet:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         # LLM Validation
         llm_validation = None
         if not response_data.get("error"):
@@ -161,9 +159,9 @@ class TestWallet:
                 additional_context={
                     "test_category": "wallet",
                     "user_type": "authenticated",
-                }
+                },
             )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -172,7 +170,7 @@ class TestWallet:
             conversation_id=self.conversation_id,
             llm_validation=llm_validation,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         assert not response_data.get("error"), f"Request failed: {response_data}"

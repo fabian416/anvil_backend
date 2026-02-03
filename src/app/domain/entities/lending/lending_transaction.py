@@ -91,10 +91,7 @@ class LendingTransaction:
 
         Returns False if health factors are not tracked (supply-only positions).
         """
-        if (
-            self.health_factor_before is None
-            or self.health_factor_after is None
-        ):
+        if self.health_factor_before is None or self.health_factor_after is None:
             return False
         return self.health_factor_after > self.health_factor_before
 
@@ -104,9 +101,6 @@ class LendingTransaction:
 
         Returns False if health factors are not tracked.
         """
-        if (
-            self.health_factor_before is None
-            or self.health_factor_after is None
-        ):
+        if self.health_factor_before is None or self.health_factor_after is None:
             return False
         return self.health_factor_after < self.health_factor_before

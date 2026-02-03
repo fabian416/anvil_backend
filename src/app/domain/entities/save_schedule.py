@@ -1,6 +1,7 @@
 """
 Save Schedule entity.
 """
+
 from dataclasses import dataclass
 from typing import Optional
 from decimal import Decimal
@@ -16,9 +17,11 @@ from app.domain.enums.schedule_status import ScheduleStatus
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.updated_at import UpdatedAt
 
+
 @dataclass(frozen=True, repr=False)
 class SaveScheduleId(ValueObject):
     value: int
+
 
 @dataclass(eq=False, kw_only=True)
 class SaveSchedule(Entity[SaveScheduleId]):

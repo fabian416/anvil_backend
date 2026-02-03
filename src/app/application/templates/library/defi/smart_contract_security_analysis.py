@@ -13,7 +13,9 @@ from app.domain.entities.chat.conversation_template import (
 )
 
 
-def create_smart_contract_security_analysis_template(created_by: UUID) -> ConversationTemplate:
+def create_smart_contract_security_analysis_template(
+    created_by: UUID,
+) -> ConversationTemplate:
     """Create smart contract security analysis template.
 
     Comprehensive security assessment including:

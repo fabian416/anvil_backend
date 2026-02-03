@@ -99,7 +99,9 @@ class PortfolioHandler:
 
         if not portfolio:
             return PortfolioHandlerResult(
-                content=self._format_no_portfolio_response(wallet_address, chain, language),
+                content=self._format_no_portfolio_response(
+                    wallet_address, chain, language
+                ),
                 portfolio=None,
                 total_usd=0.0,
                 chain=chain,
@@ -149,7 +151,9 @@ class PortfolioHandler:
 
         if not portfolio:
             return BalanceHandlerResult(
-                content=self._format_no_balance_response(wallet_address, chain, language),
+                content=self._format_no_balance_response(
+                    wallet_address, chain, language
+                ),
                 total_usd=0.0,
                 tokens=[],
                 native_balance=0.0,
@@ -184,10 +188,12 @@ class PortfolioHandler:
         }
         return chain_map.get(chain.lower(), ChainType.BASE)
 
-    def _format_portfolio_response(self, portfolio: PortfolioDTO, language: str = "en") -> str:
+    def _format_portfolio_response(
+        self, portfolio: PortfolioDTO, language: str = "en"
+    ) -> str:
         """Format portfolio data as chat response with improved formatting."""
         chain_emoji = self._get_chain_emoji(portfolio.chain)
-        
+
         portfolio_msgs = {
             "en": {
                 "title": f"Your Portfolio on {portfolio.chain.upper()}",
@@ -222,7 +228,7 @@ class PortfolioHandler:
                 "question": "您想要投资组合优化建议吗？",
             },
         }
-        
+
         msgs = portfolio_msgs.get(language, portfolio_msgs["en"])
 
         response = f"""{chain_emoji} **{msgs["title"]}**
@@ -237,33 +243,43 @@ class PortfolioHandler:
         # Native token
         if portfolio.native_balance > 0:
             native_usd = portfolio.native_usd_value or 0
-            pct = (native_usd / portfolio.total_usd * 100) if portfolio.total_usd > 0 else 0
+            pct = (
+                (native_usd / portfolio.total_usd * 100)
+                if portfolio.total_usd > 0
+                else 0
+            )
             response += f"• **{portfolio.native_symbol}**: {portfolio.native_balance:.4f} (${native_usd:,.2f}) - {pct:.1f}%\n"
 
         # ERC-20 tokens
-        for token in sorted(portfolio.tokens, key=lambda t: t.get("usd_value", 0) or 0, reverse=True):
+        for token in sorted(
+            portfolio.tokens, key=lambda t: t.get("usd_value", 0) or 0, reverse=True
+        ):
             amount = token.get("amount", 0)
             usd_value = token.get("usd_value", 0) or 0
             symbol = token.get("symbol", "???")
             pct = token.get("percentage", 0)
 
             if usd_value > 0.01:  # Only show tokens worth more than $0.01
-                response += f"• **{symbol}**: {amount:,.4f} (${usd_value:,.2f}) - {pct:.1f}%\n"
+                response += (
+                    f"• **{symbol}**: {amount:,.4f} (${usd_value:,.2f}) - {pct:.1f}%\n"
+                )
 
         response += f"""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 **{msgs["wallet"]}:** `{portfolio.wallet_address[:8]}...{portfolio.wallet_address[-6:]}`
-**{msgs["last_updated"]}:** {portfolio.captured_at[:19].replace('T', ' ')} UTC
+**{msgs["last_updated"]}:** {portfolio.captured_at[:19].replace("T", " ")} UTC
 
 💡 {msgs["question"]}
 """
         return response
 
-    def _format_balance_response(self, portfolio: PortfolioDTO, language: str = "en") -> str:
+    def _format_balance_response(
+        self, portfolio: PortfolioDTO, language: str = "en"
+    ) -> str:
         """Format balance data as chat response with improved formatting."""
         chain_emoji = self._get_chain_emoji(portfolio.chain)
-        
+
         balance_msgs = {
             "en": {
                 "title": "Your Balance",
@@ -294,7 +310,7 @@ class PortfolioHandler:
                 "question": "您想查看完整的投资组合或交易历史吗？",
             },
         }
-        
+
         msgs = balance_msgs.get(language, balance_msgs["en"])
 
         response = f"""{chain_emoji} **{msgs["title"]}**
@@ -311,7 +327,9 @@ class PortfolioHandler:
             response += f"• {portfolio.native_balance:.4f} {portfolio.native_symbol} (${native_usd:,.2f})\n"
 
         # Top tokens by value
-        for token in sorted(portfolio.tokens, key=lambda t: t.get("usd_value", 0) or 0, reverse=True)[:5]:
+        for token in sorted(
+            portfolio.tokens, key=lambda t: t.get("usd_value", 0) or 0, reverse=True
+        )[:5]:
             amount = token.get("amount", 0)
             usd_value = token.get("usd_value", 0) or 0
             symbol = token.get("symbol", "???")
@@ -328,7 +346,9 @@ class PortfolioHandler:
 """
         return response
 
-    def _format_no_portfolio_response(self, wallet_address: str, chain: str, language: str = "en") -> str:
+    def _format_no_portfolio_response(
+        self, wallet_address: str, chain: str, language: str = "en"
+    ) -> str:
         """Format response when no portfolio found with improved formatting."""
         no_portfolio_msgs = {
             "en": {
@@ -336,30 +356,58 @@ class PortfolioHandler:
                 "message": f"I couldn't find any assets for wallet `{wallet_address[:10]}...` on {chain.upper()}.",
                 "header": "What would you like to try?",
                 "options": [
-                    ("🌐", "Try a different chain", "Ethereum, Base, Arbitrum, Polygon, Optimism"),
+                    (
+                        "🌐",
+                        "Try a different chain",
+                        "Ethereum, Base, Arbitrum, Polygon, Optimism",
+                    ),
                     ("📥", "Receive funds", "Get your deposit address to start"),
-                    ("💡", "Check back later", "Assets may appear after transactions")
-                ]
+                    ("💡", "Check back later", "Assets may appear after transactions"),
+                ],
             },
             "es": {
                 "title": "Portafolio No Encontrado",
                 "message": f"No pude encontrar activos para la billetera `{wallet_address[:10]}...` en {chain.upper()}.",
                 "header": "¿Qué te gustaría intentar?",
                 "options": [
-                    ("🌐", "Probar otra cadena", "Ethereum, Base, Arbitrum, Polygon, Optimism"),
-                    ("📥", "Recibir fondos", "Obtén tu dirección de depósito para comenzar"),
-                    ("💡", "Verificar más tarde", "Los activos pueden aparecer después de transacciones")
-                ]
+                    (
+                        "🌐",
+                        "Probar otra cadena",
+                        "Ethereum, Base, Arbitrum, Polygon, Optimism",
+                    ),
+                    (
+                        "📥",
+                        "Recibir fondos",
+                        "Obtén tu dirección de depósito para comenzar",
+                    ),
+                    (
+                        "💡",
+                        "Verificar más tarde",
+                        "Los activos pueden aparecer después de transacciones",
+                    ),
+                ],
             },
             "pt": {
                 "title": "Portfólio Não Encontrado",
                 "message": f"Não consegui encontrar ativos para a carteira `{wallet_address[:10]}...` em {chain.upper()}.",
                 "header": "O que você gostaria de tentar?",
                 "options": [
-                    ("🌐", "Tentar outra rede", "Ethereum, Base, Arbitrum, Polygon, Optimism"),
-                    ("📥", "Receber fundos", "Obtenha seu endereço de depósito para começar"),
-                    ("💡", "Verificar mais tarde", "Os ativos podem aparecer após transações")
-                ]
+                    (
+                        "🌐",
+                        "Tentar outra rede",
+                        "Ethereum, Base, Arbitrum, Polygon, Optimism",
+                    ),
+                    (
+                        "📥",
+                        "Receber fundos",
+                        "Obtenha seu endereço de depósito para começar",
+                    ),
+                    (
+                        "💡",
+                        "Verificar mais tarde",
+                        "Os ativos podem aparecer após transações",
+                    ),
+                ],
             },
             "zh": {
                 "title": "未找到投资组合",
@@ -368,17 +416,17 @@ class PortfolioHandler:
                 "options": [
                     ("🌐", "尝试其他链", "Ethereum, Base, Arbitrum, Polygon, Optimism"),
                     ("📥", "接收资金", "获取您的存款地址以开始"),
-                    ("💡", "稍后查看", "资产可能在交易后出现")
-                ]
+                    ("💡", "稍后查看", "资产可能在交易后出现"),
+                ],
             },
         }
-        
+
         msgs = no_portfolio_msgs.get(language, no_portfolio_msgs["en"])
         options_text = "\n".join([
-            f"**{i}.** {emoji} **{title}**\n   {details}" 
+            f"**{i}.** {emoji} **{title}**\n   {details}"
             for i, (emoji, title, details) in enumerate(msgs["options"], 1)
         ])
-        
+
         return f"""📊 **{msgs["title"]}**
 
 {msgs["message"]}
@@ -392,7 +440,9 @@ class PortfolioHandler:
 💬 **Reply with the number (1, 2, or 3) to continue.**
 """
 
-    def _format_no_balance_response(self, wallet_address: str, chain: str, language: str = "en") -> str:
+    def _format_no_balance_response(
+        self, wallet_address: str, chain: str, language: str = "en"
+    ) -> str:
         """Format response when no balance found with improved formatting."""
         no_balance_msgs = {
             "en": {
@@ -400,30 +450,62 @@ class PortfolioHandler:
                 "message": f"I couldn't find any balance for wallet `{wallet_address[:10]}...` on {chain.upper()}.",
                 "header": "What would you like to do?",
                 "options": [
-                    ("🌐", "Try a different chain", "Ethereum, Base, Arbitrum, Polygon, Optimism"),
-                    ("📥", "Receive funds", "Get your deposit address to start receiving"),
-                    ("💡", "Check back later", "Balance may appear after transactions")
-                ]
+                    (
+                        "🌐",
+                        "Try a different chain",
+                        "Ethereum, Base, Arbitrum, Polygon, Optimism",
+                    ),
+                    (
+                        "📥",
+                        "Receive funds",
+                        "Get your deposit address to start receiving",
+                    ),
+                    ("💡", "Check back later", "Balance may appear after transactions"),
+                ],
             },
             "es": {
                 "title": "Balance No Encontrado",
                 "message": f"No pude encontrar balance para la billetera `{wallet_address[:10]}...` en {chain.upper()}.",
                 "header": "¿Qué te gustaría hacer?",
                 "options": [
-                    ("🌐", "Probar otra cadena", "Ethereum, Base, Arbitrum, Polygon, Optimism"),
-                    ("📥", "Recibir fondos", "Obtén tu dirección de depósito para comenzar a recibir"),
-                    ("💡", "Verificar más tarde", "El balance puede aparecer después de transacciones")
-                ]
+                    (
+                        "🌐",
+                        "Probar otra cadena",
+                        "Ethereum, Base, Arbitrum, Polygon, Optimism",
+                    ),
+                    (
+                        "📥",
+                        "Recibir fondos",
+                        "Obtén tu dirección de depósito para comenzar a recibir",
+                    ),
+                    (
+                        "💡",
+                        "Verificar más tarde",
+                        "El balance puede aparecer después de transacciones",
+                    ),
+                ],
             },
             "pt": {
                 "title": "Saldo Não Encontrado",
                 "message": f"Não consegui encontrar saldo para a carteira `{wallet_address[:10]}...` em {chain.upper()}.",
                 "header": "O que você gostaria de fazer?",
                 "options": [
-                    ("🌐", "Tentar outra rede", "Ethereum, Base, Arbitrum, Polygon, Optimism"),
-                    ("📥", "Receber fundos", "Obtenha seu endereço de depósito para começar a receber"),
-                    ("💡", "Verificar mais tarde", "O saldo pode aparecer após transações")
-                ]
+                    (
+                        "🌐",
+                        "Tentar outra rede",
+                        "Ethereum, Base, Arbitrum, Polygon, Optimism",
+                    ),
+                    (
+                        "📥",
+                        "Receber fundos",
+                        "Obtenha seu endereço de depósito para começar a receber",
+                    ),
+                    (
+                        "💡",
+                        "Verificar mais tarde",
+                        "O saldo pode aparecer após transações",
+                    ),
+                ],
             },
             "zh": {
                 "title": "未找到余额",
@@ -432,17 +514,17 @@ class PortfolioHandler:
                 "options": [
                     ("🌐", "尝试其他链", "Ethereum, Base, Arbitrum, Polygon, Optimism"),
                     ("📥", "接收资金", "获取您的存款地址以开始接收"),
-                    ("💡", "稍后查看", "余额可能在交易后出现")
-                ]
+                    ("💡", "稍后查看", "余额可能在交易后出现"),
+                ],
             },
         }
-        
+
         msgs = no_balance_msgs.get(language, no_balance_msgs["en"])
         options_text = "\n".join([
-            f"**{i}.** {emoji} **{title}**\n   {details}" 
+            f"**{i}.** {emoji} **{title}**\n   {details}"
             for i, (emoji, title, details) in enumerate(msgs["options"], 1)
         ])
-        
+
         return f"""💰 **{msgs["title"]}**
 
 {msgs["message"]}

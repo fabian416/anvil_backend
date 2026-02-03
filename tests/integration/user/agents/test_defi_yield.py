@@ -169,15 +169,17 @@ RESEARCH_TESTS = [
 @pytest.mark.llm_validation
 class TestDefiYield:
     """Tests for DeFi Yield agent with LLM validation."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
+    async def setup(
+        self, authenticated_client, conversation_id, csv_reporter, llm_validator
+    ):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
         self.llm_validator = llm_validator
-    
+
     @pytest.mark.parametrize("test_case", YIELD_TESTS, ids=lambda t: t["test_id"])
     async def test_yield(self, test_case: dict):
         """Test yield queries with LLM validation."""
@@ -186,7 +188,7 @@ class TestDefiYield:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         # LLM Validation
         llm_validation = None
         if not response_data.get("error"):
@@ -197,9 +199,12 @@ class TestDefiYield:
                 user_input=test_case["input"],
                 agent_output=parsed.get("content", ""),
                 expected_behavior="Response should provide yield/APY information with rates, protocol names, and earning opportunities.",
-                additional_context={"test_category": "defi_yield", "user_type": "authenticated"}
+                additional_context={
+                    "test_category": "defi_yield",
+                    "user_type": "authenticated",
+                },
             )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -208,14 +213,14 @@ class TestDefiYield:
             conversation_id=self.conversation_id,
             llm_validation=llm_validation,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "").lower()
-        
+
         # Yield responses should mention APY or yield
         assert any(
             word in content
@@ -228,15 +233,17 @@ class TestDefiYield:
 @pytest.mark.llm_validation
 class TestRiskAnalyzer:
     """Tests for Risk Analyzer agent with LLM validation."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
+    async def setup(
+        self, authenticated_client, conversation_id, csv_reporter, llm_validator
+    ):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
         self.llm_validator = llm_validator
-    
+
     @pytest.mark.parametrize("test_case", RISK_TESTS, ids=lambda t: t["test_id"])
     async def test_risk(self, test_case: dict):
         """Test risk analysis queries with LLM validation."""
@@ -245,7 +252,7 @@ class TestRiskAnalyzer:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         # LLM Validation
         llm_validation = None
         if not response_data.get("error"):
@@ -256,9 +263,12 @@ class TestRiskAnalyzer:
                 user_input=test_case["input"],
                 agent_output=parsed.get("content", ""),
                 expected_behavior="Response should provide risk analysis including safety assessment, TVL, audit status, or potential vulnerabilities.",
-                additional_context={"test_category": "risk_analyzer", "user_type": "authenticated"}
+                additional_context={
+                    "test_category": "risk_analyzer",
+                    "user_type": "authenticated",
+                },
             )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -267,9 +277,9 @@ class TestRiskAnalyzer:
             conversation_id=self.conversation_id,
             llm_validation=llm_validation,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         assert not response_data.get("error"), f"Request failed: {response_data}"
 
 
@@ -278,15 +288,17 @@ class TestRiskAnalyzer:
 @pytest.mark.llm_validation
 class TestResearch:
     """Tests for Research agent with LLM validation."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
+    async def setup(
+        self, authenticated_client, conversation_id, csv_reporter, llm_validator
+    ):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
         self.llm_validator = llm_validator
-    
+
     @pytest.mark.parametrize("test_case", RESEARCH_TESTS, ids=lambda t: t["test_id"])
     async def test_research(self, test_case: dict):
         """Test research queries with LLM validation."""
@@ -295,7 +307,7 @@ class TestResearch:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         # LLM Validation
         llm_validation = None
         if not response_data.get("error"):
@@ -306,9 +318,12 @@ class TestResearch:
                 user_input=test_case["input"],
                 agent_output=parsed.get("content", ""),
                 expected_behavior="Response should provide educational/informative content about the requested DeFi topic or protocol.",
-                additional_context={"test_category": "research", "user_type": "authenticated"}
+                additional_context={
+                    "test_category": "research",
+                    "user_type": "authenticated",
+                },
             )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -317,13 +332,13 @@ class TestResearch:
             conversation_id=self.conversation_id,
             llm_validation=llm_validation,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "")
-        
+
         # Research responses should be informative
         assert len(content) > 50, f"Research response too short: {content[:200]}"

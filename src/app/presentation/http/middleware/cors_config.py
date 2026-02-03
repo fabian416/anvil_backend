@@ -68,7 +68,9 @@ def get_cors_config(environment: str = "local") -> dict:
             "PATCH",
             "DELETE",
             "OPTIONS",
-        ] if not is_production else [
+        ]
+        if not is_production
+        else [
             "GET",
             "POST",
             "PUT",

@@ -195,7 +195,11 @@ class BorrowInteractor:
         if not asset_market:
             raise ValueError(f"Asset {command.asset} not found in Aave market")
 
-        borrow_apy = asset_market.variable_borrow_apy if command.rate_mode == "variable" else asset_market.stable_borrow_apy
+        borrow_apy = (
+            asset_market.variable_borrow_apy
+            if command.rate_mode == "variable"
+            else asset_market.stable_borrow_apy
+        )
         asset_address = asset_market.address
 
         # STEP 5: Generate execute_data (only if safe)
@@ -227,7 +231,9 @@ class BorrowInteractor:
             rate_mode=command.rate_mode,
             health_factor_before=str(validation_result.current_hf),
             health_factor_after=str(validation_result.projected_hf),
-            liquidation_price=str(validation_result.liquidation_price) if validation_result.liquidation_price else None,
+            liquidation_price=str(validation_result.liquidation_price)
+            if validation_result.liquidation_price
+            else None,
             transaction_hash=None,  # Awaiting signature
         )
 
@@ -319,7 +325,9 @@ class BorrowInteractor:
 
         # Format health factor values
         hf_current_str = f"{hf_current:.2f}" if hf_current != Decimal("inf") else "∞"
-        hf_projected_str = f"{hf_projected:.2f}" if hf_projected != Decimal("inf") else "∞"
+        hf_projected_str = (
+            f"{hf_projected:.2f}" if hf_projected != Decimal("inf") else "∞"
+        )
 
         # Build message
         message_lines = [

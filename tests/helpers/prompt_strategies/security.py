@@ -173,19 +173,33 @@ Verdict Guidelines:
         """
         input_lower = user_input.lower()
 
-        if '<script>' in input_lower or 'javascript:' in input_lower or 'onerror=' in input_lower:
+        if (
+            "<script>" in input_lower
+            or "javascript:" in input_lower
+            or "onerror=" in input_lower
+        ):
             return "XSS (Cross-Site Scripting)"
-        elif 'drop table' in input_lower or 'union select' in input_lower or "' or 1=1" in input_lower:
+        elif (
+            "drop table" in input_lower
+            or "union select" in input_lower
+            or "' or 1=1" in input_lower
+        ):
             return "SQL Injection"
-        elif '../' in user_input or '..\\' in user_input or '/etc/passwd' in input_lower:
+        elif (
+            "../" in user_input or "..\\" in user_input or "/etc/passwd" in input_lower
+        ):
             return "Path Traversal"
-        elif '; rm -rf' in user_input or '& del' in user_input or '| cat' in user_input:
+        elif "; rm -rf" in user_input or "& del" in user_input or "| cat" in user_input:
             return "Command Injection"
-        elif 'ssrf' in input_lower or 'localhost' in input_lower or '127.0.0.1' in user_input:
+        elif (
+            "ssrf" in input_lower
+            or "localhost" in input_lower
+            or "127.0.0.1" in user_input
+        ):
             return "SSRF (Server-Side Request Forgery)"
         elif len(user_input) > 10000:
             return "Payload Size Attack (Buffer Overflow)"
-        elif user_input.count('<') > 100 or user_input.count('{') > 100:
+        elif user_input.count("<") > 100 or user_input.count("{") > 100:
             return "XML/JSON Bomb Attack"
         else:
             return "Edge Case / Malformed Input"
@@ -207,7 +221,7 @@ Verdict Guidelines:
             assertion_desc = self._get_assertion_description(assertion)
             lines.append(f"{i}. **{assertion_desc}**: `{assertion.full_assertion}`")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def _get_assertion_description(self, assertion: ExtractedAssertion) -> str:
         """Get human-readable description of assertion type.
@@ -227,4 +241,6 @@ Verdict Guidelines:
             "generic": "Generic Assertion",
         }
 
-        return type_descriptions.get(assertion.assertion_type, assertion.assertion_type.replace("_", " ").title())
+        return type_descriptions.get(
+            assertion.assertion_type, assertion.assertion_type.replace("_", " ").title()
+        )

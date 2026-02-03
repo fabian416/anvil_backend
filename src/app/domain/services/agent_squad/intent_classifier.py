@@ -13,21 +13,22 @@ from app.domain.value_objects.message_content import MessageContent
 class ConversationContext:
     """
     Conversation context for intent classification.
-    
+
     Contains:
     - conversation_history: Recent messages (for context)
     - user_metadata: User preferences, portfolio, etc.
     - session_metadata: Current session info
     """
+
     conversation_history: list[dict]  # Recent messages
     user_metadata: dict  # User profile, preferences, portfolio
     session_metadata: dict  # Session info
-    
+
     @property
     def last_n_messages(self, n: int = 5) -> list[dict]:
         """Get last N messages for context."""
         return self.conversation_history[-n:] if self.conversation_history else []
-    
+
     @property
     def has_history(self) -> bool:
         """Check if conversation has history."""
@@ -49,18 +50,18 @@ class ConversationContext:
 class IntentClassifier:
     """
     Intent Classifier domain service.
-    
+
     Responsibilities:
     - Classify user intent from message content
     - Recommend appropriate agent for intent
     - Support multi-turn conversation context
     - Provide confidence scores
-    
+
     Architecture:
     - Domain service (framework-agnostic)
     - Uses LLM port for classification
     - Returns intent classification (not agent responses)
-    
+
     Intent Categories (Examples):
     - swap_tokens: Execute token swap (EXECUTION agent)
     - analyze_risk: Risk assessment (RISK_ANALYZER agent)
@@ -71,7 +72,7 @@ class IntentClassifier:
     - alert_setup: Risk alerts (ALERT_MONITORING agent)
     - crisis_response: Emergency response (CRISIS_MANAGER agent)
     """
-    
+
     # Intent to Agent mapping
     INTENT_AGENT_MAP = {
         # Core user intents
@@ -95,7 +96,6 @@ class IntentClassifier:
         "security_audit": AgentType.SECURITY_AUDITOR,
         "optimize_gas": AgentType.GAS_OPTIMIZER,
         "gas_estimation": AgentType.GAS_OPTIMIZER,
-        
         # Authenticated user intents (requires login)
         "wallet_info": AgentType.WALLET,
         "check_balance": AgentType.WALLET,
@@ -105,7 +105,6 @@ class IntentClassifier:
         "recent_transactions": AgentType.TRANSACTION_HISTORY,
         "transaction_details": AgentType.TRANSACTION_HISTORY,
         "activity_summary": AgentType.TRANSACTION_HISTORY,
-        
         # Enterprise intents
         "check_compliance": AgentType.COMPLIANCE_MONITOR,
         "screen_wallet": AgentType.COMPLIANCE_MONITOR,
@@ -119,7 +118,6 @@ class IntentClassifier:
         "cross_chain": AgentType.BRIDGE_CROSSCHAIN,
         "borrow_assets": AgentType.LENDING_BORROWING,
         "leverage_position": AgentType.LENDING_BORROWING,
-
         # Lending workflow intents
         "check_lending_health": AgentType.LENDING_WORKFLOW,
         "supply_assets": AgentType.LENDING_WORKFLOW,
@@ -131,7 +129,7 @@ class IntentClassifier:
         "dao_voting": AgentType.DAO_GOVERNANCE,
         "governance_proposal": AgentType.DAO_GOVERNANCE,
     }
-    
+
     def __init__(
         self,
         llm_client: "LLMClientPort",
@@ -139,14 +137,14 @@ class IntentClassifier:
     ):
         """
         Initialize intent classifier.
-        
+
         Args:
             llm_client: LLM client port for classification
             classification_model: Model to use (default gpt-4o-mini for speed)
         """
         self._llm_client = llm_client
         self._classification_model = classification_model
-    
+
     async def classify(
         self,
         message: MessageContent,
@@ -154,43 +152,43 @@ class IntentClassifier:
     ) -> "IntentClassification":
         """
         Classify user intent from message.
-        
+
         Uses LLM to classify intent and recommend agent.
-        
+
         Args:
             message: User message
             conversation_context: Conversation history & metadata
-            
+
         Returns:
             IntentClassification with intent, confidence, and agent
         """
         # Build classification prompt
         prompt = self._build_classification_prompt(message, conversation_context)
-        
+
         # Call LLM for classification
         response = await self._llm_client.classify_intent(
             prompt=prompt,
             model=self._classification_model,
         )
-        
+
         # Parse response
         intent = response.get("intent", "general_chat")
         confidence = response.get("confidence", 0.5)
         reasoning = response.get("reasoning", "")
-        
+
         # Map intent to agent
         agent_type = self.INTENT_AGENT_MAP.get(intent, AgentType.CHAT)
-        
+
         # Import IntentClassification from agent_orchestrator to avoid circular import
         from .agent_orchestrator import IntentClassification
-        
+
         return IntentClassification(
             intent=intent,
             confidence=confidence,
             agent_type=agent_type,
             reasoning=reasoning,
         )
-    
+
     async def recommend_agents_for_complex_task(
         self,
         message: MessageContent,
@@ -199,29 +197,31 @@ class IntentClassifier:
     ) -> list[AgentType]:
         """
         Recommend multiple agents for complex task.
-        
+
         Used for supervisor-coordinated workflows.
-        
+
         Args:
             message: User message
             conversation_context: Conversation history
             max_agents: Maximum agents to recommend
-            
+
         Returns:
             List of agent types for complex task
         """
         # Build complex task prompt
-        prompt = self._build_complex_task_prompt(message, conversation_context, max_agents)
-        
+        prompt = self._build_complex_task_prompt(
+            message, conversation_context, max_agents
+        )
+
         # Call LLM for agent recommendation
         response = await self._llm_client.recommend_agents(
             prompt=prompt,
             model=self._classification_model,
         )
-        
+
         # Parse agent list
         agent_names = response.get("agents", ["chat"])
-        
+
         # Map to AgentType
         agents = []
         for agent_name in agent_names[:max_agents]:
@@ -231,13 +231,13 @@ class IntentClassifier:
             except KeyError:
                 # Invalid agent name, skip
                 continue
-        
+
         # Fallback to CHAT if no valid agents
         if not agents:
             agents = [AgentType.CHAT]
-        
+
         return agents
-    
+
     def _build_classification_prompt(
         self,
         message: MessageContent,
@@ -245,7 +245,7 @@ class IntentClassifier:
     ) -> str:
         """
         Build intent classification prompt for LLM.
-        
+
         Enhanced to recognize:
         - Price queries → price_query intent → Hunter AI
         - Anvil knowledge → anvil_knowledge intent → Chat agent
@@ -259,9 +259,9 @@ class IntentClassifier:
                 f"- {msg.get('role', 'user')}: {msg.get('content', '')}"
                 for msg in recent_messages
             ])
-        
+
         available_intents = ", ".join(self.INTENT_AGENT_MAP.keys())
-        
+
         return f"""
 Classify the user's intent from the following message.
 
@@ -319,7 +319,7 @@ Guidelines:
 - **IMPORTANT**: "what is X" or "explain X" queries should use "general_question" intent for fast single-agent response
 - **AUTHENTICATED INTENTS**: wallet_info, check_balance, transaction_history require user login - route to these only if user is asking about THEIR personal data
 """
-    
+
     def _build_complex_task_prompt(
         self,
         message: MessageContent,
@@ -328,7 +328,7 @@ Guidelines:
     ) -> str:
         """Build complex task agent recommendation prompt."""
         available_agents = [agent.value for agent in AgentType.get_all_agents()]
-        
+
         return f"""
 The user is requesting a complex task that requires multiple specialist agents.
 
@@ -372,9 +372,10 @@ Respond with JSON:
 
 # Port (interface) for dependency injection
 
+
 class LLMClientPort(Protocol):
     """Port for LLM client (intent classification)."""
-    
+
     async def classify_intent(
         self,
         prompt: str,
@@ -382,7 +383,7 @@ class LLMClientPort(Protocol):
     ) -> dict:
         """Classify intent using LLM."""
         ...
-    
+
     async def recommend_agents(
         self,
         prompt: str,

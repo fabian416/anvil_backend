@@ -36,7 +36,11 @@ class MultiStepFlowStrategy:
         # Format conversation history
         history_text = self._format_conversation_history(conversation_history)
         assertions_text = self._format_assertions(test_metadata.assertions)
-        intents_text = ', '.join(test_metadata.expected_intents) if test_metadata.expected_intents else 'N/A'
+        intents_text = (
+            ", ".join(test_metadata.expected_intents)
+            if test_metadata.expected_intents
+            else "N/A"
+        )
 
         return f"""# Validation Task: {test_metadata.test_name}
 
@@ -146,7 +150,7 @@ Verdict Guidelines:
             lines.append(f"Agent: {turn.get('agent', turn.get('output', 'N/A'))}")
             lines.append("")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def _format_assertions(self, assertions: list[ExtractedAssertion]) -> str:
         """Format assertions for prompt.
@@ -165,7 +169,7 @@ Verdict Guidelines:
             assertion_desc = self._get_assertion_description(assertion)
             lines.append(f"{i}. **{assertion_desc}**: `{assertion.full_assertion}`")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def _get_assertion_description(self, assertion: ExtractedAssertion) -> str:
         """Get human-readable description of assertion type.
@@ -185,4 +189,6 @@ Verdict Guidelines:
             "generic": "Generic Assertion",
         }
 
-        return type_descriptions.get(assertion.assertion_type, assertion.assertion_type.replace("_", " ").title())
+        return type_descriptions.get(
+            assertion.assertion_type, assertion.assertion_type.replace("_", " ").title()
+        )

@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 
 class ULTRAToolType(Enum):
     """ULTRA Arbitrage tool types."""
-    
+
     FLASH_LOANS = "ultra_flash_loans"
     ARBITRAGE_DISCOVERY = "ultra_arbitrage_discovery"
     MEV_PROTECTION = "ultra_mev_protection"
@@ -23,23 +23,23 @@ class ULTRAToolType(Enum):
 class ULTRAToolDefinition:
     """
     ULTRA Arbitrage tool definition for agent use.
-    
+
     Attributes:
         name: Tool function name
         type: ULTRA tool type
         description: Human-readable description of what the tool does
         parameters: Parameter schema (JSON Schema format)
     """
-    
+
     name: str
     type: ULTRAToolType
     description: str
     parameters: Dict[str, Any]
-    
+
     def to_agent_format(self) -> Dict[str, Any]:
         """
         Convert to Agent Squad tool format.
-        
+
         Returns:
             Dictionary in Agent Squad tool format
         """
@@ -153,10 +153,10 @@ ULTRA_TOOLS: List[ULTRAToolDefinition] = [
 def get_ultra_tool_by_name(name: str) -> ULTRAToolDefinition | None:
     """
     Get ULTRA tool definition by name.
-    
+
     Args:
         name: Tool name
-    
+
     Returns:
         Tool definition if found, None otherwise
     """
@@ -169,10 +169,10 @@ def get_ultra_tool_by_name(name: str) -> ULTRAToolDefinition | None:
 def get_ultra_tool_by_type(tool_type: ULTRAToolType) -> ULTRAToolDefinition | None:
     """
     Get ULTRA tool definition by type.
-    
+
     Args:
         tool_type: Tool type enum
-    
+
     Returns:
         Tool definition if found, None otherwise
     """

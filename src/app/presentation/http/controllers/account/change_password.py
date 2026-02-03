@@ -51,5 +51,3 @@ def create_change_own_password_router() -> APIRouter:
         return await handler.execute(data)
 
     return router
-
-

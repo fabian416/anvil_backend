@@ -27,13 +27,18 @@ class CompositeRiskResponse(BaseModel):
     """Response model for comprehensive risk assessment."""
 
     token_symbol: str = Field(..., description="Token symbol")
-    overall_risk_score: float = Field(..., description="Overall risk score (0-100)", ge=0, le=100)
+    overall_risk_score: float = Field(
+        ..., description="Overall risk score (0-100)", ge=0, le=100
+    )
     overall_risk_level: str = Field(..., description="Overall risk level")
-    risk_factors: Dict[str, RiskFactorResponse] = Field(..., description="Individual risk factors")
+    risk_factors: Dict[str, RiskFactorResponse] = Field(
+        ..., description="Individual risk factors"
+    )
     recommendation: str = Field(..., description="Trading recommendation")
     timestamp: str = Field(..., description="Analysis timestamp")
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "token_symbol": "ETH",
                 "overall_risk_score": 32.5,
@@ -53,7 +58,8 @@ class CompositeRiskResponse(BaseModel):
                 "recommendation": "Moderate risk profile. Suitable for balanced portfolios.",
                 "timestamp": "2025-12-03T17:00:00Z",
             }
-        })
+        }
+    )
 
 
 def create_risk_analysis_router() -> APIRouter:
@@ -137,7 +143,9 @@ def create_risk_analysis_router() -> APIRouter:
     )
     async def analyze_volatility_risk(
         token_symbol: str,
-        window_days: int = Query(30, ge=7, le=90, description="Analysis window in days"),
+        window_days: int = Query(
+            30, ge=7, le=90, description="Analysis window in days"
+        ),
     ) -> RiskFactorResponse:
         """Analyze volatility risk only.
 

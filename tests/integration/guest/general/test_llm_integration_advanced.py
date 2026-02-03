@@ -18,14 +18,21 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="LLM integration requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.llm]
+pytestmark = [
+    pytest.mark.skip(reason="LLM integration requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.llm,
+]
 
 
 class TestLLMIntegrationAdvanced:
     """Test advanced LLM integration scenarios."""
 
     @pytest.mark.llm_validation
-    async def test_provider_failover_multiple_providers(self, client: AsyncClient, llm_validator):
+    async def test_provider_failover_multiple_providers(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test LLM provider failover and resilience.
 
@@ -34,10 +41,7 @@ class TestLLMIntegrationAdvanced:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Explain DeFi yield farming strategies",
-                "language": "en"
-            }
+            json={"content": "Explain DeFi yield farming strategies", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -48,10 +52,14 @@ class TestLLMIntegrationAdvanced:
 
         # Should receive valid response regardless of which provider served it
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 100, "Should provide comprehensive DeFi explanation"
+        assert len(agent_response) > 100, (
+            "Should provide comprehensive DeFi explanation"
+        )
 
     @pytest.mark.llm_validation
-    async def test_streaming_response_interruption(self, client: AsyncClient, llm_validator):
+    async def test_streaming_response_interruption(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test handling of streaming responses.
 
@@ -62,8 +70,8 @@ class TestLLMIntegrationAdvanced:
             "/api/v1/guest/chat",
             json={
                 "content": "Provide a detailed analysis of top 10 DeFi protocols",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -77,7 +85,9 @@ class TestLLMIntegrationAdvanced:
         assert len(agent_response) > 150, "Should provide complete detailed analysis"
 
     @pytest.mark.llm_validation
-    async def test_token_limit_handling_comprehensive(self, client: AsyncClient, llm_validator):
+    async def test_token_limit_handling_comprehensive(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test token limit handling at various boundaries.
 
@@ -89,8 +99,8 @@ class TestLLMIntegrationAdvanced:
             "/api/v1/guest/chat",
             json={
                 "content": "Tell me about Bitcoin's history and development",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -103,8 +113,8 @@ class TestLLMIntegrationAdvanced:
                 f"/api/v1/guest/chat?conversation_id={conversation_id}",
                 json={
                     "content": f"What about aspect {i} of Bitcoin's development?",
-                    "language": "en"
-                }
+                    "language": "en",
+                },
             )
             assert response.status_code == status.HTTP_200_OK
 
@@ -113,8 +123,8 @@ class TestLLMIntegrationAdvanced:
             f"/api/v1/guest/chat?conversation_id={conversation_id}",
             json={
                 "content": "Summarize everything about Bitcoin we've discussed",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response_final.status_code == status.HTTP_200_OK
@@ -125,7 +135,9 @@ class TestLLMIntegrationAdvanced:
         assert len(agent_response) > 50, "Should handle context window appropriately"
 
     @pytest.mark.llm_validation
-    async def test_response_validation_quality_checks(self, client: AsyncClient, llm_validator):
+    async def test_response_validation_quality_checks(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test LLM response quality validation.
 
@@ -136,8 +148,8 @@ class TestLLMIntegrationAdvanced:
             "/api/v1/guest/chat",
             json={
                 "content": "What are the risks of using DeFi protocols?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK

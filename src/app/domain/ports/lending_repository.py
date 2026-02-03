@@ -100,9 +100,7 @@ class ILendingRepository(ABC):
         ...
 
     @abstractmethod
-    async def get_position_by_id(
-        self, position_id: UUID
-    ) -> Optional[LendingPosition]:
+    async def get_position_by_id(self, position_id: UUID) -> Optional[LendingPosition]:
         """
         Get a lending position by ID.
 
@@ -167,9 +165,7 @@ class ILendingRepository(ABC):
     # =========================================================================
 
     @abstractmethod
-    async def save_user_preferences(
-        self, preferences: UserLendingPreferences
-    ) -> None:
+    async def save_user_preferences(self, preferences: UserLendingPreferences) -> None:
         """
         Save or update user lending preferences.
 

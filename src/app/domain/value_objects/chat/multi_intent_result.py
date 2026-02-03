@@ -136,7 +136,9 @@ class MultiIntentResult:
 
         # Calculate overall confidence as average of intent confidences
         if self.intents:
-            self.confidence = sum(intent.confidence for intent in self.intents) / len(self.intents)
+            self.confidence = sum(intent.confidence for intent in self.intents) / len(
+                self.intents
+            )
 
         # Validate dependency indices
         max_index = len(self.intents) - 1
@@ -211,10 +213,7 @@ class MultiIntentResult:
             >>> multi_intent.get_dependencies_for_intent(1)
             [IntentDependency(dependent_index=1, dependency_index=0)]
         """
-        return [
-            dep for dep in self.dependencies
-            if dep.dependent_index == intent_index
-        ]
+        return [dep for dep in self.dependencies if dep.dependent_index == intent_index]
 
     def can_execute_intent(self, intent_index: int, executed_indices: set[int]) -> bool:
         """

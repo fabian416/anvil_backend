@@ -9,6 +9,7 @@ Features:
     - Agent utilization
     - Real-time metrics
 """
+
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, UTC
@@ -25,26 +26,26 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AgentMetrics:
     """Metrics for a single agent execution."""
-    
+
     agent_type: str
     query: str
     user_id: Optional[str]
     session_id: Optional[str]
-    
+
     start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
     end_time: Optional[datetime] = None
     duration_ms: float = 0.0
-    
+
     success: bool = False
     error: Optional[str] = None
-    
+
     tools_used: List[str] = field(default_factory=list)
     tool_call_count: int = 0
     tool_duration_ms: float = 0.0
-    
+
     response_length: int = 0
     cached: bool = False
-    
+
     def complete(self, success: bool = True, error: Optional[str] = None):
         """Mark execution as complete."""
         self.end_time = datetime.now(UTC)
@@ -56,29 +57,29 @@ class AgentMetrics:
 class AgentMonitor:
     """
     Monitors agent performance and tracks metrics.
-    
+
     Usage:
         monitor = AgentMonitor()
-        
+
         # Start tracking
         metrics = monitor.start_tracking(
             agent_type="trading",
             query="Swap ETH for USDC",
             user_id="user_123",
         )
-        
+
         # Record tool calls
         metrics.tools_used.append("get_swap_quote")
         metrics.tool_call_count += 1
-        
+
         # Complete tracking
         metrics.complete(success=True)
         monitor.record_metrics(metrics)
-        
+
         # Get statistics
         stats = monitor.get_statistics()
     """
-    
+
     def __init__(
         self,
         retention_hours: int = 24,
@@ -86,17 +87,17 @@ class AgentMonitor:
     ):
         """
         Initialize monitor.
-        
+
         Args:
             retention_hours: How long to keep metrics
             max_metrics: Max metrics to store
         """
         self.retention_hours = retention_hours
         self.max_metrics = max_metrics
-        
+
         # Store metrics
         self.metrics: List[AgentMetrics] = []
-        
+
         # Aggregate stats
         self.stats = {
             "total_requests": 0,
@@ -104,15 +105,17 @@ class AgentMonitor:
             "failed_requests": 0,
             "total_duration_ms": 0.0,
             "cache_hits": 0,
-            "by_agent": defaultdict(lambda: {
-                "requests": 0,
-                "successful": 0,
-                "failed": 0,
-                "total_duration_ms": 0.0,
-                "tools_used": defaultdict(int),
-            }),
+            "by_agent": defaultdict(
+                lambda: {
+                    "requests": 0,
+                    "successful": 0,
+                    "failed": 0,
+                    "total_duration_ms": 0.0,
+                    "tools_used": defaultdict(int),
+                }
+            ),
         }
-    
+
     def start_tracking(
         self,
         agent_type: str,
@@ -122,13 +125,13 @@ class AgentMonitor:
     ) -> AgentMetrics:
         """
         Start tracking a new agent execution.
-        
+
         Args:
             agent_type: Agent type
             query: User query
             user_id: User ID
             session_id: Session ID
-        
+
         Returns:
             AgentMetrics instance
         """
@@ -138,29 +141,29 @@ class AgentMonitor:
             user_id=user_id,
             session_id=session_id,
         )
-    
+
     def record_metrics(self, metrics: AgentMetrics):
         """
         Record completed metrics.
-        
+
         Args:
             metrics: Completed metrics
         """
         # Add to storage
         self.metrics.append(metrics)
-        
+
         # Update aggregate stats
         self.stats["total_requests"] += 1
         if metrics.success:
             self.stats["successful_requests"] += 1
         else:
             self.stats["failed_requests"] += 1
-        
+
         self.stats["total_duration_ms"] += metrics.duration_ms
-        
+
         if metrics.cached:
             self.stats["cache_hits"] += 1
-        
+
         # Update agent-specific stats
         agent_stats = self.stats["by_agent"][metrics.agent_type]
         agent_stats["requests"] += 1
@@ -169,31 +172,28 @@ class AgentMonitor:
         else:
             agent_stats["failed"] += 1
         agent_stats["total_duration_ms"] += metrics.duration_ms
-        
+
         for tool in metrics.tools_used:
             agent_stats["tools_used"][tool] += 1
-        
+
         # Cleanup old metrics
         self._cleanup_old_metrics()
-        
+
         logger.debug(
             f"Recorded metrics: {metrics.agent_type} "
             f"({metrics.duration_ms:.0f}ms, success={metrics.success})"
         )
-    
+
     def _cleanup_old_metrics(self):
         """Remove old metrics beyond retention period."""
         if len(self.metrics) > self.max_metrics:
             # Keep only recent metrics
-            self.metrics = self.metrics[-self.max_metrics:]
-        
+            self.metrics = self.metrics[-self.max_metrics :]
+
         # Remove metrics older than retention period
         cutoff = datetime.now(UTC) - timedelta(hours=self.retention_hours)
-        self.metrics = [
-            m for m in self.metrics
-            if m.start_time > cutoff
-        ]
-    
+        self.metrics = [m for m in self.metrics if m.start_time > cutoff]
+
     def get_statistics(
         self,
         agent_type: Optional[str] = None,
@@ -201,54 +201,54 @@ class AgentMonitor:
     ) -> Dict[str, Any]:
         """
         Get performance statistics.
-        
+
         Args:
             agent_type: Filter by agent type (optional)
             time_window_minutes: Only include recent metrics (optional)
-        
+
         Returns:
             Statistics dictionary
         """
         # Filter metrics
         metrics = self.metrics
-        
+
         if time_window_minutes:
             cutoff = datetime.now(UTC) - timedelta(minutes=time_window_minutes)
             metrics = [m for m in metrics if m.start_time > cutoff]
-        
+
         if agent_type:
             metrics = [m for m in metrics if m.agent_type == agent_type]
-        
+
         if not metrics:
             return {
                 "total_requests": 0,
                 "message": "No metrics available for the specified filters",
             }
-        
+
         # Calculate statistics
         total_requests = len(metrics)
         successful = sum(1 for m in metrics if m.success)
         failed = total_requests - successful
-        
+
         durations = [m.duration_ms for m in metrics]
         avg_duration = sum(durations) / len(durations)
         min_duration = min(durations)
         max_duration = max(durations)
-        
+
         # Calculate percentiles
         sorted_durations = sorted(durations)
         p50_idx = int(len(sorted_durations) * 0.5)
         p95_idx = int(len(sorted_durations) * 0.95)
         p99_idx = int(len(sorted_durations) * 0.99)
-        
+
         cached = sum(1 for m in metrics if m.cached)
-        
+
         # Tool usage
         tool_usage = defaultdict(int)
         for m in metrics:
             for tool in m.tools_used:
                 tool_usage[tool] += 1
-        
+
         return {
             "total_requests": total_requests,
             "successful_requests": successful,
@@ -267,20 +267,20 @@ class AgentMonitor:
             "time_window_minutes": time_window_minutes or "all",
             "agent_type": agent_type or "all",
         }
-    
+
     def get_real_time_stats(self) -> Dict[str, Any]:
         """
         Get real-time statistics (last 5 minutes).
-        
+
         Returns:
             Real-time statistics
         """
         return self.get_statistics(time_window_minutes=5)
-    
+
     def get_agent_breakdown(self) -> Dict[str, Dict[str, Any]]:
         """
         Get statistics broken down by agent type.
-        
+
         Returns:
             Statistics per agent type
         """
@@ -288,7 +288,7 @@ class AgentMonitor:
             agent_type: self.get_statistics(agent_type=agent_type)
             for agent_type in set(m.agent_type for m in self.metrics)
         }
-    
+
     def get_slow_queries(
         self,
         threshold_ms: float = 5000,
@@ -296,22 +296,19 @@ class AgentMonitor:
     ) -> List[Dict[str, Any]]:
         """
         Get slowest queries.
-        
+
         Args:
             threshold_ms: Minimum duration threshold
             limit: Max number of queries to return
-        
+
         Returns:
             List of slow queries
         """
-        slow_metrics = [
-            m for m in self.metrics
-            if m.duration_ms >= threshold_ms
-        ]
-        
+        slow_metrics = [m for m in self.metrics if m.duration_ms >= threshold_ms]
+
         # Sort by duration
         slow_metrics.sort(key=lambda m: m.duration_ms, reverse=True)
-        
+
         return [
             {
                 "agent_type": m.agent_type,
@@ -323,7 +320,7 @@ class AgentMonitor:
             }
             for m in slow_metrics[:limit]
         ]
-    
+
     def reset(self):
         """Reset all metrics and statistics."""
         self.metrics.clear()
@@ -333,13 +330,15 @@ class AgentMonitor:
             "failed_requests": 0,
             "total_duration_ms": 0.0,
             "cache_hits": 0,
-            "by_agent": defaultdict(lambda: {
-                "requests": 0,
-                "successful": 0,
-                "failed": 0,
-                "total_duration_ms": 0.0,
-                "tools_used": defaultdict(int),
-            }),
+            "by_agent": defaultdict(
+                lambda: {
+                    "requests": 0,
+                    "successful": 0,
+                    "failed": 0,
+                    "total_duration_ms": 0.0,
+                    "tools_used": defaultdict(int),
+                }
+            ),
         }
         logger.info("Metrics reset")
 
@@ -351,7 +350,7 @@ _monitor: Optional[AgentMonitor] = None
 def get_monitor() -> AgentMonitor:
     """
     Get global monitor instance.
-    
+
     Returns:
         AgentMonitor instance
     """

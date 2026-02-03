@@ -17,14 +17,21 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Historical chat requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.historical_chat]
+pytestmark = [
+    pytest.mark.skip(reason="Historical chat requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.historical_chat,
+]
 
 
 class TestConversationSearchFiltering:
     """Test conversation search and filtering capabilities."""
 
     @pytest.mark.llm_validation
-    async def test_conversation_search_by_keyword(self, client: AsyncClient, llm_validator):
+    async def test_conversation_search_by_keyword(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Search conversation history for specific keyword.
 
@@ -33,10 +40,7 @@ class TestConversationSearchFiltering:
         # Create conversation with specific keywords
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What is the price of Ethereum?",
-                "language": "en"
-            }
+            json={"content": "What is the price of Ethereum?", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -52,8 +56,8 @@ class TestConversationSearchFiltering:
             json={
                 "content": "How about Bitcoin price?",
                 "language": "en",
-                "conversation_id": conversation_id
-            }
+                "conversation_id": conversation_id,
+            },
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -68,8 +72,8 @@ class TestConversationSearchFiltering:
             json={
                 "content": "Can you explain DeFi lending?",
                 "language": "en",
-                "conversation_id": conversation_id
-            }
+                "conversation_id": conversation_id,
+            },
         )
 
         assert response3.status_code == status.HTTP_200_OK
@@ -87,11 +91,13 @@ class TestConversationSearchFiltering:
         assert all([
             response1.status_code == status.HTTP_200_OK,
             response2.status_code == status.HTTP_200_OK,
-            response3.status_code == status.HTTP_200_OK
+            response3.status_code == status.HTTP_200_OK,
         ])
 
     @pytest.mark.llm_validation
-    async def test_conversation_export_json_format(self, client: AsyncClient, llm_validator):
+    async def test_conversation_export_json_format(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Export conversation as JSON format.
 
@@ -100,10 +106,7 @@ class TestConversationSearchFiltering:
         # Create conversation with multiple messages
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Tell me about DeFi protocols",
-                "language": "en"
-            }
+            json={"content": "Tell me about DeFi protocols", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -119,8 +122,8 @@ class TestConversationSearchFiltering:
             json={
                 "content": "Which one is best for lending?",
                 "language": "en",
-                "conversation_id": conversation_id
-            }
+                "conversation_id": conversation_id,
+            },
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -144,7 +147,9 @@ class TestConversationSearchFiltering:
             assert agent_msg["content"]  # Non-empty content
 
     @pytest.mark.llm_validation
-    async def test_conversation_filtering_by_date_range(self, client: AsyncClient, llm_validator):
+    async def test_conversation_filtering_by_date_range(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Filter conversations by date range.
 
@@ -154,10 +159,7 @@ class TestConversationSearchFiltering:
         # Create first message in conversation
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "First message about Ethereum",
-                "language": "en"
-            }
+            json={"content": "First message about Ethereum", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -170,8 +172,8 @@ class TestConversationSearchFiltering:
             json={
                 "content": "Second message about Bitcoin",
                 "language": "en",
-                "conversation_id": conversation_id_1
-            }
+                "conversation_id": conversation_id_1,
+            },
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -184,8 +186,8 @@ class TestConversationSearchFiltering:
             json={
                 "content": "Third message about DeFi",
                 "language": "en",
-                "conversation_id": conversation_id_1
-            }
+                "conversation_id": conversation_id_1,
+            },
         )
 
         assert response3.status_code == status.HTTP_200_OK
@@ -194,15 +196,14 @@ class TestConversationSearchFiltering:
 
         # Verify conversation ID is maintained across messages
         # Guest chat maintains conversation continuity for the same client
-        assert conversation_id_1 == conversation_id_2 == conversation_id_3, \
+        assert conversation_id_1 == conversation_id_2 == conversation_id_3, (
             "Conversation ID should be maintained across messages from same client"
+        )
 
         # Verify all messages have valid conversation ID
-        assert all([
-            conversation_id_1,
-            conversation_id_2,
-            conversation_id_3
-        ]), "All messages should have valid conversation IDs"
+        assert all([conversation_id_1, conversation_id_2, conversation_id_3]), (
+            "All messages should have valid conversation IDs"
+        )
 
         # In a real filtering implementation, we would have an endpoint like:
         # GET /api/v1/guest/conversations/{id}/messages?from_date=X&to_date=Y

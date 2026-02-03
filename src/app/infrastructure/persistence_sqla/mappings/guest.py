@@ -34,18 +34,26 @@ def _map_guest_users_table() -> None:
     class GuestUsersTable:
         __tablename__ = "guest_users"
         __table_args__ = {"extend_existing": True}
-        
+
         id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
         ip_address = mapped_column(String(45), nullable=False, unique=True, index=True)
         fingerprint = mapped_column(String(255), nullable=True)
-        first_seen_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
-        last_seen_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+        first_seen_at = mapped_column(
+            DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP")
+        )
+        last_seen_at = mapped_column(
+            DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP")
+        )
         total_messages = mapped_column(Integer, default=0)
         language = mapped_column(String(5), default="en")
         country_code = mapped_column(String(2), nullable=True)
         is_blocked = mapped_column(Boolean, default=False)
-        created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
-        updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+        created_at = mapped_column(
+            DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP")
+        )
+        updated_at = mapped_column(
+            DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP")
+        )
 
 
 def _map_guest_conversations_table() -> None:
@@ -57,7 +65,7 @@ def _map_guest_conversations_table() -> None:
     class GuestConversationsTable:
         __tablename__ = "guest_conversations"
         __table_args__ = {"extend_existing": True}
-        
+
         id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
         guest_user_id = mapped_column(
             UUID(as_uuid=True),
@@ -69,8 +77,12 @@ def _map_guest_conversations_table() -> None:
         status = mapped_column(String(20), default="active", index=True)
         message_count = mapped_column(Integer, default=0)
         language = mapped_column(String(5), default="en")
-        created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
-        updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+        created_at = mapped_column(
+            DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP")
+        )
+        updated_at = mapped_column(
+            DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP")
+        )
         archived_at = mapped_column(DateTime(timezone=True), nullable=True)
 
 
@@ -83,7 +95,7 @@ def _map_guest_messages_table() -> None:
     class GuestMessagesTable:
         __tablename__ = "guest_messages"
         __table_args__ = {"extend_existing": True}
-        
+
         id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
         conversation_id = mapped_column(
             UUID(as_uuid=True),
@@ -100,8 +112,12 @@ def _map_guest_messages_table() -> None:
         is_restricted_action = mapped_column(Boolean, default=False)
         # Note: 'metadata' is reserved in SQLAlchemy, so we use 'extra_metadata' as attribute name
         # but map it to 'metadata' column in the database
-        extra_metadata = mapped_column("metadata", JSONB, default={}, server_default='{}')
-        created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+        extra_metadata = mapped_column(
+            "metadata", JSONB, default={}, server_default="{}"
+        )
+        created_at = mapped_column(
+            DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP")
+        )
 
 
 def _map_guest_telemetry_table() -> None:
@@ -113,7 +129,7 @@ def _map_guest_telemetry_table() -> None:
     class GuestTelemetryTable:
         __tablename__ = "guest_telemetry"
         __table_args__ = {"extend_existing": True}
-        
+
         id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
         guest_user_id = mapped_column(
             UUID(as_uuid=True),
@@ -132,4 +148,8 @@ def _map_guest_telemetry_table() -> None:
         user_agent = mapped_column(Text, nullable=True)
         referer = mapped_column(Text, nullable=True)
         language = mapped_column(String(5), default="en")
-        created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), index=True)
+        created_at = mapped_column(
+            DateTime(timezone=True),
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+            index=True,
+        )

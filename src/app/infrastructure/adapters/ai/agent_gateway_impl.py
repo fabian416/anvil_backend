@@ -21,20 +21,20 @@ from app.domain.enums.agent_type import AgentType
 class AgentGatewayImpl(AgentGateway):
     """
     Agent Gateway that routes messages to specialized agents.
-    
+
     Current implementation: Simple keyword-based intent classification
     Future: Full Agent Squad orchestration with advanced classification
     """
-    
+
     def __init__(
-        self, 
+        self,
         storage: AnvilSquadStorage,
         llm_gateway: LLMGateway,
-        config: Optional[AgentSquadConfig] = None
+        config: Optional[AgentSquadConfig] = None,
     ):
         """
         Initialize Agent Gateway.
-        
+
         Args:
             storage: Storage adapter for conversation persistence
             llm_gateway: LLM gateway for agent responses
@@ -43,13 +43,13 @@ class AgentGatewayImpl(AgentGateway):
         self.storage = storage
         self.llm_gateway = llm_gateway
         self.config = config or AgentSquadConfig()
-        
+
         # Initialize classifier
         self.classifier = DeFiIntentClassifier(model=self.config.default_model)
-        
+
         # Agent registry (will be populated when agents are registered)
         self._agents: Dict[str, Any] = {}
-        
+
         # Initialize simple keyword-based intent detection
         self._intent_patterns = self._build_intent_patterns()
 
@@ -82,13 +82,20 @@ class AgentGatewayImpl(AgentGateway):
     def _build_intent_patterns(self) -> Dict[str, List[str]]:
         """
         Build keyword patterns for simple intent detection.
-        
+
         Returns:
             Dictionary mapping intents to keyword lists
         """
         return {
             "trade_swap": ["swap", "exchange", "convert", "trade"],
-            "trade_perp_open": ["open", "long", "short", "position", "leverage", "perp"],
+            "trade_perp_open": [
+                "open",
+                "long",
+                "short",
+                "position",
+                "leverage",
+                "perp",
+            ],
             "trade_perp_close": ["close", "exit", "stop", "take profit"],
             "lend_supply": ["lend", "supply", "deposit", "provide"],
             "lend_borrow": ["borrow", "loan", "against"],
@@ -99,53 +106,50 @@ class AgentGatewayImpl(AgentGateway):
             "save_schedule": ["save", "schedule", "recurring", "dca", "weekly"],
             "general_question": ["what", "how", "explain", "tell me"],
         }
-    
+
     def _classify_intent_simple(self, message: str) -> str:
         """
         Simple keyword-based intent classification (fallback).
-        
+
         Args:
             message: User message
-        
+
         Returns:
             Detected intent
         """
         message_lower = message.lower()
-        
+
         # Score each intent based on keyword matches
         scores: Dict[str, int] = {}
         for intent, keywords in self._intent_patterns.items():
             score = sum(1 for keyword in keywords if keyword in message_lower)
             if score > 0:
                 scores[intent] = score
-        
+
         # Return highest scoring intent, or general_question as default
         if scores:
             return max(scores.items(), key=lambda x: x[1])[0]
         return "general_question"
-    
+
     async def _classify_intent_llm(
-        self, 
-        message: str, 
-        context: Optional[Dict[str, Any]] = None
+        self, message: str, context: Optional[Dict[str, Any]] = None
     ) -> str:
         """
         LLM-based intent classification (more accurate).
-        
+
         Args:
             message: User message
             context: Optional conversation context
-        
+
         Returns:
             Detected intent
         """
         # Build classification prompt
         intents_desc = self.classifier.get_intent_descriptions()
         intents_list = "\n".join(
-            f"- {intent}: {desc}" 
-            for intent, desc in intents_desc.items()
+            f"- {intent}: {desc}" for intent, desc in intents_desc.items()
         )
-        
+
         prompt = f"""Classify the user's intent from the following message.
 
 Available intents:
@@ -154,36 +158,41 @@ Available intents:
 User message: "{message}"
 
 Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)"""
-        
+
         # Get classification from LLM
         try:
             response = await self.llm_gateway.generate(
                 model="meta-llama/Llama-3.2-3B-Instruct",  # Using 3B (70B is overloaded)
                 messages=[
-                    {"role": "system", "content": "You are an intent classifier. Respond only with the intent name."},
+                    {
+                        "role": "system",
+                        "content": "You are an intent classifier. Respond only with the intent name.",
+                    },
                     {"role": "user", "content": prompt},
                 ],
                 max_tokens=50,
-                temperature=0.0
+                temperature=0.0,
             )
 
             intent = response.strip().lower()
-            
+
             # Validate intent is in our list
             if intent in self.classifier.INTENTS:
                 return intent
-            
+
             # Fallback to keyword-based
             return self._classify_intent_simple(message)
-            
+
         except Exception as e:
-            print(f"LLM intent classification failed: {e}, falling back to keyword-based")
+            print(
+                f"LLM intent classification failed: {e}, falling back to keyword-based"
+            )
             return self._classify_intent_simple(message)
-    
+
     def register_agent(self, agent_name: str, agent: Any, intents: List[str]) -> None:
         """
         Register a specialized agent with this gateway.
-        
+
         Args:
             agent_name: Name of the agent
             agent: Agent instance
@@ -193,23 +202,20 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
             self._agents[intent] = agent
 
         # Log agent registration (debug mode check removed as field doesn't exist in config)
-        if hasattr(self.config, 'debug_mode') and self.config.debug_mode:
+        if hasattr(self.config, "debug_mode") and self.config.debug_mode:
             print(f"Registered agent '{agent_name}' for intents: {intents}")
-    
+
     async def _generate_fallback_response(
-        self,
-        message: str,
-        intent: str,
-        context: Optional[Dict[str, Any]] = None
+        self, message: str, intent: str, context: Optional[Dict[str, Any]] = None
     ) -> str:
         """
         Generate a fallback response when no specialized agent is available.
-        
+
         Args:
             message: User message
             intent: Detected intent
             context: Conversation context
-        
+
         Returns:
             Generated response
         """
@@ -220,10 +226,9 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
             if history:
                 recent = history[-5:]  # Last 5 messages
                 context_str = "\n".join(
-                    f"{msg['role'].capitalize()}: {msg['content']}" 
-                    for msg in recent
+                    f"{msg['role'].capitalize()}: {msg['content']}" for msg in recent
                 )
-        
+
         # Build system message based on intent
         intent_prompts = {
             "trade_swap": "You are a DeFi swap specialist. Help users with token swaps and DEX operations.",
@@ -236,17 +241,17 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
             "risk_analysis": "You are a DeFi risk analyst. Help users understand and manage their position risks.",
             "general_question": "You are a DeFi education assistant. Explain DeFi concepts clearly and simply.",
         }
-        
+
         system_message = intent_prompts.get(
             intent,
-            "You are a helpful DeFi assistant. Provide clear, accurate, and actionable advice."
+            "You are a helpful DeFi assistant. Provide clear, accurate, and actionable advice.",
         )
-        
+
         # Add context if available
         full_prompt = message
         if context_str:
             full_prompt = f"Previous conversation:\n{context_str}\n\nUser: {message}"
-        
+
         # Generate response using LLM
         response = await self.llm_gateway.generate(
             model="meta-llama/Llama-3.2-3B-Instruct",  # Using 3B (70B is overloaded)
@@ -255,7 +260,7 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
                 {"role": "user", "content": full_prompt},
             ],
             max_tokens=500,
-            temperature=0.7
+            temperature=0.7,
         )
 
         return self._normalize_agent_response(response)
@@ -263,7 +268,7 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
     def _normalize_agent_response(self, response: Any) -> str:
         """
         Normalize agent outputs to a string.
-        
+
         Defensive: some LLM gateways/providers can return tuples like (text, meta),
         dict payloads, or custom objects.
         """
@@ -289,23 +294,23 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
                     return value
 
         return str(response)
-    
+
     async def process_message(
-        self, 
-        user_id: UUID, 
-        session_id: str, 
+        self,
+        user_id: UUID,
+        session_id: str,
         message: str,
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Process user message through intent classification and agent routing.
-        
+
         Args:
             user_id: User identifier
             session_id: Conversation session ID
             message: User message to process
             context: Optional conversation context
-        
+
         Returns:
             Agent response text
         """
@@ -315,48 +320,49 @@ Respond with ONLY the intent name (e.g., "trade_swap", "portfolio_view", etc.)""
                 intent = await self._classify_intent_llm(message, context)
             else:
                 intent = self._classify_intent_simple(message)
-            
+
             if self.config.log_intent_classification:
                 print(f"Intent classified: {intent} for message: '{message[:50]}...'")
-            
+
             # Step 2: Get conversation history for context
             if context is None:
                 context = {}
-            
+
             if "history" not in context:
                 history = await self.storage.get_chat_history(
-                    session_id, 
-                    limit=self.config.max_context_messages
+                    session_id, limit=self.config.max_context_messages
                 )
                 context["history"] = history
-            
+
             # Step 3: Route to appropriate agent
             agent = self._agents.get(intent)
-            
-            if agent and hasattr(agent, 'run'):
+
+            if agent and hasattr(agent, "run"):
                 # Route to specialized agent
                 if self.config.log_agent_selection:
                     print(f"Routing to agent: {agent.__class__.__name__}")
-                
+
                 response = await agent.run(message, context=context)
             else:
                 # No specialized agent available, use fallback
                 if self.config.log_agent_selection:
                     print(f"No specialized agent for intent '{intent}', using fallback")
-                
-                response = await self._generate_fallback_response(message, intent, context)
+
+                response = await self._generate_fallback_response(
+                    message, intent, context
+                )
 
             response_text = self._normalize_agent_response(response)
-            
+
             # NOTE: Message persistence is handled by SendMessage command.
             # The gateway only generates responses; the command layer handles
             # saving both user and agent messages to maintain proper transaction control.
-            
+
             return response_text
-            
+
         except Exception as e:
             error_msg = f"Error processing message: {str(e)}"
             print(error_msg)
-            
+
             # Return friendly error message
             return "I apologize, but I encountered an error processing your request. Please try rephrasing your message or contact support if the issue persists."

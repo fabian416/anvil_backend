@@ -35,23 +35,23 @@ from app.infrastructure.telemetry.tracing import (
 class InstrumentedGasOracleClient(GasOracleClient):
     """
     Gas Oracle client with full telemetry instrumentation.
-    
+
     Usage:
         client = InstrumentedGasOracleClient(
             blocknative_api_key="...",
             etherscan_api_key="...",
         )
-        
+
         # All calls automatically instrumented
         prices = await client.get_gas_prices("ethereum")
-        
+
         # Get metrics
         telemetry = get_api_telemetry()
         metrics = telemetry.get_metrics("gas_oracle")
     """
-    
+
     API_NAME = "gas_oracle"
-    
+
     def __init__(
         self,
         blocknative_api_key: str | None = None,
@@ -63,7 +63,7 @@ class InstrumentedGasOracleClient(GasOracleClient):
         super().__init__(blocknative_api_key, etherscan_api_key, timeout)
         self._telemetry = telemetry or get_api_telemetry()
         self._tracing = tracing or get_tracing_service()
-    
+
     async def get_gas_prices(
         self,
         chain: str = "ethereum",
@@ -74,7 +74,7 @@ class InstrumentedGasOracleClient(GasOracleClient):
             operation="get_gas_prices",
             chain=chain,
         )
-        
+
         with self._tracing.start_span(
             name=f"{self.API_NAME}.get_gas_prices",
             kind=SpanKind.CLIENT,
@@ -86,19 +86,19 @@ class InstrumentedGasOracleClient(GasOracleClient):
         ) as span:
             try:
                 result = await super().get_gas_prices(chain)
-                
+
                 ctx.complete(status=APIStatus.SUCCESS, status_code=200)
                 span.set_status(SpanStatus.OK)
-                
+
                 # Log standard gas price
                 if GasSpeed.STANDARD.value in result:
                     span.set_attribute(
                         "response.standard_gas_gwei",
-                        result[GasSpeed.STANDARD.value].gas_price_gwei
+                        result[GasSpeed.STANDARD.value].gas_price_gwei,
                     )
-                
+
                 return result
-                
+
             except Exception as e:
                 error_type = self._classify_error(e)
                 ctx.complete(
@@ -108,10 +108,10 @@ class InstrumentedGasOracleClient(GasOracleClient):
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
-    
+
     async def get_current_price(
         self,
         chain: str = "ethereum",
@@ -122,7 +122,7 @@ class InstrumentedGasOracleClient(GasOracleClient):
             operation="get_current_price",
             chain=chain,
         )
-        
+
         with self._tracing.start_span(
             name=f"{self.API_NAME}.get_current_price",
             kind=SpanKind.CLIENT,
@@ -134,13 +134,15 @@ class InstrumentedGasOracleClient(GasOracleClient):
         ) as span:
             try:
                 result = await super().get_current_price(chain)
-                
+
                 ctx.complete(status=APIStatus.SUCCESS, status_code=200)
                 span.set_status(SpanStatus.OK)
-                span.set_attribute("response.estimated_price_gwei", result.estimated_price_gwei)
-                
+                span.set_attribute(
+                    "response.estimated_price_gwei", result.estimated_price_gwei
+                )
+
                 return result
-                
+
             except Exception as e:
                 error_type = self._classify_error(e)
                 ctx.complete(
@@ -150,10 +152,10 @@ class InstrumentedGasOracleClient(GasOracleClient):
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
-    
+
     async def get_gas_prediction(
         self,
         chain: str = "ethereum",
@@ -166,7 +168,7 @@ class InstrumentedGasOracleClient(GasOracleClient):
             chain=chain,
             minutes_ahead=minutes_ahead,
         )
-        
+
         with self._tracing.start_span(
             name=f"{self.API_NAME}.get_gas_prediction",
             kind=SpanKind.CLIENT,
@@ -179,14 +181,16 @@ class InstrumentedGasOracleClient(GasOracleClient):
         ) as span:
             try:
                 result = await super().get_gas_prediction(chain, minutes_ahead)
-                
+
                 ctx.complete(status=APIStatus.SUCCESS, status_code=200)
                 span.set_status(SpanStatus.OK)
-                span.set_attribute("response.predicted_base_fee", result.predicted_base_fee)
+                span.set_attribute(
+                    "response.predicted_base_fee", result.predicted_base_fee
+                )
                 span.set_attribute("response.confidence", result.confidence)
-                
+
                 return result
-                
+
             except Exception as e:
                 error_type = self._classify_error(e)
                 ctx.complete(
@@ -196,10 +200,10 @@ class InstrumentedGasOracleClient(GasOracleClient):
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
-    
+
     async def estimate_transaction_cost(
         self,
         gas_limit: int,
@@ -214,7 +218,7 @@ class InstrumentedGasOracleClient(GasOracleClient):
             speed=speed.value,
             gas_limit=gas_limit,
         )
-        
+
         with self._tracing.start_span(
             name=f"{self.API_NAME}.estimate_transaction_cost",
             kind=SpanKind.CLIENT,
@@ -227,15 +231,17 @@ class InstrumentedGasOracleClient(GasOracleClient):
             },
         ) as span:
             try:
-                result = await super().estimate_transaction_cost(gas_limit, speed, chain)
-                
+                result = await super().estimate_transaction_cost(
+                    gas_limit, speed, chain
+                )
+
                 ctx.complete(status=APIStatus.SUCCESS, status_code=200)
                 span.set_status(SpanStatus.OK)
                 span.set_attribute("response.cost_usd", result.cost_usd)
                 span.set_attribute("response.cost_eth", result.cost_eth)
-                
+
                 return result
-                
+
             except Exception as e:
                 error_type = self._classify_error(e)
                 ctx.complete(
@@ -245,10 +251,10 @@ class InstrumentedGasOracleClient(GasOracleClient):
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
-    
+
     async def get_optimal_time(
         self,
         target_gas_price: float,
@@ -261,7 +267,7 @@ class InstrumentedGasOracleClient(GasOracleClient):
             target_gas_price=target_gas_price,
             max_wait_hours=max_wait_hours,
         )
-        
+
         with self._tracing.start_span(
             name=f"{self.API_NAME}.get_optimal_time",
             kind=SpanKind.CLIENT,
@@ -273,14 +279,16 @@ class InstrumentedGasOracleClient(GasOracleClient):
             },
         ) as span:
             try:
-                result = await super().get_optimal_time(target_gas_price, max_wait_hours)
-                
+                result = await super().get_optimal_time(
+                    target_gas_price, max_wait_hours
+                )
+
                 ctx.complete(status=APIStatus.SUCCESS, status_code=200)
                 span.set_status(SpanStatus.OK)
                 span.set_attribute("response.found_time", result is not None)
-                
+
                 return result
-                
+
             except Exception as e:
                 error_type = self._classify_error(e)
                 ctx.complete(
@@ -290,10 +298,10 @@ class InstrumentedGasOracleClient(GasOracleClient):
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
-    
+
     async def get_gas_history(
         self,
         chain: str = "ethereum",
@@ -306,7 +314,7 @@ class InstrumentedGasOracleClient(GasOracleClient):
             chain=chain,
             hours=hours,
         )
-        
+
         with self._tracing.start_span(
             name=f"{self.API_NAME}.get_gas_history",
             kind=SpanKind.CLIENT,
@@ -319,13 +327,13 @@ class InstrumentedGasOracleClient(GasOracleClient):
         ) as span:
             try:
                 result = await super().get_gas_history(chain, hours)
-                
+
                 ctx.complete(status=APIStatus.SUCCESS, status_code=200)
                 span.set_status(SpanStatus.OK)
                 span.set_attribute("response.data_point_count", len(result))
-                
+
                 return result
-                
+
             except Exception as e:
                 error_type = self._classify_error(e)
                 ctx.complete(
@@ -335,21 +343,21 @@ class InstrumentedGasOracleClient(GasOracleClient):
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
-    
+
     def _classify_error(self, error: Exception) -> APIStatus:
         """Classify error type for telemetry."""
         import httpx
-        
+
         if isinstance(error, httpx.TimeoutException):
             return APIStatus.TIMEOUT
-        
+
         if isinstance(error, httpx.HTTPStatusError):
             if error.response.status_code == 429:
                 return APIStatus.RATE_LIMITED
             if error.response.status_code in (401, 403):
                 return APIStatus.AUTH_FAILURE
-        
+
         return APIStatus.ERROR

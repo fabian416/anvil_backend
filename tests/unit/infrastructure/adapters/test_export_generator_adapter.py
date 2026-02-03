@@ -119,6 +119,7 @@ class TestExportGeneratorAdapter:
 
         # Verify content is valid JSON
         import json
+
         data = json.loads(content.decode())
 
         assert "metadata" in data
@@ -217,6 +218,7 @@ class TestExportGeneratorAdapter:
 
         # Verify wallet address was redacted
         import json
+
         data = json.loads(content.decode())
         messages_text = json.dumps(data["messages"])
 
@@ -352,6 +354,7 @@ class TestExportGeneratorAdapter:
         )
 
         import json
+
         data = json.loads(content.decode())
 
         assert "metadata" in data
@@ -371,6 +374,7 @@ class TestExportGeneratorAdapter:
         )
 
         import json
+
         data = json.loads(content.decode())
 
         assert "metadata" not in data
@@ -389,6 +393,7 @@ class TestExportGeneratorAdapter:
         )
 
         import json
+
         data = json.loads(content.decode())
 
         # Verify timestamps are not in messages
@@ -408,6 +413,7 @@ class TestExportGeneratorAdapter:
         )
 
         import json
+
         data = json.loads(content.decode())
 
         # Verify agent types are not in messages
@@ -476,9 +482,7 @@ class TestExportGeneratorAdapter:
     def test_validate_compliance_raises_for_invalid(self, export_adapter):
         """Test validate_compliance raises for invalid combinations."""
         with pytest.raises(ComplianceViolationError):
-            export_adapter.validate_compliance(
-                ExportFormat.CSV, ComplianceStandard.SEC
-            )
+            export_adapter.validate_compliance(ExportFormat.CSV, ComplianceStandard.SEC)
 
     @pytest.mark.asyncio
     async def test_empty_messages_raises_error(

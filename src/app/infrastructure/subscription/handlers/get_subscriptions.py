@@ -36,5 +36,3 @@ class GetSubscriptionsHandler:
             )
             for r in rows
         ]
-
-

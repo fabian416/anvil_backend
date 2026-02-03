@@ -3,9 +3,15 @@ Perplexity MCP Server.
 
 Provides access to Perplexity AI's search and research capabilities.
 """
+
 from typing import Dict, Any, Optional, List
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 from app.infrastructure.mcp.base import MCPServer
 from app.setup.config.mcp import MCPSettings
@@ -14,10 +20,10 @@ from app.setup.config.mcp import MCPSettings
 class PerplexityMCPServer(MCPServer):
     """
     MCP server for Perplexity AI API.
-    
+
     Provides intelligent search and research capabilities with retry support.
     """
-    
+
     def __init__(
         self,
         api_key: str,
@@ -27,18 +33,22 @@ class PerplexityMCPServer(MCPServer):
     ):
         """
         Initialize Perplexity MCP server.
-        
+
         Args:
             api_key: Perplexity API key
             base_url: Base URL for Perplexity API
             timeout_ms: Request timeout in milliseconds
             settings: MCP settings for retry configuration
         """
-        super().__init__("perplexity", version="1.0.0", description="Perplexity AI research MCP server")
+        super().__init__(
+            "perplexity",
+            version="1.0.0",
+            description="Perplexity AI research MCP server",
+        )
         self.api_key = api_key
         self.base_url = base_url
         self.timeout_seconds = timeout_ms / 1000.0
-        
+
         self.client = httpx.AsyncClient(
             base_url=base_url,
             timeout=self.timeout_seconds,
@@ -47,26 +57,28 @@ class PerplexityMCPServer(MCPServer):
                 "Content-Type": "application/json",
             },
         )
-        
+
         # Initialize retry decorator
         retry_config = settings.retry if settings else None
-        max_retries = retry_config.max_retries if retry_config and retry_config.enabled else 3
+        max_retries = (
+            retry_config.max_retries if retry_config and retry_config.enabled else 3
+        )
         initial_backoff = retry_config.initial_backoff_seconds if retry_config else 2.0
         max_backoff = retry_config.max_backoff_seconds if retry_config else 10.0
-        
+
         self._retry = retry(
             stop=stop_after_attempt(max_retries),
             wait=wait_exponential(multiplier=1, min=initial_backoff, max=max_backoff),
             retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
             reraise=True,
         )
-        
+
         self._register_tools()
 
     def setup_tools(self):
         """Implement abstract method - tools are registered in _register_tools."""
         pass
-    
+
     def _register_tools(self):
         """Register Perplexity MCP tools."""
         # Register search tool
@@ -95,7 +107,7 @@ class PerplexityMCPServer(MCPServer):
             },
             handler=self._search,
         )
-        
+
         # Register chat tool
         self.register_tool(
             name="chat",
@@ -124,7 +136,7 @@ class PerplexityMCPServer(MCPServer):
             },
             handler=self._chat,
         )
-    
+
     async def _search(
         self,
         query: str,
@@ -134,15 +146,16 @@ class PerplexityMCPServer(MCPServer):
     ) -> Dict[str, Any]:
         """
         Search using Perplexity AI.
-        
+
         Args:
             query: Search query
             model: Model to use
             max_tokens: Maximum tokens in response
-        
+
         Returns:
             Search results
         """
+
         @self._retry
         async def _fetch():
             response = await self.client.post(
@@ -160,15 +173,15 @@ class PerplexityMCPServer(MCPServer):
             )
             response.raise_for_status()
             return response.json()
-        
+
         try:
             data = await _fetch()
-            
+
             # Extract the response
             if "choices" in data and len(data["choices"]) > 0:
                 content = data["choices"][0].get("message", {}).get("content", "")
                 citations = data.get("citations", [])
-                
+
                 return {
                     "query": query,
                     "answer": content,
@@ -181,7 +194,7 @@ class PerplexityMCPServer(MCPServer):
                     "error": "No results found",
                     "query": query,
                 }
-        
+
         except httpx.HTTPError as e:
             return {
                 "error": f"Perplexity API error: {str(e)}",
@@ -192,7 +205,7 @@ class PerplexityMCPServer(MCPServer):
                 "error": f"Error searching with Perplexity: {str(e)}",
                 "query": query,
             }
-    
+
     async def _chat(
         self,
         messages: List[Dict[str, str]],
@@ -201,14 +214,15 @@ class PerplexityMCPServer(MCPServer):
     ) -> Dict[str, Any]:
         """
         Chat with Perplexity AI.
-        
+
         Args:
             messages: List of conversation messages
             model: Model to use
-        
+
         Returns:
             Chat response
         """
+
         @self._retry
         async def _fetch():
             response = await self.client.post(
@@ -220,14 +234,14 @@ class PerplexityMCPServer(MCPServer):
             )
             response.raise_for_status()
             return response.json()
-        
+
         try:
             data = await _fetch()
-            
+
             # Extract the response
             if "choices" in data and len(data["choices"]) > 0:
                 message = data["choices"][0].get("message", {})
-                
+
                 return {
                     "message": message,
                     "citations": data.get("citations", []),
@@ -238,7 +252,7 @@ class PerplexityMCPServer(MCPServer):
                 return {
                     "error": "No response from Perplexity",
                 }
-        
+
         except httpx.HTTPError as e:
             return {
                 "error": f"Perplexity API error: {str(e)}",
@@ -247,15 +261,17 @@ class PerplexityMCPServer(MCPServer):
             return {
                 "error": f"Error chatting with Perplexity: {str(e)}",
             }
-    
-    async def call_tool(self, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
+
+    async def call_tool(
+        self, tool_name: str, parameters: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Call a Perplexity tool.
-        
+
         Args:
             tool_name: Name of the tool
             parameters: Tool parameters
-        
+
         Returns:
             Tool response
         """
@@ -264,10 +280,10 @@ class PerplexityMCPServer(MCPServer):
                 "error": f"Unknown tool: {tool_name}",
                 "available_tools": list(self.tools.keys()),
             }
-        
+
         tool = self.tools[tool_name]
         handler = tool.handler
-        
+
         try:
             return await handler(**parameters)
         except Exception as e:
@@ -275,7 +291,7 @@ class PerplexityMCPServer(MCPServer):
                 "error": f"Tool execution error: {str(e)}",
                 "tool": tool_name,
             }
-    
+
     async def close(self):
         """Close the HTTP client."""
         await self.client.aclose()

@@ -15,8 +15,7 @@ class TestGuestPortfolioFlow:
         """Test that portfolio shows demo holdings for guests."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "portfolio", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "portfolio", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -60,7 +59,7 @@ class TestGuestPortfolioFlow:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "show my portfolio", "language": "en"}
+            json={"content": "show my portfolio", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -82,8 +81,7 @@ class TestGuestPortfolioFlow:
         """Test that portfolio shows 24h performance change."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "portfolio", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "portfolio", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -105,8 +103,7 @@ class TestGuestPortfolioFlow:
         """Test that portfolio shows detailed holdings breakdown."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "portfolio", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "portfolio", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -142,8 +139,7 @@ class TestGuestPortfolioFlow:
         """Test that portfolio shows performance highlights."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "portfolio", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "portfolio", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -152,7 +148,10 @@ class TestGuestPortfolioFlow:
         enrichment = data["enrichment"]
 
         # Should show performance section
-        assert any(word in content.lower() for word in ["performance", "highlights", "top performer"])
+        assert any(
+            word in content.lower()
+            for word in ["performance", "highlights", "top performer"]
+        )
 
         # Should identify top performer
         assert "portfolio" in enrichment
@@ -166,8 +165,7 @@ class TestGuestPortfolioFlow:
         """Test that portfolio shows diversification info."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "my portfolio", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "my portfolio", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -188,8 +186,7 @@ class TestGuestPortfolioFlow:
         """Test portfolio in Spanish."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "portafolio", "language": "es"}
+            "/api/v1/guest/chat", json={"content": "portafolio", "language": "es"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -197,15 +194,17 @@ class TestGuestPortfolioFlow:
         content = data["agent_message"]["content"]
 
         # Should contain Spanish or English text (fallback)
-        assert any(word in content.lower() for word in ["portafolio", "portfolio", "valor", "value"])
+        assert any(
+            word in content.lower()
+            for word in ["portafolio", "portfolio", "valor", "value"]
+        )
 
     @pytest.mark.asyncio
     async def test_portfolio_multilingual_portuguese(self, client):
         """Test portfolio in Portuguese."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "carteira", "language": "pt"}
+            "/api/v1/guest/chat", json={"content": "carteira", "language": "pt"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -213,15 +212,17 @@ class TestGuestPortfolioFlow:
         content = data["agent_message"]["content"]
 
         # Should contain Portuguese or English text (fallback)
-        assert any(word in content.lower() for word in ["portfólio", "portfolio", "valor", "value"])
+        assert any(
+            word in content.lower()
+            for word in ["portfólio", "portfolio", "valor", "value"]
+        )
 
     @pytest.mark.asyncio
     async def test_portfolio_multilingual_chinese(self, client):
         """Test portfolio in Chinese."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "投资组合", "language": "zh"}
+            "/api/v1/guest/chat", json={"content": "投资组合", "language": "zh"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -229,7 +230,9 @@ class TestGuestPortfolioFlow:
         content = data["agent_message"]["content"]
 
         # Should contain Chinese or English text (fallback)
-        assert any(word in content for word in ["投资组合", "Portfolio", "价值", "value"])
+        assert any(
+            word in content for word in ["投资组合", "Portfolio", "价值", "value"]
+        )
 
 
 class TestGuestPortfolioStorytellingQuality:
@@ -240,8 +243,7 @@ class TestGuestPortfolioStorytellingQuality:
         """Test that portfolio uses emojis to enhance communication."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "portfolio", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "portfolio", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -253,22 +255,23 @@ class TestGuestPortfolioStorytellingQuality:
         """Test that portfolio has clear signup call-to-action."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "portfolio", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "portfolio", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
         # Should have clear signup CTA
         assert "sign up" in content.lower() or "signup" in content.lower()
-        assert any(phrase in content.lower() for phrase in ["real portfolio", "your real", "actual"])
+        assert any(
+            phrase in content.lower()
+            for phrase in ["real portfolio", "your real", "actual"]
+        )
 
     @pytest.mark.asyncio
     async def test_portfolio_shows_clear_formatting(self, client):
         """Test that portfolio has clear visual formatting."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "portfolio", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "portfolio", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 

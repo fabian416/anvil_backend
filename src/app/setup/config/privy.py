@@ -15,12 +15,13 @@ from pydantic import BaseModel, ConfigDict, Field
 class WalletSourceMode(str, Enum):
     """
     Wallet data source mode configuration.
-    
+
     Controls how the backend fetches and stores wallet data:
     - PRIVY: Primary source is Privy API; DB used for caching/analytics
     - HYBRID: Use Privy when available, always persist to DB; tolerate outages
     - LOCAL: No Privy calls; DB-only mode for offline/air-gapped environments
     """
+
     PRIVY = "privy"
     HYBRID = "hybrid"
     LOCAL = "local"
@@ -32,8 +33,12 @@ class PrivySettings(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     app_id: str = Field(..., alias="APP_ID", description="Privy App ID")
-    client_id: str = Field(default="", alias="CLIENT_ID", description="Privy Client ID (for frontend SDK)")
-    app_secret: str = Field(default="", alias="APP_SECRET", description="Privy App Secret")
+    client_id: str = Field(
+        default="", alias="CLIENT_ID", description="Privy Client ID (for frontend SDK)"
+    )
+    app_secret: str = Field(
+        default="", alias="APP_SECRET", description="Privy App Secret"
+    )
     api_base_url: str = Field(
         default="https://api.privy.io",
         alias="API_BASE_URL",
@@ -68,9 +73,15 @@ class PrivySettings(BaseModel):
     @property
     def should_call_privy(self) -> bool:
         """Check if Privy API calls should be made."""
-        return self.wallets_source_mode in (WalletSourceMode.PRIVY, WalletSourceMode.HYBRID)
+        return self.wallets_source_mode in (
+            WalletSourceMode.PRIVY,
+            WalletSourceMode.HYBRID,
+        )
 
     @property
     def should_persist_to_db(self) -> bool:
         """Check if wallet data should always be persisted to DB."""
-        return self.wallets_source_mode in (WalletSourceMode.HYBRID, WalletSourceMode.LOCAL)
+        return self.wallets_source_mode in (
+            WalletSourceMode.HYBRID,
+            WalletSourceMode.LOCAL,
+        )

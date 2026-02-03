@@ -94,7 +94,9 @@ class InvalidTimeframeError(ApplicationError):
             details["timeframe"] = timeframe
         if valid_timeframes:
             details["valid_timeframes"] = valid_timeframes
-        super().__init__(ErrorCode.PORT_INVALID_TIMEFRAME, details=details, field="timeframe")
+        super().__init__(
+            ErrorCode.PORT_INVALID_TIMEFRAME, details=details, field="timeframe"
+        )
 
 
 class RebalanceFailedError(ApplicationError):
@@ -136,6 +138,7 @@ class InvalidPositionError(ApplicationError):
 
 
 # Additional portfolio-specific exceptions
+
 
 class PortfolioLimitExceededError(ApplicationError):
     """Raised when user has reached maximum portfolios."""

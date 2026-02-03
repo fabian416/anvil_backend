@@ -16,22 +16,22 @@ class DashboardData:
 
     # System health
     system_health: Dict[str, Any]
-    
+
     # Provider status
     providers: List[Dict[str, Any]]
-    
+
     # Model rankings
     top_models: List[Dict[str, Any]]
-    
+
     # Metrics summary
     metrics_summary: Dict[str, Any]
-    
+
     # Cost summary
     cost_summary: Dict[str, Any]
-    
+
     # Recent requests
     recent_requests: List[Dict[str, Any]]
-    
+
     # Alerts
     active_alerts: List[Dict[str, Any]]
 
@@ -39,7 +39,7 @@ class DashboardData:
 class GetDashboardData:
     """
     Get dashboard data query.
-    
+
     Aggregates all data needed for the admin dashboard
     in a single optimized query.
     """
@@ -55,17 +55,17 @@ class GetDashboardData:
     ) -> DashboardData:
         """
         Execute dashboard data query.
-        
+
         Args:
             period: Time period (1h, 24h, 7d, 30d)
             user_id: Optional user filter
-            
+
         Returns:
             Aggregated dashboard data
         """
         # TODO: Implement actual database queries
         # This is a placeholder structure
-        
+
         return DashboardData(
             system_health={
                 "status": "healthy",
@@ -176,7 +176,9 @@ class GetDashboardData:
             recent_requests=[
                 {
                     "request_id": "req_abc123",
-                    "timestamp": (datetime.now(UTC) - timedelta(seconds=30)).isoformat(),
+                    "timestamp": (
+                        datetime.now(UTC) - timedelta(seconds=30)
+                    ).isoformat(),
                     "agent_type": "swap_agent",
                     "provider": "vertex_ai",
                     "model": "gemini-1.5-pro",
@@ -186,7 +188,9 @@ class GetDashboardData:
                 },
                 {
                     "request_id": "req_def456",
-                    "timestamp": (datetime.now(UTC) - timedelta(seconds=45)).isoformat(),
+                    "timestamp": (
+                        datetime.now(UTC) - timedelta(seconds=45)
+                    ).isoformat(),
                     "agent_type": "trading_agent",
                     "provider": "deepinfra",
                     "model": "llama-3.1-405b",
@@ -201,7 +205,9 @@ class GetDashboardData:
                     "type": "budget_warning",
                     "severity": "low",
                     "message": "Daily budget at 76% (approaching 80% warning threshold)",
-                    "timestamp": (datetime.now(UTC) - timedelta(minutes=15)).isoformat(),
+                    "timestamp": (
+                        datetime.now(UTC) - timedelta(minutes=15)
+                    ).isoformat(),
                 }
             ],
         )

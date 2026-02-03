@@ -112,7 +112,9 @@ class ExecuteSupervisorWorkflow:
                 timestamp=datetime.now(UTC).isoformat(),
                 metadata={
                     "workflow_id": str(workflow_id),
-                    "agents_used": [task.agent_type.value for task in workflow_result.task_results],
+                    "agents_used": [
+                        task.agent_type.value for task in workflow_result.task_results
+                    ],
                     "is_supervisor_workflow": True,
                 },
             ),

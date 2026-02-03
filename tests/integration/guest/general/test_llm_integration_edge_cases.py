@@ -17,14 +17,21 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="LLM integration requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.llm]
+pytestmark = [
+    pytest.mark.skip(reason="LLM integration requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.llm,
+]
 
 
 class TestLLMIntegrationEdgeCases:
     """Test edge cases for LLM integration."""
 
     @pytest.mark.llm_validation
-    async def test_provider_selection_load_balancing(self, client: AsyncClient, llm_validator):
+    async def test_provider_selection_load_balancing(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test load distribution across available providers.
 
@@ -38,8 +45,8 @@ class TestLLMIntegrationEdgeCases:
                 "/api/v1/guest/chat",
                 json={
                     "content": f"What is the price of Ethereum? Query {i}",
-                    "language": "en"
-                }
+                    "language": "en",
+                },
             )
             responses.append(response)
 
@@ -51,7 +58,9 @@ class TestLLMIntegrationEdgeCases:
             assert len(data["agent_message"]["content"]) > 30
 
     @pytest.mark.llm_validation
-    async def test_llm_timeout_handling_comprehensive(self, client: AsyncClient, llm_validator):
+    async def test_llm_timeout_handling_comprehensive(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test timeout handling for LLM requests.
 
@@ -62,10 +71,10 @@ class TestLLMIntegrationEdgeCases:
             "/api/v1/guest/chat",
             json={
                 "content": "Provide comprehensive analysis of all major cryptocurrencies, "
-                          "their market caps, use cases, technology, teams, roadmaps, "
-                          "competitive advantages, and future predictions",
-                "language": "en"
-            }
+                "their market caps, use cases, technology, teams, roadmaps, "
+                "competitive advantages, and future predictions",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -79,7 +88,9 @@ class TestLLMIntegrationEdgeCases:
         assert len(agent_response) > 50, "Should provide meaningful response"
 
     @pytest.mark.llm_validation
-    async def test_llm_error_recovery_patterns(self, client: AsyncClient, llm_validator):
+    async def test_llm_error_recovery_patterns(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test recovery from various LLM errors.
 
@@ -91,16 +102,12 @@ class TestLLMIntegrationEdgeCases:
             "What is crypto?",  # Simple query
             "Explain the Byzantine Generals Problem in detail",  # Complex query
             "🚀🌙💎",  # Emoji-only query
-            "a" * 50  # Repetitive query
+            "a" * 50,  # Repetitive query
         ]
 
         for query in test_queries:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={
-                    "content": query,
-                    "language": "en"
-                }
+                "/api/v1/guest/chat", json={"content": query, "language": "en"}
             )
 
             # All queries should be handled without errors

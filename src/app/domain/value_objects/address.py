@@ -10,4 +10,5 @@ from app.domain.value_objects.base import ValueObject
 @dataclass(frozen=True, repr=False)
 class Address(ValueObject[str]):
     """Address value object."""
+
     value: str

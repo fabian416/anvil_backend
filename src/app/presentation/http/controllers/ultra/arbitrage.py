@@ -27,27 +27,29 @@ class ArbitrageOpportunityResponse(BaseModel):
     estimated_gas_cost: str = Field(..., description="Estimated gas cost USD")
     confidence_score: float = Field(..., description="Confidence score (0-1)")
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "opportunity_id": "ARB-1638360000-0001",
-            "type": "2hop",
-            "path": [
-                {
-                    "dex": "uniswap_v2",
-                    "token_in": "WETH",
-                    "token_out": "USDC",
-                    "amount_in": "10000",
-                    "amount_out": "20000000",
-                    "price": "2000.0",
-                }
-            ],
-            "expected_profit_usd": "95.50",
-            "profit_percentage": 0.955,
-            "required_capital": "10000",
-            "estimated_gas_cost": "15.00",
-            "confidence_score": 0.85,
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "opportunity_id": "ARB-1638360000-0001",
+                "type": "2hop",
+                "path": [
+                    {
+                        "dex": "uniswap_v2",
+                        "token_in": "WETH",
+                        "token_out": "USDC",
+                        "amount_in": "10000",
+                        "amount_out": "20000000",
+                        "price": "2000.0",
+                    }
+                ],
+                "expected_profit_usd": "95.50",
+                "profit_percentage": 0.955,
+                "required_capital": "10000",
+                "estimated_gas_cost": "15.00",
+                "confidence_score": 0.85,
+            }
         }
-    })
+    )
 
 
 class SimulationRequest(BaseModel):
@@ -55,7 +57,9 @@ class SimulationRequest(BaseModel):
 
     opportunity_id: str = Field(..., description="Opportunity ID to simulate")
 
-    model_config = ConfigDict(json_schema_extra={"example": {"opportunity_id": "ARB-1638360000-0001"}})
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"opportunity_id": "ARB-1638360000-0001"}}
+    )
 
 
 class SimulationResponse(BaseModel):
@@ -69,17 +73,19 @@ class SimulationResponse(BaseModel):
     success_probability: float = Field(..., description="Success probability (0-1)")
     recommendation: str = Field(..., description="Execute or Skip")
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "opportunity_id": "ARB-1638360000-0001",
-            "type": "2hop",
-            "expected_profit": "95.50",
-            "simulated_profit": "94.55",
-            "slippage_impact": "0.95",
-            "success_probability": 0.85,
-            "recommendation": "Execute",
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "opportunity_id": "ARB-1638360000-0001",
+                "type": "2hop",
+                "expected_profit": "95.50",
+                "simulated_profit": "94.55",
+                "slippage_impact": "0.95",
+                "success_probability": 0.85,
+                "recommendation": "Execute",
+            }
         }
-    })
+    )
 
 
 def create_arbitrage_router() -> APIRouter:
@@ -236,9 +242,7 @@ def create_arbitrage_router() -> APIRouter:
 
             # Sort
             if sort_by == "profit":
-                opportunities.sort(
-                    key=lambda x: x.expected_profit_usd, reverse=True
-                )
+                opportunities.sort(key=lambda x: x.expected_profit_usd, reverse=True)
             elif sort_by == "confidence":
                 opportunities.sort(key=lambda x: x.confidence_score, reverse=True)
             elif sort_by == "timestamp":
@@ -393,9 +397,7 @@ def create_arbitrage_router() -> APIRouter:
                 "total_opportunities": len(_discovered_opportunities),
                 "by_type": by_type,
                 "total_potential_profit": str(total_profit),
-                "average_profit": str(
-                    total_profit / len(_discovered_opportunities)
-                ),
+                "average_profit": str(total_profit / len(_discovered_opportunities)),
                 "best_opportunity": {
                     "id": best.opportunity_id,
                     "type": best.type.value,

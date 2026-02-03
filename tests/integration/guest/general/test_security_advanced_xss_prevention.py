@@ -18,14 +18,21 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.security]
+pytestmark = [
+    pytest.mark.skip(reason="Requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.security,
+]
 
 
 class TestSecurityAdvancedXSSPrevention:
     """Test advanced XSS prevention and security measures."""
 
     @pytest.mark.llm_validation
-    async def test_advanced_xss_script_injection(self, client: AsyncClient, llm_validator):
+    async def test_advanced_xss_script_injection(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test XSS prevention for sophisticated attack vectors.
 
@@ -46,11 +53,7 @@ class TestSecurityAdvancedXSSPrevention:
         for payload in xss_payloads:
             user_input = f"Tell me about crypto {payload}"
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={
-                    "content": user_input,
-                    "language": "en"
-                }
+                "/api/v1/guest/chat", json={"content": user_input, "language": "en"}
             )
 
             assert response.status_code == status.HTTP_200_OK
@@ -86,8 +89,8 @@ class TestSecurityAdvancedXSSPrevention:
                         "test_category": "security",
                         "attack_vector": "xss_injection",
                         "payload_type": payload[:20],
-                        "security_check": "response_should_not_reveal_security_awareness"
-                    }
+                        "security_check": "response_should_not_reveal_security_awareness",
+                    },
                 )
                 if validation.verdict != "PASS":
                     warnings.warn(
@@ -107,8 +110,8 @@ class TestSecurityAdvancedXSSPrevention:
             "/api/v1/guest/chat",
             json={
                 "content": "Show me an example of JavaScript code for blockchain",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -122,10 +125,16 @@ class TestSecurityAdvancedXSSPrevention:
         # If it contains script tag, it should be in code block or escaped
         if "script" in agent_response.lower():
             # Should be in markdown code block or properly escaped
-            assert "```" in agent_response or "&lt;" in agent_response or "\\<" in agent_response
+            assert (
+                "```" in agent_response
+                or "&lt;" in agent_response
+                or "\\<" in agent_response
+            )
 
     @pytest.mark.llm_validation
-    async def test_csrf_token_validation_edge_cases(self, client: AsyncClient, llm_validator):
+    async def test_csrf_token_validation_edge_cases(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test CSRF protection for various edge cases.
 
@@ -135,10 +144,7 @@ class TestSecurityAdvancedXSSPrevention:
         # Guest endpoint should work without CSRF token
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What is Ethereum?",
-                "language": "en"
-            }
+            json={"content": "What is Ethereum?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -148,17 +154,16 @@ class TestSecurityAdvancedXSSPrevention:
         # Should work with invalid CSRF token in guest mode
         response_with_token = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What is Bitcoin?",
-                "language": "en"
-            },
-            headers={"X-CSRF-Token": "invalid-token-123"}
+            json={"content": "What is Bitcoin?", "language": "en"},
+            headers={"X-CSRF-Token": "invalid-token-123"},
         )
 
         assert response_with_token.status_code == status.HTTP_200_OK
 
     @pytest.mark.llm_validation
-    async def test_security_headers_comprehensive(self, client: AsyncClient, llm_validator):
+    async def test_security_headers_comprehensive(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test security headers presence and correctness.
 

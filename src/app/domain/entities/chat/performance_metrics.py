@@ -300,7 +300,10 @@ class PerformanceMetrics:
             min_ms=min(self.response_times.min_ms or float("inf"), response_time_ms),
             max_ms=max(self.response_times.max_ms, response_time_ms),
             avg_ms=(
-                (self.response_times.avg_ms * (self.request_count - 1) + response_time_ms)
+                (
+                    self.response_times.avg_ms * (self.request_count - 1)
+                    + response_time_ms
+                )
                 / self.request_count
             ),
             total_requests=self.request_count,
@@ -343,7 +346,9 @@ class PerformanceMetrics:
     def get_avg_tokens_per_request(self) -> float:
         """Get average tokens per request."""
         return (
-            self.costs.token_count / self.request_count if self.request_count > 0 else 0.0
+            self.costs.token_count / self.request_count
+            if self.request_count > 0
+            else 0.0
         )
 
     def to_dict(self) -> dict:

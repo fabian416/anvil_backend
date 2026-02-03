@@ -12,7 +12,9 @@ from app.domain.value_objects.message_content import MessageContent
 
 if TYPE_CHECKING:
     from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
-    from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+    from app.domain.value_objects.agent_squad.conversation_context import (
+        ConversationContext,
+    )
     from app.domain.enums.agent_type import AgentType
 
 logger = logging.getLogger(__name__)
@@ -21,14 +23,14 @@ logger = logging.getLogger(__name__)
 class AgentExecutorAdapter:
     """
     Adapter that implements AgentExecutorPort using AgentOrchestrator.
-    
+
     This allows SupervisorCoordinator to execute agents through the orchestrator.
     """
 
     def __init__(self, orchestrator: "AgentOrchestrator"):
         """
         Initialize agent executor adapter.
-        
+
         Args:
             orchestrator: AgentOrchestrator to use for agent execution
         """
@@ -43,30 +45,31 @@ class AgentExecutorAdapter:
     ) -> "AgentResponse":
         """
         Execute specific agent and return full AgentResponse.
-        
+
         Args:
             conversation_id: Conversation identifier
             agent_type: Agent to execute
             message: Message content for agent
             conversation_context: Conversation context
-            
+
         Returns:
             AgentResponse with content, sources, and metadata
         """
         from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+
         try:
             # Build conversation context for orchestrator
             # The orchestrator expects a different context format
             from app.domain.value_objects.agent_squad.conversation_context import (
                 ConversationContext as OrchestratorContext,
             )
-            
+
             # The orchestrator's execute_agent expects conversation_context with conversation_id
             # We need to add conversation_id to the context
             from app.domain.value_objects.agent_squad.conversation_context import (
                 ConversationContext as OrchestratorContext,
             )
-            
+
             # Create context - pass conversation_id via session_metadata as ConversationId object
             # The orchestrator expects ConversationId object in session_metadata
             orchestrator_context = OrchestratorContext(
@@ -79,10 +82,10 @@ class AgentExecutorAdapter:
                     "conversation_id": conversation_id,  # Store ConversationId object (orchestrator will convert if needed)
                 },
             )
-            
+
             # Note: ConversationContext is frozen, so we can't assign conversation_id directly
             # The orchestrator will extract it from session_metadata and convert to ConversationId if needed
-            
+
             # Use orchestrator to execute agent
             # Note: orchestrator.execute_agent expects message as str, not MessageContent
             response = await self._orchestrator.execute_agent(
@@ -90,7 +93,7 @@ class AgentExecutorAdapter:
                 message=message.value,  # Convert MessageContent to str
                 conversation_context=orchestrator_context,
             )
-            
+
             # Return full AgentResponse if available, otherwise create one
             if isinstance(response, AgentResponse):
                 return response
@@ -100,6 +103,7 @@ class AgentExecutorAdapter:
             elif isinstance(response, str):
                 # Fallback: create minimal AgentResponse from string
                 from app.domain.enums.agent_type import AgentType
+
                 return AgentResponse(
                     content=response,
                     agent_type=agent_type,
@@ -116,7 +120,7 @@ class AgentExecutorAdapter:
                     sources=[],
                     metadata={},
                 )
-            
+
         except Exception as e:
             logger.error(
                 f"Failed to execute agent {agent_type.value}",

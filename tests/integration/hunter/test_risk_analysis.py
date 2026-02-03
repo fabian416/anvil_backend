@@ -115,6 +115,7 @@ class TestLiquidityRisk:
         assert 0 <= details["volume_consistency"] <= 1
         assert details["analysis_period_days"] == 7
 
+
 class TestSmartContractRisk:
     """Test smart contract risk analysis."""
 
@@ -148,6 +149,7 @@ class TestSmartContractRisk:
         assert eth_risk.score < 40
         assert btc_risk.score < 40
 
+
 class TestMarketCorrelationRisk:
     """Test market correlation risk analysis."""
 
@@ -179,6 +181,7 @@ class TestMarketCorrelationRisk:
         assert -1 <= details["correlation_with_btc"] <= 1
         assert details["analysis_period_days"] == 90
         assert details["systemic_risk_exposure"] in ["low", "moderate", "high"]
+
 
 class TestCompositeRiskAssessment:
     """Test comprehensive risk assessment."""

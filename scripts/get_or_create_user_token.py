@@ -25,7 +25,9 @@ from app.infrastructure.auth.session.id_generator_str import StrAuthSessionIdGen
 from app.infrastructure.auth.session.timer_utc import UtcAuthSessionTimer
 from app.infrastructure.auth.refresh_token.generator import RefreshTokenGenerator
 from app.infrastructure.auth.adapters.data_mapper_sqla import SqlaAuthSessionDataMapper
-from app.infrastructure.auth.adapters.access_token_processor_jwt import JwtAccessTokenProcessor
+from app.infrastructure.auth.adapters.access_token_processor_jwt import (
+    JwtAccessTokenProcessor,
+)
 from app.infrastructure.auth.session.model import AuthSession
 from app.domain.value_objects.user_id import UserId
 from app.setup.config.security import SecuritySettings
@@ -34,25 +36,27 @@ from app.setup.config.security import SecuritySettings
 async def get_or_create_user_token(email: str) -> str | None:
     """
     Get or create access token for user by email.
-    
+
     Args:
         email: User email address
-        
+
     Returns:
         Access token or None if not found
     """
     # Load settings
     settings = load_settings()
     database_url = settings.postgres.dsn
-    
+
     # Map tables
     map_users_table()
     map_sessions_table()
-    
+
     # Create async engine and session
     engine = create_async_engine(database_url, echo=False)
-    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+    async_session_maker = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
+
     async with async_session_maker() as session:
         # Get users table
         users_table = mapping_registry.metadata.tables.get("users")
@@ -60,27 +64,27 @@ async def get_or_create_user_token(email: str) -> str | None:
             print("❌ Users table not found")
             await engine.dispose()
             return None
-        
+
         # Get sessions table
         sessions_table = mapping_registry.metadata.tables.get("sessions")
         if sessions_table is None:
             print("❌ Sessions table not found")
             await engine.dispose()
             return None
-        
+
         # Find user by email
         stmt = select(users_table.c.id).where(users_table.c.email == email)
         result = await session.execute(stmt)
         user_row = result.first()
-        
+
         if not user_row:
             print(f"❌ User with email {email} not found")
             await engine.dispose()
             return None
-        
+
         user_id = user_row.id
         print(f"✓ Found user: {email} (ID: {user_id})")
-        
+
         # Try to get existing active session
         stmt = (
             select(sessions_table.c.access_token)
@@ -90,26 +94,28 @@ async def get_or_create_user_token(email: str) -> str | None:
             .order_by(sessions_table.c.expires_at.desc())
             .limit(1)
         )
-        
+
         result = await session.execute(stmt)
         token_row = result.first()
-        
+
         if token_row:
             access_token = token_row.access_token
             print(f"✓ Found existing access token: {access_token[:30]}...")
             await engine.dispose()
             return access_token
-        
+
         # No active session found - create new one
         print("⚠️  No active session found, creating new session...")
-        
+
         # Create auth session service components
-        from app.infrastructure.auth.adapters.access_token_processor_jwt import JwtAccessTokenProcessor
+        from app.infrastructure.auth.adapters.access_token_processor_jwt import (
+            JwtAccessTokenProcessor,
+        )
         from app.setup.config.security import SecuritySettings
-        
+
         security_settings = SecuritySettings()
         jwt_processor = JwtAccessTokenProcessor(security_settings)
-        
+
         # Create session
         session_id_generator = StrAuthSessionIdGenerator()
         session_timer = UtcAuthSessionTimer(
@@ -117,36 +123,40 @@ async def get_or_create_user_token(email: str) -> str | None:
             auth_session_refresh_threshold=security_settings.auth_session_refresh_threshold,
         )
         refresh_token_generator = RefreshTokenGenerator()
-        
+
         # Create auth session
         session_id = session_id_generator()
         expiration = session_timer.auth_session_expiration()
         refresh_token = refresh_token_generator()
-        
+
         auth_session = AuthSession(
             id_=session_id,
             user_id=UserId(value=user_id),
             expiration=expiration,
             refresh_token=refresh_token,
         )
-        
+
         # Create JWT access token
         access_token = jwt_processor.create_token(
             session_id=session_id,
             user_id=user_id,
             email=email,
         )
-        
+
         # Save session to database
-        from app.infrastructure.auth.adapters.data_mapper_sqla import SqlaAuthSessionDataMapper
+        from app.infrastructure.auth.adapters.data_mapper_sqla import (
+            SqlaAuthSessionDataMapper,
+        )
+
         auth_mapper = SqlaAuthSessionDataMapper(session)
         auth_mapper.add(auth_session)
         await session.commit()
-        
+
         # Also save to sessions table (legacy)
         from datetime import datetime, timedelta
+
         expires_at = expiration
-        
+
         insert_stmt = sessions_table.insert().values(
             user_id=user_id,
             access_token=access_token,
@@ -159,7 +169,7 @@ async def get_or_create_user_token(email: str) -> str | None:
         )
         await session.execute(insert_stmt)
         await session.commit()
-        
+
         print(f"✓ Created new access token: {access_token[:30]}...")
         await engine.dispose()
         return access_token
@@ -170,12 +180,12 @@ async def main():
     if len(sys.argv) < 2:
         print("Usage: python scripts/get_or_create_user_token.py <email>")
         sys.exit(1)
-    
+
     email = sys.argv[1]
     print(f"Searching for user: {email}")
-    
+
     token = await get_or_create_user_token(email)
-    
+
     if token:
         print(f"\n✅ Access Token:")
         print(token)

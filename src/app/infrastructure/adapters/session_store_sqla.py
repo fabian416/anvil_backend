@@ -17,7 +17,7 @@ from app.application.common.ports.session_store import SessionRow, SessionStore
 class SqlaSessionStore(SessionStore):
     """
     No-op session store.
-    
+
     The legacy sessions table has been removed. Authentication is now
     handled entirely by auth_sessions.
     This adapter exists only for API compatibility during migration.

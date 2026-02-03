@@ -69,14 +69,18 @@ class SettingsProvider(Provider):
     @provide
     def provide_privy_settings(self, settings: AppSettings) -> PrivySettings:
         if settings.privy is None:
-            raise ValueError("Privy settings not configured. Add [privy] section to config.toml")
+            raise ValueError(
+                "Privy settings not configured. Add [privy] section to config.toml"
+            )
         return settings.privy
 
     @provide
-    def provide_distillation_settings(self, settings: AppSettings) -> DistillationSettings:
+    def provide_distillation_settings(
+        self, settings: AppSettings
+    ) -> DistillationSettings:
         """
         Provide distillation settings with fail-safe defaults.
-        
+
         If distillation section is not in config.toml, returns disabled config.
         This allows the system to start without distillation configured.
         """
@@ -88,6 +92,7 @@ class SettingsProvider(Provider):
                 DistillationRetrySettings,
                 DistillationTelemetrySettings,
             )
+
             return DistillationSettings(
                 enabled=False,
                 provider="vertex_ai",
@@ -123,18 +128,16 @@ class SettingsProvider(Provider):
     ) -> TransactionConfirmationSettings:
         """
         Provide transaction confirmation worker settings.
-        
+
         Uses defaults from TransactionConfirmationSettings if not configured.
         """
         return settings.transaction_confirmation
 
     @provide
-    def provide_agent_squad_settings(
-        self, settings: AppSettings
-    ) -> AgentSquadSettings:
+    def provide_agent_squad_settings(self, settings: AppSettings) -> AgentSquadSettings:
         """
         Provide Agent Squad settings.
-        
+
         Includes:
         - use_demo_mode: If True, use demo handlers instead of real LLM
         - Other agent squad configuration
@@ -145,7 +148,7 @@ class SettingsProvider(Provider):
     def provide_moonpay_settings(self, settings: AppSettings) -> MoonPaySettings:
         """
         Provide MoonPay settings for on-ramp and swap operations.
-        
+
         Returns default (empty) settings if not configured.
         The MoonPaySwapClient will check is_configured before making calls.
         """

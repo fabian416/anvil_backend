@@ -32,7 +32,9 @@ class VerifyEmailHandler:
 
     async def execute(self, request_data: VerifyEmailRequest) -> None:
         user = await self._current_user_service.get_current_user()
-        row = await self._repo.read_by_user_and_token(user_id=user.id_.value, token=request_data.token)
+        row = await self._repo.read_by_user_and_token(
+            user_id=user.id_.value, token=request_data.token
+        )
         if not row:
             raise AuthorizationError("Invalid or expired verification token")
 
@@ -46,5 +48,3 @@ class VerifyEmailHandler:
         await self._repo.delete_by_id(id_=row["id"])  # type: ignore[index]
 
         await self._tx.commit()
-
-

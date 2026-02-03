@@ -30,19 +30,29 @@ for root, dirs, files in os.walk(base_dir):
         if file.endswith(".py") and file not in fixed_files:
             filepath = os.path.join(root, file)
             try:
-                with open(filepath, 'r') as f:
+                with open(filepath, "r") as f:
                     content = f.read()
-                    count = content.count('agent_output=agent_response')
+                    count = content.count("agent_output=agent_response")
                     if count > 0:
                         # Check for syntax errors
                         result = subprocess.run(
-                            [".venv/bin/python", "-m", "pytest", filepath, "--collect-only"],
+                            [
+                                ".venv/bin/python",
+                                "-m",
+                                "pytest",
+                                filepath,
+                                "--collect-only",
+                            ],
                             capture_output=True,
                             text=True,
-                            timeout=5
+                            timeout=5,
                         )
 
-                        has_syntax_error = "SyntaxError" in result.stderr or "IndentationError" in result.stderr or "error during collection" in result.stdout
+                        has_syntax_error = (
+                            "SyntaxError" in result.stderr
+                            or "IndentationError" in result.stderr
+                            or "error during collection" in result.stdout
+                        )
 
                         results.append((count, filepath, has_syntax_error))
             except Exception as e:
@@ -51,33 +61,33 @@ for root, dirs, files in os.walk(base_dir):
 # Sort by count descending
 results.sort(reverse=True, key=lambda x: x[0])
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("WORKING FILES (No Syntax Errors)")
-print("="*80)
+print("=" * 80)
 working = [r for r in results if not r[2]]
 for i, (count, filepath, _) in enumerate(working, 1):
     short_path = filepath.replace("/home/ubuntu/anvil_backend/", "")
     print(f"{i:2d}. {count:2d} instances - {short_path}")
 
-print(f"\n{'='*80}")
+print(f"\n{'=' * 80}")
 print(f"Working Files: {len(working)}")
 print(f"Total Instances: {sum(c for c, _, _ in working)}")
 
-print("\n" + "="*80)
+print("\n" + "=" * 80)
 print("BROKEN FILES (Have Syntax Errors)")
-print("="*80)
+print("=" * 80)
 broken = [r for r in results if r[2]]
 for i, (count, filepath, _) in enumerate(broken, 1):
     short_path = filepath.replace("/home/ubuntu/anvil_backend/", "")
     print(f"{i:2d}. {count:2d} instances - {short_path}")
 
-print(f"\n{'='*80}")
+print(f"\n{'=' * 80}")
 print(f"Broken Files: {len(broken)}")
 print(f"Total Instances: {sum(c for c, _, _ in broken)}")
 
-print(f"\n{'='*80}")
+print(f"\n{'=' * 80}")
 print(f"GRAND TOTAL")
-print(f"{'='*80}")
+print(f"{'=' * 80}")
 print(f"Total Files Remaining: {len(results)}")
 print(f"Working: {len(working)} | Broken: {len(broken)}")
 print(f"Total Instances: {sum(c for c, _, _ in results)}")

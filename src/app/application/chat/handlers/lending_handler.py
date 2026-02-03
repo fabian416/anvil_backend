@@ -52,28 +52,32 @@ class LendingHandlerResult:
     latency_ms: int
     language: str = "en"
     handler: str = "lending_handler"
-    pending_action: str | None = None  # For multi-turn flows (e.g., "lending_no_vaults", "lending_awaiting_asset", "lending_awaiting_chain")
-    lending_info: dict | None = None  # Lending info for continuation (chain, asset, awaiting_asset, awaiting_chain)
+    pending_action: str | None = (
+        None  # For multi-turn flows (e.g., "lending_no_vaults", "lending_awaiting_asset", "lending_awaiting_chain")
+    )
+    lending_info: dict | None = (
+        None  # Lending info for continuation (chain, asset, awaiting_asset, awaiting_chain)
+    )
     execute_data: dict | None = None  # Execute data for frontend transaction execution
 
 
 class LendingHandler:
     """
     Handler for lending-related chat intents.
-    
+
     Per CEO spec: Morpho only for lending, top 3 vaults by APY.
     Uses filters from product stack document.
-    
+
     Uses MorphoGateway to fetch real vault data from
     the Morpho GraphQL API (supports Ethereum + Base).
-    
+
     Features:
     - Top 3 vaults by APY (per CEO spec)
     - Whitelisted vault filtering
     - Multi-chain support (Ethereum, Base)
     - ERC-4626 deposit flow guidance
     """
-    
+
     # Per CEO spec: Show top 3 vaults
     MAX_VAULTS_TO_SHOW = 3
 
@@ -97,7 +101,7 @@ class LendingHandler:
         self._balance_checker = balance_checker
         self._leverage_loop_interactor = leverage_loop_interactor
         self._lending_repository = lending_repository
-    
+
     async def execute(
         self,
         message: str,
@@ -126,7 +130,7 @@ class LendingHandler:
             LendingHandlerResult with formatted content and vault data
         """
         start_time = time.time()
-        
+
         # Handle continuation from previous lending query (when no vaults found)
         if continuation_step and previous_lending_info:
             if continuation_step == "select_asset":
@@ -142,17 +146,21 @@ class LendingHandler:
             elif continuation_step == "check_later":
                 # User selected option 3 - check back later message
                 return self._handle_check_later(language)
-        
+
         # Handle asset/chain selection continuations (when user is selecting from options)
         # This happens when user selects an option after seeing the numbered list
         if previous_lending_info:
             if previous_lending_info.get("awaiting_asset"):
                 # User is selecting an asset from the options (e.g., "1" for USDC)
-                chain, asset = self._apply_asset_selection(message, previous_lending_info)
+                chain, asset = self._apply_asset_selection(
+                    message, previous_lending_info
+                )
                 # Continue with new asset (fall through to fetch vaults)
             elif previous_lending_info.get("awaiting_chain"):
                 # User is selecting a chain from the options (e.g., "1" for Ethereum)
-                chain, asset = self._apply_chain_selection(message, previous_lending_info)
+                chain, asset = self._apply_chain_selection(
+                    message, previous_lending_info
+                )
                 # Continue with new chain (fall through to fetch vaults)
             else:
                 # Use previous info as-is (for regular continuation)
@@ -160,38 +168,40 @@ class LendingHandler:
                 asset = previous_lending_info.get("asset", asset)
         else:
             # Extract chain and asset from message if not provided
-            extracted_chain, extracted_asset = self._extract_params_from_message(message)
+            extracted_chain, extracted_asset = self._extract_params_from_message(
+                message
+            )
             chain = extracted_chain if chain == "base" else chain
             asset = extracted_asset if asset == "USDC" else asset
-        
+
         # Fetch vaults from Morpho
         vaults = await self._morpho.get_vaults(
             asset=asset,
             chain=chain,
         )
-        
+
         # Filter whitelisted if requested
         if whitelisted_only:
             vaults = [v for v in vaults if v.whitelisted]
-        
+
         # Sort by APY (highest first)
         vaults = sorted(vaults, key=lambda v: v.apy, reverse=True)
-        
+
         # Generate response content - TOP 3 per CEO spec with i18n
         content = self._format_vault_response(
-            vaults=vaults[:self.MAX_VAULTS_TO_SHOW],
+            vaults=vaults[: self.MAX_VAULTS_TO_SHOW],
             chain=chain,
             asset=asset,
             message=message,
             language=language,
         )
-        
+
         # Prepare vault data for response - TOP 3 per CEO spec
-        vault_data = [self._vault_to_dict(v) for v in vaults[:self.MAX_VAULTS_TO_SHOW]]
-        
+        vault_data = [self._vault_to_dict(v) for v in vaults[: self.MAX_VAULTS_TO_SHOW]]
+
         best_apy = vaults[0].apy if vaults else 0.0
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         # Set pending_action if no vaults found (for multi-turn flow)
         pending_action = None
         lending_info = None
@@ -228,11 +238,13 @@ class LendingHandler:
                         token_address=best_vault.asset_address,
                         chain=chain,
                     )
-                    insufficient_balance_error = self._format_insufficient_balance_error(
-                        asset=best_vault.asset,
-                        current_balance=current_balance,
-                        required_amount=Decimal(default_amount),
-                        language=language,
+                    insufficient_balance_error = (
+                        self._format_insufficient_balance_error(
+                            asset=best_vault.asset,
+                            current_balance=current_balance,
+                            required_amount=Decimal(default_amount),
+                            language=language,
+                        )
                     )
                     # Don't generate execute_data if insufficient balance
                     execute_data = None
@@ -317,11 +329,11 @@ class LendingHandler:
     ) -> Optional[MorphoVault]:
         """
         Get detailed vault information.
-        
+
         Args:
             vault_address: Vault contract address
             chain: Blockchain network
-        
+
         Returns:
             MorphoVault if found, None otherwise
         """
@@ -329,7 +341,7 @@ class LendingHandler:
             vault_address=vault_address,
             chain=chain,
         )
-    
+
     async def compare_yields(
         self,
         asset: str = "USDC",
@@ -337,29 +349,29 @@ class LendingHandler:
     ) -> dict:
         """
         Compare yields across chains and protocols.
-        
+
         Args:
             asset: Asset to compare yields for
             chains: List of chains to compare (default: ethereum, base)
-        
+
         Returns:
             Comparison data with best opportunities
         """
         if chains is None:
             chains = ["ethereum", "base"]
-        
+
         results = await self._morpho.compare_yields(
             asset=asset,
             chains=chains,
         )
-        
+
         return {
             "asset": asset,
             "chains": chains,
             "best_opportunity": results.get("best", {}),
             "all_opportunities": results.get("opportunities", []),
         }
-    
+
     def _format_vault_response(
         self,
         vaults: list[MorphoVault],
@@ -370,10 +382,12 @@ class LendingHandler:
     ) -> str:
         """Format vault data as chat response with i18n support."""
         from app.application.chat.i18n import t
-        
+
         if not vaults:
-            no_vaults_msg = t("lending", "no_vaults", language, asset=asset, chain=chain.capitalize())
-            
+            no_vaults_msg = t(
+                "lending", "no_vaults", language, asset=asset, chain=chain.capitalize()
+            )
+
             # Numbered options for user selection with improved formatting
             options_msgs = {
                 "en": {
@@ -381,41 +395,49 @@ class LendingHandler:
                     "options": [
                         ("💎", "Try a different asset", "USDC, USDT, DAI, ETH, WBTC"),
                         ("🌐", "Try a different chain", "Ethereum, Base, Arbitrum"),
-                        ("⏰", "Check back later", "New vaults may be available soon")
-                    ]
+                        ("⏰", "Check back later", "New vaults may be available soon"),
+                    ],
                 },
                 "es": {
                     "header": "¿Qué te gustaría intentar?",
                     "options": [
                         ("💎", "Probar otro activo", "USDC, USDT, DAI, ETH, WBTC"),
                         ("🌐", "Probar otra cadena", "Ethereum, Base, Arbitrum"),
-                        ("⏰", "Verificar más tarde", "Puede haber nuevos vaults disponibles pronto")
-                    ]
+                        (
+                            "⏰",
+                            "Verificar más tarde",
+                            "Puede haber nuevos vaults disponibles pronto",
+                        ),
+                    ],
                 },
                 "pt": {
                     "header": "O que você gostaria de tentar?",
                     "options": [
                         ("💎", "Tentar outro ativo", "USDC, USDT, DAI, ETH, WBTC"),
                         ("🌐", "Tentar outra rede", "Ethereum, Base, Arbitrum"),
-                        ("⏰", "Verificar mais tarde", "Novos vaults podem estar disponíveis em breve")
-                    ]
+                        (
+                            "⏰",
+                            "Verificar mais tarde",
+                            "Novos vaults podem estar disponíveis em breve",
+                        ),
+                    ],
                 },
                 "zh": {
                     "header": "您想尝试什么？",
                     "options": [
                         ("💎", "尝试其他资产", "USDC, USDT, DAI, ETH, WBTC"),
                         ("🌐", "尝试其他链", "Ethereum, Base, Arbitrum"),
-                        ("⏰", "稍后查看", "可能很快会有新的金库")
-                    ]
+                        ("⏰", "稍后查看", "可能很快会有新的金库"),
+                    ],
                 },
             }
-            
+
             options = options_msgs.get(language, options_msgs["en"])
             options_text = "\n".join([
-                f"**{i}.** {emoji} **{title}**\n   {details}" 
+                f"**{i}.** {emoji} **{title}**\n   {details}"
                 for i, (emoji, title, details) in enumerate(options["options"], 1)
             ])
-            
+
             return f"""🔍 **{no_vaults_msg}**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -426,9 +448,9 @@ class LendingHandler:
 
 💬 **Reply with the number (1, 2, or 3) to continue.**
 """
-        
+
         chain_emoji = "🔵" if chain == "base" else "⟠"
-        
+
         response = f"""{chain_emoji} **{asset} MORPHO VAULTS ON {chain.upper()}**
 
 Top {len(vaults)} vaults by APY (Morpho Protocol):
@@ -438,23 +460,23 @@ Top {len(vaults)} vaults by APY (Morpho Protocol):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 """
-        
-        for i, vault in enumerate(vaults[:self.MAX_VAULTS_TO_SHOW], 1):
+
+        for i, vault in enumerate(vaults[: self.MAX_VAULTS_TO_SHOW], 1):
             apy_pct = vault.apy * 100
             curated = "⭐" if vault.whitelisted else ""
             tvl = self._format_tvl(vault.total_assets)
-            
+
             response += f"""**{i}. {vault.name}** {curated}
    • APY: **{apy_pct:.2f}%**
    • TVL: {tvl}
    • Address: `{vault.address[:10]}...{vault.address[-6:]}`
 
 """
-        
+
         # Best recommendation
         best = vaults[0]
         best_apy = best.apy * 100
-        
+
         response += f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **🎯 RECOMMENDATION**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -475,9 +497,9 @@ Top {len(vaults)} vaults by APY (Morpho Protocol):
 
 Would you like me to help you deposit into **{best.name}**?
 """
-        
+
         return response
-    
+
     def _vault_to_dict(self, vault: MorphoVault) -> dict:
         """Convert vault to dictionary for API response."""
         return {
@@ -493,7 +515,7 @@ Would you like me to help you deposit into **{best.name}**?
             "chain": vault.chain,
             "risk_tier": vault.risk_tier,
         }
-    
+
     def _format_tvl(self, total_assets: float) -> str:
         """Format total assets as human-readable TVL."""
         if total_assets >= 1_000_000_000:
@@ -504,24 +526,28 @@ Would you like me to help you deposit into **{best.name}**?
             return f"${total_assets / 1_000:.2f}K"
         else:
             return f"${total_assets:.2f}"
-    
+
     def _extract_params_from_message(self, message: str) -> tuple[str, str]:
         """
         Extract chain and asset from user message.
-        
+
         Returns:
             Tuple of (chain, asset)
         """
         message_lower = message.lower()
-        
+
         # Detect chain
         if "base" in message_lower:
             chain = "base"
-        elif "ethereum" in message_lower or "eth" in message_lower or "mainnet" in message_lower:
+        elif (
+            "ethereum" in message_lower
+            or "eth" in message_lower
+            or "mainnet" in message_lower
+        ):
             chain = "ethereum"
         else:
             chain = "base"  # Default to Base (CEO preference)
-        
+
         # Detect asset
         if "eth" in message_lower and "ether" in message_lower:
             asset = "ETH"
@@ -531,10 +557,12 @@ Would you like me to help you deposit into **{best.name}**?
             asset = "DAI"
         else:
             asset = "USDC"  # Default to USDC
-        
+
         return chain, asset
-    
-    def _handle_asset_selection(self, previous_info: dict, language: str) -> LendingHandlerResult:
+
+    def _handle_asset_selection(
+        self, previous_info: dict, language: str
+    ) -> LendingHandlerResult:
         """Handle asset selection after user chose option 1."""
         asset_options = {
             "en": {
@@ -544,8 +572,8 @@ Would you like me to help you deposit into **{best.name}**?
                     ("USDT", "Tether - Stablecoin"),
                     ("DAI", "Dai - Decentralized stablecoin"),
                     ("ETH", "Ethereum - Native token"),
-                    ("WBTC", "Wrapped Bitcoin - Bitcoin on Ethereum")
-                ]
+                    ("WBTC", "Wrapped Bitcoin - Bitcoin on Ethereum"),
+                ],
             },
             "es": {
                 "header": "Selecciona un activo para buscar vaults:",
@@ -554,8 +582,8 @@ Would you like me to help you deposit into **{best.name}**?
                     ("USDT", "Tether - Stablecoin"),
                     ("DAI", "Dai - Stablecoin descentralizado"),
                     ("ETH", "Ethereum - Token nativo"),
-                    ("WBTC", "Wrapped Bitcoin - Bitcoin en Ethereum")
-                ]
+                    ("WBTC", "Wrapped Bitcoin - Bitcoin en Ethereum"),
+                ],
             },
             "pt": {
                 "header": "Selecione um ativo para buscar vaults:",
@@ -564,8 +592,8 @@ Would you like me to help you deposit into **{best.name}**?
                     ("USDT", "Tether - Stablecoin"),
                     ("DAI", "Dai - Stablecoin descentralizado"),
                     ("ETH", "Ethereum - Token nativo"),
-                    ("WBTC", "Wrapped Bitcoin - Bitcoin no Ethereum")
-                ]
+                    ("WBTC", "Wrapped Bitcoin - Bitcoin no Ethereum"),
+                ],
             },
             "zh": {
                 "header": "选择资产以搜索金库:",
@@ -574,17 +602,17 @@ Would you like me to help you deposit into **{best.name}**?
                     ("USDT", "Tether - 稳定币"),
                     ("DAI", "Dai - 去中心化稳定币"),
                     ("ETH", "以太坊 - 原生代币"),
-                    ("WBTC", "Wrapped Bitcoin - 以太坊上的比特币")
-                ]
+                    ("WBTC", "Wrapped Bitcoin - 以太坊上的比特币"),
+                ],
             },
         }
-        
+
         options = asset_options.get(language, asset_options["en"])
         options_text = "\n".join([
-            f"**{i}.** 💰 **{symbol}** - {description}" 
+            f"**{i}.** 💰 **{symbol}** - {description}"
             for i, (symbol, description) in enumerate(options["options"], 1)
         ])
-        
+
         content = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **{options["header"]}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -593,14 +621,14 @@ Would you like me to help you deposit into **{best.name}**?
 
 💬 **Reply with the number (1-5) or type the asset name to continue.**
 """
-        
+
         # Mark that we're awaiting asset selection
         lending_info = {
             "chain": previous_info.get("chain", "base"),
             "asset": previous_info.get("asset", "USDC"),
             "awaiting_asset": True,
         }
-        
+
         return LendingHandlerResult(
             content=content,
             vaults=[],
@@ -611,12 +639,15 @@ Would you like me to help you deposit into **{best.name}**?
             language=language,
             pending_action="lending_awaiting_asset",
         )
-    
-    def _apply_asset_selection(self, message: str, previous_info: dict) -> tuple[str, str]:
+
+    def _apply_asset_selection(
+        self, message: str, previous_info: dict
+    ) -> tuple[str, str]:
         """Apply user's asset selection (number or name)."""
         import re
+
         message_upper = message.upper().strip()
-        
+
         # Check if user selected a numbered option (1-5)
         number_match = re.search(r"^(\d+)", message)
         if number_match:
@@ -624,17 +655,19 @@ Would you like me to help you deposit into **{best.name}**?
             assets = ["USDC", "USDT", "DAI", "ETH", "WBTC"]
             if 1 <= option_num <= len(assets):
                 return previous_info.get("chain", "base"), assets[option_num - 1]
-        
+
         # Check if message contains asset name
         assets = ["USDC", "USDT", "DAI", "ETH", "WBTC", "WETH", "BTC"]
         for asset in assets:
             if asset in message_upper:
                 return previous_info.get("chain", "base"), asset
-        
+
         # Default to USDC
         return previous_info.get("chain", "base"), "USDC"
-    
-    def _handle_chain_selection(self, previous_info: dict, language: str) -> LendingHandlerResult:
+
+    def _handle_chain_selection(
+        self, previous_info: dict, language: str
+    ) -> LendingHandlerResult:
         """Handle chain selection after user chose option 2."""
         chain_options = {
             "en": {
@@ -642,41 +675,49 @@ Would you like me to help you deposit into **{best.name}**?
                 "options": [
                     ("⟠", "Ethereum", "Mainnet - Largest DeFi ecosystem"),
                     ("🔵", "Base", "Layer 2 - Coinbase's L2 network"),
-                    ("🔷", "Arbitrum", "Layer 2 - High-performance scaling solution")
-                ]
+                    ("🔷", "Arbitrum", "Layer 2 - High-performance scaling solution"),
+                ],
             },
             "es": {
                 "header": "Selecciona una cadena para buscar vaults:",
                 "options": [
                     ("⟠", "Ethereum", "Mainnet - Ecosistema DeFi más grande"),
                     ("🔵", "Base", "Layer 2 - Red L2 de Coinbase"),
-                    ("🔷", "Arbitrum", "Layer 2 - Solución de escalado de alto rendimiento")
-                ]
+                    (
+                        "🔷",
+                        "Arbitrum",
+                        "Layer 2 - Solución de escalado de alto rendimiento",
+                    ),
+                ],
             },
             "pt": {
                 "header": "Selecione uma rede para buscar vaults:",
                 "options": [
                     ("⟠", "Ethereum", "Mainnet - Maior ecossistema DeFi"),
                     ("🔵", "Base", "Layer 2 - Rede L2 da Coinbase"),
-                    ("🔷", "Arbitrum", "Layer 2 - Solução de escalonamento de alto desempenho")
-                ]
+                    (
+                        "🔷",
+                        "Arbitrum",
+                        "Layer 2 - Solução de escalonamento de alto desempenho",
+                    ),
+                ],
             },
             "zh": {
                 "header": "选择链以搜索金库:",
                 "options": [
                     ("⟠", "Ethereum", "主网 - 最大的 DeFi 生态系统"),
                     ("🔵", "Base", "Layer 2 - Coinbase 的 L2 网络"),
-                    ("🔷", "Arbitrum", "Layer 2 - 高性能扩展解决方案")
-                ]
+                    ("🔷", "Arbitrum", "Layer 2 - 高性能扩展解决方案"),
+                ],
             },
         }
-        
+
         options = chain_options.get(language, chain_options["en"])
         options_text = "\n".join([
-            f"**{i}.** {emoji} **{chain}** - {description}" 
+            f"**{i}.** {emoji} **{chain}** - {description}"
             for i, (emoji, chain, description) in enumerate(options["options"], 1)
         ])
-        
+
         content = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 **{options["header"]}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -685,14 +726,14 @@ Would you like me to help you deposit into **{best.name}**?
 
 💬 **Reply with the number (1-3) or type the chain name to continue.**
 """
-        
+
         # Mark that we're awaiting chain selection
         lending_info = {
             "chain": previous_info.get("chain", "base"),
             "asset": previous_info.get("asset", "USDC"),
             "awaiting_chain": True,
         }
-        
+
         return LendingHandlerResult(
             content=content,
             vaults=[],
@@ -703,12 +744,15 @@ Would you like me to help you deposit into **{best.name}**?
             language=language,
             pending_action="lending_awaiting_chain",
         )
-    
-    def _apply_chain_selection(self, message: str, previous_info: dict) -> tuple[str, str]:
+
+    def _apply_chain_selection(
+        self, message: str, previous_info: dict
+    ) -> tuple[str, str]:
         """Apply user's chain selection (number or name)."""
         import re
+
         message_lower = message.lower().strip()
-        
+
         # Check if user selected a numbered option (1-3)
         number_match = re.search(r"^(\d+)", message_lower)
         if number_match:
@@ -716,18 +760,22 @@ Would you like me to help you deposit into **{best.name}**?
             chains = ["ethereum", "base", "arbitrum"]
             if 1 <= option_num <= len(chains):
                 return chains[option_num - 1], previous_info.get("asset", "USDC")
-        
+
         # Check if message contains chain name
-        if "ethereum" in message_lower or "eth" in message_lower and "mainnet" in message_lower:
+        if (
+            "ethereum" in message_lower
+            or "eth" in message_lower
+            and "mainnet" in message_lower
+        ):
             return "ethereum", previous_info.get("asset", "USDC")
         elif "base" in message_lower:
             return "base", previous_info.get("asset", "USDC")
         elif "arbitrum" in message_lower or "arb" in message_lower:
             return "arbitrum", previous_info.get("asset", "USDC")
-        
+
         # Default to base
         return "base", previous_info.get("asset", "USDC")
-    
+
     def _handle_check_later(self, language: str) -> LendingHandlerResult:
         """Handle check back later message after user chose option 3."""
         messages = {
@@ -772,7 +820,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
 
 🔔 **想要提醒？** 注册以在新金库可用时收到通知！""",
         }
-        
+
         return LendingHandlerResult(
             content=messages.get(language, messages["en"]),
             vaults=[],
@@ -951,9 +999,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
             # 1. Get initial balance
             token_address = self._get_token_address(asset, chain)
             balance = await self._balance_checker.get_balance(
-                wallet_address=wallet_address,
-                token_address=token_address,
-                chain=chain
+                wallet_address=wallet_address, token_address=token_address, chain=chain
             )
 
             if balance <= 0:
@@ -961,12 +1007,14 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                     message=self._translate("insufficient_balance", language).format(
                         asset=asset
                     ),
-                    language=language
+                    language=language,
                 )
 
             # 2. Get user preferences for safety thresholds
             if self._lending_repository:
-                preferences = await self._lending_repository.get_user_preferences(user_id)
+                preferences = await self._lending_repository.get_user_preferences(
+                    user_id
+                )
                 if preferences:
                     min_hf = preferences.min_health_factor
                     max_leverage = preferences.max_leverage
@@ -974,11 +1022,10 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                     # Check if user's target exceeds their max
                     if target_leverage > max_leverage:
                         return self._format_warning(
-                            message=self._translate("leverage_exceeds_preference", language).format(
-                                target=target_leverage,
-                                max=max_leverage
-                            ),
-                            language=language
+                            message=self._translate(
+                                "leverage_exceeds_preference", language
+                            ).format(target=target_leverage, max=max_leverage),
+                            language=language,
                         )
                 else:
                     min_hf = min_health_factor or Decimal("1.5")
@@ -993,7 +1040,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                 target_leverage=target_leverage,
                 protocol="aave",
                 chain=chain,
-                min_health_factor=min_hf
+                min_health_factor=min_hf,
             )
 
             # 4. Calculate loop steps
@@ -1034,9 +1081,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
 
             # 6. Format response with execution plan
             response_message = self._format_leverage_loop_plan(
-                result=result,
-                asset=asset,
-                language=language
+                result=result, asset=asset, language=language
             )
 
             # 7. Return ONLY first step's execute_data
@@ -1050,8 +1095,8 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                     "total_steps": result.total_steps,
                     "current_step": 1,
                     "warnings": result.warnings,
-                    "action_type": "leverage_loop_start"
-                }
+                    "action_type": "leverage_loop_start",
+                },
             }
 
         except InsufficientBalanceError as e:
@@ -1059,14 +1104,14 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                 message=self._translate("insufficient_balance", language).format(
                     asset=asset
                 ),
-                language=language
+                language=language,
             )
         except UnsupportedAssetError as e:
             return self._format_error(
                 message=self._translate("unsupported_leverage_asset", language).format(
                     asset=asset
                 ),
-                language=language
+                language=language,
             )
         except ValueError as e:
             if "leverage must be between" in str(e).lower():
@@ -1074,7 +1119,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                     message=self._translate("leverage_too_high", language).format(
                         max="4.0"
                     ),
-                    language=language
+                    language=language,
                 )
             raise
 
@@ -1104,7 +1149,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
         if not self._lending_repository:
             return self._format_error(
                 message=self._translate("repository_unavailable", language),
-                language=language
+                language=language,
             )
 
         # 1. Load loop execution state
@@ -1112,14 +1157,15 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
 
         if not loop_execution:
             return self._format_error(
-                message=self._translate("loop_not_found", language),
-                language=language
+                message=self._translate("loop_not_found", language), language=language
             )
 
         # 2. Update loop state with completed step
         updated_steps = loop_execution.steps_completed + [completed_tx_hash]
         current_step = loop_execution.current_step + 1
-        status = "completed" if current_step >= loop_execution.total_steps else "in_progress"
+        status = (
+            "completed" if current_step >= loop_execution.total_steps else "in_progress"
+        )
 
         # Create updated execution
         updated_execution = LeverageLoopExecution(
@@ -1161,9 +1207,9 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                         alert_type="loop_completed",
                         severity="info",
                         title=self._translate("loop_completed_title", language),
-                        message=self._translate("loop_completed_message", language).format(
-                            leverage=loop_execution.actual_leverage
-                        ),
+                        message=self._translate(
+                            "loop_completed_message", language
+                        ).format(leverage=loop_execution.actual_leverage),
                         health_factor=loop_execution.final_health_factor,
                         threshold_value=None,
                         position_id=None,
@@ -1181,8 +1227,8 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                 "metadata": {
                     "loop_completed": True,
                     "final_leverage": str(updated_execution.actual_leverage),
-                    "final_health_factor": str(updated_execution.final_health_factor)
-                }
+                    "final_health_factor": str(updated_execution.final_health_factor),
+                },
             }
 
         # 4. Recalculate health factor with latest data (safety check)
@@ -1194,7 +1240,9 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                 next_step_data = steps[current_step]
 
                 # Check if HF is still safe
-                health_factor_after = Decimal(next_step_data.get("health_factor_after", "1.5"))
+                health_factor_after = Decimal(
+                    next_step_data.get("health_factor_after", "1.5")
+                )
 
                 if health_factor_after < Decimal("1.2"):
                     # Mark loop as failed
@@ -1224,7 +1272,9 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                         completed_at=None,
                     )
 
-                    await self._lending_repository.update_loop_execution(failed_execution)
+                    await self._lending_repository.update_loop_execution(
+                        failed_execution
+                    )
 
                     # Create critical alert
                     if self._lending_repository:
@@ -1251,7 +1301,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                         message=self._translate("loop_hf_unsafe", language).format(
                             hf=health_factor_after
                         ),
-                        language=language
+                        language=language,
                     )
 
                 # 5. Get next step's execute_data
@@ -1259,7 +1309,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                     "message": self._format_next_step(
                         execution=updated_execution,
                         next_step_data=next_step_data,
-                        language=language
+                        language=language,
                     ),
                     "execute_data": next_step_data.get("execute_data"),
                     "metadata": {
@@ -1267,14 +1317,14 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                         "loop_id": str(loop_id),
                         "total_steps": updated_execution.total_steps,
                         "current_step": current_step + 1,
-                        "action_type": "leverage_loop_continue"
-                    }
+                        "action_type": "leverage_loop_continue",
+                    },
                 }
 
         # Fallback if metadata is missing
         return self._format_error(
             message=self._translate("loop_metadata_missing", language),
-            language=language
+            language=language,
         )
 
     def _get_token_address(self, asset: str, chain: str) -> str:
@@ -1310,7 +1360,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                 "cost": "Estimated Cost",
                 "warning": "WARNING",
                 "signatures": "This will require {} separate wallet signatures",
-                "risk": "Leverage trading is high risk - you could be liquidated"
+                "risk": "Leverage trading is high risk - you could be liquidated",
             },
             "es": {
                 "title": "Plan de Ejecución de Bucle de Apalancamiento",
@@ -1322,7 +1372,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                 "cost": "Costo Estimado",
                 "warning": "ADVERTENCIA",
                 "signatures": "Esto requerirá {} firmas de billetera separadas",
-                "risk": "El trading con apalancamiento es de alto riesgo - podrías ser liquidado"
+                "risk": "El trading con apalancamiento es de alto riesgo - podrías ser liquidado",
             },
             "pt": {
                 "title": "Plano de Execução de Loop de Alavancagem",
@@ -1334,7 +1384,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                 "cost": "Custo Estimado",
                 "warning": "AVISO",
                 "signatures": "Isso exigirá {} assinaturas de carteira separadas",
-                "risk": "Trading com alavancagem é de alto risco - você pode ser liquidado"
+                "risk": "Trading com alavancagem é de alto risco - você pode ser liquidado",
             },
             "zh": {
                 "title": "杠杆循环执行计划",
@@ -1347,27 +1397,27 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
                 "warning": "警告",
                 "signatures": "这将需要{}个单独的钱包签名",
                 "risk": "杠杆交易是高风险的 - 您可能会被清算",
-                "continue": "回复'是'以开始步骤1，或'取消'以中止"
+                "continue": "回复'是'以开始步骤1，或'取消'以中止",
             },
         }
 
         t = translations.get(language, translations["en"])
 
         return f"""
-🔄 **{t['title']}**
+🔄 **{t["title"]}**
 
-{t['leverage']}: {result.target_leverage}x
-{t['actual']}: {result.actual_leverage:.2f}x
-{t['steps']}: {result.total_steps}
-{t['hf']}: {result.final_health_factor:.2f}
-{t['apy']}: {result.estimated_apy:.2f}%
-{t['cost']}: ${result.total_cost_usd:.2f}
+{t["leverage"]}: {result.target_leverage}x
+{t["actual"]}: {result.actual_leverage:.2f}x
+{t["steps"]}: {result.total_steps}
+{t["hf"]}: {result.final_health_factor:.2f}
+{t["apy"]}: {result.estimated_apy:.2f}%
+{t["cost"]}: ${result.total_cost_usd:.2f}
 
-⚠️ **{t['warning']}**:
-- {t['signatures'].format(result.total_steps)}
-- {t['risk']}
+⚠️ **{t["warning"]}**:
+- {t["signatures"].format(result.total_steps)}
+- {t["risk"]}
 
-💬 {t['continue']}
+💬 {t["continue"]}
 """
 
     def _format_loop_completion(
@@ -1386,7 +1436,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
         template = translations.get(language, translations["en"])
         return template.format(
             leverage=execution.actual_leverage or 0,
-            hf=execution.final_health_factor or 0
+            hf=execution.final_health_factor or 0,
         )
 
     def _format_next_step(
@@ -1483,7 +1533,7 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
         return {
             "message": f"❌ {message}",
             "execute_data": None,
-            "metadata": {"error": True}
+            "metadata": {"error": True},
         }
 
     def _format_warning(self, message: str, language: str) -> dict:
@@ -1491,5 +1541,5 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
         return {
             "message": f"⚠️ {message}",
             "execute_data": None,
-            "metadata": {"warning": True}
+            "metadata": {"warning": True},
         }

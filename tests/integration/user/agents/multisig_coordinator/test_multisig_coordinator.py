@@ -35,7 +35,6 @@ MULTISIG_COORDINATOR_TESTS = [
         "category": "enterprise",
         "subcategory": "multisig_proposal",
     },
-    
     # Check Status
     {
         "test_id": "multisig_status_001",
@@ -51,7 +50,6 @@ MULTISIG_COORDINATOR_TESTS = [
         "category": "enterprise",
         "subcategory": "multisig_status",
     },
-    
     # Treasury Management
     {
         "test_id": "multisig_treasury_001",
@@ -67,7 +65,6 @@ MULTISIG_COORDINATOR_TESTS = [
         "category": "enterprise",
         "subcategory": "multisig_treasury",
     },
-    
     # Budget Management
     {
         "test_id": "multisig_budget_001",
@@ -93,30 +90,29 @@ def multisig_reporter() -> CSVReporter:
 @pytest.mark.asyncio
 class TestMultiSigCoordinatorAgent:
     """Test Multi-Sig Coordinator agent functionality."""
-    
+
     async def test_multisig_queries(self, authenticated_client, multisig_reporter):
         """Test multi-sig treasury management queries."""
         import asyncio
-        
+
         for test_case in MULTISIG_COORDINATOR_TESTS:
             conv_id = await create_conversation(
-                authenticated_client,
-                title=f"Test {test_case['test_id']}"
+                authenticated_client, title=f"Test {test_case['test_id']}"
             )
-            
+
             response_data, response_time = await send_message(
                 authenticated_client,
                 conv_id,
                 test_case["input"],
                 timeout=90.0,
             )
-            
+
             parsed = parse_response(response_data)
-            
+
             expected_agent = test_case.get("expected_agent", "")
             actual_agents = parsed.get("agents_used", "")
             has_error = parsed.get("error", False)
-            
+
             if has_error:
                 status = "FAIL"
             elif expected_agent and expected_agent in actual_agents:
@@ -125,7 +121,7 @@ class TestMultiSigCoordinatorAgent:
                 status = "PARTIAL"
             else:
                 status = "FAIL"
-            
+
             result = TestResult(
                 test_id=test_case["test_id"],
                 category=test_case.get("category", ""),
@@ -139,12 +135,16 @@ class TestMultiSigCoordinatorAgent:
                 status=status,
                 conversation_id=conv_id,
             )
-            
+
             multisig_reporter.add_result(result)
-            
-            status_emoji = "✅" if status == "PASS" else "⚠️" if status == "PARTIAL" else "❌"
-            print(f"{status_emoji} {test_case['test_id']}: {test_case['input'][:40]}... → {actual_agents} ({response_time}ms)")
-            
+
+            status_emoji = (
+                "✅" if status == "PASS" else "⚠️" if status == "PARTIAL" else "❌"
+            )
+            print(
+                f"{status_emoji} {test_case['test_id']}: {test_case['input'][:40]}... → {actual_agents} ({response_time}ms)"
+            )
+
             await asyncio.sleep(0.5)
 
 

@@ -23,7 +23,9 @@ from tests.helpers.test_data_loader import (
 class TestChatIntentClassification:
     """Component tests for Chat intent classification logic."""
 
-    @pytest.mark.parametrize("test_case", get_chat_test_cases(), ids=lambda tc: tc["id"])
+    @pytest.mark.parametrize(
+        "test_case", get_chat_test_cases(), ids=lambda tc: tc["id"]
+    )
     async def test_classify_chat_intent(
         self,
         mock_intent_classifier,
@@ -37,7 +39,9 @@ class TestChatIntentClassification:
         """
         # Arrange: Configure mock classifier to return expected intent
         expected_intent = test_case["expected_routing"]["intent"]
-        expected_confidence_min = test_case["expected_routing"].get("confidence_min", 0.5)
+        expected_confidence_min = test_case["expected_routing"].get(
+            "confidence_min", 0.5
+        )
 
         # Get IntentResult class from fixture
         IntentResult = mock_intent_classifier.IntentResult
@@ -146,7 +150,9 @@ class TestChatHandlerExecution:
 class TestChatEnrichmentValidation:
     """Component tests for Chat enrichment data structure."""
 
-    @pytest.mark.parametrize("test_case", get_chat_test_cases(), ids=lambda tc: tc["id"])
+    @pytest.mark.parametrize(
+        "test_case", get_chat_test_cases(), ids=lambda tc: tc["id"]
+    )
     async def test_chat_enrichment_structure(
         self,
         mock_chat_handler,
@@ -189,7 +195,10 @@ class TestChatEnrichmentValidation:
         if result_enrichment is not None:
             # If enrichment exists, verify structure
             if subcategory == "general_conversation":
-                assert "conversation_type" in result_enrichment or "topics" in result_enrichment, (
+                assert (
+                    "conversation_type" in result_enrichment
+                    or "topics" in result_enrichment
+                ), (
                     f"General conversation enrichment (when present) should include "
                     f"conversation_type or topics for {test_case['id']}"
                 )

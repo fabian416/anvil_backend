@@ -66,12 +66,18 @@ class ChatAnalyticsService:
         date_from = date_to - timedelta(days=days)
 
         # Gather all metrics
-        trends = await self._get_conversation_trends(user_id, date_from, date_to, time_range)
+        trends = await self._get_conversation_trends(
+            user_id, date_from, date_to, time_range
+        )
         agent_stats = await self._get_agent_usage_stats(user_id, date_from, date_to)
-        response_times = await self._get_response_time_metrics(user_id, date_from, date_to)
+        response_times = await self._get_response_time_metrics(
+            user_id, date_from, date_to
+        )
         topics = await self._analyze_topic_clusters(user_id, date_from, date_to)
         decisions = await self._calculate_decision_velocity(user_id, date_from, date_to)
-        collaboration = await self._get_team_collaboration_metrics(user_id, date_from, date_to)
+        collaboration = await self._get_team_collaboration_metrics(
+            user_id, date_from, date_to
+        )
         costs = await self._get_cost_metrics(user_id, date_from, date_to)
 
         # Generate formatted response
@@ -133,15 +139,19 @@ class ChatAnalyticsService:
 
         # Top 5 agents
         sorted_agents = sorted(
-            agent_stats.agent_invocations.items(),
-            key=lambda x: x[1],
-            reverse=True
+            agent_stats.agent_invocations.items(), key=lambda x: x[1], reverse=True
         )[:5]
 
         medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
         for idx, (agent, count) in enumerate(sorted_agents):
-            pct = (count / agent_stats.total_invocations * 100) if agent_stats.total_invocations > 0 else 0
-            lines.append(f"  {medals[idx]} {agent.replace('_', ' ').title()} - {pct:.0f}% ({count:,} invocations)")
+            pct = (
+                (count / agent_stats.total_invocations * 100)
+                if agent_stats.total_invocations > 0
+                else 0
+            )
+            lines.append(
+                f"  {medals[idx]} {agent.replace('_', ' ').title()} - {pct:.0f}% ({count:,} invocations)"
+            )
 
         lines.extend([
             "",

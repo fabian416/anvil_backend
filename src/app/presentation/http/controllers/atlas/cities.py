@@ -74,5 +74,3 @@ def create_cities_router() -> APIRouter:
         return [s.__dict__ for s in await interactor.execute(request)]
 
     return router
-
-

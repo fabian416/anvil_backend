@@ -12,6 +12,7 @@ from typing import Any
 
 class RiskLevel(str, Enum):
     """Risk level classification."""
+
     SAFE = "safe"
     MODERATE = "moderate"
     HIGH = "high"
@@ -112,7 +113,9 @@ class HealthFactor:
             value=value,
             collateral_usd=Decimal(str(data.get("collateral_usd", "0"))),
             debt_usd=Decimal(str(data.get("debt_usd", "0"))),
-            liquidation_threshold=Decimal(str(data.get("liquidation_threshold", "0.825"))),
+            liquidation_threshold=Decimal(
+                str(data.get("liquidation_threshold", "0.825"))
+            ),
         )
 
     @classmethod

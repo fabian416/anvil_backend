@@ -42,7 +42,7 @@ async def get_graph_analytics(
 ) -> GraphAnalyticsResponse:
     """
     Get comprehensive graph analytics.
-    
+
     Provides:
     - Overview statistics (node/edge counts)
     - Top protocols by TVL
@@ -50,10 +50,10 @@ async def get_graph_analytics(
     - Chain distribution
     - Health metrics
     """
-    
+
     # Get overview stats
     overview = await interactor.get_overview_stats()
-    
+
     # Get top protocols
     top_protocols_data = await interactor.get_top_protocols(limit=10)
     top_protocols = [
@@ -66,11 +66,11 @@ async def get_graph_analytics(
         )
         for p in top_protocols_data
     ]
-    
+
     # Get distributions
     category_dist = await interactor.get_category_distribution()
     chain_dist = await interactor.get_chain_distribution()
-    
+
     return GraphAnalyticsResponse(
         overview=GraphOverviewStats(**overview),
         top_protocols=top_protocols,
@@ -93,7 +93,7 @@ async def validate_graph(
 ) -> GraphValidationResponse:
     """
     Validate graph integrity.
-    
+
     Runs checks for:
     - Orphaned nodes (no relationships)
     - Circular dependencies
@@ -101,14 +101,14 @@ async def validate_graph(
     - Duplicate protocols
     - Invalid relationships
     """
-    
+
     report = await interactor.validate_all()
-    
+
     # Convert to response format
     checks = {}
     for check_name, check_result in report["checks"].items():
         checks[check_name] = ValidationIssue(**check_result)
-    
+
     return GraphValidationResponse(
         timestamp=report["timestamp"],
         checks=checks,
@@ -132,13 +132,13 @@ async def generate_embeddings(
 ) -> EmbeddingGenerationResponse:
     """
     Generate embeddings for protocols.
-    
+
     This endpoint triggers embedding generation for protocols.
     Embeddings are used for semantic search in hybrid retrieval.
-    
+
     Note: This can be a long-running operation.
     Consider running as a background task for production.
-    
+
     Example:
     ```json
     {
@@ -147,10 +147,10 @@ async def generate_embeddings(
     }
     ```
     """
-    
+
     stats = await interactor.generate_protocol_embeddings(
         limit=request.limit,
         force_regenerate=request.force_regenerate,
     )
-    
+
     return EmbeddingGenerationResponse(**stats)

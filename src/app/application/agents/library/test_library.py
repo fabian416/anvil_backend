@@ -86,17 +86,22 @@ def test_agent_configurations():
     all_agents = get_all_agents()
     for agent in all_agents:
         # Check temperature range
-        assert 0.0 <= agent.temperature <= 2.0, f"{agent.name}: Invalid temperature {agent.temperature}"
+        assert 0.0 <= agent.temperature <= 2.0, (
+            f"{agent.name}: Invalid temperature {agent.temperature}"
+        )
 
         # Check max_tokens
-        assert 100 <= agent.max_tokens <= 8000, f"{agent.name}: Invalid max_tokens {agent.max_tokens}"
+        assert 100 <= agent.max_tokens <= 8000, (
+            f"{agent.name}: Invalid max_tokens {agent.max_tokens}"
+        )
 
         # Check required fields
         assert agent.capabilities, f"{agent.name}: Missing capabilities"
         assert agent.personality_traits, f"{agent.name}: Missing personality_traits"
         assert agent.expertise_areas, f"{agent.name}: Missing expertise_areas"
-        assert agent.response_style in ["technical", "balanced", "beginner-friendly"], \
+        assert agent.response_style in ["technical", "balanced", "beginner-friendly"], (
             f"{agent.name}: Invalid response_style {agent.response_style}"
+        )
 
     print(f"✓ All agent configurations are valid")
 
@@ -108,7 +113,9 @@ def test_system_prompts():
     all_agents = get_all_agents()
     for agent in all_agents:
         prompt = agent.to_llm_prompt()
-        assert len(prompt) > 100, f"{agent.name}: System prompt too short ({len(prompt)} chars)"
+        assert len(prompt) > 100, (
+            f"{agent.name}: System prompt too short ({len(prompt)} chars)"
+        )
         assert agent.name in prompt, f"{agent.name}: Name not in system prompt"
 
     print(f"✓ All {len(all_agents)} agents have valid system prompts")
@@ -151,7 +158,9 @@ def test_registry_features():
 
     # Test stats
     stats = registry.get_library_stats()
-    assert stats["total_agents"] == 10, f"Stats show wrong count: {stats['total_agents']}"
+    assert stats["total_agents"] == 10, (
+        f"Stats show wrong count: {stats['total_agents']}"
+    )
     print(f"✓ Library stats: {stats['total_agents']} total agents")
 
     # Test summaries
@@ -178,7 +187,9 @@ def test_personality_traits():
     all_agents = get_all_agents()
     for agent in all_agents:
         for trait, value in agent.personality_traits.items():
-            assert 0.0 <= value <= 1.0, f"{agent.name}: Invalid trait value {trait}={value}"
+            assert 0.0 <= value <= 1.0, (
+                f"{agent.name}: Invalid trait value {trait}={value}"
+            )
 
     print(f"✓ All personality traits are in valid range [0.0, 1.0]")
 

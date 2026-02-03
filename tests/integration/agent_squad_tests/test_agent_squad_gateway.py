@@ -24,15 +24,15 @@ from app.setup.config.agent_squad import AgentSquadConfig
 @pytest.mark.asyncio
 class TestAgentSquadGatewayStructure:
     """Structural tests for Agent Squad integration."""
-    
+
     def test_agent_squad_gateway_exists(self):
         """Test AgentSquadGateway class exists."""
         assert AgentSquadGateway is not None
-    
+
     def test_anvil_squad_storage_exists(self):
         """Test AnvilSquadStorage adapter exists."""
         assert AnvilSquadStorage is not None
-    
+
     def test_agent_squad_config_exists(self):
         """Test AgentSquadConfig exists."""
         assert AgentSquadConfig is not None
@@ -40,10 +40,12 @@ class TestAgentSquadGatewayStructure:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Requires Agent Squad library installed and API keys configured")
+@pytest.mark.skip(
+    reason="Requires Agent Squad library installed and API keys configured"
+)
 class TestAgentSquadGateway:
     """Integration tests for Agent Squad integration."""
-    
+
     @pytest.mark.llm_validation
     async def test_trading_intent_classification(
         self,
@@ -54,24 +56,27 @@ class TestAgentSquadGateway:
         storage = AnvilSquadStorage(repo=mock_conversation_repo)
         config = AgentSquadConfig()
         gateway = AgentSquadGateway(storage=storage, config=config)
-        
+
         user_id = uuid4()
         session_id = f"test_{uuid4()}"
         message = "I want to swap 100 USDC for ETH on Uniswap"
-        
+
         # Act
         response = await gateway.process_message(
             user_id=user_id,
             session_id=session_id,
             message=message,
         )
-        
+
         # Assert
         assert response is not None
         assert len(response) > 0
         # Response should mention swap/trade concepts
-        assert any(word in response.lower() for word in ['swap', 'trade', 'uniswap', 'eth', 'usdc'])
-    
+        assert any(
+            word in response.lower()
+            for word in ["swap", "trade", "uniswap", "eth", "usdc"]
+        )
+
     @pytest.mark.llm_validation
     async def test_context_preservation(
         self,
@@ -82,27 +87,27 @@ class TestAgentSquadGateway:
         storage = AnvilSquadStorage(repo=mock_conversation_repo)
         config = AgentSquadConfig()
         gateway = AgentSquadGateway(storage=storage, config=config)
-        
+
         user_id = uuid4()
         session_id = f"test_{uuid4()}"
-        
+
         # Act - First message
         response1 = await gateway.process_message(
             user_id=user_id,
             session_id=session_id,
             message="What is Aave?",
         )
-        
+
         # Act - Follow-up message (should understand "it" refers to Aave)
         response2 = await gateway.process_message(
             user_id=user_id,
             session_id=session_id,
             message="What are the risks of using it?",
         )
-        
+
         # Assert
         assert "aave" in response2.lower() or "lending" in response2.lower()
-    
+
     @pytest.mark.llm_validation
     async def test_agent_switching(
         self,
@@ -113,28 +118,28 @@ class TestAgentSquadGateway:
         storage = AnvilSquadStorage(repo=mock_conversation_repo)
         config = AgentSquadConfig()
         gateway = AgentSquadGateway(storage=storage, config=config)
-        
+
         user_id = uuid4()
         session_id = f"test_{uuid4()}"
-        
+
         # Act - Portfolio question
         response1 = await gateway.process_message(
             user_id=user_id,
             session_id=session_id,
             message="Show me my portfolio",
         )
-        
+
         # Act - Switch to risk question
         response2 = await gateway.process_message(
             user_id=user_id,
             session_id=session_id,
             message="What are my liquidation risks?",
         )
-        
+
         # Assert - Both should have valid responses
         assert len(response1) > 0
         assert len(response2) > 0
-    
+
     @pytest.mark.llm_validation
     async def test_lending_agent_classification(
         self,
@@ -145,23 +150,25 @@ class TestAgentSquadGateway:
         storage = AnvilSquadStorage(repo=mock_conversation_repo)
         config = AgentSquadConfig()
         gateway = AgentSquadGateway(storage=storage, config=config)
-        
+
         user_id = uuid4()
         session_id = f"test_{uuid4()}"
         message = "I want to supply 1000 USDC to Aave to earn yield"
-        
+
         # Act
         response = await gateway.process_message(
             user_id=user_id,
             session_id=session_id,
             message=message,
         )
-        
+
         # Assert
         assert response is not None
         assert len(response) > 0
-        assert any(word in response.lower() for word in ['lend', 'supply', 'aave', 'yield'])
-    
+        assert any(
+            word in response.lower() for word in ["lend", "supply", "aave", "yield"]
+        )
+
     @pytest.mark.llm_validation
     async def test_market_data_agent_classification(
         self,
@@ -172,22 +179,22 @@ class TestAgentSquadGateway:
         storage = AnvilSquadStorage(repo=mock_conversation_repo)
         config = AgentSquadConfig()
         gateway = AgentSquadGateway(storage=storage, config=config)
-        
+
         user_id = uuid4()
         session_id = f"test_{uuid4()}"
         message = "What is the current price of ETH?"
-        
+
         # Act
         response = await gateway.process_message(
             user_id=user_id,
             session_id=session_id,
             message=message,
         )
-        
+
         # Assert
         assert response is not None
         assert len(response) > 0
-    
+
     @pytest.mark.llm_validation
     async def test_risk_analysis_agent_classification(
         self,
@@ -198,22 +205,22 @@ class TestAgentSquadGateway:
         storage = AnvilSquadStorage(repo=mock_conversation_repo)
         config = AgentSquadConfig()
         gateway = AgentSquadGateway(storage=storage, config=config)
-        
+
         user_id = uuid4()
         session_id = f"test_{uuid4()}"
         message = "What is my liquidation risk if ETH drops 20%?"
-        
+
         # Act
         response = await gateway.process_message(
             user_id=user_id,
             session_id=session_id,
             message=message,
         )
-        
+
         # Assert
         assert response is not None
         assert len(response) > 0
-    
+
     @pytest.mark.llm_validation
     async def test_research_agent_fallback(
         self,
@@ -224,23 +231,23 @@ class TestAgentSquadGateway:
         storage = AnvilSquadStorage(repo=mock_conversation_repo)
         config = AgentSquadConfig()
         gateway = AgentSquadGateway(storage=storage, config=config)
-        
+
         user_id = uuid4()
         session_id = f"test_{uuid4()}"
         message = "What is DeFi?"
-        
+
         # Act
         response = await gateway.process_message(
             user_id=user_id,
             session_id=session_id,
             message=message,
         )
-        
+
         # Assert
         assert response is not None
         assert len(response) > 0
         assert "defi" in response.lower()
-    
+
     @pytest.mark.llm_validation
     async def test_error_handling(
         self,
@@ -251,17 +258,17 @@ class TestAgentSquadGateway:
         storage = AnvilSquadStorage(repo=mock_conversation_repo)
         config = AgentSquadConfig()
         gateway = AgentSquadGateway(storage=storage, config=config)
-        
+
         user_id = uuid4()
         session_id = f"test_{uuid4()}"
-        
+
         # Act - Empty message should still return response
         response = await gateway.process_message(
             user_id=user_id,
             session_id=session_id,
             message="",
         )
-        
+
         # Assert
         assert response is not None
         assert len(response) > 0

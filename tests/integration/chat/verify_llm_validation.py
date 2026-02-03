@@ -17,7 +17,7 @@ import sys
 import asyncio
 
 # Add project to path
-sys.path.insert(0, '/home/ubuntu/anvil_backend')
+sys.path.insert(0, "/home/ubuntu/anvil_backend")
 
 # Configure environment
 os.environ["DEEPINFRA_API_KEY"] = "ur1aITAnOmIXK0LTT1zCBDGnk3elzsVA"
@@ -37,7 +37,9 @@ async def verify_system():
 
     # Step 1: Check configuration
     print("\n1. Configuration Check:")
-    print(f"   DEEPINFRA_API_KEY: {'✅ SET' if os.getenv('DEEPINFRA_API_KEY') else '❌ NOT SET'}")
+    print(
+        f"   DEEPINFRA_API_KEY: {'✅ SET' if os.getenv('DEEPINFRA_API_KEY') else '❌ NOT SET'}"
+    )
     print(f"   ENABLE_LLM_VALIDATION: {os.getenv('ENABLE_LLM_VALIDATION')}")
     print(f"   ENABLE_LOG_ANALYSIS: {os.getenv('ENABLE_LOG_ANALYSIS')}")
 
@@ -103,6 +105,7 @@ async def verify_system():
 
     # Verify CSV format
     import csv
+
     with open("/tmp/verify_test.csv", "r") as f:
         reader = csv.DictReader(f)
         headers = reader.fieldnames

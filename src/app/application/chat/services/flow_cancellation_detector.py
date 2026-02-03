@@ -27,57 +27,193 @@ logger = logging.getLogger(__name__)
 TOPIC_CHANGE_KEYWORDS = {
     "en": [
         # Explicit cancellation
-        "cancel", "stop", "abort", "never mind", "forget it", "nevermind",
-        "exit", "quit", "back", "no thanks",
+        "cancel",
+        "stop",
+        "abort",
+        "never mind",
+        "forget it",
+        "nevermind",
+        "exit",
+        "quit",
+        "back",
+        "no thanks",
         # Topic switching indicators
-        "actually", "instead", "rather", "what about", "how about",
-        "show me", "tell me", "what is", "what's", "give me",
-        "i want to", "i'd like to", "can you", "could you",
+        "actually",
+        "instead",
+        "rather",
+        "what about",
+        "how about",
+        "show me",
+        "tell me",
+        "what is",
+        "what's",
+        "give me",
+        "i want to",
+        "i'd like to",
+        "can you",
+        "could you",
     ],
     "es": [
         # Explicit cancellation
-        "cancelar", "parar", "abortar", "no importa", "olvídalo", "olvidalo",
-        "salir", "atrás", "no gracias",
+        "cancelar",
+        "parar",
+        "abortar",
+        "no importa",
+        "olvídalo",
+        "olvidalo",
+        "salir",
+        "atrás",
+        "no gracias",
         # Topic switching
-        "mejor", "en lugar", "en vez", "qué tal", "que tal",
-        "muéstrame", "dime", "qué es", "que es", "dame",
-        "quiero", "quisiera", "puedes", "podrías",
+        "mejor",
+        "en lugar",
+        "en vez",
+        "qué tal",
+        "que tal",
+        "muéstrame",
+        "dime",
+        "qué es",
+        "que es",
+        "dame",
+        "quiero",
+        "quisiera",
+        "puedes",
+        "podrías",
     ],
     "pt": [
         # Explicit cancellation
-        "cancelar", "parar", "abortar", "não importa", "esquece",
-        "sair", "voltar", "não obrigado",
+        "cancelar",
+        "parar",
+        "abortar",
+        "não importa",
+        "esquece",
+        "sair",
+        "voltar",
+        "não obrigado",
         # Topic switching
-        "melhor", "ao invés", "ao inves", "que tal",
-        "mostre-me", "me mostre", "me diga", "o que é", "o que e", "me dê",
-        "quero", "gostaria", "pode", "poderia",
+        "melhor",
+        "ao invés",
+        "ao inves",
+        "que tal",
+        "mostre-me",
+        "me mostre",
+        "me diga",
+        "o que é",
+        "o que e",
+        "me dê",
+        "quero",
+        "gostaria",
+        "pode",
+        "poderia",
     ],
     "zh": [
         # Explicit cancellation
-        "取消", "停止", "算了", "没关系", "忘了",
-        "退出", "返回", "不用了",
+        "取消",
+        "停止",
+        "算了",
+        "没关系",
+        "忘了",
+        "退出",
+        "返回",
+        "不用了",
         # Topic switching
-        "换个", "实际上", "其实", "什么是", "怎么",
-        "给我看", "告诉我", "我想", "可以",
+        "换个",
+        "实际上",
+        "其实",
+        "什么是",
+        "怎么",
+        "给我看",
+        "告诉我",
+        "我想",
+        "可以",
     ],
     "fr": [
         # Explicit cancellation
-        "annuler", "arrêter", "arreter", "abandonner", "peu importe", "oublie",
-        "sortir", "retour", "non merci",
+        "annuler",
+        "arrêter",
+        "arreter",
+        "abandonner",
+        "peu importe",
+        "oublie",
+        "sortir",
+        "retour",
+        "non merci",
         # Topic switching
-        "plutôt", "plutot", "au lieu", "et si", "qu'est-ce que",
-        "montre-moi", "dis-moi", "donne-moi",
-        "je veux", "je voudrais", "peux-tu", "pourrais-tu",
+        "plutôt",
+        "plutot",
+        "au lieu",
+        "et si",
+        "qu'est-ce que",
+        "montre-moi",
+        "dis-moi",
+        "donne-moi",
+        "je veux",
+        "je voudrais",
+        "peux-tu",
+        "pourrais-tu",
     ],
 }
 
 # Question patterns that indicate new queries (not flow continuations)
 QUESTION_PATTERNS = {
-    "en": ["what", "how", "show", "tell", "give", "can you", "where", "when", "why", "which"],
-    "es": ["qué", "que", "cuál", "cual", "cómo", "como", "muestra", "dime", "dame", "puedes", "dónde", "donde", "cuándo", "cuando", "por qué", "porque"],
-    "pt": ["o que", "qual", "como", "mostre", "diga", "dê", "pode", "onde", "quando", "por que", "porque"],
+    "en": [
+        "what",
+        "how",
+        "show",
+        "tell",
+        "give",
+        "can you",
+        "where",
+        "when",
+        "why",
+        "which",
+    ],
+    "es": [
+        "qué",
+        "que",
+        "cuál",
+        "cual",
+        "cómo",
+        "como",
+        "muestra",
+        "dime",
+        "dame",
+        "puedes",
+        "dónde",
+        "donde",
+        "cuándo",
+        "cuando",
+        "por qué",
+        "porque",
+    ],
+    "pt": [
+        "o que",
+        "qual",
+        "como",
+        "mostre",
+        "diga",
+        "dê",
+        "pode",
+        "onde",
+        "quando",
+        "por que",
+        "porque",
+    ],
     "zh": ["什么", "怎么", "如何", "哪", "为什么", "哪里", "什么时候"],
-    "fr": ["quoi", "quel", "quelle", "comment", "montre", "dis", "donne", "peux", "où", "ou", "quand", "pourquoi"],
+    "fr": [
+        "quoi",
+        "quel",
+        "quelle",
+        "comment",
+        "montre",
+        "dis",
+        "donne",
+        "peux",
+        "où",
+        "ou",
+        "quand",
+        "pourquoi",
+    ],
 }
 
 # Map pending_action prefixes to their intent
@@ -156,7 +292,7 @@ class FlowCancellationDetector:
                         "keyword": keyword,
                         "language": language,
                         "pending_action": pending_action,
-                    }
+                    },
                 )
                 return (True, f"keyword_match:{keyword}")
 
@@ -178,19 +314,22 @@ class FlowCancellationDetector:
                         "current_intent": current_intent,
                         "language": language,
                         "is_question": is_question,
-                    }
+                    },
                 )
                 return (True, f"intent_mismatch:{expected_intent}→{current_intent}")
 
             # Intent changed but not a clear question - still likely a topic change
             # Examples: "lending" flow but user says "swap USDC for ETH"
-            if current_intent in FLOW_TO_INTENT_MAP and current_intent != expected_intent:
+            if (
+                current_intent in FLOW_TO_INTENT_MAP
+                and current_intent != expected_intent
+            ):
                 logger.info(
                     f"Topic change detected via different flow intent",
                     extra={
                         "expected_intent": expected_intent,
                         "current_intent": current_intent,
-                    }
+                    },
                 )
                 return (True, f"flow_change:{expected_intent}→{current_intent}")
 
@@ -200,7 +339,7 @@ class FlowCancellationDetector:
             extra={
                 "pending_action": pending_action,
                 "intent": current_intent,
-            }
+            },
         )
         return (False, "continuing_flow")
 
@@ -243,7 +382,7 @@ class FlowCancellationDetector:
             return None
 
         # Extract everything after the keyword
-        remaining = content[keyword_pos + len(keyword):].strip()
+        remaining = content[keyword_pos + len(keyword) :].strip()
 
         if not remaining:
             return None
@@ -252,7 +391,17 @@ class FlowCancellationDetector:
         # Common patterns: comma, period, semicolon, "then", "and"
         separators = {
             "en": [",", ".", ";", " then ", " and ", " - ", ":", " but ", " though "],
-            "es": [",", ".", ";", " entonces ", " y ", " - ", ":", " pero ", " aunque "],
+            "es": [
+                ",",
+                ".",
+                ";",
+                " entonces ",
+                " y ",
+                " - ",
+                ":",
+                " pero ",
+                " aunque ",
+            ],
             "pt": [",", ".", ";", " então ", " e ", " - ", ":", " mas ", " embora "],
             "zh": ["，", "。", "；", "然后", "和", "-", "：", "但是"],
             "fr": [",", ".", ";", " puis ", " et ", " - ", ":", " mais ", " bien que "],
@@ -264,7 +413,7 @@ class FlowCancellationDetector:
         # Remove leading separator
         for sep in lang_separators:
             if remaining.lower().startswith(sep.strip()):
-                remaining = remaining[len(sep):].strip()
+                remaining = remaining[len(sep) :].strip()
                 break
 
         # Must have meaningful content (> 5 characters)
@@ -285,7 +434,7 @@ class FlowCancellationDetector:
                 "keyword": keyword,
                 "extracted": remaining,
                 "language": language,
-            }
+            },
         )
 
         return remaining
@@ -322,7 +471,7 @@ class FlowCancellationDetector:
             f"Cleared flow metadata",
             extra={
                 "removed_keys": [k for k in flow_keys if k in metadata],
-            }
+            },
         )
 
         return cleaned_metadata

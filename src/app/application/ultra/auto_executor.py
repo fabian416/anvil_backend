@@ -82,7 +82,10 @@ class AutoExecutor:
             Status message
         """
         if self._status == AutoExecutorStatus.RUNNING:
-            return {"status": "already_running", "message": "Auto-executor already running"}
+            return {
+                "status": "already_running",
+                "message": "Auto-executor already running",
+            }
 
         self._status = AutoExecutorStatus.RUNNING
         return {
@@ -102,7 +105,10 @@ class AutoExecutor:
             Status message
         """
         if self._status == AutoExecutorStatus.STOPPED:
-            return {"status": "already_stopped", "message": "Auto-executor already stopped"}
+            return {
+                "status": "already_stopped",
+                "message": "Auto-executor already stopped",
+            }
 
         self._status = AutoExecutorStatus.STOPPED
         return {
@@ -229,7 +235,9 @@ class AutoExecutor:
         return {
             "status": self._status.value,
             "total_executions": self._execution_count,
-            "last_scan": self._last_scan_time.isoformat() if self._last_scan_time else None,
+            "last_scan": self._last_scan_time.isoformat()
+            if self._last_scan_time
+            else None,
             "metrics": metrics.to_dict(),
             "risk_score": round(risk_score * 100, 2),
             "config": {

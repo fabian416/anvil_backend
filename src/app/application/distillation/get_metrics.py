@@ -1,16 +1,20 @@
 """
 Get distillation metrics interactor.
 """
+
 from datetime import datetime, timedelta, UTC
 from typing import List, Optional
 from dataclasses import dataclass
 
-from app.domain.ports.distillation_telemetry_repository import DistillationTelemetryRepository
+from app.domain.ports.distillation_telemetry_repository import (
+    DistillationTelemetryRepository,
+)
 
 
 @dataclass
 class DistillationMetric:
     """Distillation metric data."""
+
     date: datetime
     provider: str
     total_requests: int
@@ -28,14 +32,14 @@ class DistillationMetric:
 class GetDistillationMetrics:
     """
     Get distillation metrics interactor.
-    
+
     Retrieves aggregated metrics from telemetry data.
     """
-    
+
     def __init__(self, repository: DistillationTelemetryRepository):
         """Initialize interactor."""
         self._repository = repository
-    
+
     async def execute(
         self,
         days: int = 7,
@@ -43,25 +47,25 @@ class GetDistillationMetrics:
     ) -> List[DistillationMetric]:
         """
         Get distillation metrics.
-        
+
         Args:
             days: Number of days to retrieve (1-90)
             provider: Filter by provider name (optional)
-        
+
         Returns:
             List of daily metrics
         """
         # Calculate date range
         end_date = datetime.now(UTC).date()
         start_date = end_date - timedelta(days=days)
-        
+
         # Get metrics from repository
         metrics = await self._repository.get_daily_metrics(
             start_date=start_date,
             end_date=end_date,
             provider=provider,
         )
-        
+
         # Convert to response format
         return [
             DistillationMetric(
@@ -70,7 +74,9 @@ class GetDistillationMetrics:
                 total_requests=m.total_requests,
                 successful_requests=m.successful_requests,
                 failed_requests=m.total_requests - m.successful_requests,
-                success_rate=m.successful_requests / m.total_requests if m.total_requests > 0 else 0.0,
+                success_rate=m.successful_requests / m.total_requests
+                if m.total_requests > 0
+                else 0.0,
                 avg_latency_ms=m.avg_latency_ms,
                 p95_latency_ms=None,  # TODO: Calculate from raw data if needed
                 avg_confidence=m.avg_confidence,

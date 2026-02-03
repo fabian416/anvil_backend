@@ -73,7 +73,12 @@ def create_protocol_deep_dive_template(created_by: UUID) -> ConversationTemplate
             depends_on=[],
             parallel_execution=True,
             timeout_seconds=60,
-            outputs=["audit_history", "security_incidents", "security_rating", "bug_bounty_size"],
+            outputs=[
+                "audit_history",
+                "security_incidents",
+                "security_rating",
+                "bug_bounty_size",
+            ],
         ),
         AgentStep(
             agent_name="@tokenomics-analyst",
@@ -93,7 +98,12 @@ def create_protocol_deep_dive_template(created_by: UUID) -> ConversationTemplate
             depends_on=[],
             parallel_execution=True,
             timeout_seconds=45,
-            outputs=["token_info", "token_distribution", "inflation_rate", "tokenomics_score"],
+            outputs=[
+                "token_info",
+                "token_distribution",
+                "inflation_rate",
+                "tokenomics_score",
+            ],
         ),
         AgentStep(
             agent_name="@market-analyst",
@@ -112,7 +122,12 @@ def create_protocol_deep_dive_template(created_by: UUID) -> ConversationTemplate
             depends_on=[0],
             parallel_execution=False,
             timeout_seconds=60,
-            outputs=["competitors", "market_share", "competitive_advantages", "market_position"],
+            outputs=[
+                "competitors",
+                "market_share",
+                "competitive_advantages",
+                "market_position",
+            ],
         ),
         AgentStep(
             agent_name="@financial-analyst",
@@ -130,7 +145,12 @@ def create_protocol_deep_dive_template(created_by: UUID) -> ConversationTemplate
             depends_on=[0],
             parallel_execution=True,
             timeout_seconds=45,
-            outputs=["protocol_revenue", "revenue_trend", "treasury_size", "financial_health_score"],
+            outputs=[
+                "protocol_revenue",
+                "revenue_trend",
+                "treasury_size",
+                "financial_health_score",
+            ],
         ),
         AgentStep(
             agent_name="@data-analyst",
@@ -148,7 +168,12 @@ def create_protocol_deep_dive_template(created_by: UUID) -> ConversationTemplate
             depends_on=[0],
             parallel_execution=True,
             timeout_seconds=45,
-            outputs=["active_users", "user_growth", "retention_rate", "adoption_momentum"],
+            outputs=[
+                "active_users",
+                "user_growth",
+                "retention_rate",
+                "adoption_momentum",
+            ],
         ),
         AgentStep(
             agent_name="@risk-analyst",
@@ -185,7 +210,12 @@ def create_protocol_deep_dive_template(created_by: UUID) -> ConversationTemplate
             depends_on=[],
             parallel_execution=True,
             timeout_seconds=45,
-            outputs=["team_info", "governance_model", "community_engagement", "governance_score"],
+            outputs=[
+                "team_info",
+                "governance_model",
+                "community_engagement",
+                "governance_score",
+            ],
         ),
         AgentStep(
             agent_name="@integration-specialist",

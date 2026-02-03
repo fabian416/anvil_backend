@@ -142,36 +142,31 @@ async def websocket_endpoint(websocket: WebSocket):
 
     try:
         # Send initial status
-        await websocket.send_json(
-            {
-                "type": "connection",
-                "status": "connected",
-                "timestamp": datetime.now(UTC).isoformat(),
-            }
-        )
+        await websocket.send_json({
+            "type": "connection",
+            "status": "connected",
+            "timestamp": datetime.now(UTC).isoformat(),
+        })
 
         # Keep connection alive and send updates
         while True:
             # Wait for client messages (ping/pong)
             try:
-                message = await asyncio.wait_for(
-                    websocket.receive_text(), timeout=30.0
-                )
+                message = await asyncio.wait_for(websocket.receive_text(), timeout=30.0)
 
                 # Echo back (for ping/pong)
                 if message == "ping":
-                    await websocket.send_json(
-                        {"type": "pong", "timestamp": datetime.now(UTC).isoformat()}
-                    )
+                    await websocket.send_json({
+                        "type": "pong",
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    })
 
             except asyncio.TimeoutError:
                 # Send heartbeat every 30 seconds
-                await websocket.send_json(
-                    {
-                        "type": "heartbeat",
-                        "timestamp": datetime.now(UTC).isoformat(),
-                    }
-                )
+                await websocket.send_json({
+                    "type": "heartbeat",
+                    "timestamp": datetime.now(UTC).isoformat(),
+                })
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
@@ -213,9 +208,7 @@ async def export_data(request: ExportRequest):
             "data_type": request.data_type,
             "status": "generating",
             "download_url": f"/admin/llm/dashboard/export/export-uuid/download",
-            "expires_at": (
-                datetime.now(UTC).replace(microsecond=0).isoformat() + "Z"
-            ),
+            "expires_at": (datetime.now(UTC).replace(microsecond=0).isoformat() + "Z"),
         }
     )
 
@@ -257,13 +250,11 @@ async def broadcast_request_update(request_data: Dict[str, Any]):
 
     Call this from orchestrator after each request.
     """
-    await manager.broadcast(
-        {
-            "type": "request_update",
-            "data": request_data,
-            "timestamp": datetime.now(UTC).isoformat(),
-        }
-    )
+    await manager.broadcast({
+        "type": "request_update",
+        "data": request_data,
+        "timestamp": datetime.now(UTC).isoformat(),
+    })
 
 
 async def broadcast_alert(alert_data: Dict[str, Any]):
@@ -272,13 +263,11 @@ async def broadcast_alert(alert_data: Dict[str, Any]):
 
     Call this when budget thresholds are reached or circuit breakers trip.
     """
-    await manager.broadcast(
-        {
-            "type": "alert",
-            "data": alert_data,
-            "timestamp": datetime.now(UTC).isoformat(),
-        }
-    )
+    await manager.broadcast({
+        "type": "alert",
+        "data": alert_data,
+        "timestamp": datetime.now(UTC).isoformat(),
+    })
 
 
 async def broadcast_metrics_update(metrics_data: Dict[str, Any]):
@@ -287,10 +276,8 @@ async def broadcast_metrics_update(metrics_data: Dict[str, Any]):
 
     Call this periodically (e.g., every minute) to update metrics.
     """
-    await manager.broadcast(
-        {
-            "type": "metrics_update",
-            "data": metrics_data,
-            "timestamp": datetime.now(UTC).isoformat(),
-        }
-    )
+    await manager.broadcast({
+        "type": "metrics_update",
+        "data": metrics_data,
+        "timestamp": datetime.now(UTC).isoformat(),
+    })

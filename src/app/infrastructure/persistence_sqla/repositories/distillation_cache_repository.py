@@ -1,4 +1,5 @@
 """SQLAlchemy repository for distillation cache."""
+
 from datetime import datetime, timedelta, UTC
 from typing import List, Optional
 
@@ -15,23 +16,23 @@ from app.infrastructure.persistence_sqla.mappings.distillation import (
 
 class DistillationCacheRepositorySqla(CacheRepository):
     """SQLAlchemy implementation of cache repository."""
-    
+
     def __init__(self, session: AsyncSession):
         self.session = session
-    
+
     async def get_exact(self, cache_key: str) -> Optional[CachedResponse]:
         """Get exact cache match by key."""
         query = select(distillation_cache_exact).where(
             distillation_cache_exact.c.cache_key == cache_key,
             distillation_cache_exact.c.expires_at > datetime.now(UTC),
         )
-        
+
         result = await self.session.execute(query)
         row = result.first()
-        
+
         if not row:
             return None
-        
+
         return CachedResponse(
             cache_key=row.cache_key,
             normalized_query=row.normalized_query,
@@ -46,7 +47,7 @@ class DistillationCacheRepositorySqla(CacheRepository):
             source_model=row.source_model,
             cache_level=CacheLevel.EXACT,
         )
-    
+
     async def get_semantic(
         self,
         query_embedding: List[float],
@@ -64,19 +65,19 @@ class DistillationCacheRepositorySqla(CacheRepository):
             ORDER BY query_embedding <=> :embedding::vector
             LIMIT 1
         """)
-        
+
         # Convert embedding to string format for pgvector
         embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
-        
+
         result = await self.session.execute(
             query,
             {"embedding": embedding_str, "threshold": threshold},
         )
         row = result.first()
-        
+
         if not row:
             return None
-        
+
         return CachedResponse(
             cache_key=f"semantic:{row.id}",
             normalized_query=row.original_query,
@@ -91,7 +92,7 @@ class DistillationCacheRepositorySqla(CacheRepository):
             source_model=row.source_model,
             cache_level=CacheLevel.SEMANTIC,
         )
-    
+
     async def set_exact(
         self,
         cache_key: str,
@@ -103,7 +104,7 @@ class DistillationCacheRepositorySqla(CacheRepository):
     ) -> None:
         """Set exact cache entry."""
         expires_at = datetime.now(UTC) + timedelta(seconds=ttl_seconds)
-        
+
         # Use INSERT ON CONFLICT to handle duplicates
         query = text("""
             INSERT INTO distillation_cache_exact (
@@ -120,7 +121,7 @@ class DistillationCacheRepositorySqla(CacheRepository):
                 expires_at = EXCLUDED.expires_at,
                 hit_count = distillation_cache_exact.hit_count + 1
         """)
-        
+
         await self.session.execute(
             query,
             {
@@ -135,9 +136,9 @@ class DistillationCacheRepositorySqla(CacheRepository):
                 "source_request_id": metadata.get("source_request_id"),
             },
         )
-        
+
         await self.session.commit()
-    
+
     async def set_semantic(
         self,
         query_embedding: List[float],
@@ -149,10 +150,10 @@ class DistillationCacheRepositorySqla(CacheRepository):
     ) -> None:
         """Set semantic cache entry."""
         expires_at = datetime.now(UTC) + timedelta(seconds=ttl_seconds)
-        
+
         # Convert embedding to string format for pgvector
         embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
-        
+
         query = text("""
             INSERT INTO distillation_cache_semantic (
                 query_embedding, original_query, intent, entities,
@@ -164,7 +165,7 @@ class DistillationCacheRepositorySqla(CacheRepository):
                 :expires_at, :source_model, :source_request_id
             )
         """)
-        
+
         await self.session.execute(
             query,
             {
@@ -179,9 +180,9 @@ class DistillationCacheRepositorySqla(CacheRepository):
                 "source_request_id": metadata.get("source_request_id"),
             },
         )
-        
+
         await self.session.commit()
-    
+
     async def invalidate(
         self,
         cache_type: str,
@@ -190,38 +191,46 @@ class DistillationCacheRepositorySqla(CacheRepository):
         """Invalidate cache entries."""
         filters = filters or {}
         total_deleted = 0
-        
+
         if cache_type in ["exact", "all"]:
             # Delete from exact cache
             query = delete(distillation_cache_exact)
-            
+
             if "intent" in filters:
-                query = query.where(distillation_cache_exact.c.intent == filters["intent"])
-            
+                query = query.where(
+                    distillation_cache_exact.c.intent == filters["intent"]
+                )
+
             if "older_than_hours" in filters:
-                cutoff = datetime.now(UTC) - timedelta(hours=filters["older_than_hours"])
+                cutoff = datetime.now(UTC) - timedelta(
+                    hours=filters["older_than_hours"]
+                )
                 query = query.where(distillation_cache_exact.c.created_at < cutoff)
-            
+
             result = await self.session.execute(query)
             total_deleted += result.rowcount
-        
+
         if cache_type in ["semantic", "all"]:
             # Delete from semantic cache
             query = delete(distillation_cache_semantic)
-            
+
             if "intent" in filters:
-                query = query.where(distillation_cache_semantic.c.intent == filters["intent"])
-            
+                query = query.where(
+                    distillation_cache_semantic.c.intent == filters["intent"]
+                )
+
             if "older_than_hours" in filters:
-                cutoff = datetime.now(UTC) - timedelta(hours=filters["older_than_hours"])
+                cutoff = datetime.now(UTC) - timedelta(
+                    hours=filters["older_than_hours"]
+                )
                 query = query.where(distillation_cache_semantic.c.created_at < cutoff)
-            
+
             result = await self.session.execute(query)
             total_deleted += result.rowcount
-        
+
         await self.session.commit()
         return total_deleted
-    
+
     async def get_stats(self) -> dict:
         """Get cache statistics."""
         # Exact cache stats
@@ -233,10 +242,10 @@ class DistillationCacheRepositorySqla(CacheRepository):
             FROM distillation_cache_exact
             WHERE expires_at > NOW()
         """)
-        
+
         exact_result = await self.session.execute(exact_query)
         exact_row = exact_result.first()
-        
+
         # Semantic cache stats
         semantic_query = text("""
             SELECT 
@@ -246,10 +255,10 @@ class DistillationCacheRepositorySqla(CacheRepository):
             FROM distillation_cache_semantic
             WHERE expires_at > NOW()
         """)
-        
+
         semantic_result = await self.session.execute(semantic_query)
         semantic_row = semantic_result.first()
-        
+
         return {
             "exact_cache": {
                 "total_entries": exact_row.total_entries or 0,

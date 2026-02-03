@@ -155,8 +155,7 @@ class TestEmailVerificationFlow:
         }
 
         response = await client.put(
-            "/api/v1/account/email-verification",
-            json=verification_data
+            "/api/v1/account/email-verification", json=verification_data
         )
 
         # Token likely invalid in test - expect 400/404
@@ -172,8 +171,7 @@ class TestEmailVerificationFlow:
         }
 
         response = await client.put(
-            "/api/v1/account/email-verification",
-            json=verification_data
+            "/api/v1/account/email-verification", json=verification_data
         )
 
         # Should return 400 or 404 for invalid token
@@ -226,7 +224,9 @@ class TestRegistrationValidation:
             "password": "Secure!@#$%^Password123",
         }
 
-        response = await client.post("/api/v1/account/signup", json=special_password_data)
+        response = await client.post(
+            "/api/v1/account/signup", json=special_password_data
+        )
 
         # Should succeed or fail due to DB
         assert response.status_code in (200, 201, 500, 503)

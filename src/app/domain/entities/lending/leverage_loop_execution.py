@@ -97,15 +97,11 @@ class LeverageLoopExecution:
         valid_statuses = ("pending", "in_progress", "completed", "failed", "cancelled")
         if self.status not in valid_statuses:
             raise ValueError(
-                f"Invalid status: {self.status}. "
-                f"Must be one of {valid_statuses}."
+                f"Invalid status: {self.status}. Must be one of {valid_statuses}."
             )
 
         if self.total_steps < 1:
-            raise ValueError(
-                f"Invalid total_steps: {self.total_steps}. "
-                "Must be >= 1."
-            )
+            raise ValueError(f"Invalid total_steps: {self.total_steps}. Must be >= 1.")
 
         if self.current_step < 0 or self.current_step > self.total_steps:
             raise ValueError(
@@ -115,8 +111,7 @@ class LeverageLoopExecution:
 
         if self.target_leverage < Decimal("1.0"):
             raise ValueError(
-                f"Invalid target_leverage: {self.target_leverage}. "
-                "Must be >= 1.0."
+                f"Invalid target_leverage: {self.target_leverage}. Must be >= 1.0."
             )
 
     @property

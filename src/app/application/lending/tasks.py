@@ -49,7 +49,7 @@ class PositionProvider(Protocol):
 class MonitorHealthFactorsTask:
     """
     Task to monitor all active lending positions and check health factors.
-    
+
     Runs periodically to:
     1. Fetch all active positions from protocols
     2. Calculate current health factors
@@ -68,7 +68,7 @@ class MonitorHealthFactorsTask:
     async def run(self) -> dict:
         """
         Monitor all positions and generate health checks.
-        
+
         Returns:
             Dictionary with stats: {
                 "positions_checked": int,
@@ -77,28 +77,28 @@ class MonitorHealthFactorsTask:
             }
         """
         logger.info("Starting health factor monitoring task")
-        
+
         stats = {
             "positions_checked": 0,
             "alerts_created": 0,
             "critical_positions": 0,
         }
-        
+
         try:
             # Get all active positions (users with lending positions)
             # This would typically query user_lending_preferences for active users
             # For now, we'll need to implement a method to get active users
             # TODO: Add method to repository to get users with active positions
-            
+
             # For each user with active positions:
             # 1. Fetch current position from protocol
             # 2. Calculate health factor
             # 3. Save health check snapshot
             # 4. Create alerts if needed
-            
+
             logger.info(f"Health monitoring complete: {stats}")
             return stats
-            
+
         except Exception as e:
             logger.error(f"Error in health factor monitoring: {e}", exc_info=True)
             raise
@@ -107,7 +107,7 @@ class MonitorHealthFactorsTask:
 class CheckUserHealthFactorTask:
     """
     Task to check health factor for a specific user position.
-    
+
     Used for:
     - On-demand health checks
     - Critical position monitoring
@@ -130,19 +130,19 @@ class CheckUserHealthFactorTask:
     ) -> LendingHealthCheck:
         """
         Check health factor for a specific user position.
-        
+
         Args:
             user_id: User identifier
             protocol: Protocol name ("aave" or "morpho")
             chain: Blockchain network
-            
+
         Returns:
             LendingHealthCheck entity with current health metrics
         """
         logger.info(
             f"Checking health factor for user={user_id}, protocol={protocol}, chain={chain}"
         )
-        
+
         try:
             # Get user's wallet address from repository
             if hasattr(self._repository, "get_user_wallet_address"):
@@ -151,20 +151,20 @@ class CheckUserHealthFactorTask:
                 raise ValueError(
                     "Repository does not implement get_user_wallet_address method"
                 )
-            
+
             if not wallet_address:
                 raise ValueError(f"No wallet address found for user {user_id}")
-            
+
             # Fetch current position from protocol
             position = await self._position_provider.get_position(
                 wallet_address=preferences.wallet_address,
                 protocol=protocol,
                 chain=chain,
             )
-            
+
             # Calculate health factor
             health_factor = position.health_factor
-            
+
             # Determine health factor level (matches entity enum)
             if health_factor >= Decimal("2.0"):
                 health_level = "safe"
@@ -176,11 +176,11 @@ class CheckUserHealthFactorTask:
                 health_level = "critical"
             else:
                 health_level = "liquidatable"
-            
+
             # Create health check snapshot
             # Note: LendingHealthCheck entity requires id, so we'll generate a UUID
             from uuid import uuid4
-            
+
             health_check = LendingHealthCheck(
                 id=uuid4(),
                 user_id=user_id,
@@ -194,10 +194,10 @@ class CheckUserHealthFactorTask:
                 liquidation_price=None,  # TODO: Calculate from position
                 checked_at=datetime.now(UTC),
             )
-            
+
             # Save health check
             await self._repository.save_health_check(health_check)
-            
+
             # Create alert if health factor is critical
             if health_factor < Decimal("1.5"):
                 alert = await self._create_health_alert(
@@ -210,14 +210,14 @@ class CheckUserHealthFactorTask:
                     logger.warning(
                         f"Created alert for user {user_id}: HF={health_factor:.2f}"
                     )
-            
+
             logger.info(
                 f"Health check complete for user {user_id}: HF={health_factor:.2f}, "
                 f"level={health_level}"
             )
-            
+
             return health_check
-            
+
         except Exception as e:
             logger.error(
                 f"Error checking health factor for user {user_id}: {e}",
@@ -232,7 +232,7 @@ class CheckUserHealthFactorTask:
         position,
     ) -> LendingAlert | None:
         """Create alert for critical health factor."""
-        
+
         # Determine alert severity (note: LendingAlert uses 'critical' not 'urgent')
         if health_check.health_factor < Decimal("1.0"):
             severity = "critical"
@@ -243,7 +243,7 @@ class CheckUserHealthFactorTask:
         else:
             severity = "warning"
             alert_type = "health_factor_low"
-        
+
         # Create alert message
         if alert_type == "liquidation_risk":
             title = "🚨 Liquidation Risk Detected"
@@ -258,9 +258,9 @@ class CheckUserHealthFactorTask:
                 f"Your health factor is {health_check.health_factor:.2f}. "
                 f"Consider adding collateral or repaying debt to improve your position."
             )
-        
+
         from uuid import uuid4
-        
+
         alert = LendingAlert(
             id=uuid4(),
             user_id=user_id,
@@ -282,14 +282,14 @@ class CheckUserHealthFactorTask:
             },
             created_at=datetime.now(UTC),
         )
-        
+
         return alert
 
 
 class RefreshPositionsTask:
     """
     Task to refresh lending positions from protocols.
-    
+
     Periodically fetches latest position data from Aave and Morpho
     to keep our database in sync with on-chain state.
     """
@@ -305,17 +305,17 @@ class RefreshPositionsTask:
     async def run(self) -> dict:
         """
         Refresh all active positions from protocols.
-        
+
         Returns:
             Dictionary with refresh stats
         """
         logger.info("Starting position refresh task")
-        
+
         stats = {
             "positions_refreshed": 0,
             "errors": 0,
         }
-        
+
         try:
             # Get all users with active lending preferences
             # TODO: Implement method to get active users
@@ -323,10 +323,10 @@ class RefreshPositionsTask:
             #   1. Fetch position from protocol
             #   2. Update position in database
             #   3. Trigger health check if needed
-            
+
             logger.info(f"Position refresh complete: {stats}")
             return stats
-            
+
         except Exception as e:
             logger.error(f"Error refreshing positions: {e}", exc_info=True)
             raise

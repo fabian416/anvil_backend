@@ -3,6 +3,7 @@
 Provides real-time communication for chat, agent streaming, analytics,
 template execution, and live updates.
 """
+
 from app.presentation.http.websocket.analytics_handler import (
     AnalyticsWebSocketHandler,
 )

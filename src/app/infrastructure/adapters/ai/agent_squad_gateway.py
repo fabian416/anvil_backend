@@ -17,6 +17,7 @@ try:
     from agent_squad.orchestrator import AgentSquad
     from agent_squad.agents.openai_agent import OpenAIAgent
     from agent_squad.types import ConversationMessage, ParticipantRole
+
     AGENT_SQUAD_AVAILABLE = True
 except ImportError as e:
     # Fallback during installation - will be resolved
@@ -36,14 +37,14 @@ from app.setup.config.agent_squad import AgentSquadConfig
 class AgentSquadGateway(AgentGateway):
     """
     Production Agent Squad integration.
-    
+
     Features:
     - Intelligent intent classification via Agent Squad
     - Multi-agent orchestration
     - Context preservation
     - Supervisor patterns
     """
-    
+
     def __init__(
         self,
         storage: AnvilSquadStorage,
@@ -51,11 +52,11 @@ class AgentSquadGateway(AgentGateway):
     ):
         """
         Initialize Agent Squad Gateway.
-        
+
         Args:
             storage: Anvil storage adapter for Agent Squad
             config: Agent Squad configuration
-        
+
         Raises:
             ImportError: If Agent Squad library is not installed
         """
@@ -65,10 +66,10 @@ class AgentSquadGateway(AgentGateway):
                 "Install with: pip install agent-squad "
                 "or: uv pip install -e '.[dev,test]'"
             )
-        
+
         self.storage = storage
         self.config = config
-        
+
         # Create Agent Squad orchestrator
         self.orchestrator = AgentSquad(
             storage=storage,
@@ -80,19 +81,23 @@ class AgentSquadGateway(AgentGateway):
                 "LOG_EXECUTION_TIMES": config.debug_mode,
                 "MAX_RETRIES": config.max_retries,
                 "USE_DEFAULT_AGENT_IF_NONE_IDENTIFIED": True,
-            }
+            },
         )
-        
+
         # Register specialized agents
         self._register_agents()
-    
+
     def _register_agents(self):
         """Register all specialized DeFi agents."""
-        
+
         # Default model ID for Bedrock Claude
-        default_model = self.config.default_model or "anthropic.claude-3-sonnet-20240229-v1:0"
-        fallback_model = self.config.fallback_model or "anthropic.claude-3-sonnet-20240229-v1:0"
-        
+        default_model = (
+            self.config.default_model or "anthropic.claude-3-sonnet-20240229-v1:0"
+        )
+        fallback_model = (
+            self.config.fallback_model or "anthropic.claude-3-sonnet-20240229-v1:0"
+        )
+
         # 1. Trading Agent (Swaps, Perps)
         trading_agent = OpenAIAgent(
             name="Trading Agent",
@@ -105,7 +110,7 @@ class AgentSquadGateway(AgentGateway):
             model=default_model,
         )
         self.orchestrator.add_agent(trading_agent)
-        
+
         # 2. Lending Agent (Supply, Borrow)
         lending_agent = OpenAIAgent(
             name="Lending Agent",
@@ -118,7 +123,7 @@ class AgentSquadGateway(AgentGateway):
             model=self.config.default_model,
         )
         self.orchestrator.add_agent(lending_agent)
-        
+
         # 3. Portfolio Agent (View, Analyze)
         portfolio_agent = OpenAIAgent(
             name="Portfolio Agent",
@@ -131,7 +136,7 @@ class AgentSquadGateway(AgentGateway):
             model=self.config.default_model,
         )
         self.orchestrator.add_agent(portfolio_agent)
-        
+
         # 4. Market Data Agent (Prices, Rates, Info)
         market_agent = OpenAIAgent(
             name="Market Agent",
@@ -144,7 +149,7 @@ class AgentSquadGateway(AgentGateway):
             model=self.config.default_model,
         )
         self.orchestrator.add_agent(market_agent)
-        
+
         # 5. Risk Agent (Analysis, Warnings)
         risk_agent = OpenAIAgent(
             name="Risk Agent",
@@ -157,7 +162,7 @@ class AgentSquadGateway(AgentGateway):
             model=self.config.default_model,
         )
         self.orchestrator.add_agent(risk_agent)
-        
+
         # 6. Research Agent (General Questions, Education)
         research_agent = OpenAIAgent(
             name="Research Agent",
@@ -170,10 +175,10 @@ class AgentSquadGateway(AgentGateway):
             model=self.config.fallback_model,  # Use cheaper model for education
         )
         self.orchestrator.add_agent(research_agent)
-        
+
         # Set research agent as default fallback
         self.orchestrator.set_default_agent(research_agent)
-    
+
     async def process_message(
         self,
         user_id: UUID,
@@ -185,37 +190,37 @@ class AgentSquadGateway(AgentGateway):
     ) -> str:
         """
         Process message through Agent Squad orchestrator.
-        
+
         Args:
             user_id: User identifier
-            session_id: Session/conversation identifier  
+            session_id: Session/conversation identifier
             message: User message content
             context: Optional context dictionary
             suggested_model: Optional model hint (ignored - Agent Squad handles)
             suggested_agent: Optional agent hint for routing
-        
+
         Returns:
             Agent response text
         """
         try:
             # Convert our user_id to string for Agent Squad
             user_id_str = str(user_id)
-            
+
             # Route through Agent Squad
             response = await self.orchestrator.route_request(
                 user_input=message,
                 user_id=user_id_str,
                 session_id=session_id,
             )
-            
+
             # Extract text response
             # Agent Squad returns AgentResponse object
             return self._normalize_agent_response(response)
-                
+
         except Exception as e:
             # Log error
             print(f"Agent Squad error: {str(e)}")
-            
+
             # Fallback to friendly error
             return (
                 "I apologize, but I encountered an error processing your request. "
@@ -225,12 +230,12 @@ class AgentSquadGateway(AgentGateway):
     def _normalize_agent_response(self, response: Any) -> str:
         """
         Normalize agent outputs to a plain string.
-        
+
         Some providers/agents may return structured outputs like:
         - tuple: (text, metadata)
         - dict: { output/content/text: "..." }
         - AgentResponse objects with `.output`
-        
+
         The chat DB and API contract expect `content` to be a string.
         """
         if response is None:

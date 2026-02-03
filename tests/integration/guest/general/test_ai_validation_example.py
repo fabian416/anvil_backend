@@ -89,6 +89,7 @@ class TestAIValidationExample:
 
         # Step 3: Optional LLM semantic validation
         validation_result = None
+
     async def test_multistep_chat_with_ai_validation(
         self,
         client: AsyncClient,
@@ -129,6 +130,7 @@ class TestAIValidationExample:
         output3 = data3["agent_message"]["content"]
 
         # Multi-step AI validation
+
     async def test_security_injection_with_ai_validation(
         self,
         client: AsyncClient,

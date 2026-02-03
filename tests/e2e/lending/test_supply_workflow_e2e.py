@@ -35,7 +35,7 @@ class TestSupplyWorkflowE2E:
     ):
         """
         Test complete successful Aave supply flow.
-        
+
         Flow:
         1. User initiates supply via LENDING_SUPPLY shortcut
         2. SupplyInteractor validates balance
@@ -47,7 +47,7 @@ class TestSupplyWorkflowE2E:
         # ARRANGE: Setup test data
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = SupplyCommand(
             user_id=user_id,
             protocol="aave",
@@ -56,11 +56,11 @@ class TestSupplyWorkflowE2E:
             chain="ethereum",
             use_as_collateral=True,
         )
-        
+
         # Mock balance check - user has sufficient balance
         mock_balance_checker.get_balance.return_value = Decimal("2000.0")
         mock_balance_checker.check_gas_balance.return_value = True
-        
+
         # Mock Aave market data
         mock_market_data = [
             MagicMock(
@@ -71,11 +71,11 @@ class TestSupplyWorkflowE2E:
             )
         ]
         mock_aave_gateway.get_market_data.return_value = mock_market_data
-        
+
         # Mock repository save
         expected_position_id = uuid4()
         mock_lending_repository.save_supply_position.return_value = expected_position_id
-        
+
         # Create interactor
         interactor = SupplyInteractor(
             balance_checker=mock_balance_checker,
@@ -83,15 +83,15 @@ class TestSupplyWorkflowE2E:
             morpho_gateway=MagicMock(),  # Not used for Aave
             repository=mock_lending_repository,
         )
-        
+
         # ACT: Execute supply command
         result = await interactor.execute(
             command=command,
             wallet_address=wallet_address,
         )
-        
+
         # ASSERT: Verify complete flow
-        
+
         # 1. Balance was checked BEFORE execute_data generation
         mock_balance_checker.get_balance.assert_called_once_with(
             wallet_address=wallet_address,
@@ -99,10 +99,10 @@ class TestSupplyWorkflowE2E:
             chain="ethereum",
         )
         mock_balance_checker.check_gas_balance.assert_called_once()
-        
+
         # 2. Aave market data was fetched
         mock_aave_gateway.get_market_data.assert_called_once_with(chain="ethereum")
-        
+
         # 3. Position was saved to database
         mock_lending_repository.save_supply_position.assert_called_once()
         call_args = mock_lending_repository.save_supply_position.call_args[1]
@@ -113,7 +113,7 @@ class TestSupplyWorkflowE2E:
         assert call_args["apy"] == "5.25"
         assert call_args["chain"] == "ethereum"
         assert call_args["transaction_hash"] is None  # Awaiting signature
-        
+
         # 4. Result has correct execute_data structure
         assert result.position_id == expected_position_id
         assert result.status == "awaiting_signature"
@@ -121,20 +121,23 @@ class TestSupplyWorkflowE2E:
         assert result.protocol == "aave"
         assert result.asset == "USDC"
         assert result.amount == Decimal("1000.0")
-        
+
         # 5. execute_data has required fields for Privy
         execute_data = result.execute_data
         assert execute_data["action_type"] == "supply"
         assert execute_data["provider"] == "aave"
         assert execute_data["protocol"] == "aave_v3"
         assert execute_data["chain"] == "ethereum"
-        assert execute_data["asset_address"] == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        assert (
+            execute_data["asset_address"]
+            == "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+        )
         assert execute_data["asset_symbol"] == "USDC"
         assert execute_data["amount"] == "1000.0"
         assert execute_data["use_as_collateral"] is True
         assert execute_data["expected_apy"] == 5.25
         assert "pool_address" in execute_data
-        
+
         # 6. Message is user-friendly
         assert "1000.0 USDC" in result.message
         assert "Aave" in result.message
@@ -150,14 +153,14 @@ class TestSupplyWorkflowE2E:
     ):
         """
         Test supply is BLOCKED when user has insufficient balance.
-        
+
         Critical: Balance check happens BEFORE execute_data generation.
         User should NEVER see approval UI if they can't afford the transaction.
         """
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = SupplyCommand(
             user_id=user_id,
             protocol="aave",
@@ -165,29 +168,31 @@ class TestSupplyWorkflowE2E:
             amount=Decimal("1000.0"),
             chain="ethereum",
         )
-        
+
         # Mock insufficient balance
-        mock_balance_checker.get_balance.return_value = Decimal("500.0")  # Less than required
-        
+        mock_balance_checker.get_balance.return_value = Decimal(
+            "500.0"
+        )  # Less than required
+
         interactor = SupplyInteractor(
             balance_checker=mock_balance_checker,
             aave_gateway=mock_aave_gateway,
             morpho_gateway=MagicMock(),
             repository=mock_lending_repository,
         )
-        
+
         # ACT & ASSERT: Should raise exception before any other operations
         with pytest.raises(BalanceInsufficientError) as exc_info:
             await interactor.execute(command=command, wallet_address=wallet_address)
-        
+
         # Verify exception details
         assert exc_info.value.asset == "USDC"
         assert exc_info.value.required == Decimal("1000.0")
         assert exc_info.value.available == Decimal("500.0")
-        
+
         # Verify NO execute_data was generated
         mock_aave_gateway.get_market_data.assert_not_called()
-        
+
         # Verify NO database write occurred
         mock_lending_repository.save_supply_position.assert_not_called()
 
@@ -203,7 +208,7 @@ class TestSupplyWorkflowE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = SupplyCommand(
             user_id=user_id,
             protocol="aave",
@@ -211,22 +216,22 @@ class TestSupplyWorkflowE2E:
             amount=Decimal("1000.0"),
             chain="ethereum",
         )
-        
+
         # Mock sufficient token balance but NO gas
         mock_balance_checker.get_balance.return_value = Decimal("2000.0")
         mock_balance_checker.check_gas_balance.return_value = False  # No gas
-        
+
         interactor = SupplyInteractor(
             balance_checker=mock_balance_checker,
             aave_gateway=mock_aave_gateway,
             morpho_gateway=MagicMock(),
             repository=mock_lending_repository,
         )
-        
+
         # ACT & ASSERT
         with pytest.raises(BalanceInsufficientError) as exc_info:
             await interactor.execute(command=command, wallet_address=wallet_address)
-        
+
         # Should mention ETH (gas token)
         assert exc_info.value.asset == "ETH"
 
@@ -242,9 +247,9 @@ class TestSupplyWorkflowE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         vault_address = "0x1234567890123456789012345678901234567890"
-        
+
         command = SupplyCommand(
             user_id=user_id,
             protocol="morpho",
@@ -253,11 +258,11 @@ class TestSupplyWorkflowE2E:
             chain="ethereum",
             vault_address=vault_address,
         )
-        
+
         # Mock balance check
         mock_balance_checker.get_balance.return_value = Decimal("10000.0")
         mock_balance_checker.check_gas_balance.return_value = True
-        
+
         # Mock Morpho vault details
         mock_vault = MagicMock(
             address=vault_address,
@@ -268,39 +273,39 @@ class TestSupplyWorkflowE2E:
             total_assets=Decimal("50000000.0"),
         )
         mock_morpho_gateway.get_vault_details.return_value = mock_vault
-        
+
         # Mock repository
         expected_position_id = uuid4()
         mock_lending_repository.save_supply_position.return_value = expected_position_id
-        
+
         interactor = SupplyInteractor(
             balance_checker=mock_balance_checker,
             aave_gateway=MagicMock(),  # Not used for Morpho
             morpho_gateway=mock_morpho_gateway,
             repository=mock_lending_repository,
         )
-        
+
         # ACT
         result = await interactor.execute(
             command=command,
             wallet_address=wallet_address,
         )
-        
+
         # ASSERT
-        
+
         # 1. Vault details were fetched
         mock_morpho_gateway.get_vault_details.assert_called_once_with(
             vault_address=vault_address,
             chain="ethereum",
         )
-        
+
         # 2. Position saved with vault info
         call_args = mock_lending_repository.save_supply_position.call_args[1]
         assert call_args["protocol"] == "morpho"
         assert call_args["vault_address"] == vault_address
         assert call_args["vault_name"] == "Steakhouse USDC Vault"
         assert call_args["apy"] == "8.75"
-        
+
         # 3. execute_data has Morpho-specific fields
         execute_data = result.execute_data
         assert execute_data["provider"] == "morpho"
@@ -308,7 +313,7 @@ class TestSupplyWorkflowE2E:
         assert execute_data["vault_name"] == "Steakhouse USDC Vault"
         assert execute_data["vault_apy"] == 8.75
         assert execute_data["vault_tvl"] == 50000000.0
-        
+
         # 4. Result metadata
         assert result.vault_name == "Steakhouse USDC Vault"
         assert result.apy == Decimal("8.75")
@@ -325,7 +330,7 @@ class TestSupplyWorkflowE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         # Note: Command validation will catch this first, but test interactor too
         command = SupplyCommand(
             user_id=user_id,
@@ -334,11 +339,11 @@ class TestSupplyWorkflowE2E:
             amount=Decimal("1000.0"),
             chain="ethereum",
         )
-        
+
         # Mock balance check passes
         mock_balance_checker.get_balance.return_value = Decimal("2000.0")
         mock_balance_checker.check_gas_balance.return_value = True
-        
+
         # Create interactor with NO gateways (simulates unsupported protocol)
         interactor = SupplyInteractor(
             balance_checker=mock_balance_checker,
@@ -346,7 +351,7 @@ class TestSupplyWorkflowE2E:
             morpho_gateway=MagicMock(),
             repository=mock_lending_repository,
         )
-        
+
         # Manually change protocol to unsupported (bypass command validation for testing)
         command = SupplyCommand(
             user_id=user_id,
@@ -355,12 +360,12 @@ class TestSupplyWorkflowE2E:
             amount=Decimal("1000.0"),
             chain="ethereum",
         )
-        
+
         # This should raise ValueError from command validation
         # We're testing the full validation chain
         with pytest.raises(ValueError) as exc_info:
             pass  # Command creation itself will fail
-        
+
         # The validation happens at command creation time
         assert True  # Test structure validation
 
@@ -376,7 +381,7 @@ class TestSupplyWorkflowE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = SupplyCommand(
             user_id=user_id,
             protocol="aave",
@@ -384,34 +389,35 @@ class TestSupplyWorkflowE2E:
             amount=Decimal("100.0"),
             chain="ethereum",
         )
-        
+
         # Mock balance check passes
         mock_balance_checker.get_balance.return_value = Decimal("200.0")
         mock_balance_checker.check_gas_balance.return_value = True
-        
+
         # Mock empty market data (asset not found)
         mock_aave_gateway.get_market_data.return_value = [
             MagicMock(symbol="USDC"),
             MagicMock(symbol="DAI"),
         ]
-        
+
         interactor = SupplyInteractor(
             balance_checker=mock_balance_checker,
             aave_gateway=mock_aave_gateway,
             morpho_gateway=MagicMock(),
             repository=mock_lending_repository,
         )
-        
+
         # ACT & ASSERT
         with pytest.raises(ValueError) as exc_info:
             await interactor.execute(command=command, wallet_address=wallet_address)
-        
+
         assert "not found in Aave market" in str(exc_info.value)
 
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def test_user_context() -> Dict[str, Any]:

@@ -23,6 +23,7 @@ PRIVY_API_TIMEOUT = 10.0
 @dataclass
 class PrivyWallet:
     """Wallet data from Privy API."""
+
     wallet_id: str  # Privy internal wallet ID (e.g., "ydsfu5mmwzcrlkykxd7ejf4j")
     address: str  # Wallet address (e.g., "0x...")
     chain_type: str  # Chain type (e.g., "ethereum", "solana")
@@ -34,6 +35,7 @@ class PrivyWallet:
 @dataclass
 class PrivyUserData:
     """User data from Privy API."""
+
     privy_user_id: str
     wallets: list[PrivyWallet]
     email: str | None = None
@@ -43,7 +45,7 @@ class PrivyUserData:
 class PrivyApiClient:
     """
     Client for Privy API interactions.
-    
+
     Used to fetch wallet IDs and other user data from Privy
     that isn't available in the frontend token.
     """
@@ -63,10 +65,10 @@ class PrivyApiClient:
     async def get_user(self, privy_user_id: str) -> PrivyUserData | None:
         """
         Fetch user data from Privy API.
-        
+
         Args:
             privy_user_id: The Privy user ID (e.g., "did:privy:cml15tigy...")
-            
+
         Returns:
             PrivyUserData with wallets and user info, or None on error
         """
@@ -154,11 +156,11 @@ class PrivyApiClient:
     ) -> str | None:
         """
         Get the Privy wallet ID for a specific wallet address.
-        
+
         Args:
             privy_user_id: The Privy user ID
             wallet_address: The wallet address to find
-            
+
         Returns:
             Privy wallet ID if found, None otherwise
         """

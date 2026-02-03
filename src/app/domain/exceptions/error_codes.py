@@ -44,7 +44,9 @@ class ErrorDefinition:
     default_message: str
     http_status: int
 
-    def to_dict(self, details: dict[str, Any] | None = None, field: str | None = None) -> dict[str, Any]:
+    def to_dict(
+        self, details: dict[str, Any] | None = None, field: str | None = None
+    ) -> dict[str, Any]:
         """Convert to API response format."""
         result: dict[str, Any] = {
             "code": self.code,

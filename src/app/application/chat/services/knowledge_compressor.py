@@ -12,9 +12,10 @@ from enum import Enum
 
 class CompressionLevel(str, Enum):
     """Compression levels for knowledge injection"""
-    NONE = "none"           # Full knowledge (baseline)
-    LIGHT = "light"         # ~30% reduction
-    MEDIUM = "medium"       # ~60% reduction
+
+    NONE = "none"  # Full knowledge (baseline)
+    LIGHT = "light"  # ~30% reduction
+    MEDIUM = "medium"  # ~60% reduction
     AGGRESSIVE = "aggressive"  # ~80% reduction
 
 
@@ -32,8 +33,7 @@ class KnowledgeCompressor:
 
     @staticmethod
     def compress_overview(
-        overview_data: Dict[str, Any],
-        level: CompressionLevel = CompressionLevel.MEDIUM
+        overview_data: Dict[str, Any], level: CompressionLevel = CompressionLevel.MEDIUM
     ) -> str:
         """Compress overview.json to essential information"""
 
@@ -95,7 +95,7 @@ UNIQUE FEATURES:
     def compress_hunter_ai(
         hunter_data: Dict[str, Any],
         level: CompressionLevel = CompressionLevel.MEDIUM,
-        specific_capability: Optional[str] = None
+        specific_capability: Optional[str] = None,
     ) -> str:
         """Compress Hunter AI knowledge"""
 
@@ -142,7 +142,10 @@ UNIQUE FEATURES:
 
             for cap in caps:
                 name = cap.get("name", "")
-                if specific_capability and specific_capability.lower() not in name.lower():
+                if (
+                    specific_capability
+                    and specific_capability.lower() not in name.lower()
+                ):
                     continue
 
                 result.append(f"\n{name.upper()}:")
@@ -182,7 +185,7 @@ UNIQUE FEATURES:
     def compress_ultra(
         ultra_data: Dict[str, Any],
         level: CompressionLevel = CompressionLevel.MEDIUM,
-        specific_capability: Optional[str] = None
+        specific_capability: Optional[str] = None,
     ) -> str:
         """Compress ULTRA knowledge"""
 
@@ -229,7 +232,10 @@ UNIQUE FEATURES:
 
             for cap in caps:
                 name = cap.get("name", "")
-                if specific_capability and specific_capability.lower() not in name.lower():
+                if (
+                    specific_capability
+                    and specific_capability.lower() not in name.lower()
+                ):
                     continue
 
                 result.append(f"\n{name.upper()}:")
@@ -242,10 +248,14 @@ UNIQUE FEATURES:
                 elif name == "Flash Loan Engine":
                     protocols = cap.get("protocols_supported", [])
                     for p in protocols:
-                        max_loan_str = f", {p['max_loan']} max" if 'max_loan' in p else ""
+                        max_loan_str = (
+                            f", {p['max_loan']} max" if "max_loan" in p else ""
+                        )
                         result.append(f"• {p['name']}: {p['fee']} fee{max_loan_str}")
                 elif name == "MEV Protection":
-                    result.append("• Relays: Flashbots (FREE), MEV Blocker, Eden Network")
+                    result.append(
+                        "• Relays: Flashbots (FREE), MEV Blocker, Eden Network"
+                    )
                     result.append("• Protection rate: 99.2%")
                     result.append("• Saved: $127K (last 30 days)")
                 elif name == "Auto Executor":
@@ -258,8 +268,7 @@ UNIQUE FEATURES:
 
     @staticmethod
     def compress_swap(
-        swap_data: Dict[str, Any],
-        level: CompressionLevel = CompressionLevel.MEDIUM
+        swap_data: Dict[str, Any], level: CompressionLevel = CompressionLevel.MEDIUM
     ) -> str:
         """Compress swap knowledge - Hyperliquid Spot only (meme tokens)"""
 
@@ -314,7 +323,7 @@ FOR ETH/BTC TRADING:
     def compress_shortcuts(
         shortcuts_data: Dict[str, Any],
         level: CompressionLevel = CompressionLevel.MEDIUM,
-        specific_category: Optional[str] = None
+        specific_category: Optional[str] = None,
     ) -> str:
         """Compress shortcuts knowledge"""
 
@@ -346,9 +355,9 @@ Languages: en, es, pt, zh"""
                 cat_data = cats.get(specific_category, {})
                 if cat_data:
                     result.append(f"\n{cat_data.get('title', '')}:")
-                    commands = cat_data.get('commands', [])
+                    commands = cat_data.get("commands", [])
                     for cmd in commands[:3]:  # Top 3 per category
-                        examples = cmd.get('examples', [])
+                        examples = cmd.get("examples", [])
                         if examples:
                             result.append(f"• {examples[0]}")
             else:
@@ -366,7 +375,7 @@ Languages: en, es, pt, zh"""
     @staticmethod
     def _format_light(data: Dict[str, Any]) -> str:
         """Light compression - just remove extra whitespace"""
-        return json.dumps(data, separators=(',', ':'))
+        return json.dumps(data, separators=(",", ":"))
 
     @staticmethod
     def estimate_tokens(text: str) -> int:
@@ -381,7 +390,7 @@ Languages: en, es, pt, zh"""
         knowledge: Dict[str, Any],
         intent: str,
         user_query: str,
-        level: CompressionLevel = CompressionLevel.MEDIUM
+        level: CompressionLevel = CompressionLevel.MEDIUM,
     ) -> str:
         """
         Compress knowledge based on intent type.
@@ -435,10 +444,7 @@ Languages: en, es, pt, zh"""
 
 
 def compress_knowledge(
-    knowledge: Dict[str, Any],
-    intent: str,
-    user_query: str,
-    level: str = "medium"
+    knowledge: Dict[str, Any], intent: str, user_query: str, level: str = "medium"
 ) -> tuple[str, int]:
     """
     Convenience function to compress knowledge.

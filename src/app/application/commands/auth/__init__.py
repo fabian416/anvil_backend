@@ -8,6 +8,6 @@ from .change_role import ChangeRoleInteractor, ChangeRoleRequest
 __all__ = [
     "UpgradeToAdminInteractor",
     "UpgradeToAdminRequest",
-    "ChangeRoleInteractor", 
+    "ChangeRoleInteractor",
     "ChangeRoleRequest",
 ]

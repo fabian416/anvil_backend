@@ -89,7 +89,12 @@ class TestMultiIntentIntegrationService:
 
     @pytest.mark.asyncio
     async def test_process_multi_intent_message(
-        self, integration_service, mock_detector, mock_orchestrator, mock_formatter, guest_context
+        self,
+        integration_service,
+        mock_detector,
+        mock_orchestrator,
+        mock_formatter,
+        guest_context,
     ):
         """Test processing message with multiple intents."""
         # Setup: Multi-intent detection result
@@ -157,7 +162,12 @@ class TestMultiIntentIntegrationService:
 
     @pytest.mark.asyncio
     async def test_process_single_intent_fallback(
-        self, integration_service, mock_detector, mock_cache, mock_hunter_service, guest_context
+        self,
+        integration_service,
+        mock_detector,
+        mock_cache,
+        mock_hunter_service,
+        guest_context,
     ):
         """Test fallback to single-intent for single intent messages."""
         # Setup: Single intent detection
@@ -252,7 +262,13 @@ class TestMultiIntentIntegrationService:
 
     @pytest.mark.asyncio
     async def test_multi_intent_disabled(
-        self, mock_detector, mock_orchestrator, mock_formatter, mock_hunter_service, mock_cache, guest_context
+        self,
+        mock_detector,
+        mock_orchestrator,
+        mock_formatter,
+        mock_hunter_service,
+        mock_cache,
+        guest_context,
     ):
         """Test that multi-intent can be disabled."""
         # Create service with multi-intent disabled
@@ -293,7 +309,12 @@ class TestMultiIntentIntegrationService:
 
     @pytest.mark.asyncio
     async def test_error_fallback_to_single_intent(
-        self, integration_service, mock_detector, mock_cache, mock_hunter_service, guest_context
+        self,
+        integration_service,
+        mock_detector,
+        mock_cache,
+        mock_hunter_service,
+        guest_context,
     ):
         """Test fallback to single-intent on multi-intent error."""
         # Setup: Multi-intent detection raises error
@@ -337,7 +358,12 @@ class TestMultiIntentIntegrationService:
 
     @pytest.mark.asyncio
     async def test_sequential_intents(
-        self, integration_service, mock_detector, mock_orchestrator, mock_formatter, guest_context
+        self,
+        integration_service,
+        mock_detector,
+        mock_orchestrator,
+        mock_formatter,
+        guest_context,
     ):
         """Test sequential intent processing."""
         # Setup: Sequential intents (SWAP → BALANCE)

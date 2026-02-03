@@ -73,10 +73,15 @@ class TestChartPatterns:
 
         patterns = await recognizer.detect_chart_patterns("SOL")
 
-        valid_signals = [SignalDirection.BULLISH, SignalDirection.BEARISH, SignalDirection.NEUTRAL]
+        valid_signals = [
+            SignalDirection.BULLISH,
+            SignalDirection.BEARISH,
+            SignalDirection.NEUTRAL,
+        ]
 
         for pattern in patterns:
             assert pattern.signal in valid_signals
+
 
 class TestCandlestickPatterns:
     """Test candlestick pattern detection."""
@@ -104,8 +109,10 @@ class TestCandlestickPatterns:
 
         # Filter to doji patterns
         doji_signals = [
-            s for s in signals
-            if s.pattern in [
+            s
+            for s in signals
+            if s.pattern
+            in [
                 CandlestickPattern.DOJI,
                 CandlestickPattern.DRAGONFLY_DOJI,
                 CandlestickPattern.GRAVESTONE_DOJI,
@@ -127,8 +134,10 @@ class TestCandlestickPatterns:
 
         # Filter to engulfing patterns
         engulfing_signals = [
-            s for s in signals
-            if s.pattern in [
+            s
+            for s in signals
+            if s.pattern
+            in [
                 CandlestickPattern.BULLISH_ENGULFING,
                 CandlestickPattern.BEARISH_ENGULFING,
             ]
@@ -137,6 +146,7 @@ class TestCandlestickPatterns:
         for signal in engulfing_signals:
             assert signal.signal in [SignalDirection.BULLISH, SignalDirection.BEARISH]
             assert signal.confidence >= 0.6
+
 
 class TestSupportResistance:
     """Test support and resistance level detection."""
@@ -181,6 +191,7 @@ class TestSupportResistance:
             assert resistance.level_type == "resistance"
             assert 0 <= resistance.strength <= 1
             assert resistance.touches >= 2
+
 
 class TestPatternSerialization:
     """Test pattern serialization."""
@@ -243,6 +254,7 @@ class TestPatternSerialization:
             assert "first_touch" in data
             assert "last_touch" in data
 
+
 class TestPatternConfidence:
     """Test pattern confidence scoring."""
 
@@ -273,6 +285,7 @@ class TestPatternConfidence:
 
         for signal in signals:
             assert 0 <= signal.confidence <= 1
+
 
 class TestPatternTypes:
     """Test different pattern type detections."""
@@ -312,12 +325,15 @@ class TestPatternTypes:
             PatternType.SYMMETRICAL_TRIANGLE,
         ]
 
-        continuation_patterns = [p for p in patterns if p.pattern_type in continuation_types]
+        continuation_patterns = [
+            p for p in patterns if p.pattern_type in continuation_types
+        ]
 
         # Continuation patterns exist
         # (Not asserting count as it depends on market conditions)
         for pattern in continuation_patterns:
             assert pattern.confidence > 0
+
 
 class TestEdgeCases:
     """Test edge cases and error handling."""

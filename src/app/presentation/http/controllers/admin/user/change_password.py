@@ -22,6 +22,7 @@ from app.presentation.http.errors.translators import (
     ServiceUnavailableTranslator,
 )
 
+
 class ChangePasswordBody(BaseModel):
     model_config = ConfigDict(frozen=True)
 

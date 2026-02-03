@@ -132,8 +132,8 @@ class HealthCheckQueryHandler:
             # Calculate liquidation price
             if largest_supply.balance > 0:
                 collateral_amount = largest_supply.balance
-                liquidation_price = (
-                    position.total_debt_usd / (collateral_amount * liquidation_threshold)
+                liquidation_price = position.total_debt_usd / (
+                    collateral_amount * liquidation_threshold
                 )
 
         # STEP 7: Generate warning message
@@ -296,7 +296,9 @@ class HealthCheckQueryHandler:
                 recommendations.append(
                     f"💡 You can safely borrow up to ${available_to_borrow:.2f} more"
                 )
-            recommendations.append("✅ Your position is healthy - maintain current strategy")
+            recommendations.append(
+                "✅ Your position is healthy - maintain current strategy"
+            )
 
         elif level == HealthFactorLevel.CAUTION:
             recommendations.append(
@@ -315,7 +317,10 @@ class HealthCheckQueryHandler:
                 "💰 Or add more collateral to improve your health factor above 1.5"
             )
 
-        elif level == HealthFactorLevel.CRITICAL or level == HealthFactorLevel.LIQUIDATABLE:
+        elif (
+            level == HealthFactorLevel.CRITICAL
+            or level == HealthFactorLevel.LIQUIDATABLE
+        ):
             repay_amount = total_debt * Decimal("0.5")  # Repay 50% for critical
             recommendations.append(
                 f"🚨 IMMEDIATE ACTION REQUIRED: Repay at least ${repay_amount:.2f}"

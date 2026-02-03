@@ -74,7 +74,7 @@ def recalculate_all_rankings(self: Task):
 
             # Retry with exponential backoff
             if self.request.retries < self.max_retries:
-                raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+                raise self.retry(exc=e, countdown=60 * (2**self.request.retries))
 
             # Final failure
             return {

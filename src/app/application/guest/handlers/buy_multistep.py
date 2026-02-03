@@ -24,7 +24,7 @@ class BuyMultiStepHandler:
     SUPPORTED_CRYPTOS = {
         "usdc": {"symbol": "USDC", "name": "USD Coin", "emoji": "💵"},
     }
-    
+
     # Unsupported cryptos (for helpful error messages)
     UNSUPPORTED_CRYPTOS = {
         "btc": {"symbol": "BTC", "name": "Bitcoin", "emoji": "₿"},
@@ -62,7 +62,7 @@ class BuyMultiStepHandler:
         1. User: "buy" → Ask for amount (USDC is the only option)
         2. User: "100" → Show quote, ask confirmation
         3. User: "confirm" → Execute (requires auth)
-        
+
         If user requests other crypto (BTC, ETH, etc.), show helpful message
         suggesting they buy USDC and swap.
         """
@@ -75,24 +75,36 @@ class BuyMultiStepHandler:
         # Handle continuation steps
         if continuation_step:
             return await self._handle_continuation(
-                content, content_lower, language, is_authenticated, continuation_step, buy_info
+                content,
+                content_lower,
+                language,
+                is_authenticated,
+                continuation_step,
+                buy_info,
             )
 
         # Check if user is trying to buy an unsupported crypto
         unsupported_crypto = self._detect_unsupported_crypto(content)
         if unsupported_crypto:
-            return self._show_usdc_only_message(unsupported_crypto, language, is_authenticated)
+            return self._show_usdc_only_message(
+                unsupported_crypto, language, is_authenticated
+            )
 
         # Parse buy request - only look for amount (crypto is always USDC)
         parsed = self._parse_buy_request(content)
-        
+
         if parsed["amount"]:
             # Amount provided, show quote
             buy_info["amount"] = parsed["amount"]
-            return await self._show_quote_and_confirm(buy_info, language, is_authenticated)
+            return await self._show_quote_and_confirm(
+                buy_info, language, is_authenticated
+            )
 
         # Initial "buy" command - ask for amount directly (USDC is the only option)
-        if any(kw in content_lower for kw in ["buy", "purchase", "on-ramp", "onramp", "crypto"]):
+        if any(
+            kw in content_lower
+            for kw in ["buy", "purchase", "on-ramp", "onramp", "crypto"]
+        ):
             return self._ask_for_usdc_amount(language, is_authenticated)
 
         # Fallback: ask for USDC amount
@@ -108,30 +120,41 @@ class BuyMultiStepHandler:
         buy_info: dict,
     ) -> dict[str, Any]:
         """Handle continuation from previous step (USDC only flow)."""
-        
+
         # Always ensure crypto is USDC
         buy_info["crypto"] = "USDC"
 
         # Handle confirmation
         if step == "buy_awaiting_confirmation":
-            if any(kw in content_lower for kw in ["confirm", "yes", "ok", "proceed", "go", "buy", "sí", "sim"]):
+            if any(
+                kw in content_lower
+                for kw in ["confirm", "yes", "ok", "proceed", "go", "buy", "sí", "sim"]
+            ):
                 return self._execute_buy(buy_info, language, is_authenticated)
-            elif any(kw in content_lower for kw in ["cancel", "no", "stop", "cancelar"]):
+            elif any(
+                kw in content_lower for kw in ["cancel", "no", "stop", "cancelar"]
+            ):
                 return self._cancel_buy(language)
             elif "change" in content_lower or "edit" in content_lower:
-                return await self._handle_edit(content, buy_info, language, is_authenticated)
+                return await self._handle_edit(
+                    content, buy_info, language, is_authenticated
+                )
 
         # Handle amount input
         if step == "buy_awaiting_amount":
             # Check if user is trying to buy unsupported crypto instead of providing amount
             unsupported = self._detect_unsupported_crypto(content)
             if unsupported:
-                return self._show_usdc_only_message(unsupported, language, is_authenticated)
-            
+                return self._show_usdc_only_message(
+                    unsupported, language, is_authenticated
+                )
+
             amount = self._extract_amount(content)
             if amount:
                 buy_info["amount"] = amount
-                return await self._show_quote_and_confirm(buy_info, language, is_authenticated)
+                return await self._show_quote_and_confirm(
+                    buy_info, language, is_authenticated
+                )
             else:
                 return self._ask_for_usdc_amount(language, is_authenticated)
 
@@ -140,8 +163,10 @@ class BuyMultiStepHandler:
             # Check for unsupported crypto
             unsupported = self._detect_unsupported_crypto(content)
             if unsupported:
-                return self._show_usdc_only_message(unsupported, language, is_authenticated)
-            
+                return self._show_usdc_only_message(
+                    unsupported, language, is_authenticated
+                )
+
             # Otherwise, ask for amount (USDC is auto-selected)
             return self._ask_for_usdc_amount(language, is_authenticated)
 
@@ -154,8 +179,8 @@ class BuyMultiStepHandler:
 
         # Pattern: "buy 100 USD of ETH" or "buy ETH 100"
         pattern = re.compile(
-            r'(?:buy|purchase)\s+(?:(\d+\.?\d*)\s+)?(?:usd|dollars?\s+)?(?:of\s+)?(\w+)|(\w+)\s+(?:for\s+)?(\d+\.?\d*)',
-            re.IGNORECASE
+            r"(?:buy|purchase)\s+(?:(\d+\.?\d*)\s+)?(?:usd|dollars?\s+)?(?:of\s+)?(\w+)|(\w+)\s+(?:for\s+)?(\d+\.?\d*)",
+            re.IGNORECASE,
         )
         match = pattern.search(content)
 
@@ -169,7 +194,9 @@ class BuyMultiStepHandler:
             amount = amount_start or amount_end
 
             if crypto:
-                result["crypto"] = self.SUPPORTED_CRYPTOS.get(crypto.lower(), {}).get("symbol")
+                result["crypto"] = self.SUPPORTED_CRYPTOS.get(crypto.lower(), {}).get(
+                    "symbol"
+                )
             if amount:
                 result["amount"] = amount
 
@@ -181,7 +208,7 @@ class BuyMultiStepHandler:
         if "usdc" in content_lower:
             return "USDC"
         return None
-    
+
     def _detect_unsupported_crypto(self, content: str) -> str | None:
         """Detect if user is trying to buy an unsupported crypto."""
         content_lower = content.lower().strip()
@@ -192,10 +219,12 @@ class BuyMultiStepHandler:
 
     def _extract_amount(self, content: str) -> str | None:
         """Extract amount from content."""
-        match = re.search(r'(\d+\.?\d*)', content)
+        match = re.search(r"(\d+\.?\d*)", content)
         return match.group(1) if match else None
-    
-    def _show_usdc_only_message(self, requested_crypto: str, language: str, is_authenticated: bool) -> dict:
+
+    def _show_usdc_only_message(
+        self, requested_crypto: str, language: str, is_authenticated: bool
+    ) -> dict:
         """Show message when user requests unsupported crypto."""
         translations = {
             "en": {
@@ -204,7 +233,7 @@ class BuyMultiStepHandler:
                 "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
                 "tip": f"**Here's a tip:** You can buy USDC first, then swap it for {requested_crypto} instantly!\n\n",
                 "question": "Would you like to buy USDC instead?\n\n",
-                "hint": "💬 Just tell me how much (e.g., \"$100\" or \"500 dollars\")",
+                "hint": '💬 Just tell me how much (e.g., "$100" or "500 dollars")',
             },
             "es": {
                 "title": f"💡 **Solo USDC Disponible**\n\n",
@@ -212,7 +241,7 @@ class BuyMultiStepHandler:
                 "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
                 "tip": f"**Un consejo:** ¡Puedes comprar USDC primero y luego cambiarlo por {requested_crypto} al instante!\n\n",
                 "question": "¿Te gustaría comprar USDC en su lugar?\n\n",
-                "hint": "💬 Solo dime cuánto (ej: \"$100\" o \"500 dólares\")",
+                "hint": '💬 Solo dime cuánto (ej: "$100" o "500 dólares")',
             },
             "pt": {
                 "title": f"💡 **Apenas USDC Disponível**\n\n",
@@ -220,7 +249,7 @@ class BuyMultiStepHandler:
                 "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
                 "tip": f"**Uma dica:** Você pode comprar USDC primeiro e depois trocar por {requested_crypto} instantaneamente!\n\n",
                 "question": "Gostaria de comprar USDC em vez disso?\n\n",
-                "hint": "💬 Apenas me diga quanto (ex: \"$100\" ou \"500 dólares\")",
+                "hint": '💬 Apenas me diga quanto (ex: "$100" ou "500 dólares")',
             },
             "zh": {
                 "title": f"💡 **仅支持 USDC**\n\n",
@@ -228,21 +257,24 @@ class BuyMultiStepHandler:
                 "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
                 "tip": f"**小贴士：** 您可以先购买 USDC，然后立即将其兑换成 {requested_crypto}！\n\n",
                 "question": "您想改为购买 USDC 吗？\n\n",
-                "hint": "💬 告诉我您想要多少（例如：\"$100\" 或 \"500美元\"）",
+                "hint": '💬 告诉我您想要多少（例如："$100" 或 "500美元"）',
             },
         }
         t = translations.get(language, translations["en"])
-        
+
         content = f"{t['title']}{t['message']}{t['divider']}{t['tip']}{t['question']}{t['hint']}"
-        
+
         return {
             "content": content,
-            "enrichment": {"buy_flow": "usdc_only_redirect", "requested_crypto": requested_crypto},
+            "enrichment": {
+                "buy_flow": "usdc_only_redirect",
+                "requested_crypto": requested_crypto,
+            },
             "requires_registration": not is_authenticated,
             "pending_action": "buy_awaiting_amount",
             "buy_info": {"crypto": "USDC", "requested_crypto": requested_crypto},
         }
-    
+
     def _ask_for_usdc_amount(self, language: str, is_authenticated: bool) -> dict:
         """Ask user how much USDC to buy."""
         translations = {
@@ -251,7 +283,7 @@ class BuyMultiStepHandler:
                 "question": "How much USDC would you like to buy?\n\n",
                 "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
                 "benefits": "**USDC** is a stablecoin pegged 1:1 to the US Dollar - perfect for:\n• 🔄 Swapping to other cryptos (ETH, BTC, SOL...)\n• 💰 Earning yield in DeFi\n• 📤 Sending to friends\n\n",
-                "hint": "💬 Enter the amount in USD (e.g., \"100\" or \"$500\")\n\n",
+                "hint": '💬 Enter the amount in USD (e.g., "100" or "$500")\n\n',
                 "note": "💡 *Minimum: $20 • Maximum: $10,000*",
             },
             "es": {
@@ -259,7 +291,7 @@ class BuyMultiStepHandler:
                 "question": "¿Cuánto USDC te gustaría comprar?\n\n",
                 "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
                 "benefits": "**USDC** es una stablecoin con paridad 1:1 al dólar - perfecta para:\n• 🔄 Intercambiar por otras criptos (ETH, BTC, SOL...)\n• 💰 Ganar rendimiento en DeFi\n• 📤 Enviar a amigos\n\n",
-                "hint": "💬 Ingresa la cantidad en USD (ej: \"100\" o \"$500\")\n\n",
+                "hint": '💬 Ingresa la cantidad en USD (ej: "100" o "$500")\n\n',
                 "note": "💡 *Mínimo: $20 • Máximo: $10,000*",
             },
             "pt": {
@@ -267,7 +299,7 @@ class BuyMultiStepHandler:
                 "question": "Quanto USDC você gostaria de comprar?\n\n",
                 "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
                 "benefits": "**USDC** é uma stablecoin com paridade 1:1 ao dólar - perfeita para:\n• 🔄 Trocar por outras criptos (ETH, BTC, SOL...)\n• 💰 Ganhar rendimento em DeFi\n• 📤 Enviar para amigos\n\n",
-                "hint": "💬 Digite o valor em USD (ex: \"100\" ou \"$500\")\n\n",
+                "hint": '💬 Digite o valor em USD (ex: "100" ou "$500")\n\n',
                 "note": "💡 *Mínimo: $20 • Máximo: $10,000*",
             },
             "zh": {
@@ -275,14 +307,14 @@ class BuyMultiStepHandler:
                 "question": "您想购买多少 USDC？\n\n",
                 "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n",
                 "benefits": "**USDC** 是与美元 1:1 挂钩的稳定币 - 非常适合：\n• 🔄 兑换其他加密货币（ETH、BTC、SOL...）\n• 💰 在 DeFi 中赚取收益\n• 📤 发送给朋友\n\n",
-                "hint": "💬 输入美元金额（例如：\"100\" 或 \"$500\"）\n\n",
+                "hint": '💬 输入美元金额（例如："100" 或 "$500"）\n\n',
                 "note": "💡 *最低：$20 • 最高：$10,000*",
             },
         }
         t = translations.get(language, translations["en"])
-        
+
         content = f"{t['title']}{t['question']}{t['divider']}{t['benefits']}{t['hint']}{t['note']}"
-        
+
         return {
             "content": content,
             "enrichment": {"buy_flow": "step1_amount"},
@@ -291,19 +323,27 @@ class BuyMultiStepHandler:
             "buy_info": {"crypto": "USDC"},
         }
 
-    def _ask_for_crypto(self, language: str, is_authenticated: bool, error: bool = False) -> dict:
+    def _ask_for_crypto(
+        self, language: str, is_authenticated: bool, error: bool = False
+    ) -> dict:
         """Ask user which crypto to buy (redirects to USDC amount since only USDC is available)."""
         # Since only USDC is available, skip crypto selection and ask for amount
         return self._ask_for_usdc_amount(language, is_authenticated)
 
-    def _ask_for_amount(self, buy_info: dict, language: str, is_authenticated: bool, error: bool = False) -> dict:
+    def _ask_for_amount(
+        self, buy_info: dict, language: str, is_authenticated: bool, error: bool = False
+    ) -> dict:
         """Ask user how much to buy."""
         crypto = buy_info.get("crypto", "").upper()
 
         # Crypto emoji mapping
         crypto_emoji = {
-            "BTC": "₿", "ETH": "Ξ", "SOL": "◎",
-            "USDC": "💵", "USDT": "💵", "MATIC": "🔷"
+            "BTC": "₿",
+            "ETH": "Ξ",
+            "SOL": "◎",
+            "USDC": "💵",
+            "USDT": "💵",
+            "MATIC": "🔷",
         }
         emoji = crypto_emoji.get(crypto, "💎")
 
@@ -353,12 +393,18 @@ class BuyMultiStepHandler:
             logger.warning(f"Failed to fetch price for {symbol} from CoinGecko: {e}")
             # Fallback to approximate prices
             fallback_prices = {
-                "BTC": 45000, "ETH": 1950, "SOL": 32.5,
-                "USDC": 1.0, "USDT": 1.0, "MATIC": 0.65
+                "BTC": 45000,
+                "ETH": 1950,
+                "SOL": 32.5,
+                "USDC": 1.0,
+                "USDT": 1.0,
+                "MATIC": 0.65,
             }
             return fallback_prices.get(symbol, 100.0)
 
-    async def _show_quote_and_confirm(self, buy_info: dict, language: str, is_authenticated: bool) -> dict:
+    async def _show_quote_and_confirm(
+        self, buy_info: dict, language: str, is_authenticated: bool
+    ) -> dict:
         """Show quote and ask for confirmation (USDC only)."""
         crypto = "USDC"  # Always USDC
         buy_info["crypto"] = crypto
@@ -433,14 +479,16 @@ class BuyMultiStepHandler:
                 "quote": {
                     "price_per_unit": price_per_unit,
                     "processing_fee": processing_fee,
-                }
+                },
             },
             "requires_registration": not is_authenticated,
             "pending_action": "buy_awaiting_confirmation",
             "buy_info": buy_info,
         }
 
-    def _execute_buy(self, buy_info: dict, language: str, is_authenticated: bool) -> dict:
+    def _execute_buy(
+        self, buy_info: dict, language: str, is_authenticated: bool
+    ) -> dict:
         """Execute buy (requires authentication)."""
         crypto = buy_info.get("crypto", "").upper()
         amount = buy_info.get("amount", "100")
@@ -488,12 +536,12 @@ class BuyMultiStepHandler:
             "en": {
                 "title": "❌ **Purchase Cancelled**\n\n",
                 "message": "No problem! Your purchase has been cancelled.\n\n",
-                "restart": "💡 *Want to start over? Just type \"buy\" anytime!*",
+                "restart": '💡 *Want to start over? Just type "buy" anytime!*',
             },
             "es": {
                 "title": "❌ **Compra Cancelada**\n\n",
                 "message": "¡No hay problema! Tu compra ha sido cancelada.\n\n",
-                "restart": "💡 *¿Quieres empezar de nuevo? ¡Solo escribe \"buy\" en cualquier momento!*",
+                "restart": '💡 *¿Quieres empezar de nuevo? ¡Solo escribe "buy" en cualquier momento!*',
             },
         }
         t = translations.get(language, translations["en"])
@@ -504,14 +552,18 @@ class BuyMultiStepHandler:
             "requires_registration": False,
         }
 
-    async def _handle_edit(self, content: str, buy_info: dict, language: str, is_authenticated: bool) -> dict:
+    async def _handle_edit(
+        self, content: str, buy_info: dict, language: str, is_authenticated: bool
+    ) -> dict:
         """Handle edit request."""
         # Extract new amount if mentioned
         if "amount" in content.lower():
             new_amount = self._extract_amount(content)
             if new_amount:
                 buy_info["amount"] = new_amount
-                return await self._show_quote_and_confirm(buy_info, language, is_authenticated)
+                return await self._show_quote_and_confirm(
+                    buy_info, language, is_authenticated
+                )
 
         # Generic edit response
         return self._ask_for_amount(buy_info, language, is_authenticated)

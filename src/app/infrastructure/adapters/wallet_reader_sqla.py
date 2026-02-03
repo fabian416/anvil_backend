@@ -219,13 +219,10 @@ class SqlaWalletReader(WalletQueryGateway):
             wallets_table = self._get_wallets_table()
             users_table = self._get_users_table()
 
-            stmt = (
-                select(func.count())
-                .select_from(
-                    wallets_table.join(
-                        users_table,
-                        wallets_table.c.user_id == users_table.c.id,
-                    )
+            stmt = select(func.count()).select_from(
+                wallets_table.join(
+                    users_table,
+                    wallets_table.c.user_id == users_table.c.id,
                 )
             )
 

@@ -42,7 +42,6 @@ CROSS_CHAIN_TESTS = [
         "category": "workflow",
         "subcategory": "bridge",
     },
-    
     # Cross-Chain Swaps
     {
         "test_id": "cross_swap_001",
@@ -58,7 +57,6 @@ CROSS_CHAIN_TESTS = [
         "category": "workflow",
         "subcategory": "cross_chain_swap",
     },
-    
     # Chain-Specific Operations
     {
         "test_id": "chain_base_001",
@@ -88,7 +86,6 @@ CROSS_CHAIN_TESTS = [
         "category": "workflow",
         "subcategory": "chain_optimism",
     },
-    
     # Multi-Chain Queries
     {
         "test_id": "multi_chain_001",
@@ -111,14 +108,14 @@ CROSS_CHAIN_TESTS = [
 @pytest.mark.integration
 class TestCrossChainWorkflow:
     """Tests for cross-chain operations."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, conversation_id, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
-    
+
     @pytest.mark.parametrize("test_case", CROSS_CHAIN_TESTS, ids=lambda t: t["test_id"])
     async def test_cross_chain(self, test_case: dict):
         """Test cross-chain workflow routing and response."""
@@ -127,7 +124,7 @@ class TestCrossChainWorkflow:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -135,20 +132,29 @@ class TestCrossChainWorkflow:
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         # Assertions
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "").lower()
-        
+
         # Verify cross-chain related response
         assert any(
             indicator in content
             for indicator in [
-                "bridge", "cross-chain", "ethereum", "base", "arbitrum", "polygon", 
-                "optimism", "layer", "chain", "transfer", "route"
+                "bridge",
+                "cross-chain",
+                "ethereum",
+                "base",
+                "arbitrum",
+                "polygon",
+                "optimism",
+                "layer",
+                "chain",
+                "transfer",
+                "route",
             ]
         ), f"Cross-chain query should return relevant response: {content[:200]}"

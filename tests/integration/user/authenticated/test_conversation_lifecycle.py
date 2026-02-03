@@ -30,8 +30,7 @@ class TestCreateConversation:
         THEN system SHALL return conversation with ID
         """
         response = await client.post(
-            "/api/v1/chat/conversations",
-            json={"title": "Test Conversation"}
+            "/api/v1/chat/conversations", json={"title": "Test Conversation"}
         )
 
         # Without auth, expect 401
@@ -47,10 +46,7 @@ class TestCreateConversation:
         WHEN user creates conversation without title
         THEN system SHALL create conversation with null/default title
         """
-        response = await client.post(
-            "/api/v1/chat/conversations",
-            json={}
-        )
+        response = await client.post("/api/v1/chat/conversations", json={})
 
         # Should work (title is optional) or return 401 (not authenticated)
         assert response.status_code in (201, 401, 422)
@@ -62,8 +58,7 @@ class TestCreateConversation:
         THEN system SHALL return 401 unauthorized
         """
         response = await client.post(
-            "/api/v1/chat/conversations",
-            json={"title": "Test"}
+            "/api/v1/chat/conversations", json={"title": "Test"}
         )
 
         assert response.status_code == 401
@@ -76,8 +71,7 @@ class TestCreateConversation:
         """
         long_title = "A" * 500
         response = await client.post(
-            "/api/v1/chat/conversations",
-            json={"title": long_title}
+            "/api/v1/chat/conversations", json={"title": long_title}
         )
 
         # Should create, truncate, or return validation error
@@ -112,8 +106,7 @@ class TestListConversations:
         THEN system SHALL return paginated results
         """
         response = await client.get(
-            "/api/v1/chat/conversations",
-            params={"limit": 10, "offset": 0}
+            "/api/v1/chat/conversations", params={"limit": 10, "offset": 0}
         )
 
         assert response.status_code in (200, 401)
@@ -181,10 +174,7 @@ class TestConversationPagination:
         WHEN user specifies limit
         THEN system SHALL return at most that many items
         """
-        response = await client.get(
-            "/api/v1/chat/conversations",
-            params={"limit": 5}
-        )
+        response = await client.get("/api/v1/chat/conversations", params={"limit": 5})
 
         assert response.status_code in (200, 401)
 
@@ -200,7 +190,4 @@ class TestConversationPagination:
         WHEN user specifies offset
         THEN system SHALL skip that many items
         """
-        response = await client.get(
-            "/api/v1/chat/conversations",
-            params={"offset": 10}
-        )
+        response = await client.get("/api/v1/chat/conversations", params={"offset": 10})

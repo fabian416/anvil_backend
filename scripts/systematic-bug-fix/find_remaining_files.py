@@ -23,9 +23,9 @@ for root, dirs, files in os.walk("/home/ubuntu/anvil_backend/tests/integration/g
         if file.endswith(".py") and file not in fixed_files:
             filepath = os.path.join(root, file)
             try:
-                with open(filepath, 'r') as f:
+                with open(filepath, "r") as f:
                     content = f.read()
-                    count = content.count('agent_output=agent_response')
+                    count = content.count("agent_output=agent_response")
                     if count > 0:
                         results.append((count, filepath))
             except:
@@ -39,6 +39,6 @@ for i, (count, filepath) in enumerate(results[:20], 1):
     short_path = filepath.replace("/home/ubuntu/anvil_backend/", "")
     print(f"{i:2d}. {count:2d} instances - {short_path}")
 
-print(f"\n{'='*80}")
+print(f"\n{'=' * 80}")
 print(f"Total files remaining: {len(results)}")
 print(f"Total instances: {sum(c for c, _ in results)}")

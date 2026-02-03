@@ -154,14 +154,15 @@ class MoonPaySwapClient:
 
         # Sign with HMAC SHA-256
         signature = hmac.new(
-            self._secret_key.encode('utf-8'),
-            query_string.encode('utf-8'),
-            hashlib.sha256
+            self._secret_key.encode("utf-8"),
+            query_string.encode("utf-8"),
+            hashlib.sha256,
         ).digest()
 
         # Return base64-encoded signature
         import base64
-        return base64.b64encode(signature).decode('utf-8')
+
+        return base64.b64encode(signature).decode("utf-8")
 
     def _sign_merchant_payload(self, payload: dict) -> str:
         """
@@ -196,18 +197,17 @@ class MoonPaySwapClient:
         import json
         import base64
 
-        json_string = json.dumps(payload, separators=(',', ':'), sort_keys=True)
+        json_string = json.dumps(payload, separators=(",", ":"), sort_keys=True)
 
         # Generate HMAC-SHA256
         signature = hmac.new(
-            self._secret_key.encode('utf-8'),
-            json_string.encode('utf-8'),
-            hashlib.sha256
+            self._secret_key.encode("utf-8"),
+            json_string.encode("utf-8"),
+            hashlib.sha256,
         ).digest()
 
         # Return base64-encoded signature
-        return base64.b64encode(signature).decode('utf-8')
-
+        return base64.b64encode(signature).decode("utf-8")
 
     async def get_pairs(self) -> list[MoonPaySwapPair]:
         """
@@ -246,8 +246,12 @@ class MoonPaySwapClient:
                         quote_currency_code=quote_code,
                         base_currency_name=base_code,  # API doesn't provide full names
                         quote_currency_name=quote_code,
-                        min_base_amount=float(pair_data.get("minSwapAmount", 0)) if pair_data.get("minSwapAmount") else None,
-                        max_base_amount=float(pair_data.get("maxSwapAmount", 0)) if pair_data.get("maxSwapAmount") else None,
+                        min_base_amount=float(pair_data.get("minSwapAmount", 0))
+                        if pair_data.get("minSwapAmount")
+                        else None,
+                        max_base_amount=float(pair_data.get("maxSwapAmount", 0))
+                        if pair_data.get("maxSwapAmount")
+                        else None,
                     )
                 )
 
@@ -281,7 +285,7 @@ class MoonPaySwapClient:
         Example:
             >>> quote = await client.get_quote("eth-usdc", "1")
             >>> print(f"1 ETH = {quote.quote_currency_amount} USDC")
-        
+
         Raises:
             ValueError: If the quote response contains invalid data (zero amount, missing fields)
             httpx.HTTPStatusError: If the API returns an error status
@@ -290,7 +294,7 @@ class MoonPaySwapClient:
             logger.info(
                 f"💰 [MoonPay] Requesting quote for pair={pair_name}, amount={base_amount}"
             )
-            
+
             response = await self._client.get(
                 f"/swap/{pair_name}/quote",
                 params={
@@ -300,22 +304,24 @@ class MoonPaySwapClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             # Log raw response for debugging
             logger.info(f"[MoonPay] Raw quote response: {data}")
 
             # Extract and validate quote currency amount
             quote_currency_amount = data.get("quoteCurrencyAmount", "0")
             exchange_rate = data.get("exchangeRate", "0")
-            
+
             # Validate the response has meaningful data
             try:
-                quote_amount_float = float(quote_currency_amount) if quote_currency_amount else 0
+                quote_amount_float = (
+                    float(quote_currency_amount) if quote_currency_amount else 0
+                )
                 exchange_rate_float = float(exchange_rate) if exchange_rate else 0
             except (ValueError, TypeError):
                 quote_amount_float = 0
                 exchange_rate_float = 0
-            
+
             # If MoonPay returns 0 or empty values, calculate from exchange rate
             if quote_amount_float == 0 and exchange_rate_float > 0:
                 try:
@@ -328,7 +334,7 @@ class MoonPaySwapClient:
                     )
                 except (ValueError, TypeError):
                     pass
-            
+
             # If still no valid quote, try to calculate from USD prices
             if quote_amount_float == 0:
                 base_price_usd = data.get("baseCurrencyPriceInUsd", "0")
@@ -339,7 +345,9 @@ class MoonPaySwapClient:
                     if base_price > 0 and quote_price > 0:
                         base_amount_float = float(base_amount)
                         # Calculate: (base_amount * base_price_usd) / quote_price_usd
-                        quote_amount_float = (base_amount_float * base_price) / quote_price
+                        quote_amount_float = (
+                            base_amount_float * base_price
+                        ) / quote_price
                         quote_currency_amount = str(quote_amount_float)
                         # Also calculate exchange rate
                         exchange_rate = str(base_price / quote_price)
@@ -354,16 +362,20 @@ class MoonPaySwapClient:
             signature = data.get("signature", "")
             constraints = data.get("constraints", [])
             kyc_required = any(
-                c.get("type") == "KycDataRequired" 
-                for c in constraints 
+                c.get("type") == "KycDataRequired"
+                for c in constraints
                 if isinstance(c, dict)
             )
-            
+
             quote = MoonPaySwapQuote(
                 id=data.get("id", ""),
                 pair_name=data.get("pairName", pair_name),
-                base_currency_code=data.get("baseCurrency", {}).get("code", "") or pair_name.split("-")[0],
-                quote_currency_code=data.get("quoteCurrency", {}).get("code", "") or pair_name.split("-")[1] if "-" in pair_name else "",
+                base_currency_code=data.get("baseCurrency", {}).get("code", "")
+                or pair_name.split("-")[0],
+                quote_currency_code=data.get("quoteCurrency", {}).get("code", "")
+                or pair_name.split("-")[1]
+                if "-" in pair_name
+                else "",
                 base_currency_amount=data.get("baseCurrencyAmount", base_amount),
                 quote_currency_amount=quote_currency_amount,
                 exchange_rate=exchange_rate,
@@ -383,7 +395,7 @@ class MoonPaySwapClient:
                 f"{quote.quote_currency_amount} {quote.quote_currency_code} "
                 f"(rate: {quote.exchange_rate})"
             )
-            
+
             # Validate we have a meaningful quote
             try:
                 final_quote_amount = float(quote.quote_currency_amount)
@@ -394,7 +406,7 @@ class MoonPaySwapClient:
                     )
             except (ValueError, TypeError):
                 pass
-            
+
             return quote
 
         except httpx.HTTPStatusError as e:
@@ -541,6 +553,7 @@ class MoonPaySwapClient:
 
             # Generate timestamp for replay attack prevention
             import time
+
             timestamp = str(int(time.time()))
 
             # SIGNATURE 1: URL Signature (for query parameters)
@@ -568,30 +581,26 @@ class MoonPaySwapClient:
             payload["merchantSignature"] = merchant_signature
 
             # ========== DEBUG LOGGING ==========
-            logger.info(
-                f"🚀 [MoonPay] ====== EXECUTE_QUOTE DEBUG START ======"
-            )
+            logger.info(f"🚀 [MoonPay] ====== EXECUTE_QUOTE DEBUG START ======")
             logger.info(
                 f"🔑 [MoonPay] Customer Token (first 30 chars): {customer_token[:30] if customer_token else 'EMPTY'}..."
             )
-            logger.info(
-                f"🔑 [MoonPay] API Key: {self._api_key}"
-            )
+            logger.info(f"🔑 [MoonPay] API Key: {self._api_key}")
             logger.info(
                 f"🔐 [MoonPay] Secret Key (first 20 chars): {self._secret_key[:20] if self._secret_key else 'NOT CONFIGURED'}..."
             )
 
             # Debug query params - ALL params are included in signature
-            logger.info(
-                f"📋 [MoonPay] Query params (ALL included in signature):"
-            )
+            logger.info(f"📋 [MoonPay] Query params (ALL included in signature):")
             for k, v in sorted(query_params.items()):
                 if k == "quoteId":
                     logger.info(f"  ✅ {k} = {v}  ← REQUIRED for authorization")
                 elif k == "apiKey":
                     logger.info(f"  ✅ {k} = {v}  ← REQUIRED for API access")
                 elif k == "timestamp":
-                    logger.info(f"  ✅ {k} = {v}  ← CRITICAL for replay attack prevention")
+                    logger.info(
+                        f"  ✅ {k} = {v}  ← CRITICAL for replay attack prevention"
+                    )
                 else:
                     logger.info(f"  ✅ {k} = {v}")
 
@@ -606,7 +615,10 @@ class MoonPaySwapClient:
 
             # Debug merchant signature
             import json
-            merchant_json = json.dumps(merchant_payload, separators=(',', ':'), sort_keys=True)
+
+            merchant_json = json.dumps(
+                merchant_payload, separators=(",", ":"), sort_keys=True
+            )
             logger.info(
                 f"📝 [MoonPay] Canonical JSON for merchant signature: {merchant_json[:100]}..."
             )
@@ -615,15 +627,9 @@ class MoonPaySwapClient:
             )
 
             # Debug final payload with both signatures
-            logger.info(
-                f"📦 [MoonPay] Final request body (with merchantSignature):"
-            )
-            logger.info(
-                f"  {json.dumps(payload, indent=2)}"
-            )
-            logger.info(
-                f"🏁 [MoonPay] ====== EXECUTE_QUOTE DEBUG END ======"
-            )
+            logger.info(f"📦 [MoonPay] Final request body (with merchantSignature):")
+            logger.info(f"  {json.dumps(payload, indent=2)}")
+            logger.info(f"🏁 [MoonPay] ====== EXECUTE_QUOTE DEBUG END ======")
             logger.info(
                 f"🔑 [MoonPay] SUMMARY: Using DOUBLE signature system (URL + Merchant)"
             )
@@ -641,7 +647,9 @@ class MoonPaySwapClient:
                     "Ensure MOONPAY_SECRET_KEY is configured."
                 )
 
-            logger.info(f"🔄 [MoonPay] Executing quote with quote signature: {signature[:20]}...")
+            logger.info(
+                f"🔄 [MoonPay] Executing quote with quote signature: {signature[:20]}..."
+            )
 
             # Make POST request with signed URL and JSON payload
             response = await self._client.post(
@@ -703,7 +711,9 @@ class MoonPaySwapClient:
             response.raise_for_status()
             data = response.json()
 
-            logger.info(f"[MoonPay] Transaction status: {transaction_id} -> {data.get('status', 'unknown')}")
+            logger.info(
+                f"[MoonPay] Transaction status: {transaction_id} -> {data.get('status', 'unknown')}"
+            )
             return data
 
         except httpx.HTTPStatusError as e:

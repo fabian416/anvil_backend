@@ -328,9 +328,9 @@ class AaveClient:
             available_borrow_usd = Decimal(available_borrow_base) / Decimal(USD_BASE)
 
             # Convert liquidation threshold and LTV (4 decimals, e.g., 8250 = 82.50%)
-            liquidation_threshold_pct = Decimal(current_liquidation_threshold) / Decimal(
-                100
-            )
+            liquidation_threshold_pct = Decimal(
+                current_liquidation_threshold
+            ) / Decimal(100)
             ltv_pct = Decimal(ltv) / Decimal(100)
 
             # Health factor (18 decimals, e.g., 2000000000000000000 = 2.0)

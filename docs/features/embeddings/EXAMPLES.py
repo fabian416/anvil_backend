@@ -8,6 +8,7 @@ import asyncio
 import numpy as np
 from typing import List
 
+
 # Example 1: Basic Usage
 async def example_basic_usage():
     """Basic embedding generation."""
@@ -69,8 +70,7 @@ async def example_semantic_search():
 
         # Calculate similarities
         similarities = [
-            cosine_similarity(query_embedding, doc_emb)
-            for doc_emb in doc_embeddings
+            cosine_similarity(query_embedding, doc_emb) for doc_emb in doc_embeddings
         ]
 
         # Rank results
@@ -212,8 +212,7 @@ async def example_document_clustering():
         print("Document Clusters:")
         for i in range(3):
             cluster_docs = [
-                doc for doc, cluster in zip(documents, clusters)
-                if cluster == i
+                doc for doc, cluster in zip(documents, clusters) if cluster == i
             ]
             print(f"\nCluster {i + 1}:")
             for doc in cluster_docs:
@@ -321,8 +320,7 @@ async def example_rag_pipeline():
 
         # Find most relevant context
         similarities = [
-            cosine_similarity(query_embedding, kb_emb)
-            for kb_emb in kb_embeddings
+            cosine_similarity(query_embedding, kb_emb) for kb_emb in kb_embeddings
         ]
         best_match_idx = np.argmax(similarities)
         context = knowledge_base[best_match_idx]

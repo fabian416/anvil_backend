@@ -20,7 +20,7 @@ class TestGuestHunterPricePrediction:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What's the price prediction for BTC?", "language": "en"}
+            json={"content": "What's the price prediction for BTC?", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -30,7 +30,9 @@ class TestGuestHunterPricePrediction:
         content = data["agent_message"]["content"]
 
         # Should show price prediction
-        assert any(word in content.lower() for word in ["prediction", "forecast", "price"])
+        assert any(
+            word in content.lower() for word in ["prediction", "forecast", "price"]
+        )
         assert "BTC" in content
 
         # Should have enrichment
@@ -48,12 +50,14 @@ class TestGuestHunterPricePrediction:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_price_prediction_timeframes(self, client, llm_validator, csv_tracker):
+    async def test_price_prediction_timeframes(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that prediction shows multiple timeframes."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "BTC price prediction", "language": "en"}
+            json={"content": "BTC price prediction", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -69,7 +73,9 @@ class TestGuestHunterPricePrediction:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_price_prediction_multiple_tokens(self, client, llm_validator, csv_tracker):
+    async def test_price_prediction_multiple_tokens(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test price prediction for different tokens."""
 
         tokens = ["BTC", "ETH", "SOL"]
@@ -78,7 +84,7 @@ class TestGuestHunterPricePrediction:
         for token in tokens:
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={"content": f"price prediction for {token}", "language": "en"}
+                json={"content": f"price prediction for {token}", "language": "en"},
             )
             assert response.status_code == 200
             data = response.json()
@@ -89,12 +95,14 @@ class TestGuestHunterPricePrediction:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_price_prediction_confidence_levels(self, client, llm_validator, csv_tracker):
+    async def test_price_prediction_confidence_levels(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that predictions include confidence levels."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH price forecast", "language": "en"}
+            json={"content": "ETH price forecast", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -111,12 +119,14 @@ class TestGuestHunterPricePrediction:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_price_prediction_historical_accuracy(self, client, llm_validator, csv_tracker):
+    async def test_price_prediction_historical_accuracy(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that predictions show historical accuracy."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "BTC price prediction", "language": "en"}
+            json={"content": "BTC price prediction", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -133,12 +143,14 @@ class TestGuestHunterPricePrediction:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_price_prediction_lstm_model_tag(self, client, llm_validator, csv_tracker):
+    async def test_price_prediction_lstm_model_tag(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that response includes LSTM model tag."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "SOL price prediction", "language": "en"}
+            json={"content": "SOL price prediction", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -151,12 +163,14 @@ class TestGuestHunterPricePrediction:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_price_prediction_uses_real_data(self, client, llm_validator, csv_tracker):
+    async def test_price_prediction_uses_real_data(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that predictions use real CoinGecko historical data."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH price forecast", "language": "en"}
+            json={"content": "ETH price forecast", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -176,12 +190,14 @@ class TestGuestHunterPricePrediction:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_price_prediction_multilingual_spanish(self, client, llm_validator, csv_tracker):
+    async def test_price_prediction_multilingual_spanish(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test price prediction in Spanish."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "predicción de precio para ETH", "language": "es"}
+            json={"content": "predicción de precio para ETH", "language": "es"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -191,6 +207,7 @@ class TestGuestHunterPricePrediction:
         # Should contain Spanish or English text (fallback), or at minimum some response
         # Language detection may result in English fallback or error messages
         assert len(content) > 0  # At minimum, has some content
+
 
 class TestGuestHunterPricePredictionStorytellingQuality:
     """Test storytelling and UX quality of price prediction responses."""
@@ -202,22 +219,26 @@ class TestGuestHunterPricePredictionStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "BTC price prediction", "language": "en"}
+            json={"content": "BTC price prediction", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
         # Should have emoji indicators
-        has_emojis = any(emoji in content for emoji in ["📈", "📉", "🔮", "💹", "📊", "⚡"])
+        has_emojis = any(
+            emoji in content for emoji in ["📈", "📉", "🔮", "💹", "📊", "⚡"]
+        )
         assert has_emojis
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_prediction_clear_formatting(self, client, llm_validator, csv_tracker):
+    async def test_prediction_clear_formatting(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that predictions have clear visual formatting."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH price forecast", "language": "en"}
+            json={"content": "ETH price forecast", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
@@ -227,32 +248,51 @@ class TestGuestHunterPricePredictionStorytellingQuality:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_prediction_actionable_insights(self, client, llm_validator, csv_tracker):
+    async def test_prediction_actionable_insights(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that predictions provide actionable context."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "SOL price prediction", "language": "en"}
+            json={"content": "SOL price prediction", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
         # Should provide context about predictions
-        insights_keywords = ["increase", "decrease", "bullish", "bearish", "trend", "forecast"]
+        insights_keywords = [
+            "increase",
+            "decrease",
+            "bullish",
+            "bearish",
+            "trend",
+            "forecast",
+        ]
         has_insights = any(keyword in content.lower() for keyword in insights_keywords)
         assert has_insights
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_prediction_risk_disclaimers(self, client, llm_validator, csv_tracker):
+    async def test_prediction_risk_disclaimers(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that predictions include appropriate risk disclaimers."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "BTC price prediction", "language": "en"}
+            json={"content": "BTC price prediction", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
         # Should have disclaimer language
-        disclaimer_keywords = ["not financial advice", "prediction", "estimate", "may vary", "risk"]
-        has_disclaimers = any(keyword in content.lower() for keyword in disclaimer_keywords)
+        disclaimer_keywords = [
+            "not financial advice",
+            "prediction",
+            "estimate",
+            "may vary",
+            "risk",
+        ]
+        has_disclaimers = any(
+            keyword in content.lower() for keyword in disclaimer_keywords
+        )
         assert has_disclaimers

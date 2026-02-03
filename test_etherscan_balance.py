@@ -39,10 +39,16 @@ async def test_etherscan_client():
     etherscan_settings = settings.etherscan
 
     print(f"\n✓ Etherscan API Key configured: {etherscan_settings.is_configured}")
-    print(f"  API Key: {etherscan_settings.api_key[:10]}..." if etherscan_settings.api_key else "  No API key")
+    print(
+        f"  API Key: {etherscan_settings.api_key[:10]}..."
+        if etherscan_settings.api_key
+        else "  No API key"
+    )
 
     if not etherscan_settings.is_configured:
-        print("❌ Etherscan API key not configured. Add it to config/local/.secrets.toml")
+        print(
+            "❌ Etherscan API key not configured. Add it to config/local/.secrets.toml"
+        )
         return False
 
     # Create client
@@ -86,7 +92,9 @@ async def test_etherscan_client():
         print(f"✅ Balance matches expected: {expected_balance} USDT")
         return True
     else:
-        print(f"⚠️  Balance mismatch: expected {expected_balance}, got {formatted_balance}")
+        print(
+            f"⚠️  Balance mismatch: expected {expected_balance}, got {formatted_balance}"
+        )
         print("   (This may be normal if wallet balance has changed)")
         return True
 
@@ -108,7 +116,9 @@ async def test_database_wallet():
             from sqlalchemy import select
             from sqlalchemy.ext.asyncio import AsyncSession
             from app.infrastructure.persistence_sqla.registry import mapping_registry
-            from app.infrastructure.persistence_sqla.mappings.wallet import map_wallet_tables
+            from app.infrastructure.persistence_sqla.mappings.wallet import (
+                map_wallet_tables,
+            )
             from app.infrastructure.adapters.types import MainAsyncSession
 
             # Ensure wallet mappings loaded
@@ -122,16 +132,13 @@ async def test_database_wallet():
                 return False
 
             # Query for test wallet
-            stmt = (
-                select(
-                    wallets_table.c.id,
-                    wallets_table.c.user_id,
-                    wallets_table.c.address,
-                    wallets_table.c.default_chain,
-                    wallets_table.c.status,
-                )
-                .where(wallets_table.c.address == TEST_WALLET.lower())
-            )
+            stmt = select(
+                wallets_table.c.id,
+                wallets_table.c.user_id,
+                wallets_table.c.address,
+                wallets_table.c.default_chain,
+                wallets_table.c.status,
+            ).where(wallets_table.c.address == TEST_WALLET.lower())
 
             result = await session.execute(stmt)
             wallet_row = result.fetchone()
@@ -171,9 +178,13 @@ async def test_celery_task_simulation():
             from sqlalchemy import select, update
             from sqlalchemy.ext.asyncio import AsyncSession
             from app.infrastructure.persistence_sqla.registry import mapping_registry
-            from app.infrastructure.persistence_sqla.mappings.wallet import map_wallet_tables
+            from app.infrastructure.persistence_sqla.mappings.wallet import (
+                map_wallet_tables,
+            )
             from app.infrastructure.adapters.types import MainAsyncSession
-            from app.infrastructure.adapters.external.etherscan_client import EtherscanClient
+            from app.infrastructure.adapters.external.etherscan_client import (
+                EtherscanClient,
+            )
             from datetime import datetime, UTC
 
             # Ensure wallet mappings loaded
@@ -181,17 +192,16 @@ async def test_celery_task_simulation():
 
             session: AsyncSession = await request_container.get(MainAsyncSession)
             wallets_table = mapping_registry.metadata.tables.get("wallets")
-            chain_addresses_table = mapping_registry.metadata.tables.get("chain_addresses")
+            chain_addresses_table = mapping_registry.metadata.tables.get(
+                "chain_addresses"
+            )
 
             # Find test wallet
-            stmt = (
-                select(
-                    wallets_table.c.id,
-                    wallets_table.c.address,
-                    wallets_table.c.default_chain,
-                )
-                .where(wallets_table.c.address == TEST_WALLET.lower())
-            )
+            stmt = select(
+                wallets_table.c.id,
+                wallets_table.c.address,
+                wallets_table.c.default_chain,
+            ).where(wallets_table.c.address == TEST_WALLET.lower())
 
             result = await session.execute(stmt)
             wallet_row = result.fetchone()
@@ -205,7 +215,11 @@ async def test_celery_task_simulation():
             default_chain = wallet_row[2]
 
             if default_chain:
-                chain = default_chain.value if hasattr(default_chain, 'value') else str(default_chain)
+                chain = (
+                    default_chain.value
+                    if hasattr(default_chain, "value")
+                    else str(default_chain)
+                )
             else:
                 chain = "ethereum"
 
@@ -259,13 +273,12 @@ async def test_celery_task_simulation():
             if chain_addresses_table is not None:
                 from sqlalchemy import and_
 
-                check_stmt = (
-                    select(chain_addresses_table.c.id, chain_addresses_table.c.balance_usd)
-                    .where(
-                        and_(
-                            chain_addresses_table.c.wallet_id == wallet_id,
-                            chain_addresses_table.c.chain == chain,
-                        )
+                check_stmt = select(
+                    chain_addresses_table.c.id, chain_addresses_table.c.balance_usd
+                ).where(
+                    and_(
+                        chain_addresses_table.c.wallet_id == wallet_id,
+                        chain_addresses_table.c.chain == chain,
                     )
                 )
                 check_result = await session.execute(check_stmt)

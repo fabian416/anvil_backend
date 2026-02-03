@@ -93,7 +93,7 @@ async def get_scan_details(scan_id: str):
 
 @router.get("/trends")
 async def get_vulnerability_trends(
-    days: int = Query(default=30, ge=1, le=90, description="Number of days to analyze")
+    days: int = Query(default=30, ge=1, le=90, description="Number of days to analyze"),
 ):
     """
     Get vulnerability trends over time.

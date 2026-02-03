@@ -10,7 +10,9 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 
-TEST_DATA_PATH = Path(__file__).parent.parent.parent / "docs" / "api" / "examples" / "test_data.json"
+TEST_DATA_PATH = (
+    Path(__file__).parent.parent.parent / "docs" / "api" / "examples" / "test_data.json"
+)
 
 
 def load_test_data() -> Dict[str, Any]:
@@ -72,7 +74,9 @@ def get_test_cases_by_category(category: str) -> List[Dict[str, Any]]:
     return [tc for tc in all_cases if tc.get("_category") == category]
 
 
-def get_test_cases_by_subcategory(category: str, subcategory: str) -> List[Dict[str, Any]]:
+def get_test_cases_by_subcategory(
+    category: str, subcategory: str
+) -> List[Dict[str, Any]]:
     """
     Get all test cases for a specific subcategory.
 
@@ -85,7 +89,8 @@ def get_test_cases_by_subcategory(category: str, subcategory: str) -> List[Dict[
     """
     all_cases = get_all_test_cases()
     return [
-        tc for tc in all_cases
+        tc
+        for tc in all_cases
         if tc.get("_category") == category and tc.get("_subcategory") == subcategory
     ]
 
@@ -140,22 +145,18 @@ def get_critical_integration_test_ids() -> List[str]:
     """
     return [
         # GraphRAG samples (2 tests)
-        "graphrag_ps_001",      # Protocol search
-        "graphrag_ra_001",      # Risk assessment
-
+        "graphrag_ps_001",  # Protocol search
+        "graphrag_ra_001",  # Risk assessment
         # Hunter AI samples (2 tests)
-        "hunter_sent_001",      # Sentiment
-        "hunter_pp_001",        # Price prediction
-
+        "hunter_sent_001",  # Sentiment
+        "hunter_pp_001",  # Price prediction
         # ULTRA samples (2 tests)
-        "ultra_arb_001",        # Arbitrage
-        "ultra_fl_001",         # Flash loans
-
+        "ultra_arb_001",  # Arbitrage
+        "ultra_fl_001",  # Flash loans
         # Agent Squad samples (2 tests)
-        "squad_spec_001",       # Specialist task
-        "squad_work_001",       # Complex workflow
-
+        "squad_spec_001",  # Specialist task
+        "squad_work_001",  # Complex workflow
         # Chat samples (2 tests)
-        "chat_gen_001",         # General chat
-        "chat_gen_003",         # General chat variation (if exists)
+        "chat_gen_001",  # General chat
+        "chat_gen_003",  # General chat variation (if exists)
     ]

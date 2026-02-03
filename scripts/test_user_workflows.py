@@ -55,7 +55,6 @@ TEST_CASES = [
         "expected_workflow": "swap_workflow",
         "category": "swap",
     },
-    
     # Lending Workflow Tests
     {
         "test_id": 5,
@@ -85,7 +84,6 @@ TEST_CASES = [
         "expected_workflow": "lending_workflow",
         "category": "lending",
     },
-    
     # Transfer Workflow Tests
     {
         "test_id": 9,
@@ -115,7 +113,6 @@ TEST_CASES = [
         "expected_workflow": "transfer_workflow",
         "category": "transfer",
     },
-    
     # Buy Workflow Tests
     {
         "test_id": 13,
@@ -145,7 +142,6 @@ TEST_CASES = [
         "expected_workflow": "buy_workflow",
         "category": "buy",
     },
-    
     # Money Market Workflow Tests
     {
         "test_id": 17,
@@ -175,7 +171,6 @@ TEST_CASES = [
         "expected_workflow": "money_market_workflow",
         "category": "money_market",
     },
-    
     # Edge Cases - Should NOT trigger workflow agents
     {
         "test_id": 21,
@@ -212,7 +207,6 @@ TEST_CASES = [
         "expected_workflow": "transaction_history",
         "category": "transactions",
     },
-    
     # Multi-language tests
     {
         "test_id": 26,
@@ -247,11 +241,11 @@ async def get_or_create_conversation(client: httpx.AsyncClient) -> str:
         headers={"Authorization": f"Bearer {JWT_TOKEN}"},
         json={"title": "Workflow Test Session"},
     )
-    
+
     if response.status_code in (200, 201):
         data = response.json()
         return data.get("id") or data.get("conversation_id")
-    
+
     raise Exception(f"Failed to create conversation: {response.text}")
 
 
@@ -262,9 +256,9 @@ async def send_message(
     language: str = "en",
 ) -> dict[str, Any]:
     """Send message to conversation and get response."""
-    
+
     start_time = time.time()
-    
+
     response = await client.post(
         f"{BASE_URL}/api/v1/conversations/{conversation_id}/messages",
         headers={
@@ -277,9 +271,9 @@ async def send_message(
         },
         timeout=60.0,
     )
-    
+
     elapsed_ms = int((time.time() - start_time) * 1000)
-    
+
     if response.status_code not in (200, 201):
         return {
             "content": f"ERROR: {response.status_code} - {response.text[:200]}",
@@ -291,21 +285,25 @@ async def send_message(
             "execute_data": None,
             "error": True,
         }
-    
+
     data = response.json()
-    
+
     # Extract from nested response structure
     routing = data.get("routing", {})
     enrichment = data.get("enrichment", {})
     agent_message = data.get("agent_message", {})
-    
+
     # Check for error in enrichment metadata
     error_msg = enrichment.get("metadata", {}).get("error", "")
-    
+
     return {
         "content": agent_message.get("content", "")[:500],
-        "agents_used": ",".join(routing.get("agents_used", []) or enrichment.get("agents_used", [])),
-        "sources": json.dumps(agent_message.get("sources", []))[:200] if agent_message.get("sources") else "",
+        "agents_used": ",".join(
+            routing.get("agents_used", []) or enrichment.get("agents_used", [])
+        ),
+        "sources": json.dumps(agent_message.get("sources", []))[:200]
+        if agent_message.get("sources")
+        else "",
         "handler": routing.get("handler", ""),
         "workflow_type": enrichment.get("workflow_type", ""),
         "response_time_ms": elapsed_ms,
@@ -318,19 +316,25 @@ async def send_message(
 
 def analyze_result(test_case: dict, result: dict) -> tuple[str, str]:
     """Analyze test result and determine status."""
-    
+
     expected = test_case["expected_workflow"]
     agents_used = result.get("agents_used", "")
     content = result.get("content", "")
     execute_data = result.get("execute_data")
-    
+
     # Check for errors
     if result.get("error"):
         return "FAIL", f"FAIL: Error response - {content[:100]}"
-    
+
     # For workflow agents, check if execute_data is present
-    workflow_agents = ["swap_workflow", "lending_workflow", "transfer_workflow", "buy_workflow", "money_market_workflow"]
-    
+    workflow_agents = [
+        "swap_workflow",
+        "lending_workflow",
+        "transfer_workflow",
+        "buy_workflow",
+        "money_market_workflow",
+    ]
+
     if expected in workflow_agents:
         if expected in agents_used:
             if execute_data:
@@ -344,16 +348,28 @@ def analyze_result(test_case: dict, result: dict) -> tuple[str, str]:
                 "lending_workflow": ["deposit", "vault", "apy", "yield"],
                 "transfer_workflow": ["send", "transfer", "recipient", "address"],
                 "buy_workflow": ["buy", "purchase", "payment", "moonpay"],
-                "money_market_workflow": ["compare", "rates", "aave", "compound", "morpho"],
+                "money_market_workflow": [
+                    "compare",
+                    "rates",
+                    "aave",
+                    "compound",
+                    "morpho",
+                ],
             }
-            
+
             keywords = workflow_keywords.get(expected, [])
             content_lower = content.lower()
-            
+
             if any(kw in content_lower for kw in keywords):
-                return "PARTIAL", f"PARTIAL: Content suggests {expected} but agents_used={agents_used}"
+                return (
+                    "PARTIAL",
+                    f"PARTIAL: Content suggests {expected} but agents_used={agents_used}",
+                )
             else:
-                return "FAIL", f"FAIL: Expected {expected}, got agents_used={agents_used}"
+                return (
+                    "FAIL",
+                    f"FAIL: Expected {expected}, got agents_used={agents_used}",
+                )
     else:
         # For non-workflow agents
         if expected in agents_used:
@@ -364,9 +380,9 @@ def analyze_result(test_case: dict, result: dict) -> tuple[str, str]:
 
 async def run_tests():
     """Run all workflow tests and generate CSV output."""
-    
+
     results = []
-    
+
     async with httpx.AsyncClient() as client:
         # Get or create conversation
         try:
@@ -375,25 +391,29 @@ async def run_tests():
         except Exception as e:
             print(f"Failed to get conversation: {e}")
             return
-        
+
         # Run each test
         for test_case in TEST_CASES:
             test_id = test_case["test_id"]
             input_text = test_case["input"]
             language = test_case["language"]
             category = test_case["category"]
-            
+
             print(f"\n[{test_id}] Testing: {input_text[:50]}...")
-            
+
             try:
-                result = await send_message(client, conversation_id, input_text, language)
+                result = await send_message(
+                    client, conversation_id, input_text, language
+                )
                 status, analysis = analyze_result(test_case, result)
-                
+
                 print(f"    Status: {status}")
                 print(f"    Agents: {result.get('agents_used', 'N/A')}")
-                print(f"    Execute Data: {'Yes' if result.get('execute_data') else 'No'}")
+                print(
+                    f"    Execute Data: {'Yes' if result.get('execute_data') else 'No'}"
+                )
                 print(f"    Time: {result.get('response_time_ms', 0)}ms")
-                
+
                 results.append({
                     "test_id": test_id,
                     "timestamp": datetime.now().isoformat(),
@@ -408,12 +428,16 @@ async def run_tests():
                     "workflow_type": result.get("workflow_type", ""),
                     "response_time_ms": result.get("response_time_ms", 0),
                     "has_execute_data": "Yes" if result.get("execute_data") else "No",
-                    "execute_data_type": result.get("execute_data", {}).get("action_type", "") if result.get("execute_data") else "",
+                    "execute_data_type": result.get("execute_data", {}).get(
+                        "action_type", ""
+                    )
+                    if result.get("execute_data")
+                    else "",
                     "user_type": result.get("user_type", ""),
                     "status": status,
                     "analysis": analysis,
                 })
-                
+
             except Exception as e:
                 print(f"    Error: {e}")
                 results.append({
@@ -435,39 +459,52 @@ async def run_tests():
                     "status": "ERROR",
                     "analysis": f"ERROR: {str(e)[:100]}",
                 })
-            
+
             # Small delay between requests
             await asyncio.sleep(1)
-    
+
     # Write CSV output
     fieldnames = [
-        "test_id", "timestamp", "input", "language", "category", "expected_workflow",
-        "output", "agents_used", "sources", "handler", "workflow_type",
-        "response_time_ms", "has_execute_data", "execute_data_type", "user_type",
-        "status", "analysis"
+        "test_id",
+        "timestamp",
+        "input",
+        "language",
+        "category",
+        "expected_workflow",
+        "output",
+        "agents_used",
+        "sources",
+        "handler",
+        "workflow_type",
+        "response_time_ms",
+        "has_execute_data",
+        "execute_data_type",
+        "user_type",
+        "status",
+        "analysis",
     ]
-    
+
     with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(results)
-    
-    print(f"\n{'='*60}")
+
+    print(f"\n{'=' * 60}")
     print(f"Results written to: {OUTPUT_FILE}")
-    print(f"{'='*60}")
-    
+    print(f"{'=' * 60}")
+
     # Summary
     total = len(results)
     passed = sum(1 for r in results if r["status"] == "PASS")
     partial = sum(1 for r in results if r["status"] == "PARTIAL")
     failed = sum(1 for r in results if r["status"] in ("FAIL", "ERROR"))
-    
+
     print(f"\nSummary:")
     print(f"  Total: {total}")
-    print(f"  PASS: {passed} ({passed/total*100:.1f}%)")
-    print(f"  PARTIAL: {partial} ({partial/total*100:.1f}%)")
-    print(f"  FAIL/ERROR: {failed} ({failed/total*100:.1f}%)")
-    
+    print(f"  PASS: {passed} ({passed / total * 100:.1f}%)")
+    print(f"  PARTIAL: {partial} ({partial / total * 100:.1f}%)")
+    print(f"  FAIL/ERROR: {failed} ({failed / total * 100:.1f}%)")
+
     # Category breakdown
     print(f"\nBy Category:")
     categories = set(r["category"] for r in results)

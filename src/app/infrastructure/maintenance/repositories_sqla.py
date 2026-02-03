@@ -44,13 +44,9 @@ class SqlaPasswordResetRepository(PasswordResetRepository):
             # Ensure table is mapped, then fetch table from registry
             map_password_resets_table()
             pr_table = mapping_registry.metadata.tables["password_resets"]
-            stmt: Delete = delete(pr_table).where(
-                pr_table.c.expires_at < now
-            )
+            stmt: Delete = delete(pr_table).where(pr_table.c.expires_at < now)
             result = await self._session.execute(stmt)
             await self._session.commit()
             return int(getattr(result, "rowcount", 0) or 0)
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
-
-

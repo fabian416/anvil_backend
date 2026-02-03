@@ -8,7 +8,10 @@ from fastapi_error_map import ErrorAwareRouter, rule
 from app.application.common.exceptions.authorization import AuthorizationError
 from app.domain.exceptions.base import DomainFieldError
 from app.domain.exceptions.user import UserNotFoundByEmailError
-from app.infrastructure.auth.exceptions import AlreadyAuthenticatedError, AuthenticationError
+from app.infrastructure.auth.exceptions import (
+    AlreadyAuthenticatedError,
+    AuthenticationError,
+)
 from app.infrastructure.auth.handlers.log_in import LogInHandler, LogInRequest
 from app.infrastructure.exceptions.gateway import DataMapperError
 from app.presentation.http.errors.callbacks import log_error, log_info

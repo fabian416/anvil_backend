@@ -13,6 +13,7 @@ from app.domain.value_objects.user_id import UserId
 @dataclass(frozen=True, slots=True)
 class UserEventId:
     """Value object for UserEvent ID."""
+
     value: int
 
 
@@ -21,6 +22,7 @@ class UserEvent(Entity[UserEventId]):
     """
     Entity representing a user activity event for analytics and metrics.
     """
+
     user_id: UserId
     event_type: str
     event_category: str | None = None

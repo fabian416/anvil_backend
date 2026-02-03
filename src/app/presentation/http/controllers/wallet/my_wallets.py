@@ -37,7 +37,9 @@ class WalletResponseModel(BaseModel):
     wallet_id: str = Field(..., description="Unique wallet identifier")
     address: str = Field(..., description="Blockchain address")
     chain_type: str = Field(..., description="Blockchain type (ethereum, solana, etc.)")
-    wallet_type: str = Field(..., description="Type: embedded, external, server_controlled")
+    wallet_type: str = Field(
+        ..., description="Type: embedded, external, server_controlled"
+    )
     is_primary: bool = Field(..., description="Whether this is the primary wallet")
     source: str = Field(..., description="Data source: privy, local, or both")
     created_at: Optional[str] = Field(None, description="When the wallet was created")
@@ -49,11 +51,14 @@ class MyWalletsResponseModel(BaseModel):
     user_id: int = Field(..., description="Local user ID")
     privy_user_id: Optional[str] = Field(None, description="Privy user ID if linked")
     wallets: list[WalletResponseModel] = Field(..., description="List of all wallets")
-    primary_wallet_address: Optional[str] = Field(None, description="Primary wallet address")
+    primary_wallet_address: Optional[str] = Field(
+        None, description="Primary wallet address"
+    )
     privy_connected: bool = Field(..., description="Whether Privy data was fetched")
     message: Optional[str] = Field(None, description="Optional status message")
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "user_id": 123,
                 "privy_user_id": "did:privy:abc123",
@@ -72,7 +77,8 @@ class MyWalletsResponseModel(BaseModel):
                 "privy_connected": True,
                 "message": None,
             }
-        })
+        }
+    )
 
 
 class SyncWalletItem(BaseModel):
@@ -213,7 +219,7 @@ def create_my_wallets_router() -> APIRouter:
 
         The frontend should call this after connecting or importing wallets
         to inform the backend of all connected addresses and their types.
-        
+
         Supports:
         - Legacy format: wallet_addresses (list of strings)
         - New format: wallets (list of SyncWalletItem with metadata)

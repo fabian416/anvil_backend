@@ -32,9 +32,7 @@ class LendingRepositoryAdapterSqla:
         self._preferences_table = mapping_registry.metadata.tables[
             "user_lending_preferences"
         ]
-        self._positions_table = mapping_registry.metadata.tables[
-            "lending_positions"
-        ]
+        self._positions_table = mapping_registry.metadata.tables["lending_positions"]
 
     # ═══════════════════════════════════════════════════════════════
     # HEALTH CHECKS
@@ -178,9 +176,8 @@ class LendingRepositoryAdapterSqla:
 
     async def get_users_with_active_positions(self) -> list[UUID]:
         """Get list of user IDs with active lending positions."""
-        query = (
-            select(self._positions_table.c.user_id.distinct())
-            .where(self._positions_table.c.status == "active")
+        query = select(self._positions_table.c.user_id.distinct()).where(
+            self._positions_table.c.status == "active"
         )
 
         result = await self._session.execute(query)

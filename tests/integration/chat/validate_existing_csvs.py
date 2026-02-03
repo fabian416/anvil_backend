@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 # Add project to path
-sys.path.insert(0, '/home/ubuntu/anvil_backend')
+sys.path.insert(0, "/home/ubuntu/anvil_backend")
 
 # Configure environment
 os.environ["DEEPINFRA_API_KEY"] = "ur1aITAnOmIXK0LTT1zCBDGnk3elzsVA"
@@ -55,12 +55,20 @@ class CSVValidator:
         self.validator = LLMTestValidator()
 
         # File paths
-        self.guest_csv = Path("/home/ubuntu/anvil_backend/tests/output/guest/week1_8_input_output.csv")
-        self.user_csv = Path("/home/ubuntu/anvil_backend/tests/output/user/week1_8_input_output.csv")
+        self.guest_csv = Path(
+            "/home/ubuntu/anvil_backend/tests/output/guest/week1_8_input_output.csv"
+        )
+        self.user_csv = Path(
+            "/home/ubuntu/anvil_backend/tests/output/user/week1_8_input_output.csv"
+        )
 
         # Output paths
-        self.guest_output = Path("/home/ubuntu/anvil_backend/tests/output/guest/week1_8_input_output_validated.csv")
-        self.user_output = Path("/home/ubuntu/anvil_backend/tests/output/user/week1_8_input_output_validated.csv")
+        self.guest_output = Path(
+            "/home/ubuntu/anvil_backend/tests/output/guest/week1_8_input_output_validated.csv"
+        )
+        self.user_output = Path(
+            "/home/ubuntu/anvil_backend/tests/output/user/week1_8_input_output_validated.csv"
+        )
 
         # Statistics
         self.stats = {
@@ -83,9 +91,9 @@ class CSVValidator:
             output_csv: Output CSV file path
             csv_type: Type of CSV (guest or user)
         """
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print(f"Validating {csv_type.upper()} CSV: {input_csv.name}")
-        print(f"{'='*70}")
+        print(f"{'=' * 70}")
 
         # Read existing CSV
         with input_csv.open("r", encoding="utf-8") as f:
@@ -110,8 +118,10 @@ class CSVValidator:
 
         # Ask for confirmation if cost > $0.50
         if estimated_cost > 0.50:
-            response = input(f"\n⚠️  This will cost approximately ${estimated_cost:.2f}. Continue? (y/n): ")
-            if response.lower() != 'y':
+            response = input(
+                f"\n⚠️  This will cost approximately ${estimated_cost:.2f}. Continue? (y/n): "
+            )
+            if response.lower() != "y":
                 print("❌ Validation cancelled")
                 return
 
@@ -132,14 +142,20 @@ class CSVValidator:
                 # Progress indicator
                 if i % 10 == 0:
                     print(f"\n📊 Progress: {i}/{len(rows)} rows processed")
-                    print(f"   Validated: {self.stats['validated']}, Skipped: {self.stats['skipped']}")
-                    print(f"   Total tokens: {self.stats['total_tokens']:,}, Cost: ${self.stats['total_tokens'] / 1_000_000 * 0.08:.4f}")
+                    print(
+                        f"   Validated: {self.stats['validated']}, Skipped: {self.stats['skipped']}"
+                    )
+                    print(
+                        f"   Total tokens: {self.stats['total_tokens']:,}, Cost: ${self.stats['total_tokens'] / 1_000_000 * 0.08:.4f}"
+                    )
 
         # Write validated CSV
         self._write_validated_csv(validated_rows, output_csv)
         print(f"\n✅ Validated CSV written to: {output_csv}")
 
-    def _select_rows_to_validate(self, rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _select_rows_to_validate(
+        self, rows: List[Dict[str, str]]
+    ) -> List[Dict[str, str]]:
         """Select which rows to validate based on mode."""
         if self.mode == "full":
             return rows
@@ -202,7 +218,7 @@ class CSVValidator:
                     {
                         "user_input": inputs[i],
                         "agent_output": outputs[i],
-                        "expected_behavior": f"Step {i+1} of {test_type}"
+                        "expected_behavior": f"Step {i + 1} of {test_type}",
                     }
                     for i in range(min(len(inputs), len(outputs)))
                 ]
@@ -232,7 +248,9 @@ class CSVValidator:
                 else:
                     self.stats["warnings"] += 1
 
-                print(f"   AI: {flow_result.verdict.value} ({flow_result.confidence:.2f})")
+                print(
+                    f"   AI: {flow_result.verdict.value} ({flow_result.confidence:.2f})"
+                )
 
             else:
                 # Single-step validation
@@ -250,7 +268,11 @@ class CSVValidator:
                 # Update row
                 row["llm_verdict"] = validation_result.verdict.value
                 row["llm_confidence"] = f"{validation_result.confidence:.2f}"
-                row["error_analysis"] = "; ".join(validation_result.semantic_issues) if validation_result.semantic_issues else validation_result.reasoning[:500]
+                row["error_analysis"] = (
+                    "; ".join(validation_result.semantic_issues)
+                    if validation_result.semantic_issues
+                    else validation_result.reasoning[:500]
+                )
                 row["root_cause"] = ""
                 row["suggested_fix"] = ""
 
@@ -262,7 +284,9 @@ class CSVValidator:
                 else:
                     self.stats["warnings"] += 1
 
-                print(f"   AI: {validation_result.verdict.value} ({validation_result.confidence:.2f})")
+                print(
+                    f"   AI: {validation_result.verdict.value} ({validation_result.confidence:.2f})"
+                )
 
         except Exception as e:
             print(f"   ❌ Error: {str(e)[:100]}")
@@ -279,7 +303,11 @@ class CSVValidator:
         test_type_lower = test_type.lower()
 
         # Security tests
-        if "xss" in test_type_lower or "sql" in test_type_lower or "injection" in test_type_lower:
+        if (
+            "xss" in test_type_lower
+            or "sql" in test_type_lower
+            or "injection" in test_type_lower
+        ):
             return "Should safely handle malicious input without executing or exposing the injection attempt"
 
         if "command" in test_type_lower or "prompt" in test_type_lower:
@@ -290,9 +318,17 @@ class CSVValidator:
 
         # Functional tests
         if "swap" in test_type_lower:
-            return "Should guide user through token swap process with accurate information" if is_multi_step else "Should provide swap information"
+            return (
+                "Should guide user through token swap process with accurate information"
+                if is_multi_step
+                else "Should provide swap information"
+            )
 
-        if "price" in test_type_lower or "bitcoin" in test_type_lower or "ethereum" in test_type_lower:
+        if (
+            "price" in test_type_lower
+            or "bitcoin" in test_type_lower
+            or "ethereum" in test_type_lower
+        ):
             return "Should provide accurate cryptocurrency price information"
 
         if "balance" in test_type_lower or "portfolio" in test_type_lower:
@@ -317,7 +353,13 @@ class CSVValidator:
     def _write_validated_csv(self, rows: List[Dict[str, str]], output_csv: Path):
         """Write validated rows to CSV with AI columns."""
         # Ensure all rows have AI columns
-        ai_columns = ["llm_verdict", "llm_confidence", "error_analysis", "root_cause", "suggested_fix"]
+        ai_columns = [
+            "llm_verdict",
+            "llm_confidence",
+            "error_analysis",
+            "root_cause",
+            "suggested_fix",
+        ]
 
         # Get all column names (original + AI columns)
         if rows:
@@ -328,8 +370,20 @@ class CSVValidator:
                 if col not in all_columns:
                     all_columns.append(col)
         else:
-            all_columns = ["Type", "device", "is multi step", "input 1", "output 1", "input 2", "output 2",
-                          "input 3", "output 3", "input 4", "output 4", "test pass"] + ai_columns
+            all_columns = [
+                "Type",
+                "device",
+                "is multi step",
+                "input 1",
+                "output 1",
+                "input 2",
+                "output 2",
+                "input 3",
+                "output 3",
+                "input 4",
+                "output 4",
+                "test pass",
+            ] + ai_columns
 
         # Write CSV
         with output_csv.open("w", newline="", encoding="utf-8") as f:
@@ -345,9 +399,9 @@ class CSVValidator:
 
     def print_summary(self):
         """Print validation summary."""
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("VALIDATION SUMMARY")
-        print("="*70)
+        print("=" * 70)
         print(f"\nTotal rows: {self.stats['total_rows']}")
         print(f"Validated: {self.stats['validated']}")
         print(f"Skipped: {self.stats['skipped']}")
@@ -368,13 +422,27 @@ async def main():
     """Main validation function."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Validate existing CSV test results with LLM")
-    parser.add_argument("--mode", choices=["full", "failed", "sample", "dry-run"], default="failed",
-                       help="Validation mode (default: failed)")
-    parser.add_argument("--sample-rate", type=int, default=10,
-                       help="Sample rate for sample mode (default: 10)")
-    parser.add_argument("--csv-type", choices=["guest", "user", "both"], default="both",
-                       help="Which CSV to validate (default: both)")
+    parser = argparse.ArgumentParser(
+        description="Validate existing CSV test results with LLM"
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["full", "failed", "sample", "dry-run"],
+        default="failed",
+        help="Validation mode (default: failed)",
+    )
+    parser.add_argument(
+        "--sample-rate",
+        type=int,
+        default=10,
+        help="Sample rate for sample mode (default: 10)",
+    )
+    parser.add_argument(
+        "--csv-type",
+        choices=["guest", "user", "both"],
+        default="both",
+        help="Which CSV to validate (default: both)",
+    )
 
     args = parser.parse_args()
 
@@ -383,10 +451,14 @@ async def main():
 
     # Validate CSVs
     if args.csv_type in ["guest", "both"]:
-        await validator.validate_csv_file(validator.guest_csv, validator.guest_output, "guest")
+        await validator.validate_csv_file(
+            validator.guest_csv, validator.guest_output, "guest"
+        )
 
     if args.csv_type in ["user", "both"]:
-        await validator.validate_csv_file(validator.user_csv, validator.user_output, "user")
+        await validator.validate_csv_file(
+            validator.user_csv, validator.user_output, "user"
+        )
 
     # Print summary
     validator.print_summary()

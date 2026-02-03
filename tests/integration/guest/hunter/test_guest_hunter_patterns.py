@@ -20,7 +20,10 @@ class TestGuestHunterPatterns:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What patterns do you see in BTC chart?", "language": "en"}
+            json={
+                "content": "What patterns do you see in BTC chart?",
+                "language": "en",
+            },
         )
         assert response.status_code == 200
         data = response.json()
@@ -30,7 +33,10 @@ class TestGuestHunterPatterns:
         content = data["agent_message"]["content"]
 
         # Should show pattern analysis
-        assert any(word in content.lower() for word in ["pattern", "chart", "formation", "trend"])
+        assert any(
+            word in content.lower()
+            for word in ["pattern", "chart", "formation", "trend"]
+        )
         assert "BTC" in content
 
         # Should have enrichment
@@ -48,12 +54,14 @@ class TestGuestHunterPatterns:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_pattern_types_classification(self, client, llm_validator, csv_tracker):
+    async def test_pattern_types_classification(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that patterns are properly classified."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH chart patterns", "language": "en"}
+            json={"content": "ETH chart patterns", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -70,7 +78,9 @@ class TestGuestHunterPatterns:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_pattern_detection_multiple_tokens(self, client, llm_validator, csv_tracker):
+    async def test_pattern_detection_multiple_tokens(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test pattern detection for different tokens."""
 
         tokens = ["BTC", "ETH", "SOL"]
@@ -79,7 +89,7 @@ class TestGuestHunterPatterns:
         for token in tokens:
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={"content": f"chart patterns for {token}", "language": "en"}
+                json={"content": f"chart patterns for {token}", "language": "en"},
             )
             assert response.status_code == 200
             data = response.json()
@@ -95,7 +105,7 @@ class TestGuestHunterPatterns:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "BTC chart analysis", "language": "en"}
+            json={"content": "BTC chart analysis", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -117,7 +127,7 @@ class TestGuestHunterPatterns:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH chart patterns", "language": "en"}
+            json={"content": "ETH chart patterns", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -137,12 +147,14 @@ class TestGuestHunterPatterns:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_pattern_bullish_bearish_signals(self, client, llm_validator, csv_tracker):
+    async def test_pattern_bullish_bearish_signals(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that patterns indicate bullish/bearish implications."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "SOL chart patterns", "language": "en"}
+            json={"content": "SOL chart patterns", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -154,7 +166,13 @@ class TestGuestHunterPatterns:
         assert "chart_patterns" in enrichment or "candlestick_patterns" in enrichment
 
         # Should mention bullish/bearish context
-        sentiment_keywords = ["bullish", "bearish", "reversal", "continuation", "breakout"]
+        sentiment_keywords = [
+            "bullish",
+            "bearish",
+            "reversal",
+            "continuation",
+            "breakout",
+        ]
         assert any(keyword in content.lower() for keyword in sentiment_keywords)
 
     @pytest.mark.asyncio
@@ -164,7 +182,7 @@ class TestGuestHunterPatterns:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "BTC pattern analysis", "language": "en"}
+            json={"content": "BTC pattern analysis", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -186,7 +204,7 @@ class TestGuestHunterPatterns:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH chart patterns", "language": "en"}
+            json={"content": "ETH chart patterns", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -198,12 +216,13 @@ class TestGuestHunterPatterns:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_pattern_uses_real_chart_data(self, client, llm_validator, csv_tracker):
+    async def test_pattern_uses_real_chart_data(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that patterns use real chart data."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "BTC patterns", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "BTC patterns", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -220,12 +239,14 @@ class TestGuestHunterPatterns:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_pattern_multilingual_spanish(self, client, llm_validator, csv_tracker):
+    async def test_pattern_multilingual_spanish(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test pattern detection in Spanish."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "patrones de gráfico para ETH", "language": "es"}
+            json={"content": "patrones de gráfico para ETH", "language": "es"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -238,6 +259,7 @@ class TestGuestHunterPatterns:
         # Ideally has pattern keywords but not required due to rate limits/errors
         # assert any(word in content for word in ["Patrón", "Pattern", "Gráfico", "Chart", "Formación", "Formation"])
 
+
 class TestGuestHunterPatternsStorytellingQuality:
     """Test storytelling and UX quality of pattern detection responses."""
 
@@ -248,12 +270,14 @@ class TestGuestHunterPatternsStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "BTC chart patterns", "language": "en"}
+            json={"content": "BTC chart patterns", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
         # Should have emoji indicators
-        assert any(emoji in content for emoji in ["📊", "📈", "📉", "🔺", "🔻", "📐", "⚡"])
+        assert any(
+            emoji in content for emoji in ["📊", "📈", "📉", "🔺", "🔻", "📐", "⚡"]
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -262,7 +286,7 @@ class TestGuestHunterPatternsStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH pattern analysis", "language": "en"}
+            json={"content": "ETH pattern analysis", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
@@ -274,12 +298,14 @@ class TestGuestHunterPatternsStorytellingQuality:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_pattern_visual_descriptions(self, client, llm_validator, csv_tracker):
+    async def test_pattern_visual_descriptions(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that patterns are described visually."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "SOL chart patterns", "language": "en"}
+            json={"content": "SOL chart patterns", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
@@ -289,12 +315,13 @@ class TestGuestHunterPatternsStorytellingQuality:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_pattern_actionable_insights(self, client, llm_validator, csv_tracker):
+    async def test_pattern_actionable_insights(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that patterns provide actionable insights."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "BTC patterns", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "BTC patterns", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -304,15 +331,24 @@ class TestGuestHunterPatternsStorytellingQuality:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_pattern_educational_context(self, client, llm_validator, csv_tracker):
+    async def test_pattern_educational_context(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that patterns include educational explanations."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH chart analysis", "language": "en"}
+            json={"content": "ETH chart analysis", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
         # Should explain what patterns mean
-        educational_keywords = ["typically", "usually", "indicates", "suggests", "means", "signals"]
+        educational_keywords = [
+            "typically",
+            "usually",
+            "indicates",
+            "suggests",
+            "means",
+            "signals",
+        ]
         assert any(keyword in content.lower() for keyword in educational_keywords)

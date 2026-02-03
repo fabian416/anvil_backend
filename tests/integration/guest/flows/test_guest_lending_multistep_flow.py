@@ -16,8 +16,7 @@ class TestGuestLendingMultiStepFlow:
 
         # Step 1: Initiate lending
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "lending", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -33,8 +32,7 @@ class TestGuestLendingMultiStepFlow:
 
         # Step 2: Select asset (USDC)
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "USDC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "USDC", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -48,8 +46,7 @@ class TestGuestLendingMultiStepFlow:
 
         # Step 3: Enter amount
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "1000", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "1000", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -64,8 +61,7 @@ class TestGuestLendingMultiStepFlow:
 
         # Step 4: Confirm deposit
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "confirm", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "confirm", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -90,8 +86,7 @@ class TestGuestLendingMultiStepFlow:
 
         for i, (message, expected_flow) in enumerate(steps, 1):
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": message, "language": "en"}
+                "/api/v1/guest/chat", json={"content": message, "language": "en"}
             )
             assert response.status_code == 200
             data = response.json()
@@ -101,21 +96,29 @@ class TestGuestLendingMultiStepFlow:
 
             # Verify final step
             if i == len(steps):
-                assert "🎉" in data["agent_message"]["content"] or "✅" in data["agent_message"]["content"]
+                assert (
+                    "🎉" in data["agent_message"]["content"]
+                    or "✅" in data["agent_message"]["content"]
+                )
 
     @pytest.mark.asyncio
     async def test_lending_flow_cancel(self, client):
         """Test cancelling lending at confirmation."""
 
         # Complete flow to confirmation
-        await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "DAI", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "500", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "DAI", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "500", "language": "en"}
+        )
 
         # Cancel
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "cancel", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "cancel", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -131,12 +134,13 @@ class TestGuestLendingMultiStepFlow:
 
         for asset in assets:
             # Initiate
-            await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
+            await client.post(
+                "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
+            )
 
             # Select asset
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": asset, "language": "en"}
+                "/api/v1/guest/chat", json={"content": asset, "language": "en"}
             )
             assert response.status_code == 200
             data = response.json()
@@ -150,12 +154,15 @@ class TestGuestLendingMultiStepFlow:
         """Test that lending shows demo APY."""
 
         # Complete flow to quote
-        await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "USDC", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "USDC", "language": "en"}
+        )
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "1000", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "1000", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -167,19 +174,24 @@ class TestGuestLendingMultiStepFlow:
         assert "USDC" in content  # Asset
         assert "Demo" in content or "demo" in content.lower()  # Demo indicator
         # Should show earnings estimates
-        assert "earn" in content.lower() or "month" in content.lower() or "year" in content.lower()
+        assert (
+            "earn" in content.lower()
+            or "month" in content.lower()
+            or "year" in content.lower()
+        )
 
     @pytest.mark.asyncio
     async def test_lending_number_selection(self, client):
         """Test that users can select assets by number."""
 
         # Initiate
-        await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
+        )
 
         # Select option 1 (USDC)
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "1", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "1", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -194,26 +206,31 @@ class TestGuestLendingMultiStepFlow:
 
         # Step 1
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "préstamo", "language": "es"}
+            "/api/v1/guest/chat", json={"content": "préstamo", "language": "es"}
         )
         assert response.status_code == 200
         data = response.json()
 
         content = data["agent_message"]["content"]
         # Should contain Spanish or English text (fallback)
-        assert any(word in content.lower() for word in ["depositar", "deposit", "cripto", "crypto", "ganar", "earn"])
+        assert any(
+            word in content.lower()
+            for word in ["depositar", "deposit", "cripto", "crypto", "ganar", "earn"]
+        )
 
     @pytest.mark.asyncio
     async def test_lending_apy_breakdown(self, client):
         """Test that quote shows APY breakdown."""
 
         # Get to quote step
-        await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "USDC", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "USDC", "language": "en"}
+        )
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "1000", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "1000", "language": "en"}
         )
 
         assert response.status_code == 200
@@ -243,8 +260,7 @@ class TestGuestLendingFlowStorytellingQuality:
 
         for step in steps:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": step, "language": "en"}
+                "/api/v1/guest/chat", json={"content": step, "language": "en"}
             )
             content = response.json()["agent_message"]["content"]
 
@@ -257,8 +273,7 @@ class TestGuestLendingFlowStorytellingQuality:
         """Test that responses use emojis to enhance communication."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "lending", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -270,11 +285,14 @@ class TestGuestLendingFlowStorytellingQuality:
         """Test that confirmation step has clear CTAs."""
 
         # Get to confirmation
-        await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "DAI", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "DAI", "language": "en"}
+        )
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "500", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "500", "language": "en"}
         )
 
         content = response.json()["agent_message"]["content"]
@@ -289,11 +307,14 @@ class TestGuestLendingFlowStorytellingQuality:
         """Test that quote step shows clear earnings breakdown."""
 
         # Get to quote step
-        await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "USDC", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "USDC", "language": "en"}
+        )
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "1000", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "1000", "language": "en"}
         )
 
         content = response.json()["agent_message"]["content"]

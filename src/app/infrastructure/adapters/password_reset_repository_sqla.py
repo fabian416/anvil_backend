@@ -3,7 +3,9 @@ from datetime import datetime, UTC
 from sqlalchemy import Select, and_, delete, select
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.application.common.ports.password_reset_repository import PasswordResetRepository
+from app.application.common.ports.password_reset_repository import (
+    PasswordResetRepository,
+)
 from app.infrastructure.adapters.constants import DB_QUERY_FAILED
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.exceptions.gateway import DataMapperError
@@ -38,7 +40,9 @@ class SqlaPasswordResetRepository(PasswordResetRepository):
         try:
             table = mapping_registry.metadata.tables["password_resets"]  # type: ignore
             await self._session.execute(
-                table.update().where(table.c.user_id == user_id).values(is_used=True, updated_at=datetime.now(UTC))
+                table.update()
+                .where(table.c.user_id == user_id)
+                .values(is_used=True, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
@@ -62,7 +66,9 @@ class SqlaPasswordResetRepository(PasswordResetRepository):
         try:
             table = mapping_registry.metadata.tables["password_resets"]  # type: ignore
             await self._session.execute(
-                table.update().where(table.c.id == id_).values(is_used=True, updated_at=datetime.now(UTC))
+                table.update()
+                .where(table.c.id == id_)
+                .values(is_used=True, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
@@ -70,10 +76,6 @@ class SqlaPasswordResetRepository(PasswordResetRepository):
     async def delete_by_id(self, *, id_: int) -> None:
         try:
             table = mapping_registry.metadata.tables["password_resets"]  # type: ignore
-            await self._session.execute(
-                delete(table).where(table.c.id == id_)
-            )
+            await self._session.execute(delete(table).where(table.c.id == id_))
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
-
-

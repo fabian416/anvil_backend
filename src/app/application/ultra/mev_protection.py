@@ -14,21 +14,21 @@ Usage:
     protection = MEVProtection()
     bundle = await protection.create_bundle(transactions, expected_profit)
     result = await protection.submit_bundle(bundle)
-    
+
     # With real mempool scanning
     protection = MEVProtection(
         enable_mempool_scanning=True,
         alchemy_api_key="your-key",
     )
     await protection.start_scanner()
-    
+
     # Check if transaction is being attacked
     is_safe = await protection.check_transaction_safety(
         token_pair=("WETH", "USDC"),
         amount_usd=Decimal("10000"),
         gas_price=50_000_000_000,
     )
-    
+
     if not is_safe["safe"]:
         # Route via Flashbots
         result = await protection.submit_protected(signed_tx)
@@ -133,7 +133,9 @@ class FlashbotsResponse:
             "bundle_id": self.bundle_id,
             "status": self.status.value,
             "block_number": self.block_number,
-            "profit_realized": str(self.profit_realized) if self.profit_realized else None,
+            "profit_realized": str(self.profit_realized)
+            if self.profit_realized
+            else None,
             "gas_used": self.gas_used,
             "error_message": self.error_message,
         }
@@ -173,22 +175,22 @@ class MEVProtection:
     - Priority fee optimization
     - Simulation before execution
     - Real-time mempool scanning (optional)
-    
+
     Example:
         >>> protection = MEVProtection()
-        >>> 
+        >>>
         >>> # Create and submit bundle
         >>> tx = Transaction(to="0x...", data="0x...", value=Decimal("0"), ...)
         >>> bundle = await protection.create_bundle([tx], Decimal("150"))
         >>> result = await protection.submit_bundle(bundle)
-        >>> 
+        >>>
         >>> # With mempool scanning
         >>> protection = MEVProtection(
         ...     enable_mempool_scanning=True,
         ...     alchemy_api_key="your-key",
         ... )
         >>> await protection.start_scanner()
-        >>> 
+        >>>
         >>> # Check safety
         >>> safety = await protection.check_transaction_safety(
         ...     token_pair=("WETH", "USDC"),
@@ -215,7 +217,7 @@ class MEVProtection:
         self.config = config or MEVConfig()
         self._bundle_counter = 0
         self._submitted_bundles: dict[str, MEVBundle] = {}
-        
+
         # Mempool scanning (optional)
         self._enable_scanning = enable_mempool_scanning
         self._alchemy_key = alchemy_api_key
@@ -360,7 +362,10 @@ class MEVProtection:
         # Check profitability
         if self.config.require_profit_guarantee:
             if bundle.expected_profit <= 0:
-                return False, f"Expected profit ${bundle.expected_profit} not profitable"
+                return (
+                    False,
+                    f"Expected profit ${bundle.expected_profit} not profitable",
+                )
 
         # Simulation passed
         return True, None
@@ -611,9 +616,9 @@ class MEVProtection:
 
     async def start_scanner(self) -> None:
         """Start mempool scanner for real-time attack detection.
-        
+
         Requires alchemy_api_key to be set during initialization.
-        
+
         Example:
             >>> protection = MEVProtection(
             ...     enable_mempool_scanning=True,
@@ -623,13 +628,15 @@ class MEVProtection:
             >>> # Scanner is now monitoring mempool
         """
         if not self._enable_scanning:
-            raise ValueError("Mempool scanning not enabled. Set enable_mempool_scanning=True")
-        
+            raise ValueError(
+                "Mempool scanning not enabled. Set enable_mempool_scanning=True"
+            )
+
         if not self._alchemy_key:
             raise ValueError("Alchemy API key required for mempool scanning")
-        
+
         from app.application.ultra.mempool_scanner import MempoolScanner, Chain
-        
+
         self._scanner = MempoolScanner(
             alchemy_api_key=self._alchemy_key,
             chain=Chain.ETHEREUM,
@@ -638,7 +645,7 @@ class MEVProtection:
 
     async def stop_scanner(self) -> None:
         """Stop mempool scanner.
-        
+
         Example:
             >>> await protection.stop_scanner()
         """
@@ -653,17 +660,17 @@ class MEVProtection:
         gas_price: int = 0,
     ) -> dict[str, Any]:
         """Check if it's safe to submit a transaction.
-        
+
         Analyzes mempool for potential attacks on your transaction.
-        
+
         Args:
             token_pair: Token pair being traded (e.g., ("WETH", "USDC"))
             amount_usd: Trade amount in USD
             gas_price: Your transaction's gas price in wei
-            
+
         Returns:
             Safety analysis with recommendation
-            
+
         Example:
             >>> safety = await protection.check_transaction_safety(
             ...     token_pair=("WETH", "USDC"),
@@ -679,12 +686,12 @@ class MEVProtection:
             "attack": None,
             "reason": None,
         }
-        
+
         # Always recommend Flashbots for large trades
         if amount_usd > Decimal("5000"):
             result["recommendation"] = "USE_FLASHBOTS"
             result["reason"] = "Large trade value"
-        
+
         # Check mempool if scanner is active
         if self._scanner:
             attack = await self._scanner.detect_attack_on_transaction(
@@ -692,14 +699,14 @@ class MEVProtection:
                 our_gas_price=gas_price,
                 our_amount_usd=amount_usd,
             )
-            
+
             if attack:
                 result["safe"] = False
                 result["recommendation"] = "USE_FLASHBOTS"
                 result["attack"] = attack.to_dict()
                 result["reason"] = f"{attack.attack_type.value} detected"
                 result["estimated_loss_usd"] = str(attack.estimated_loss_usd)
-        
+
         return result
 
     async def submit_protected(
@@ -709,17 +716,17 @@ class MEVProtection:
         amount_usd: Decimal = Decimal("0"),
     ) -> dict[str, Any]:
         """Submit transaction with automatic MEV protection.
-        
+
         Checks for attacks and routes via Flashbots if needed.
-        
+
         Args:
             signed_tx: Signed transaction hex string
             token_pair: Token pair being traded
             amount_usd: Trade amount in USD
-            
+
         Returns:
             Submission result
-            
+
         Example:
             >>> result = await protection.submit_protected(
             ...     signed_tx="0x...",
@@ -729,8 +736,11 @@ class MEVProtection:
             >>> print(f"Protected: {result['protected']}")
             >>> print(f"TX Hash: {result.get('tx_hash')}")
         """
-        from app.application.ultra.flashbots_client import FlashbotsClient, MEVBlockerClient
-        
+        from app.application.ultra.flashbots_client import (
+            FlashbotsClient,
+            MEVBlockerClient,
+        )
+
         # Check for attacks if scanner is active
         attack = None
         if self._scanner and token_pair:
@@ -738,20 +748,21 @@ class MEVProtection:
                 token_pair=token_pair,
                 our_amount_usd=amount_usd,
             )
-        
+
         # Decide submission method
         use_private = (
             attack is not None
             or amount_usd > Decimal("1000")
-            or self.config.protection_level in (ProtectionLevel.ADVANCED, ProtectionLevel.MAXIMUM)
+            or self.config.protection_level
+            in (ProtectionLevel.ADVANCED, ProtectionLevel.MAXIMUM)
         )
-        
+
         result: dict[str, Any] = {
             "protected": use_private,
             "attack_detected": attack.to_dict() if attack else None,
             "method": "private" if use_private else "public",
         }
-        
+
         try:
             if use_private:
                 # Use MEV Blocker (simplest, no signing required)
@@ -766,26 +777,26 @@ class MEVProtection:
             else:
                 result["status"] = "not_submitted"
                 result["note"] = "Public submission disabled for safety"
-                
+
         except Exception as e:
             result["status"] = "failed"
             result["error"] = str(e)
-        
+
         return result
 
     async def get_scanner_stats(self) -> dict[str, Any]:
         """Get mempool scanner statistics.
-        
+
         Returns:
             Scanner statistics
-            
+
         Example:
             >>> stats = await protection.get_scanner_stats()
             >>> print(f"Attacks detected: {stats['attacks_detected']}")
         """
         if not self._scanner:
             return {"enabled": False, "message": "Scanner not active"}
-        
+
         return {
             "enabled": True,
             **self._scanner.get_stats(),
@@ -793,10 +804,10 @@ class MEVProtection:
 
     async def get_mempool_info(self) -> dict[str, Any]:
         """Get current mempool information.
-        
+
         Returns:
             Mempool statistics
-            
+
         Example:
             >>> info = await protection.get_mempool_info()
             >>> print(f"Pending txs: {info['pending_transactions']}")
@@ -804,5 +815,5 @@ class MEVProtection:
         """
         if not self._scanner:
             return {"enabled": False, "message": "Scanner not active"}
-        
+
         return await self._scanner.get_mempool_statistics()

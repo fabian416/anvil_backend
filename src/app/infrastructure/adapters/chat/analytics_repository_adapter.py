@@ -212,7 +212,9 @@ class AnalyticsRepositoryAdapter(AnalyticsRepository):
             func.avg(ConversationAnalyticsModel.sentiment_score).label(
                 "avg_sentiment_score"
             ),
-            func.avg(ConversationAnalyticsModel.quality_score).label("avg_quality_score"),
+            func.avg(ConversationAnalyticsModel.quality_score).label(
+                "avg_quality_score"
+            ),
             func.sum(ConversationAnalyticsModel.total_tokens_used).label(
                 "total_tokens_used"
             ),
@@ -583,7 +585,9 @@ class AnalyticsRepositoryAdapter(AnalyticsRepository):
                 func.count(ConversationAnalyticsModel.analytics_id).label(
                     "conversation_count"
                 ),
-                func.sum(ConversationAnalyticsModel.message_count).label("message_count"),
+                func.sum(ConversationAnalyticsModel.message_count).label(
+                    "message_count"
+                ),
                 func.sum(ConversationAnalyticsModel.total_cost_usd).label(
                     "total_cost_usd"
                 ),
@@ -710,9 +714,7 @@ class AnalyticsRepositoryAdapter(AnalyticsRepository):
     # CONVERSION METHODS
     # =========================================================================
 
-    def _to_domain(
-        self, model: "ConversationAnalyticsModel"
-    ) -> ConversationAnalytics:
+    def _to_domain(self, model: "ConversationAnalyticsModel") -> ConversationAnalytics:
         """
         Convert database model to domain entity.
 
@@ -823,7 +825,6 @@ class AnalyticsRepositoryAdapter(AnalyticsRepository):
         model.first_message_at = analytics.first_message_at
         model.last_message_at = analytics.last_message_at
         model.updated_at = analytics.updated_at
-
 
     # NOTE: ConversationAnalyticsModel is defined/registered in
     # `app.infrastructure.persistence_sqla.mappings.conversation_analytics`.

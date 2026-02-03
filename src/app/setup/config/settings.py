@@ -39,7 +39,9 @@ class AppSettings(BaseModel):
     projects: ProjectSettings = ProjectSettings()
     distillation: DistillationSettings | None = None
     agent_squad: AgentSquadSettings = AgentSquadSettings()
-    transaction_confirmation: TransactionConfirmationSettings = TransactionConfirmationSettings()
+    transaction_confirmation: TransactionConfirmationSettings = (
+        TransactionConfirmationSettings()
+    )
     translation: TranslationSettings = TranslationSettings()
     rpc: RPCSettings = RPCSettings()
     wallet: WalletSettings = WalletSettings()

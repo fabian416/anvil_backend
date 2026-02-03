@@ -45,7 +45,6 @@ CHINESE_TESTS = [
         "subcategory": "chinese_swap",
         "language": "zh",
     },
-    
     # Lending
     {
         "test_id": "zh_lend_001",
@@ -63,7 +62,6 @@ CHINESE_TESTS = [
         "subcategory": "chinese_lending",
         "language": "zh",
     },
-    
     # Money Market
     {
         "test_id": "zh_mm_001",
@@ -81,7 +79,6 @@ CHINESE_TESTS = [
         "subcategory": "chinese_money_market",
         "language": "zh",
     },
-    
     # Buy
     {
         "test_id": "zh_buy_001",
@@ -99,7 +96,6 @@ CHINESE_TESTS = [
         "subcategory": "chinese_buy",
         "language": "zh",
     },
-    
     # Price
     {
         "test_id": "zh_price_001",
@@ -125,15 +121,17 @@ CHINESE_TESTS = [
 @pytest.mark.llm_validation
 class TestChinese:
     """Tests for Chinese language support with LLM validation."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
+    async def setup(
+        self, authenticated_client, conversation_id, csv_reporter, llm_validator
+    ):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
         self.llm_validator = llm_validator
-    
+
     @pytest.mark.parametrize("test_case", CHINESE_TESTS, ids=lambda t: t["test_id"])
     async def test_chinese(self, test_case: dict):
         """Test Chinese language routing with LLM validation."""
@@ -143,7 +141,7 @@ class TestChinese:
             test_case["input"],
             language=test_case.get("language", "zh"),
         )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -151,7 +149,7 @@ class TestChinese:
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         assert not response_data.get("error"), f"Request failed: {response_data}"

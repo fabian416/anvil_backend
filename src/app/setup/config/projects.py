@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 class ProjectTemplateSettings(BaseModel):
     """Settings for individual project templates."""
-    
+
     defi_swing_trader_enabled: bool = Field(
         default=True,
         description="Enable DeFi Swing Trader template (Intermediate users)",
@@ -34,7 +34,7 @@ class ProjectTemplateSettings(BaseModel):
 
 class ProjectSettings(BaseModel):
     """Project system configuration settings."""
-    
+
     enabled: bool = Field(
         default=True,
         description="Master switch for project system",
@@ -51,4 +51,5 @@ class ProjectSettings(BaseModel):
 
 class TemplateDisabledError(Exception):
     """Raised when attempting to use a disabled template."""
+
     pass

@@ -42,7 +42,6 @@ RESEARCH_TESTS = [
         "category": "agent",
         "subcategory": "research_protocol",
     },
-    
     # Market Research
     {
         "test_id": "research_market_001",
@@ -58,7 +57,6 @@ RESEARCH_TESTS = [
         "category": "agent",
         "subcategory": "research_market",
     },
-    
     # Technical Analysis
     {
         "test_id": "research_technical_001",
@@ -84,30 +82,29 @@ def research_reporter() -> CSVReporter:
 @pytest.mark.asyncio
 class TestResearchAgent:
     """Test Research agent functionality."""
-    
+
     async def test_research_queries(self, authenticated_client, research_reporter):
         """Test research queries with Perplexity integration."""
         import asyncio
-        
+
         for test_case in RESEARCH_TESTS:
             conv_id = await create_conversation(
-                authenticated_client,
-                title=f"Test {test_case['test_id']}"
+                authenticated_client, title=f"Test {test_case['test_id']}"
             )
-            
+
             response_data, response_time = await send_message(
                 authenticated_client,
                 conv_id,
                 test_case["input"],
                 timeout=120.0,  # Research can take longer
             )
-            
+
             parsed = parse_response(response_data)
-            
+
             expected_agent = test_case.get("expected_agent", "")
             actual_agents = parsed.get("agents_used", "")
             has_error = parsed.get("error", False)
-            
+
             if has_error:
                 status = "FAIL"
             elif expected_agent and expected_agent in actual_agents:
@@ -116,7 +113,7 @@ class TestResearchAgent:
                 status = "PARTIAL"
             else:
                 status = "FAIL"
-            
+
             result = TestResult(
                 test_id=test_case["test_id"],
                 category=test_case.get("category", ""),
@@ -131,12 +128,16 @@ class TestResearchAgent:
                 status=status,
                 conversation_id=conv_id,
             )
-            
+
             research_reporter.add_result(result)
-            
-            status_emoji = "✅" if status == "PASS" else "⚠️" if status == "PARTIAL" else "❌"
-            print(f"{status_emoji} {test_case['test_id']}: {test_case['input'][:40]}... → {actual_agents} ({response_time}ms)")
-            
+
+            status_emoji = (
+                "✅" if status == "PASS" else "⚠️" if status == "PARTIAL" else "❌"
+            )
+            print(
+                f"{status_emoji} {test_case['test_id']}: {test_case['input'][:40]}... → {actual_agents} ({response_time}ms)"
+            )
+
             await asyncio.sleep(0.5)
 
 

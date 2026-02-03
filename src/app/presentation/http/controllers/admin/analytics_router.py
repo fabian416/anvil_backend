@@ -34,27 +34,19 @@ router = APIRouter(
 
 class DistributionResponse(BaseModel):
     """Response for user distribution endpoint."""
-    
+
     portfolio: dict[str, int] = Field(
         description="User count by portfolio state (empty, starter, active, whale)"
     )
-    activity: dict[str, int] = Field(
-        description="User count by activity level"
-    )
-    user_types: dict[str, int] = Field(
-        description="User count by behavioral type"
-    )
-    executions: dict[str, int] = Field(
-        description="Total executions by type"
-    )
-    totals: dict[str, Any] = Field(
-        description="Total users and balance"
-    )
+    activity: dict[str, int] = Field(description="User count by activity level")
+    user_types: dict[str, int] = Field(description="User count by behavioral type")
+    executions: dict[str, int] = Field(description="Total executions by type")
+    totals: dict[str, Any] = Field(description="Total users and balance")
 
 
 class SnapshotResponse(BaseModel):
     """Response for a single analytics snapshot."""
-    
+
     id: str
     snapshot_date: str
     snapshot_type: str
@@ -69,7 +61,7 @@ class SnapshotResponse(BaseModel):
 
 class SnapshotListResponse(BaseModel):
     """Response for list of snapshots."""
-    
+
     snapshots: list[SnapshotResponse]
     count: int
     start_date: str
@@ -78,7 +70,7 @@ class SnapshotListResponse(BaseModel):
 
 class TrendResponse(BaseModel):
     """Response for a single trend metric."""
-    
+
     metric_name: str
     current_value: float | int
     previous_value: float | int
@@ -89,7 +81,7 @@ class TrendResponse(BaseModel):
 
 class TrendsListResponse(BaseModel):
     """Response for list of trends."""
-    
+
     trends: list[TrendResponse]
     current_date: str
     comparison_date: str
@@ -97,7 +89,7 @@ class TrendsListResponse(BaseModel):
 
 class SummaryResponse(BaseModel):
     """Response for analytics summary."""
-    
+
     total_users: int
     total_balance_usd: float
     engaged_users: int
@@ -150,7 +142,7 @@ async def get_analytics_summary(
     """Get analytics summary with key metrics and percentages."""
     try:
         latest = await analytics_repo.get_latest("daily")
-        
+
         if not latest:
             return SummaryResponse(
                 total_users=0,
@@ -163,9 +155,9 @@ async def get_analytics_summary(
                 user_type_distribution={},
                 as_of_date=date.today().isoformat(),
             )
-        
+
         total = latest.total_users or 1  # Avoid division by zero
-        
+
         # Calculate percentages
         portfolio_pct = {
             "empty": round(latest.portfolio.empty / total * 100, 1),
@@ -173,7 +165,7 @@ async def get_analytics_summary(
             "active": round(latest.portfolio.active / total * 100, 1),
             "whale": round(latest.portfolio.whale / total * 100, 1),
         }
-        
+
         activity_pct = {
             "new": round(latest.activity.new / total * 100, 1),
             "very_active": round(latest.activity.very_active / total * 100, 1),
@@ -183,7 +175,7 @@ async def get_analytics_summary(
             "inactive": round(latest.activity.inactive / total * 100, 1),
             "reactivated": round(latest.activity.reactivated / total * 100, 1),
         }
-        
+
         user_type_pct = {
             "new_user": round(latest.user_types.new_user / total * 100, 1),
             "casual": round(latest.user_types.casual / total * 100, 1),
@@ -191,7 +183,7 @@ async def get_analytics_summary(
             "yield_farmer": round(latest.user_types.yield_farmer / total * 100, 1),
             "power_user": round(latest.user_types.power_user / total * 100, 1),
         }
-        
+
         return SummaryResponse(
             total_users=latest.total_users,
             total_balance_usd=float(latest.total_balance_usd),
@@ -220,18 +212,20 @@ async def get_analytics_summary(
 async def get_latest_snapshot(
     authorization: Annotated[str, Security(bearer_scheme)],
     analytics_repo: FromDishka[AnalyticsRepository],
-    snapshot_type: Annotated[str, Query(description="Snapshot type: daily, weekly, monthly")] = "daily",
+    snapshot_type: Annotated[
+        str, Query(description="Snapshot type: daily, weekly, monthly")
+    ] = "daily",
 ) -> SnapshotResponse:
     """Get the most recent snapshot of a given type."""
     try:
         snapshot = await analytics_repo.get_latest(snapshot_type)
-        
+
         if not snapshot:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No {snapshot_type} snapshot found",
             )
-        
+
         return _snapshot_to_response(snapshot)
     except HTTPException:
         raise
@@ -252,16 +246,20 @@ async def get_latest_snapshot(
 async def get_snapshot_history(
     authorization: Annotated[str, Security(bearer_scheme)],
     analytics_repo: FromDishka[AnalyticsRepository],
-    days: Annotated[int, Query(description="Number of days to look back", ge=1, le=365)] = 30,
-    snapshot_type: Annotated[str, Query(description="Snapshot type: daily, weekly, monthly")] = "daily",
+    days: Annotated[
+        int, Query(description="Number of days to look back", ge=1, le=365)
+    ] = 30,
+    snapshot_type: Annotated[
+        str, Query(description="Snapshot type: daily, weekly, monthly")
+    ] = "daily",
 ) -> SnapshotListResponse:
     """Get historical snapshots for the last N days."""
     try:
         end_date = date.today()
         start_date = end_date - timedelta(days=days)
-        
+
         snapshots = await analytics_repo.get_range(start_date, end_date, snapshot_type)
-        
+
         return SnapshotListResponse(
             snapshots=[_snapshot_to_response(s) for s in snapshots],
             count=len(snapshots),
@@ -286,18 +284,20 @@ async def get_snapshot_by_date(
     authorization: Annotated[str, Security(bearer_scheme)],
     analytics_repo: FromDishka[AnalyticsRepository],
     snapshot_date: date,
-    snapshot_type: Annotated[str, Query(description="Snapshot type: daily, weekly, monthly")] = "daily",
+    snapshot_type: Annotated[
+        str, Query(description="Snapshot type: daily, weekly, monthly")
+    ] = "daily",
 ) -> SnapshotResponse:
     """Get a snapshot for a specific date."""
     try:
         snapshot = await analytics_repo.get_by_date(snapshot_date, snapshot_type)
-        
+
         if not snapshot:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No {snapshot_type} snapshot found for {snapshot_date}",
             )
-        
+
         return _snapshot_to_response(snapshot)
     except HTTPException:
         raise
@@ -323,9 +323,9 @@ async def get_week_over_week_trends(
     try:
         current = date.today()
         previous = current - timedelta(days=7)
-        
+
         trends = await analytics_repo.get_week_over_week()
-        
+
         return TrendsListResponse(
             trends=[_trend_to_response(t) for t in trends],
             current_date=current.isoformat(),
@@ -353,9 +353,9 @@ async def get_month_over_month_trends(
     try:
         current = date.today()
         previous = current - timedelta(days=30)
-        
+
         trends = await analytics_repo.get_month_over_month()
-        
+
         return TrendsListResponse(
             trends=[_trend_to_response(t) for t in trends],
             current_date=current.isoformat(),
@@ -380,12 +380,16 @@ async def get_custom_trends(
     analytics_repo: FromDishka[AnalyticsRepository],
     current_date: Annotated[date, Query(description="Current date for comparison")],
     comparison_date: Annotated[date, Query(description="Previous date for comparison")],
-    snapshot_type: Annotated[str, Query(description="Snapshot type: daily, weekly, monthly")] = "daily",
+    snapshot_type: Annotated[
+        str, Query(description="Snapshot type: daily, weekly, monthly")
+    ] = "daily",
 ) -> TrendsListResponse:
     """Get trends comparing two custom dates."""
     try:
-        trends = await analytics_repo.get_trends(current_date, comparison_date, snapshot_type)
-        
+        trends = await analytics_repo.get_trends(
+            current_date, comparison_date, snapshot_type
+        )
+
         return TrendsListResponse(
             trends=[_trend_to_response(t) for t in trends],
             current_date=current_date.isoformat(),
@@ -412,7 +416,7 @@ async def get_totals(
     try:
         total_users = await analytics_repo.get_total_users()
         total_balance = await analytics_repo.get_total_balance()
-        
+
         return {
             "total_users": total_users,
             "total_balance_usd": total_balance,

@@ -21,7 +21,8 @@ class DetectedPatternResponse(BaseModel):
     key_levels: Dict[str, float] = Field(..., description="Key price levels")
     description: str = Field(..., description="Pattern description")
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "pattern_type": "head_and_shoulders",
                 "signal": "bearish",
@@ -37,7 +38,8 @@ class DetectedPatternResponse(BaseModel):
                 },
                 "description": "Head and shoulders pattern indicates bearish reversal",
             }
-        })
+        }
+    )
 
 
 class CandlestickSignalResponse(BaseModel):
@@ -50,7 +52,8 @@ class CandlestickSignalResponse(BaseModel):
     price: float = Field(..., description="Price at pattern")
     description: str = Field(..., description="Pattern description")
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "pattern": "bullish_engulfing",
                 "signal": "bullish",
@@ -59,7 +62,8 @@ class CandlestickSignalResponse(BaseModel):
                 "price": 2000.0,
                 "description": "Bullish engulfing indicates strong buying pressure",
             }
-        })
+        }
+    )
 
 
 class SupportResistanceLevelResponse(BaseModel):
@@ -89,7 +93,9 @@ def create_patterns_router() -> APIRouter:
     )
     async def detect_chart_patterns(
         token_symbol: str,
-        min_confidence: float = Query(0.6, ge=0.0, le=1.0, description="Minimum pattern confidence"),
+        min_confidence: float = Query(
+            0.6, ge=0.0, le=1.0, description="Minimum pattern confidence"
+        ),
     ) -> List[DetectedPatternResponse]:
         """Detect chart patterns.
 
@@ -143,7 +149,9 @@ def create_patterns_router() -> APIRouter:
     )
     async def detect_candlestick_patterns(
         token_symbol: str,
-        min_confidence: float = Query(0.6, ge=0.0, le=1.0, description="Minimum pattern confidence"),
+        min_confidence: float = Query(
+            0.6, ge=0.0, le=1.0, description="Minimum pattern confidence"
+        ),
     ) -> List[CandlestickSignalResponse]:
         """Detect candlestick patterns.
 
@@ -241,8 +249,14 @@ def create_patterns_router() -> APIRouter:
             levels = await recognizer.find_support_resistance(token_symbol.upper())
 
             return {
-                "support": [SupportResistanceLevelResponse(**l.to_dict()) for l in levels["support"]],
-                "resistance": [SupportResistanceLevelResponse(**l.to_dict()) for l in levels["resistance"]],
+                "support": [
+                    SupportResistanceLevelResponse(**l.to_dict())
+                    for l in levels["support"]
+                ],
+                "resistance": [
+                    SupportResistanceLevelResponse(**l.to_dict())
+                    for l in levels["resistance"]
+                ],
             }
 
         except Exception as e:
@@ -289,8 +303,12 @@ def create_patterns_router() -> APIRouter:
         try:
             recognizer = PatternRecognizer()
 
-            chart_patterns = await recognizer.detect_chart_patterns(token_symbol.upper())
-            candlestick_patterns = await recognizer.detect_candlestick_patterns(token_symbol.upper())
+            chart_patterns = await recognizer.detect_chart_patterns(
+                token_symbol.upper()
+            )
+            candlestick_patterns = await recognizer.detect_candlestick_patterns(
+                token_symbol.upper()
+            )
             levels = await recognizer.find_support_resistance(token_symbol.upper())
 
             return {

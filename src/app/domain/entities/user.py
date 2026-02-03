@@ -37,10 +37,11 @@ from app.domain.value_objects.ip_address import IpAddress
 class User(Entity[UserId]):
     """
     User entity representing a user in the system.
-    
+
     This is an anemic model following DDD principles where behavior
     is handled by domain services rather than the entity itself.
     """
+
     email: Email
     first_name: FirstName
     last_name: LastName

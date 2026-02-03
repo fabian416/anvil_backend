@@ -54,11 +54,14 @@ ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ
 # FIXTURES
 # ============================================================================
 
+
 @pytest_asyncio.fixture
 async def client():
     """Create test client for both guest and authenticated requests."""
     app = make_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
@@ -70,13 +73,16 @@ async def user_conversation_id(client: AsyncClient):
         json={"title": "Multi-Step Test", "language": "en"},
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
-    assert response.status_code == 201, f"Failed to create conversation: {response.text}"
+    assert response.status_code == 201, (
+        f"Failed to create conversation: {response.text}"
+    )
     return response.json()["id"]
 
 
 # ============================================================================
 # SEND INTENT - Multi-Step Flow Tests (7 Steps)
 # ============================================================================
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -121,8 +127,9 @@ async def test_send_flow_guest_step1_initiate(client: AsyncClient, llm_validator
     assert data["routing"]["intent"] == "send", "Intent should be detected as 'send'"
 
     content = data["agent_message"]["content"].lower()
-    assert any(keyword in content for keyword in ["send", "transfer", "wallet"]), \
+    assert any(keyword in content for keyword in ["send", "transfer", "wallet"]), (
         "Response should mention sending/transfer/wallet"
+    )
 
     assert len(content) > 50, "Response should be meaningful (>50 chars)"
 
@@ -147,20 +154,23 @@ async def test_send_flow_guest_step1_initiate(client: AsyncClient, llm_validator
             expected_behavior=(
                 "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
             ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            additional_context={"test_category": "info_query", "topic": "crypto/DeFi"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_send_flow_user_step1_initiate(client: AsyncClient, llm_validator, user_conversation_id: str):
+async def test_send_flow_user_step1_initiate(
+    client: AsyncClient, llm_validator, user_conversation_id: str
+):
     """
     SEND Flow - Authenticated User - Step 1: Initiate Send
 
@@ -168,9 +178,9 @@ async def test_send_flow_user_step1_initiate(client: AsyncClient, llm_validator,
     Authenticated users may have access to saved contacts/addresses.
     """
     response = await client.post(
-    f"/api/v1/user/chat/conversations/{user_conversation_id}/messages",
-    json={"content": "I want to send USDC", "language": "en"},
-    headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+        f"/api/v1/user/chat/conversations/{user_conversation_id}/messages",
+        json={"content": "I want to send USDC", "language": "en"},
+        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
     assert response.status_code in (200, 201)
@@ -182,8 +192,9 @@ async def test_send_flow_user_step1_initiate(client: AsyncClient, llm_validator,
     content = data["agent_message"]["content"].lower()
     # Note: This test may fail if agent has API key configuration issues
     # The authenticated user flow uses a different agent configuration than guest flow
-    assert any(keyword in content for keyword in ["send", "transfer", "usdc", "error", "api"]), \
-    "Response should acknowledge send request for USDC or return error message"
+    assert any(
+        keyword in content for keyword in ["send", "transfer", "usdc", "error", "api"]
+    ), "Response should acknowledge send request for USDC or return error message"
 
     # Optional LLM semantic validation (environment-gated)
     # Extract response data
@@ -198,14 +209,15 @@ async def test_send_flow_user_step1_initiate(client: AsyncClient, llm_validator,
             expected_behavior=(
                 "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
             ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            additional_context={"test_category": "info_query", "topic": "crypto/DeFi"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 @pytest.mark.asyncio
@@ -225,12 +237,9 @@ async def test_send_flow_guest_with_partial_info(client: AsyncClient, llm_valida
     guest_ip = f"127.0.0.{hash('send_guest_002') % 255}"
 
     response = await client.post(
-    "/api/v1/guest/chat",
-    json={
-        "content": "I want to send USDC to friend",
-        "language": "en"
-    },
-    headers={"X-Forwarded-For": guest_ip},
+        "/api/v1/guest/chat",
+        json={"content": "I want to send USDC to friend", "language": "en"},
+        headers={"X-Forwarded-For": guest_ip},
     )
 
     assert response.status_code == 200
@@ -240,8 +249,9 @@ async def test_send_flow_guest_with_partial_info(client: AsyncClient, llm_valida
 
     content = data["agent_message"]["content"].lower()
     # Should acknowledge the send request
-    assert any(keyword in content for keyword in ["send", "transfer", "usdc"]), \
-    "Response should acknowledge send request with USDC"
+    assert any(keyword in content for keyword in ["send", "transfer", "usdc"]), (
+        "Response should acknowledge send request with USDC"
+    )
 
     # Optional LLM semantic validation (environment-gated)
     # Extract response data
@@ -256,19 +266,21 @@ async def test_send_flow_guest_with_partial_info(client: AsyncClient, llm_valida
             expected_behavior=(
                 "Should provide accurate and relevant information about USDC. Response must focus on USDC specifically and provide clear, educational content appropriate for the query."
             ),
-            additional_context={'test_category': 'info_query', 'topic': 'USDC'}
+            additional_context={"test_category": "info_query", "topic": "USDC"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 # ============================================================================
 # LENDING INTENT - Multi-Step Flow Tests (6 Steps)
 # ============================================================================
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -296,9 +308,9 @@ async def test_lending_flow_guest_step1_initiate(client: AsyncClient, llm_valida
     guest_ip = f"127.0.0.{hash('lending_guest_001') % 255}"
 
     response = await client.post(
-    "/api/v1/guest/chat",
-    json={"content": "Deposit USDC on Morpho", "language": "en"},
-    headers={"X-Forwarded-For": guest_ip},
+        "/api/v1/guest/chat",
+        json={"content": "Deposit USDC on Morpho", "language": "en"},
+        headers={"X-Forwarded-For": guest_ip},
     )
 
     assert response.status_code == 200
@@ -307,8 +319,9 @@ async def test_lending_flow_guest_step1_initiate(client: AsyncClient, llm_valida
     assert data["routing"]["intent"] == "lending"
 
     content = data["agent_message"]["content"].lower()
-    assert any(keyword in content for keyword in ["lending", "vault", "deposit", "morpho"]), \
-    "Response should mention lending/vault/deposit"
+    assert any(
+        keyword in content for keyword in ["lending", "vault", "deposit", "morpho"]
+    ), "Response should mention lending/vault/deposit"
 
     # Future enhancement:
     # assert "quick_replies" in data["agent_message"], "Should offer vault options"
@@ -329,27 +342,30 @@ async def test_lending_flow_guest_step1_initiate(client: AsyncClient, llm_valida
             expected_behavior=(
                 "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
             ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            additional_context={"test_category": "info_query", "topic": "crypto/DeFi"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_lending_flow_user_step1_initiate(client: AsyncClient, llm_validator, user_conversation_id: str):
+async def test_lending_flow_user_step1_initiate(
+    client: AsyncClient, llm_validator, user_conversation_id: str
+):
     """
     LENDING Flow - Authenticated User - Step 1: Best Vaults
     """
     response = await client.post(
-    f"/api/v1/user/chat/conversations/{user_conversation_id}/messages",
-    json={"content": "What are the best lending vaults?", "language": "en"},
-    headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+        f"/api/v1/user/chat/conversations/{user_conversation_id}/messages",
+        json={"content": "What are the best lending vaults?", "language": "en"},
+        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
     assert response.status_code in (200, 201)
@@ -358,8 +374,9 @@ async def test_lending_flow_user_step1_initiate(client: AsyncClient, llm_validat
     assert data["routing"]["intent"] == "lending"
 
     content = data["agent_message"]["content"].lower()
-    assert any(keyword in content for keyword in ["vault", "lending", "apy", "yield"]), \
-    "Response should provide vault information"
+    assert any(
+        keyword in content for keyword in ["vault", "lending", "apy", "yield"]
+    ), "Response should provide vault information"
 
     # Optional LLM semantic validation (environment-gated)
     # Extract response data
@@ -374,19 +391,21 @@ async def test_lending_flow_user_step1_initiate(client: AsyncClient, llm_validat
             expected_behavior=(
                 "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
             ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            additional_context={"test_category": "info_query", "topic": "crypto/DeFi"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 # ============================================================================
 # SWAP INTENT - Multi-Step Flow Tests (5 Steps)
 # ============================================================================
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -412,9 +431,9 @@ async def test_swap_flow_guest_step1_initiate(client: AsyncClient, llm_validator
     guest_ip = f"127.0.0.{hash('swap_guest_001') % 255}"
 
     response = await client.post(
-    "/api/v1/guest/chat",
-    json={"content": "Swap ETH to USDC", "language": "en"},
-    headers={"X-Forwarded-For": guest_ip},
+        "/api/v1/guest/chat",
+        json={"content": "Swap ETH to USDC", "language": "en"},
+        headers={"X-Forwarded-For": guest_ip},
     )
 
     assert response.status_code == 200
@@ -422,12 +441,14 @@ async def test_swap_flow_guest_step1_initiate(client: AsyncClient, llm_validator
 
     # Note: May detect as 'swap' or 'swap_moonpay' depending on token pair
     detected_intent = data["routing"]["intent"]
-    assert detected_intent in ["swap", "swap_moonpay"], \
-    f"Intent should be swap-related, got: {detected_intent}"
+    assert detected_intent in ["swap", "swap_moonpay"], (
+        f"Intent should be swap-related, got: {detected_intent}"
+    )
 
     content = data["agent_message"]["content"].lower()
-    assert any(keyword in content for keyword in ["swap", "exchange", "trade"]), \
-    "Response should mention swap/exchange"
+    assert any(keyword in content for keyword in ["swap", "exchange", "trade"]), (
+        "Response should mention swap/exchange"
+    )
 
     # Optional LLM semantic validation (environment-gated)
     # Extract response data
@@ -442,41 +463,46 @@ async def test_swap_flow_guest_step1_initiate(client: AsyncClient, llm_validator
             expected_behavior=(
                 "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
             ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            additional_context={"test_category": "info_query", "topic": "crypto/DeFi"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_swap_flow_user_step1_moonpay(client: AsyncClient, llm_validator, user_conversation_id: str):
+async def test_swap_flow_user_step1_moonpay(
+    client: AsyncClient, llm_validator, user_conversation_id: str
+):
     """
     SWAP Flow - Authenticated User - MoonPay Pair
 
     For MoonPay-supported pairs (BTC, ETH, SOL), should route to swap_moonpay handler.
     """
     response = await client.post(
-    f"/api/v1/user/chat/conversations/{user_conversation_id}/messages",
-    json={"content": "Swap BTC to ETH", "language": "en"},
-    headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+        f"/api/v1/user/chat/conversations/{user_conversation_id}/messages",
+        json={"content": "Swap BTC to ETH", "language": "en"},
+        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
     assert response.status_code in (200, 201)
     data = response.json()
 
     # MoonPay pairs should route to swap_moonpay
-    assert data["routing"]["intent"] == "swap_moonpay", \
-    "BTC to ETH should route to swap_moonpay handler"
+    assert data["routing"]["intent"] == "swap_moonpay", (
+        "BTC to ETH should route to swap_moonpay handler"
+    )
 
     content = data["agent_message"]["content"].lower()
-    assert any(keyword in content for keyword in ["swap", "btc", "eth"]), \
-    "Response should acknowledge swap request"
+    assert any(keyword in content for keyword in ["swap", "btc", "eth"]), (
+        "Response should acknowledge swap request"
+    )
 
     # Optional LLM semantic validation (environment-gated)
     # Extract response data
@@ -491,19 +517,21 @@ async def test_swap_flow_user_step1_moonpay(client: AsyncClient, llm_validator, 
             expected_behavior=(
                 "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
             ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            additional_context={"test_category": "info_query", "topic": "crypto/DeFi"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 # ============================================================================
 # BUY INTENT - Multi-Step Flow Tests (7 Steps)
 # ============================================================================
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -531,9 +559,9 @@ async def test_buy_flow_guest_step1_initiate(client: AsyncClient, llm_validator)
     guest_ip = f"127.0.0.{hash('buy_guest_001') % 255}"
 
     response = await client.post(
-    "/api/v1/guest/chat",
-    json={"content": "Buy crypto with card", "language": "en"},
-    headers={"X-Forwarded-For": guest_ip},
+        "/api/v1/guest/chat",
+        json={"content": "Buy crypto with card", "language": "en"},
+        headers={"X-Forwarded-For": guest_ip},
     )
 
     assert response.status_code == 200
@@ -542,8 +570,9 @@ async def test_buy_flow_guest_step1_initiate(client: AsyncClient, llm_validator)
     assert data["routing"]["intent"] == "buy"
 
     content = data["agent_message"]["content"].lower()
-    assert any(keyword in content for keyword in ["buy", "card", "crypto", "purchase"]), \
-    "Response should mention buying crypto"
+    assert any(
+        keyword in content for keyword in ["buy", "card", "crypto", "purchase"]
+    ), "Response should mention buying crypto"
 
     # Optional LLM semantic validation (environment-gated)
     # Extract response data
@@ -558,27 +587,30 @@ async def test_buy_flow_guest_step1_initiate(client: AsyncClient, llm_validator)
             expected_behavior=(
                 "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
             ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            additional_context={"test_category": "info_query", "topic": "crypto/DeFi"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_buy_flow_user_step1_initiate(client: AsyncClient, llm_validator, user_conversation_id: str):
+async def test_buy_flow_user_step1_initiate(
+    client: AsyncClient, llm_validator, user_conversation_id: str
+):
     """
     BUY Flow - Authenticated User - Step 1: Buy Bitcoin
     """
     response = await client.post(
-    f"/api/v1/user/chat/conversations/{user_conversation_id}/messages",
-    json={"content": "I want to buy Bitcoin", "language": "en"},
-    headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+        f"/api/v1/user/chat/conversations/{user_conversation_id}/messages",
+        json={"content": "I want to buy Bitcoin", "language": "en"},
+        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
     assert response.status_code in (200, 201)
@@ -587,8 +619,9 @@ async def test_buy_flow_user_step1_initiate(client: AsyncClient, llm_validator, 
     assert data["routing"]["intent"] == "buy"
 
     content = data["agent_message"]["content"].lower()
-    assert any(keyword in content for keyword in ["buy", "bitcoin", "btc"]), \
-    "Response should acknowledge buy Bitcoin request"
+    assert any(keyword in content for keyword in ["buy", "bitcoin", "btc"]), (
+        "Response should acknowledge buy Bitcoin request"
+    )
 
     # Optional LLM semantic validation (environment-gated)
     # Extract response data
@@ -603,24 +636,28 @@ async def test_buy_flow_user_step1_initiate(client: AsyncClient, llm_validator, 
             expected_behavior=(
                 "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
             ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            additional_context={"test_category": "info_query", "topic": "crypto/DeFi"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 # ============================================================================
 # MONEY_MARKET INTENT - Multi-Step Flow Tests (6 Steps)
 # ============================================================================
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_money_market_flow_guest_step1_initiate(client: AsyncClient, llm_validator):
+async def test_money_market_flow_guest_step1_initiate(
+    client: AsyncClient, llm_validator
+):
     """
     MONEY_MARKET Flow - Guest User - Step 1: Query Rates
 
@@ -643,9 +680,9 @@ async def test_money_market_flow_guest_step1_initiate(client: AsyncClient, llm_v
     guest_ip = f"127.0.0.{hash('money_market_guest_001') % 255}"
 
     response = await client.post(
-    "/api/v1/guest/chat",
-    json={"content": "Best money market rates for USDC", "language": "en"},
-    headers={"X-Forwarded-For": guest_ip},
+        "/api/v1/guest/chat",
+        json={"content": "Best money market rates for USDC", "language": "en"},
+        headers={"X-Forwarded-For": guest_ip},
     )
 
     assert response.status_code == 200
@@ -654,8 +691,9 @@ async def test_money_market_flow_guest_step1_initiate(client: AsyncClient, llm_v
     assert data["routing"]["intent"] == "money_market"
 
     content = data["agent_message"]["content"].lower()
-    assert any(keyword in content for keyword in ["rate", "apy", "aave", "compound", "market"]), \
-    "Response should show money market rates"
+    assert any(
+        keyword in content for keyword in ["rate", "apy", "aave", "compound", "market"]
+    ), "Response should show money market rates"
 
     # Optional LLM semantic validation (environment-gated)
     # Extract response data
@@ -670,27 +708,30 @@ async def test_money_market_flow_guest_step1_initiate(client: AsyncClient, llm_v
             expected_behavior=(
                 "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
             ),
-            additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
+            additional_context={"test_category": "sentiment_query", "token": "crypto"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_money_market_flow_user_step1_initiate(client: AsyncClient, llm_validator, user_conversation_id: str):
+async def test_money_market_flow_user_step1_initiate(
+    client: AsyncClient, llm_validator, user_conversation_id: str
+):
     """
     MONEY_MARKET Flow - Authenticated User - Step 1: Compare Rates
     """
     response = await client.post(
-    f"/api/v1/user/chat/conversations/{user_conversation_id}/messages",
-    json={"content": "Compare Aave and Compound rates", "language": "en"},
-    headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+        f"/api/v1/user/chat/conversations/{user_conversation_id}/messages",
+        json={"content": "Compare Aave and Compound rates", "language": "en"},
+        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
     assert response.status_code in (200, 201)
@@ -699,8 +740,9 @@ async def test_money_market_flow_user_step1_initiate(client: AsyncClient, llm_va
     assert data["routing"]["intent"] == "money_market"
 
     content = data["agent_message"]["content"].lower()
-    assert any(keyword in content for keyword in ["aave", "compound", "rate"]), \
-    "Response should compare protocols"
+    assert any(keyword in content for keyword in ["aave", "compound", "rate"]), (
+        "Response should compare protocols"
+    )
 
     # Optional LLM semantic validation (environment-gated)
     # Extract response data
@@ -715,19 +757,21 @@ async def test_money_market_flow_user_step1_initiate(client: AsyncClient, llm_va
             expected_behavior=(
                 "Should provide market sentiment analysis for crypto. Response should include relevant market indicators, community sentiment, or price trends without making specific investment recommendations."
             ),
-            additional_context={'test_category': 'sentiment_query', 'token': 'crypto'}
+            additional_context={"test_category": "sentiment_query", "token": "crypto"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 # ============================================================================
 # EDGE CASES - Multi-Step Flow Error Handling
 # ============================================================================
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -742,9 +786,9 @@ async def test_multi_step_invalid_amount_format(client: AsyncClient, llm_validat
     guest_ip = f"127.0.0.{hash('edge_case_001') % 255}"
 
     response = await client.post(
-    "/api/v1/guest/chat",
-    json={"content": "Send abc USDC to friend", "language": "en"},
-    headers={"X-Forwarded-For": guest_ip},
+        "/api/v1/guest/chat",
+        json={"content": "Send abc USDC to friend", "language": "en"},
+        headers={"X-Forwarded-For": guest_ip},
     )
 
     assert response.status_code == 200
@@ -766,20 +810,23 @@ async def test_multi_step_invalid_amount_format(client: AsyncClient, llm_validat
             expected_behavior=(
                 "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
             ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            additional_context={"test_category": "info_query", "topic": "crypto/DeFi"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_multi_step_ambiguous_token(client: AsyncClient, llm_validator, user_conversation_id: str):
+async def test_multi_step_ambiguous_token(
+    client: AsyncClient, llm_validator, user_conversation_id: str
+):
     """
     Test handling of ambiguous token names.
 
@@ -788,9 +835,9 @@ async def test_multi_step_ambiguous_token(client: AsyncClient, llm_validator, us
     Current: Should detect send intent
     """
     response = await client.post(
-    f"/api/v1/user/chat/conversations/{user_conversation_id}/messages",
-    json={"content": "Send 100 ETH", "language": "en"},
-    headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+        f"/api/v1/user/chat/conversations/{user_conversation_id}/messages",
+        json={"content": "Send 100 ETH", "language": "en"},
+        headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
     assert response.status_code in (200, 201)
@@ -812,19 +859,21 @@ async def test_multi_step_ambiguous_token(client: AsyncClient, llm_validator, us
             expected_behavior=(
                 "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
             ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
+            additional_context={"test_category": "info_query", "topic": "crypto/DeFi"},
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
 
 # ============================================================================
 # SUMMARY TEST - All Multi-Step Intents Coverage
 # ============================================================================
+
 
 @pytest.mark.asyncio
 @pytest.mark.integration
@@ -837,25 +886,28 @@ async def test_all_multi_step_intents_detected():
     intents requiring multi-step flows.
     """
     multi_step_intents = {
-    "send": "Send crypto to a friend",
-    "lending": "Deposit USDC on Morpho",
-    "swap": "Swap ETH to USDC",
-    "buy": "Buy crypto with card",
-    "money_market": "Best money market rates for USDC",
+        "send": "Send crypto to a friend",
+        "lending": "Deposit USDC on Morpho",
+        "swap": "Swap ETH to USDC",
+        "buy": "Buy crypto with card",
+        "money_market": "Best money market rates for USDC",
     }
 
     # Verify each intent has corresponding test functions
     import inspect
+
     current_module = inspect.getmodule(inspect.currentframe())
     test_functions = [
-    name for name, obj in inspect.getmembers(current_module)
-    if inspect.isfunction(obj) and name.startswith("test_")
+        name
+        for name, obj in inspect.getmembers(current_module)
+        if inspect.isfunction(obj) and name.startswith("test_")
     ]
 
     for intent in multi_step_intents.keys():
         intent_tests = [t for t in test_functions if f"_{intent}_" in t]
-        assert len(intent_tests) >= 2, \
+        assert len(intent_tests) >= 2, (
             f"Intent '{intent}' should have at least 2 tests (guest + user)"
+        )
 
     print("\n✅ All multi-step intents have test coverage:")
     for intent, example in multi_step_intents.items():

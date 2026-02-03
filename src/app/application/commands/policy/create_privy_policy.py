@@ -67,11 +67,15 @@ class CreatePrivyPolicy:
         self._privy_client = privy_client
         self._session = session
 
-    async def execute(self, request: CreatePrivyPolicyRequest) -> CreatePrivyPolicyResult:
+    async def execute(
+        self, request: CreatePrivyPolicyRequest
+    ) -> CreatePrivyPolicyResult:
         current_user = await self._current_user_service.get_current_user()
         authorize(
             CanManageRole(),
-            context=RoleManagementContext(subject=current_user, target_role=UserRole.USER),
+            context=RoleManagementContext(
+                subject=current_user, target_role=UserRole.USER
+            ),
         )
 
         try:
@@ -85,7 +89,11 @@ class CreatePrivyPolicy:
                 authorization_signature=request.authorization_signature,
             )
             policy = PrivyPolicyDTO.from_api(data)
-            actor_user_id = getattr(current_user, "id_", None).value if getattr(current_user, "id_", None) else None
+            actor_user_id = (
+                getattr(current_user, "id_", None).value
+                if getattr(current_user, "id_", None)
+                else None
+            )
 
             repo = PolicyRepositorySqla(self._session)
             await repo.upsert_from_privy(
@@ -108,4 +116,3 @@ class CreatePrivyPolicy:
             if isinstance(e, (AuthorizationError, PolicyCreateError)):
                 raise
             raise PolicyCreateError(str(e)) from e
-

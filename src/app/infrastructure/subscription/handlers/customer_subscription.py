@@ -73,8 +73,12 @@ class CreateSubscriptionHandler:
             base = request.callback_base_url or "http://127.0.0.1:9999"
             if base.endswith("/"):
                 base = base[:-1]
-            success_url = f"{base}/api/v1/subscription/success?session_id={{CHECKOUT_SESSION_ID}}"
-            cancel_url = f"{base}/api/v1/subscription/cancel?session_id={{CHECKOUT_SESSION_ID}}"
+            success_url = (
+                f"{base}/api/v1/subscription/success?session_id={{CHECKOUT_SESSION_ID}}"
+            )
+            cancel_url = (
+                f"{base}/api/v1/subscription/cancel?session_id={{CHECKOUT_SESSION_ID}}"
+            )
             try:
                 session = stripe.checkout.Session.create(
                     mode="subscription",
@@ -104,6 +108,3 @@ class CreateSubscriptionHandler:
             "payment_id": payment_id,
             "checkout_session_id": checkout_session_id,
         }
-
-
-

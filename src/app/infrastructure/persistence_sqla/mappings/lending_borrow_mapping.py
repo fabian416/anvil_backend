@@ -28,15 +28,9 @@ def map_lending_borrows_table() -> None:
 
         __tablename__ = "lending_borrows"
         __table_args__ = (
-            sa.Index(
-                "idx_lending_borrows_position_id", "position_id"
-            ),
-            sa.Index(
-                "idx_lending_borrows_user_id", "user_id"
-            ),
-            sa.Index(
-                "idx_lending_borrows_transaction_hash", "transaction_hash"
-            ),
+            sa.Index("idx_lending_borrows_position_id", "position_id"),
+            sa.Index("idx_lending_borrows_user_id", "user_id"),
+            sa.Index("idx_lending_borrows_transaction_hash", "transaction_hash"),
             {"extend_existing": True},
         )
 

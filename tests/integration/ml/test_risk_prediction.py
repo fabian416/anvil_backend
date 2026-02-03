@@ -110,7 +110,9 @@ class TestBatchRiskPrediction:
             "protocol_ids": [str(uuid4())],
         }
 
-        response = await client.post("/api/v1/user/ml/prediction/batch", json=batch_request)
+        response = await client.post(
+            "/api/v1/user/ml/prediction/batch", json=batch_request
+        )
 
         assert response.status_code in (401, 403, 422)
 

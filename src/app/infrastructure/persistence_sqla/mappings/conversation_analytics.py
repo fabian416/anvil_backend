@@ -39,7 +39,9 @@ class ConversationAnalyticsModel:
     conversation_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), nullable=False, unique=True, index=True
     )
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False, index=True)
+    user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), nullable=False, index=True
+    )
 
     # Message metrics
     message_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -58,7 +60,9 @@ class ConversationAnalyticsModel:
 
     # Cost metrics (USD)
     total_cost_usd: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    avg_cost_per_message: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    avg_cost_per_message: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.0
+    )
     cost_by_agent: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
 
     # Quality metrics (0.0 to 1.0)
@@ -83,5 +87,3 @@ def map_conversation_analytics_table() -> None:
     # Import side-effect above already registers the model; keep this for consistency
     # with other mapping modules and for `map_tables()` usage.
     return
-
-

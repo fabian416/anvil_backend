@@ -27,9 +27,7 @@ class MoneyMarketComparisonAdapterSqla(MoneyMarketComparisonGateway):
 
     def __init__(self, session: MainAsyncSession):
         self._session = session
-        self._table = mapping_registry.metadata.tables[
-            "money_market_comparisons"
-        ]
+        self._table = mapping_registry.metadata.tables["money_market_comparisons"]
 
     # ═══════════════════════════════════════════════════════════════
     # COMPARISON CRUD
@@ -91,9 +89,7 @@ class MoneyMarketComparisonAdapterSqla(MoneyMarketComparisonGateway):
         rows = result.fetchall()
 
         comparisons = [self._row_to_entity(row) for row in rows]
-        logger.debug(
-            f"Retrieved {len(comparisons)} comparisons for user {user_id}"
-        )
+        logger.debug(f"Retrieved {len(comparisons)} comparisons for user {user_id}")
         return comparisons
 
     async def get_comparison_by_id(
@@ -187,12 +183,8 @@ class MoneyMarketComparisonAdapterSqla(MoneyMarketComparisonGateway):
             select(
                 self._table.c.chain,
                 func.count(self._table.c.id).label("comparison_count"),
-                func.avg(self._table.c.execution_time_ms).label(
-                    "avg_latency_ms"
-                ),
-                func.count(func.distinct(self._table.c.user_id)).label(
-                    "unique_users"
-                ),
+                func.avg(self._table.c.execution_time_ms).label("avg_latency_ms"),
+                func.count(func.distinct(self._table.c.user_id)).label("unique_users"),
             )
             .where(self._table.c.created_at >= since)
             .group_by(self._table.c.chain)
@@ -220,8 +212,10 @@ class MoneyMarketComparisonAdapterSqla(MoneyMarketComparisonGateway):
         since: datetime | None = None,
     ) -> int:
         """Get total comparison count for a user."""
-        query = select(func.count()).select_from(self._table).where(
-            self._table.c.user_id == user_id
+        query = (
+            select(func.count())
+            .select_from(self._table)
+            .where(self._table.c.user_id == user_id)
         )
 
         if since:

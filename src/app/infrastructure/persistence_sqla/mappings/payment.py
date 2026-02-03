@@ -23,9 +23,17 @@ def map_payments_table() -> None:
         id = mapped_column(Integer, primary_key=True, index=True)
 
         # Foreign keys
-        user_id = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-        subscription_id = mapped_column(Integer, ForeignKey("subscriptions.id", ondelete="SET NULL"), nullable=True)
-        subscription_user_id = mapped_column(Integer, ForeignKey("subscription_users.id", ondelete="SET NULL"), nullable=True)
+        user_id = mapped_column(
+            Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        )
+        subscription_id = mapped_column(
+            Integer, ForeignKey("subscriptions.id", ondelete="SET NULL"), nullable=True
+        )
+        subscription_user_id = mapped_column(
+            Integer,
+            ForeignKey("subscription_users.id", ondelete="SET NULL"),
+            nullable=True,
+        )
 
         # Payment information
         amount = mapped_column(Float, nullable=True)
@@ -41,6 +49,8 @@ def map_payments_table() -> None:
 
         # Timestamps
         created_at = mapped_column(DateTime, default=datetime.utcnow)
-        updated_at = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+        updated_at = mapped_column(
+            DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        )
 
     # Keep only table metadata for create_all

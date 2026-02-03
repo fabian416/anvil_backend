@@ -152,7 +152,9 @@ class HealthFactorValidatorService:
 
         # Step 2: Fetch current price for borrow asset
         try:
-            borrow_price = await self._prices.get_price_usd(asset=borrow_asset, chain=chain)
+            borrow_price = await self._prices.get_price_usd(
+                asset=borrow_asset, chain=chain
+            )
         except Exception as e:
             logger.error(f"Failed to fetch price for {borrow_asset}: {e}")
             raise ValueError(f"Could not fetch price for {borrow_asset}: {e}") from e
@@ -271,8 +273,8 @@ class HealthFactorValidatorService:
         if position.total_collateral_usd > 0:
             current_lt = position.max_ltv + Decimal("0.05")  # Estimate
             weighted_lt = (
-                (position.total_collateral_usd * current_lt) +
-                (supply_usd * new_asset_lt)
+                (position.total_collateral_usd * current_lt)
+                + (supply_usd * new_asset_lt)
             ) / new_collateral_usd
         else:
             weighted_lt = new_asset_lt

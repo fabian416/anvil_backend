@@ -8,7 +8,9 @@ from typing import Any
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
-from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.domain.value_objects.agent_squad.conversation_context import (
+    ConversationContext,
+)
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentResponse
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
@@ -16,21 +18,21 @@ from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 class ChatAgent:
     """
     Chat Agent implementation.
-    
+
     Implements: AgentGateway
-    
+
     Purpose: General conversation, fallback agent
-    
+
     Capabilities:
     - Answer general questions
     - Provide DeFi information
     - Guide users to specialist agents
     - Maintain friendly, helpful tone
-    
+
     Model: gemini-2.0-flash (Vertex AI, fast, cost-effective)
     Temperature: 0.7 (balanced creativity)
     """
-    
+
     def __init__(
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed)
@@ -40,7 +42,7 @@ class ChatAgent:
     ):
         """
         Initialize chat agent.
-        
+
         Args:
             llm_client: LLM client gateway (Vertex AI or DeepInfra)
             model: Model to use (default: gemini-2.0-flash)
@@ -51,12 +53,12 @@ class ChatAgent:
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
-    
+
     @property
     def agent_type(self) -> AgentType:
         """Get agent type."""
         return AgentType.CHAT
-    
+
     async def execute(
         self,
         conversation_id: ConversationId,
@@ -65,29 +67,31 @@ class ChatAgent:
     ) -> AgentResponse:
         """
         Execute chat agent.
-        
+
         Provides general conversation, guidance to specialist agents.
         """
         start_time = time.time()
-        
+
         # Build messages for OpenAI
         messages = self._build_messages(message, conversation_context)
-        
+
         # Check if this is a restricted feature query (for guest users)
         is_restricted_query = self._is_restricted_feature_query(message.value)
-        
+
         if is_restricted_query:
             # Use custom messages directly (no LLM call needed)
             restricted_feature = self._detect_restricted_feature(message.value)
-            custom_message = self._get_custom_message(restricted_feature, conversation_context)
-            
+            custom_message = self._get_custom_message(
+                restricted_feature, conversation_context
+            )
+
             # Return response directly with custom message
             from datetime import datetime, UTC
             from app.domain.value_objects.chat.source_info import SourceInfo, SourceType
-            
+
             fetched_at = datetime.now(UTC)
             provider = "Vertex AI" if "gemini" in self._model.lower() else "DeepInfra"
-            
+
             sources = [
                 SourceInfo(
                     source_type=SourceType.LLM,
@@ -96,12 +100,15 @@ class ChatAgent:
                     fetched_at=fetched_at,
                     provider=provider,
                     relevance_score=1.0,  # LLM generates the response
-                    metadata={"model": self._model, "restricted_feature": restricted_feature},
+                    metadata={
+                        "model": self._model,
+                        "restricted_feature": restricted_feature,
+                    },
                 )
             ]
-            
+
             latency_ms = int((time.time() - start_time) * 1000)
-            
+
             return AgentResponse(
                 content=custom_message,
                 agent_type=self.agent_type,
@@ -112,20 +119,25 @@ class ChatAgent:
                     "latency_ms": latency_ms,
                     "model": self._model,
                     "restricted_feature": restricted_feature,
-                    "provider": "vertex_ai" if "gemini" in self._model.lower() else "deepinfra",
+                    "provider": "vertex_ai"
+                    if "gemini" in self._model.lower()
+                    else "deepinfra",
                 },
             )
-        
+
         # Detect if this is an aggregation task (multiple agent responses to summarize)
         is_aggregation = (
-            "aggregate" in message.value.lower() or
-            "agent response" in message.value.lower() or
-            len(message.value) > 2000  # Long messages likely contain multiple agent responses
+            "aggregate" in message.value.lower()
+            or "agent response" in message.value.lower()
+            or len(message.value)
+            > 2000  # Long messages likely contain multiple agent responses
         )
-        
+
         # Use higher token limit for aggregation tasks
-        max_tokens = self._max_tokens * 3 if is_aggregation else self._max_tokens  # 3000 for aggregation, 1000 for normal
-        
+        max_tokens = (
+            self._max_tokens * 3 if is_aggregation else self._max_tokens
+        )  # 3000 for aggregation, 1000 for normal
+
         # Call OpenAI
         response = await self._llm_client.chat(
             messages=messages,
@@ -133,18 +145,18 @@ class ChatAgent:
             temperature=self._temperature,
             max_tokens=max_tokens,
         )
-        
+
         # Calculate latency
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         # Add LLM source
         from datetime import datetime, UTC
         from app.domain.value_objects.chat.source_info import SourceInfo, SourceType
-        
+
         fetched_at = datetime.now(UTC)
         model_name = response.get("model", "Unknown")
         provider = "Vertex AI" if "gemini" in model_name.lower() else "DeepInfra"
-        
+
         sources = [
             SourceInfo(
                 source_type=SourceType.LLM,
@@ -156,7 +168,7 @@ class ChatAgent:
                 metadata={"model": model_name},
             )
         ]
-        
+
         # Build response
         return AgentResponse(
             content=response["content"],
@@ -168,15 +180,17 @@ class ChatAgent:
                 "latency_ms": latency_ms,
                 "model": response.get("model"),
                 "finish_reason": response.get("finish_reason"),
-                "provider": response.get("provider", provider),  # Include provider from LLM response
+                "provider": response.get(
+                    "provider", provider
+                ),  # Include provider from LLM response
             },
         )
-    
+
     async def is_available(self) -> bool:
         """Check if agent is available."""
         # Always available (no external dependencies)
         return True
-    
+
     def _build_messages(
         self,
         message: MessageContent,
@@ -185,42 +199,46 @@ class ChatAgent:
         """Build messages for OpenAI API."""
         message_value = message.value
         message_lower = message_value.lower().strip()
-        
+
         # Check for supervisor instruction (off-topic handling)
         has_instruction = message_value.startswith("[SYSTEM INSTRUCTION:")
         if has_instruction:
             # Extract instruction and original message
             # Format: [SYSTEM INSTRUCTION: task_description]\n\nUser message: "original"
             return self._build_instruction_messages(message_value)
-        
+
         # Detect if this is a greeting or small talk
         is_greeting = any([
             message_lower in ["hi", "hello", "hey", "hola", "holi", "hey there"],
             message_lower.startswith(("hi ", "hello ", "hey ", "hola ")),
             "how are you" in message_lower,
-            "good morning" in message_lower or "good afternoon" in message_lower or "good evening" in message_lower,
+            "good morning" in message_lower
+            or "good afternoon" in message_lower
+            or "good evening" in message_lower,
         ])
-        
+
         # Use conversational prompt for greetings, standard prompt for others
-        system_prompt = self._get_greeting_prompt() if is_greeting else self._get_system_prompt()
-        
+        system_prompt = (
+            self._get_greeting_prompt() if is_greeting else self._get_system_prompt()
+        )
+
         messages = [
             {
                 "role": "system",
                 "content": system_prompt,
             }
         ]
-        
+
         # Check if this is an aggregation task (message contains agent responses)
         # If message contains "Agent Response:" or similar patterns, it's aggregation
         is_aggregation = (
-            "agent response" in message.value.lower() or
-            "from hunter ai" in message.value.lower() or
-            "from research" in message.value.lower() or
-            "from risk analyzer" in message.value.lower() or
-            len(message.value) > 5000  # Likely contains multiple agent responses
+            "agent response" in message.value.lower()
+            or "from hunter ai" in message.value.lower()
+            or "from research" in message.value.lower()
+            or "from risk analyzer" in message.value.lower()
+            or len(message.value) > 5000  # Likely contains multiple agent responses
         )
-        
+
         if is_aggregation:
             # For aggregation, add special instruction
             messages.append({
@@ -262,62 +280,154 @@ Create a single, well-structured response that combines all unique insights with
                     "role": msg.get("role", "user"),
                     "content": msg.get("content", ""),
                 })
-            
+
             # Add current message
             messages.append({
                 "role": "user",
                 "content": message.value,
             })
-        
+
         return messages
-    
+
     def _is_restricted_feature_query(self, message: str) -> bool:
         """Check if message is asking about a restricted feature."""
         message_lower = message.lower()
         restricted_keywords = [
             # Balance
-            "my balance", "what's my balance", "check my balance", "how much do i have", "wallet balance",
+            "my balance",
+            "what's my balance",
+            "check my balance",
+            "how much do i have",
+            "wallet balance",
             # Activity
-            "my transactions", "transaction history", "show my activity", "recent activity", "my activity",
+            "my transactions",
+            "transaction history",
+            "show my activity",
+            "recent activity",
+            "my activity",
             # Receive
-            "my address", "wallet address", "receive crypto", "deposit address", "QR code", "i want to receive",
+            "my address",
+            "wallet address",
+            "receive crypto",
+            "deposit address",
+            "QR code",
+            "i want to receive",
             # Buy
-            "buy crypto", "purchase bitcoin", "buy with card", "how to buy ETH", "i want to buy",
+            "buy crypto",
+            "purchase bitcoin",
+            "buy with card",
+            "how to buy ETH",
+            "i want to buy",
             # Send
-            "send crypto", "transfer tokens", "send to wallet", "send to friend", "i want to send",
+            "send crypto",
+            "transfer tokens",
+            "send to wallet",
+            "send to friend",
+            "i want to send",
             # Portfolio
-            "my portfolio", "my holdings", "list my tokens", "what tokens do i have", "show my holdings",
+            "my portfolio",
+            "my holdings",
+            "list my tokens",
+            "what tokens do i have",
+            "show my holdings",
         ]
         return any(kw in message_lower for kw in restricted_keywords)
-    
+
     def _detect_restricted_feature(self, message: str) -> str:
         """Detect which restricted feature user is asking about."""
         message_lower = message.lower()
-        
+
         # Priority order (most specific first)
-        if any(kw in message_lower for kw in ["my balance", "what's my balance", "check my balance", "how much do i have", "wallet balance"]):
+        if any(
+            kw in message_lower
+            for kw in [
+                "my balance",
+                "what's my balance",
+                "check my balance",
+                "how much do i have",
+                "wallet balance",
+            ]
+        ):
             return "balance"
-        elif any(kw in message_lower for kw in ["my transactions", "transaction history", "show my activity", "recent activity", "my activity", "my trades"]):
+        elif any(
+            kw in message_lower
+            for kw in [
+                "my transactions",
+                "transaction history",
+                "show my activity",
+                "recent activity",
+                "my activity",
+                "my trades",
+            ]
+        ):
             return "activity"
-        elif any(kw in message_lower for kw in ["my address", "wallet address", "receive crypto", "deposit address", "QR code", "receive address", "i want to receive"]):
+        elif any(
+            kw in message_lower
+            for kw in [
+                "my address",
+                "wallet address",
+                "receive crypto",
+                "deposit address",
+                "QR code",
+                "receive address",
+                "i want to receive",
+            ]
+        ):
             return "receive"
-        elif any(kw in message_lower for kw in ["buy crypto", "purchase bitcoin", "buy with card", "how to buy ETH", "i want to buy", "buy with fiat"]):
+        elif any(
+            kw in message_lower
+            for kw in [
+                "buy crypto",
+                "purchase bitcoin",
+                "buy with card",
+                "how to buy ETH",
+                "i want to buy",
+                "buy with fiat",
+            ]
+        ):
             return "buy"
-        elif any(kw in message_lower for kw in ["send crypto", "transfer tokens", "send to wallet", "send to friend", "i want to send", "transfer crypto"]):
+        elif any(
+            kw in message_lower
+            for kw in [
+                "send crypto",
+                "transfer tokens",
+                "send to wallet",
+                "send to friend",
+                "i want to send",
+                "transfer crypto",
+            ]
+        ):
             return "send"
-        elif any(kw in message_lower for kw in ["my portfolio", "my holdings", "list my tokens", "what tokens do i have", "show my holdings", "what tokens do i own"]):
+        elif any(
+            kw in message_lower
+            for kw in [
+                "my portfolio",
+                "my holdings",
+                "list my tokens",
+                "what tokens do i have",
+                "show my holdings",
+                "what tokens do i own",
+            ]
+        ):
             return "portfolio"
         else:
             return "general"  # Fallback
-    
+
     def _get_custom_message(self, feature: str, context: ConversationContext) -> str:
         """Get custom registration message for restricted feature."""
         # Get language from context
-        language = context.user_metadata.get("language", "en") if context.user_metadata else "en"
-        
+        language = (
+            context.user_metadata.get("language", "en")
+            if context.user_metadata
+            else "en"
+        )
+
         # Import translation function
-        from app.application.guest.i18n.translations import get_registration_message, get_cta_message
-        
+        from app.application.guest.i18n.translations import (
+            get_registration_message,
+            get_cta_message,
+        )
+
         # Map feature to reason
         feature_to_reason = {
             "balance": "wallet_access",
@@ -328,29 +438,33 @@ Create a single, well-structured response that combines all unique insights with
             "portfolio": "portfolio_access",
             "general": "execute_action",  # Fallback
         }
-        
+
         reason = feature_to_reason.get(feature, "execute_action")
         messages = get_registration_message(reason, language)
         message = messages.get(language, messages.get("en", ""))
-        
+
         # Add CTA
         cta = get_cta_message(language)
-        
+
         return f"{message}\n\n👉 {cta}"
-    
+
     def _build_instruction_messages(self, message_value: str) -> list[dict]:
         """Build messages when supervisor provides a specific instruction (e.g., off-topic)."""
         # Parse the instruction format: [SYSTEM INSTRUCTION: task]\n\nUser message: "original"
         import re
-        
+
         # Extract instruction
-        instruction_match = re.search(r'\[SYSTEM INSTRUCTION: ([^\]]+)\]', message_value)
-        instruction = instruction_match.group(1) if instruction_match else "Respond naturally"
-        
+        instruction_match = re.search(
+            r"\[SYSTEM INSTRUCTION: ([^\]]+)\]", message_value
+        )
+        instruction = (
+            instruction_match.group(1) if instruction_match else "Respond naturally"
+        )
+
         # Extract original user message
         user_match = re.search(r'User message: ["\']?([^"\']+)["\']?', message_value)
         original_message = user_match.group(1) if user_match else message_value
-        
+
         # Build focused system prompt for instruction handling
         system_prompt = f"""You are Anvil's AI assistant, specialized in DeFi and cryptocurrency.
 
@@ -365,12 +479,12 @@ Create a single, well-structured response that combines all unique insights with
 **Example off-topic response:**
 "I'm specialized in DeFi and crypto assistance. I can't help with [topic], but I can help you with swaps, staking, lending, and other DeFi operations. What would you like to know about DeFi?"
 """
-        
+
         return [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": original_message},
         ]
-    
+
     def _get_greeting_prompt(self) -> str:
         """Get conversational prompt for greetings."""
         return """You are a friendly DeFi assistant for Anvil. 
@@ -401,7 +515,7 @@ Example BAD responses (DO NOT DO THIS):
 - "Hello! Welcome to Anvil! Anvil is a decentralized finance platform..."
 - "Hi! Anvil is a comprehensive DeFi platform that allows users to..."
 - "Hello! Welcome to Anvil! We offer a range of features including..." """
-    
+
     def _get_system_prompt(self) -> str:
         """Get system prompt for chat agent."""
         return """You are Anvil's AI assistant, a friendly and helpful guide for DeFi users.

@@ -18,12 +18,18 @@ def _send_email_via_mailgun(to_email: str, subject: str, body: str) -> None:
     settings = load_settings()
     mailgun = getattr(settings, "mailgun", None)
     if not mailgun:
-        log.info("Mailgun not configured; skipping email to %s. Subject: %s", to_email, subject)
+        log.info(
+            "Mailgun not configured; skipping email to %s. Subject: %s",
+            to_email,
+            subject,
+        )
         return
     domain = getattr(mailgun, "domain", None)
     api_key = getattr(mailgun, "api_key", None)
     if not (domain and api_key):
-        log.info("Mailgun keys missing; skipping email to %s. Subject: %s", to_email, subject)
+        log.info(
+            "Mailgun keys missing; skipping email to %s. Subject: %s", to_email, subject
+        )
         return
     try:
         resp = requests.post(
@@ -49,9 +55,16 @@ def _safe_get(d: dict[str, Any], key: str, default: str = "") -> str:
 
 
 @celery_app.task(name="send_email")
-def send_email_compat(to_email: str | None = None, subject: str | None = None, body: str | None = None, **_: Any) -> None:
+def send_email_compat(
+    to_email: str | None = None,
+    subject: str | None = None,
+    body: str | None = None,
+    **_: Any,
+) -> None:
     if not to_email or not subject or not body:
-        log.info("send_email called with missing args; to=%s subject=%s", to_email, subject)
+        log.info(
+            "send_email called with missing args; to=%s subject=%s", to_email, subject
+        )
         return
     _send_email_via_mailgun(to_email, subject, body)
 
@@ -85,10 +98,7 @@ def send_verification_email(**kwargs: Any) -> None:
     to_email = _safe_get(kwargs, "to_email")
     verification_url = _safe_get(kwargs, "verification_url")
     subject = "Verify your email"
-    body = (
-        "use the code below to verify your email\n"
-        f"{verification_url}\n\n"
-    )
+    body = f"use the code below to verify your email\n{verification_url}\n\n"
     if to_email and verification_url:
         _send_email_via_mailgun(to_email, subject, body)
 
@@ -112,5 +122,3 @@ def invalidate_all_sessions_task(**_: Any) -> None:
     # Backward-compatibility stub; no args provided in messages seen.
     # If needed, extend to accept user_id and call AuthSessionService.invalidate_all_sessions_for_user.
     log.info("invalidate_all_sessions: no-op (no user_id provided)")
-
-

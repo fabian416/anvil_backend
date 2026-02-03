@@ -78,7 +78,9 @@ class TestHybridSearch:
             "limit": 10,
         }
 
-        response = await client.post("/api/v1/user/graph/search/hybrid", json=search_request)
+        response = await client.post(
+            "/api/v1/user/graph/search/hybrid", json=search_request
+        )
 
         assert response.status_code in (401, 403, 422)
 

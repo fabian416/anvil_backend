@@ -184,12 +184,12 @@ CURVE_TESTS = [
 
 
 ALL_PROTOCOL_TESTS = (
-    AAVE_TESTS + 
-    COMPOUND_TESTS + 
-    MORPHO_TESTS + 
-    UNISWAP_TESTS + 
-    LIDO_TESTS + 
-    CURVE_TESTS
+    AAVE_TESTS
+    + COMPOUND_TESTS
+    + MORPHO_TESTS
+    + UNISWAP_TESTS
+    + LIDO_TESTS
+    + CURVE_TESTS
 )
 
 
@@ -197,15 +197,17 @@ ALL_PROTOCOL_TESTS = (
 @pytest.mark.integration
 class TestProtocolSpecific:
     """Tests for protocol-specific interactions."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, conversation_id, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
-    
-    @pytest.mark.parametrize("test_case", ALL_PROTOCOL_TESTS, ids=lambda t: t["test_id"])
+
+    @pytest.mark.parametrize(
+        "test_case", ALL_PROTOCOL_TESTS, ids=lambda t: t["test_id"]
+    )
     async def test_protocol_specific(self, test_case: dict):
         """Test protocol-specific workflow routing."""
         response_data, response_time_ms = await send_message(
@@ -213,7 +215,7 @@ class TestProtocolSpecific:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -221,22 +223,31 @@ class TestProtocolSpecific:
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         # Assertions
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "").lower()
-        
+
         # Verify protocol-specific response
         protocol = test_case["subcategory"].split("_")[0]
-        
+
         assert any(
             indicator in content
             for indicator in [
-                protocol, "deposit", "supply", "rate", "apy", "yield", 
-                "vault", "pool", "swap", "stake", "liquidity"
+                protocol,
+                "deposit",
+                "supply",
+                "rate",
+                "apy",
+                "yield",
+                "vault",
+                "pool",
+                "swap",
+                "stake",
+                "liquidity",
             ]
         ), f"Protocol query should return relevant response: {content[:200]}"

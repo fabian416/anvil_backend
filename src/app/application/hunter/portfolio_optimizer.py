@@ -17,7 +17,7 @@ import warnings
 from app.application.hunter.price_data_service import PriceDataService
 
 # Suppress optimization warnings
-warnings.filterwarnings('ignore', category=RuntimeWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 
 @dataclass
@@ -115,7 +115,8 @@ class EfficientFrontier:
                 "risk": round(self.risks[self.min_vol_idx] * 100, 2),
                 "sharpe": round(self.sharpe_ratios[self.min_vol_idx], 2),
                 "weights": {
-                    k: round(v * 100, 2) for k, v in self.weights[self.min_vol_idx].items()
+                    k: round(v * 100, 2)
+                    for k, v in self.weights[self.min_vol_idx].items()
                 },
             },
         }
@@ -135,8 +136,12 @@ class RebalancingPlan:
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
         return {
-            "current_weights": {k: round(v * 100, 2) for k, v in self.current_weights.items()},
-            "target_weights": {k: round(v * 100, 2) for k, v in self.target_weights.items()},
+            "current_weights": {
+                k: round(v * 100, 2) for k, v in self.current_weights.items()
+            },
+            "target_weights": {
+                k: round(v * 100, 2) for k, v in self.target_weights.items()
+            },
             "changes": {k: round(v * 100, 2) for k, v in self.changes.items()},
             "trades": self.trades,
             "estimated_cost": round(self.estimated_cost * 100, 2),  # As %
@@ -187,7 +192,9 @@ class PortfolioOptimizer:
             >>> portfolio = await optimizer.optimize_portfolio(["BTC", "ETH", "SOL"])
             >>> print(portfolio.weights)
         """
-        risk_tol = risk_tolerance if risk_tolerance is not None else self.config.risk_tolerance
+        risk_tol = (
+            risk_tolerance if risk_tolerance is not None else self.config.risk_tolerance
+        )
 
         # Fetch historical data
         returns, cov_matrix = await self._get_returns_and_covariance(tokens)
@@ -263,7 +270,9 @@ class PortfolioOptimizer:
                 frontier_returns.append(float(port_return))
                 frontier_risks.append(float(port_vol))
                 frontier_sharpes.append(float(sharpe))
-                frontier_weights.append({token: float(w) for token, w in zip(tokens, weights)})
+                frontier_weights.append({
+                    token: float(w) for token, w in zip(tokens, weights)
+                })
             except:
                 # Skip infeasible points
                 continue
@@ -281,9 +290,7 @@ class PortfolioOptimizer:
             min_vol_idx=min_vol_idx,
         )
 
-    async def analyze_portfolio(
-        self, portfolio: Dict[str, float]
-    ) -> PortfolioMetrics:
+    async def analyze_portfolio(self, portfolio: Dict[str, float]) -> PortfolioMetrics:
         """Analyze existing portfolio.
 
         Args:
@@ -414,14 +421,15 @@ class PortfolioOptimizer:
         constraints = {"type": "eq", "fun": lambda w: np.sum(w) - 1}
         # Only apply max_single_asset if we have 3+ assets
         max_per_asset = self.config.max_single_asset if n_assets >= 3 else 1.0
-        bounds = tuple(
-            (self.config.min_weight, max_per_asset)
-            for _ in range(n_assets)
-        )
+        bounds = tuple((self.config.min_weight, max_per_asset) for _ in range(n_assets))
         initial_guess = np.array([1 / n_assets] * n_assets)
 
         result = minimize(
-            neg_sharpe, initial_guess, method="SLSQP", bounds=bounds, constraints=constraints
+            neg_sharpe,
+            initial_guess,
+            method="SLSQP",
+            bounds=bounds,
+            constraints=constraints,
         )
 
         return result.x
@@ -446,20 +454,24 @@ class PortfolioOptimizer:
         constraints = {"type": "eq", "fun": lambda w: np.sum(w) - 1}
         # Only apply max_single_asset if we have 3+ assets
         max_per_asset = self.config.max_single_asset if n_assets >= 3 else 1.0
-        bounds = tuple(
-            (self.config.min_weight, max_per_asset)
-            for _ in range(n_assets)
-        )
+        bounds = tuple((self.config.min_weight, max_per_asset) for _ in range(n_assets))
         initial_guess = np.array([1 / n_assets] * n_assets)
 
         result = minimize(
-            portfolio_variance, initial_guess, method="SLSQP", bounds=bounds, constraints=constraints
+            portfolio_variance,
+            initial_guess,
+            method="SLSQP",
+            bounds=bounds,
+            constraints=constraints,
         )
 
         return result.x
 
     def _optimize_max_return(
-        self, expected_returns: np.ndarray, cov_matrix: np.ndarray, risk_tolerance: float
+        self,
+        expected_returns: np.ndarray,
+        cov_matrix: np.ndarray,
+        risk_tolerance: float,
     ) -> np.ndarray:
         """Optimize for maximum return with risk constraint.
 
@@ -489,14 +501,15 @@ class PortfolioOptimizer:
         ]
         # Only apply max_single_asset if we have 3+ assets
         max_per_asset = self.config.max_single_asset if n_assets >= 3 else 1.0
-        bounds = tuple(
-            (self.config.min_weight, max_per_asset)
-            for _ in range(n_assets)
-        )
+        bounds = tuple((self.config.min_weight, max_per_asset) for _ in range(n_assets))
         initial_guess = np.array([1 / n_assets] * n_assets)
 
         result = minimize(
-            neg_return, initial_guess, method="SLSQP", bounds=bounds, constraints=constraints
+            neg_return,
+            initial_guess,
+            method="SLSQP",
+            bounds=bounds,
+            constraints=constraints,
         )
 
         return result.x
@@ -521,18 +534,22 @@ class PortfolioOptimizer:
 
         constraints = [
             {"type": "eq", "fun": lambda w: np.sum(w) - 1},
-            {"type": "eq", "fun": lambda w: np.dot(w, expected_returns) - target_return},
+            {
+                "type": "eq",
+                "fun": lambda w: np.dot(w, expected_returns) - target_return,
+            },
         ]
         # Only apply max_single_asset if we have 3+ assets
         max_per_asset = self.config.max_single_asset if n_assets >= 3 else 1.0
-        bounds = tuple(
-            (self.config.min_weight, max_per_asset)
-            for _ in range(n_assets)
-        )
+        bounds = tuple((self.config.min_weight, max_per_asset) for _ in range(n_assets))
         initial_guess = np.array([1 / n_assets] * n_assets)
 
         result = minimize(
-            portfolio_variance, initial_guess, method="SLSQP", bounds=bounds, constraints=constraints
+            portfolio_variance,
+            initial_guess,
+            method="SLSQP",
+            bounds=bounds,
+            constraints=constraints,
         )
 
         return result.x
@@ -565,8 +582,16 @@ class PortfolioOptimizer:
         # Sortino ratio (downside deviation)
         portfolio_returns = returns_matrix @ weights
         downside_returns = portfolio_returns[portfolio_returns < 0]
-        downside_dev = np.std(downside_returns) * np.sqrt(252) if len(downside_returns) > 0 else port_vol
-        sortino = (port_return - self.config.risk_free_rate) / downside_dev if downside_dev > 0 else 0.0
+        downside_dev = (
+            np.std(downside_returns) * np.sqrt(252)
+            if len(downside_returns) > 0
+            else port_vol
+        )
+        sortino = (
+            (port_return - self.config.risk_free_rate) / downside_dev
+            if downside_dev > 0
+            else 0.0
+        )
 
         # Maximum drawdown
         cumulative_returns = np.cumprod(1 + portfolio_returns)
@@ -576,7 +601,9 @@ class PortfolioOptimizer:
 
         # Diversification score (effective number of assets)
         herfindahl = np.sum(weights**2)
-        diversification = (1 - herfindahl) / (1 - 1 / len(weights)) if len(weights) > 1 else 0.0
+        diversification = (
+            (1 - herfindahl) / (1 - 1 / len(weights)) if len(weights) > 1 else 0.0
+        )
 
         # Value at Risk (95% confidence)
         var_95 = float(np.percentile(portfolio_returns, 5))

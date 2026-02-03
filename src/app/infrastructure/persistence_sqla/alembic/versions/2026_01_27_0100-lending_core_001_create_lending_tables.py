@@ -149,9 +149,7 @@ def upgrade() -> None:
         "lending_positions",
         ["user_id", "protocol"],
     )
-    op.create_index(
-        "idx_lending_positions_status", "lending_positions", ["status"]
-    )
+    op.create_index("idx_lending_positions_status", "lending_positions", ["status"])
     op.create_index(
         "idx_lending_positions_user_protocol_status",
         "lending_positions",
@@ -357,9 +355,7 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("CURRENT_TIMESTAMP"),
         ),
-        sa.Column(
-            "confirmed_at", sa.TIMESTAMP(timezone=True), nullable=True
-        ),
+        sa.Column("confirmed_at", sa.TIMESTAMP(timezone=True), nullable=True),
     )
 
     # Indexes for lending_transactions

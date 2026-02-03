@@ -12,7 +12,10 @@ from dishka import Provider, Scope, provide
 
 class DefiLlamaClientProtocol(Protocol):
     """Protocol for DefiLlamaClient to help Dishka distinguish it from other types."""
-    async def get_protocol_yields(self, protocol: str | None = None, chain: str | None = None) -> Any: ...
+
+    async def get_protocol_yields(
+        self, protocol: str | None = None, chain: str | None = None
+    ) -> Any: ...
     async def get_protocol_tvl(self, protocol: str) -> Any: ...
     async def get_all_protocols(self) -> Any: ...
     async def close(self) -> None: ...
@@ -20,6 +23,7 @@ class DefiLlamaClientProtocol(Protocol):
 
 class Web3ClientProtocol(Protocol):
     """Protocol for Web3Client to help Dishka distinguish it from other types."""
+
     async def get_gas_price(self) -> Any: ...
     async def get_block_number(self) -> int: ...
     async def is_connected(self) -> bool: ...
@@ -27,6 +31,7 @@ class Web3ClientProtocol(Protocol):
 
 class OneInchClientProtocol(Protocol):
     """Protocol for OneInchClient to help Dishka distinguish it from other types."""
+
     async def get_swap_quote(
         self,
         from_token: str,
@@ -38,6 +43,7 @@ class OneInchClientProtocol(Protocol):
 
 class LiFiClientProtocol(Protocol):
     """Protocol for LiFiClient to help Dishka distinguish it from other types."""
+
     async def get_quote(
         self,
         from_chain: str,
@@ -47,6 +53,8 @@ class LiFiClientProtocol(Protocol):
         from_amount: str,
         from_address: str,
     ) -> Any: ...
+
+
 from redis.asyncio import Redis
 
 from app.domain.enums.agent_type import AgentType
@@ -69,11 +77,18 @@ from app.infrastructure.adapters.agent_squad.context_storage_redis import (
 from app.infrastructure.adapters.agent_squad.feature_flags_config import (
     FeatureFlagsConfig,
 )
+
 # OpenAI removed - using only Vertex AI and DeepInfra
 # from app.infrastructure.adapters.agent_squad.llm_client_openai import LLMClientOpenAI
-from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import LLMClientVertexAI
-from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import LLMClientDeepInfra
-from app.infrastructure.adapters.agent_squad.llm_client_with_fallback import LLMClientWithFallback
+from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import (
+    LLMClientVertexAI,
+)
+from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import (
+    LLMClientDeepInfra,
+)
+from app.infrastructure.adapters.agent_squad.llm_client_with_fallback import (
+    LLMClientWithFallback,
+)
 from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
 from app.infrastructure.adapters.external.defillama_client import DefiLlamaClient
 from app.setup.config.agent_squad import AgentSquadSettings
@@ -191,29 +206,29 @@ class AgentSquadInfrastructureProvider(Provider):
 
         # Get LLM provider config (using dict access with defaults)
         llm_config = raw_config.get("llm_provider", {})
-        
+
         # Check for unified gateway feature flag
         use_unified_gateway = llm_config.get("use_unified_gateway", False)
-        
+
         if use_unified_gateway:
             logger.info(
                 "LLM client configured: using unified AgentLLMGateway "
                 "(use_unified_gateway=true)"
             )
             return AgentLLMGateway(llm_gateway=llm_gateway)
-        
+
         # Legacy path: use provider-specific clients
         # OpenAI removed - only vertex_ai and deepinfra supported
         primary_provider = llm_config.get("primary_provider", "vertex_ai")
         if primary_provider == "openai":
             logger.warning("OpenAI provider removed. Falling back to vertex_ai.")
             primary_provider = "vertex_ai"
-        
+
         fallback_provider = llm_config.get("fallback_provider", "deepinfra")
         if fallback_provider == "openai":
             logger.warning("OpenAI provider removed. Falling back to deepinfra.")
             fallback_provider = "deepinfra"
-        
+
         enable_fallback = llm_config.get("enable_fallback", True)
 
         # Provider configs
@@ -261,7 +276,9 @@ class AgentSquadInfrastructureProvider(Provider):
                 )
 
             else:
-                raise ValueError(f"Unknown LLM provider: {provider_name}. Supported: vertex_ai, deepinfra")
+                raise ValueError(
+                    f"Unknown LLM provider: {provider_name}. Supported: vertex_ai, deepinfra"
+                )
 
         # Create primary client
         primary_client = create_client(primary_provider)
@@ -272,7 +289,9 @@ class AgentSquadInfrastructureProvider(Provider):
             try:
                 fallback_client = create_client(fallback_provider)
             except Exception as e:
-                logger.warning(f"Could not create fallback client ({fallback_provider}): {e}")
+                logger.warning(
+                    f"Could not create fallback client ({fallback_provider}): {e}"
+                )
 
         # Wrap with fallback logic
         if fallback_client:
@@ -286,16 +305,16 @@ class AgentSquadInfrastructureProvider(Provider):
                 enable_fallback=enable_fallback,
             )
         else:
-            logger.info(f"LLM client configured: primary={primary_provider} (no fallback)")
+            logger.info(
+                f"LLM client configured: primary={primary_provider} (no fallback)"
+            )
             return primary_client
 
     @provide
-    def provide_agent_llm_gateway(
-        self, llm_gateway: LLMGateway
-    ) -> AgentLLMGateway:
+    def provide_agent_llm_gateway(self, llm_gateway: LLMGateway) -> AgentLLMGateway:
         """
         Provide AgentLLMGateway for unified LLM access.
-        
+
         This adapter wraps the unified LLMGateway to provide the dict-based
         response format expected by agents. Can be used directly or via
         the feature flag in provide_llm_client.
@@ -303,126 +322,155 @@ class AgentSquadInfrastructureProvider(Provider):
         return AgentLLMGateway(llm_gateway=llm_gateway)
 
     @provide
-    def provide_coingecko_client(self, settings: AgentSquadSettings) -> CoinGeckoClient | None:
+    def provide_coingecko_client(
+        self, settings: AgentSquadSettings
+    ) -> CoinGeckoClient | None:
         """Provide CoinGecko API client if enabled."""
         if not settings.external_apis.enable_coingecko:
             return None
-        
+
         api_key = os.getenv("COINGECKO_API_KEY")  # Optional
         return CoinGeckoClient(api_key=api_key)
-    
+
     @provide(scope=Scope.APP)
-    def provide_oneinch_client(self, settings: AgentSquadSettings) -> OneInchClientProtocol | None:
+    def provide_oneinch_client(
+        self, settings: AgentSquadSettings
+    ) -> OneInchClientProtocol | None:
         """Provide 1inch API client if enabled."""
         if not settings.external_apis.enable_1inch:
             return None
-        
+
         from app.infrastructure.adapters.external.oneinch_client import OneInchClient
+
         api_key = os.getenv("ONEINCH_API_KEY", "")
         if not api_key:
             # Log warning but don't fail - can still work with some features
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning("⚠️ ONEINCH_API_KEY not set - 1inch client will be None")
             return None
         return OneInchClient(api_key=api_key)
-    
+
     @provide(scope=Scope.APP)
-    def provide_lifi_client(self, settings: AgentSquadSettings) -> LiFiClientProtocol | None:
+    def provide_lifi_client(
+        self, settings: AgentSquadSettings
+    ) -> LiFiClientProtocol | None:
         """Provide LiFi API client for cross-chain swaps."""
         # LiFi doesn't require an API key for public endpoints
         try:
             from app.infrastructure.adapters.external.lifi_client import LiFiClient
+
             return LiFiClient()
         except ImportError:
             import logging
+
             logger = logging.getLogger(__name__)
             logger.warning("⚠️ LiFi client not available - cross-chain swaps disabled")
             return None
-    
+
     @provide(scope=Scope.APP)
-    def provide_web3_client(self, settings: AgentSquadSettings) -> Web3ClientProtocol | None:
+    def provide_web3_client(
+        self, settings: AgentSquadSettings
+    ) -> Web3ClientProtocol | None:
         """Provide Web3Client for Ethereum gas prices if enabled."""
         # Web3Client requires API keys - check if available
         # Try both direct env vars and RPC_ prefixed (from .secrets.toml export)
-        alchemy_key = os.getenv("ALCHEMY_API_KEY") or os.getenv("RPC_ALCHEMY_API_KEY", "")
+        alchemy_key = os.getenv("ALCHEMY_API_KEY") or os.getenv(
+            "RPC_ALCHEMY_API_KEY", ""
+        )
         infura_key = os.getenv("INFURA_API_KEY") or os.getenv("RPC_INFURA_API_KEY", "")
-        
+
         if not alchemy_key and not infura_key:
             # No RPC provider keys - return None
             import logging
+
             logger = logging.getLogger(__name__)
-            logger.warning("⚠️ ALCHEMY_API_KEY/RPC_ALCHEMY_API_KEY and INFURA_API_KEY/RPC_INFURA_API_KEY not set - Web3Client will be None")
+            logger.warning(
+                "⚠️ ALCHEMY_API_KEY/RPC_ALCHEMY_API_KEY and INFURA_API_KEY/RPC_INFURA_API_KEY not set - Web3Client will be None"
+            )
             return None
-        
+
         from app.infrastructure.adapters.external.web3_client import Web3Client, Chain
+
         return Web3Client(
             alchemy_api_key=alchemy_key if alchemy_key else None,
             infura_api_key=infura_key if infura_key else None,
             chain=Chain.ETHEREUM,  # Default to Ethereum for gas prices
         )
-    
+
     @provide(scope=Scope.APP)
     def provide_etherscan_client(self, settings: AgentSquadSettings) -> Any:
         """
         Provide Etherscan client for address labels and interaction history.
-        
+
         Uses Etherscan API V2 - single key works for 60+ EVM chains.
-        
+
         Used by TransferWorkflowAgent for:
         - Address label lookup (exchanges, DeFi protocols)
         - Contract verification status
         - Interaction history (previous transfers to recipient)
-        
+
         Returns None if ETHERSCAN_API_KEY is not set.
         """
         import logging
+
         logger = logging.getLogger(__name__)
-        
+
         # Try multiple env var names (from .secrets.toml or environment)
         api_key = (
-            os.getenv("ETHERSCAN_API_KEY") or
-            os.getenv("ETHERSCAN__API_KEY") or  # TOML nested format
-            os.getenv("BASESCAN_API_KEY") or
-            os.getenv("EXPLORER_API_KEY", "")
+            os.getenv("ETHERSCAN_API_KEY")
+            or os.getenv("ETHERSCAN__API_KEY")  # TOML nested format
+            or os.getenv("BASESCAN_API_KEY")
+            or os.getenv("EXPLORER_API_KEY", "")
         )
-        
+
         if not api_key:
-            logger.info("ℹ️ ETHERSCAN_API_KEY not set - address labels via Etherscan disabled (local labels still work)")
+            logger.info(
+                "ℹ️ ETHERSCAN_API_KEY not set - address labels via Etherscan disabled (local labels still work)"
+            )
             return None
-        
+
         logger.info("✅ Etherscan API V2 client initialized (supports 60+ EVM chains)")
-        
-        from app.infrastructure.adapters.external.etherscan_client import EtherscanClient
+
+        from app.infrastructure.adapters.external.etherscan_client import (
+            EtherscanClient,
+        )
+
         return EtherscanClient(
             api_key=api_key,
             network="base",  # Default to Base chain (chainid=8453)
             use_v2_api=True,  # Use unified V2 endpoint
         )
-    
+
     @provide(scope=Scope.APP)  # APP scope - single instance shared across requests
     def provide_defillama_client(
-        self, 
-        settings: AgentSquadSettings
+        self, settings: AgentSquadSettings
     ) -> DefiLlamaClientProtocol | None:
         """Provide DeFiLlama API client if enabled."""
         if not settings.external_apis.enable_defillama:
             return None
-        
+
         # Import here to avoid circular dependencies
-        from app.infrastructure.adapters.external.defillama_client import DefiLlamaClient
+        from app.infrastructure.adapters.external.defillama_client import (
+            DefiLlamaClient,
+        )
+
         return DefiLlamaClient()  # No API key required
-    
+
     @provide
     def provide_hyperliquid_client(self, settings: AgentSquadSettings) -> Any:
         """Provide Hyperliquid API client if enabled."""
         if not settings.external_apis.enable_hyperliquid:
             return None
-        
-        from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+
+        from app.infrastructure.adapters.external.hyperliquid_client import (
+            HyperliquidClient,
+        )
+
         api_key = os.getenv("HYPERLIQUID_API_KEY")
         api_secret = os.getenv("HYPERLIQUID_API_SECRET")
-        
+
         # Can use without keys for market data
         return HyperliquidClient(api_key=api_key, api_secret=api_secret)
 
@@ -475,9 +523,7 @@ class AgentSquadInfrastructureProvider(Provider):
         )
 
     @provide
-    def provide_feature_flags(
-        self, config: AgentSquadConfig
-    ) -> FeatureFlagsGateway:
+    def provide_feature_flags(self, config: AgentSquadConfig) -> FeatureFlagsGateway:
         """Provide feature flags gateway."""
         return FeatureFlagsConfig(config=config)
 
@@ -494,7 +540,7 @@ class AgentSquadInfrastructureProvider(Provider):
     def provide_guest_auth_agent(self, llm_client: LLMClientGateway) -> GuestAuthAgent:
         """Provide Guest Auth agent for handling authentication requirements."""
         return GuestAuthAgent(llm_client=llm_client)
-    
+
     @provide
     def provide_knowledge_agent(self, llm_client: LLMClientGateway) -> KnowledgeAgent:
         """Provide Knowledge Anvil agent for educational queries and Anvil knowledge."""
@@ -504,7 +550,8 @@ class AgentSquadInfrastructureProvider(Provider):
     def provide_hunter_ai_agent(
         self,
         llm_client: LLMClientGateway,
-        coingecko_client: CoinGeckoClient | None,  # Type-annotated for explicit DI resolution
+        coingecko_client: CoinGeckoClient
+        | None,  # Type-annotated for explicit DI resolution
         settings: AgentSquadSettings,
     ) -> HunterAIAgent:
         """Provide Hunter AI agent with optional CoinGecko and Hyperliquid integration."""
@@ -512,14 +559,23 @@ class AgentSquadInfrastructureProvider(Provider):
         hyperliquid_client = None
         if settings.external_apis.enable_hyperliquid:
             try:
-                from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+                from app.infrastructure.adapters.external.hyperliquid_client import (
+                    HyperliquidClient,
+                )
+
                 hyperliquid_client = HyperliquidClient(testnet=False)
                 import logging
-                logging.getLogger(__name__).info("✅ Hyperliquid client enabled for Hunter AI swap quotes")
+
+                logging.getLogger(__name__).info(
+                    "✅ Hyperliquid client enabled for Hunter AI swap quotes"
+                )
             except Exception as e:
                 import logging
-                logging.getLogger(__name__).warning(f"⚠️ Failed to create Hyperliquid client: {e}")
-        
+
+                logging.getLogger(__name__).warning(
+                    f"⚠️ Failed to create Hyperliquid client: {e}"
+                )
+
         return HunterAIAgent(
             llm_client=llm_client,
             coingecko_client=coingecko_client,
@@ -534,16 +590,16 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> ResearchAgentPerplexity:
         """
         Provide Research agent with optional Perplexity integration.
-        
+
         If Perplexity is enabled and API key is available, injects PerplexityMCPServer
         for real-time web search with citations.
         """
         import os
         from app.infrastructure.mcp.servers.perplexity_mcp import PerplexityMCPServer
         from app.setup.config.mcp import MCPSettings
-        
+
         perplexity_client = None
-        
+
         # Check if Perplexity is enabled and API key is available
         if settings.mcp and settings.mcp.servers.perplexity_enabled:
             perplexity_api_key = os.getenv("PERPLEXITY_API_KEY")
@@ -561,7 +617,7 @@ class AgentSquadInfrastructureProvider(Provider):
                 except Exception:
                     # If Perplexity fails to initialize, continue without it
                     perplexity_client = None
-        
+
         return ResearchAgentPerplexity(
             llm_client=llm_client,
             perplexity_client=perplexity_client,
@@ -572,7 +628,8 @@ class AgentSquadInfrastructureProvider(Provider):
         self,
         llm_client: LLMClientGateway,
         settings: AppSettings,
-        oneinch_client: OneInchClientProtocol | None,  # Injected from provide_oneinch_client
+        oneinch_client: OneInchClientProtocol
+        | None,  # Injected from provide_oneinch_client
     ) -> ExecutionAgentPrivy:
         """Provide Execution agent with optional OneInch integration."""
         from unittest.mock import MagicMock
@@ -594,7 +651,8 @@ class AgentSquadInfrastructureProvider(Provider):
     def provide_risk_analyzer_agent(
         self,
         llm_client: LLMClientGateway,
-        defi_llama_client: DefiLlamaClientProtocol | None,  # Injected from provide_defillama_client
+        defi_llama_client: DefiLlamaClientProtocol
+        | None,  # Injected from provide_defillama_client
     ) -> RiskAnalyzerAgent:
         """Provide Risk Analyzer agent with optional DeFiLlama integration."""
         return RiskAnalyzerAgent(
@@ -606,7 +664,8 @@ class AgentSquadInfrastructureProvider(Provider):
     def provide_portfolio_agent(
         self,
         llm_client: LLMClientGateway,
-        coingecko_client: CoinGeckoClient | None,  # Injected from provide_coingecko_client
+        coingecko_client: CoinGeckoClient
+        | None,  # Injected from provide_coingecko_client
     ) -> PortfolioAgent:
         """Provide Portfolio agent with optional CoinGecko integration."""
         return PortfolioAgent(
@@ -625,7 +684,8 @@ class AgentSquadInfrastructureProvider(Provider):
     def provide_defi_yield_agent(
         self,
         llm_client: LLMClientGateway,
-        defi_llama_client: DefiLlamaClientProtocol | None,  # Injected from provide_defillama_client
+        defi_llama_client: DefiLlamaClientProtocol
+        | None,  # Injected from provide_defillama_client
     ) -> DefiYieldAgent:
         """Provide DeFi Yield agent with optional DeFiLlama integration."""
         return DefiYieldAgent(
@@ -664,6 +724,7 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> ComplianceMonitorAgentChainalysis:
         """Provide Compliance Monitor agent."""
         from unittest.mock import MagicMock
+
         return ComplianceMonitorAgentChainalysis(
             llm_client=llm_client,
             chainalysis_client=MagicMock(),
@@ -675,6 +736,7 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> MultiSigCoordinatorAgentGnosis:
         """Provide Multi-Sig Coordinator agent."""
         from unittest.mock import MagicMock
+
         return MultiSigCoordinatorAgentGnosis(
             llm_client=llm_client,
             gnosis_safe_client=MagicMock(),
@@ -686,6 +748,7 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> AlertMonitoringAgentForta:
         """Provide Alert Monitoring agent."""
         from unittest.mock import MagicMock
+
         return AlertMonitoringAgentForta(
             llm_client=llm_client,
             forta_client=MagicMock(),
@@ -698,6 +761,7 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> CrisisManagerAgentForta:
         """Provide Crisis Manager agent."""
         from unittest.mock import MagicMock
+
         return CrisisManagerAgentForta(
             llm_client=llm_client,
             forta_client=MagicMock(),
@@ -714,6 +778,7 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> BridgeCrosschainAgentAxelar:
         """Provide Bridge Crosschain agent."""
         from unittest.mock import MagicMock
+
         return BridgeCrosschainAgentAxelar(
             llm_client=llm_client,
             axelar_client=MagicMock(),
@@ -725,6 +790,7 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> LendingBorrowingAgentAave:
         """Provide Lending Borrowing agent."""
         from unittest.mock import MagicMock
+
         return LendingBorrowingAgentAave(
             llm_client=llm_client,
             aave_client=MagicMock(),
@@ -736,6 +802,7 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> NFTAssetManagerAgentOpenSea:
         """Provide NFT Asset Manager agent."""
         from unittest.mock import MagicMock
+
         return NFTAssetManagerAgentOpenSea(
             llm_client=llm_client,
             opensea_client=MagicMock(),
@@ -747,6 +814,7 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> DAOGovernanceAgentSnapshot:
         """Provide DAO Governance agent."""
         from unittest.mock import MagicMock
+
         return DAOGovernanceAgentSnapshot(
             llm_client=llm_client,
             snapshot_client=MagicMock(),
@@ -757,12 +825,10 @@ class AgentSquadInfrastructureProvider(Provider):
     # ========================================
 
     @provide
-    def provide_wallet_agent(
-        self, llm_client: LLMClientGateway
-    ) -> WalletAgent:
+    def provide_wallet_agent(self, llm_client: LLMClientGateway) -> WalletAgent:
         """
         Provide Wallet Agent for authenticated users.
-        
+
         This agent handles wallet queries:
         - List connected wallets
         - Show balances
@@ -776,7 +842,7 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> TransactionHistoryAgent:
         """
         Provide Transaction History Agent for authenticated users.
-        
+
         This agent handles transaction queries:
         - View recent transactions
         - Filter by chain/type/date
@@ -800,19 +866,19 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> SwapWorkflowAgent:
         """
         Provide Swap Workflow Agent for authenticated users.
-        
+
         This agent handles multi-step swap operations:
         1. Parse swap request (tokens, amount)
         2. Route to appropriate provider based on token type
         3. Fetch quotes
         4. Confirm with user
         5. Generate execute_data for frontend
-        
+
         Provider Routing:
         - Hyperliquid Spot: Meme tokens (PURR, TRUMP, PEPE, etc.) paired with USDC
         - 1inch: Major tokens same-chain swaps (ETH, BTC, USDC, etc.)
         - LiFi: Cross-chain swaps
-        
+
         Integrations:
         - Hyperliquid: Meme token swaps (zero gas fees)
         - 1inch: Same-chain major token swaps
@@ -820,18 +886,26 @@ class AgentSquadInfrastructureProvider(Provider):
         - CoinGecko: Market prices for enrichment
         """
         import logging
+
         logger = logging.getLogger(__name__)
-        
+
         # Create Hyperliquid client for meme token swaps
         hyperliquid_client = None
         if settings.external_apis.enable_hyperliquid:
             try:
-                from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+                from app.infrastructure.adapters.external.hyperliquid_client import (
+                    HyperliquidClient,
+                )
+
                 hyperliquid_client = HyperliquidClient(testnet=False)
-                logger.info("✅ Hyperliquid enabled for SwapWorkflowAgent (meme token swaps)")
+                logger.info(
+                    "✅ Hyperliquid enabled for SwapWorkflowAgent (meme token swaps)"
+                )
             except Exception as e:
-                logger.warning(f"⚠️ Failed to create Hyperliquid client for SwapWorkflowAgent: {e}")
-        
+                logger.warning(
+                    f"⚠️ Failed to create Hyperliquid client for SwapWorkflowAgent: {e}"
+                )
+
         return SwapWorkflowAgent(
             llm_client=llm_client,
             oneinch_client=oneinch_client,
@@ -850,13 +924,13 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> LendingWorkflowAgent:
         """
         Provide Lending Workflow Agent for authenticated users.
-        
+
         This agent handles multi-step deposit/yield operations:
         1. Parse deposit request (asset, amount)
         2. Fetch best vault from Morpho (fallback to Aave)
         3. Show quote with APY and earnings projection
         4. Generate execute_data for frontend
-        
+
         Integrations:
         - Morpho: MetaMorpho vaults on Base
         - Aave: Aave V3 markets as fallback
@@ -878,7 +952,7 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> TransferWorkflowAgent:
         """
         Provide Transfer Workflow Agent for authenticated users (Phase 2 enhanced).
-        
+
         This agent handles multi-step token transfer operations:
         1. Parse transfer request (token, amount, recipient)
         2. Validate recipient address format
@@ -889,7 +963,7 @@ class AgentSquadInfrastructureProvider(Provider):
            - Contract verification status
         4. Show transfer review with safety info and wait for confirmation
         5. Generate execute_data for frontend
-        
+
         Features:
         - Multi-chain address validation (EVM, Solana)
         - Network detection from address format
@@ -912,13 +986,13 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> BuyWorkflowAgent:
         """
         Provide Buy Workflow Agent for authenticated users.
-        
+
         This agent handles multi-step crypto purchase operations:
         1. Parse buy request (crypto, fiat amount, currency)
         2. Validate supported assets
         3. Show purchase review and wait for confirmation
         4. Generate execute_data for Privy modal
-        
+
         Integrations:
         - Privy SDK for MoonPay/Coinbase on-ramp
         """
@@ -935,13 +1009,13 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> MoneyMarketWorkflowAgent:
         """
         Provide Money Market Workflow Agent for authenticated users.
-        
+
         This agent handles multi-step rate comparison operations:
         1. Parse comparison request (asset)
         2. Fetch rates from Aave, Compound, Morpho
         3. Show comparison with best recommendation
         4. Allow user to select protocol for deposit
-        
+
         Integrations:
         - Aave V3 for lending markets
         - Compound V3 for lending markets
@@ -998,7 +1072,7 @@ class AgentSquadInfrastructureProvider(Provider):
     ) -> dict[AgentType, AgentGateway]:
         """
         Provide agent registry mapping agent types to implementations.
-        
+
         This allows the orchestrator to dynamically route to any agent.
         """
         return {

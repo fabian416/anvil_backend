@@ -19,17 +19,17 @@ class RiskAlert:
     message: str = ""
     details: Dict = field(default_factory=dict)
     recommendations: List[str] = field(default_factory=list)
-    
+
     # Risk metrics
     current_risk_score: float = 0.0
     previous_risk_score: Optional[float] = None
     risk_change: Optional[float] = None
-    
+
     # Status
     acknowledged: bool = False
     dismissed: bool = False
     acted_upon: bool = False
-    
+
     # Timestamps
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     acknowledged_at: Optional[datetime] = None
@@ -83,35 +83,35 @@ class AlertSubscription:
 
     id: UUID = field(default_factory=uuid4)
     user_id: UUID = field(default=None)
-    
+
     # Alert type preferences
     risk_alerts_enabled: bool = True
     anomaly_alerts_enabled: bool = True
     protocol_update_alerts_enabled: bool = True
     price_alerts_enabled: bool = True
-    
+
     # Severity threshold
     min_severity: str = "MEDIUM"  # Only alert for this severity and above
-    
+
     # Protocol-specific
     subscribed_protocols: List[UUID] = field(default_factory=list)
     excluded_protocols: List[UUID] = field(default_factory=list)
-    
+
     # Notification channels
     push_notifications: bool = True
     email_notifications: bool = False
     websocket_notifications: bool = True
-    
+
     # Throttling
     max_alerts_per_hour: int = 10
-    
+
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def should_alert_for_severity(self, severity: str) -> bool:
         """Check if should alert for given severity."""
         severity_order = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
-        
+
         try:
             min_idx = severity_order.index(self.min_severity)
             alert_idx = severity_order.index(severity)
@@ -124,10 +124,10 @@ class AlertSubscription:
         # If excluded, don't alert
         if protocol_id in self.excluded_protocols:
             return False
-        
+
         # If subscription list is empty, alert for all
         if not self.subscribed_protocols:
             return True
-        
+
         # Only alert for subscribed protocols
         return protocol_id in self.subscribed_protocols

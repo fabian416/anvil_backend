@@ -175,12 +175,16 @@ class IntentResult:
     def __post_init__(self):
         """Validate confidence score."""
         if not 0.0 <= self.confidence <= 1.0:
-            raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
+            raise ValueError(
+                f"Confidence must be between 0.0 and 1.0, got {self.confidence}"
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            "intent": self.intent.value if hasattr(self.intent, "value") else str(self.intent),
+            "intent": self.intent.value
+            if hasattr(self.intent, "value")
+            else str(self.intent),
             "confidence": self.confidence,
             "entities": self.entities,
             "metadata": self.metadata,

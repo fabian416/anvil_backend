@@ -20,9 +20,13 @@ from app.domain.services.agent_squad.context_manager import ContextManager
 from app.domain.services.agent_squad.intent_classifier import IntentClassifier
 from app.domain.services.agent_squad.supervisor_coordinator import SupervisorCoordinator
 from app.domain.services.agent_squad.guest_supervisor import GuestSupervisorCoordinator
-from app.domain.services.agent_squad.authenticated_supervisor import AuthenticatedSupervisorCoordinator
+from app.domain.services.agent_squad.authenticated_supervisor import (
+    AuthenticatedSupervisorCoordinator,
+)
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway
-from app.domain.ports.agent_squad.intent_classifier_gateway import IntentClassifierGateway
+from app.domain.ports.agent_squad.intent_classifier_gateway import (
+    IntentClassifierGateway,
+)
 from app.domain.ports.agent_squad.feature_flags_gateway import FeatureFlagsGateway
 from app.domain.ports.agent_squad.context_storage_gateway import ContextStorageGateway
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
@@ -74,12 +78,12 @@ class AgentSquadDomainProvider(Provider):
     ) -> GuestSupervisorCoordinator:
         """
         Provide supervisor coordinator domain service for GUEST users.
-        
+
         ISOLATED from AuthenticatedSupervisorCoordinator to:
         - Prevent prompt changes from affecting authenticated users
         - Allow independent optimization
         - Enable different routing strategies
-        
+
         Guest-specific:
         - Lower agent limit (5)
         - Shorter timeout (120s)
@@ -89,7 +93,7 @@ class AgentSquadDomainProvider(Provider):
         from app.infrastructure.adapters.agent_squad.agent_executor_adapter import (
             AgentExecutorAdapter,
         )
-        
+
         # Create real agent executor using orchestrator
         agent_executor = AgentExecutorAdapter(orchestrator=agent_orchestrator)
 
@@ -108,16 +112,16 @@ class AgentSquadDomainProvider(Provider):
     ) -> SupervisorCoordinator:
         """
         Provide base supervisor coordinator.
-        
+
         DEPRECATED for direct use - prefer GuestSupervisorCoordinator or
         AuthenticatedSupervisorCoordinator for proper isolation.
-        
+
         Kept for backward compatibility with existing code.
         """
         from app.infrastructure.adapters.agent_squad.agent_executor_adapter import (
             AgentExecutorAdapter,
         )
-        
+
         # Create real agent executor using orchestrator
         agent_executor = AgentExecutorAdapter(orchestrator=agent_orchestrator)
 
@@ -125,7 +129,7 @@ class AgentSquadDomainProvider(Provider):
             llm_client=llm_client,
             agent_executor=agent_executor,
         )
-    
+
     @provide
     def provide_authenticated_supervisor_coordinator(
         self,
@@ -134,12 +138,12 @@ class AgentSquadDomainProvider(Provider):
     ) -> AuthenticatedSupervisorCoordinator:
         """
         Provide supervisor coordinator domain service for AUTHENTICATED users.
-        
+
         ISOLATED from GuestSupervisorCoordinator to:
         - Prevent prompt changes from affecting guest users
         - Allow independent optimization
         - Enable different routing strategies
-        
+
         Authenticated-specific:
         - Higher agent limit (6)
         - Longer timeout (180s)
@@ -154,13 +158,13 @@ class AgentSquadDomainProvider(Provider):
         from app.application.chat.services.response_template_service import (
             ResponseTemplateService,
         )
-        
+
         # Create real agent executor using orchestrator
         agent_executor = AgentExecutorAdapter(orchestrator=agent_orchestrator)
-        
+
         # Create response template service for context-aware responses
         response_template_service = ResponseTemplateService()
-        
+
         # UserDataService will be injected separately when needed
         # (repositories are request-scoped, so we can't inject them here)
         # The command layer will set user data via load_user_data()

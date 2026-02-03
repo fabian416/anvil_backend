@@ -31,7 +31,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_cross_chain",
     },
-    
     # Sentiment Aggregation
     {
         "test_id": "hunter_sentiment_multi_001",
@@ -40,7 +39,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_sentiment_multi",
     },
-    
     # Historical Pattern Recognition
     {
         "test_id": "hunter_historical_001",
@@ -49,7 +47,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_historical",
     },
-    
     # Risk-Adjusted Recommendations
     {
         "test_id": "hunter_risk_adjusted_001",
@@ -58,7 +55,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_risk_adjusted",
     },
-    
     # Portfolio Rebalancing
     {
         "test_id": "hunter_portfolio_001",
@@ -67,7 +63,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_portfolio",
     },
-    
     # Gas Optimization
     {
         "test_id": "hunter_gas_001",
@@ -76,7 +71,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_gas",
     },
-    
     # Market Regime Detection
     {
         "test_id": "hunter_regime_001",
@@ -85,7 +79,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_regime",
     },
-    
     # Correlation Analysis
     {
         "test_id": "hunter_correlation_001",
@@ -94,7 +87,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_correlation",
     },
-    
     # Liquidity Depth
     {
         "test_id": "hunter_liquidity_001",
@@ -103,7 +95,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_liquidity",
     },
-    
     # Whale Activity
     {
         "test_id": "hunter_whale_001",
@@ -112,7 +103,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_whale",
     },
-    
     # DEX Volume Analysis
     {
         "test_id": "hunter_dex_001",
@@ -121,7 +111,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_dex",
     },
-    
     # Token Unlocks
     {
         "test_id": "hunter_unlocks_001",
@@ -130,7 +119,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_unlocks",
     },
-    
     # Protocol Comparison
     {
         "test_id": "hunter_protocol_001",
@@ -139,7 +127,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_protocol",
     },
-    
     # Market Cap Analysis
     {
         "test_id": "hunter_mcap_001",
@@ -148,7 +135,6 @@ HUNTER_ADVANCED_TESTS = [
         "category": "agent",
         "subcategory": "hunter_mcap",
     },
-    
     # Staking Yield
     {
         "test_id": "hunter_staking_001",
@@ -164,15 +150,17 @@ HUNTER_ADVANCED_TESTS = [
 @pytest.mark.integration
 class TestHunterAdvanced:
     """Tests for advanced Hunter AI features."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, conversation_id, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
-    
-    @pytest.mark.parametrize("test_case", HUNTER_ADVANCED_TESTS, ids=lambda t: t["test_id"])
+
+    @pytest.mark.parametrize(
+        "test_case", HUNTER_ADVANCED_TESTS, ids=lambda t: t["test_id"]
+    )
     async def test_hunter_advanced(self, test_case: dict):
         """Test advanced Hunter AI features."""
         response_data, response_time_ms = await send_message(
@@ -180,7 +168,7 @@ class TestHunterAdvanced:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -188,46 +176,69 @@ class TestHunterAdvanced:
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         # Assertions
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "")
-        
+
         # Advanced queries should return substantial analysis
         assert len(content) > 50, f"Advanced query response too short: {content[:200]}"
-        
+
         # Validate specific content based on subcategory
         subcategory = test_case["subcategory"]
         content_lower = content.lower()
-        
+
         if "cross_chain" in subcategory:
             assert any(
                 word in content_lower
-                for word in ["arbitrage", "ethereum", "polygon", "usdc", "bridge", "opportunity"]
+                for word in [
+                    "arbitrage",
+                    "ethereum",
+                    "polygon",
+                    "usdc",
+                    "bridge",
+                    "opportunity",
+                ]
             ), f"Cross-chain response should mention relevant chains/tokens"
-        
+
         elif "sentiment" in subcategory:
             assert any(
                 word in content_lower
-                for word in ["sentiment", "bullish", "bearish", "neutral", "social", "news"]
+                for word in [
+                    "sentiment",
+                    "bullish",
+                    "bearish",
+                    "neutral",
+                    "social",
+                    "news",
+                ]
             ), f"Sentiment response should contain sentiment analysis"
-        
+
         elif "historical" in subcategory:
             assert any(
                 word in content_lower
-                for word in ["bull", "bear", "market", "pattern", "history", "cycle", "2017", "2021"]
+                for word in [
+                    "bull",
+                    "bear",
+                    "market",
+                    "pattern",
+                    "history",
+                    "cycle",
+                    "2017",
+                    "2021",
+                ]
             ), f"Historical response should reference market cycles"
-        
+
         elif "gas" in subcategory:
             assert any(
                 word in content_lower
                 for word in ["gas", "gwei", "time", "weekend", "peak", "cheap", "save"]
             ), f"Gas response should mention gas-related terms"
-        
+
         elif "regime" in subcategory:
             assert any(
                 word in content_lower

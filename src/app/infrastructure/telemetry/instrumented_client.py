@@ -14,7 +14,7 @@ Usage:
         api_name="coingecko",
         base_url="https://api.coingecko.com/api/v3",
     )
-    
+
     response = await client.get("/simple/price", params={"ids": "bitcoin"})
     # Telemetry automatically recorded
 """
@@ -45,14 +45,14 @@ T = TypeVar("T")
 class InstrumentedClient:
     """
     HTTP client with automatic telemetry instrumentation.
-    
+
     Features:
     - Automatic timing and metrics recording
     - Error classification (timeout, rate limit, auth, etc.)
     - Distributed tracing integration
     - Retry tracking
     """
-    
+
     def __init__(
         self,
         api_name: str,
@@ -64,7 +64,7 @@ class InstrumentedClient:
     ):
         """
         Initialize instrumented client.
-        
+
         Args:
             api_name: Name of the API (for telemetry)
             base_url: Base URL for API
@@ -76,17 +76,17 @@ class InstrumentedClient:
         self._api_name = api_name
         self._telemetry = telemetry or get_api_telemetry()
         self._tracing = tracing or get_tracing_service()
-        
+
         self._client = httpx.AsyncClient(
             base_url=base_url,
             timeout=timeout,
             headers=headers or {},
         )
-    
+
     async def close(self):
         """Close the HTTP client."""
         await self._client.aclose()
-    
+
     async def request(
         self,
         method: str,
@@ -96,18 +96,18 @@ class InstrumentedClient:
     ) -> httpx.Response:
         """
         Make an instrumented HTTP request.
-        
+
         Args:
             method: HTTP method
             url: Request URL (relative to base_url)
             operation: Operation name for telemetry
             **kwargs: Additional httpx request arguments
-            
+
         Returns:
             httpx Response
         """
         operation = operation or f"{method}:{url}"
-        
+
         # Start telemetry context
         ctx = self._telemetry.start_call(
             api=self._api_name,
@@ -116,7 +116,7 @@ class InstrumentedClient:
             url=url,
             **{k: str(v)[:100] for k, v in kwargs.get("params", {}).items()},
         )
-        
+
         # Start tracing span
         with self._tracing.start_span(
             name=f"{self._api_name}.{operation}",
@@ -133,14 +133,14 @@ class InstrumentedClient:
                 headers = kwargs.pop("headers", {}) or {}
                 headers = self._tracing.inject_context(headers)
                 kwargs["headers"] = headers
-                
+
                 # Make request
                 response = await self._client.request(method, url, **kwargs)
-                
+
                 # Record response info
                 span.set_attribute("http.status_code", response.status_code)
                 span.set_attribute("http.response_size", len(response.content))
-                
+
                 # Determine status
                 if response.status_code == 429:
                     ctx.complete(
@@ -170,9 +170,9 @@ class InstrumentedClient:
                         status_code=response.status_code,
                     )
                     span.set_status(SpanStatus.OK)
-                
+
                 return response
-                
+
             except httpx.TimeoutException as e:
                 ctx.complete(
                     status=APIStatus.TIMEOUT,
@@ -181,7 +181,7 @@ class InstrumentedClient:
                 )
                 span.set_status(SpanStatus.ERROR, "Timeout")
                 raise
-                
+
             except httpx.ConnectError as e:
                 ctx.complete(
                     status=APIStatus.ERROR,
@@ -190,7 +190,7 @@ class InstrumentedClient:
                 )
                 span.set_status(SpanStatus.ERROR, "Connection error")
                 raise
-                
+
             except Exception as e:
                 ctx.complete(
                     status=APIStatus.ERROR,
@@ -199,27 +199,27 @@ class InstrumentedClient:
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 # Record telemetry
                 await self._telemetry.record(ctx)
-    
+
     async def get(self, url: str, operation: str = "", **kwargs) -> httpx.Response:
         """Make GET request."""
         return await self.request("GET", url, operation=operation, **kwargs)
-    
+
     async def post(self, url: str, operation: str = "", **kwargs) -> httpx.Response:
         """Make POST request."""
         return await self.request("POST", url, operation=operation, **kwargs)
-    
+
     async def put(self, url: str, operation: str = "", **kwargs) -> httpx.Response:
         """Make PUT request."""
         return await self.request("PUT", url, operation=operation, **kwargs)
-    
+
     async def delete(self, url: str, operation: str = "", **kwargs) -> httpx.Response:
         """Make DELETE request."""
         return await self.request("DELETE", url, operation=operation, **kwargs)
-    
+
     async def patch(self, url: str, operation: str = "", **kwargs) -> httpx.Response:
         """Make PATCH request."""
         return await self.request("PATCH", url, operation=operation, **kwargs)
@@ -233,12 +233,12 @@ def instrumented(
 ):
     """
     Decorator to add telemetry instrumentation to any async function.
-    
+
     Usage:
         @instrumented("coingecko", "get_price")
         async def get_price(coin_id: str):
             ...
-            
+
         # Or with automatic operation name from function
         @instrumented("coingecko")
         async def get_market_chart(coin_id: str, days: int):
@@ -246,10 +246,10 @@ def instrumented(
     """
     _telemetry = telemetry or get_api_telemetry()
     _tracing = tracing or get_tracing_service()
-    
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         op_name = operation or func.__name__
-        
+
         @functools.wraps(func)
         async def wrapper(*args, **kwargs) -> T:
             # Start telemetry context
@@ -258,7 +258,7 @@ def instrumented(
                 operation=op_name,
                 **{k: str(v)[:100] for k, v in kwargs.items()},
             )
-            
+
             # Start tracing span
             with _tracing.start_span(
                 name=f"{api_name}.{op_name}",
@@ -273,7 +273,7 @@ def instrumented(
                     ctx.complete(status=APIStatus.SUCCESS)
                     span.set_status(SpanStatus.OK)
                     return result
-                    
+
                 except Exception as e:
                     ctx.complete(
                         status=APIStatus.ERROR,
@@ -282,30 +282,31 @@ def instrumented(
                     )
                     span.set_status(SpanStatus.ERROR, str(e))
                     raise
-                    
+
                 finally:
                     await _telemetry.record(ctx)
-        
+
         return wrapper
+
     return decorator
 
 
 class TelemetryMixin:
     """
     Mixin class to add telemetry to existing API clients.
-    
+
     Usage:
         class CoinGeckoClientWithTelemetry(TelemetryMixin, CoinGeckoClient):
             API_NAME = "coingecko"
     """
-    
+
     API_NAME: str = "unknown"
-    
+
     def __init__(self, *args, **kwargs):
         self._telemetry = kwargs.pop("telemetry", None) or get_api_telemetry()
         self._tracing = kwargs.pop("tracing", None) or get_tracing_service()
         super().__init__(*args, **kwargs)
-    
+
     async def _with_telemetry(
         self,
         operation: str,
@@ -319,7 +320,7 @@ class TelemetryMixin:
             operation=operation,
             **{k: str(v)[:100] for k, v in kwargs.items()},
         )
-        
+
         with self._tracing.start_span(
             name=f"{self.API_NAME}.{operation}",
             kind=SpanKind.CLIENT,
@@ -333,7 +334,7 @@ class TelemetryMixin:
                 ctx.complete(status=APIStatus.SUCCESS)
                 span.set_status(SpanStatus.OK)
                 return result
-                
+
             except Exception as e:
                 ctx.complete(
                     status=APIStatus.ERROR,
@@ -342,6 +343,6 @@ class TelemetryMixin:
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)

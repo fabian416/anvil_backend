@@ -66,9 +66,9 @@ LIFI_CHAINS = {
     "zksync": 324,
     # Hyperliquid chains
     "hyperliquid": 1337,  # HyperCore (perps/spot)
-    "hpl": 1337,          # Alias for hyperliquid
-    "hyperevm": 999,      # HyperEVM (smart contracts)
-    "hyp": 999,           # Alias for hyperevm
+    "hpl": 1337,  # Alias for hyperliquid
+    "hyperevm": 999,  # HyperEVM (smart contracts)
+    "hyp": 999,  # Alias for hyperevm
 }
 
 # Common token addresses
@@ -102,8 +102,8 @@ LIFI_TOKENS = {
     },
     # Hyperliquid tokens (chain 1337 - HyperCore)
     "hyperliquid": {
-        "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",       # USDC (Perps)
-        "USDC_PERPS": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", # USDC (Perps) alias
+        "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",  # USDC (Perps)
+        "USDC_PERPS": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",  # USDC (Perps) alias
         "USDC_SPOT": "0x6d1e7cde53bA9467B783Cb7c530CE05400000000",  # USDC (Spot)
     },
     "hpl": {
@@ -224,18 +224,18 @@ class LiFiClient:
                 from_amount=from_amount,
                 to_amount=data.get("estimate", {}).get("toAmount", "0"),
                 to_amount_min=data.get("estimate", {}).get("toAmountMin", "0"),
-                estimated_gas=data.get("estimate", {}).get("gasCosts", [{}])[0].get(
-                    "amount", "0"
-                ),
+                estimated_gas=data.get("estimate", {})
+                .get("gasCosts", [{}])[0]
+                .get("amount", "0"),
                 bridge_name=bridge_name,
-                execution_duration=data.get("estimate", {}).get(
-                    "executionDuration", 0
-                ),
+                execution_duration=data.get("estimate", {}).get("executionDuration", 0),
                 fee_costs=data.get("estimate", {}).get("feeCosts", []),
             )
 
         except httpx.HTTPStatusError as e:
-            logger.error(f"LiFi API error: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                f"LiFi API error: {e.response.status_code} - {e.response.text}"
+            )
             raise
         except Exception as e:
             logger.error(f"LiFi request failed: {e}")

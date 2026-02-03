@@ -19,7 +19,9 @@ from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.enums.transaction_type import TransactionType
 from app.domain.enums.wallet_provider import WalletProvider
 from app.domain.enums.wallet_status import WalletStatus
-from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.ports.transaction.transaction_repository import (
+    TransactionRepository,
+)
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.updated_at import UpdatedAt
@@ -545,7 +547,9 @@ class TestLogTransactionHandlerDualLogging:
     ):
         """Test that receiver logging error doesn't affect sender's transaction."""
         mock_transaction_repository = MagicMock(spec=TransactionRepository)
-        mock_transaction_repository.get_by_user_and_tx_hash = AsyncMock(return_value=None)
+        mock_transaction_repository.get_by_user_and_tx_hash = AsyncMock(
+            return_value=None
+        )
 
         save_call_count = [0]
 

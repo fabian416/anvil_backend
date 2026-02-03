@@ -10,21 +10,21 @@ Core entities:
 
 from .agent_telemetry import AgentTelemetry, AgentTelemetryId
 from .compliance_screening_log import (
-    ComplianceScreeningLog, 
+    ComplianceScreeningLog,
     ComplianceScreeningLogId,
     ScreeningResult,
     OFACStatus,
     PEPStatus,
 )
 from .multisig_proposal import (
-    MultiSigProposal, 
+    MultiSigProposal,
     MultiSigProposalId,
     Approval,
     ProposalStatus,
     PolicyCheckResult,
 )
 from .crisis_event import (
-    CrisisEvent, 
+    CrisisEvent,
     CrisisEventId,
     CrisisAction,
     PositionSaved,
@@ -36,21 +36,18 @@ __all__ = [
     # AgentTelemetry
     "AgentTelemetry",
     "AgentTelemetryId",
-    
     # ComplianceScreeningLog
     "ComplianceScreeningLog",
     "ComplianceScreeningLogId",
     "ScreeningResult",
     "OFACStatus",
     "PEPStatus",
-    
     # MultiSigProposal
     "MultiSigProposal",
     "MultiSigProposalId",
     "Approval",
     "ProposalStatus",
     "PolicyCheckResult",
-    
     # CrisisEvent
     "CrisisEvent",
     "CrisisEventId",

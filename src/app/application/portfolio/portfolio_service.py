@@ -21,7 +21,9 @@ from app.domain.portfolio.entities.portfolio_snapshot import (
 )
 from app.domain.entities.wallet import Wallet, WalletId
 from app.domain.enums.chain_type import ChainType
-from app.domain.portfolio.ports.portfolio.portfolio_repository import PortfolioRepository
+from app.domain.portfolio.ports.portfolio.portfolio_repository import (
+    PortfolioRepository,
+)
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 
 logger = logging.getLogger(__name__)
@@ -222,7 +224,9 @@ class PortfolioService:
                 return Decimal(balance_wei) / Decimal(10**18)
 
         except Exception as e:
-            logger.error(f"Error fetching native balance from {rpc_url}: {type(e).__name__}: {e}")
+            logger.error(
+                f"Error fetching native balance from {rpc_url}: {type(e).__name__}: {e}"
+            )
             return Decimal("0")
 
     async def _fetch_token_balance(
@@ -281,7 +285,9 @@ class PortfolioService:
                 return Decimal(balance_raw) / Decimal(10**decimals)
 
         except Exception as e:
-            logger.debug(f"Error fetching token balance for {token_address} from {rpc_url}: {type(e).__name__}: {e}")
+            logger.debug(
+                f"Error fetching token balance for {token_address} from {rpc_url}: {type(e).__name__}: {e}"
+            )
             return Decimal("0")
 
     async def _fetch_eth_price(self) -> Decimal | None:
@@ -506,7 +512,9 @@ class PortfolioService:
             logger.warning(f"No RPC URL for chain {chain.value}")
             return None
 
-        logger.info(f"Fetching portfolio for {address[:10]}... on {chain.value} via {rpc_url}")
+        logger.info(
+            f"Fetching portfolio for {address[:10]}... on {chain.value} via {rpc_url}"
+        )
 
         # Fetch native balance
         native_balance = await self._fetch_native_balance(rpc_url, address)

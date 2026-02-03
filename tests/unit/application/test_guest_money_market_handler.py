@@ -20,5 +20,3 @@ async def test_guest_money_market_returns_comparison_not_static_prompt() -> None
     assert result["enrichment"] is not None
     assert isinstance(result["enrichment"].get("rates"), list)
     assert result["requires_registration"] is True
-
-

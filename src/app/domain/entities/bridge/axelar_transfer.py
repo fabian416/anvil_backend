@@ -62,7 +62,9 @@ class AxelarTransfer:
             "source_tx_hash": self.source_tx_hash,
             "destination_tx_hash": self.destination_tx_hash,
             "created_at": self.created_at.isoformat(),
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "error_message": self.error_message,
             "is_express": self.is_express,
         }

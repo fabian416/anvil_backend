@@ -136,9 +136,7 @@ class OpenAIEmbeddingAdapter:
         # Validate and set dimensions
         if dimensions is not None:
             if not model_config["supports_shortening"]:
-                raise ValueError(
-                    f"Model {model} does not support dimension reduction"
-                )
+                raise ValueError(f"Model {model} does not support dimension reduction")
             if dimensions > model_config["max_dimensions"]:
                 raise ValueError(
                     f"Dimensions {dimensions} exceeds max {model_config['max_dimensions']} for {model}"

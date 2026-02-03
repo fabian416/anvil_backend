@@ -357,34 +357,33 @@ def create_project_from_template(
 ) -> Project:
     """
     Create a Project entity from a template.
-    
+
     Args:
         template: Project template dictionary
         created_by: User ID of creator (admin)
         settings: Project settings with feature flags
-    
+
     Returns:
         New Project entity
-        
+
     Raises:
         TemplateDisabledError: If template is disabled in settings
     """
     settings = settings or ProjectSettings()
-    
+
     # Check if projects are globally enabled
     if not settings.enabled:
         raise TemplateDisabledError(
-            "Project system is disabled. "
-            "Enable with projects.enabled=true in config."
+            "Project system is disabled. Enable with projects.enabled=true in config."
         )
-    
+
     # Check if templates are enabled
     if not settings.templates_enabled:
         raise TemplateDisabledError(
             "Project templates are disabled. "
             "Enable with projects.templates_enabled=true in config."
         )
-    
+
     # Check if specific template is enabled
     template_slug = template["slug"]
     if not _is_template_enabled(template_slug, settings):
@@ -394,7 +393,7 @@ def create_project_from_template(
             f"Template '{template_name}' is disabled. "
             f"Enable with projects.templates.{flag_name}=true in config."
         )
-    
+
     return Project.create(
         slug=template["slug"],
         name=template["name"],
@@ -419,11 +418,11 @@ def create_project_from_template(
 def _is_template_enabled(template_slug: str, settings: ProjectSettings) -> bool:
     """
     Check if a template is enabled in settings.
-    
+
     Args:
         template_slug: Template slug (e.g., 'defi-swing-trader')
         settings: Project settings
-        
+
     Returns:
         True if template is enabled, False otherwise
     """
@@ -434,26 +433,28 @@ def _is_template_enabled(template_slug: str, settings: ProjectSettings) -> bool:
         "conservative-investor": settings.templates.conservative_investor_enabled,
         "day-trader-pro": settings.templates.day_trader_pro_enabled,
     }
-    
+
     return template_flag_map.get(template_slug, True)  # Default to enabled if unknown
 
 
-def get_available_templates(settings: Optional[ProjectSettings] = None) -> List[Dict[str, Any]]:
+def get_available_templates(
+    settings: Optional[ProjectSettings] = None,
+) -> List[Dict[str, Any]]:
     """
     Get list of available (enabled) templates.
-    
+
     Args:
         settings: Project settings with feature flags
-        
+
     Returns:
         List of enabled template dictionaries
     """
     settings = settings or ProjectSettings()
-    
+
     # Check if project system is enabled
     if not settings.enabled or not settings.templates_enabled:
         return []
-    
+
     # Filter enabled templates
     return [
         template

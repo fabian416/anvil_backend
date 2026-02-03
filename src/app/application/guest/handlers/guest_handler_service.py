@@ -18,7 +18,9 @@ from app.application.chat.handlers.money_market_handler import MoneyMarketHandle
 from app.application.chat.handlers.swap_handler import SwapHandler
 from app.application.chat.handlers.buy_handler import BuyHandler
 from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandler
-from app.application.guest.handlers.moonpay_swap_multistep import MoonPaySwapMultiStepHandler
+from app.application.guest.handlers.moonpay_swap_multistep import (
+    MoonPaySwapMultiStepHandler,
+)
 from app.application.guest.handlers.send_multistep import SendMultiStepHandler
 from app.application.guest.handlers.buy_multistep import BuyMultiStepHandler
 from app.application.guest.handlers.lending_multistep import LendingMultiStepHandler
@@ -87,7 +89,11 @@ class GuestHandlerService:
         self._moonpay_swap_handler = moonpay_swap_handler
         self._portfolio_service = portfolio_service
         # Multi-step swap flow handler
-        self._moonpay_multistep = MoonPaySwapMultiStepHandler(moonpay_swap_handler) if moonpay_swap_handler else None
+        self._moonpay_multistep = (
+            MoonPaySwapMultiStepHandler(moonpay_swap_handler)
+            if moonpay_swap_handler
+            else None
+        )
         # Multi-step send flow handler
         self._send_multistep = SendMultiStepHandler()
         # Multi-step buy flow handler
@@ -294,12 +300,48 @@ class GuestHandlerService:
         """Handle protocol search intent (demo mode with example protocols)."""
         # Demo protocols data - in production, this would query the graph
         demo_protocols = [
-            {"name": "Aave", "category": "Lending", "tvl": 12.5, "risk": "LOW", "chain": "Ethereum"},
-            {"name": "Compound", "category": "Lending", "tvl": 3.2, "risk": "LOW", "chain": "Ethereum"},
-            {"name": "Uniswap", "category": "DEX", "tvl": 5.8, "risk": "LOW", "chain": "Ethereum"},
-            {"name": "Curve", "category": "DEX", "tvl": 4.1, "risk": "LOW", "chain": "Ethereum"},
-            {"name": "Lido", "category": "Staking", "tvl": 25.0, "risk": "LOW", "chain": "Ethereum"},
-            {"name": "Morpho", "category": "Lending", "tvl": 1.8, "risk": "MEDIUM", "chain": "Ethereum"},
+            {
+                "name": "Aave",
+                "category": "Lending",
+                "tvl": 12.5,
+                "risk": "LOW",
+                "chain": "Ethereum",
+            },
+            {
+                "name": "Compound",
+                "category": "Lending",
+                "tvl": 3.2,
+                "risk": "LOW",
+                "chain": "Ethereum",
+            },
+            {
+                "name": "Uniswap",
+                "category": "DEX",
+                "tvl": 5.8,
+                "risk": "LOW",
+                "chain": "Ethereum",
+            },
+            {
+                "name": "Curve",
+                "category": "DEX",
+                "tvl": 4.1,
+                "risk": "LOW",
+                "chain": "Ethereum",
+            },
+            {
+                "name": "Lido",
+                "category": "Staking",
+                "tvl": 25.0,
+                "risk": "LOW",
+                "chain": "Ethereum",
+            },
+            {
+                "name": "Morpho",
+                "category": "Lending",
+                "tvl": 1.8,
+                "risk": "MEDIUM",
+                "chain": "Ethereum",
+            },
         ]
 
         translations = {
@@ -310,7 +352,12 @@ class GuestHandlerService:
                 "risk": "Risk",
                 "chain": "Chain",
                 "note": "Register for full access to:",
-                "features": ["Search 500+ protocols", "Custom filters", "Real-time data", "Risk analysis"],
+                "features": [
+                    "Search 500+ protocols",
+                    "Custom filters",
+                    "Real-time data",
+                    "Risk analysis",
+                ],
             },
             "es": {
                 "title": "🔍 **Resultados de Búsqueda de Protocolos (Demo)**",
@@ -319,7 +366,12 @@ class GuestHandlerService:
                 "risk": "Riesgo",
                 "chain": "Red",
                 "note": "Regístrate para acceso completo a:",
-                "features": ["Buscar 500+ protocolos", "Filtros personalizados", "Datos en tiempo real", "Análisis de riesgo"],
+                "features": [
+                    "Buscar 500+ protocolos",
+                    "Filtros personalizados",
+                    "Datos en tiempo real",
+                    "Análisis de riesgo",
+                ],
             },
             "pt": {
                 "title": "🔍 **Resultados da Pesquisa de Protocolos (Demo)**",
@@ -328,7 +380,12 @@ class GuestHandlerService:
                 "risk": "Risco",
                 "chain": "Rede",
                 "note": "Registre-se para acesso completo a:",
-                "features": ["Pesquisar 500+ protocolos", "Filtros personalizados", "Dados em tempo real", "Análise de risco"],
+                "features": [
+                    "Pesquisar 500+ protocolos",
+                    "Filtros personalizados",
+                    "Dados em tempo real",
+                    "Análise de risco",
+                ],
             },
             "zh": {
                 "title": "🔍 **协议搜索结果 (演示)**",
@@ -349,7 +406,9 @@ class GuestHandlerService:
         response += f"\n{t['note']}\n"
         for feature in t["features"]:
             response += f"  ✓ {feature}\n"
-        response += "\n" + self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
+        response += "\n" + self._get_auth_cta_message(
+            language, for_action=False, is_authenticated=is_authenticated
+        )
 
         return {
             "content": response,
@@ -395,7 +454,12 @@ class GuestHandlerService:
                 "liquidity": "Liquidity Risk",
                 "oracle": "Oracle Risk",
                 "note": "Register for full risk analysis including:",
-                "features": ["Real-time monitoring", "Historical data", "ML predictions", "Alerts"],
+                "features": [
+                    "Real-time monitoring",
+                    "Historical data",
+                    "ML predictions",
+                    "Alerts",
+                ],
             },
             "es": {
                 "title": f"🛡️ **Evaluación de Riesgo: {protocol} (Demo)**",
@@ -408,7 +472,12 @@ class GuestHandlerService:
                 "liquidity": "Riesgo de Liquidez",
                 "oracle": "Riesgo de Oráculo",
                 "note": "Regístrate para análisis de riesgo completo incluyendo:",
-                "features": ["Monitoreo en tiempo real", "Datos históricos", "Predicciones ML", "Alertas"],
+                "features": [
+                    "Monitoreo en tiempo real",
+                    "Datos históricos",
+                    "Predicciones ML",
+                    "Alertas",
+                ],
             },
             "pt": {
                 "title": f"🛡️ **Avaliação de Risco: {protocol} (Demo)**",
@@ -421,7 +490,12 @@ class GuestHandlerService:
                 "liquidity": "Risco de Liquidez",
                 "oracle": "Risco de Oráculo",
                 "note": "Registre-se para análise de risco completa incluindo:",
-                "features": ["Monitoramento em tempo real", "Dados históricos", "Previsões ML", "Alertas"],
+                "features": [
+                    "Monitoramento em tempo real",
+                    "Dados históricos",
+                    "Previsões ML",
+                    "Alertas",
+                ],
             },
             "zh": {
                 "title": f"🛡️ **风险评估: {protocol} (演示)**",
@@ -451,7 +525,9 @@ class GuestHandlerService:
         response += f"{t['note']}\n"
         for feature in t["features"]:
             response += f"  ✓ {feature}\n"
-        response += "\n" + self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
+        response += "\n" + self._get_auth_cta_message(
+            language, for_action=False, is_authenticated=is_authenticated
+        )
 
         return {
             "content": response,
@@ -493,21 +569,36 @@ class GuestHandlerService:
                 "desc": f"Based on category, features, and risk profile, here are protocols similar to {protocol}:",
                 "similarity": "Similarity",
                 "note": "Register for full comparison including:",
-                "features": ["Detailed feature comparison", "APY comparison", "Risk analysis", "User reviews"],
+                "features": [
+                    "Detailed feature comparison",
+                    "APY comparison",
+                    "Risk analysis",
+                    "User reviews",
+                ],
             },
             "es": {
                 "title": f"🔗 **Protocolos Similares a {protocol} (Demo)**",
                 "desc": f"Basándose en categoría, características y perfil de riesgo, aquí hay protocolos similares a {protocol}:",
                 "similarity": "Similitud",
                 "note": "Regístrate para comparación completa incluyendo:",
-                "features": ["Comparación detallada de características", "Comparación de APY", "Análisis de riesgo", "Opiniones de usuarios"],
+                "features": [
+                    "Comparación detallada de características",
+                    "Comparación de APY",
+                    "Análisis de riesgo",
+                    "Opiniones de usuarios",
+                ],
             },
             "pt": {
                 "title": f"🔗 **Protocolos Similares a {protocol} (Demo)**",
                 "desc": f"Com base em categoria, recursos e perfil de risco, aqui estão protocolos semelhantes a {protocol}:",
                 "similarity": "Similaridade",
                 "note": "Registre-se para comparação completa incluindo:",
-                "features": ["Comparação detalhada de recursos", "Comparação de APY", "Análise de risco", "Avaliações de usuários"],
+                "features": [
+                    "Comparação detalhada de recursos",
+                    "Comparação de APY",
+                    "Análise de risco",
+                    "Avaliações de usuários",
+                ],
             },
             "zh": {
                 "title": f"🔗 **与{protocol}类似的协议 (演示)**",
@@ -526,7 +617,9 @@ class GuestHandlerService:
         response += f"\n{t['note']}\n"
         for feature in t["features"]:
             response += f"  ✓ {feature}\n"
-        response += "\n" + self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
+        response += "\n" + self._get_auth_cta_message(
+            language, for_action=False, is_authenticated=is_authenticated
+        )
 
         return {
             "content": response,
@@ -544,11 +637,19 @@ class GuestHandlerService:
     # ========================================
 
     async def _handle_sentiment(
-        self, content: str, language: str, context: str = "", is_authenticated: bool = False
+        self,
+        content: str,
+        language: str,
+        context: str = "",
+        is_authenticated: bool = False,
     ) -> dict[str, Any]:
         """Handle sentiment analysis with real data."""
         # Extract token from content, using context if token not found in current message
-        token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
+        token = (
+            self._extract_token(content)
+            or self._extract_token_from_context(context)
+            or "ETH"
+        )
 
         # Check cache first
         cached = await self._cache.get_hunter_response("sentiment", token, language)
@@ -608,34 +709,47 @@ class GuestHandlerService:
             response = f"{t['title']}\n\n"
             response += f"{t['overall']} {aggregated.classification.value.title()} "
             response += f"({aggregated.overall_score:.1f}/100)\n"
-            response += f"{t['confidence']} {aggregated.overall_confidence * 100:.0f}%\n\n"
+            response += (
+                f"{t['confidence']} {aggregated.overall_confidence * 100:.0f}%\n\n"
+            )
 
             response += "**By Source:**\n"
             for source, data in breakdown.items():
-                emoji = "🟢" if data["score"] > 60 else "🔴" if data["score"] < 40 else "🟡"
+                emoji = (
+                    "🟢" if data["score"] > 60 else "🔴" if data["score"] < 40 else "🟡"
+                )
                 response += f"- {source.title()}: {emoji} {data['score']:.0f}/100\n"
 
-            response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
+            response += self._get_auth_cta_message(
+                language, for_action=False, is_authenticated=is_authenticated
+            )
 
             # Build sources list
             from datetime import datetime, UTC
             from app.domain.value_objects.chat.source_info import SourceInfo, SourceType
-            
+
             sources = []
             fetched_at = datetime.now(UTC)
-            
+
             # Add social media sources
             for source_name, data in breakdown.items():
-                sources.append(SourceInfo(
-                    source_type=SourceType.SOCIAL_MEDIA if source_name.lower() in ["twitter", "reddit", "discord"] else SourceType.RSS_FEED,
-                    source_name=source_name.title(),
-                    citation_text=f"{source_name.title()} sentiment analysis for {token}",
-                    fetched_at=fetched_at,
-                    data_points_used=data.get("sample_size", 0),
-                    relevance_score=data.get("weight", 0.25),
-                    metadata={"score": data["score"], "classification": data["classification"]},
-                ))
-            
+                sources.append(
+                    SourceInfo(
+                        source_type=SourceType.SOCIAL_MEDIA
+                        if source_name.lower() in ["twitter", "reddit", "discord"]
+                        else SourceType.RSS_FEED,
+                        source_name=source_name.title(),
+                        citation_text=f"{source_name.title()} sentiment analysis for {token}",
+                        fetched_at=fetched_at,
+                        data_points_used=data.get("sample_size", 0),
+                        relevance_score=data.get("weight", 0.25),
+                        metadata={
+                            "score": data["score"],
+                            "classification": data["classification"],
+                        },
+                    )
+                )
+
             # Normalize score from 0-100 to -1 to 1 range for API consistency
             # 0 → -1 (bearish), 50 → 0 (neutral), 100 → 1 (bullish)
             normalized_score = (aggregated.overall_score - 50) / 50
@@ -660,17 +774,29 @@ class GuestHandlerService:
             return result
         except Exception as e:
             logger.warning(f"Sentiment analysis error: {e}")
-            return self._fallback_response(ChatIntent.HUNTER_SENTIMENT, language, is_authenticated)
+            return self._fallback_response(
+                ChatIntent.HUNTER_SENTIMENT, language, is_authenticated
+            )
 
     async def _handle_price_prediction(
-        self, content: str, language: str, context: str = "", is_authenticated: bool = False
+        self,
+        content: str,
+        language: str,
+        context: str = "",
+        is_authenticated: bool = False,
     ) -> dict[str, Any]:
         """Handle price prediction with real ML model."""
         # Extract token from content, using context if token not found in current message
-        token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
+        token = (
+            self._extract_token(content)
+            or self._extract_token_from_context(context)
+            or "ETH"
+        )
 
         # Check cache first
-        cached = await self._cache.get_hunter_response("price_prediction", token, language)
+        cached = await self._cache.get_hunter_response(
+            "price_prediction", token, language
+        )
         if cached:
             logger.debug(f"Cache HIT for price_prediction: {token}/{language}")
             return cached
@@ -680,7 +806,13 @@ class GuestHandlerService:
             prediction = await predictor.predict(token, horizon_hours=168)  # 7 days
 
             # Determine emoji based on direction
-            direction_emoji = "🟢" if prediction.direction == "up" else "🔴" if prediction.direction == "down" else "🟡"
+            direction_emoji = (
+                "🟢"
+                if prediction.direction == "up"
+                else "🔴"
+                if prediction.direction == "down"
+                else "🟡"
+            )
 
             # Translations for price prediction response
             translations = {
@@ -762,7 +894,9 @@ class GuestHandlerService:
             response += f"{t['horizon']} {prediction.horizon_hours} {t['hours']}\n"
 
             # Use conditional CTA helper
-            response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
+            response += self._get_auth_cta_message(
+                language, for_action=False, is_authenticated=is_authenticated
+            )
 
             result = {
                 "content": response,
@@ -779,20 +913,33 @@ class GuestHandlerService:
             }
 
             # Cache the successful response
-            await self._cache.set_hunter_response("price_prediction", token, language, result)
+            await self._cache.set_hunter_response(
+                "price_prediction", token, language, result
+            )
 
             return result
         except Exception as e:
-            logger.error(f"Price prediction error for token {token}: {e}", exc_info=True)
+            logger.error(
+                f"Price prediction error for token {token}: {e}", exc_info=True
+            )
             # Try to provide a helpful response even on error
             # Get current price at least
             try:
-                from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
+                from app.infrastructure.adapters.external.coingecko_client import (
+                    CoinGeckoClient,
+                )
+
                 client = CoinGeckoClient()
                 try:
-                    symbol_to_id = {"BTC": "bitcoin", "ETH": "ethereum", "SOL": "solana"}
+                    symbol_to_id = {
+                        "BTC": "bitcoin",
+                        "ETH": "ethereum",
+                        "SOL": "solana",
+                    }
                     coin_id = symbol_to_id.get(token.upper(), token.lower())
-                    price_data = await client.get_simple_price(coin_ids=[coin_id], vs_currencies=["usd"])
+                    price_data = await client.get_simple_price(
+                        coin_ids=[coin_id], vs_currencies=["usd"]
+                    )
                     if price_data and coin_id in price_data:
                         current_price = price_data[coin_id]["usd"]
                         # Provide basic response with current price
@@ -804,22 +951,36 @@ class GuestHandlerService:
                         }
                         return {
                             "content": translations.get(language, translations["en"]),
-                            "enrichment": {"token": token, "current_price": current_price, "error": True},
+                            "enrichment": {
+                                "token": token,
+                                "current_price": current_price,
+                                "error": True,
+                            },
                             "requires_registration": False,
                         }
                 finally:
                     await client.close()
             except Exception as e2:
                 logger.warning(f"Failed to get fallback price: {e2}")
-            
-            return self._fallback_response(ChatIntent.HUNTER_PRICE_PREDICTION, language, is_authenticated)
+
+            return self._fallback_response(
+                ChatIntent.HUNTER_PRICE_PREDICTION, language, is_authenticated
+            )
 
     async def _handle_risk_signals(
-        self, content: str, language: str, context: str = "", is_authenticated: bool = False
+        self,
+        content: str,
+        language: str,
+        context: str = "",
+        is_authenticated: bool = False,
     ) -> dict[str, Any]:
         """Handle market risk signals."""
         # Extract token from content, using context if token not found in current message
-        token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
+        token = (
+            self._extract_token(content)
+            or self._extract_token_from_context(context)
+            or "ETH"
+        )
 
         # Check cache first
         cached = await self._cache.get_hunter_response("risk_signals", token, language)
@@ -879,7 +1040,13 @@ class GuestHandlerService:
             response += f"{t['risk_factors']}\n"
             # Display risk factors from assessment
             for factor_name, risk_score in assessment.risk_factors.items():
-                emoji = "🔴" if risk_score.level in ["high", "extreme"] else "🟡" if risk_score.level == "medium" else "🟢"
+                emoji = (
+                    "🔴"
+                    if risk_score.level in ["high", "extreme"]
+                    else "🟡"
+                    if risk_score.level == "medium"
+                    else "🟢"
+                )
                 factor_display = factor_name.replace("_", " ").title()
                 response += f"- {emoji} {factor_display}: {risk_score.level.upper()} risk (score: {risk_score.score:.1f}/100)\n"
 
@@ -887,7 +1054,9 @@ class GuestHandlerService:
             if assessment.recommendation:
                 response += f"\n**Recommendation:** {assessment.recommendation}\n"
 
-            response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
+            response += self._get_auth_cta_message(
+                language, for_action=False, is_authenticated=is_authenticated
+            )
 
             result = {
                 "content": response,
@@ -895,7 +1064,9 @@ class GuestHandlerService:
                     "token": token,
                     "overall_risk_score": assessment.overall_risk_score,
                     "risk_level": assessment.overall_risk_level,
-                    "risk_factors": {k: v.to_dict() for k, v in assessment.risk_factors.items()},
+                    "risk_factors": {
+                        k: v.to_dict() for k, v in assessment.risk_factors.items()
+                    },
                     "recommendation": assessment.recommendation,
                     "hunter_tool": "risk_analyzer",
                 },
@@ -903,22 +1074,36 @@ class GuestHandlerService:
             }
 
             # Cache the successful response
-            await self._cache.set_hunter_response("risk_signals", token, language, result)
+            await self._cache.set_hunter_response(
+                "risk_signals", token, language, result
+            )
 
             return result
         except Exception as e:
             logger.error(f"Risk signals error for token {token}: {e}", exc_info=True)
-            return self._fallback_response(ChatIntent.HUNTER_RISK_SIGNALS, language, is_authenticated)
+            return self._fallback_response(
+                ChatIntent.HUNTER_RISK_SIGNALS, language, is_authenticated
+            )
 
     async def _handle_trading_signals(
-        self, content: str, language: str, context: str = "", is_authenticated: bool = False
+        self,
+        content: str,
+        language: str,
+        context: str = "",
+        is_authenticated: bool = False,
     ) -> dict[str, Any]:
         """Handle trading signal generation."""
         # Extract token from content, using context if token not found in current message
-        token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
+        token = (
+            self._extract_token(content)
+            or self._extract_token_from_context(context)
+            or "ETH"
+        )
 
         # Check cache first
-        cached = await self._cache.get_hunter_response("trading_signals", token, language)
+        cached = await self._cache.get_hunter_response(
+            "trading_signals", token, language
+        )
         if cached:
             logger.debug(f"Cache HIT for trading_signals: {token}/{language}")
             return cached
@@ -928,7 +1113,13 @@ class GuestHandlerService:
             signal = await generator.generate_signal(token, Timeframe.HOUR_4)
 
             # Determine emoji based on signal type
-            signal_emoji = "🟢" if signal.signal_type.value == "buy" else "🔴" if signal.signal_type.value == "sell" else "🟡"
+            signal_emoji = (
+                "🟢"
+                if signal.signal_type.value == "buy"
+                else "🔴"
+                if signal.signal_type.value == "sell"
+                else "🟡"
+            )
 
             # Translations for trading signals
             translations = {
@@ -992,7 +1183,9 @@ class GuestHandlerService:
             t = translations.get(language, translations["en"])
 
             response = f"{t['title']}\n\n"
-            response += f"{t['signal']} {signal_emoji} {signal.signal_type.value.upper()}\n"
+            response += (
+                f"{t['signal']} {signal_emoji} {signal.signal_type.value.upper()}\n"
+            )
             response += f"{t['strength']} {signal.signal_strength:.0f}/100\n"
             response += f"{t['confidence']} {signal.confidence * 100:.0f}%\n"
             response += f"{t['timeframe']} {signal.timeframe.value}\n\n"
@@ -1009,7 +1202,9 @@ class GuestHandlerService:
             response += f"- {t['prediction']} {signal.prediction_score:.0f}/100\n"
             response += f"- {t['risk']} {signal.risk_score:.0f}/100\n"
 
-            response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
+            response += self._get_auth_cta_message(
+                language, for_action=False, is_authenticated=is_authenticated
+            )
 
             result = {
                 "content": response,
@@ -1027,19 +1222,31 @@ class GuestHandlerService:
             }
 
             # Cache the successful response
-            await self._cache.set_hunter_response("trading_signals", token, language, result)
+            await self._cache.set_hunter_response(
+                "trading_signals", token, language, result
+            )
 
             return result
         except Exception as e:
             logger.warning(f"Trading signals error: {e}")
-            return self._fallback_response(ChatIntent.HUNTER_TRADING_SIGNALS, language, is_authenticated)
+            return self._fallback_response(
+                ChatIntent.HUNTER_TRADING_SIGNALS, language, is_authenticated
+            )
 
     async def _handle_patterns(
-        self, content: str, language: str, context: str = "", is_authenticated: bool = False
+        self,
+        content: str,
+        language: str,
+        context: str = "",
+        is_authenticated: bool = False,
     ) -> dict[str, Any]:
         """Handle chart pattern recognition."""
         # Extract token from content, using context if token not found in current message
-        token = self._extract_token(content) or self._extract_token_from_context(context) or "ETH"
+        token = (
+            self._extract_token(content)
+            or self._extract_token_from_context(context)
+            or "ETH"
+        )
 
         # Check cache first
         cached = await self._cache.get_hunter_response("patterns", token, language)
@@ -1103,13 +1310,25 @@ class GuestHandlerService:
                 if chart_patterns:
                     response += f"{t['chart_patterns']}\n"
                     for pattern in chart_patterns[:3]:
-                        emoji = "🟢" if pattern.signal.value == "bullish" else "🔴" if pattern.signal.value == "bearish" else "🟡"
-                        pattern_name = pattern.pattern_type.value.replace("_", " ").title()
+                        emoji = (
+                            "🟢"
+                            if pattern.signal.value == "bullish"
+                            else "🔴"
+                            if pattern.signal.value == "bearish"
+                            else "🟡"
+                        )
+                        pattern_name = pattern.pattern_type.value.replace(
+                            "_", " "
+                        ).title()
                         response += f"**{emoji} {pattern_name}**\n"
                         response += f"- {t['signal']} {pattern.signal.value.upper()}\n"
-                        response += f"- {t['confidence']} {pattern.confidence * 100:.0f}%\n"
+                        response += (
+                            f"- {t['confidence']} {pattern.confidence * 100:.0f}%\n"
+                        )
                         if pattern.key_levels:
-                            target = pattern.key_levels.get("target", pattern.key_levels.get("neckline", 0))
+                            target = pattern.key_levels.get(
+                                "target", pattern.key_levels.get("neckline", 0)
+                            )
                             if target:
                                 response += f"- Target: ${target:,.2f}\n"
                         response += f"- {pattern.description}\n\n"
@@ -1118,21 +1337,33 @@ class GuestHandlerService:
                 if candlestick_patterns:
                     response += f"{t['candlestick_patterns']}\n"
                     for signal in candlestick_patterns[:2]:
-                        emoji = "🟢" if signal.signal.value == "bullish" else "🔴" if signal.signal.value == "bearish" else "🟡"
+                        emoji = (
+                            "🟢"
+                            if signal.signal.value == "bullish"
+                            else "🔴"
+                            if signal.signal.value == "bearish"
+                            else "🟡"
+                        )
                         pattern_name = signal.pattern.value.replace("_", " ").title()
                         response += f"**{emoji} {pattern_name}**\n"
                         response += f"- {t['signal']} {signal.signal.value.upper()}\n"
-                        response += f"- {t['confidence']} {signal.confidence * 100:.0f}%\n"
+                        response += (
+                            f"- {t['confidence']} {signal.confidence * 100:.0f}%\n"
+                        )
                         response += f"- Price: ${signal.price:,.2f}\n\n"
 
-            response += self._get_auth_cta_message(language, for_action=False, is_authenticated=is_authenticated)
+            response += self._get_auth_cta_message(
+                language, for_action=False, is_authenticated=is_authenticated
+            )
 
             result = {
                 "content": response,
                 "enrichment": {
                     "token": token,
                     "chart_patterns": [p.pattern_type.value for p in chart_patterns],
-                    "candlestick_patterns": [s.pattern.value for s in candlestick_patterns],
+                    "candlestick_patterns": [
+                        s.pattern.value for s in candlestick_patterns
+                    ],
                     "hunter_tool": "pattern_recognizer",
                 },
                 "requires_registration": False,
@@ -1143,8 +1374,12 @@ class GuestHandlerService:
 
             return result
         except Exception as e:
-            logger.error(f"Pattern recognition error for token {token}: {e}", exc_info=True)
-            return self._fallback_response(ChatIntent.HUNTER_PATTERNS, language, is_authenticated)
+            logger.error(
+                f"Pattern recognition error for token {token}: {e}", exc_info=True
+            )
+            return self._fallback_response(
+                ChatIntent.HUNTER_PATTERNS, language, is_authenticated
+            )
 
     async def _handle_portfolio_optimization(
         self, content: str, language: str, is_authenticated: bool = False
@@ -1215,7 +1450,9 @@ class GuestHandlerService:
             response += f"\n{t['expected_return']} {result.expected_return * 100:.1f}% {t['annual']}\n"
             response += f"{t['sharpe_ratio']} {result.sharpe_ratio:.2f}\n"
 
-            response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
+            response += self._get_auth_cta_message(
+                language, for_action=True, is_authenticated=is_authenticated
+            )
 
             result_dict = {
                 "content": response,
@@ -1229,12 +1466,16 @@ class GuestHandlerService:
             }
 
             # Cache the successful response
-            await self._cache.set_hunter_response("portfolio", "demo", language, result_dict)
+            await self._cache.set_hunter_response(
+                "portfolio", "demo", language, result_dict
+            )
 
             return result_dict
         except Exception as e:
             logger.warning(f"Portfolio optimization error: {e}")
-            return self._fallback_response(ChatIntent.HUNTER_PORTFOLIO, language, is_authenticated)
+            return self._fallback_response(
+                ChatIntent.HUNTER_PORTFOLIO, language, is_authenticated
+            )
 
     # ========================================
     # ULTRA Handlers
@@ -1247,39 +1488,53 @@ class GuestHandlerService:
         try:
             # Try to get real data from 1inch API
             import os
+
             # Try multiple sources for API key
             oneinch_api_key = None
-            
+
             # 1. Try environment variable
             oneinch_api_key = os.getenv("ONEINCH_API_KEY", "").strip()
-            
+
             # 2. Try from TOML config if not in env
             if not oneinch_api_key:
                 try:
                     from app.setup.config.defi import load_defi_config
+
                     defi_config = load_defi_config()
-                    oneinch_api_key = defi_config.oneinch_api_key.strip() if defi_config.oneinch_api_key else ""
+                    oneinch_api_key = (
+                        defi_config.oneinch_api_key.strip()
+                        if defi_config.oneinch_api_key
+                        else ""
+                    )
                 except (ValueError, Exception) as e:
                     logger.debug(f"Could not load 1inch API key from config: {e}")
-            
+
             # 3. Try from TOML config (external_apis section in .secrets.toml)
             if not oneinch_api_key:
                 try:
-                    from app.setup.config.loader import load_full_config, get_current_env
+                    from app.setup.config.loader import (
+                        load_full_config,
+                        get_current_env,
+                    )
+
                     raw_config = load_full_config(env=get_current_env())
-                    if 'external_apis' in raw_config and isinstance(raw_config['external_apis'], dict):
-                        oneinch_key = raw_config['external_apis'].get('ONEINCH_API_KEY', '')
+                    if "external_apis" in raw_config and isinstance(
+                        raw_config["external_apis"], dict
+                    ):
+                        oneinch_key = raw_config["external_apis"].get(
+                            "ONEINCH_API_KEY", ""
+                        )
                         if oneinch_key:
                             oneinch_api_key = str(oneinch_key).strip()
                 except Exception as e:
                     logger.debug(f"Could not load 1inch API key from TOML config: {e}")
-            
+
             if not oneinch_api_key:
                 logger.info("1inch API key not available - using simulated data")
-            
+
             discovery = ArbitrageDiscovery()
             capital = Decimal("10000")  # Demo with $10k
-            
+
             # Use real data if API key is available
             if oneinch_api_key and oneinch_api_key.strip():
                 try:
@@ -1289,9 +1544,13 @@ class GuestHandlerService:
                         oneinch_api_key=oneinch_api_key,
                         chain="ethereum",
                     )
-                    logger.info(f"Found {len(opportunities)} real arbitrage opportunities")
+                    logger.info(
+                        f"Found {len(opportunities)} real arbitrage opportunities"
+                    )
                 except Exception as e:
-                    logger.error(f"Real arbitrage data fetch failed: {e}", exc_info=True)
+                    logger.error(
+                        f"Real arbitrage data fetch failed: {e}", exc_info=True
+                    )
                     # Fallback to regular discovery if real data fails
                     opportunities = await discovery.discover_all_opportunities(capital)
             else:
@@ -1350,11 +1609,13 @@ class GuestHandlerService:
 
             # Determine if using real data
             using_real_data = (
-                oneinch_api_key 
-                and oneinch_api_key.strip() 
-                and any(opp.metadata.get("is_real_data", False) for opp in opportunities)
+                oneinch_api_key
+                and oneinch_api_key.strip()
+                and any(
+                    opp.metadata.get("is_real_data", False) for opp in opportunities
+                )
             )
-            
+
             if using_real_data:
                 response = f"{t['title']}\n\n"
                 response += "**Using real-time DEX data from 1inch API**\n\n"
@@ -1418,7 +1679,9 @@ class GuestHandlerService:
                 }
                 response += context_msgs.get(language, context_msgs["en"])
             else:
-                response += f"{t['found']} {len(opportunities)} {t['opportunities']}\n\n"
+                response += (
+                    f"{t['found']} {len(opportunities)} {t['opportunities']}\n\n"
+                )
                 for i, opp in enumerate(opportunities[:3], 1):
                     response += f"**{i}. {opp.type.value.upper()}**\n"
                     # Build path string from trading pairs
@@ -1427,10 +1690,16 @@ class GuestHandlerService:
                         path_tokens.append(pair.token_out)
                     path_str = " → ".join(path_tokens)
                     response += f"- {t['route']} {path_str}\n"
-                    response += f"- {t['net_profit']} ${float(opp.expected_profit_usd):,.2f}\n"
-                    response += f"- {t['roi']} {float(opp.profit_percentage * 100):.2f}%\n\n"
+                    response += (
+                        f"- {t['net_profit']} ${float(opp.expected_profit_usd):,.2f}\n"
+                    )
+                    response += (
+                        f"- {t['roi']} {float(opp.profit_percentage * 100):.2f}%\n\n"
+                    )
 
-            response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
+            response += self._get_auth_cta_message(
+                language, for_action=True, is_authenticated=is_authenticated
+            )
 
             return {
                 "content": response,
@@ -1443,7 +1712,9 @@ class GuestHandlerService:
             }
         except Exception as e:
             logger.warning(f"Arbitrage discovery error: {e}")
-            return self._fallback_response(ChatIntent.ULTRA_ARBITRAGE, language, is_authenticated)
+            return self._fallback_response(
+                ChatIntent.ULTRA_ARBITRAGE, language, is_authenticated
+            )
 
     async def _handle_flash_loans(
         self, content: str, language: str, is_authenticated: bool = False
@@ -1503,15 +1774,21 @@ class GuestHandlerService:
             for protocol in protocols:
                 response += f"**{protocol.name}**\n"
                 response += f"- {t['max_loan']} ${float(protocol.max_loan_usd):,.0f}\n"
-                response += f"- {t['fee']} {float(protocol.fee_percentage * 100):.2f}%\n"
-                response += f"- {t['tokens']} {', '.join(protocol.supported_tokens[:3])}\n\n"
+                response += (
+                    f"- {t['fee']} {float(protocol.fee_percentage * 100):.2f}%\n"
+                )
+                response += (
+                    f"- {t['tokens']} {', '.join(protocol.supported_tokens[:3])}\n\n"
+                )
 
             response += f"{t['use_cases']}\n"
             response += f"- {t['arbitrage']}\n"
             response += f"- {t['collateral']}\n"
             response += f"- {t['liquidation']}\n"
 
-            response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
+            response += self._get_auth_cta_message(
+                language, for_action=True, is_authenticated=is_authenticated
+            )
 
             return {
                 "content": response,
@@ -1523,7 +1800,9 @@ class GuestHandlerService:
             }
         except Exception as e:
             logger.warning(f"Flash loans error: {e}")
-            return self._fallback_response(ChatIntent.ULTRA_FLASH_LOANS, language, is_authenticated)
+            return self._fallback_response(
+                ChatIntent.ULTRA_FLASH_LOANS, language, is_authenticated
+            )
 
     async def _handle_mev_protection(
         self, content: str, language: str, is_authenticated: bool = False
@@ -1614,7 +1893,9 @@ class GuestHandlerService:
             response += f"- ✅ {t['private_routing']}\n"
             response += f"- ✅ {t['backrun']}\n"
 
-            response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
+            response += self._get_auth_cta_message(
+                language, for_action=True, is_authenticated=is_authenticated
+            )
 
             return {
                 "content": response,
@@ -1628,7 +1909,9 @@ class GuestHandlerService:
             }
         except Exception as e:
             logger.warning(f"MEV protection error: {e}")
-            return self._fallback_response(ChatIntent.ULTRA_MEV_PROTECTION, language, is_authenticated)
+            return self._fallback_response(
+                ChatIntent.ULTRA_MEV_PROTECTION, language, is_authenticated
+            )
 
     async def _handle_auto_executor(
         self, content: str, language: str, is_authenticated: bool = False
@@ -1709,7 +1992,9 @@ class GuestHandlerService:
         response += f"- {t['mev']}\n"
         response += f"- {t['multichain']}\n\n"
 
-        response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
+        response += self._get_auth_cta_message(
+            language, for_action=True, is_authenticated=is_authenticated
+        )
 
         return {
             "content": response,
@@ -1743,7 +2028,9 @@ class GuestHandlerService:
         - lending_awaiting_amount: Need deposit amount
         - lending_awaiting_confirmation: Show vault quote, await confirmation
         """
-        logger.info(f"[Lending] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(
+            f"[Lending] Handler called - language: {language}, authenticated: {is_authenticated}"
+        )
         logger.info(f"[Lending] Continuation step: {continuation_step}")
         logger.info(f"[Lending] Previous lending info: {previous_lending_info}")
 
@@ -1780,7 +2067,9 @@ class GuestHandlerService:
                     )
                 else:
                     # Extract chain and asset from message
-                    chain, asset = self._lending_handler._extract_params_from_message(content)
+                    chain, asset = self._lending_handler._extract_params_from_message(
+                        content
+                    )
 
                     # Call execute method with correct parameters
                     result = await self._lending_handler.execute(
@@ -1795,7 +2084,9 @@ class GuestHandlerService:
                 response_content = result.content
                 # Only add CTA if not in a continuation flow
                 if not continuation_step:
-                    response_content += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
+                    response_content += self._get_auth_cta_message(
+                        language, for_action=True, is_authenticated=is_authenticated
+                    )
 
                 response = {
                     "content": response_content,
@@ -1828,7 +2119,9 @@ class GuestHandlerService:
 
                 return response
             except Exception as e:
-                logger.error(f"Lending handler error for '{content}': {e}", exc_info=True)
+                logger.error(
+                    f"Lending handler error for '{content}': {e}", exc_info=True
+                )
 
         return self._fallback_response(ChatIntent.LENDING, language, is_authenticated)
 
@@ -1853,7 +2146,9 @@ class GuestHandlerService:
 
             return {
                 "content": result.content
-                + self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated),
+                + self._get_auth_cta_message(
+                    language, for_action=True, is_authenticated=is_authenticated
+                ),
                 "enrichment": {
                     "asset": result.asset,
                     "chain": chain,
@@ -1868,10 +2163,16 @@ class GuestHandlerService:
             }
         except Exception as e:
             logger.warning(f"Money market handler error: {e}")
-            return self._fallback_response(ChatIntent.MONEY_MARKET, language, is_authenticated)
+            return self._fallback_response(
+                ChatIntent.MONEY_MARKET, language, is_authenticated
+            )
 
     async def _handle_swap(
-        self, content: str, language: str, context: str = "", is_authenticated: bool = False,
+        self,
+        content: str,
+        language: str,
+        context: str = "",
+        is_authenticated: bool = False,
         continuation_step: str | None = None,
         previous_swap_info: dict | None = None,
     ) -> dict[str, Any]:
@@ -1899,7 +2200,9 @@ class GuestHandlerService:
 
             # If no tokens specified OR we're in a continuation flow, use multi-step handler
             if not swap_info.get("from_token") or continuation_step:
-                logger.info(f"[SWAP] Delegating to multi-step MoonPay flow (continuation={continuation_step})")
+                logger.info(
+                    f"[SWAP] Delegating to multi-step MoonPay flow (continuation={continuation_step})"
+                )
                 return await self._moonpay_multistep.handle_flow(
                     content=content,
                     language=language,
@@ -1923,12 +2226,14 @@ class GuestHandlerService:
                 is_bridge = swap_info.get("is_bridge", False)
                 from_chain = swap_info.get("from_chain", "ethereum")
                 to_chain = swap_info.get("to_chain")
-                
+
                 # For bridge swaps
                 if is_bridge and from_token and to_chain:
                     # Use default amount if not specified
-                    bridge_amount = amount or "100"  # Default to 100 tokens for bridge quotes
-                    
+                    bridge_amount = (
+                        amount or "100"
+                    )  # Default to 100 tokens for bridge quotes
+
                     result = await self._swap_handler.get_swap_quote(
                         from_token=from_token,
                         to_token=from_token,  # Same token, different chain
@@ -1940,12 +2245,16 @@ class GuestHandlerService:
                     content_response = result.content
                     if language != "en":
                         # Translate key phrases (simplified)
-                        content_response = self._translate_swap_response(content_response, language)
-                    
+                        content_response = self._translate_swap_response(
+                            content_response, language
+                        )
+
                     # Add registration message - clear that execution requires registration
-                    registration_msg = self._get_registration_message_for_execution(language)
+                    registration_msg = self._get_registration_message_for_execution(
+                        language
+                    )
                     content_response += f"\n\n{registration_msg}"
-                    
+
                     return {
                         "content": content_response,
                         "enrichment": {
@@ -1963,7 +2272,7 @@ class GuestHandlerService:
                         },
                         "requires_registration": True,
                     }
-                
+
                 # For regular swaps or best rate queries
                 elif from_token and to_token:
                     result = await self._swap_handler.get_swap_quote(
@@ -1976,12 +2285,16 @@ class GuestHandlerService:
                     )
                     content_response = result.content
                     if language != "en":
-                        content_response = self._translate_swap_response(content_response, language)
-                    
+                        content_response = self._translate_swap_response(
+                            content_response, language
+                        )
+
                     # Add registration message - clear that execution requires registration
-                    registration_msg = self._get_registration_message_for_execution(language)
+                    registration_msg = self._get_registration_message_for_execution(
+                        language
+                    )
                     content_response += f"\n\n{registration_msg}"
-                    
+
                     return {
                         "content": content_response,
                         "enrichment": {
@@ -2002,31 +2315,38 @@ class GuestHandlerService:
             logger.info("SwapHandler not available, using demo response")
 
         # Demo response with parsed swap info
-        demo_response = self._get_swap_demo_response(swap_info, language, is_authenticated)
+        demo_response = self._get_swap_demo_response(
+            swap_info, language, is_authenticated
+        )
         # Ensure registration message is present in demo response too
         # Check if registration message is already in content (for bridge/best rate responses)
         content_lower = demo_response["content"].lower()
         has_registration_msg = (
-            "to execute" in content_lower or 
-            "para ejecutar" in content_lower or
-            "para executar" in content_lower or
-            "要执行" in content_lower
+            "to execute" in content_lower
+            or "para ejecutar" in content_lower
+            or "para executar" in content_lower
+            or "要执行" in content_lower
         )
         if not has_registration_msg:
             registration_msg = self._get_registration_message_for_execution(language)
             demo_response["content"] += f"\n\n{registration_msg}"
         # Add registration CTA if not already present
-        if "👉" not in demo_response["content"] and "Sign up" not in demo_response["content"]:
-            demo_response["content"] += f"\n\n{self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)}"
+        if (
+            "👉" not in demo_response["content"]
+            and "Sign up" not in demo_response["content"]
+        ):
+            demo_response["content"] += (
+                f"\n\n{self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)}"
+            )
         demo_response["requires_registration"] = True
         return demo_response
-    
+
     def _parse_swap_from_context(
         self, content: str, context: str
     ) -> dict[str, str | None]:
         """
         Parse swap parameters from message and conversation context.
-        
+
         Supports multi-turn conversations like:
         - "quiero swap" → "de USDC" → "a ETH" → "100"
         - "Swap 100 USDC for ETH"
@@ -2034,9 +2354,9 @@ class GuestHandlerService:
         - "Best swap rate for ETH to USDC"
         """
         import re
-        
+
         combined = f"{context}\n{content}".lower()
-        
+
         result = {
             "from_token": None,
             "to_token": None,
@@ -2046,15 +2366,35 @@ class GuestHandlerService:
             "from_chain": None,
             "to_chain": None,
         }
-        
+
         # Extract tokens mentioned
-        tokens = ["eth", "usdc", "usdt", "dai", "wbtc", "weth", "btc", "sol", "matic", "arb", "op"]
-        chains = ["ethereum", "base", "arbitrum", "optimism", "polygon", "avalanche", "mainnet"]
+        tokens = [
+            "eth",
+            "usdc",
+            "usdt",
+            "dai",
+            "wbtc",
+            "weth",
+            "btc",
+            "sol",
+            "matic",
+            "arb",
+            "op",
+        ]
+        chains = [
+            "ethereum",
+            "base",
+            "arbitrum",
+            "optimism",
+            "polygon",
+            "avalanche",
+            "mainnet",
+        ]
         found_tokens = []
         for token in tokens:
             if token in combined:
                 found_tokens.append(token.upper())
-        
+
         # Pattern 1: Bridge - "bridge USDC from Ethereum to Base"
         bridge_pattern = re.compile(
             r"bridge\s+(\w+)\s+(?:from\s+)?(\w+)?\s*(?:to|on)\s+(\w+)",
@@ -2070,7 +2410,7 @@ class GuestHandlerService:
             result["is_bridge"] = True
             result["is_complete"] = True
             return result
-        
+
         # Pattern 2: Best swap rate - "best swap rate for ETH to USDC"
         best_rate_pattern = re.compile(
             r"(?:best\s+)?(?:swap\s+)?rate\s+(?:for|from)?\s*(\w+)\s+(?:to|for)\s+(\w+)",
@@ -2082,7 +2422,7 @@ class GuestHandlerService:
             result["to_token"] = best_rate_match.group(2).upper()
             result["is_complete"] = True
             return result
-        
+
         # Pattern 3: Swap with amount - "swap 100 USDC for ETH" or "swap 100 USDC to ETH"
         swap_pattern = re.compile(
             r"swap\s+(\d*\.?\d*)\s*(\w+)\s+(?:for|to)\s+(\w+)",
@@ -2096,7 +2436,7 @@ class GuestHandlerService:
             result["to_token"] = swap_match.group(3).upper()
             result["is_complete"] = True
             return result
-        
+
         # Pattern 4: Token to token - "ETH to USDC" or "USDC for ETH"
         token_to_token = re.compile(
             r"(\w+)\s+(?:to|for)\s+(\w+)",
@@ -2106,12 +2446,14 @@ class GuestHandlerService:
         if token_match:
             token1 = token_match.group(1).upper()
             token2 = token_match.group(2).upper()
-            if token1 in [t.upper() for t in tokens] and token2 in [t.upper() for t in tokens]:
+            if token1 in [t.upper() for t in tokens] and token2 in [
+                t.upper() for t in tokens
+            ]:
                 result["from_token"] = token1
                 result["to_token"] = token2
                 result["is_complete"] = True
                 return result
-        
+
         # Try to extract source/target from patterns
         from_patterns = [
             r"(?:de|from|del)\s+(\w+)",
@@ -2125,7 +2467,7 @@ class GuestHandlerService:
             r"(\d+\.?\d*)\s*(?:tokens?)?",
             r"swap\s+(\d+\.?\d*)",
         ]
-        
+
         for pattern in from_patterns:
             match = re.search(pattern, combined)
             if match:
@@ -2137,33 +2479,38 @@ class GuestHandlerService:
                         result["from_token"] = token
                 elif groups[0].upper() in [t.upper() for t in tokens]:
                     result["from_token"] = groups[0].upper()
-        
+
         for pattern in to_patterns:
             match = re.search(pattern, combined)
             if match and match.group(1).upper() in [t.upper() for t in tokens]:
                 result["to_token"] = match.group(1).upper()
-        
+
         for pattern in amount_patterns:
             match = re.search(pattern, combined)
             if match and match.group(1):
                 result["amount"] = match.group(1)
-        
+
         # If we found tokens but couldn't determine source/target, use order
         if found_tokens and not result["from_token"] and not result["to_token"]:
             if len(found_tokens) >= 1:
                 result["from_token"] = found_tokens[0]
             if len(found_tokens) >= 2:
                 result["to_token"] = found_tokens[1]
-        
+
         # Check if we have enough info
         result["is_complete"] = bool(
-            result["from_token"] and result["to_token"] and (result["amount"] or result["is_bridge"])
+            result["from_token"]
+            and result["to_token"]
+            and (result["amount"] or result["is_bridge"])
         )
-        
+
         return result
-    
+
     def _get_swap_demo_response(
-        self, swap_info: dict[str, str | None], language: str, is_authenticated: bool = False
+        self,
+        swap_info: dict[str, str | None],
+        language: str,
+        is_authenticated: bool = False,
     ) -> dict[str, Any]:
         """Generate demo swap response based on parsed info."""
         from_token = swap_info.get("from_token")
@@ -2174,19 +2521,21 @@ class GuestHandlerService:
         from_chain = swap_info.get("from_chain")
         to_chain = swap_info.get("to_chain")
 
-        logger.info(f"[SWAP DEMO] from_token={from_token}, to_token={to_token}, amount={amount}, is_complete={is_complete}")
-        
+        logger.info(
+            f"[SWAP DEMO] from_token={from_token}, to_token={to_token}, amount={amount}, is_complete={is_complete}"
+        )
+
         # Bridge swap - show bridge quote with detailed information
         if is_bridge and from_token and to_chain:
             # Use default amount for demo if not specified
             bridge_amount = amount or "100"
-            
+
             # Estimate bridge details (demo data)
             # In production, this would come from LiFi/LayerZero API
             estimated_time_minutes = 5  # Typical bridge time
             estimated_fee_usd = 2.5  # Typical bridge fee
             bridge_protocol = "LiFi"  # Default bridge aggregator
-            
+
             # For same token bridge, amount received is same (minus fees)
             try:
                 amount_float = float(bridge_amount)
@@ -2194,7 +2543,7 @@ class GuestHandlerService:
             except ValueError:
                 amount_float = 100.0
                 received_amount = 99.75
-            
+
             translations = {
                 "en": {
                     "title": "🌉 **Bridge Quote**",
@@ -2246,7 +2595,7 @@ class GuestHandlerService:
                 },
             }
             t = translations.get(language, translations["en"])
-            
+
             response = f"{t['title']}\n\n"
             response += f"{t['from']}\n"
             response += f"{t['from_chain']}\n"
@@ -2261,7 +2610,7 @@ class GuestHandlerService:
             response += f"{t['gas']}\n\n"
             response += f"{t['note']}\n\n"
             # Note: registration_cta is added by the caller, don't duplicate here
-            
+
             return {
                 "content": response,
                 "enrichment": {
@@ -2278,7 +2627,7 @@ class GuestHandlerService:
                 },
                 "requires_registration": True,
             }
-        
+
         # Best rate query - show comprehensive rate comparison
         if is_complete and from_token and to_token and not amount:
             # Demo rates for common pairs
@@ -2290,25 +2639,49 @@ class GuestHandlerService:
                 ("BTC", "USDC"): 45000.0,
                 ("USDC", "BTC"): 0.0000222,
             }
-            
+
             rate = demo_rates.get((from_token.upper(), to_token.upper()))
             if not rate:
                 # Default rate estimation
                 rate = 1.0 if from_token.upper() == to_token.upper() else 0.5
-            
+
             # Simulate multiple protocol rates for comparison
             base_rate = rate
             protocols = [
-                {"name": "1inch", "rate": base_rate, "price_impact": 0.12, "gas_usd": 8.50, "slippage": 0.1},
-                {"name": "Uniswap V3", "rate": base_rate * 0.9995, "price_impact": 0.15, "gas_usd": 12.00, "slippage": 0.3},
-                {"name": "Curve", "rate": base_rate * 0.9998, "price_impact": 0.08, "gas_usd": 15.00, "slippage": 0.1},
-                {"name": "Balancer", "rate": base_rate * 0.9992, "price_impact": 0.18, "gas_usd": 10.00, "slippage": 0.2},
+                {
+                    "name": "1inch",
+                    "rate": base_rate,
+                    "price_impact": 0.12,
+                    "gas_usd": 8.50,
+                    "slippage": 0.1,
+                },
+                {
+                    "name": "Uniswap V3",
+                    "rate": base_rate * 0.9995,
+                    "price_impact": 0.15,
+                    "gas_usd": 12.00,
+                    "slippage": 0.3,
+                },
+                {
+                    "name": "Curve",
+                    "rate": base_rate * 0.9998,
+                    "price_impact": 0.08,
+                    "gas_usd": 15.00,
+                    "slippage": 0.1,
+                },
+                {
+                    "name": "Balancer",
+                    "rate": base_rate * 0.9992,
+                    "price_impact": 0.18,
+                    "gas_usd": 10.00,
+                    "slippage": 0.2,
+                },
             ]
-            
+
             # Sort by best rate
             protocols.sort(key=lambda x: x["rate"], reverse=True)
             best_protocol = protocols[0]
-            
+
             translations = {
                 "en": {
                     "title": "🔄 **Best Swap Rate Comparison**",
@@ -2356,7 +2729,7 @@ class GuestHandlerService:
                 },
             }
             t = translations.get(language, translations["en"])
-            
+
             response = f"{t['title']}\n\n"
             response += f"{t['best_rate']}\n"
             response += f"{t['best_protocol']}\n\n"
@@ -2374,7 +2747,7 @@ class GuestHandlerService:
             response += f"{t['slippage']}\n\n"
             response += f"{t['note']}\n\n"
             # Note: registration_cta is added by the caller if needed
-            
+
             return {
                 "content": response,
                 "enrichment": {
@@ -2391,9 +2764,11 @@ class GuestHandlerService:
                 },
                 "requires_registration": True,
             }
-        
+
         if is_complete and from_token and to_token and amount:
-            logger.info(f"[SWAP DEMO] Entering complete swap block with amount={amount}")
+            logger.info(
+                f"[SWAP DEMO] Entering complete swap block with amount={amount}"
+            )
             # Generate realistic demo quote
             demo_rates = {
                 ("USDC", "ETH"): 0.00045,
@@ -2403,7 +2778,7 @@ class GuestHandlerService:
                 ("ETH", "WBTC"): 0.053,
                 ("WBTC", "ETH"): 18.9,
             }
-            
+
             rate = demo_rates.get((from_token, to_token), 1.0)
             try:
                 from_amount = float(amount)
@@ -2411,7 +2786,7 @@ class GuestHandlerService:
             except ValueError:
                 from_amount = 100.0
                 to_amount = from_amount * rate
-            
+
             translations = {
                 "en": {
                     "title": "🔄 **Swap Quote**",
@@ -2451,7 +2826,7 @@ class GuestHandlerService:
                 },
             }
             t = translations.get(language, translations["en"])
-            
+
             response = f"{t['title']}\n\n"
             response += f"**{t['from']}:** {from_amount:.4f} {from_token}\n"
             response += f"**{t['to']}:** {to_amount:.6f} {to_token}\n\n"
@@ -2459,8 +2834,10 @@ class GuestHandlerService:
             response += f"**{t['impact']}:** ~0.12%\n"
             response += f"**{t['gas']}:** ~$0.50\n\n"
             response += f"{t['note']}\n\n"
-            response += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
-            
+            response += self._get_auth_cta_message(
+                language, for_action=True, is_authenticated=is_authenticated
+            )
+
             return {
                 "content": response,
                 "enrichment": {
@@ -2473,7 +2850,7 @@ class GuestHandlerService:
                 },
                 "requires_registration": True,
             }
-        
+
         # Incomplete swap - ask for more info WITH persuasive registration CTA
         if from_token and not to_token:
             prompts = {
@@ -2522,12 +2899,27 @@ class GuestHandlerService:
                 "title": "🤖 **Agent Squad - Specialist Agents**",
                 "desc": "Our AI agents can help with specialized DeFi tasks:",
                 "agents": [
-                    ("🔬 Research Agent", "Deep protocol analysis and yield strategies"),
-                    ("🛡️ Security Auditor", "Smart contract security analysis via Slither"),
-                    ("⛽ Gas Optimizer", "Reduce transaction costs with optimal timing"),
+                    (
+                        "🔬 Research Agent",
+                        "Deep protocol analysis and yield strategies",
+                    ),
+                    (
+                        "🛡️ Security Auditor",
+                        "Smart contract security analysis via Slither",
+                    ),
+                    (
+                        "⛽ Gas Optimizer",
+                        "Reduce transaction costs with optimal timing",
+                    ),
                     ("📊 Tax Optimizer", "Capital gains strategies and tax reporting"),
-                    ("📈 Risk Analyzer", "Portfolio risk assessment and exposure analysis"),
-                    ("💼 Portfolio Agent", "Asset allocation and rebalancing recommendations"),
+                    (
+                        "📈 Risk Analyzer",
+                        "Portfolio risk assessment and exposure analysis",
+                    ),
+                    (
+                        "💼 Portfolio Agent",
+                        "Asset allocation and rebalancing recommendations",
+                    ),
                     ("🌉 Bridge Agent", "Cross-chain transfers via Axelar/LayerZero"),
                     ("🏛️ Compliance", "AML/KYC checks via Chainalysis"),
                     ("🔐 Multi-Sig", "Gnosis Safe treasury management"),
@@ -2598,16 +2990,27 @@ class GuestHandlerService:
         for agent_name, agent_desc in t["agents"]:
             response += f"- {agent_name}: {agent_desc}\n"
 
-        response += "\n" + self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
+        response += "\n" + self._get_auth_cta_message(
+            language, for_action=True, is_authenticated=is_authenticated
+        )
 
         return {
             "content": response,
             "enrichment": {
                 "agent_squad": True,
                 "available_agents": [
-                    "research", "security_auditor", "gas_optimizer", "tax_optimizer",
-                    "risk_analyzer", "portfolio", "bridge_crosschain", "compliance_monitor",
-                    "multisig_coordinator", "dao_governance", "nft_asset_manager", "lending_borrowing",
+                    "research",
+                    "security_auditor",
+                    "gas_optimizer",
+                    "tax_optimizer",
+                    "risk_analyzer",
+                    "portfolio",
+                    "bridge_crosschain",
+                    "compliance_monitor",
+                    "multisig_coordinator",
+                    "dao_governance",
+                    "nft_asset_manager",
+                    "lending_borrowing",
                 ],
             },
             "requires_registration": True,
@@ -2702,7 +3105,9 @@ class GuestHandlerService:
         for step in t["steps"]:
             response += f"{step}\n"
 
-        response += "\n" + self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
+        response += "\n" + self._get_auth_cta_message(
+            language, for_action=True, is_authenticated=is_authenticated
+        )
 
         return {
             "content": response,
@@ -2721,7 +3126,7 @@ class GuestHandlerService:
     def _extract_token(self, content: str) -> str | None:
         """Extract token symbol from content."""
         content_lower = content.lower()
-        
+
         # Token aliases map common names to their symbols
         token_aliases = {
             "bitcoin": "BTC",
@@ -2747,7 +3152,7 @@ class GuestHandlerService:
             "optimism": "OP",
             "op": "OP",
         }
-        
+
         # Check aliases (longer names first to avoid partial matches)
         for alias, symbol in sorted(token_aliases.items(), key=lambda x: -len(x[0])):
             if alias in content_lower:
@@ -2758,11 +3163,11 @@ class GuestHandlerService:
         """Extract token from conversation context (for follow-up questions)."""
         if not context:
             return None
-        
+
         # Look for token mentions in context
         # Context format: "User: message\nAssistant: response\n..."
         context_lower = context.lower()
-        
+
         # Extract token from context using same logic as _extract_token
         token_aliases = {
             "bitcoin": "BTC",
@@ -2788,7 +3193,7 @@ class GuestHandlerService:
             "optimism": "OP",
             "op": "OP",
         }
-        
+
         # Check aliases (longer names first to avoid partial matches)
         for alias, symbol in sorted(token_aliases.items(), key=lambda x: -len(x[0])):
             if alias in context_lower:
@@ -2873,14 +3278,14 @@ class GuestHandlerService:
                 "Ready to swap?": "准备交换？",
             },
         }
-        
+
         if language not in translations:
             return content
-        
+
         translated = content
         for en_phrase, translated_phrase in translations[language].items():
             translated = translated.replace(en_phrase, translated_phrase)
-        
+
         return translated
 
     def _get_registration_message_for_execution(self, language: str) -> str:
@@ -2893,9 +3298,7 @@ class GuestHandlerService:
         }
         return messages.get(language, messages["en"])
 
-    def _get_registration_cta(
-        self, language: str, for_action: bool = False
-    ) -> str:
+    def _get_registration_cta(self, language: str, for_action: bool = False) -> str:
         """Get registration call-to-action based on language."""
         if for_action:
             ctas = {
@@ -2918,7 +3321,7 @@ class GuestHandlerService:
     ) -> str:
         """
         Get registration CTA message based on authentication status.
-        
+
         Returns empty string if user is authenticated (no signup prompts needed).
         """
         if is_authenticated:
@@ -2979,15 +3382,22 @@ class GuestHandlerService:
         content = messages.get(language, messages.get("en", ""))
 
         # Add CTA only for guests
-        if not is_authenticated and intent in [ChatIntent.SWAP, ChatIntent.SWAP_MOONPAY, ChatIntent.LENDING, ChatIntent.MONEY_MARKET]:
-            content += self._get_auth_cta_message(language, for_action=True, is_authenticated=is_authenticated)
+        if not is_authenticated and intent in [
+            ChatIntent.SWAP,
+            ChatIntent.SWAP_MOONPAY,
+            ChatIntent.LENDING,
+            ChatIntent.MONEY_MARKET,
+        ]:
+            content += self._get_auth_cta_message(
+                language, for_action=True, is_authenticated=is_authenticated
+            )
 
         return {
             "content": content,
             "enrichment": None,
             "requires_registration": not is_authenticated,
         }
-    
+
     async def _handle_buy(
         self,
         content: str,
@@ -3005,7 +3415,9 @@ class GuestHandlerService:
         - buy_awaiting_amount: Need USD amount
         - buy_awaiting_confirmation: Show quote, await confirmation
         """
-        logger.info(f"[Buy] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(
+            f"[Buy] Handler called - language: {language}, authenticated: {is_authenticated}"
+        )
         logger.info(f"[Buy] Continuation step: {continuation_step}")
         logger.info(f"[Buy] Previous buy info: {previous_buy_info}")
 
@@ -3051,8 +3463,10 @@ class GuestHandlerService:
 
         # Fallback for guests or if BuyHandler not available
         return self._fallback_buy_response(language, is_authenticated)
-    
-    def _fallback_buy_response(self, language: str, is_authenticated: bool) -> dict[str, Any]:
+
+    def _fallback_buy_response(
+        self, language: str, is_authenticated: bool
+    ) -> dict[str, Any]:
         """Fallback response when BuyHandler is not available."""
         translations = {
             "en": {
@@ -3077,12 +3491,14 @@ class GuestHandlerService:
             },
         }
         t = translations.get(language, translations["en"])
-        
+
         content = f"{t['title']}\n\n{t['description']}\n\n"
         if not is_authenticated:
-            content += t['no_wallet'] + "\n\n"
-            content += self._get_auth_cta_message(language, for_action=True, is_authenticated=False)
-        
+            content += t["no_wallet"] + "\n\n"
+            content += self._get_auth_cta_message(
+                language, for_action=True, is_authenticated=False
+            )
+
         return {
             "content": content,
             "enrichment": {
@@ -3109,10 +3525,14 @@ class GuestHandlerService:
         - swap_awaiting_confirmation: Show quote, await confirmation
         - swap_edit: User editing parameters
         """
-        logger.info(f"[MoonPay Swap] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(
+            f"[MoonPay Swap] Handler called - language: {language}, authenticated: {is_authenticated}"
+        )
         logger.info(f"[MoonPay Swap] Continuation step: {continuation_step}")
         logger.info(f"[MoonPay Swap] Previous swap info: {previous_swap_info}")
-        logger.info(f"[MoonPay Swap] Multi-step handler available: {self._moonpay_multistep is not None}")
+        logger.info(
+            f"[MoonPay Swap] Multi-step handler available: {self._moonpay_multistep is not None}"
+        )
         logger.info(f"[MoonPay Swap] Message content: {content}")
 
         # Use multi-step flow handler if available
@@ -3125,10 +3545,14 @@ class GuestHandlerService:
                     continuation_step=continuation_step,
                     previous_swap_info=previous_swap_info,
                 )
-                logger.info(f"[MoonPay Swap] Multi-step handler returned: {result.keys()}")
+                logger.info(
+                    f"[MoonPay Swap] Multi-step handler returned: {result.keys()}"
+                )
                 return result
             except Exception as e:
-                logger.error(f"[MoonPay Swap] Multi-step handler error: {e}", exc_info=True)
+                logger.error(
+                    f"[MoonPay Swap] Multi-step handler error: {e}", exc_info=True
+                )
                 # Fall through to fallback
 
         # Fallback: original single-step handler
@@ -3161,8 +3585,8 @@ class GuestHandlerService:
 
                 # Try explicit swap pattern first: "swap 100 BTC to ETH"
                 swap_pattern = re.compile(
-                    r'(?:swap|exchange|convert|trade)\s+(?:(\d+\.?\d*)\s+)?(\w+)\s+(?:to|for|into)\s+(\w+)',
-                    re.IGNORECASE
+                    r"(?:swap|exchange|convert|trade)\s+(?:(\d+\.?\d*)\s+)?(\w+)\s+(?:to|for|into)\s+(\w+)",
+                    re.IGNORECASE,
                 )
                 match = swap_pattern.search(content)
 
@@ -3180,8 +3604,8 @@ class GuestHandlerService:
                 if not from_token or not to_token:
                     # Pattern: TOKEN1 to TOKEN2 AMOUNT or AMOUNT TOKEN1 to TOKEN2
                     implicit_pattern = re.compile(
-                        r'(?:(\d+\.?\d*)\s+)?(\w+)\s+(?:to|for|into)\s+(\w+)(?:\s+(\d+\.?\d*))?',
-                        re.IGNORECASE
+                        r"(?:(\d+\.?\d*)\s+)?(\w+)\s+(?:to|for|into)\s+(\w+)(?:\s+(\d+\.?\d*))?",
+                        re.IGNORECASE,
                     )
                     match = implicit_pattern.search(content)
 
@@ -3203,24 +3627,34 @@ class GuestHandlerService:
                         to_token = moonpay_tokens.get(token2)
 
                 if from_token and to_token:
-                    logger.info(f"[MoonPay Swap] Parsed: from={from_token}, to={to_token}, amount={amount}")
+                    logger.info(
+                        f"[MoonPay Swap] Parsed: from={from_token}, to={to_token}, amount={amount}"
+                    )
 
                 # If both tokens are specified, get quote
                 if from_token and to_token:
-                    logger.info(f"[MoonPay Swap] Getting quote for {from_token} → {to_token}, amount={amount}")
+                    logger.info(
+                        f"[MoonPay Swap] Getting quote for {from_token} → {to_token}, amount={amount}"
+                    )
                     result = await self._moonpay_swap_handler.get_swap_quote(
                         from_currency=from_token,
                         to_currency=to_token,
                         amount=amount,
-                        language=language
+                        language=language,
                     )
                     logger.info(f"[MoonPay Swap] Quote returned successfully")
                 else:
                     # Show available pairs if tokens not specified
-                    logger.info(f"[MoonPay Swap] Tokens not fully specified, showing available pairs")
-                    result = await self._moonpay_swap_handler.get_available_pairs(language=language)
+                    logger.info(
+                        f"[MoonPay Swap] Tokens not fully specified, showing available pairs"
+                    )
+                    result = await self._moonpay_swap_handler.get_available_pairs(
+                        language=language
+                    )
 
-                logger.info(f"[MoonPay Swap] Handler returned successfully - action: {result.action}")
+                logger.info(
+                    f"[MoonPay Swap] Handler returned successfully - action: {result.action}"
+                )
                 return {
                     "content": result.content,
                     "enrichment": {
@@ -3236,7 +3670,9 @@ class GuestHandlerService:
                 logger.error(f"[MoonPay Swap] Handler error: {e}", exc_info=True)
                 # Fall through to fallback response
         else:
-            logger.warning("[MoonPay Swap] Handler not available - using fallback response")
+            logger.warning(
+                "[MoonPay Swap] Handler not available - using fallback response"
+            )
 
         # Fallback for guests or if MoonPaySwapHandler not available
         return self._fallback_moonpay_swap_response(language, is_authenticated)
@@ -3259,7 +3695,9 @@ class GuestHandlerService:
         - send_awaiting_confirmation: Show review, await confirmation
         - send_edit: User editing parameters
         """
-        logger.info(f"[Send] Handler called - language: {language}, authenticated: {is_authenticated}")
+        logger.info(
+            f"[Send] Handler called - language: {language}, authenticated: {is_authenticated}"
+        )
         logger.info(f"[Send] Continuation step: {continuation_step}")
         logger.info(f"[Send] Previous send info: {previous_send_info}")
         logger.info(f"[Send] Message content: {content}")
@@ -3283,7 +3721,9 @@ class GuestHandlerService:
         # Fallback response
         return self._fallback_send_response(language, is_authenticated)
 
-    def _fallback_send_response(self, language: str, is_authenticated: bool) -> dict[str, Any]:
+    def _fallback_send_response(
+        self, language: str, is_authenticated: bool
+    ) -> dict[str, Any]:
         """Fallback response when send handler is not available."""
         translations = {
             "en": {
@@ -3342,7 +3782,9 @@ class GuestHandlerService:
         For guests: Show sample balances with signup CTA
         For authenticated: Show real wallet balances
         """
-        logger.info(f"[Balance] Handler called - language: {language}, authenticated: {is_authenticated}, wallet: {wallet_address[:10] if wallet_address else 'None'}...")
+        logger.info(
+            f"[Balance] Handler called - language: {language}, authenticated: {is_authenticated}, wallet: {wallet_address[:10] if wallet_address else 'None'}..."
+        )
 
         translations = {
             "en": {
@@ -3414,13 +3856,17 @@ class GuestHandlerService:
             try:
                 from app.domain.enums.chain_type import ChainType
 
-                logger.info(f"[Balance] Fetching real portfolio for wallet: {wallet_address[:10]}...")
+                logger.info(
+                    f"[Balance] Fetching real portfolio for wallet: {wallet_address[:10]}..."
+                )
                 portfolio = await self._portfolio_service.get_portfolio_by_address(
                     address=wallet_address,
                     chain=ChainType.BASE,  # Default to Base chain
                 )
 
-                logger.info(f"[Balance] Portfolio result: {portfolio is not None}, has_value: {portfolio.has_value if portfolio else 'N/A'}, total_usd: {portfolio.total_usd if portfolio else 'N/A'}")
+                logger.info(
+                    f"[Balance] Portfolio result: {portfolio is not None}, has_value: {portfolio.has_value if portfolio else 'N/A'}, total_usd: {portfolio.total_usd if portfolio else 'N/A'}"
+                )
 
                 if portfolio:
                     # Build real balances list (even if empty for authenticated users)
@@ -3428,11 +3874,15 @@ class GuestHandlerService:
 
                     # Add native token (ETH) if has balance
                     if portfolio.native_balance > 0:
-                        token_emoji = {"ETH": "Ξ", "WETH": "Ξ"}.get(portfolio.native_symbol, "🪙")
+                        token_emoji = {"ETH": "Ξ", "WETH": "Ξ"}.get(
+                            portfolio.native_symbol, "🪙"
+                        )
                         real_balances.append({
                             "token": portfolio.native_symbol,
                             "amount": f"{portfolio.native_balance:.4f}",
-                            "value_usd": f"${portfolio.native_usd_value:.2f}" if portfolio.native_usd_value else "N/A",
+                            "value_usd": f"${portfolio.native_usd_value:.2f}"
+                            if portfolio.native_usd_value
+                            else "N/A",
                             "emoji": token_emoji,
                         })
 
@@ -3451,7 +3901,9 @@ class GuestHandlerService:
                         real_balances.append({
                             "token": token.get("symbol", "Unknown"),
                             "amount": f"{token.get('amount', 0):.4f}",
-                            "value_usd": f"${token.get('usd_value', 0):.2f}" if token.get("usd_value") else "N/A",
+                            "value_usd": f"${token.get('usd_value', 0):.2f}"
+                            if token.get("usd_value")
+                            else "N/A",
                             "emoji": token_emoji,
                         })
 
@@ -3469,7 +3921,9 @@ class GuestHandlerService:
                     content += f"\n{t['divider']}"
                     content += t["learn_more"]
 
-                    logger.info(f"[Balance] Successfully fetched real portfolio - Total: ${portfolio.total_usd:.2f}")
+                    logger.info(
+                        f"[Balance] Successfully fetched real portfolio - Total: ${portfolio.total_usd:.2f}"
+                    )
                     return {
                         "content": content,
                         "enrichment": {
@@ -3482,7 +3936,9 @@ class GuestHandlerService:
                     }
 
             except Exception as e:
-                logger.error(f"[Balance] Error fetching real portfolio: {e}", exc_info=True)
+                logger.error(
+                    f"[Balance] Error fetching real portfolio: {e}", exc_info=True
+                )
                 # Fall through to demo data for guests, but show wallet not connected for authenticated users
 
         # For authenticated users without wallet data, show wallet connection message
@@ -3504,7 +3960,12 @@ class GuestHandlerService:
 
         # Demo balances for guests only
         demo_balances = [
-            {"token": "USDC", "amount": "1,250.00", "value_usd": "$1,250.00", "emoji": "💵"},
+            {
+                "token": "USDC",
+                "amount": "1,250.00",
+                "value_usd": "$1,250.00",
+                "emoji": "💵",
+            },
             {"token": "ETH", "amount": "0.5", "value_usd": "$975.00", "emoji": "Ξ"},
             {"token": "BTC", "amount": "0.01", "value_usd": "$450.00", "emoji": "₿"},
             {"token": "SOL", "amount": "10.0", "value_usd": "$325.00", "emoji": "◎"},
@@ -3546,7 +4007,9 @@ class GuestHandlerService:
         For guests: Show sample addresses with signup CTA
         For authenticated: Show real wallet addresses
         """
-        logger.info(f"[Receive] Handler called - language: {language}, authenticated: {is_authenticated}, wallet: {wallet_address[:10] if wallet_address else 'None'}...")
+        logger.info(
+            f"[Receive] Handler called - language: {language}, authenticated: {is_authenticated}, wallet: {wallet_address[:10] if wallet_address else 'None'}..."
+        )
 
         translations = {
             "en": {
@@ -3650,7 +4113,9 @@ class GuestHandlerService:
             # Show real wallet address for authenticated users
             content += f"{t['ethereum']}\n`{wallet_address}`\n\n"
             content += f"💡 **Note:** This is your EVM-compatible address (works for Ethereum, Base, Polygon, etc.)\n\n"
-            logger.info(f"[Receive] Showing real wallet address: {wallet_address[:10]}...")
+            logger.info(
+                f"[Receive] Showing real wallet address: {wallet_address[:10]}..."
+            )
         else:
             # Show demo addresses for guests
             content += f"{t['ethereum']}\n{t['demo_eth']}\n\n"
@@ -3666,7 +4131,9 @@ class GuestHandlerService:
             "content": content,
             "enrichment": {
                 "addresses": {
-                    "ethereum": wallet_address if is_authenticated and wallet_address else ("0x1234...5678" if not is_authenticated else None),
+                    "ethereum": wallet_address
+                    if is_authenticated and wallet_address
+                    else ("0x1234...5678" if not is_authenticated else None),
                     "bitcoin": "bc1q1234...5678" if not is_authenticated else None,
                     "solana": "A1B2C3...XYZ" if not is_authenticated else None,
                 }
@@ -3674,7 +4141,9 @@ class GuestHandlerService:
             "requires_registration": not is_authenticated,
         }
 
-    def _fallback_moonpay_swap_response(self, language: str, is_authenticated: bool) -> dict[str, Any]:
+    def _fallback_moonpay_swap_response(
+        self, language: str, is_authenticated: bool
+    ) -> dict[str, Any]:
         """Fallback response when MoonPaySwapHandler is not available."""
         translations = {
             "en": {
@@ -3707,7 +4176,9 @@ class GuestHandlerService:
 
         content = f"{t['title']}\n\n{t['description']}\n\n{t['unavailable']}\n\n"
         if not is_authenticated:
-            content += self._get_auth_cta_message(language, for_action=True, is_authenticated=False)
+            content += self._get_auth_cta_message(
+                language, for_action=True, is_authenticated=False
+            )
 
         return {
             "content": content,
@@ -3717,7 +4188,9 @@ class GuestHandlerService:
             "requires_registration": not is_authenticated,
         }
 
-    async def _build_real_portfolio_response(self, portfolio, language: str) -> dict[str, Any]:
+    async def _build_real_portfolio_response(
+        self, portfolio, language: str
+    ) -> dict[str, Any]:
         """Build real portfolio response from on-chain data."""
         messages = {
             "en": {
@@ -3769,7 +4242,11 @@ class GuestHandlerService:
         # Add native token (ETH) if has balance
         if portfolio.native_balance > 0:
             token_emoji = {"ETH": "Ξ", "WETH": "Ξ"}.get(portfolio.native_symbol, "🪙")
-            allocation_pct = (portfolio.native_usd_value / portfolio.total_usd * 100) if portfolio.total_usd > 0 else 0
+            allocation_pct = (
+                (portfolio.native_usd_value / portfolio.total_usd * 100)
+                if portfolio.total_usd > 0
+                else 0
+            )
             real_holdings.append({
                 "token": portfolio.native_symbol,
                 "symbol": portfolio.native_symbol,
@@ -3793,7 +4270,11 @@ class GuestHandlerService:
             }.get(token_symbol, "🪙")
 
             token_value = token.get("usd_value", 0)
-            allocation_pct = (token_value / portfolio.total_usd * 100) if portfolio.total_usd > 0 else 0
+            allocation_pct = (
+                (token_value / portfolio.total_usd * 100)
+                if portfolio.total_usd > 0
+                else 0
+            )
 
             real_holdings.append({
                 "token": token.get("name", token_symbol),
@@ -3817,14 +4298,14 @@ class GuestHandlerService:
 
         # Build content
         divider = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        content = f"""{divider}{msg['title']}
+        content = f"""{divider}{msg["title"]}
 {divider}
-**📊 {msg['total_value']}**
+**📊 {msg["total_value"]}**
 {divider}
 
 💰 **${portfolio.total_usd:,.2f}**
 
-{divider}**💎 {msg['holdings_title']}** ({len(real_holdings)} {msg['assets']})
+{divider}**💎 {msg["holdings_title"]}** ({len(real_holdings)} {msg["assets"]})
 {divider}"""
 
         if real_holdings:
@@ -3834,7 +4315,9 @@ class GuestHandlerService:
 
         content += f"\n{divider}\n{msg['learn_more']}"
 
-        logger.info(f"[Portfolio] Successfully fetched real portfolio - Total: ${portfolio.total_usd:.2f}, Holdings: {len(real_holdings)}")
+        logger.info(
+            f"[Portfolio] Successfully fetched real portfolio - Total: ${portfolio.total_usd:.2f}, Holdings: {len(real_holdings)}"
+        )
 
         return {
             "content": content,
@@ -3871,27 +4354,37 @@ class GuestHandlerService:
         For guests: Show demo portfolio with sample holdings
         For authenticated: Show real on-chain portfolio with actual holdings
         """
-        logger.info(f"[Portfolio] Handler called - language: {language}, authenticated: {is_authenticated}, wallet: {wallet_address[:10] if wallet_address else 'None'}...")
+        logger.info(
+            f"[Portfolio] Handler called - language: {language}, authenticated: {is_authenticated}, wallet: {wallet_address[:10] if wallet_address else 'None'}..."
+        )
 
         # Try to fetch real portfolio for authenticated users with wallet
         if is_authenticated and wallet_address and self._portfolio_service:
             try:
                 from app.domain.enums.chain_type import ChainType
 
-                logger.info(f"[Portfolio] Fetching real portfolio for wallet: {wallet_address[:10]}...")
+                logger.info(
+                    f"[Portfolio] Fetching real portfolio for wallet: {wallet_address[:10]}..."
+                )
                 portfolio = await self._portfolio_service.get_portfolio_by_address(
                     address=wallet_address,
                     chain=ChainType.BASE,  # Default to Base chain
                 )
 
-                logger.info(f"[Portfolio] Portfolio result: {portfolio is not None}, has_value: {portfolio.has_value if portfolio else 'N/A'}, total_usd: {portfolio.total_usd if portfolio else 'N/A'}")
+                logger.info(
+                    f"[Portfolio] Portfolio result: {portfolio is not None}, has_value: {portfolio.has_value if portfolio else 'N/A'}, total_usd: {portfolio.total_usd if portfolio else 'N/A'}"
+                )
 
                 if portfolio:
                     # Build real portfolio response
-                    return await self._build_real_portfolio_response(portfolio, language)
+                    return await self._build_real_portfolio_response(
+                        portfolio, language
+                    )
 
             except Exception as e:
-                logger.error(f"[Portfolio] Error fetching real portfolio: {e}", exc_info=True)
+                logger.error(
+                    f"[Portfolio] Error fetching real portfolio: {e}", exc_info=True
+                )
                 # Fall through to demo data for guests, but show wallet not connected for authenticated users
 
         # For authenticated users without wallet data, show wallet connection message
@@ -3902,7 +4395,7 @@ class GuestHandlerService:
                     "greeting": "**Your Crypto Portfolio**\n\n",
                     "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n",
                     "no_wallet": "💼 **No Wallet Connected**\n\n"
-                                "To view your crypto portfolio, please connect your wallet through your account settings.\n\n",
+                    "To view your crypto portfolio, please connect your wallet through your account settings.\n\n",
                     "hint": "💡 *Once connected, you'll see your complete portfolio with real-time values across all supported chains.*",
                 },
                 "es": {
@@ -3910,7 +4403,7 @@ class GuestHandlerService:
                     "greeting": "**Tu Cartera de Criptomonedas**\n\n",
                     "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n",
                     "no_wallet": "💼 **Sin Cartera Conectada**\n\n"
-                                "Para ver tu cartera de criptomonedas, conecta tu cartera en la configuración de tu cuenta.\n\n",
+                    "Para ver tu cartera de criptomonedas, conecta tu cartera en la configuración de tu cuenta.\n\n",
                     "hint": "💡 *Una vez conectada, verás tu cartera completa con valores en tiempo real en todas las cadenas compatibles.*",
                 },
                 "pt": {
@@ -3918,7 +4411,7 @@ class GuestHandlerService:
                     "greeting": "**Sua Carteira de Criptomoedas**\n\n",
                     "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n",
                     "no_wallet": "💼 **Nenhuma Carteira Conectada**\n\n"
-                                "Para visualizar sua carteira de criptomoedas, conecte sua carteira nas configurações da sua conta.\n\n",
+                    "Para visualizar sua carteira de criptomoedas, conecte sua carteira nas configurações da sua conta.\n\n",
                     "hint": "💡 *Uma vez conectada, você verá sua carteira completa com valores em tempo real em todas as cadeias suportadas.*",
                 },
                 "zh": {
@@ -3926,7 +4419,7 @@ class GuestHandlerService:
                     "greeting": "**您的加密货币投资组合**\n\n",
                     "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n",
                     "no_wallet": "💼 **未连接钱包**\n\n"
-                                "要查看您的加密货币投资组合，请通过帐户设置连接您的钱包。\n\n",
+                    "要查看您的加密货币投资组合，请通过帐户设置连接您的钱包。\n\n",
                     "hint": "💡 *连接后，您将看到所有支持链上的完整投资组合及实时价值。*",
                 },
                 "fr": {
@@ -3934,16 +4427,16 @@ class GuestHandlerService:
                     "greeting": "**Votre Portefeuille Crypto**\n\n",
                     "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n",
                     "no_wallet": "💼 **Aucun Portefeuille Connecté**\n\n"
-                                "Pour voir votre portefeuille crypto, connectez votre portefeuille dans les paramètres de votre compte.\n\n",
+                    "Pour voir votre portefeuille crypto, connectez votre portefeuille dans les paramètres de votre compte.\n\n",
                     "hint": "💡 *Une fois connecté, vous verrez votre portefeuille complet avec des valeurs en temps réel sur toutes les chaînes prises en charge.*",
                 },
             }
             t = messages.get(language, messages["en"])
 
             content = f"{t['title']}\n\n{t['greeting']}{t['divider']}"
-            content += t['no_wallet']
+            content += t["no_wallet"]
             content += f"{t['divider']}"
-            content += t['hint']
+            content += t["hint"]
 
             return {
                 "content": content,
@@ -3961,7 +4454,9 @@ class GuestHandlerService:
             is_authenticated=is_authenticated,
         )
 
-    async def _build_real_activity_response(self, language: str, wallet_address: str | None) -> dict[str, Any]:
+    async def _build_real_activity_response(
+        self, language: str, wallet_address: str | None
+    ) -> dict[str, Any]:
         """Build real activity response (empty or from blockchain scan)."""
         messages = {
             "en": {
@@ -4010,23 +4505,25 @@ class GuestHandlerService:
         divider = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 
         # Build content for empty transaction history
-        content = f"""{divider}{msg['title']}
+        content = f"""{divider}{msg["title"]}
 {divider}
 
-**{msg['empty_title']}**
+**{msg["empty_title"]}**
 
-{msg['empty_message']}
+{msg["empty_message"]}
 
-{msg['explanation']}
+{msg["explanation"]}
 
 {divider}
-{msg['coming_soon']}
+{msg["coming_soon"]}
 """
 
         if wallet_address:
             content += f"\n**{msg['wallet_label']}:** `{wallet_address[:6]}...{wallet_address[-4:]}`"
 
-        logger.info(f"[Activity] Showing empty transaction history for authenticated user")
+        logger.info(
+            f"[Activity] Showing empty transaction history for authenticated user"
+        )
 
         return {
             "content": content,
@@ -4052,14 +4549,18 @@ class GuestHandlerService:
         For guests: Show demo transaction history
         For authenticated: Show real on-chain transaction history
         """
-        logger.info(f"[Activity] Handler called - language: {language}, authenticated: {is_authenticated}, wallet: {wallet_address[:10] if wallet_address else 'None'}...")
+        logger.info(
+            f"[Activity] Handler called - language: {language}, authenticated: {is_authenticated}, wallet: {wallet_address[:10] if wallet_address else 'None'}..."
+        )
 
         # Try to fetch real activity for authenticated users
         if is_authenticated and user_id:
             try:
                 from app.domain.value_objects.user_id import UserId
 
-                logger.info(f"[Activity] Fetching real transactions for user: {user_id[:10]}...")
+                logger.info(
+                    f"[Activity] Fetching real transactions for user: {user_id[:10]}..."
+                )
 
                 # Fetch user's transactions from database (limited to recent 20)
                 # Note: This requires transaction_repository to be injected
@@ -4069,10 +4570,14 @@ class GuestHandlerService:
                 # 2. Scan blockchain using Etherscan API or similar for all wallet activity
 
                 # Build response indicating real transaction history is coming soon
-                return await self._build_real_activity_response(language, wallet_address)
+                return await self._build_real_activity_response(
+                    language, wallet_address
+                )
 
             except Exception as e:
-                logger.error(f"[Activity] Error fetching real activity: {e}", exc_info=True)
+                logger.error(
+                    f"[Activity] Error fetching real activity: {e}", exc_info=True
+                )
                 # Fall through to demo data
 
         # For guests or fallback, show demo activity
@@ -4093,79 +4598,81 @@ class GuestHandlerService:
 
         Politely decline and redirect user to Anvil's DeFi capabilities.
         """
-        logger.info(f"[OutOfScope] Declining off-topic query - language: {language}, content: {content[:50]}...")
+        logger.info(
+            f"[OutOfScope] Declining off-topic query - language: {language}, content: {content[:50]}..."
+        )
 
         translations = {
             "en": {
                 "title": "⚠️ **Outside My Expertise**",
                 "message": "I'm Anvil, a specialized DeFi assistant focused on:\n\n"
-                          "💰 **Portfolio Management** - Check balances, view holdings\n"
-                          "📊 **Market Intelligence** - Hunter AI sentiment, price predictions\n"
-                          "🔄 **DeFi Operations** - Swap, lend, stake, bridge\n"
-                          "⚡ **ULTRA Tools** - Arbitrage, flash loans, MEV protection\n"
-                          "🤖 **Agent Squad** - Specialist agents for yield, risk, security\n\n"
-                          "I can't help with questions outside crypto and DeFi.\n\n"
-                          "**Try asking:**\n"
-                          "• \"What's my portfolio worth?\"\n"
-                          "• \"Show me USDC lending rates\"\n"
-                          "• \"Find arbitrage opportunities\"\n"
-                          "• \"Analyze ETH sentiment\"",
+                "💰 **Portfolio Management** - Check balances, view holdings\n"
+                "📊 **Market Intelligence** - Hunter AI sentiment, price predictions\n"
+                "🔄 **DeFi Operations** - Swap, lend, stake, bridge\n"
+                "⚡ **ULTRA Tools** - Arbitrage, flash loans, MEV protection\n"
+                "🤖 **Agent Squad** - Specialist agents for yield, risk, security\n\n"
+                "I can't help with questions outside crypto and DeFi.\n\n"
+                "**Try asking:**\n"
+                '• "What\'s my portfolio worth?"\n'
+                '• "Show me USDC lending rates"\n'
+                '• "Find arbitrage opportunities"\n'
+                '• "Analyze ETH sentiment"',
             },
             "es": {
                 "title": "⚠️ **Fuera de Mi Experiencia**",
                 "message": "Soy Anvil, un asistente DeFi especializado en:\n\n"
-                          "💰 **Gestión de Portafolio** - Verificar saldos, ver tenencias\n"
-                          "📊 **Inteligencia de Mercado** - Sentimiento Hunter AI, predicciones\n"
-                          "🔄 **Operaciones DeFi** - Intercambiar, prestar, stakear, puentear\n"
-                          "⚡ **Herramientas ULTRA** - Arbitraje, préstamos flash, protección MEV\n"
-                          "🤖 **Escuadrón de Agentes** - Agentes especialistas\n\n"
-                          "No puedo ayudar con preguntas fuera de cripto y DeFi.\n\n"
-                          "**Intenta preguntar:**\n"
-                          "• \"¿Cuánto vale mi portafolio?\"\n"
-                          "• \"Muéstrame tasas de préstamo USDC\"\n"
-                          "• \"Encuentra oportunidades de arbitraje\"",
+                "💰 **Gestión de Portafolio** - Verificar saldos, ver tenencias\n"
+                "📊 **Inteligencia de Mercado** - Sentimiento Hunter AI, predicciones\n"
+                "🔄 **Operaciones DeFi** - Intercambiar, prestar, stakear, puentear\n"
+                "⚡ **Herramientas ULTRA** - Arbitraje, préstamos flash, protección MEV\n"
+                "🤖 **Escuadrón de Agentes** - Agentes especialistas\n\n"
+                "No puedo ayudar con preguntas fuera de cripto y DeFi.\n\n"
+                "**Intenta preguntar:**\n"
+                '• "¿Cuánto vale mi portafolio?"\n'
+                '• "Muéstrame tasas de préstamo USDC"\n'
+                '• "Encuentra oportunidades de arbitraje"',
             },
             "pt": {
                 "title": "⚠️ **Fora da Minha Expertise**",
                 "message": "Sou Anvil, um assistente DeFi especializado em:\n\n"
-                          "💰 **Gestão de Portfólio** - Verificar saldos, ver holdings\n"
-                          "📊 **Inteligência de Mercado** - Sentimento Hunter AI, previsões\n"
-                          "🔄 **Operações DeFi** - Trocar, emprestar, stake, bridge\n"
-                          "⚡ **Ferramentas ULTRA** - Arbitragem, flash loans, proteção MEV\n"
-                          "🤖 **Equipe de Agentes** - Agentes especialistas\n\n"
-                          "Não posso ajudar com perguntas fora de cripto e DeFi.\n\n"
-                          "**Tente perguntar:**\n"
-                          "• \"Quanto vale meu portfólio?\"\n"
-                          "• \"Mostre taxas de empréstimo USDC\"\n"
-                          "• \"Encontre oportunidades de arbitragem\"",
+                "💰 **Gestão de Portfólio** - Verificar saldos, ver holdings\n"
+                "📊 **Inteligência de Mercado** - Sentimento Hunter AI, previsões\n"
+                "🔄 **Operações DeFi** - Trocar, emprestar, stake, bridge\n"
+                "⚡ **Ferramentas ULTRA** - Arbitragem, flash loans, proteção MEV\n"
+                "🤖 **Equipe de Agentes** - Agentes especialistas\n\n"
+                "Não posso ajudar com perguntas fora de cripto e DeFi.\n\n"
+                "**Tente perguntar:**\n"
+                '• "Quanto vale meu portfólio?"\n'
+                '• "Mostre taxas de empréstimo USDC"\n'
+                '• "Encontre oportunidades de arbitragem"',
             },
             "zh": {
                 "title": "⚠️ **超出我的专业范围**",
                 "message": "我是Anvil，专注于DeFi的助手：\n\n"
-                          "💰 **投资组合管理** - 检查余额，查看持仓\n"
-                          "📊 **市场情报** - Hunter AI情绪，价格预测\n"
-                          "🔄 **DeFi操作** - 交换，借贷，质押，跨链\n"
-                          "⚡ **ULTRA工具** - 套利，闪电贷，MEV保护\n"
-                          "🤖 **代理小队** - 专业代理\n\n"
-                          "我无法帮助加密和DeFi之外的问题。\n\n"
-                          "**尝试问：**\n"
-                          "• \"我的投资组合值多少？\"\n"
-                          "• \"显示USDC借贷利率\"\n"
-                          "• \"寻找套利机会\"",
+                "💰 **投资组合管理** - 检查余额，查看持仓\n"
+                "📊 **市场情报** - Hunter AI情绪，价格预测\n"
+                "🔄 **DeFi操作** - 交换，借贷，质押，跨链\n"
+                "⚡ **ULTRA工具** - 套利，闪电贷，MEV保护\n"
+                "🤖 **代理小队** - 专业代理\n\n"
+                "我无法帮助加密和DeFi之外的问题。\n\n"
+                "**尝试问：**\n"
+                '• "我的投资组合值多少？"\n'
+                '• "显示USDC借贷利率"\n'
+                '• "寻找套利机会"',
             },
             "fr": {
                 "title": "⚠️ **Hors de Mon Expertise**",
                 "message": "Je suis Anvil, un assistant DeFi spécialisé dans:\n\n"
-                          "💰 **Gestion de Portefeuille** - Vérifier soldes, voir holdings\n"
-                          "📊 **Intelligence du Marché** - Sentiment Hunter AI, prédictions\n"
-                          "🔄 **Opérations DeFi** - Échanger, prêter, staker, bridge\n"
-                          "⚡ **Outils ULTRA** - Arbitrage, flash loans, protection MEV\n"
-                          "🤖 **Équipe d'Agents** - Agents spécialistes\n\n"
-                          "Je ne peux pas aider avec des questions hors crypto et DeFi.\n\n"
-                          "**Essayez de demander:**\n"
-                          "• \"Quelle est la valeur de mon portefeuille?\"\n"
-                          "• \"Montrez les taux de prêt USDC\"\n"
-                          "• \"Trouvez des opportunités d'arbitrage\"",
+                "💰 **Gestion de Portefeuille** - Vérifier soldes, voir holdings\n"
+                "📊 **Intelligence du Marché** - Sentiment Hunter AI, prédictions\n"
+                "🔄 **Opérations DeFi** - Échanger, prêter, staker, bridge\n"
+                "⚡ **Outils ULTRA** - Arbitrage, flash loans, protection MEV\n"
+                "🤖 **Équipe d'Agents** - Agents spécialistes\n\n"
+                "Je ne peux pas aider avec des questions hors crypto et DeFi.\n\n"
+                "**Essayez de demander:**\n"
+                '• "Quelle est la valeur de mon portefeuille?"\n'
+                '• "Montrez les taux de prêt USDC"\n'
+                '• "Trouvez des opportunités d\'arbitrage"',
             },
         }
         t = translations.get(language, translations["en"])
@@ -4176,7 +4683,13 @@ class GuestHandlerService:
             "content": content,
             "enrichment": {
                 "intent": "out_of_scope",
-                "suggested_topics": ["portfolio", "swap", "lending", "arbitrage", "sentiment"],
+                "suggested_topics": [
+                    "portfolio",
+                    "swap",
+                    "lending",
+                    "arbitrage",
+                    "sentiment",
+                ],
             },
             "requires_registration": False,
         }

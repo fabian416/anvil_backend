@@ -46,10 +46,8 @@ class BuyInfo:
     crypto_currency: str | None = "USDC"  # Crypto to buy (USDC only)
 
     # Only USDC is supported for direct purchase
-    SUPPORTED_CRYPTOS: list[str] = field(
-        default_factory=lambda: ["USDC"]
-    )
-    
+    SUPPORTED_CRYPTOS: list[str] = field(default_factory=lambda: ["USDC"])
+
     # Unsupported cryptos (for helpful error messages)
     UNSUPPORTED_CRYPTOS: list[str] = field(
         default_factory=lambda: ["ETH", "USDT", "BTC", "MATIC", "SOL"]
@@ -617,14 +615,18 @@ class BuyHandler:
         try:
             # Resolve wallet address using best-effort strategy (DB -> Privy -> primary_wallet_address)
             wallet_address = await self._resolve_user_wallet_address(user_id)
-            
+
             # Log for debugging
-            logger.debug(f"BuyHandler: Resolved wallet address for user {user_id}: {wallet_address[:10] + '...' if wallet_address else 'None'}")
+            logger.debug(
+                f"BuyHandler: Resolved wallet address for user {user_id}: {wallet_address[:10] + '...' if wallet_address else 'None'}"
+            )
 
             latency_ms = int((time.time() - start_time) * 1000)
 
             if not wallet_address:
-                logger.warning(f"BuyHandler: No wallet found for user {user_id} after checking DB, Privy, and primary_wallet_address")
+                logger.warning(
+                    f"BuyHandler: No wallet found for user {user_id} after checking DB, Privy, and primary_wallet_address"
+                )
                 return BuyHandlerResult(
                     content=msgs["no_wallet"],
                     wallet_address=None,
@@ -653,10 +655,13 @@ class BuyHandler:
 
         except Exception as e:
             # Log the error for debugging
-            logger.warning(f"Error getting wallet for user {user_id} in buy handler: {e}", exc_info=True)
-            
+            logger.warning(
+                f"Error getting wallet for user {user_id} in buy handler: {e}",
+                exc_info=True,
+            )
+
             latency_ms = int((time.time() - start_time) * 1000)
-            
+
             # Provide user-friendly error message instead of technical error
             # Check if it's a database error
             if isinstance(e, DataMapperError) or "Database query failed" in str(e):
@@ -691,7 +696,9 @@ class BuyHandler:
         """Format buy info as chat response with improved visual structure."""
         # Format assets and networks as bullet points for better readability
         assets_list = "\n".join([f"• {asset}" for asset in self.SUPPORTED_ASSETS])
-        networks_list = "\n".join([f"• {network}" for network in self.SUPPORTED_NETWORKS])
+        networks_list = "\n".join([
+            f"• {network}" for network in self.SUPPORTED_NETWORKS
+        ])
 
         response = f"""{msgs["title"]}
 
@@ -773,21 +780,31 @@ class BuyHandler:
             return "USDC"
 
         return None
-    
+
     def _detect_unsupported_crypto(self, message: str) -> str | None:
         """
         Detect if user is trying to buy an unsupported crypto.
-        
+
         Args:
             message: User's message
-            
+
         Returns:
             Crypto symbol if unsupported crypto detected, None otherwise
         """
         message_upper = message.upper().strip()
-        
-        unsupported = ["ETH", "BTC", "BITCOIN", "ETHEREUM", "SOL", "SOLANA", "USDT", "MATIC", "POLYGON"]
-        
+
+        unsupported = [
+            "ETH",
+            "BTC",
+            "BITCOIN",
+            "ETHEREUM",
+            "SOL",
+            "SOLANA",
+            "USDT",
+            "MATIC",
+            "POLYGON",
+        ]
+
         for crypto in unsupported:
             if crypto in message_upper:
                 # Normalize to standard symbol
@@ -800,7 +817,7 @@ class BuyHandler:
                 elif crypto in ["POLYGON"]:
                     return "MATIC"
                 return crypto
-        
+
         return None
 
     def _format_crypto_options(self, cryptos: list[str]) -> str:
@@ -829,15 +846,17 @@ class BuyHandler:
         logger.info(f"[BUY_DEBUG] buy_info.crypto_currency: {buy_info.crypto_currency}")
         logger.info(f"[BUY_DEBUG] buy_info.is_complete: {buy_info.is_complete}")
         logger.info(f"[BUY_DEBUG] buy_info.next_step: {buy_info.next_step}")
-        
+
         msgs = BUY_FLOW_MESSAGES.get(language, BUY_FLOW_MESSAGES["en"])
-        
+
         # Ensure crypto_currency is always USDC
         buy_info.crypto_currency = "USDC"
 
         # Step 1: Ask for amount (only step needed since USDC is the only option)
         if not buy_info.amount:
-            logger.info(f"[BUY_DEBUG] Step 1: Asking for USDC amount, pending_action=buy_awaiting_amount")
+            logger.info(
+                f"[BUY_DEBUG] Step 1: Asking for USDC amount, pending_action=buy_awaiting_amount"
+            )
             return BuyHandlerResult(
                 content=msgs["ask_amount"],
                 wallet_address=wallet_address,
@@ -851,7 +870,9 @@ class BuyHandler:
             )
 
         # Step 2: All data collected - Generate execute_data
-        logger.info(f"[BUY_DEBUG] Step 2: All data collected, generating execute_data for USDC")
+        logger.info(
+            f"[BUY_DEBUG] Step 2: All data collected, generating execute_data for USDC"
+        )
         execute_data = {
             "action_type": "buy",
             "chain": "base",
@@ -969,7 +990,7 @@ class BuyHandler:
     ) -> BuyHandlerResult:
         """
         Start a new buy flow, optionally extracting info from initial message.
-        
+
         Note: Only USDC is available for purchase. If user requests other crypto,
         we show a helpful message suggesting they buy USDC and swap.
 
@@ -981,7 +1002,9 @@ class BuyHandler:
         Returns:
             BuyHandlerResult with first step or confirmation if all info provided
         """
-        logger.info(f"[BUY_DEBUG] start_buy_flow() called with user_id={user_id}, message='{message}', language={language}")
+        logger.info(
+            f"[BUY_DEBUG] start_buy_flow() called with user_id={user_id}, message='{message}', language={language}"
+        )
         start_time = time.time()
 
         # Get wallet address first
@@ -1002,7 +1025,9 @@ class BuyHandler:
         # Check if user is trying to buy an unsupported crypto
         unsupported_crypto = self._detect_unsupported_crypto(message)
         if unsupported_crypto:
-            logger.info(f"[BUY_DEBUG] User requested unsupported crypto: {unsupported_crypto}")
+            logger.info(
+                f"[BUY_DEBUG] User requested unsupported crypto: {unsupported_crypto}"
+            )
             msgs = BUY_FLOW_MESSAGES.get(language, BUY_FLOW_MESSAGES["en"])
             return BuyHandlerResult(
                 content=msgs["usdc_only"].format(crypto=unsupported_crypto),
@@ -1013,7 +1038,10 @@ class BuyHandler:
                 latency_ms=int((time.time() - start_time) * 1000),
                 language=language,
                 pending_action="buy_awaiting_amount",  # Ready to accept amount for USDC
-                metadata={"crypto_currency": "USDC", "requested_crypto": unsupported_crypto},
+                metadata={
+                    "crypto_currency": "USDC",
+                    "requested_crypto": unsupported_crypto,
+                },
             )
 
         # Try to extract info from initial message
@@ -1029,4 +1057,3 @@ class BuyHandler:
         result = await self.process_buy_flow(buy_info, language, wallet_address)
         result.latency_ms = int((time.time() - start_time) * 1000)
         return result
-

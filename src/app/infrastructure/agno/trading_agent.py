@@ -21,6 +21,7 @@ Examples:
     - "What's the APY on the 3pool?"
     - "How much gas will this swap cost?"
 """
+
 from typing import List, Optional
 
 from app.infrastructure.agno.base_agent import DeFiAgentBase
@@ -49,7 +50,7 @@ class TradingAgent(DeFiAgentBase):
         result = await agent.run("Swap 1 ETH for USDC on Ethereum")
         print(result.content)
     """
-    
+
     def __init__(
         self,
         config: AgnoConfig,
@@ -57,7 +58,7 @@ class TradingAgent(DeFiAgentBase):
     ):
         """
         Initialize Trading Agent.
-        
+
         Args:
             config: Agno configuration
             debug_mode: Enable debug logging
@@ -68,37 +69,31 @@ class TradingAgent(DeFiAgentBase):
             "You specialize in DeFi token trading, swaps, and liquidity provision.",
             "You use 1inch DEX aggregator for best swap prices across multiple DEXes.",
             "You use Curve Finance for stablecoin swaps and liquidity pool discovery.",
-
             # Protocol expertise
             "1inch: Best for general token swaps, aggregates 100+ DEXes.",
             "Curve: Best for stablecoins and pegged assets, lowest slippage.",
             "When user wants stablecoin swaps (USDC/DAI/USDT), prefer Curve for better rates.",
-
             # Safety & confirmation
             "ALWAYS get a swap quote before suggesting any trade.",
             "ALWAYS show the user the full details: amounts, gas costs, price impact, route.",
             "NEVER execute a swap without explicit user confirmation.",
             "Warn users about high price impact (> 1%) and slippage risks.",
-
             # Liquidity provision
             "Users can earn yield by providing liquidity to Curve pools.",
             "Show pool APY including trading fees and CRV rewards.",
             "Explain impermanent loss risk (minimal for stablecoin pools).",
             "Recommend pools based on APY, TVL, and risk tolerance.",
-
             # Best practices
             "For large trades, suggest splitting into smaller amounts to reduce price impact.",
             "Always mention gas costs in both native token and USD.",
             "Explain the DEX route being used (e.g., 'via Uniswap V3 + SushiSwap').",
             "Consider gas costs when recommending trades on expensive chains.",
             "For stablecoin swaps, compare 1inch vs Curve quotes.",
-
             # Common operations - 1inch
             "For price checks: use get_token_price",
             "For swap quotes: use get_swap_quote with accurate amounts",
             "For route comparison: use compare_swap_routes",
             "For gas estimates: use estimate_gas",
-
             # Common operations - Curve
             "To find pools: use curve_find_best_pools (filter by token)",
             "To get pool details: use curve_get_pool_details",
@@ -106,18 +101,15 @@ class TradingAgent(DeFiAgentBase):
             "To get swap quote: use curve_get_swap_quote (for Curve-specific routes)",
             "To check TVL: use curve_get_tvl",
             "To find gauge rewards: use curve_get_gauges",
-
             # Chain-specific guidance
             "Ethereum (chain_id=1): High gas, best liquidity.",
             "Polygon (chain_id=137): Low gas, good liquidity.",
             "Arbitrum (chain_id=42161): Low gas, L2 benefits.",
             "Optimism (chain_id=10): Low gas, L2 benefits.",
-
             # Token addresses
             "Native ETH address: 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
             "Remember: amounts should be in wei (1 ETH = 1000000000000000000 wei).",
             "For USDC/USDT (6 decimals): 1 USDC = 1000000.",
-
             # Yield optimization
             "When asked 'where to provide liquidity', show top Curve pools by APY.",
             "Present as table: Pool | Coins | APY | TVL | Volume",
@@ -133,7 +125,7 @@ class TradingAgent(DeFiAgentBase):
             instructions=trading_instructions,
             debug_mode=debug_mode,
         )
-    
+
     async def get_swap_quote(
         self,
         chain_id: int,
@@ -144,14 +136,14 @@ class TradingAgent(DeFiAgentBase):
     ):
         """
         Helper method to get swap quote directly.
-        
+
         Args:
             chain_id: Chain ID (1=Ethereum, 137=Polygon, etc.)
             from_token: From token address
             to_token: To token address
             amount: Amount in smallest unit (wei)
             slippage: Slippage tolerance (default 1.0%)
-        
+
         Returns:
             Swap quote details
         """
@@ -161,7 +153,7 @@ class TradingAgent(DeFiAgentBase):
             stream=False,
         )
         return result.content
-    
+
     async def get_token_price(
         self,
         chain_id: int,
@@ -169,11 +161,11 @@ class TradingAgent(DeFiAgentBase):
     ):
         """
         Helper method to get token price.
-        
+
         Args:
             chain_id: Chain ID
             token_address: Token contract address
-        
+
         Returns:
             Token price in USD
         """
@@ -182,7 +174,7 @@ class TradingAgent(DeFiAgentBase):
             stream=False,
         )
         return result.content
-    
+
     async def compare_routes(
         self,
         chain_id: int,
@@ -192,13 +184,13 @@ class TradingAgent(DeFiAgentBase):
     ):
         """
         Helper method to compare swap routes.
-        
+
         Args:
             chain_id: Chain ID
             from_token: From token address
             to_token: To token address
             amount: Amount in smallest unit
-        
+
         Returns:
             Route comparison analysis
         """
@@ -213,7 +205,7 @@ class TradingAgent(DeFiAgentBase):
 # Example usage
 if __name__ == "__main__":
     import asyncio
-    
+
     async def test_trading_agent():
         """Test trading agent with 1inch MCP tools."""
         # Create config
@@ -223,18 +215,18 @@ if __name__ == "__main__":
             max_tokens=2000,
             show_tool_calls=True,
         )
-        
+
         # Create trading agent
         agent = TradingAgent(config, debug_mode=True)
-        
+
         # Load MCP tools
         print("\n🔧 Loading 1inch MCP tools...")
         await agent.load_mcp_tools()
-        
+
         print(f"\n✅ Loaded {len(agent.mcp_tools)} trading tools:")
         for tool in agent.get_available_tools():
             print(f"   • {tool['name']}")
-        
+
         # Test queries
         test_queries = [
             "What tools do you have for trading?",
@@ -243,28 +235,28 @@ if __name__ == "__main__":
             "What are the available DEXes on Polygon?",
             "Compare routes for swapping ETH to DAI on Ethereum.",
         ]
-        
-        print("\n" + "="*70)
+
+        print("\n" + "=" * 70)
         print("TRADING AGENT TEST")
-        print("="*70)
-        
+        print("=" * 70)
+
         for query in test_queries:
             print(f"\n📝 User: {query}")
-            print("-"*70)
-            
+            print("-" * 70)
+
             try:
                 result = await agent.run(query)
                 print(f"🤖 Agent: {result.content}")
             except Exception as e:
                 print(f"❌ Error: {e}")
-            
-            print("-"*70)
-    
+
+            print("-" * 70)
+
     # Run test
     print("""
 ╔══════════════════════════════════════════════════════════╗
 ║            Trading Agent - 1inch Integration             ║
 ╚══════════════════════════════════════════════════════════╝
     """)
-    
+
     asyncio.run(test_trading_agent())

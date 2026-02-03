@@ -18,7 +18,12 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Historical chat requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.historical_chat]
+pytestmark = [
+    pytest.mark.skip(reason="Historical chat requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.historical_chat,
+]
 
 
 class TestHistoricalChatDataIntegrity:
@@ -34,10 +39,7 @@ class TestHistoricalChatDataIntegrity:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "This is my first message",
-                "language": "en"
-            }
+            json={"content": "This is my first message", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -59,10 +61,7 @@ class TestHistoricalChatDataIntegrity:
         # Create conversation
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Tell me about Bitcoin",
-                "language": "en"
-            }
+            json={"content": "Tell me about Bitcoin", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -72,10 +71,7 @@ class TestHistoricalChatDataIntegrity:
         # Add second message (context from first)
         response2 = await client.post(
             f"/api/v1/guest/chat?conversation_id={conversation_id}",
-            json={
-                "content": "What about Ethereum?",
-                "language": "en"
-            }
+            json={"content": "What about Ethereum?", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -86,10 +82,7 @@ class TestHistoricalChatDataIntegrity:
         # Third message should still work (conversation continuity)
         response3 = await client.post(
             f"/api/v1/guest/chat?conversation_id={conversation_id}",
-            json={
-                "content": "Compare them for me",
-                "language": "en"
-            }
+            json={"content": "Compare them for me", "language": "en"},
         )
 
         assert response3.status_code == status.HTTP_200_OK
@@ -98,7 +91,9 @@ class TestHistoricalChatDataIntegrity:
         assert len(data3["agent_message"]["content"]) > 50
 
     @pytest.mark.llm_validation
-    async def test_conversation_timestamp_consistency(self, client: AsyncClient, llm_validator):
+    async def test_conversation_timestamp_consistency(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test timestamp consistency across conversation history.
 
@@ -107,11 +102,7 @@ class TestHistoricalChatDataIntegrity:
         """
         # Create initial message
         response1 = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Message 1",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "Message 1", "language": "en"}
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -122,10 +113,7 @@ class TestHistoricalChatDataIntegrity:
         for i in range(2, 6):
             response = await client.post(
                 f"/api/v1/guest/chat?conversation_id={conversation_id}",
-                json={
-                    "content": f"Message {i}",
-                    "language": "en"
-                }
+                json={"content": f"Message {i}", "language": "en"},
             )
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -135,7 +123,9 @@ class TestHistoricalChatDataIntegrity:
         assert conversation_id is not None
 
     @pytest.mark.llm_validation
-    async def test_large_conversation_performance(self, client: AsyncClient, llm_validator):
+    async def test_large_conversation_performance(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test performance with large conversation history.
 
@@ -145,10 +135,7 @@ class TestHistoricalChatDataIntegrity:
         # Create conversation
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Start of long conversation",
-                "language": "en"
-            }
+            json={"content": "Start of long conversation", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -161,8 +148,8 @@ class TestHistoricalChatDataIntegrity:
                 f"/api/v1/guest/chat?conversation_id={conversation_id}",
                 json={
                     "content": f"Message {i}: Tell me about crypto topic {i}",
-                    "language": "en"
-                }
+                    "language": "en",
+                },
             )
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -174,10 +161,7 @@ class TestHistoricalChatDataIntegrity:
         # Final message should still work with full history
         response_final = await client.post(
             f"/api/v1/guest/chat?conversation_id={conversation_id}",
-            json={
-                "content": "Summarize everything we discussed",
-                "language": "en"
-            }
+            json={"content": "Summarize everything we discussed", "language": "en"},
         )
 
         assert response_final.status_code == status.HTTP_200_OK

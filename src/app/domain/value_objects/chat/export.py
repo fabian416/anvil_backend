@@ -57,7 +57,9 @@ class ExportMetadata:
             "exported_by_user_id": self.exported_by_user_id,
             "export_timestamp": self.export_timestamp.isoformat(),
             "format": self.format.value,
-            "compliance_standard": self.compliance_standard.value if self.compliance_standard else None,
+            "compliance_standard": self.compliance_standard.value
+            if self.compliance_standard
+            else None,
             "file_size_bytes": self.file_size_bytes,
             "message_count": self.message_count,
             "date_range_start": self.date_range_start.isoformat(),
@@ -178,7 +180,9 @@ class ComplianceRequirements:
             "require_immutable_audit_trail": self.require_immutable_audit_trail,
             "retention_period_years": self.retention_period_years,
             "required_metadata_fields": self.required_metadata_fields,
-            "export_format_restrictions": [fmt.value for fmt in self.export_format_restrictions],
+            "export_format_restrictions": [
+                fmt.value for fmt in self.export_format_restrictions
+            ],
         }
 
 
@@ -205,7 +209,9 @@ class ExportAuditEntry:
             "action": self.action,
             "conversation_id": self.conversation_id,
             "export_format": self.export_format.value,
-            "compliance_standard": self.compliance_standard.value if self.compliance_standard else None,
+            "compliance_standard": self.compliance_standard.value
+            if self.compliance_standard
+            else None,
             "ip_address": self.ip_address,
             "user_agent": self.user_agent,
             "success": self.success,

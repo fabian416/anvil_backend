@@ -29,6 +29,7 @@ try:
         create_admin_session,
         invalidate_session,
     )
+
     __all__.extend([
         "AuthHelper",
         "create_test_user",
@@ -38,25 +39,30 @@ try:
     ])
 except ImportError as e:
     import warnings
+
     warnings.warn(f"Could not import auth_helper: {e}")
 
 # API client - requires httpx
 try:
     from tests.helpers.api_client import AuthenticatedClient
+
     __all__.append("AuthenticatedClient")
 except (ImportError, RuntimeError) as e:
     # RuntimeError is raised by starlette if httpx is missing
     AuthenticatedClient = None
     import warnings
+
     warnings.warn(f"AuthenticatedClient not available (httpx may be missing): {e}")
 
 # Database manager
 try:
     from tests.helpers.db_manager import DatabaseTestManager
+
     __all__.append("DatabaseTestManager")
 except ImportError as e:
     DatabaseTestManager = None
     import warnings
+
     warnings.warn(f"DatabaseTestManager not available: {e}")
 
 # Error validator - always available
@@ -67,6 +73,7 @@ try:
         validate_i18n_key,
         validate_http_status_match,
     )
+
     __all__.extend([
         "ErrorValidator",
         "validate_error_response",
@@ -75,6 +82,7 @@ try:
     ])
 except ImportError as e:
     import warnings
+
     warnings.warn(f"Could not import error_validator: {e}")
 
 # LLM verifier
@@ -86,6 +94,7 @@ try:
         verify_risk_disclaimers,
         verify_defi_data_format,
     )
+
     __all__.extend([
         "LLMVerifier",
         "verify_response_structure",
@@ -95,4 +104,5 @@ try:
     ])
 except ImportError as e:
     import warnings
+
     warnings.warn(f"Could not import llm_verifier: {e}")

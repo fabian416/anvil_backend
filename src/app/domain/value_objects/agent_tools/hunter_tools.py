@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 
 class HunterToolType(Enum):
     """Hunter AI tool types."""
-    
+
     SENTIMENT_ANALYSIS = "hunter_sentiment_analysis"
     PRICE_PREDICTION = "hunter_price_prediction"
     RISK_ANALYSIS = "hunter_risk_analysis"
@@ -25,23 +25,23 @@ class HunterToolType(Enum):
 class HunterToolDefinition:
     """
     Hunter AI tool definition for agent use.
-    
+
     Attributes:
         name: Tool function name
         type: Hunter AI tool type
         description: Human-readable description of what the tool does
         parameters: Parameter schema (JSON Schema format)
     """
-    
+
     name: str
     type: HunterToolType
     description: str
     parameters: Dict[str, Any]
-    
+
     def to_agent_format(self) -> Dict[str, Any]:
         """
         Convert to Agent Squad tool format.
-        
+
         Returns:
             Dictionary in Agent Squad tool format
         """
@@ -212,10 +212,10 @@ HUNTER_TOOLS: List[HunterToolDefinition] = [
 def get_hunter_tool_by_name(name: str) -> HunterToolDefinition | None:
     """
     Get Hunter AI tool definition by name.
-    
+
     Args:
         name: Tool name
-    
+
     Returns:
         Tool definition if found, None otherwise
     """
@@ -228,10 +228,10 @@ def get_hunter_tool_by_name(name: str) -> HunterToolDefinition | None:
 def get_hunter_tool_by_type(tool_type: HunterToolType) -> HunterToolDefinition | None:
     """
     Get Hunter AI tool definition by type.
-    
+
     Args:
         tool_type: Tool type enum
-    
+
     Returns:
         Tool definition if found, None otherwise
     """

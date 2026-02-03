@@ -23,7 +23,7 @@ from app.infrastructure.auth.exceptions import AuthenticationError
 from app.infrastructure.security.scan_result_aggregator import (
     ScanResultAggregator,
     SecurityScanResult,
-    ToolScanResult
+    ToolScanResult,
 )
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.presentation.http.errors.callbacks import log_info
@@ -35,7 +35,7 @@ from .security_dashboard_schemas import (
     ScanToolsSchema,
     ToolScanResultSchema,
     VulnerabilitySummarySchema,
-    ErrorResponse
+    ErrorResponse,
 )
 
 
@@ -54,7 +54,11 @@ def get_scan_aggregator() -> ScanResultAggregator:
     For now, hardcoded to default reports directory.
     """
     # TODO: Inject via Dishka container with proper configuration
-    reports_dir = Path(__file__).parent.parent.parent.parent.parent.parent / "security" / "reports"
+    reports_dir = (
+        Path(__file__).parent.parent.parent.parent.parent.parent
+        / "security"
+        / "reports"
+    )
     return ScanResultAggregator(reports_dir)
 
 
@@ -84,11 +88,11 @@ def convert_scan_result(result: SecurityScanResult) -> SecurityScanResultSchema:
             medium=result.vulnerabilities.medium,
             low=result.vulnerabilities.low,
             info=result.vulnerabilities.info,
-            total=result.vulnerabilities.total
+            total=result.vulnerabilities.total,
         ),
         reports_path=result.reports_path,
         duration_seconds=result.duration_seconds,
-        errors=result.errors or []
+        errors=result.errors or [],
     )
 
 
@@ -100,7 +104,7 @@ def convert_tool_result(result: ToolScanResult) -> ToolScanResultSchema:
         status=result.status,
         vulnerabilities_found=result.vulnerabilities_found,
         report_path=result.report_path,
-        details=result.details
+        details=result.details,
     )
 
 
@@ -146,17 +150,17 @@ async def get_security_dashboard(
             overall_status = "unknown"
 
         # Get unique list of active tools
-        active_tools = list(set(
-            tool
-            for scan in scan_history
-            for tool in scan.tools_executed
-        )) if scan_history else []
+        active_tools = (
+            list(set(tool for scan in scan_history for tool in scan.tools_executed))
+            if scan_history
+            else []
+        )
 
         return SecurityDashboardSummarySchema(
             latest_scan=convert_scan_result(latest_scan) if latest_scan else None,
             total_scans=len(scan_history),
             active_tools=active_tools,
-            overall_status=overall_status
+            overall_status=overall_status,
         )
 
     except Exception:
@@ -198,10 +202,7 @@ async def get_latest_scan(
     latest_scan = aggregator.get_latest_scan()
 
     if not latest_scan:
-        raise HTTPException(
-            status_code=404,
-            detail="No security scans found"
-        )
+        raise HTTPException(status_code=404, detail="No security scans found")
 
     return convert_scan_result(latest_scan)
 
@@ -242,10 +243,7 @@ async def get_scan_by_id(
     scan_result = aggregator.get_scan_by_id(scan_id)
 
     if not scan_result:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Scan not found: {scan_id}"
-        )
+        raise HTTPException(status_code=404, detail=f"Scan not found: {scan_id}")
 
     return convert_scan_result(scan_result)
 
@@ -268,7 +266,9 @@ async def get_scan_by_id(
 async def get_scan_history(
     current_user_service: FromDishka[CurrentUserService],
     aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
-    limit: int = Query(10, ge=1, le=100, description="Maximum number of scans to return"),
+    limit: int = Query(
+        10, ge=1, le=100, description="Maximum number of scans to return"
+    ),
 ) -> ScanHistorySchema:
     """
     Get historical security scans.
@@ -284,7 +284,7 @@ async def get_scan_history(
 
     return ScanHistorySchema(
         scans=[convert_scan_result(scan) for scan in scan_history],
-        total_scans=len(scan_history)
+        total_scans=len(scan_history),
     )
 
 
@@ -327,20 +327,13 @@ async def get_scan_tools(
         # Check if scan exists
         scan = aggregator.get_scan_by_id(scan_id)
         if not scan:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Scan not found: {scan_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Scan not found: {scan_id}")
 
         # Scan exists but has no tool results
-        return ScanToolsSchema(
-            scan_id=scan_id,
-            tools=[]
-        )
+        return ScanToolsSchema(scan_id=scan_id, tools=[])
 
     return ScanToolsSchema(
-        scan_id=scan_id,
-        tools=[convert_tool_result(tool) for tool in tool_results]
+        scan_id=scan_id, tools=[convert_tool_result(tool) for tool in tool_results]
     )
 
 
@@ -362,7 +355,9 @@ async def get_scan_tools(
 async def get_vulnerability_trends(
     current_user_service: FromDishka[CurrentUserService],
     aggregator: ScanResultAggregator = Depends(get_scan_aggregator),
-    days: int = Query(30, ge=1, le=90, description="Number of days to include in trends"),
+    days: int = Query(
+        30, ge=1, le=90, description="Number of days to include in trends"
+    ),
 ) -> VulnerabilityTrendsSchema:
     """
     Get vulnerability trends over time.
@@ -381,7 +376,7 @@ async def get_vulnerability_trends(
         critical=trends.get("critical", []),
         high=trends.get("high", []),
         medium=trends.get("medium", []),
-        low=trends.get("low", [])
+        low=trends.get("low", []),
     )
 
 
@@ -417,7 +412,9 @@ async def security_health_check(
             "status": "healthy",
             "reports_directory_exists": aggregator.reports_base_dir.exists(),
             "latest_scan_id": latest_scan.scan_id if latest_scan else None,
-            "latest_scan_date": latest_scan.scan_date.isoformat() if latest_scan else None
+            "latest_scan_date": latest_scan.scan_date.isoformat()
+            if latest_scan
+            else None,
         }
 
     except Exception:

@@ -134,6 +134,7 @@ class InvalidCardError(ApplicationError):
 
 # Additional subscription-specific exceptions
 
+
 class SubscriptionExpiredError(ApplicationError):
     """Raised when subscription has expired."""
 

@@ -43,8 +43,12 @@ from app.application.chat.risk_insights_handler import (
     ChatRiskFactor,
     ChatAlternativeProtocol,
 )
-from app.application.agent_squad.commands.send_agent_squad_message import SendAgentSquadMessage
-from app.application.agent_squad.commands.execute_supervisor_workflow import ExecuteSupervisorWorkflow
+from app.application.agent_squad.commands.send_agent_squad_message import (
+    SendAgentSquadMessage,
+)
+from app.application.agent_squad.commands.execute_supervisor_workflow import (
+    ExecuteSupervisorWorkflow,
+)
 
 
 class MockChatLLMProvider(ChatLLMProvider):
@@ -56,9 +60,7 @@ class MockChatLLMProvider(ChatLLMProvider):
     """
 
     async def generate_chat_response(
-        self,
-        messages: List[Dict[str, str]],
-        **kwargs: Any
+        self, messages: List[Dict[str, str]], **kwargs: Any
     ) -> Dict[str, Any]:
         """
         Generate mock chat response based on message content.
@@ -88,7 +90,10 @@ class MockChatLLMProvider(ChatLLMProvider):
         message_lower = user_message.lower()
 
         # Protocol search responses
-        if any(word in message_lower for word in ["protocol", "aave", "compound", "lending"]):
+        if any(
+            word in message_lower
+            for word in ["protocol", "aave", "compound", "lending"]
+        ):
             return """Here are the top protocols:
 
 1. **Aave V3** - Leading lending protocol
@@ -117,7 +122,10 @@ These protocols are well-audited and suitable for your needs."""
 **Recommendation:** Suitable for moderate-risk portfolios with proper diversification."""
 
         # Sentiment analysis responses
-        if any(word in message_lower for word in ["sentiment", "bullish", "bearish", "opinion"]):
+        if any(
+            word in message_lower
+            for word in ["sentiment", "bullish", "bearish", "opinion"]
+        ):
             return """**Current Sentiment:** Bullish
 
 **Market Indicators:**
@@ -128,7 +136,10 @@ These protocols are well-audited and suitable for your needs."""
 **Recommendation:** Sentiment is positive but monitor for trend reversal signals."""
 
         # Arbitrage responses
-        if any(word in message_lower for word in ["arbitrage", "opportunity", "profit", "dex"]):
+        if any(
+            word in message_lower
+            for word in ["arbitrage", "opportunity", "profit", "dex"]
+        ):
             return """**Arbitrage Opportunity Detected:**
 
 - **DEX Pair:** UniswapV3 → SushiSwap
@@ -139,7 +150,10 @@ These protocols are well-audited and suitable for your needs."""
 Execute quickly as opportunities are time-sensitive."""
 
         # Agent Squad responses
-        if any(word in message_lower for word in ["analyze", "research", "investigate", "complex"]):
+        if any(
+            word in message_lower
+            for word in ["analyze", "research", "investigate", "complex"]
+        ):
             return """I'll coordinate a multi-agent analysis for this complex request.
 
 **Agents Deployed:**
@@ -191,11 +205,28 @@ class MockLLMClientGateway(LLMClientGateway):
         intent = "general_conversation"
 
         # Squad - Complex Workflow (check FIRST - most specific multi-step patterns)
-        if any(word in message_lower for word in ["complete defi", "complete yield", "from start to finish", "investment strategy for", "operation from start"]):
+        if any(
+            word in message_lower
+            for word in [
+                "complete defi",
+                "complete yield",
+                "from start to finish",
+                "investment strategy for",
+                "operation from start",
+            ]
+        ):
             intent = "complex_workflow"
 
         # Squad - Specialist Task (check SECOND - specific analysis requests)
-        elif any(word in message_lower for word in ["analyze", "research", "liquidity depth", "yield farming strategies"]):
+        elif any(
+            word in message_lower
+            for word in [
+                "analyze",
+                "research",
+                "liquidity depth",
+                "yield farming strategies",
+            ]
+        ):
             intent = "specialist_task"
 
         # Ultra - Arbitrage
@@ -207,11 +238,17 @@ class MockLLMClientGateway(LLMClientGateway):
             intent = "ultra_flash_loans"
 
         # Ultra - MEV Protection
-        elif any(word in message_lower for word in ["mev", "flashbots", "privately", "avoid mev"]):
+        elif any(
+            word in message_lower
+            for word in ["mev", "flashbots", "privately", "avoid mev"]
+        ):
             intent = "ultra_mev_protection"
 
         # Ultra - Auto Executor
-        elif any(word in message_lower for word in ["bot", "trading bot", "start", "stop", "configure"]):
+        elif any(
+            word in message_lower
+            for word in ["bot", "trading bot", "start", "stop", "configure"]
+        ):
             intent = "ultra_auto_executor"
 
         # Hunter - Risk Signals (specific multi-word)
@@ -219,11 +256,16 @@ class MockLLMClientGateway(LLMClientGateway):
             intent = "hunter_risk_signals"
 
         # Hunter - Trading Signals (specific multi-word)
-        elif any(word in message_lower for word in ["trading signal", "buy", "entry", "exit"]):
+        elif any(
+            word in message_lower for word in ["trading signal", "buy", "entry", "exit"]
+        ):
             intent = "hunter_trading_signals"
 
         # Hunter - Sentiment
-        elif any(word in message_lower for word in ["sentiment", "twitter", "reddit", "social media"]):
+        elif any(
+            word in message_lower
+            for word in ["sentiment", "twitter", "reddit", "social media"]
+        ):
             intent = "hunter_sentiment"
 
         # Hunter - Price Prediction
@@ -231,19 +273,39 @@ class MockLLMClientGateway(LLMClientGateway):
             intent = "hunter_price_prediction"
 
         # Hunter - Patterns
-        elif any(word in message_lower for word in ["pattern", "chart", "technical formation"]):
+        elif any(
+            word in message_lower
+            for word in ["pattern", "chart", "technical formation"]
+        ):
             intent = "hunter_patterns"
 
         # Hunter - Portfolio
-        elif any(word in message_lower for word in ["portfolio", "optimize", "conservative", "aggressive"]):
+        elif any(
+            word in message_lower
+            for word in ["portfolio", "optimize", "conservative", "aggressive"]
+        ):
             intent = "hunter_portfolio"
 
         # Protocol search (GraphRAG)
-        elif any(word in message_lower for word in ["protocol", "aave", "compound", "curve", "lending", "staking", "dex"]):
+        elif any(
+            word in message_lower
+            for word in [
+                "protocol",
+                "aave",
+                "compound",
+                "curve",
+                "lending",
+                "staking",
+                "dex",
+            ]
+        ):
             intent = "protocol_search"
 
         # Risk assessment (GraphRAG) - check AFTER squad to avoid false positives
-        elif any(word in message_lower for word in ["compare security", "audit", "safety", "risk"]):
+        elif any(
+            word in message_lower
+            for word in ["compare security", "audit", "safety", "risk"]
+        ):
             intent = "risk_assessment"
 
         # Map intent to handler and set confidence
@@ -266,13 +328,24 @@ class MockLLMClientGateway(LLMClientGateway):
             "general_conversation": ("general_chat", "General conversation"),
         }
 
-        handler, reasoning = intent_to_handler.get(intent, ("general_chat", "General conversation"))
+        handler, reasoning = intent_to_handler.get(
+            intent, ("general_chat", "General conversation")
+        )
 
         # Set confidence based on intent type and message clarity
         if intent == "general_conversation":
             # High confidence for clear greetings/feature questions
-            greeting_keywords = ["hello", "hi", "hey", "what can you", "what features", "help me"]
-            confidence = 0.95 if any(k in message_lower for k in greeting_keywords) else 0.65
+            greeting_keywords = [
+                "hello",
+                "hi",
+                "hey",
+                "what can you",
+                "what features",
+                "help me",
+            ]
+            confidence = (
+                0.95 if any(k in message_lower for k in greeting_keywords) else 0.65
+            )
         else:
             confidence = 0.92
 
@@ -295,7 +368,9 @@ class MockLLMClientGateway(LLMClientGateway):
         # Simple keyword-based intent detection for testing
         prompt_lower = prompt.lower()
 
-        if any(word in prompt_lower for word in ["protocol", "aave", "compound", "lending"]):
+        if any(
+            word in prompt_lower for word in ["protocol", "aave", "compound", "lending"]
+        ):
             return {
                 "intent": "protocol_search",
                 "confidence": 0.95,
@@ -307,7 +382,9 @@ class MockLLMClientGateway(LLMClientGateway):
                 "confidence": 0.92,
                 "reasoning": "Query asks about risk and security",
             }
-        elif any(word in prompt_lower for word in ["arbitrage", "opportunity", "profit"]):
+        elif any(
+            word in prompt_lower for word in ["arbitrage", "opportunity", "profit"]
+        ):
             return {
                 "intent": "arbitrage_search",
                 "confidence": 0.88,
@@ -461,23 +538,44 @@ class MockLLMClientGateway(LLMClientGateway):
         # ===================================================================
         if not intent:
             # Similar protocols (GraphRAG)
-            if any(word in message_lower for word in ["similar", "like", "alternative to"]):
+            if any(
+                word in message_lower for word in ["similar", "like", "alternative to"]
+            ):
                 intent = "similar_protocols"
 
             # Protocol search (GraphRAG)
-            elif any(word in message_lower for word in ["protocol", "aave", "compound", "curve", "lending", "staking", "dex"]):
+            elif any(
+                word in message_lower
+                for word in [
+                    "protocol",
+                    "aave",
+                    "compound",
+                    "curve",
+                    "lending",
+                    "staking",
+                    "dex",
+                ]
+            ):
                 intent = "protocol_search"
 
             # Risk assessment (GraphRAG)
-            elif any(word in message_lower for word in ["risk", "safe", "security", "audit", "compare security"]):
+            elif any(
+                word in message_lower
+                for word in ["risk", "safe", "security", "audit", "compare security"]
+            ):
                 intent = "risk_assessment"
 
             # Hunter - Sentiment
-            elif any(word in message_lower for word in ["sentiment", "twitter", "reddit", "social media"]):
+            elif any(
+                word in message_lower
+                for word in ["sentiment", "twitter", "reddit", "social media"]
+            ):
                 intent = "hunter_sentiment"
 
             # Hunter - Price Prediction
-            elif any(word in message_lower for word in ["predict", "forecast", "price"]):
+            elif any(
+                word in message_lower for word in ["predict", "forecast", "price"]
+            ):
                 intent = "hunter_price_prediction"
 
             # Hunter - Risk Signals
@@ -485,19 +583,30 @@ class MockLLMClientGateway(LLMClientGateway):
                 intent = "hunter_risk_signals"
 
             # Hunter - Trading Signals
-            elif any(word in message_lower for word in ["trading signal", "buy", "entry", "exit"]):
+            elif any(
+                word in message_lower
+                for word in ["trading signal", "buy", "entry", "exit"]
+            ):
                 intent = "hunter_trading_signals"
 
             # Hunter - Patterns
-            elif any(word in message_lower for word in ["pattern", "chart", "technical formation"]):
+            elif any(
+                word in message_lower
+                for word in ["pattern", "chart", "technical formation"]
+            ):
                 intent = "hunter_patterns"
 
             # Hunter - Portfolio
-            elif any(word in message_lower for word in ["portfolio", "optimize", "conservative", "aggressive"]):
+            elif any(
+                word in message_lower
+                for word in ["portfolio", "optimize", "conservative", "aggressive"]
+            ):
                 intent = "hunter_portfolio"
 
             # Ultra - Arbitrage
-            elif any(word in message_lower for word in ["arbitrage", "arb", "cross-chain"]):
+            elif any(
+                word in message_lower for word in ["arbitrage", "arb", "cross-chain"]
+            ):
                 intent = "ultra_arbitrage"
 
             # Ultra - Flash Loans
@@ -505,19 +614,31 @@ class MockLLMClientGateway(LLMClientGateway):
                 intent = "ultra_flash_loans"
 
             # Ultra - MEV Protection
-            elif any(word in message_lower for word in ["mev", "flashbots", "privately", "avoid mev"]):
+            elif any(
+                word in message_lower
+                for word in ["mev", "flashbots", "privately", "avoid mev"]
+            ):
                 intent = "ultra_mev_protection"
 
             # Ultra - Auto Executor
-            elif any(word in message_lower for word in ["bot", "trading bot", "start", "stop", "configure"]):
+            elif any(
+                word in message_lower
+                for word in ["bot", "trading bot", "start", "stop", "configure"]
+            ):
                 intent = "ultra_auto_executor"
 
             # Squad - Specialist Task
-            elif any(word in message_lower for word in ["analyze", "research", "liquidity", "yield farming"]):
+            elif any(
+                word in message_lower
+                for word in ["analyze", "research", "liquidity", "yield farming"]
+            ):
                 intent = "specialist_task"
 
             # Squad - Complex Workflow
-            elif any(word in message_lower for word in ["complete", "plan", "strategy", "operation from start"]):
+            elif any(
+                word in message_lower
+                for word in ["complete", "plan", "strategy", "operation from start"]
+            ):
                 intent = "complex_workflow"
 
             # Default
@@ -555,7 +676,9 @@ class MockLLMClientGateway(LLMClientGateway):
             "general_conversation": ("general_chat", "General conversation"),
         }
 
-        handler, reasoning = intent_to_handler.get(intent, ("general_chat", "General conversation"))
+        handler, reasoning = intent_to_handler.get(
+            intent, ("general_chat", "General conversation")
+        )
 
         # ===================================================================
         # Entity Extraction for Application Logic
@@ -565,7 +688,12 @@ class MockLLMClientGateway(LLMClientGateway):
         # Extract protocol_name for risk_assessment intents
         if intent == "risk_assessment":
             # Simple entity extraction: look for known protocol names
-            protocol_keywords = {"aave": "Aave", "uniswap": "Uniswap", "curve": "Curve", "compound": "Compound"}
+            protocol_keywords = {
+                "aave": "Aave",
+                "uniswap": "Uniswap",
+                "curve": "Curve",
+                "compound": "Compound",
+            }
             for keyword, protocol_name in protocol_keywords.items():
                 if keyword in message_lower:
                     entities["protocol_name"] = protocol_name
@@ -573,7 +701,13 @@ class MockLLMClientGateway(LLMClientGateway):
 
         # Extract token_symbol for Hunter intents
         if intent and intent.startswith("hunter_"):
-            token_keywords = {"eth": "ETH", "btc": "BTC", "sol": "SOL", "usdc": "USDC", "dai": "DAI"}
+            token_keywords = {
+                "eth": "ETH",
+                "btc": "BTC",
+                "sol": "SOL",
+                "usdc": "USDC",
+                "dai": "DAI",
+            }
             for keyword, token_symbol in token_keywords.items():
                 if keyword in message_lower:
                     entities["token_symbol"] = token_symbol
@@ -582,11 +716,12 @@ class MockLLMClientGateway(LLMClientGateway):
         # Extract capital for Ultra arbitrage intents
         if intent == "ultra_arbitrage":
             import re
+
             # Look for amounts like "$10,000", "$10k", "10000"
-            amount_match = re.search(r'\$?([\d,]+)k?', message_lower)
+            amount_match = re.search(r"\$?([\d,]+)k?", message_lower)
             if amount_match:
-                amount_str = amount_match.group(1).replace(',', '')
-                if 'k' in message_lower:
+                amount_str = amount_match.group(1).replace(",", "")
+                if "k" in message_lower:
                     entities["capital"] = int(amount_str) * 1000
                 else:
                     entities["capital"] = int(amount_str)
@@ -594,7 +729,14 @@ class MockLLMClientGateway(LLMClientGateway):
         # Set confidence based on intent type and message clarity
         if intent == "general_conversation":
             # High confidence for clear greetings/feature questions
-            greeting_keywords = ["hello", "hi", "hey", "what can you", "what features", "help me"]
+            greeting_keywords = [
+                "hello",
+                "hi",
+                "hey",
+                "what can you",
+                "what features",
+                "help me",
+            ]
             if any(keyword in message_lower for keyword in greeting_keywords):
                 confidence = 0.95
             else:
@@ -609,7 +751,7 @@ class MockLLMClientGateway(LLMClientGateway):
             "entities": entities,
             "reasoning": reasoning,
             "handler": handler,  # Handler category for routing
-            "suggested_agent": handler  # Keep for backward compatibility
+            "suggested_agent": handler,  # Keep for backward compatibility
         }
 
         return json.dumps(response)
@@ -654,7 +796,9 @@ class MockLLMGateway(LLMGateway):
 
         # Check if this is an intent classification request (before extraction)
         # Intent classification prompts contain "classify" keyword in the full prompt
-        is_intent_classification = "classify" in user_message.lower() or "intent" in user_message.lower()
+        is_intent_classification = (
+            "classify" in user_message.lower() or "intent" in user_message.lower()
+        )
 
         # Handle templated prompts - extract actual message from template
         message_lower = user_message.lower()
@@ -681,7 +825,9 @@ class MockLLMGateway(LLMGateway):
         tools: Optional[list[dict]] = None,
     ) -> tuple[str, dict]:
         """Generate with usage metadata."""
-        response_text = await self.generate(model, messages, temperature, max_tokens, tools)
+        response_text = await self.generate(
+            model, messages, temperature, max_tokens, tools
+        )
 
         metadata = {
             "tokens_used": len(response_text.split()) * 2,  # Simple approximation
@@ -762,49 +908,104 @@ class MockLLMGateway(LLMGateway):
         # Squad intents must come before general patterns to avoid misclassification
         if not intent:
             # Squad - Complex Workflow (check FIRST - most specific multi-step patterns)
-            if any(word in message_lower for word in ["complete defi", "complete yield", "from start to finish", "investment strategy for", "operation from start"]):
+            if any(
+                word in message_lower
+                for word in [
+                    "complete defi",
+                    "complete yield",
+                    "from start to finish",
+                    "investment strategy for",
+                    "operation from start",
+                ]
+            ):
                 intent = "complex_workflow"
             # Squad - Specialist Task (check SECOND - specific analysis requests)
-            elif any(word in message_lower for word in ["analyze", "research", "liquidity depth", "yield farming strategies"]):
+            elif any(
+                word in message_lower
+                for word in [
+                    "analyze",
+                    "research",
+                    "liquidity depth",
+                    "yield farming strategies",
+                ]
+            ):
                 intent = "specialist_task"
             # Similar protocols (GraphRAG)
-            elif any(word in message_lower for word in ["similar", "like", "alternative to"]):
+            elif any(
+                word in message_lower for word in ["similar", "like", "alternative to"]
+            ):
                 intent = "similar_protocols"
             # Protocol search (GraphRAG)
-            elif any(word in message_lower for word in ["protocol", "aave", "compound", "curve", "lending", "staking", "dex"]):
+            elif any(
+                word in message_lower
+                for word in [
+                    "protocol",
+                    "aave",
+                    "compound",
+                    "curve",
+                    "lending",
+                    "staking",
+                    "dex",
+                ]
+            ):
                 intent = "protocol_search"
             # Risk assessment (GraphRAG) - after squad checks to avoid false positives
-            elif any(word in message_lower for word in ["risk", "safe", "security", "audit", "compare security"]):
+            elif any(
+                word in message_lower
+                for word in ["risk", "safe", "security", "audit", "compare security"]
+            ):
                 intent = "risk_assessment"
             # Hunter - Sentiment
-            elif any(word in message_lower for word in ["sentiment", "twitter", "reddit", "social media"]):
+            elif any(
+                word in message_lower
+                for word in ["sentiment", "twitter", "reddit", "social media"]
+            ):
                 intent = "hunter_sentiment"
             # Hunter - Price Prediction
-            elif any(word in message_lower for word in ["predict", "forecast", "price"]):
+            elif any(
+                word in message_lower for word in ["predict", "forecast", "price"]
+            ):
                 intent = "hunter_price_prediction"
             # Hunter - Risk Signals
             elif any(word in message_lower for word in ["risk signal", "show risk"]):
                 intent = "hunter_risk_signals"
             # Hunter - Trading Signals
-            elif any(word in message_lower for word in ["trading signal", "buy", "entry", "exit"]):
+            elif any(
+                word in message_lower
+                for word in ["trading signal", "buy", "entry", "exit"]
+            ):
                 intent = "hunter_trading_signals"
             # Hunter - Patterns
-            elif any(word in message_lower for word in ["pattern", "chart", "technical formation"]):
+            elif any(
+                word in message_lower
+                for word in ["pattern", "chart", "technical formation"]
+            ):
                 intent = "hunter_patterns"
             # Hunter - Portfolio
-            elif any(word in message_lower for word in ["portfolio", "optimize", "conservative", "aggressive"]):
+            elif any(
+                word in message_lower
+                for word in ["portfolio", "optimize", "conservative", "aggressive"]
+            ):
                 intent = "hunter_portfolio"
             # Ultra - Arbitrage
-            elif any(word in message_lower for word in ["arbitrage", "arb", "cross-chain"]):
+            elif any(
+                word in message_lower for word in ["arbitrage", "arb", "cross-chain"]
+            ):
                 intent = "ultra_arbitrage"
             # Ultra - Flash Loans
             elif any(word in message_lower for word in ["flash loan", "flashloan"]):
                 intent = "ultra_flash_loans"
             # Ultra - MEV Protection
-            elif any(word in message_lower for word in ["mev", "flashbots", "privately", "avoid mev"]):
+            elif any(
+                word in message_lower
+                for word in ["mev", "flashbots", "privately", "avoid mev"]
+            ):
                 intent = "ultra_mev_protection"
             # Ultra - Auto Executor
-            elif any(word in message_lower for word in ["bot", "trading bot", "start", "stop", "configure"]):
+            elif any(
+                word in message_lower
+                for word in ["bot", "trading bot", "start", "stop", "configure"]
+            ):
                 intent = "ultra_auto_executor"
             else:
                 intent = "general_conversation"
@@ -829,12 +1030,23 @@ class MockLLMGateway(LLMGateway):
             "general_conversation": ("general_chat", "General conversation"),
         }
 
-        handler, reasoning = intent_to_handler.get(intent, ("general_chat", "General conversation"))
+        handler, reasoning = intent_to_handler.get(
+            intent, ("general_chat", "General conversation")
+        )
 
         # Set confidence
         if intent == "general_conversation":
-            greeting_keywords = ["hello", "hi", "hey", "what can you", "what features", "help me"]
-            confidence = 0.95 if any(k in message_lower for k in greeting_keywords) else 0.65
+            greeting_keywords = [
+                "hello",
+                "hi",
+                "hey",
+                "what can you",
+                "what features",
+                "help me",
+            ]
+            confidence = (
+                0.95 if any(k in message_lower for k in greeting_keywords) else 0.65
+            )
         else:
             confidence = 0.92
 
@@ -851,7 +1063,10 @@ class MockLLMGateway(LLMGateway):
     def _generate_chat_response(self, message_lower: str) -> str:
         """Generate general chat response based on keywords."""
         # Protocol search responses
-        if any(word in message_lower for word in ["protocol", "aave", "compound", "lending"]):
+        if any(
+            word in message_lower
+            for word in ["protocol", "aave", "compound", "lending"]
+        ):
             return "Here are the top protocols:\n\n1. **Aave V3** - Leading lending protocol\n   - TVL: $12.5B\n   - Risk Score: Low\n\n2. **Compound V3** - Established DeFi protocol\n   - TVL: $8.2B\n   - Risk Score: Low"
 
         # Risk assessment responses
@@ -1108,7 +1323,10 @@ class MockExecuteSupervisorWorkflow:
             "final_response": f"Mock workflow complete for: {complex_task[:50]}...",
             "final_synthesis": f"Comprehensive analysis complete for: {complex_task[:50]}...",
             "total_latency_ms": 220,
-            "agents_used": ["risk_analyzer", "hunter_ai"],  # List of agent names, not integer count
+            "agents_used": [
+                "risk_analyzer",
+                "hunter_ai",
+            ],  # List of agent names, not integer count
             "tokens_used": 330,
             "workflow_type": workflow_type,  # Type of workflow (investment_strategy, yield_farming, etc.)
             "capital": capital,  # Extracted capital amount from task

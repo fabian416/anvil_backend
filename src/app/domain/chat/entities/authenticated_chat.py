@@ -147,8 +147,7 @@ class AuthChatMessage(Entity[UUID]):
         valid_roles = {"user", "assistant"}
         if self.role not in valid_roles:
             raise ValueError(
-                f"Invalid role: {self.role}. "
-                f"Must be one of: {', '.join(valid_roles)}"
+                f"Invalid role: {self.role}. Must be one of: {', '.join(valid_roles)}"
             )
 
     def add_enrichment(self, key: str, value: any) -> None:

@@ -180,9 +180,7 @@ class FlashLoanExecutor:
 
         # Add contract addresses
         contracts = CONTRACT_ADDRESSES.get(self._chain, {})
-        info["contracts"] = {
-            ct.value: addr for ct, addr in contracts.items()
-        }
+        info["contracts"] = {ct.value: addr for ct, addr in contracts.items()}
 
         # Add token addresses
         tokens = TOKEN_ADDRESSES.get(self._chain, {})
@@ -252,9 +250,7 @@ class FlashLoanExecutor:
 
         if protocol == FlashLoanProtocol.AAVE_V3:
             # Query Aave Pool for available liquidity
-            pool_address = get_contract_address(
-                self._chain, ContractType.AAVE_V3_POOL
-            )
+            pool_address = get_contract_address(self._chain, ContractType.AAVE_V3_POOL)
             if pool_address:
                 # Get token balance of pool (simplified)
                 decimals = get_token_decimals(token)
@@ -332,8 +328,11 @@ class FlashLoanExecutor:
         token_address = get_token_address(self._chain, token)
         if not token_address:
             return self._error_result(
-                protocol, token, amount, receiver,
-                f"Token {token} not found on {self._chain}"
+                protocol,
+                token,
+                amount,
+                receiver,
+                f"Token {token} not found on {self._chain}",
             )
 
         # Get contract address
@@ -346,8 +345,11 @@ class FlashLoanExecutor:
 
         if not contract:
             return self._error_result(
-                protocol, token, amount, receiver,
-                f"Protocol {protocol} not available on {self._chain}"
+                protocol,
+                token,
+                amount,
+                receiver,
+                f"Protocol {protocol} not available on {self._chain}",
             )
 
         # Check liquidity
@@ -355,8 +357,11 @@ class FlashLoanExecutor:
             liquidity = await self.get_protocol_liquidity(protocol, token)
             if amount > liquidity.available_liquidity:
                 return self._error_result(
-                    protocol, token, amount, receiver,
-                    f"Insufficient liquidity: {liquidity.available_liquidity} < {amount}"
+                    protocol,
+                    token,
+                    amount,
+                    receiver,
+                    f"Insufficient liquidity: {liquidity.available_liquidity} < {amount}",
                 )
         except Exception as e:
             logger.warning(f"Liquidity check failed: {e}")

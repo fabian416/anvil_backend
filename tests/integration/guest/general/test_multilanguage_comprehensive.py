@@ -54,7 +54,9 @@ async def french_auth_headers(french_test_user):
 
 
 @pytest_asyncio.fixture
-async def french_conversation(authenticated_client: AsyncClient, french_auth_headers: dict):
+async def french_conversation(
+    authenticated_client: AsyncClient, french_auth_headers: dict
+):
     """Create conversation with French language."""
     response = await authenticated_client.post(
         "/api/v1/conversations",

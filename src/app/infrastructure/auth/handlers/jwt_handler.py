@@ -38,12 +38,12 @@ class JwtHandler:
     def create_token(self, user_id: str, email: str, role: str) -> str:
         """
         Create a JWT token.
-        
+
         Args:
             user_id: The user ID
             email: The user email
             role: The user role
-            
+
         Returns:
             The created JWT token
         """
@@ -57,10 +57,10 @@ class JwtHandler:
     def verify_token(self, token: str) -> bool:
         """
         Verify if a JWT token is valid.
-        
+
         Args:
             token: The JWT token to verify
-            
+
         Returns:
             True if valid, False otherwise
         """

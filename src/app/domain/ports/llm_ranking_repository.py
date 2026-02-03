@@ -139,9 +139,7 @@ class LLMRankingRepository(Protocol):
         """
         ...
 
-    async def get_rankings_for_agent(
-        self, agent_type: str
-    ) -> List[ModelRankingData]:
+    async def get_rankings_for_agent(self, agent_type: str) -> List[ModelRankingData]:
         """
         Get current rankings for an agent type.
 
@@ -153,9 +151,7 @@ class LLMRankingRepository(Protocol):
         """
         ...
 
-    async def get_weight_profile(
-        self, agent_type: str
-    ) -> Optional[WeightProfileData]:
+    async def get_weight_profile(self, agent_type: str) -> Optional[WeightProfileData]:
         """
         Get weight profile for agent type.
 

@@ -9,7 +9,7 @@ from app.domain.enums.user_role import UserRole
 
 class UserResponse(BaseModel):
     """Response schema for user data."""
-    
+
     id: str
     email: str
     first_name: str
@@ -18,15 +18,15 @@ class UserResponse(BaseModel):
     is_active: bool
     created_at: str
     updated_at: str
-    
+
     @classmethod
     def from_domain(cls, user: User) -> "UserResponse":
         """
         Create UserResponse from domain User entity.
-        
+
         Args:
             user: The domain user entity
-            
+
         Returns:
             UserResponse instance
         """

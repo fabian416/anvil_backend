@@ -12,16 +12,16 @@ class ListConversations:
     """
     List conversations for a user.
     """
-    
+
     def __init__(self, repository: ConversationRepository):
         """
         Initialize interactor.
-        
+
         Args:
             repository: Conversation repository
         """
         self._repository = repository
-    
+
     async def execute(
         self,
         user_id: int,
@@ -30,12 +30,12 @@ class ListConversations:
     ) -> List[Conversation]:
         """
         Execute the query.
-        
+
         Args:
             user_id: User identifier
             limit: Maximum conversations to return
             offset: Offset for pagination
-        
+
         Returns:
             List of conversation entities
         """
@@ -44,5 +44,5 @@ class ListConversations:
             limit=limit,
             offset=offset,
         )
-        
+
         return conversations

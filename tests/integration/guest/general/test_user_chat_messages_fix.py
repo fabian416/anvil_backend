@@ -29,7 +29,9 @@ from app.run import make_app
 async def client():
     """Create test client."""
     app = make_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
@@ -38,7 +40,7 @@ async def client():
 async def test_user_chat_auto_creates_conversation(client: AsyncClient):
     """
     Test that user chat endpoint auto-creates conversation if missing.
-    
+
     CTO Framework: Verification Phase
     - Verify conversation is created automatically
     - Verify message is saved successfully
@@ -46,30 +48,32 @@ async def test_user_chat_auto_creates_conversation(client: AsyncClient):
     """
     # This test requires authentication, so we'll test the logic indirectly
     # by checking that the endpoint structure is correct
-    
+
     # First, verify guest endpoint works (baseline)
     guest_response = await client.post(
         "/api/v1/guest/chat",
         json={"content": "Hello, what is Bitcoin?", "language": "en"},
         headers={"X-Forwarded-For": "127.0.0.100"},
     )
-    
+
     assert guest_response.status_code == 200
     guest_data = guest_response.json()
-    
+
     print("\n=== Guest Endpoint (Working) ===")
     print(f"Status: {guest_response.status_code}")
     print(f"Conversation ID: {guest_data.get('conversation_id')}")
-    print(f"Agent message length: {len(guest_data.get('agent_message', {}).get('content', ''))}")
+    print(
+        f"Agent message length: {len(guest_data.get('agent_message', {}).get('content', ''))}"
+    )
     print(f"Routing intent: {guest_data.get('routing', {}).get('intent')}")
-    
+
     # Verify guest response has all required fields
     assert "conversation_id" in guest_data
     assert "user_message" in guest_data
     assert "agent_message" in guest_data
     assert "routing" in guest_data
     assert guest_data["agent_message"]["content"], "Agent should return content"
-    
+
     print("\n✓ Guest endpoint working correctly")
     print("\n=== Expected User Endpoint Behavior ===")
     print("User endpoint should:")
@@ -84,7 +88,7 @@ async def test_user_chat_auto_creates_conversation(client: AsyncClient):
 async def test_user_chat_response_structure(client: AsyncClient):
     """
     Test that user chat endpoint returns correct response structure.
-    
+
     CTO Framework: Validation Phase
     - Verify response matches expected format
     - Compare with guest endpoint structure
@@ -95,10 +99,10 @@ async def test_user_chat_response_structure(client: AsyncClient):
         json={"content": "What is the price of ETH?", "language": "en"},
         headers={"X-Forwarded-For": "127.0.0.101"},
     )
-    
+
     assert guest_response.status_code == 200
     guest_data = guest_response.json()
-    
+
     # Expected structure for user endpoint (should match guest)
     expected_keys = [
         "conversation_id",
@@ -106,17 +110,17 @@ async def test_user_chat_response_structure(client: AsyncClient):
         "agent_message",
         "routing",
     ]
-    
+
     print("\n=== Response Structure Verification ===")
     for key in expected_keys:
         assert key in guest_data, f"Guest response missing key: {key}"
         print(f"✓ {key}: present")
-    
+
     # Verify nested structures
     assert "content" in guest_data["user_message"]
     assert "content" in guest_data["agent_message"]
     assert "intent" in guest_data["routing"]
-    
+
     print("\n✓ All required fields present")
     print("\nUser endpoint should return same structure")
 
@@ -126,7 +130,7 @@ async def test_user_chat_response_structure(client: AsyncClient):
 async def test_user_chat_handles_different_intents(client: AsyncClient):
     """
     Test that user chat endpoint handles different intents correctly.
-    
+
     CTO Framework: Quality Assurance Phase
     - Verify intent detection works
     - Verify appropriate handlers are called
@@ -138,7 +142,7 @@ async def test_user_chat_handles_different_intents(client: AsyncClient):
         ("Find arbitrage opportunities", "ultra_arbitrage"),
         ("Show best lending vaults", "lending"),
     ]
-    
+
     print("\n=== Intent Detection Test ===")
     for content, expected_intent in test_cases:
         response = await client.post(
@@ -146,13 +150,13 @@ async def test_user_chat_handles_different_intents(client: AsyncClient):
             json={"content": content, "language": "en"},
             headers={"X-Forwarded-For": f"127.0.0.{hash(content) % 1000}"},
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         detected_intent = data.get("routing", {}).get("intent", "").lower()
-        
+
         # Intent should be detected (may not match exactly due to keyword matching)
         assert detected_intent, f"No intent detected for: {content}"
         print(f"✓ '{content[:30]}...' → {detected_intent}")
-    
+
     print("\nUser endpoint should detect intents the same way")

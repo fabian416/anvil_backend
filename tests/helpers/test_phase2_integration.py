@@ -27,7 +27,9 @@ def test_metadata_extraction():
 
     def sample_test_function(client):
         """Sample test for BTC sentiment."""
-        response = client.post("/api/v1/guest/chat", json={"query": "What's BTC sentiment?"})
+        response = client.post(
+            "/api/v1/guest/chat", json={"query": "What's BTC sentiment?"}
+        )
         assert response.status_code == 200
         content = response.json()["content"]
         assert "sentiment" in content.lower()
@@ -68,7 +70,9 @@ def test_prompt_generation(metadata):
     )
 
     print(f"  ✓ Prompt generated: {len(prompt)} characters")
-    print(f"  ✓ Contains test name: {'test_name' in prompt or metadata.test_name in prompt}")
+    print(
+        f"  ✓ Contains test name: {'test_name' in prompt or metadata.test_name in prompt}"
+    )
     print(f"  ✓ Contains accuracy_score: {'accuracy_score' in prompt}")
     print(f"  ✓ Contains relevance_score: {'relevance_score' in prompt}")
     print(f"  ✓ Contains safety_score: {'safety_score' in prompt}")
@@ -145,7 +149,9 @@ def test_enhanced_dataclasses():
     print(f"  ✓ Overall score: {result.scoring.overall_score}")
     print(f"  ✓ Test category: {result.metadata.test_category}")
     print(f"  ✓ Test type: {result.metadata.test_type}")
-    print(f"  ✓ Improvement suggestions: {len(result.recommendations.improvement_suggestions)}")
+    print(
+        f"  ✓ Improvement suggestions: {len(result.recommendations.improvement_suggestions)}"
+    )
 
     assert result.verdict == ValidationVerdict.PASS
     assert result.scoring.accuracy_score == 0.95
@@ -193,7 +199,9 @@ def test_csv_tracking(validation_result):
         test_type=validation_result.metadata.test_type,
         expected_intents=json.dumps(validation_result.metadata.expected_intents),
         token_usage=validation_result.metadata.token_usage,
-        improvement_suggestions=json.dumps(validation_result.recommendations.improvement_suggestions),
+        improvement_suggestions=json.dumps(
+            validation_result.recommendations.improvement_suggestions
+        ),
         critical_issues=json.dumps(validation_result.recommendations.critical_issues),
         next_steps=json.dumps(validation_result.recommendations.next_steps),
         model_used=validation_result.metadata.model_used,
@@ -267,10 +275,14 @@ def test_backward_compatibility():
 
     compat_csv = Path("tests/output/phase2_test/guest/compat_test.csv")
     print(f"  ✓ Backward compatible CSV exists: {compat_csv.exists()}")
-    print(f"  ✓ No enhanced CSV created: {not Path('tests/output/phase2_test/guest/compat_test_enhanced.csv').exists()}")
+    print(
+        f"  ✓ No enhanced CSV created: {not Path('tests/output/phase2_test/guest/compat_test_enhanced.csv').exists()}"
+    )
 
     assert compat_csv.exists(), "Backward compatible CSV should exist"
-    assert not Path("tests/output/phase2_test/guest/compat_test_enhanced.csv").exists(), "Enhanced CSV should not be created when disabled"
+    assert not Path(
+        "tests/output/phase2_test/guest/compat_test_enhanced.csv"
+    ).exists(), "Enhanced CSV should not be created when disabled"
 
     print("\n✅ Test 5 PASSED: Backward compatibility maintained")
     return True

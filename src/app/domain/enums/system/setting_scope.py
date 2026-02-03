@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class SettingScope(Enum):
     GLOBAL = 0
     SECURITY = 1

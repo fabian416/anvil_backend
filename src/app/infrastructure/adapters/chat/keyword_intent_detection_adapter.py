@@ -115,7 +115,7 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
             Normalized message ready for exact matching
         """
         # Remove punctuation
-        message_no_punct = message.translate(str.maketrans('', '', string.punctuation))
+        message_no_punct = message.translate(str.maketrans("", "", string.punctuation))
 
         # Lowercase
         message_lower = message_no_punct.lower()
@@ -345,21 +345,39 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 ChatIntent(intent_str),
                 0.95,
                 "Exact message match",
-                self._determine_specialist_agent(message) if intent_str == "specialist_task" else None,
+                self._determine_specialist_agent(message)
+                if intent_str == "specialist_task"
+                else None,
             )
 
         # STEP 2: GraphRAG Protocol Exploration (check BEFORE shortcuts)
         # These are exploration/comparison queries, NOT action shortcuts
         protocol_explore_keywords = [
-            "find protocols", "find defi", "list protocols", "show protocols",
-            "search protocols", "discover protocols", "explore protocols",
-            "best protocols", "top protocols", "safest protocols",
-            "compare protocols", "protocol comparison",
-            "protocols on ethereum", "protocols on arbitrum", "protocols on base",
-            "protocols on polygon", "protocols on optimism",
-            "lending protocols", "dex protocols", "staking protocols",
-            "bridge protocols", "yield protocols", "cdp protocols",
-            "low risk protocols", "high tvl protocols",
+            "find protocols",
+            "find defi",
+            "list protocols",
+            "show protocols",
+            "search protocols",
+            "discover protocols",
+            "explore protocols",
+            "best protocols",
+            "top protocols",
+            "safest protocols",
+            "compare protocols",
+            "protocol comparison",
+            "protocols on ethereum",
+            "protocols on arbitrum",
+            "protocols on base",
+            "protocols on polygon",
+            "protocols on optimism",
+            "lending protocols",
+            "dex protocols",
+            "staking protocols",
+            "bridge protocols",
+            "yield protocols",
+            "cdp protocols",
+            "low risk protocols",
+            "high tvl protocols",
         ]
         if any(kw in message for kw in protocol_explore_keywords):
             return (
@@ -368,17 +386,29 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 "Message contains protocol exploration keywords",
                 None,
             )
-        
+
         # Risk Assessment (GraphRAG) - check BEFORE shortcuts
         # Clear security/safety questions about protocols
         risk_assessment_patterns = [
-            "is it safe", "how safe", "safe to use",
-            "what are the risks", "risks of", "risk assessment",
-            "is aave safe", "is uniswap safe", "is compound safe",
-            "is morpho safe", "is curve safe", "is lido safe",
-            "es seguro", "es seguro usar", "seguro de usar",  # Spanish
-            "é seguro", "é seguro usar",  # Portuguese
-            "安全吗", "安全使用",  # Chinese
+            "is it safe",
+            "how safe",
+            "safe to use",
+            "what are the risks",
+            "risks of",
+            "risk assessment",
+            "is aave safe",
+            "is uniswap safe",
+            "is compound safe",
+            "is morpho safe",
+            "is curve safe",
+            "is lido safe",
+            "es seguro",
+            "es seguro usar",
+            "seguro de usar",  # Spanish
+            "é seguro",
+            "é seguro usar",  # Portuguese
+            "安全吗",
+            "安全使用",  # Chinese
         ]
         if any(pattern in message for pattern in risk_assessment_patterns):
             return (
@@ -387,9 +417,9 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 "Message contains risk assessment keywords",
                 None,
             )
-        
+
         # STEP 3: DeFi Shortcuts (user convenience shortcuts for ACTIONS)
-        
+
         # Lending intent (Morpho, Aave supply/deposit)
         if any(
             word in message
@@ -420,7 +450,7 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 "Message contains lending/deposit keywords",
                 None,
             )
-        
+
         # Money Market comparison intent
         if any(
             word in message
@@ -443,7 +473,7 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 "Message contains money market comparison keywords",
                 None,
             )
-        
+
         # MoonPay swap intent (crypto-to-crypto swaps) - Check BEFORE generic swap
         # Detect token pairs for MoonPay supported tokens: BTC, ETH, SOL, USDC
         moonpay_tokens = ["btc", "eth", "sol", "usdc", "bitcoin", "ethereum", "solana"]
@@ -474,16 +504,42 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
 
         # Check for token pair patterns (swap/exchange/convert TOKEN to/for TOKEN)
         # where both tokens are MoonPay supported
-        has_swap_action = any(action in message for action in ["swap", "exchange", "convert", "trade", "cambiar", "trocar", "échanger", "交换", "兑换"])
+        has_swap_action = any(
+            action in message
+            for action in [
+                "swap",
+                "exchange",
+                "convert",
+                "trade",
+                "cambiar",
+                "trocar",
+                "échanger",
+                "交换",
+                "兑换",
+            ]
+        )
         has_moonpay_tokens = sum(1 for token in moonpay_tokens if token in message) >= 2
-        has_direction = any(dir in message for dir in [" to ", " for ", " por ", " para ", " contre ", " a ", "为", "到"])
+        has_direction = any(
+            dir in message
+            for dir in [
+                " to ",
+                " for ",
+                " por ",
+                " para ",
+                " contre ",
+                " a ",
+                "为",
+                "到",
+            ]
+        )
 
         # Also check for implicit swap patterns: "TOKEN to TOKEN AMOUNT" or "AMOUNT TOKEN to TOKEN"
         # Example: "USDC to eth 1", "1 BTC to ETH", "bitcoin to usdc 100"
         if has_moonpay_tokens and has_direction:
             # Check if there's a number (amount) in the message
             import re
-            has_amount = bool(re.search(r'\b\d+\.?\d*\b', message))
+
+            has_amount = bool(re.search(r"\b\d+\.?\d*\b", message))
 
             if has_swap_action or has_amount:
                 return (
@@ -509,7 +565,7 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 "Message contains generic swap/exchange keywords",
                 None,
             )
-        
+
         # Balance intent
         if any(
             word in message
@@ -528,7 +584,7 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 "Message contains balance check keywords",
                 None,
             )
-        
+
         # Portfolio intent
         if any(
             word in message
@@ -547,7 +603,7 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 "Message contains portfolio keywords",
                 None,
             )
-        
+
         # Activity/History intent
         if any(
             word in message
@@ -566,7 +622,7 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 "Message contains activity/history keywords",
                 None,
             )
-        
+
         # Receive intent
         if any(
             word in message
@@ -671,20 +727,36 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         # These are multi-agent workflows that require supervisor coordination
         complex_workflow_keywords = [
             # Multi-step operations
-            "complete defi", "complete yield", "from start to finish",
-            "operation from start", "multi-step", "step by step",
+            "complete defi",
+            "complete yield",
+            "from start to finish",
+            "operation from start",
+            "multi-step",
+            "step by step",
             # Full portfolio operations
-            "full portfolio rebalancing", "portfolio rebalancing with",
-            "create portfolio", "build portfolio", "rebalance my portfolio",
+            "full portfolio rebalancing",
+            "portfolio rebalancing with",
+            "create portfolio",
+            "build portfolio",
+            "rebalance my portfolio",
             # Investment strategies
-            "investment strategy for", "create a complete", "create strategy",
+            "investment strategy for",
+            "create a complete",
+            "create strategy",
             # Analysis workflows
-            "comprehensive analysis", "full analysis", "complete analysis",
+            "comprehensive analysis",
+            "full analysis",
+            "complete analysis",
             # Migration/planning
-            "plan migration", "migration strategy", "migrate my",
+            "plan migration",
+            "migration strategy",
+            "migrate my",
             # Combined operations (multiple agents needed)
-            "with tax optimization", "and risk analysis", "and execution plan",
-            "rebalance my portfolio", "optimize my portfolio",
+            "with tax optimization",
+            "and risk analysis",
+            "and execution plan",
+            "rebalance my portfolio",
+            "optimize my portfolio",
         ]
         if any(kw in message for kw in complex_workflow_keywords):
             return (
@@ -697,28 +769,61 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         # STEP 3: Specialist task patterns (Agent Squad routing)
         specialist_keywords = [
             # Research & Analysis
-            "analyze", "research", "evaluate", "assess", "investigate",
-            "deep dive", "liquidity depth", "yield farming strategies",
+            "analyze",
+            "research",
+            "evaluate",
+            "assess",
+            "investigate",
+            "deep dive",
+            "liquidity depth",
+            "yield farming strategies",
             # Security
-            "smart contract security", "security audit", "vulnerability",
-            "contract audit", "code review", "slither", "audit contract",
+            "smart contract security",
+            "security audit",
+            "vulnerability",
+            "contract audit",
+            "code review",
+            "slither",
+            "audit contract",
             # Gas & Optimization
-            "gas optimization", "optimize gas", "reduce gas", "gas usage",
+            "gas optimization",
+            "optimize gas",
+            "reduce gas",
+            "gas usage",
             # Tax
-            "tax optimization", "capital gains", "tax strategy", "tax report",
+            "tax optimization",
+            "capital gains",
+            "tax strategy",
+            "tax report",
             # Cross-chain
-            "bridge tokens", "cross-chain transfer", "bridging",
+            "bridge tokens",
+            "cross-chain transfer",
+            "bridging",
             # Compliance
-            "compliance check", "aml check", "kyc", "regulatory",
+            "compliance check",
+            "aml check",
+            "kyc",
+            "regulatory",
             # Multi-sig
-            "multisig", "multi-sig", "gnosis safe", "safe wallet",
+            "multisig",
+            "multi-sig",
+            "gnosis safe",
+            "safe wallet",
             # Governance
-            "dao governance", "snapshot vote", "governance proposal",
+            "dao governance",
+            "snapshot vote",
+            "governance proposal",
             # NFT
-            "nft portfolio", "nft management", "opensea",
+            "nft portfolio",
+            "nft management",
+            "opensea",
             # Lending/Borrowing
-            "borrow position", "lending position", "loan position",
-            "check my borrow", "my collateral", "liquidation risk",
+            "borrow position",
+            "lending position",
+            "loan position",
+            "check my borrow",
+            "my collateral",
+            "liquidation risk",
         ]
         if any(kw in message for kw in specialist_keywords):
             suggested_agent = self._determine_specialist_agent(message)
@@ -740,7 +845,8 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
 
         # STEP 5: Hunter - Sentiment (very specific patterns)
         if any(
-            word in message for word in ["sentiment", "twitter", "reddit", "social media"]
+            word in message
+            for word in ["sentiment", "twitter", "reddit", "social media"]
         ):
             return (
                 ChatIntent.HUNTER_SENTIMENT,
@@ -822,7 +928,15 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         # Use more specific patterns to avoid matching "low risk" in protocol searches
         if any(
             word in message
-            for word in ["is it safe", "how safe", "safe to use", "risks?", "risk of", "compare security", "audit"]
+            for word in [
+                "is it safe",
+                "how safe",
+                "safe to use",
+                "risks?",
+                "risk of",
+                "compare security",
+                "audit",
+            ]
         ) or ("safe" in message and "?" in message):
             return (
                 ChatIntent.RISK_ASSESSMENT,
@@ -842,7 +956,8 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
 
         # STEP 13: Hunter - Trading Signals
         if any(
-            word in message for word in ["trading signal", "buy", "entry", "exit", "sell"]
+            word in message
+            for word in ["trading signal", "buy", "entry", "exit", "sell"]
         ):
             return (
                 ChatIntent.HUNTER_TRADING_SIGNALS,
@@ -852,9 +967,7 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
             )
 
         # STEP 14: Hunter - Patterns
-        if any(
-            word in message for word in ["pattern", "chart", "technical formation"]
-        ):
+        if any(word in message for word in ["pattern", "chart", "technical formation"]):
             return (
                 ChatIntent.HUNTER_PATTERNS,
                 0.88,
@@ -876,12 +989,28 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
 
         # STEP 16: Ultra - Auto Executor
         auto_executor_keywords = [
-            "trading bot", "auto executor", "auto-executor", "autoexecutor",
-            "automated trading", "auto trading", "auto trade",
-            "dca", "dollar cost", "limit order", "stop loss", "stop-loss",
-            "take profit", "take-profit", "trailing stop",
-            "bot status", "start bot", "stop bot", "pause bot",
-            "configure bot", "trading strategy", "auto strategy",
+            "trading bot",
+            "auto executor",
+            "auto-executor",
+            "autoexecutor",
+            "automated trading",
+            "auto trading",
+            "auto trade",
+            "dca",
+            "dollar cost",
+            "limit order",
+            "stop loss",
+            "stop-loss",
+            "take profit",
+            "take-profit",
+            "trailing stop",
+            "bot status",
+            "start bot",
+            "stop bot",
+            "pause bot",
+            "configure bot",
+            "trading strategy",
+            "auto strategy",
         ]
         if any(kw in message for kw in auto_executor_keywords):
             return (
@@ -890,10 +1019,11 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 "Message contains auto executor keywords",
                 None,
             )
-        
+
         # Also check for "bot" with trading context
         if "bot" in message and any(
-            ctx in message for ctx in ["trading", "trade", "executor", "auto", "strategy"]
+            ctx in message
+            for ctx in ["trading", "trade", "executor", "auto", "strategy"]
         ):
             return (
                 ChatIntent.ULTRA_AUTO_EXECUTOR,
@@ -906,7 +1036,14 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         # High confidence for clear greetings
         if any(
             word in message
-            for word in ["hello", "hi", "hey", "what can you", "what features", "help me"]
+            for word in [
+                "hello",
+                "hi",
+                "hey",
+                "what can you",
+                "what features",
+                "help me",
+            ]
         ):
             return (
                 ChatIntent.GENERAL_CONVERSATION,
@@ -925,66 +1062,95 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
     def _determine_specialist_agent(self, message: str) -> str:
         """Determine which specialist agent to use based on message content."""
         # Security Auditor
-        if any(kw in message for kw in [
-            "security", "audit", "vulnerability", "slither", 
-            "contract audit", "code review", "smart contract security"
-        ]):
+        if any(
+            kw in message
+            for kw in [
+                "security",
+                "audit",
+                "vulnerability",
+                "slither",
+                "contract audit",
+                "code review",
+                "smart contract security",
+            ]
+        ):
             return "security_auditor"
         # Gas Optimizer
-        elif any(kw in message for kw in [
-            "gas", "fees", "optimize gas", "reduce gas", "gas usage"
-        ]):
+        elif any(
+            kw in message
+            for kw in ["gas", "fees", "optimize gas", "reduce gas", "gas usage"]
+        ):
             return "gas_optimizer"
         # Tax Optimizer
-        elif any(kw in message for kw in [
-            "tax", "capital gains", "tax strategy", "tax report", "tax optimization"
-        ]):
+        elif any(
+            kw in message
+            for kw in [
+                "tax",
+                "capital gains",
+                "tax strategy",
+                "tax report",
+                "tax optimization",
+            ]
+        ):
             return "tax_optimizer"
         # Bridge/Cross-chain
-        elif any(kw in message for kw in [
-            "bridge", "cross-chain", "bridging", "axelar", "layerzero"
-        ]):
+        elif any(
+            kw in message
+            for kw in ["bridge", "cross-chain", "bridging", "axelar", "layerzero"]
+        ):
             return "bridge_crosschain"
         # Compliance Monitor
-        elif any(kw in message for kw in [
-            "compliance", "aml", "kyc", "regulatory", "chainalysis"
-        ]):
+        elif any(
+            kw in message
+            for kw in ["compliance", "aml", "kyc", "regulatory", "chainalysis"]
+        ):
             return "compliance_monitor"
         # Multi-sig Coordinator
-        elif any(kw in message for kw in [
-            "multisig", "multi-sig", "gnosis", "safe wallet", "treasury"
-        ]):
+        elif any(
+            kw in message
+            for kw in ["multisig", "multi-sig", "gnosis", "safe wallet", "treasury"]
+        ):
             return "multisig_coordinator"
         # DAO Governance
-        elif any(kw in message for kw in [
-            "dao", "governance", "snapshot", "vote", "proposal"
-        ]):
+        elif any(
+            kw in message
+            for kw in ["dao", "governance", "snapshot", "vote", "proposal"]
+        ):
             return "dao_governance"
         # NFT Asset Manager
-        elif any(kw in message for kw in [
-            "nft", "opensea", "nft portfolio", "collectibles"
-        ]):
+        elif any(
+            kw in message for kw in ["nft", "opensea", "nft portfolio", "collectibles"]
+        ):
             return "nft_asset_manager"
             # Lending/Borrowing
-        elif any(kw in message for kw in [
-            "borrow", "leverage", "collateral", "liquidation",
-            "borrow position", "lending position", "loan position"
-        ]):
+        elif any(
+            kw in message
+            for kw in [
+                "borrow",
+                "leverage",
+                "collateral",
+                "liquidation",
+                "borrow position",
+                "lending position",
+                "loan position",
+            ]
+        ):
             return "lending_borrowing"
         # DeFi Yield
-        elif any(kw in message for kw in [
-            "yield", "apy", "earn", "farming", "staking"
-        ]):
+        elif any(
+            kw in message for kw in ["yield", "apy", "earn", "farming", "staking"]
+        ):
             return "defi_yield"
         # Portfolio Agent
-        elif any(kw in message for kw in [
-            "portfolio", "allocation", "rebalance", "diversify"
-        ]):
+        elif any(
+            kw in message
+            for kw in ["portfolio", "allocation", "rebalance", "diversify"]
+        ):
             return "portfolio"
         # Risk Analyzer
-        elif any(kw in message for kw in [
-            "risk", "exposure", "volatility", "drawdown"
-        ]):
+        elif any(
+            kw in message for kw in ["risk", "exposure", "volatility", "drawdown"]
+        ):
             return "risk_analyzer"
         # Research (default specialist)
         else:
@@ -1030,7 +1196,9 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
                 "wrapped bitcoin": "WBTC",
             }
             # Check aliases (longer names first to avoid partial matches)
-            for alias, symbol in sorted(token_aliases.items(), key=lambda x: -len(x[0])):
+            for alias, symbol in sorted(
+                token_aliases.items(), key=lambda x: -len(x[0])
+            ):
                 if alias in message_lower:
                     entities["token_symbol"] = symbol
                     break
@@ -1038,7 +1206,9 @@ class KeywordIntentDetectionAdapter(IntentDetectionPort):
         # Capital extraction for Ultra intents
         if intent.value.startswith("ultra_"):
             # Look for dollar amounts
-            amount_match = re.search(r"\$?\s*(\d{1,3}(?:,\d{3})*|\d+)\s*k?", message_lower)
+            amount_match = re.search(
+                r"\$?\s*(\d{1,3}(?:,\d{3})*|\d+)\s*k?", message_lower
+            )
             if amount_match:
                 amount_str = amount_match.group(1).replace(",", "")
                 try:

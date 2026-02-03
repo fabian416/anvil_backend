@@ -70,7 +70,14 @@ class SupplyCommand:
             raise ValueError("Morpho protocol requires vault_address")
 
         # Validate chain
-        supported_chains = {"ethereum", "base", "arbitrum", "polygon", "optimism", "avalanche"}
+        supported_chains = {
+            "ethereum",
+            "base",
+            "arbitrum",
+            "polygon",
+            "optimism",
+            "avalanche",
+        }
         if self.chain.lower() not in supported_chains:
             raise ValueError(
                 f"Unsupported chain: {self.chain}. Supported: {supported_chains}"

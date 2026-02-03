@@ -149,7 +149,9 @@ class IntentOrchestrator:
         elif multi_intent.orchestration_strategy == OrchestrationStrategy.CONDITIONAL:
             intent_results = await self._execute_conditional(multi_intent, context)
         else:
-            raise ValueError(f"Unknown orchestration strategy: {multi_intent.orchestration_strategy}")
+            raise ValueError(
+                f"Unknown orchestration strategy: {multi_intent.orchestration_strategy}"
+            )
 
         total_time = (time.time() - start_time) * 1000
 
@@ -234,7 +236,9 @@ class IntentOrchestrator:
             List of intent execution results in execution order
         """
         execution_order = multi_intent.get_execution_order()
-        logger.info(f"🔗 Executing {len(multi_intent.intents)} intents in {len(execution_order)} batches")
+        logger.info(
+            f"🔗 Executing {len(multi_intent.intents)} intents in {len(execution_order)} batches"
+        )
 
         all_results = [None] * len(multi_intent.intents)  # Track by index
         current_context = context.copy()
@@ -297,7 +301,9 @@ class IntentOrchestrator:
 
         # Execute first intent (condition)
         condition_intent = multi_intent.intents[0]
-        condition_result = await self._execute_single_intent(condition_intent, context.copy())
+        condition_result = await self._execute_single_intent(
+            condition_intent, context.copy()
+        )
         results.append(condition_result)
 
         # Evaluate condition
@@ -359,7 +365,9 @@ class IntentOrchestrator:
         start_time = time.time()
 
         try:
-            logger.debug(f"  Executing intent: {intent.intent.value} (confidence: {intent.confidence:.2f})")
+            logger.debug(
+                f"  Executing intent: {intent.intent.value} (confidence: {intent.confidence:.2f})"
+            )
 
             # Get handler from registry (placeholder for now)
             # In actual implementation, this would look up and invoke the real handler

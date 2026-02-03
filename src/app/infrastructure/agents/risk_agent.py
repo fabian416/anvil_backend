@@ -3,12 +3,10 @@ from app.infrastructure.agents.base import AnvilAgent
 # from libs.competitive_programmer_handbook_python.src.algorithms.graph import bellman_ford, Graph
 # from libs.competitive_programmer_handbook_python.src.algorithms.geometry import convex_hull, Point
 
+
 class RiskAgent(AnvilAgent):
     def __init__(self):
-        super().__init__(
-            name="RiskAgent",
-            model_id="claude-3-sonnet"
-        )
+        super().__init__(name="RiskAgent", model_id="claude-3-sonnet")
 
     def analyze_portfolio_risk(self, positions: list):
         # Example usage of Convex Hull to visualize risk diversification

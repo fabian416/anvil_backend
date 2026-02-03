@@ -4,7 +4,10 @@ from fastapi import APIRouter, Security, status
 from fastapi_error_map import ErrorAwareRouter, rule
 
 from app.application.common.exceptions.authorization import AuthorizationError
-from app.infrastructure.auth.handlers.verify_email import VerifyEmailHandler, VerifyEmailRequest
+from app.infrastructure.auth.handlers.verify_email import (
+    VerifyEmailHandler,
+    VerifyEmailRequest,
+)
 from app.infrastructure.auth.handlers.send_email_verification import (
     SendEmailVerificationHandler,
     SendEmailVerificationRequest,
@@ -64,5 +67,3 @@ def create_email_verification_router() -> APIRouter:
         return {"status": "success", "message": "Verification email enqueued"}
 
     return router
-
-

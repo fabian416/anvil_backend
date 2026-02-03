@@ -12,6 +12,7 @@ Features:
 - Hunter AI performance metrics
 - Rate limiting violation tracking
 """
+
 import logging
 from datetime import datetime, UTC
 from typing import Any, Dict, Optional
@@ -109,9 +110,7 @@ class CloudWatchMetrics:
         """
         dimensions = {"Intent": intent, "Cached": str(cached)}
 
-        self.put_metric(
-            "ResponseTime", duration_ms, "Milliseconds", dimensions
-        )
+        self.put_metric("ResponseTime", duration_ms, "Milliseconds", dimensions)
 
         # Also track overall response time
         self.put_metric("ResponseTimeOverall", duration_ms, "Milliseconds")
@@ -147,9 +146,7 @@ class CloudWatchMetrics:
 
     # Error Metrics
 
-    def track_error(
-        self, error_type: str, intent: Optional[str] = None
-    ) -> None:
+    def track_error(self, error_type: str, intent: Optional[str] = None) -> None:
         """Track application errors.
 
         Args:
@@ -165,9 +162,7 @@ class CloudWatchMetrics:
         # Track overall error count
         self.put_metric("ErrorsOverall", 1.0, "Count")
 
-    def track_hunter_ai_error(
-        self, intent: str, error_type: str, token: str
-    ) -> None:
+    def track_hunter_ai_error(self, intent: str, error_type: str, token: str) -> None:
         """Track Hunter AI specific errors.
 
         Args:
@@ -242,9 +237,7 @@ class CloudWatchMetrics:
         """
         dimensions = {"Table": table, "Operation": operation}
 
-        self.put_metric(
-            "DatabaseQueryTime", duration_ms, "Milliseconds", dimensions
-        )
+        self.put_metric("DatabaseQueryTime", duration_ms, "Milliseconds", dimensions)
 
     def track_database_connection_error(self) -> None:
         """Track database connection errors."""
@@ -331,6 +324,7 @@ def get_metrics() -> CloudWatchMetrics:
 
 
 # Convenience functions that use the global instance
+
 
 def track_response_time(intent: str, duration_ms: float, cached: bool = False) -> None:
     """Track response time (uses global metrics instance)."""

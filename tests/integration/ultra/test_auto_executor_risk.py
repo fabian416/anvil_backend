@@ -3,7 +3,11 @@
 import pytest
 from decimal import Decimal
 
-from app.application.ultra.auto_executor import AutoExecutor, AutoExecutorConfig, AutoExecutorStatus
+from app.application.ultra.auto_executor import (
+    AutoExecutor,
+    AutoExecutorConfig,
+    AutoExecutorStatus,
+)
 from app.application.ultra.risk_manager import RiskManager, RiskProfile
 
 

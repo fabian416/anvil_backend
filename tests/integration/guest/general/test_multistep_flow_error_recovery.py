@@ -18,7 +18,12 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Requires proper LLM mock for multi-step flows"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.multi_step_flows]
+pytestmark = [
+    pytest.mark.skip(reason="Requires proper LLM mock for multi-step flows"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.multi_step_flows,
+]
 
 
 class TestMultiStepFlowErrorRecovery:
@@ -36,8 +41,8 @@ class TestMultiStepFlowErrorRecovery:
             "/api/v1/guest/chat",
             json={
                 "content": "Send 999999999 ETH to invalid_address_xyz123",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -62,8 +67,8 @@ class TestMultiStepFlowErrorRecovery:
             "/api/v1/guest/chat",
             json={
                 "content": "Check my balance, then send 1000 ETH (which I don't have)",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -88,9 +93,9 @@ class TestMultiStepFlowErrorRecovery:
             "/api/v1/guest/chat",
             json={
                 "content": "Show me Bitcoin price and also tell me my portfolio balance "
-                          "(but I don't have an account)",
-                "language": "en"
-            }
+                "(but I don't have an account)",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -101,7 +106,9 @@ class TestMultiStepFlowErrorRecovery:
 
         # Should provide Bitcoin price even if portfolio balance unavailable
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 50, "Should provide partial results with explanation"
+        assert len(agent_response) > 50, (
+            "Should provide partial results with explanation"
+        )
 
     @pytest.mark.llm_validation
     async def test_retry_failed_flow_step(self, client: AsyncClient, llm_validator):
@@ -115,8 +122,8 @@ class TestMultiStepFlowErrorRecovery:
             "/api/v1/guest/chat",
             json={
                 "content": "Get the latest Ethereum price from multiple sources and compare",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK

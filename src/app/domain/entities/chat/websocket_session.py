@@ -194,11 +194,15 @@ class WebSocketSession:
             "id": str(self.id),
             "session_id": self.session_id,
             "user_id": str(self.user_id),
-            "conversation_id": str(self.conversation_id) if self.conversation_id else None,
+            "conversation_id": str(self.conversation_id)
+            if self.conversation_id
+            else None,
             "connection_state": self.connection_state.value,
             "connected_at": self.connected_at.isoformat(),
             "last_activity": self.last_activity.isoformat(),
-            "disconnected_at": self.disconnected_at.isoformat() if self.disconnected_at else None,
+            "disconnected_at": self.disconnected_at.isoformat()
+            if self.disconnected_at
+            else None,
             "metadata": self.metadata,
             "duration_seconds": self.get_duration().total_seconds(),
             "idle_seconds": self.get_idle_time().total_seconds(),

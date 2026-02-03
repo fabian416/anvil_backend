@@ -83,7 +83,9 @@ class TestUserListingPagination:
         WHEN admin requests users with pagination params
         THEN system SHALL return paginated results
         """
-        response = await client.get("/api/v1/admin/users/", params={"limit": 10, "offset": 0})
+        response = await client.get(
+            "/api/v1/admin/users/", params={"limit": 10, "offset": 0}
+        )
 
         assert response.status_code in (200, 401, 403)
 

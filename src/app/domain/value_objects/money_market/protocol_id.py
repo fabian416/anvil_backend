@@ -32,8 +32,7 @@ class ProtocolId(ValueObject[str]):
         valid_protocols = ("aave_v3", "compound_v3")
         if self.value not in valid_protocols:
             raise DomainFieldError(
-                f"Invalid protocol: {self.value}. "
-                f"Must be one of {valid_protocols}."
+                f"Invalid protocol: {self.value}. Must be one of {valid_protocols}."
             )
 
     @property

@@ -96,13 +96,13 @@ class MorphoClient:
     - Morpho Blue market data
     - User position tracking
     - Real-time APY data
-    
+
     Example:
         client = MorphoClient()
-        
+
         # Get Base USDC vaults
         vaults = await client.get_vaults(chain_id=8453, asset_address=BASE_USDC_ADDRESS)
-        
+
         # Get whitelisted vaults only
         vaults = await client.get_vaults(chain_id=8453, whitelisted=True)
     """
@@ -153,7 +153,7 @@ class MorphoClient:
 
         Returns:
             List of vault data with APY
-        
+
         Example:
             # Get Base USDC vaults (whitelisted only)
             vaults = await client.get_vaults(
@@ -169,11 +169,12 @@ class MorphoClient:
             where_parts.append(f'assetAddress_in: ["{asset_address.lower()}"]')
         if whitelisted is not None:
             where_parts.append(f"whitelisted: {str(whitelisted).lower()}")
-        
+
         where_clause = ", ".join(where_parts)
 
         # Use vaultByAddress query shape from Morpho docs
-        query = """
+        query = (
+            """
         query GetVaults($first: Int!) {
             vaults(
                 first: $first,
@@ -206,7 +207,9 @@ class MorphoClient:
                 }
             }
         }
-        """ % where_clause
+        """
+            % where_clause
+        )
 
         try:
             response = await self._client.post(
@@ -219,7 +222,9 @@ class MorphoClient:
             if "errors" in data:
                 logger.error(f"GraphQL errors: {data['errors']}")
                 # Try alternative query format (vaultV2s)
-                return await self._get_vaults_v2(chain_id, asset_address, whitelisted, first)
+                return await self._get_vaults_v2(
+                    chain_id, asset_address, whitelisted, first
+                )
 
             items = data.get("data", {}).get("vaults", {}).get("items", [])
             return [self._parse_vault(v, chain_id) for v in items]
@@ -227,7 +232,9 @@ class MorphoClient:
         except Exception as e:
             logger.error(f"Error fetching Morpho vaults: {e}")
             # Try fallback query
-            return await self._get_vaults_v2(chain_id, asset_address, whitelisted, first)
+            return await self._get_vaults_v2(
+                chain_id, asset_address, whitelisted, first
+            )
 
     async def _get_vaults_v2(
         self,
@@ -238,7 +245,7 @@ class MorphoClient:
     ) -> list[MorphoVaultData]:
         """
         Fallback: Get vaults using vaultV2s query.
-        
+
         This matches the CEO's recommended query format.
         """
         # Build where clause
@@ -247,10 +254,11 @@ class MorphoClient:
             where_parts.append(f'assetAddress_in: ["{asset_address.lower()}"]')
         if whitelisted is not None:
             where_parts.append(f"whitelisted: {str(whitelisted).lower()}")
-        
+
         where_clause = ", ".join(where_parts)
 
-        query = """
+        query = (
+            """
         query GetVaultsV2($first: Int!) {
             vaultV2s(
                 first: $first,
@@ -281,7 +289,9 @@ class MorphoClient:
                 }
             }
         }
-        """ % where_clause
+        """
+            % where_clause
+        )
 
         try:
             response = await self._client.post(
@@ -530,7 +540,7 @@ class MorphoClient:
             APY data dictionary
         """
         vault = await self.get_vault(vault_address, chain_id)
-        
+
         if vault:
             return {
                 "base_apy": vault.net_apy,
@@ -546,7 +556,7 @@ class MorphoClient:
             "reward_apy": "0",
             "fee": "0",
         }
-    
+
     async def get_base_usdc_vaults(
         self,
         whitelisted: bool = True,
@@ -561,11 +571,11 @@ class MorphoClient:
 
         Returns:
             List of Base USDC vault data sorted by APY
-        
+
         Example:
             # Get whitelisted Base USDC vaults
             vaults = await client.get_base_usdc_vaults()
-            
+
             # Show to user:
             # "Which vault do you want: Highest yield, Lowest risk, or Recommended?"
         """
@@ -575,7 +585,7 @@ class MorphoClient:
             whitelisted=whitelisted,
             first=first,
         )
-        
+
         # Sort by APY descending
         return sorted(
             vaults,
@@ -588,7 +598,7 @@ class MorphoClient:
         asset = raw.get("asset", {})
         state = raw.get("state", {})
         chain = raw.get("chain", {})
-        
+
         return MorphoVaultData(
             id=raw.get("address", ""),
             name=raw.get("name", "Unknown"),
@@ -607,14 +617,14 @@ class MorphoClient:
             net_apy=str(state.get("netApy", "0")),
             daily_apy=str(state.get("dailyApy", "0")),
         )
-    
+
     def _parse_vault_v2(self, raw: dict, chain_id: int = 1) -> MorphoVaultData:
         """Parse raw vault data from V2 query."""
         asset = raw.get("asset", {})
         state = raw.get("state", {})
         metadata = raw.get("metadata", {})
         curators = metadata.get("curators", [])
-        
+
         return MorphoVaultData(
             id=raw.get("address", ""),
             name=raw.get("name", "Unknown"),
@@ -640,7 +650,7 @@ class MorphoClient:
         loan = raw.get("loanAsset", {})
         state = raw.get("state", {})
         oracle = raw.get("oracle", {})
-        
+
         return MorphoMarketData(
             id=raw.get("uniqueKey", ""),
             collateral_address=collateral.get("address", ""),
@@ -661,7 +671,7 @@ class MorphoClient:
         """Parse raw position data from Morpho API."""
         vault = raw.get("vault", {})
         asset = vault.get("asset", {})
-        
+
         return MorphoPositionData(
             vault_id=vault.get("address", ""),
             vault_name=vault.get("name", "Unknown"),

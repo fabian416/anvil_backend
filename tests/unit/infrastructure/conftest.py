@@ -21,4 +21,3 @@ def test_db_engine():
 async def cleanup_database(test_db_engine):
     """Stub: No database cleanup needed for unit tests."""
     yield
-

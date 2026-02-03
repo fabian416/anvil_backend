@@ -100,8 +100,7 @@ class ActivityHandler:
             # Calculate totals
             total_count = len(transactions)
             gas_spent_usd = sum(
-                float(tx.fee_usd) if tx.fee_usd else 0.0
-                for tx in transactions
+                float(tx.fee_usd) if tx.fee_usd else 0.0 for tx in transactions
             )
 
             # Format transactions
@@ -117,7 +116,7 @@ class ActivityHandler:
             )
 
             latency_ms = int((time.time() - start_time) * 1000)
-            
+
             # Set pending_action if no transactions found
             pending_action = None
             if not tx_list:
@@ -152,7 +151,9 @@ class ActivityHandler:
         # Get explorer URL
         chain_name = tx.chain.value if hasattr(tx.chain, "value") else str(tx.chain)
         explorer_base = self.EXPLORER_URLS.get(chain_name.lower(), "")
-        explorer_url = f"{explorer_base}{tx.tx_hash}" if tx.tx_hash and explorer_base else None
+        explorer_url = (
+            f"{explorer_base}{tx.tx_hash}" if tx.tx_hash and explorer_base else None
+        )
 
         # Format type
         tx_type = tx.type.value if hasattr(tx.type, "value") else str(tx.type)
@@ -161,7 +162,9 @@ class ActivityHandler:
         status = tx.status.value if hasattr(tx.status, "value") else str(tx.status)
 
         # Format time ago
-        time_ago = self._format_time_ago(tx.created_at.value if hasattr(tx.created_at, "value") else tx.created_at)
+        time_ago = self._format_time_ago(
+            tx.created_at.value if hasattr(tx.created_at, "value") else tx.created_at
+        )
 
         return {
             "id": tx.id_.value if hasattr(tx.id_, "value") else tx.id_,
@@ -177,7 +180,11 @@ class ActivityHandler:
             "fee_usd": float(tx.fee_usd) if tx.fee_usd else None,
             "explorer_url": explorer_url,
             "time_ago": time_ago,
-            "created_at": str(tx.created_at.value if hasattr(tx.created_at, "value") else tx.created_at),
+            "created_at": str(
+                tx.created_at.value
+                if hasattr(tx.created_at, "value")
+                else tx.created_at
+            ),
         }
 
     def _format_time_ago(self, created_at: datetime) -> str:
@@ -247,10 +254,10 @@ class ActivityHandler:
                 "question": "您想要详细报告还是特定交易的详细信息？",
             },
         }
-        
+
         msgs = activity_msgs.get(language, activity_msgs["en"])
         chain_filter = f" on {chain.upper()}" if chain else ""
-        
+
         response = f"""📜 **{msgs["title"]}{chain_filter}**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -262,7 +269,13 @@ class ActivityHandler:
         for i, tx in enumerate(transactions[:10], 1):
             tx_type = tx.get("type", "unknown").upper()
             time_ago = tx.get("time_ago", "")
-            status_emoji = "✅" if tx.get("status") == "success" else "⏳" if tx.get("status") == "pending" else "❌"
+            status_emoji = (
+                "✅"
+                if tx.get("status") == "success"
+                else "⏳"
+                if tx.get("status") == "pending"
+                else "❌"
+            )
 
             response += f"**{i}. {tx_type}** - {time_ago} {status_emoji}\n"
 
@@ -273,7 +286,9 @@ class ActivityHandler:
                     response += f" → {tx['amount_out']:.4f} {tx['asset_out']}"
                 response += "\n"
             elif tx.get("to_address"):
-                response += f"   • To: {tx['to_address'][:10]}...{tx['to_address'][-6:]}\n"
+                response += (
+                    f"   • To: {tx['to_address'][:10]}...{tx['to_address'][-6:]}\n"
+                )
 
             # Show chain
             response += f"   • Chain: {tx.get('chain', 'unknown').capitalize()}\n"
@@ -289,7 +304,9 @@ class ActivityHandler:
 """
         return response
 
-    def _format_no_activity_response(self, chain: Optional[str], language: str = "en") -> str:
+    def _format_no_activity_response(
+        self, chain: Optional[str], language: str = "en"
+    ) -> str:
         """Format response when no activity found with improved formatting."""
         no_activity_msgs = {
             "en": {
@@ -299,28 +316,44 @@ class ActivityHandler:
                 "options": [
                     ("📥", "Receive funds", "Get your deposit address to start"),
                     ("🔄", "Make a swap", "Exchange tokens via DEX aggregators"),
-                    ("💎", "Earn yield", "Deposit into DeFi protocols for yield")
-                ]
+                    ("💎", "Earn yield", "Deposit into DeFi protocols for yield"),
+                ],
             },
             "es": {
                 "title": "Sin Actividad Reciente",
                 "message": "Aún no tienes transacciones registradas.",
                 "header": "Para comenzar:",
                 "options": [
-                    ("📥", "Recibir fondos", "Obtén tu dirección de depósito para comenzar"),
+                    (
+                        "📥",
+                        "Recibir fondos",
+                        "Obtén tu dirección de depósito para comenzar",
+                    ),
                     ("🔄", "Hacer un swap", "Intercambia tokens vía agregadores DEX"),
-                    ("💎", "Ganar rendimiento", "Deposita en protocolos DeFi para obtener rendimiento")
-                ]
+                    (
+                        "💎",
+                        "Ganar rendimiento",
+                        "Deposita en protocolos DeFi para obtener rendimiento",
+                    ),
+                ],
             },
             "pt": {
                 "title": "Sem Atividade Recente",
                 "message": "Você ainda não tem transações registradas.",
                 "header": "Para começar:",
                 "options": [
-                    ("📥", "Receber fundos", "Obtenha seu endereço de depósito para começar"),
+                    (
+                        "📥",
+                        "Receber fundos",
+                        "Obtenha seu endereço de depósito para começar",
+                    ),
                     ("🔄", "Fazer um swap", "Troque tokens via agregadores DEX"),
-                    ("💎", "Ganhar rendimento", "Deposite em protocolos DeFi para obter rendimento")
-                ]
+                    (
+                        "💎",
+                        "Ganhar rendimento",
+                        "Deposite em protocolos DeFi para obter rendimento",
+                    ),
+                ],
             },
             "zh": {
                 "title": "无最近活动",
@@ -329,18 +362,18 @@ class ActivityHandler:
                 "options": [
                     ("📥", "接收资金", "获取您的存款地址以开始"),
                     ("🔄", "进行交换", "通过 DEX 聚合器交换代币"),
-                    ("💎", "赚取收益", "存入 DeFi 协议以获得收益")
-                ]
+                    ("💎", "赚取收益", "存入 DeFi 协议以获得收益"),
+                ],
             },
         }
-        
+
         msgs = no_activity_msgs.get(language, no_activity_msgs["en"])
         chain_text = f" on {chain.upper()}" if chain else ""
         options_text = "\n".join([
-            f"**{i}.** {emoji} **{title}**\n   {details}" 
+            f"**{i}.** {emoji} **{title}**\n   {details}"
             for i, (emoji, title, details) in enumerate(msgs["options"], 1)
         ])
-        
+
         return f"""📜 **{msgs["title"]}{chain_text}**
 
 {msgs["message"]}

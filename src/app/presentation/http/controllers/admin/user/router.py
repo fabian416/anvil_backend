@@ -12,7 +12,9 @@ from app.presentation.http.controllers.admin.user.deactivate_user import (
 from app.presentation.http.controllers.admin.user.grant_admin import (
     create_grant_admin_router,
 )
-from app.presentation.http.controllers.admin.user.list_users import create_list_users_router
+from app.presentation.http.controllers.admin.user.list_users import (
+    create_list_users_router,
+)
 from app.presentation.http.controllers.admin.user.revoke_admin import (
     create_revoke_admin_router,
 )
@@ -37,5 +39,3 @@ def create_users_router() -> APIRouter:
         router.include_router(sub_router)
 
     return router
-
-

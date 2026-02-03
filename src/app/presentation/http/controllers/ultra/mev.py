@@ -25,9 +25,14 @@ class ExecuteRequest(BaseModel):
         True, description="Use MEV protection (recommended)"
     )
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {"opportunity_id": "ARB-1638360000-0001", "use_mev_protection": True}
-    })
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "opportunity_id": "ARB-1638360000-0001",
+                "use_mev_protection": True,
+            }
+        }
+    )
 
 
 class ExecutionResponse(BaseModel):

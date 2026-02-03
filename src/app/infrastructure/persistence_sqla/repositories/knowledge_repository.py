@@ -1,4 +1,5 @@
 """SQLAlchemy repositories for knowledge base."""
+
 from typing import List, Optional, Tuple
 from uuid import UUID
 
@@ -24,10 +25,10 @@ from app.infrastructure.persistence_sqla.mappings.projects import (
 
 class KnowledgeBaseRepositorySqla(KnowledgeBaseRepository):
     """SQLAlchemy implementation of knowledge base repository."""
-    
+
     def __init__(self, session: AsyncSession):
         self.session = session
-    
+
     async def add_knowledge_base(self, kb: KnowledgeBase) -> None:
         """Add knowledge base."""
         query = insert(project_knowledge_bases).values(
@@ -45,10 +46,10 @@ class KnowledgeBaseRepositorySqla(KnowledgeBaseRepository):
             created_at=kb.created_at,
             updated_at=kb.updated_at,
         )
-        
+
         await self.session.execute(query)
         await self.session.commit()
-    
+
     async def get_knowledge_base(self, kb_id: UUID) -> Optional[KnowledgeBase]:
         """Get knowledge base by ID."""
         query = select(project_knowledge_bases).where(
@@ -56,12 +57,12 @@ class KnowledgeBaseRepositorySqla(KnowledgeBaseRepository):
         )
         result = await self.session.execute(query)
         row = result.first()
-        
+
         if not row:
             return None
-        
+
         return self._row_to_kb(row)
-    
+
     async def get_knowledge_base_by_project(
         self,
         project_id: UUID,
@@ -72,12 +73,12 @@ class KnowledgeBaseRepositorySqla(KnowledgeBaseRepository):
         )
         result = await self.session.execute(query)
         row = result.first()
-        
+
         if not row:
             return None
-        
+
         return self._row_to_kb(row)
-    
+
     async def update_knowledge_base(self, kb: KnowledgeBase) -> None:
         """Update knowledge base."""
         query = (
@@ -96,10 +97,10 @@ class KnowledgeBaseRepositorySqla(KnowledgeBaseRepository):
                 updated_at=kb.updated_at,
             )
         )
-        
+
         await self.session.execute(query)
         await self.session.commit()
-    
+
     async def delete_knowledge_base(self, kb_id: UUID) -> None:
         """Delete knowledge base."""
         query = delete(project_knowledge_bases).where(
@@ -107,7 +108,7 @@ class KnowledgeBaseRepositorySqla(KnowledgeBaseRepository):
         )
         await self.session.execute(query)
         await self.session.commit()
-    
+
     def _row_to_kb(self, row) -> KnowledgeBase:
         """Convert row to KnowledgeBase entity."""
         return KnowledgeBase(
@@ -129,10 +130,10 @@ class KnowledgeBaseRepositorySqla(KnowledgeBaseRepository):
 
 class KnowledgeDocumentRepositorySqla(KnowledgeDocumentRepository):
     """SQLAlchemy implementation of knowledge document repository."""
-    
+
     def __init__(self, session: AsyncSession):
         self.session = session
-    
+
     async def add_document(self, doc: KnowledgeDocument) -> None:
         """Add document."""
         query = insert(project_knowledge_documents).values(
@@ -151,10 +152,10 @@ class KnowledgeDocumentRepositorySqla(KnowledgeDocumentRepository):
             created_at=doc.created_at,
             updated_at=doc.updated_at,
         )
-        
+
         await self.session.execute(query)
         await self.session.commit()
-    
+
     async def get_document(self, doc_id: UUID) -> Optional[KnowledgeDocument]:
         """Get document by ID."""
         query = select(project_knowledge_documents).where(
@@ -162,12 +163,12 @@ class KnowledgeDocumentRepositorySqla(KnowledgeDocumentRepository):
         )
         result = await self.session.execute(query)
         row = result.first()
-        
+
         if not row:
             return None
-        
+
         return self._row_to_doc(row)
-    
+
     async def list_documents(
         self,
         knowledge_base_id: UUID,
@@ -180,23 +181,29 @@ class KnowledgeDocumentRepositorySqla(KnowledgeDocumentRepository):
         query = select(project_knowledge_documents).where(
             project_knowledge_documents.c.knowledge_base_id == knowledge_base_id
         )
-        
+
         if doc_type:
             query = query.where(project_knowledge_documents.c.doc_type == doc_type)
-        
+
         if is_processed is not None:
-            query = query.where(project_knowledge_documents.c.is_processed == is_processed)
-        
-        query = query.order_by(
-            project_knowledge_documents.c.priority.desc(),
-            project_knowledge_documents.c.created_at.desc(),
-        ).limit(limit).offset(offset)
-        
+            query = query.where(
+                project_knowledge_documents.c.is_processed == is_processed
+            )
+
+        query = (
+            query.order_by(
+                project_knowledge_documents.c.priority.desc(),
+                project_knowledge_documents.c.created_at.desc(),
+            )
+            .limit(limit)
+            .offset(offset)
+        )
+
         result = await self.session.execute(query)
         rows = result.all()
-        
+
         return [self._row_to_doc(row) for row in rows]
-    
+
     async def update_document(self, doc: KnowledgeDocument) -> None:
         """Update document."""
         query = (
@@ -216,10 +223,10 @@ class KnowledgeDocumentRepositorySqla(KnowledgeDocumentRepository):
                 updated_at=doc.updated_at,
             )
         )
-        
+
         await self.session.execute(query)
         await self.session.commit()
-    
+
     async def delete_document(self, doc_id: UUID) -> None:
         """Delete document (cascades to chunks)."""
         query = delete(project_knowledge_documents).where(
@@ -227,17 +234,19 @@ class KnowledgeDocumentRepositorySqla(KnowledgeDocumentRepository):
         )
         await self.session.execute(query)
         await self.session.commit()
-    
+
     async def count_documents(self, knowledge_base_id: UUID) -> int:
         """Count documents in knowledge base."""
-        query = select(func.count()).select_from(project_knowledge_documents).where(
-            project_knowledge_documents.c.knowledge_base_id == knowledge_base_id
+        query = (
+            select(func.count())
+            .select_from(project_knowledge_documents)
+            .where(project_knowledge_documents.c.knowledge_base_id == knowledge_base_id)
         )
-        
+
         result = await self.session.execute(query)
         count = result.scalar()
         return count or 0
-    
+
     def _row_to_doc(self, row) -> KnowledgeDocument:
         """Convert row to KnowledgeDocument entity."""
         return KnowledgeDocument(
@@ -260,26 +269,26 @@ class KnowledgeDocumentRepositorySqla(KnowledgeDocumentRepository):
 
 class KnowledgeChunkRepositorySqla(KnowledgeChunkRepository):
     """SQLAlchemy implementation of knowledge chunk repository."""
-    
+
     def __init__(self, session: AsyncSession):
         self.session = session
-    
+
     async def add_chunk(self, chunk: KnowledgeChunk) -> None:
         """Add chunk."""
         await self.add_chunks([chunk])
-    
+
     async def add_chunks(self, chunks: List[KnowledgeChunk]) -> None:
         """Add multiple chunks (batched)."""
         if not chunks:
             return
-        
+
         values = []
         for chunk in chunks:
             # Convert embedding to string format for pgvector
             embedding_str = None
             if chunk.embedding:
                 embedding_str = "[" + ",".join(str(x) for x in chunk.embedding) + "]"
-            
+
             values.append({
                 "id": chunk.id,
                 "document_id": chunk.document_id,
@@ -290,7 +299,7 @@ class KnowledgeChunkRepositorySqla(KnowledgeChunkRepository):
                 "metadata": chunk.metadata,
                 "created_at": chunk.created_at,
             })
-        
+
         # Use raw SQL for batch insert with vector type
         query = text("""
             INSERT INTO project_knowledge_chunks (
@@ -301,26 +310,28 @@ class KnowledgeChunkRepositorySqla(KnowledgeChunkRepository):
                 :embedding::vector, :metadata, :created_at
             )
         """)
-        
+
         for value in values:
             await self.session.execute(query, value)
-        
+
         await self.session.commit()
-    
+
     async def get_chunks_by_document(
         self,
         document_id: UUID,
     ) -> List[KnowledgeChunk]:
         """Get all chunks for a document."""
-        query = select(project_knowledge_chunks).where(
-            project_knowledge_chunks.c.document_id == document_id
-        ).order_by(project_knowledge_chunks.c.chunk_index)
-        
+        query = (
+            select(project_knowledge_chunks)
+            .where(project_knowledge_chunks.c.document_id == document_id)
+            .order_by(project_knowledge_chunks.c.chunk_index)
+        )
+
         result = await self.session.execute(query)
         rows = result.all()
-        
+
         return [self._row_to_chunk(row) for row in rows]
-    
+
     async def delete_chunks_by_document(self, document_id: UUID) -> None:
         """Delete all chunks for a document."""
         query = delete(project_knowledge_chunks).where(
@@ -328,7 +339,7 @@ class KnowledgeChunkRepositorySqla(KnowledgeChunkRepository):
         )
         await self.session.execute(query)
         await self.session.commit()
-    
+
     async def search_chunks(
         self,
         knowledge_base_id: UUID,
@@ -339,7 +350,7 @@ class KnowledgeChunkRepositorySqla(KnowledgeChunkRepository):
         """Search chunks by semantic similarity."""
         # Convert embedding to string format for pgvector
         embedding_str = "[" + ",".join(str(x) for x in query_embedding) + "]"
-        
+
         # Use raw SQL for vector similarity search
         query = text("""
             SELECT *,
@@ -350,7 +361,7 @@ class KnowledgeChunkRepositorySqla(KnowledgeChunkRepository):
             ORDER BY embedding <=> :embedding::vector
             LIMIT :limit
         """)
-        
+
         result = await self.session.execute(
             query,
             {
@@ -361,19 +372,21 @@ class KnowledgeChunkRepositorySqla(KnowledgeChunkRepository):
             },
         )
         rows = result.all()
-        
+
         return [(self._row_to_chunk(row), row.similarity) for row in rows]
-    
+
     async def count_chunks(self, knowledge_base_id: UUID) -> int:
         """Count chunks in knowledge base."""
-        query = select(func.count()).select_from(project_knowledge_chunks).where(
-            project_knowledge_chunks.c.knowledge_base_id == knowledge_base_id
+        query = (
+            select(func.count())
+            .select_from(project_knowledge_chunks)
+            .where(project_knowledge_chunks.c.knowledge_base_id == knowledge_base_id)
         )
-        
+
         result = await self.session.execute(query)
         count = result.scalar()
         return count or 0
-    
+
     def _row_to_chunk(self, row) -> KnowledgeChunk:
         """Convert row to KnowledgeChunk entity."""
         # Note: embedding will be None if retrieved, as it's not needed for display

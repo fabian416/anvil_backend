@@ -1,7 +1,10 @@
 """Unit tests for IntentDetectorV2 multi-intent detection."""
 
 import pytest
-from app.application.chat.services.intent_detector_v2 import IntentDetectorV2, ChatIntentV2
+from app.application.chat.services.intent_detector_v2 import (
+    IntentDetectorV2,
+    ChatIntentV2,
+)
 from app.domain.value_objects.chat.multi_intent_result import (
     MultiIntentResult,
     OrchestrationStrategy,
@@ -81,7 +84,9 @@ class TestMultiIntentDetection:
 
     def test_entity_extraction(self, detector):
         """Test entity extraction from message."""
-        entities = detector._extract_entities_from_message("show btc eth prices on ethereum")
+        entities = detector._extract_entities_from_message(
+            "show btc eth prices on ethereum"
+        )
 
         assert "tokens" in entities
         assert "btc" in entities["tokens"] or "bitcoin" in entities["tokens"]
@@ -112,7 +117,9 @@ class TestMultiIntentDetection:
     def test_multi_language_support(self, detector):
         """Test multi-language intent detection."""
         # Spanish: "mostrar precios de btc eth"
-        result = detector.detect_multi_intent("mostrar precio de btc eth", language="es")
+        result = detector.detect_multi_intent(
+            "mostrar precio de btc eth", language="es"
+        )
 
         assert isinstance(result, MultiIntentResult)
         assert len(result.intents) >= 1  # Should detect at least one intent

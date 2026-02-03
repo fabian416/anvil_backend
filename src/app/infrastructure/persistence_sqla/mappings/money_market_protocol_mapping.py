@@ -24,7 +24,7 @@ def map_money_market_protocols_table() -> None:
     """Map money_market_protocols table (idempotent)."""
     if "money_market_protocols" in mapping_registry.metadata.tables:
         return  # Already mapped
-    
+
     # Create enum type for SQLAlchemy (using string values from migration)
     # Migration uses: 'aave_v3', 'compound_v3', 'morpho'
     protocol_enum = SQLEnum(
@@ -34,7 +34,7 @@ def map_money_market_protocols_table() -> None:
         name="money_market_protocol_enum",
         create_type=False,  # Type already exists in DB
     )
-    
+
     table = sa.Table(
         "money_market_protocols",
         mapping_registry.metadata,
@@ -137,7 +137,7 @@ def map_money_market_protocols_table() -> None:
             server_default=sa.text("NOW()"),
         ),
     )
-    
+
     # Create indexes
     sa.Index(
         "idx_money_market_protocols_name",

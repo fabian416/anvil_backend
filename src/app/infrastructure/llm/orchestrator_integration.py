@@ -119,9 +119,7 @@ class OrchestratorIntegration:
             logger.error(f"Orchestrator execution failed for {agent_type}: {e}")
             raise
 
-    def _convert_messages(
-        self, messages: list[str | dict]
-    ) -> list[LLMMessage]:
+    def _convert_messages(self, messages: list[str | dict]) -> list[LLMMessage]:
         """
         Convert messages to LLMMessage objects.
 
@@ -151,9 +149,7 @@ class OrchestratorIntegration:
 
         return llm_messages
 
-    async def _get_ranked_models_for_agent(
-        self, agent_type: str
-    ) -> list[RankedModel]:
+    async def _get_ranked_models_for_agent(self, agent_type: str) -> list[RankedModel]:
         """
         Get ranked models for agent type.
 
@@ -281,7 +277,7 @@ def create_orchestrator_integration(
     """
     # Create provider adapters
     vertex_adapter = VertexAIAdapter(
-        project_id=vertex_project_id, 
+        project_id=vertex_project_id,
         location=vertex_location,
         api_key=vertex_api_key,
     )

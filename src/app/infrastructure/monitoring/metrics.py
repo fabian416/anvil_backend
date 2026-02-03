@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class MetricsCollector:
     """
     Collects application metrics.
-    
+
     Metrics:
     - Request count (by endpoint)
     - Request duration (by endpoint)
@@ -24,7 +24,7 @@ class MetricsCollector:
     - Agent invocations
     - Tool usage
     """
-    
+
     def __init__(self):
         """Initialize metrics collector."""
         self._request_count: Dict[str, int] = defaultdict(int)
@@ -35,71 +35,73 @@ class MetricsCollector:
         self._agent_invocations: Dict[str, int] = defaultdict(int)
         self._tool_usage: Dict[str, int] = defaultdict(int)
         self._start_time = time.time()
-    
+
     def record_request(self, endpoint: str, duration: float) -> None:
         """
         Record HTTP request.
-        
+
         Args:
             endpoint: API endpoint
             duration: Request duration in seconds
         """
         self._request_count[endpoint] += 1
         self._request_duration[endpoint].append(duration)
-    
+
     def record_error(self, error_type: str) -> None:
         """
         Record error.
-        
+
         Args:
             error_type: Type of error
         """
         self._error_count[error_type] += 1
-    
+
     def record_cache_hit(self) -> None:
         """Record cache hit."""
         self._cache_hits += 1
-    
+
     def record_cache_miss(self) -> None:
         """Record cache miss."""
         self._cache_misses += 1
-    
+
     def record_agent_invocation(self, agent_name: str) -> None:
         """
         Record agent invocation.
-        
+
         Args:
             agent_name: Name of agent
         """
         self._agent_invocations[agent_name] += 1
-    
+
     def record_tool_usage(self, tool_name: str) -> None:
         """
         Record tool usage.
-        
+
         Args:
             tool_name: Name of tool
         """
         self._tool_usage[tool_name] += 1
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """
         Get current metrics.
-        
+
         Returns:
             Dictionary of metrics
         """
         uptime = time.time() - self._start_time
-        
+
         # Calculate averages
         avg_durations = {}
         for endpoint, durations in self._request_duration.items():
-            avg_durations[endpoint] = sum(durations) / len(durations) if durations else 0
-        
+            avg_durations[endpoint] = (
+                sum(durations) / len(durations) if durations else 0
+            )
+
         # Cache hit rate
         total_cache = self._cache_hits + self._cache_misses
         cache_hit_rate = self._cache_hits / total_cache if total_cache > 0 else 0
-        
+
         return {
             "uptime_seconds": uptime,
             "timestamp": datetime.now(UTC).isoformat(),
@@ -129,7 +131,7 @@ class MetricsCollector:
                 "by_tool": dict(self._tool_usage),
             },
         }
-    
+
     def reset(self) -> None:
         """Reset all metrics."""
         self._request_count.clear()
@@ -164,31 +166,31 @@ import time
 class MetricsMiddleware(BaseHTTPMiddleware):
     """
     Middleware to automatically collect request metrics.
-    
+
     Usage:
         app.add_middleware(MetricsMiddleware)
     """
-    
+
     async def dispatch(self, request: Request, call_next):
         """Process request and collect metrics."""
         collector = get_metrics_collector()
-        
+
         start_time = time.perf_counter()
-        
+
         try:
             response = await call_next(request)
             duration = time.perf_counter() - start_time
-            
+
             # Record request
             endpoint = f"{request.method} {request.url.path}"
             collector.record_request(endpoint, duration)
-            
+
             # Record error if status >= 400
             if response.status_code >= 400:
                 collector.record_error(f"HTTP_{response.status_code}")
-            
+
             return response
-        
+
         except Exception as e:
             duration = time.perf_counter() - start_time
             endpoint = f"{request.method} {request.url.path}"
@@ -208,7 +210,7 @@ metrics_router = APIRouter(tags=["metrics"])
 async def get_metrics():
     """
     Get application metrics.
-    
+
     Returns current metrics for monitoring.
     """
     collector = get_metrics_collector()
@@ -219,7 +221,7 @@ async def get_metrics():
 async def reset_metrics():
     """
     Reset metrics (admin only).
-    
+
     Useful for testing or after deployment.
     """
     collector = get_metrics_collector()

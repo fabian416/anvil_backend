@@ -27,22 +27,18 @@ class TestMorphoMCPServerStructure:
 
     def test_morpho_server_has_setup_tools(self):
         """Test server has setup_tools method."""
-        assert hasattr(MorphoMCPServer, 'setup_tools')
+        assert hasattr(MorphoMCPServer, "setup_tools")
 
     def test_morpho_server_initialization_enabled(self):
         """Test server can be instantiated when enabled."""
         # Arrange
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(morpho_enabled=True)
+            enabled=True, servers=MCPServerSettings(morpho_enabled=True)
         )
         mock_gateway = MagicMock()
 
         # Act
-        server = MorphoMCPServer(
-            morpho_gateway=mock_gateway,
-            settings=settings
-        )
+        server = MorphoMCPServer(morpho_gateway=mock_gateway, settings=settings)
 
         # Assert
         assert server is not None
@@ -53,8 +49,7 @@ class TestMorphoMCPServerStructure:
         """Test server raises error when disabled."""
         # Arrange
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(morpho_enabled=False)
+            enabled=True, servers=MCPServerSettings(morpho_enabled=False)
         )
 
         # Act & Assert
@@ -72,14 +67,10 @@ class TestMorphoTools:
         """Test setup_tools registers all expected tools."""
         # Arrange
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(morpho_enabled=True)
+            enabled=True, servers=MCPServerSettings(morpho_enabled=True)
         )
         mock_gateway = MagicMock()
-        server = MorphoMCPServer(
-            morpho_gateway=mock_gateway,
-            settings=settings
-        )
+        server = MorphoMCPServer(morpho_gateway=mock_gateway, settings=settings)
 
         # Act
         server.setup_tools()
@@ -101,14 +92,10 @@ class TestMorphoTools:
         """Test all tools have properly defined parameters."""
         # Arrange
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(morpho_enabled=True)
+            enabled=True, servers=MCPServerSettings(morpho_enabled=True)
         )
         mock_gateway = MagicMock()
-        server = MorphoMCPServer(
-            morpho_gateway=mock_gateway,
-            settings=settings
-        )
+        server = MorphoMCPServer(morpho_gateway=mock_gateway, settings=settings)
         server.setup_tools()
 
         # Act & Assert
@@ -129,13 +116,9 @@ class TestMorphoToolHandlers:
         """Test get_vaults handler when gateway is None."""
         # Arrange
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(morpho_enabled=True)
+            enabled=True, servers=MCPServerSettings(morpho_enabled=True)
         )
-        server = MorphoMCPServer(
-            morpho_gateway=None,
-            settings=settings
-        )
+        server = MorphoMCPServer(morpho_gateway=None, settings=settings)
         server.setup_tools()
 
         # Act
@@ -145,7 +128,6 @@ class TestMorphoToolHandlers:
         assert "error" in result
         assert "vaults" in result
         assert result["vaults"] == []
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -168,13 +150,9 @@ class TestMorphoToolHandlers:
         mock_gateway.get_vaults.return_value = [mock_vault]
 
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(morpho_enabled=True)
+            enabled=True, servers=MCPServerSettings(morpho_enabled=True)
         )
-        server = MorphoMCPServer(
-            morpho_gateway=mock_gateway,
-            settings=settings
-        )
+        server = MorphoMCPServer(morpho_gateway=mock_gateway, settings=settings)
         server.setup_tools()
 
         # Act
@@ -186,7 +164,6 @@ class TestMorphoToolHandlers:
         assert result["vaults"][0]["address"] == "0x123"
         assert result["vaults"][0]["name"] == "Test Vault"
         mock_gateway.get_vaults.assert_called_once_with(asset="USDC", chain="ethereum")
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -204,27 +181,20 @@ class TestMorphoToolHandlers:
         mock_gateway.get_vaults.return_value = [mock_vault]
 
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(morpho_enabled=True)
+            enabled=True, servers=MCPServerSettings(morpho_enabled=True)
         )
-        server = MorphoMCPServer(
-            morpho_gateway=mock_gateway,
-            settings=settings
-        )
+        server = MorphoMCPServer(morpho_gateway=mock_gateway, settings=settings)
         server.setup_tools()
 
         # Act
         result = await server._compare_yields_handler(
-            asset="WETH",
-            protocols=["morpho"],
-            chain="ethereum"
+            asset="WETH", protocols=["morpho"], chain="ethereum"
         )
 
         # Assert
         assert "comparisons" in result
         assert len(result["comparisons"]) > 0
         assert result["comparisons"][0]["protocol"] == "morpho"
-
 
 
 @pytest.mark.integration
@@ -264,22 +234,14 @@ class TestMorphoIntegration:
         mock_gateway.get_vaults.return_value = [vault1, vault2]
 
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(morpho_enabled=True)
+            enabled=True, servers=MCPServerSettings(morpho_enabled=True)
         )
-        server = MorphoMCPServer(
-            morpho_gateway=mock_gateway,
-            settings=settings
-        )
+        server = MorphoMCPServer(morpho_gateway=mock_gateway, settings=settings)
         server.setup_tools()
 
         # Act - Get vaults and filter by APY
         result = await server._get_vaults_handler(
-            asset="USDC",
-            min_apy=6.0,
-            sort_by="apy",
-            chain="ethereum",
-            limit=10
+            asset="USDC", min_apy=6.0, sort_by="apy", chain="ethereum", limit=10
         )
 
         # Assert

@@ -16,7 +16,7 @@ class TestGuestGraphRAGSimilarProtocols:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What protocols are similar to Aave?", "language": "en"}
+            json={"content": "What protocols are similar to Aave?", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -26,13 +26,19 @@ class TestGuestGraphRAGSimilarProtocols:
         content = data["agent_message"]["content"]
 
         # Should show similar protocols
-        assert any(word in content.lower() for word in ["similar", "alternative", "like"])
+        assert any(
+            word in content.lower() for word in ["similar", "alternative", "like"]
+        )
         assert "aave" in content.lower()
 
         # Should have enrichment
         assert "enrichment" in data
         enrichment = data["enrichment"]
-        assert "similar_protocols" in enrichment or "alternatives" in enrichment or "protocols" in enrichment
+        assert (
+            "similar_protocols" in enrichment
+            or "alternatives" in enrichment
+            or "protocols" in enrichment
+        )
 
         # Guests can access without registration
         assert data["registration_required"]["required"] is False
@@ -43,7 +49,7 @@ class TestGuestGraphRAGSimilarProtocols:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "alternatives to Compound", "language": "en"}
+            json={"content": "alternatives to Compound", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -51,8 +57,16 @@ class TestGuestGraphRAGSimilarProtocols:
         enrichment = data["enrichment"]
 
         # Should have structured similar protocol data
-        assert "similar_protocols" in enrichment or "alternatives" in enrichment or "protocols" in enrichment
-        protocols = enrichment.get("similar_protocols") or enrichment.get("alternatives") or enrichment.get("protocols")
+        assert (
+            "similar_protocols" in enrichment
+            or "alternatives" in enrichment
+            or "protocols" in enrichment
+        )
+        protocols = (
+            enrichment.get("similar_protocols")
+            or enrichment.get("alternatives")
+            or enrichment.get("protocols")
+        )
         assert isinstance(protocols, list)
 
         # Each protocol should have key fields
@@ -69,7 +83,7 @@ class TestGuestGraphRAGSimilarProtocols:
         for protocol in base_protocols:
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={"content": f"protocols like {protocol}", "language": "en"}
+                json={"content": f"protocols like {protocol}", "language": "en"},
             )
             assert response.status_code == 200
             data = response.json()
@@ -78,7 +92,11 @@ class TestGuestGraphRAGSimilarProtocols:
             content = data["agent_message"]["content"]
 
             # Should find alternatives
-            assert "similar_protocols" in enrichment or "alternatives" in enrichment or "protocols" in enrichment
+            assert (
+                "similar_protocols" in enrichment
+                or "alternatives" in enrichment
+                or "protocols" in enrichment
+            )
             assert protocol.lower() in content.lower()
 
     @pytest.mark.asyncio
@@ -87,7 +105,7 @@ class TestGuestGraphRAGSimilarProtocols:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "protocols similar to Aave", "language": "en"}
+            json={"content": "protocols similar to Aave", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -96,10 +114,18 @@ class TestGuestGraphRAGSimilarProtocols:
         content = data["agent_message"]["content"]
 
         # Should have similarity metrics
-        protocols = enrichment.get("similar_protocols") or enrichment.get("alternatives") or enrichment.get("protocols", [])
+        protocols = (
+            enrichment.get("similar_protocols")
+            or enrichment.get("alternatives")
+            or enrichment.get("protocols", [])
+        )
         if len(protocols) > 0:
             # At least some protocols should have similarity scores
-            has_score = any("similarity" in p or "score" in p for p in protocols if isinstance(p, dict))
+            has_score = any(
+                "similarity" in p or "score" in p
+                for p in protocols
+                if isinstance(p, dict)
+            )
             # If no explicit score, should at least be ranked by similarity
             assert has_score or len(protocols) > 1
 
@@ -109,7 +135,7 @@ class TestGuestGraphRAGSimilarProtocols:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "other lending protocols like Compound", "language": "en"}
+            json={"content": "other lending protocols like Compound", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -118,7 +144,11 @@ class TestGuestGraphRAGSimilarProtocols:
         content = data["agent_message"]["content"]
 
         # Should match by category (lending)
-        assert "similar_protocols" in enrichment or "alternatives" in enrichment or "protocols" in enrichment
+        assert (
+            "similar_protocols" in enrichment
+            or "alternatives" in enrichment
+            or "protocols" in enrichment
+        )
 
         # Should mention category
         category_keywords = ["lending", "borrow", "supply", "interest"]
@@ -130,7 +160,7 @@ class TestGuestGraphRAGSimilarProtocols:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "protocols like Aave on Ethereum", "language": "en"}
+            json={"content": "protocols like Aave on Ethereum", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -139,7 +169,11 @@ class TestGuestGraphRAGSimilarProtocols:
         content = data["agent_message"]["content"]
 
         # Should filter by chain
-        assert "chain" in enrichment or "similar_protocols" in enrichment or "protocols" in enrichment
+        assert (
+            "chain" in enrichment
+            or "similar_protocols" in enrichment
+            or "protocols" in enrichment
+        )
         assert "ethereum" in content.lower()
 
     @pytest.mark.asyncio
@@ -148,7 +182,7 @@ class TestGuestGraphRAGSimilarProtocols:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "alternatives to Uniswap", "language": "en"}
+            json={"content": "alternatives to Uniswap", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -157,7 +191,11 @@ class TestGuestGraphRAGSimilarProtocols:
         content = data["agent_message"]["content"]
 
         # Should compare features
-        assert "similar_protocols" in enrichment or "alternatives" in enrichment or "protocols" in enrichment
+        assert (
+            "similar_protocols" in enrichment
+            or "alternatives" in enrichment
+            or "protocols" in enrichment
+        )
 
         # Should mention key features
         feature_keywords = ["feature", "support", "offer", "provide", "enable"]
@@ -169,7 +207,7 @@ class TestGuestGraphRAGSimilarProtocols:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "how does Morpho compare to Aave?", "language": "en"}
+            json={"content": "how does Morpho compare to Aave?", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -178,7 +216,11 @@ class TestGuestGraphRAGSimilarProtocols:
         content = data["agent_message"]["content"]
 
         # Should highlight differences
-        assert "similar_protocols" in enrichment or "comparison" in enrichment or "protocols" in enrichment
+        assert (
+            "similar_protocols" in enrichment
+            or "comparison" in enrichment
+            or "protocols" in enrichment
+        )
 
         # Should use comparison language
         comparison_keywords = ["different", "unlike", "whereas", "however", "instead"]
@@ -190,7 +232,7 @@ class TestGuestGraphRAGSimilarProtocols:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "protocols like Aave", "language": "en"}
+            json={"content": "protocols like Aave", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -204,7 +246,7 @@ class TestGuestGraphRAGSimilarProtocols:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "alternatives to Compound", "language": "en"}
+            json={"content": "alternatives to Compound", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -212,14 +254,23 @@ class TestGuestGraphRAGSimilarProtocols:
         enrichment = data["enrichment"]
 
         # Should have real protocol alternatives
-        protocols = enrichment.get("similar_protocols") or enrichment.get("alternatives") or enrichment.get("protocols")
+        protocols = (
+            enrichment.get("similar_protocols")
+            or enrichment.get("alternatives")
+            or enrichment.get("protocols")
+        )
         assert len(protocols) > 0
 
         # Should include real protocol names
         real_protocol_names = ["aave", "morpho", "maker", "euler"]
-        protocol_names_in_results = [p.get("name", "").lower() for p in protocols if isinstance(p, dict)]
+        protocol_names_in_results = [
+            p.get("name", "").lower() for p in protocols if isinstance(p, dict)
+        ]
         # At least one real protocol should be mentioned
-        assert any(name in str(protocol_names_in_results).lower() for name in real_protocol_names)
+        assert any(
+            name in str(protocol_names_in_results).lower()
+            for name in real_protocol_names
+        )
 
     @pytest.mark.asyncio
     async def test_similar_protocols_multilingual_spanish(self, client):
@@ -227,7 +278,7 @@ class TestGuestGraphRAGSimilarProtocols:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "protocolos similares a Aave", "language": "es"}
+            json={"content": "protocolos similares a Aave", "language": "es"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -235,7 +286,16 @@ class TestGuestGraphRAGSimilarProtocols:
         content = data["agent_message"]["content"]
 
         # Should contain Spanish or English text (fallback)
-        assert any(word in content for word in ["Similar", "Alternativa", "Alternative", "Protocolo", "Protocol"])
+        assert any(
+            word in content
+            for word in [
+                "Similar",
+                "Alternativa",
+                "Alternative",
+                "Protocolo",
+                "Protocol",
+            ]
+        )
 
 
 class TestGuestGraphRAGSimilarProtocolsStorytellingQuality:
@@ -247,7 +307,7 @@ class TestGuestGraphRAGSimilarProtocolsStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "protocols like Aave", "language": "en"}
+            json={"content": "protocols like Aave", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
@@ -260,7 +320,7 @@ class TestGuestGraphRAGSimilarProtocolsStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "alternatives to Compound", "language": "en"}
+            json={"content": "alternatives to Compound", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
@@ -276,7 +336,7 @@ class TestGuestGraphRAGSimilarProtocolsStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "top alternatives to Uniswap", "language": "en"}
+            json={"content": "top alternatives to Uniswap", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
@@ -290,12 +350,19 @@ class TestGuestGraphRAGSimilarProtocolsStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "compare Morpho to Aave", "language": "en"}
+            json={"content": "compare Morpho to Aave", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
         # Should highlight trade-offs
-        tradeoff_keywords = ["advantage", "benefit", "downside", "tradeoff", "pro", "con"]
+        tradeoff_keywords = [
+            "advantage",
+            "benefit",
+            "downside",
+            "tradeoff",
+            "pro",
+            "con",
+        ]
         assert any(keyword in content.lower() for keyword in tradeoff_keywords)
 
     @pytest.mark.asyncio
@@ -304,7 +371,7 @@ class TestGuestGraphRAGSimilarProtocolsStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "which is better, Aave or Compound?", "language": "en"}
+            json={"content": "which is better, Aave or Compound?", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
@@ -318,10 +385,16 @@ class TestGuestGraphRAGSimilarProtocolsStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "protocols similar to Morpho", "language": "en"}
+            json={"content": "protocols similar to Morpho", "language": "en"},
         )
         content = response.json()["agent_message"]["content"]
 
         # Should explain how protocols work
-        educational_keywords = ["works by", "allows", "enables", "provides", "focuses on"]
+        educational_keywords = [
+            "works by",
+            "allows",
+            "enables",
+            "provides",
+            "focuses on",
+        ]
         assert any(keyword in content.lower() for keyword in educational_keywords)

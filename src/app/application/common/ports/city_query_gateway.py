@@ -8,5 +8,3 @@ class CityQueryGateway(Protocol):
 
     @abstractmethod
     async def get_pk_in_country(self, city_id: int, country_id: int) -> int | None: ...
-
-

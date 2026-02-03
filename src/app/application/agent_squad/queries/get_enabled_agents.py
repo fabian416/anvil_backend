@@ -54,7 +54,9 @@ class GetEnabledAgents:
 
         # Filter by subscription tier
         if user_subscription_tier:
-            enabled_agents = self._filter_by_tier(enabled_agents, user_subscription_tier)
+            enabled_agents = self._filter_by_tier(
+                enabled_agents, user_subscription_tier
+            )
 
         # Get agent configurations
         agent_configs = []
@@ -163,22 +165,74 @@ class GetEnabledAgents:
         """Get agent capabilities."""
         capabilities_map = {
             AgentType.CHAT: ["general_qa", "explanations", "conversational"],
-            AgentType.HUNTER_AI: ["sentiment_analysis", "price_predictions", "market_trends"],
-            AgentType.RESEARCH: ["protocol_research", "token_analysis", "trend_reports"],
+            AgentType.HUNTER_AI: [
+                "sentiment_analysis",
+                "price_predictions",
+                "market_trends",
+            ],
+            AgentType.RESEARCH: [
+                "protocol_research",
+                "token_analysis",
+                "trend_reports",
+            ],
             AgentType.EXECUTION: ["swap", "stake", "bridge", "transaction_safety"],
-            AgentType.RISK_ANALYZER: ["portfolio_risk", "exposure_analysis", "volatility"],
-            AgentType.PORTFOLIO: ["portfolio_tracking", "performance_metrics", "rebalancing"],
+            AgentType.RISK_ANALYZER: [
+                "portfolio_risk",
+                "exposure_analysis",
+                "volatility",
+            ],
+            AgentType.PORTFOLIO: [
+                "portfolio_tracking",
+                "performance_metrics",
+                "rebalancing",
+            ],
             AgentType.TAX_OPTIMIZER: ["tax_loss_harvesting", "cost_basis", "reporting"],
-            AgentType.DEFI_YIELD: ["yield_farming", "liquidity_mining", "apy_comparison"],
+            AgentType.DEFI_YIELD: [
+                "yield_farming",
+                "liquidity_mining",
+                "apy_comparison",
+            ],
             AgentType.SECURITY_AUDITOR: ["smart_contract_audit", "vulnerability_scan"],
-            AgentType.GAS_OPTIMIZER: ["gas_estimation", "timing_optimization", "l2_recommendations"],
-            AgentType.COMPLIANCE_MONITOR: ["aml_kyc", "sanctions_screening", "pep_check"],
-            AgentType.MULTISIG_COORDINATOR: ["multisig_proposals", "treasury_management", "approval_tracking"],
-            AgentType.ALERT_MONITORING: ["real_time_alerts", "anomaly_detection", "threshold_monitoring"],
-            AgentType.CRISIS_MANAGER: ["emergency_response", "circuit_breaker", "protocol_pause"],
-            AgentType.BRIDGE_CROSSCHAIN: ["cross_chain_bridging", "l2_operations", "asset_transfer"],
-            AgentType.LENDING_BORROWING: ["leverage_optimization", "collateral_management", "liquidation_alerts"],
-            AgentType.NFT_ASSET_MANAGER: ["nft_valuation", "portfolio_tracking", "market_analysis"],
+            AgentType.GAS_OPTIMIZER: [
+                "gas_estimation",
+                "timing_optimization",
+                "l2_recommendations",
+            ],
+            AgentType.COMPLIANCE_MONITOR: [
+                "aml_kyc",
+                "sanctions_screening",
+                "pep_check",
+            ],
+            AgentType.MULTISIG_COORDINATOR: [
+                "multisig_proposals",
+                "treasury_management",
+                "approval_tracking",
+            ],
+            AgentType.ALERT_MONITORING: [
+                "real_time_alerts",
+                "anomaly_detection",
+                "threshold_monitoring",
+            ],
+            AgentType.CRISIS_MANAGER: [
+                "emergency_response",
+                "circuit_breaker",
+                "protocol_pause",
+            ],
+            AgentType.BRIDGE_CROSSCHAIN: [
+                "cross_chain_bridging",
+                "l2_operations",
+                "asset_transfer",
+            ],
+            AgentType.LENDING_BORROWING: [
+                "leverage_optimization",
+                "collateral_management",
+                "liquidation_alerts",
+            ],
+            AgentType.NFT_ASSET_MANAGER: [
+                "nft_valuation",
+                "portfolio_tracking",
+                "market_analysis",
+            ],
             AgentType.DAO_GOVERNANCE: ["voting", "proposal_creation", "delegation"],
         }
         return capabilities_map.get(agent_type, [])

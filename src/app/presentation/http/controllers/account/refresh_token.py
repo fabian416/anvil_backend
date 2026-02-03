@@ -46,5 +46,3 @@ def create_refresh_token_router() -> APIRouter:
         return await handler.execute(enriched)
 
     return router
-
-

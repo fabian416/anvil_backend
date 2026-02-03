@@ -77,9 +77,7 @@ class GetRankingsForAgent:
         # Check for overrides
         ranked_models: List[RankedModel] = []
         for position, ranking in enumerate(rankings, start=1):
-            override = await self._repository.get_override(
-                agent_type, ranking.model_id
-            )
+            override = await self._repository.get_override(agent_type, ranking.model_id)
 
             has_override = override is not None and not override.is_expired
             override_reason = override.reason if has_override else None

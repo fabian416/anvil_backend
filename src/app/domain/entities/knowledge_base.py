@@ -1,4 +1,5 @@
 """Knowledge base entities."""
+
 from datetime import datetime, UTC
 from typing import List, Optional
 from uuid import UUID, uuid4
@@ -7,10 +8,10 @@ from uuid import UUID, uuid4
 class KnowledgeDocument:
     """
     Knowledge document entity.
-    
+
     Represents a document in a project's knowledge base.
     """
-    
+
     def __init__(
         self,
         id: UUID,
@@ -43,7 +44,7 @@ class KnowledgeDocument:
         self.processing_error = processing_error
         self.created_at = created_at or datetime.now(UTC)
         self.updated_at = updated_at or datetime.now(UTC)
-    
+
     @classmethod
     def create(
         cls,
@@ -71,20 +72,20 @@ class KnowledgeDocument:
             chunk_count=0,
             processing_error=None,
         )
-    
+
     def mark_processed(self, chunk_count: int) -> None:
         """Mark document as processed."""
         self.is_processed = True
         self.chunk_count = chunk_count
         self.processing_error = None
         self.updated_at = datetime.now(UTC)
-    
+
     def mark_failed(self, error: str) -> None:
         """Mark document processing as failed."""
         self.is_processed = False
         self.processing_error = error
         self.updated_at = datetime.now(UTC)
-    
+
     def update_content(self, content: str) -> None:
         """Update document content (requires reprocessing)."""
         self.content = content
@@ -97,10 +98,10 @@ class KnowledgeDocument:
 class KnowledgeChunk:
     """
     Knowledge chunk entity.
-    
+
     Represents a chunk of a document with vector embedding.
     """
-    
+
     def __init__(
         self,
         id: UUID,
@@ -121,7 +122,7 @@ class KnowledgeChunk:
         self.embedding = embedding
         self.metadata = metadata
         self.created_at = created_at or datetime.now(UTC)
-    
+
     @classmethod
     def create(
         cls,
@@ -141,7 +142,7 @@ class KnowledgeChunk:
             embedding=None,
             metadata=metadata or {},
         )
-    
+
     def set_embedding(self, embedding: List[float]) -> None:
         """Set the embedding vector."""
         self.embedding = embedding
@@ -150,10 +151,10 @@ class KnowledgeChunk:
 class KnowledgeBase:
     """
     Knowledge base entity.
-    
+
     Represents a project's knowledge base configuration.
     """
-    
+
     def __init__(
         self,
         id: UUID,
@@ -184,7 +185,7 @@ class KnowledgeBase:
         self.last_indexed_at = last_indexed_at
         self.created_at = created_at or datetime.now(UTC)
         self.updated_at = updated_at or datetime.now(UTC)
-    
+
     @classmethod
     def create(
         cls,
@@ -209,14 +210,14 @@ class KnowledgeBase:
             status="active",
             last_indexed_at=None,
         )
-    
+
     def update_stats(self, total_documents: int, total_chunks: int) -> None:
         """Update knowledge base statistics."""
         self.total_documents = total_documents
         self.total_chunks = total_chunks
         self.last_indexed_at = datetime.now(UTC)
         self.updated_at = datetime.now(UTC)
-    
+
     def is_active(self) -> bool:
         """Check if knowledge base is active."""
         return self.status == "active"

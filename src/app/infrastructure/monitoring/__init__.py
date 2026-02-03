@@ -3,6 +3,7 @@
 Provides error tracking (Sentry) and metrics collection (CloudWatch)
 for the guest chat system and overall application.
 """
+
 from .sentry_config import (
     SentryConfig,
     GuestChatMonitoring,

@@ -14,6 +14,7 @@ class WalletAddress(ValueObject[str]):
     Represents a blockchain wallet address.
     Supports Ethereum-style addresses (0x...) and other formats.
     """
+
     value: str
 
     def __post_init__(self) -> None:
@@ -21,7 +22,9 @@ class WalletAddress(ValueObject[str]):
             # Basic validation for Ethereum addresses
             if self.value.startswith("0x"):
                 if len(self.value) != 42:
-                    raise ValueError("Ethereum address must be 42 characters (including 0x)")
+                    raise ValueError(
+                        "Ethereum address must be 42 characters (including 0x)"
+                    )
                 if not re.match(r"^0x[a-fA-F0-9]{40}$", self.value):
                     raise ValueError("Invalid Ethereum address format")
             # Allow other formats (Solana, etc.) up to 255 chars
@@ -37,4 +40,3 @@ class WalletAddress(ValueObject[str]):
     def checksum_address(self) -> str:
         """Return the address (for Ethereum, this would be checksummed)."""
         return self.value
-

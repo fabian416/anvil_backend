@@ -46,6 +46,7 @@ log = logging.getLogger(__name__)
 @dataclass
 class PrivyLoginRequest:
     """Request data for Privy login."""
+
     privy_user_id: str
     email: str | None = None
     wallet_address: str | None = None
@@ -61,6 +62,7 @@ class PrivyLoginRequest:
 @dataclass
 class PrivyLoginResponse:
     """Response from Privy login."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -72,13 +74,13 @@ class PrivyLoginResponse:
 class PrivyLogin:
     """
     Interactor for handling Privy-based authentication.
-    
+
     This handles login/registration for users authenticating via Privy,
     which includes wallet connections, social logins, and email via Privy.
-    
+
     Users whose email is in ALLOWED_ADMIN_EMAILS will automatically be
     assigned the admin role upon registration or login.
-    
+
     Also automatically syncs wallets to the wallets table for portfolio tracking.
     """
 
@@ -112,14 +114,14 @@ class PrivyLogin:
     async def execute(self, request: PrivyLoginRequest) -> PrivyLoginResponse:
         """
         Execute Privy login flow.
-        
+
         1. Check if user exists by privy_user_id
         2. If not, check by email (if provided)
         3. If still not found, create new user
         4. Flush and commit user data to ensure FK constraint is satisfied
         5. Generate JWT tokens via session service
         6. Record the session for tracking
-        
+
         All operations are wrapped in proper transaction handling with rollback on errors.
         """
         try:
@@ -137,7 +139,9 @@ class PrivyLogin:
                 if user:
                     user.privy_user_id = PrivyUserId(request.privy_user_id)
                     if request.wallet_address:
-                        user.primary_wallet_address = WalletAddress(request.wallet_address)
+                        user.primary_wallet_address = WalletAddress(
+                            request.wallet_address
+                        )
                     await self._user_gateway.update(user)
 
             # If not found and email provided, try to find by email
@@ -151,14 +155,18 @@ class PrivyLogin:
             # If still not found, try by generated email (wallet users without email)
             if not user and not request.email:
                 # Generate the email that would be created for this privy_user_id
-                clean_id = request.privy_user_id.replace(":", "_").replace("did_privy_", "")
+                clean_id = request.privy_user_id.replace(":", "_").replace(
+                    "did_privy_", ""
+                )
                 generated_email = f"{clean_id}@wallet.anvil.io"
                 user = await self._user_gateway.read_by_email(Email(generated_email))
                 if user:
                     # Update privy_user_id to the new format
                     user.privy_user_id = PrivyUserId(request.privy_user_id)
                     if request.wallet_address:
-                        user.primary_wallet_address = WalletAddress(request.wallet_address)
+                        user.primary_wallet_address = WalletAddress(
+                            request.wallet_address
+                        )
                     await self._user_gateway.update(user)
 
             # If still not found, create new user
@@ -170,7 +178,7 @@ class PrivyLogin:
                 if request.ip_address:
                     user.last_ip = IpAddress.from_optional(request.ip_address)
                     await self._user_gateway.update(user)
-                
+
                 # Check if existing user should be promoted to admin
                 await self._maybe_upgrade_to_admin(user)
 
@@ -193,7 +201,10 @@ class PrivyLogin:
                 await self._ensure_user_context(user, request)
 
             # Now create session and get tokens (user exists in DB)
-            auth_session, access_token = await self._auth_session_service.create_session(user.id_)
+            (
+                auth_session,
+                access_token,
+            ) = await self._auth_session_service.create_session(user.id_)
 
             # Record the session (like LogInHandler and SignUpHandler do)
             now = datetime.now(UTC)
@@ -246,32 +257,36 @@ class PrivyLogin:
             PrivyUserId(privy_user_id)
         )
 
-    async def _update_user_privy_info(self, user: User, request: PrivyLoginRequest) -> None:
+    async def _update_user_privy_info(
+        self, user: User, request: PrivyLoginRequest
+    ) -> None:
         """
         Update existing user with Privy information.
-        
+
         Note: Does not commit - the caller is responsible for committing the transaction.
         """
         user.privy_user_id = PrivyUserId(request.privy_user_id)
         if request.wallet_address:
             user.primary_wallet_address = WalletAddress(request.wallet_address)
         user.auth_provider = AuthProvider(request.auth_provider)
-        
+
         # Update last_ip on login (existing user)
         if request.ip_address:
             user.last_ip = IpAddress.from_optional(request.ip_address)
-        
+
         await self._user_gateway.update(user)
         # No commit here - transaction is managed by the caller
 
     async def _maybe_upgrade_to_admin(self, user: User) -> None:
         """
         Check if existing user should be upgraded to admin based on their email.
-        
+
         If the user's email is in ALLOWED_ADMIN_EMAILS and they're currently
         a regular user, upgrade them to admin.
         """
-        if user.role != UserRole.ADMIN and self._admin_settings.is_admin_email(user.email.value):
+        if user.role != UserRole.ADMIN and self._admin_settings.is_admin_email(
+            user.email.value
+        ):
             log.info(
                 "Auto-upgrading user to admin: '%s' (email in ALLOWED_ADMIN_EMAILS)",
                 user.email.value,
@@ -283,9 +298,9 @@ class PrivyLogin:
     async def _create_privy_user(self, request: PrivyLoginRequest) -> User:
         """
         Create a new user from Privy authentication.
-        
+
         Note: Does not commit - the caller is responsible for committing the transaction.
-        
+
         If the user's email is in ALLOWED_ADMIN_EMAILS, they will be
         automatically assigned the admin role.
         """
@@ -311,7 +326,7 @@ class PrivyLogin:
 
         # Set IP tracking fields on registration
         ip = IpAddress.from_optional(request.ip_address)
-        
+
         user = User(
             id_=UserId(0),  # Will be set by database
             email=Email(email),
@@ -335,7 +350,9 @@ class PrivyLogin:
             city_id=None,
             subscription=None,
             privy_user_id=PrivyUserId(request.privy_user_id),
-            primary_wallet_address=WalletAddress(request.wallet_address) if request.wallet_address else None,
+            primary_wallet_address=WalletAddress(request.wallet_address)
+            if request.wallet_address
+            else None,
             auth_provider=AuthProvider(request.auth_provider),
             # IP tracking
             registration_ip=ip,
@@ -346,28 +363,30 @@ class PrivyLogin:
         # No commit here - transaction is managed by the caller
         return user
 
-    async def _ensure_user_context(self, user: User, request: PrivyLoginRequest) -> None:
+    async def _ensure_user_context(
+        self, user: User, request: PrivyLoginRequest
+    ) -> None:
         """
         Ensure user context entry exists for context-aware agents.
-        
+
         This is called on every login (both new and existing users) to
         ensure the context entry exists in the user_context_aware table.
-        
+
         For new users: Creates context with default values
         For existing users: Verifies context exists, creates if missing
-        
+
         The context is used by the authenticated supervisor to provide
         personalized responses based on user classification.
         """
         try:
             # Get or create chat user (UUID-based)
             chat_user = await self._chat_user_repository.get_by_user_id(user.id_.value)
-            
+
             if not chat_user:
                 # Create chat user entry
                 from app.domain.chat.entities import ChatUser
                 from uuid import uuid4
-                
+
                 chat_user = ChatUser(
                     id_=uuid4(),
                     user_id=user.id_.value,
@@ -379,7 +398,7 @@ class PrivyLogin:
                     last_seen_at=datetime.now(UTC),
                 )
                 chat_user = await self._chat_user_repository.create(chat_user)
-            
+
             # Check if context already exists
             existing = await self._user_context_service.exists(chat_user.id_)
             if existing:
@@ -389,7 +408,7 @@ class PrivyLogin:
                     chat_user.id_,
                 )
                 return
-            
+
             # Create user context with defaults
             await self._user_context_service.create_for_new_user(
                 chat_user_id=chat_user.id_,
@@ -398,13 +417,13 @@ class PrivyLogin:
                 wallet_provider=request.auth_provider,
                 language="en",
             )
-            
+
             log.info(
                 "Created user context for user %s (chat_user_id=%s)",
                 user.id_.value,
                 chat_user.id_,
             )
-            
+
         except Exception as e:
             # Log but don't fail login if context creation fails
             log.warning(
@@ -419,7 +438,7 @@ class PrivyLogin:
 
         This ensures the wallet exists in the wallets table for portfolio
         tracking and other features that depend on wallet records.
-        
+
         Also fetches the Privy wallet ID from the Privy API to enable
         balance tracking via Celery background tasks.
         """
@@ -432,16 +451,22 @@ class PrivyLogin:
                 chain_type = "bitcoin"
             elif wallet_address.startswith("1") or wallet_address.startswith("3"):
                 chain_type = "bitcoin"
-            elif wallet_address.startswith("m") or wallet_address.startswith("n") or wallet_address.startswith("2"):
+            elif (
+                wallet_address.startswith("m")
+                or wallet_address.startswith("n")
+                or wallet_address.startswith("2")
+            ):
                 chain_type = "bitcoin_testnet"
 
             # Fetch Privy wallet ID from Privy API
             privy_wallet_id: str | None = None
             if self._privy_api_client and user.privy_user_id:
                 try:
-                    privy_wallet_id = await self._privy_api_client.get_wallet_id_for_address(
-                        privy_user_id=user.privy_user_id.value,
-                        wallet_address=wallet_address,
+                    privy_wallet_id = (
+                        await self._privy_api_client.get_wallet_id_for_address(
+                            privy_user_id=user.privy_user_id.value,
+                            wallet_address=wallet_address,
+                        )
                     )
                     if privy_wallet_id:
                         log.info(

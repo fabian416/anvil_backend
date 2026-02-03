@@ -52,16 +52,19 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         self.enable_csp = enable_csp
 
         # Default CSP policy (restrictive)
-        self.csp_policy = csp_policy or (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "  # Allow eval for Swagger UI
-            "style-src 'self' 'unsafe-inline'; "  # Allow inline styles for Swagger UI
-            "img-src 'self' data: https:; "
-            "font-src 'self' data:; "
-            "connect-src 'self' https:; "
-            "frame-ancestors 'none'; "
-            "base-uri 'self'; "
-            "form-action 'self';"
+        self.csp_policy = (
+            csp_policy
+            or (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "  # Allow eval for Swagger UI
+                "style-src 'self' 'unsafe-inline'; "  # Allow inline styles for Swagger UI
+                "img-src 'self' data: https:; "
+                "font-src 'self' data:; "
+                "connect-src 'self' https:; "
+                "frame-ancestors 'none'; "
+                "base-uri 'self'; "
+                "form-action 'self';"
+            )
         )
 
     async def dispatch(
@@ -148,6 +151,7 @@ class HTTPSRedirectMiddleware(BaseHTTPMiddleware):
             # Redirect to HTTPS
             https_url = request.url.replace(scheme="https")
             from starlette.responses import RedirectResponse
+
             logger.info(f"Redirecting HTTP to HTTPS: {request.url} -> {https_url}")
             return RedirectResponse(url=str(https_url), status_code=301)
 

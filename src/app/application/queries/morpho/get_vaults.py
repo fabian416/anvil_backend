@@ -68,9 +68,7 @@ class GetVaults:
         # Enrich with APY
         for vault in vaults:
             try:
-                apy = await self._gateway.get_vault_apy(
-                    vault.address, request.chain
-                )
+                apy = await self._gateway.get_vault_apy(vault.address, request.chain)
                 vault.apy = apy.total_apy
             except Exception:
                 pass  # Keep default APY

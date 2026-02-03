@@ -21,7 +21,7 @@ from app.domain.value_objects.retry_config import RetryConfig
 
 class TestEnterpriseRetryEngine:
     """Test EnterpriseRetryEngine."""
-    
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_successful_execution_no_retry(self):
@@ -29,15 +29,15 @@ class TestEnterpriseRetryEngine:
         # Arrange
         config = RetryConfig.for_testing()
         engine = EnterpriseRetryEngine(config=config)
-        
+
         mock_func = AsyncMock(return_value="success")
-        
+
         # Act
         result = await engine.execute_with_retry(
             service_name="test_service",
             func=mock_func,
         )
-        
+
         # Assert
         assert result == "success"
         assert mock_func.call_count == 1
@@ -49,20 +49,20 @@ class TestEnterpriseRetryEngine:
         # Arrange
         config = RetryConfig.for_testing()
         engine = EnterpriseRetryEngine(config=config)
-        
+
         mock_func = AsyncMock(
             side_effect=[
                 Exception("Temporary failure"),
                 "success",
             ]
         )
-        
+
         # Act
         result = await engine.execute_with_retry(
             service_name="test_service",
             func=mock_func,
         )
-        
+
         # Assert
         assert result == "success"
         assert mock_func.call_count == 2
@@ -74,16 +74,16 @@ class TestEnterpriseRetryEngine:
         # Arrange
         config = RetryConfig.for_testing()
         engine = EnterpriseRetryEngine(config=config)
-        
+
         mock_func = AsyncMock(side_effect=Exception("Persistent failure"))
-        
+
         # Act & Assert
         with pytest.raises(AllRetriesExhaustedError) as exc_info:
             await engine.execute_with_retry(
                 service_name="test_service",
                 func=mock_func,
             )
-        
+
         assert "All 2 retries failed" in str(exc_info.value)
         assert mock_func.call_count == 2  # max_retries for testing config
 
@@ -94,16 +94,16 @@ class TestEnterpriseRetryEngine:
         # Arrange
         config = RetryConfig.for_testing()
         engine = EnterpriseRetryEngine(config=config)
-        
+
         mock_func = AsyncMock(side_effect=Exception("401 authentication failed"))
-        
+
         # Act & Assert
         with pytest.raises(AllRetriesExhaustedError):
             await engine.execute_with_retry(
                 service_name="test_service",
                 func=mock_func,
             )
-        
+
         # Should only try once (no retry for auth errors)
         assert mock_func.call_count == 1
 
@@ -113,24 +113,24 @@ class TestEnterpriseRetryEngine:
         """Test circuit breaker integration blocks requests."""
         # Arrange
         config = RetryConfig.for_testing()
-        
+
         mock_circuit_breaker = MagicMock()
         mock_circuit_breaker.is_open.return_value = True
-        
+
         engine = EnterpriseRetryEngine(
             config=config,
             circuit_breaker=mock_circuit_breaker,
         )
-        
+
         mock_func = AsyncMock(return_value="success")
-        
+
         # Act & Assert
         with pytest.raises(CircuitBreakerOpenError) as exc_info:
             await engine.execute_with_retry(
                 service_name="test_service",
                 func=mock_func,
             )
-        
+
         assert "Circuit breaker open" in str(exc_info.value)
         mock_circuit_breaker.is_open.assert_called_once_with("test_service")
         mock_func.assert_not_called()
@@ -141,23 +141,23 @@ class TestEnterpriseRetryEngine:
         """Test circuit breaker records success."""
         # Arrange
         config = RetryConfig.for_testing()
-        
+
         mock_circuit_breaker = MagicMock()
         mock_circuit_breaker.is_open.return_value = False
-        
+
         engine = EnterpriseRetryEngine(
             config=config,
             circuit_breaker=mock_circuit_breaker,
         )
-        
+
         mock_func = AsyncMock(return_value="success")
-        
+
         # Act
         result = await engine.execute_with_retry(
             service_name="test_service",
             func=mock_func,
         )
-        
+
         # Assert
         assert result == "success"
         mock_circuit_breaker.record_success.assert_called_once_with("test_service")
@@ -168,24 +168,24 @@ class TestEnterpriseRetryEngine:
         """Test circuit breaker records failure."""
         # Arrange
         config = RetryConfig.for_testing()
-        
+
         mock_circuit_breaker = MagicMock()
         mock_circuit_breaker.is_open.return_value = False
-        
+
         engine = EnterpriseRetryEngine(
             config=config,
             circuit_breaker=mock_circuit_breaker,
         )
-        
+
         mock_func = AsyncMock(side_effect=Exception("Failure"))
-        
+
         # Act & Assert
         with pytest.raises(AllRetriesExhaustedError):
             await engine.execute_with_retry(
                 service_name="test_service",
                 func=mock_func,
             )
-        
+
         # Should record failure for each attempt
         assert mock_circuit_breaker.record_failure.call_count == 2
 
@@ -195,24 +195,24 @@ class TestEnterpriseRetryEngine:
         """Test service registry blocks disabled services."""
         # Arrange
         config = RetryConfig.for_testing()
-        
+
         mock_service_registry = MagicMock()
         mock_service_registry.is_enabled.return_value = False
-        
+
         engine = EnterpriseRetryEngine(
             config=config,
             service_registry=mock_service_registry,
         )
-        
+
         mock_func = AsyncMock(return_value="success")
-        
+
         # Act & Assert
         with pytest.raises(ServiceDisabledError) as exc_info:
             await engine.execute_with_retry(
                 service_name="test_service",
                 func=mock_func,
             )
-        
+
         assert "manually disabled" in str(exc_info.value)
         mock_service_registry.is_enabled.assert_called_once_with("test_service")
         mock_func.assert_not_called()
@@ -223,27 +223,27 @@ class TestEnterpriseRetryEngine:
         """Test telemetry records successful execution."""
         # Arrange
         config = RetryConfig.for_testing()
-        
+
         mock_telemetry = AsyncMock()
-        
+
         engine = EnterpriseRetryEngine(
             config=config,
             telemetry=mock_telemetry,
         )
-        
+
         mock_func = AsyncMock(return_value="success")
-        
+
         # Act
         await engine.execute_with_retry(
             service_name="test_service",
             func=mock_func,
             context={"user_id": "123"},
         )
-        
+
         # Assert
         mock_telemetry.record_attempt_start.assert_called_once()
         mock_telemetry.record_success.assert_called_once()
-        
+
         # Check telemetry call arguments
         success_call = mock_telemetry.record_success.call_args
         assert success_call[0][0] == "test_service"  # service_name
@@ -257,31 +257,33 @@ class TestEnterpriseRetryEngine:
         """Test telemetry records failures."""
         # Arrange
         config = RetryConfig.for_testing()
-        
+
         mock_telemetry = AsyncMock()
-        
+
         engine = EnterpriseRetryEngine(
             config=config,
             telemetry=mock_telemetry,
         )
-        
+
         mock_func = AsyncMock(side_effect=Exception("Service unavailable"))
-        
+
         # Act & Assert
         with pytest.raises(AllRetriesExhaustedError):
             await engine.execute_with_retry(
                 service_name="test_service",
                 func=mock_func,
             )
-        
+
         # Should record attempt start and failure for each attempt
         assert mock_telemetry.record_attempt_start.call_count == 2
         assert mock_telemetry.record_failure.call_count == 2
-        
+
         # Check failure call arguments
         failure_call = mock_telemetry.record_failure.call_args
         assert failure_call[0][0] == "test_service"  # service_name
-        assert failure_call[0][2] == "service_unavailable"  # error_type (classified from message)
+        assert (
+            failure_call[0][2] == "service_unavailable"
+        )  # error_type (classified from message)
         assert "Service unavailable" in failure_call[0][3]  # error_message
 
     @pytest.mark.asyncio
@@ -291,20 +293,20 @@ class TestEnterpriseRetryEngine:
         # Arrange
         config = RetryConfig.for_testing()
         engine = EnterpriseRetryEngine(config=config)
-        
+
         call_times = []
-        
+
         async def failing_func():
             call_times.append(asyncio.get_event_loop().time())
             raise Exception("Temporary failure")
-        
+
         # Act
         with pytest.raises(AllRetriesExhaustedError):
             await engine.execute_with_retry(
                 service_name="test_service",
                 func=failing_func,
             )
-        
+
         # Assert - check that there was a delay between calls
         assert len(call_times) == 2
         delay = call_times[1] - call_times[0]
@@ -316,16 +318,27 @@ class TestEnterpriseRetryEngine:
         """Test error type classification."""
         # Arrange
         engine = EnterpriseRetryEngine(config=RetryConfig.for_testing())
-        
+
         # Act & Assert
         assert engine.classify_error(Exception("Rate limit exceeded")) == "rate_limit"
         assert engine.classify_error(Exception("429 Too Many Requests")) == "rate_limit"
         assert engine.classify_error(Exception("Request timeout")) == "timeout"
-        assert engine.classify_error(Exception("503 Service Unavailable")) == "service_unavailable"
-        assert engine.classify_error(Exception("Model overloaded")) == "model_overloaded"
-        assert engine.classify_error(Exception("401 Unauthorized")) == "authentication_error"
+        assert (
+            engine.classify_error(Exception("503 Service Unavailable"))
+            == "service_unavailable"
+        )
+        assert (
+            engine.classify_error(Exception("Model overloaded")) == "model_overloaded"
+        )
+        assert (
+            engine.classify_error(Exception("401 Unauthorized"))
+            == "authentication_error"
+        )
         assert engine.classify_error(Exception("400 Bad Request")) == "invalid_request"
-        assert engine.classify_error(Exception("Content policy violation")) == "content_policy"
+        assert (
+            engine.classify_error(Exception("Content policy violation"))
+            == "content_policy"
+        )
         assert engine.classify_error(Exception("Unknown error")) == "internal_error"
 
     @pytest.mark.asyncio
@@ -333,23 +346,25 @@ class TestEnterpriseRetryEngine:
     async def test_full_integration_success_after_failures(self):
         """Test full integration with all components."""
         # Arrange
-        config = RetryConfig(max_retries=3, initial_backoff_seconds=0.01, max_backoff_seconds=0.1)
-        
+        config = RetryConfig(
+            max_retries=3, initial_backoff_seconds=0.01, max_backoff_seconds=0.1
+        )
+
         mock_circuit_breaker = MagicMock()
         mock_circuit_breaker.is_open.return_value = False
-        
+
         mock_telemetry = AsyncMock()
-        
+
         mock_service_registry = MagicMock()
         mock_service_registry.is_enabled.return_value = True
-        
+
         engine = EnterpriseRetryEngine(
             config=config,
             circuit_breaker=mock_circuit_breaker,
             telemetry=mock_telemetry,
             service_registry=mock_service_registry,
         )
-        
+
         # Fail twice, then succeed
         mock_func = AsyncMock(
             side_effect=[
@@ -358,17 +373,17 @@ class TestEnterpriseRetryEngine:
                 "success",
             ]
         )
-        
+
         # Act
         result = await engine.execute_with_retry(
             service_name="test_service",
             func=mock_func,
             context={"user_id": "123"},
         )
-        
+
         # Assert
         assert result == "success"
-        
+
         # Check all components were called correctly
         mock_service_registry.is_enabled.assert_called_once()
         mock_circuit_breaker.is_open.assert_called_once()

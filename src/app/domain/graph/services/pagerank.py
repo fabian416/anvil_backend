@@ -150,9 +150,7 @@ class PageRankService:
             return []
 
         # Sort by PageRank descending
-        sorted_items = sorted(
-            pagerank_scores.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_items = sorted(pagerank_scores.items(), key=lambda x: x[1], reverse=True)
 
         results: List[PageRankResult] = []
         for rank, (node_id, score) in enumerate(sorted_items, start=1):

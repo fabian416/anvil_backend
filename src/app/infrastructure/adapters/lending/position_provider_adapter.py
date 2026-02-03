@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class PositionProviderAdapter:
     """
     Adapter for fetching positions from lending protocols via MCP.
-    
+
     Implements PositionProvider protocol for Aave and Morpho.
     """
 
@@ -39,15 +39,15 @@ class PositionProviderAdapter:
     ) -> AavePosition:
         """
         Get user's lending position from protocol.
-        
+
         Args:
             wallet_address: User's wallet address
             protocol: Protocol name ("aave" or "morpho")
             chain: Blockchain network
-            
+
         Returns:
             AavePosition entity with current position data
-            
+
         Raises:
             ValueError: If protocol is not supported
             Exception: If MCP call fails
@@ -154,9 +154,13 @@ class PositionProviderAdapter:
                     asset_address=borrow.get("asset_address", borrow.get("asset", "")),
                     symbol=borrow.get("symbol", ""),
                     balance=Decimal(str(borrow.get("debt", borrow.get("balance", 0)))),
-                    balance_usd=Decimal(str(borrow.get("debt_usd", borrow.get("balance_usd", 0)))),
+                    balance_usd=Decimal(
+                        str(borrow.get("debt_usd", borrow.get("balance_usd", 0)))
+                    ),
                     apy=Decimal(str(borrow.get("apy", 0))),
-                    borrow_type=borrow.get("rate_mode", borrow.get("borrow_type", "variable")),
+                    borrow_type=borrow.get(
+                        "rate_mode", borrow.get("borrow_type", "variable")
+                    ),
                 )
             )
 

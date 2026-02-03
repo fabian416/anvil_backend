@@ -2,10 +2,16 @@
 
 Feature Flag: mcp.servers.portfolio_enabled
 """
+
 from typing import Dict, Any, List, Optional
 from uuid import UUID
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 from app.infrastructure.mcp.base import MCPServer
 from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
@@ -14,16 +20,16 @@ from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 class PortfolioMCPServer(MCPServer):
     """
     MCP server for portfolio operations.
-    
+
     Exposes tools for:
     - Getting user balances
     - Getting user positions (lending, staking, LPs)
     - Portfolio analytics
-    
+
     This is an INTERNAL MCP server (not public-facing).
     It wraps our domain/application logic for agent consumption.
     """
-    
+
     def __init__(
         self,
         portfolio_service: Optional[Any] = None,
@@ -31,46 +37,50 @@ class PortfolioMCPServer(MCPServer):
     ):
         """
         Initialize Portfolio MCP server.
-        
+
         Args:
             portfolio_service: Service for portfolio operations (injected via DI)
             settings: MCP configuration settings
-            
+
         Raises:
             MCPServerDisabledError: If Portfolio server is disabled
         """
         self.settings = settings or MCPSettings()
-        
+
         # Check if server is enabled
         if not self.settings.enabled or not self.settings.servers.portfolio_enabled:
             raise MCPServerDisabledError(
                 "Portfolio MCP server is disabled. "
                 "Enable with mcp.servers.portfolio_enabled=true in config."
             )
-        
+
         super().__init__(
             name="portfolio",
             version="1.0.0",
-            description="Internal portfolio operations for DeFi agents"
+            description="Internal portfolio operations for DeFi agents",
         )
-        
+
         # In production, this would be injected via Dishka
         self.portfolio_service = portfolio_service
-        
+
         # Create retry decorator for this server
         self._retry = retry(
             stop=stop_after_attempt(3),
             wait=wait_exponential(multiplier=1, min=2, max=10),
-            retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException, Exception)),
+            retry=retry_if_exception_type((
+                httpx.HTTPError,
+                httpx.TimeoutException,
+                Exception,
+            )),
             reraise=True,
         )
-        
+
         # Register tools
         self.setup_tools()
-    
+
     def setup_tools(self):
         """Register portfolio tools."""
-        
+
         # Tool 1: Get user balance
         self.register_tool(
             name="get_user_balance",
@@ -91,7 +101,7 @@ class PortfolioMCPServer(MCPServer):
             },
             handler=self._get_user_balance,
         )
-        
+
         # Tool 2: Get user positions
         self.register_tool(
             name="get_user_positions",
@@ -116,7 +126,7 @@ class PortfolioMCPServer(MCPServer):
             },
             handler=self._get_user_positions,
         )
-        
+
         # Tool 3: Get portfolio summary
         self.register_tool(
             name="get_portfolio_summary",
@@ -133,7 +143,7 @@ class PortfolioMCPServer(MCPServer):
             },
             handler=self._get_portfolio_summary,
         )
-    
+
     async def _get_user_balance(
         self,
         user_id: str,
@@ -141,17 +151,17 @@ class PortfolioMCPServer(MCPServer):
     ) -> Dict[str, Any]:
         """
         Get user's token balances.
-        
+
         Args:
             user_id: User identifier
             chain_id: Optional chain ID filter
-        
+
         Returns:
             Dictionary with balance information
         """
         # TODO: Integrate with actual portfolio service
         # For now, return mock data
-        
+
         return {
             "user_id": user_id,
             "chain_id": chain_id or "all",
@@ -180,7 +190,7 @@ class PortfolioMCPServer(MCPServer):
             ],
             "total_usd": 17770.00,
         }
-    
+
     async def _get_user_positions(
         self,
         user_id: str,
@@ -189,18 +199,18 @@ class PortfolioMCPServer(MCPServer):
     ) -> Dict[str, Any]:
         """
         Get user's open positions.
-        
+
         Args:
             user_id: User identifier
             protocol: Optional protocol filter
             position_type: Optional position type filter
-        
+
         Returns:
             Dictionary with position information
         """
         # TODO: Integrate with actual portfolio service
         # For now, return mock data
-        
+
         return {
             "user_id": user_id,
             "positions": [
@@ -234,23 +244,23 @@ class PortfolioMCPServer(MCPServer):
             ],
             "total_value_usd": 11200.00,
         }
-    
+
     async def _get_portfolio_summary(
         self,
         user_id: str,
     ) -> Dict[str, Any]:
         """
         Get portfolio summary.
-        
+
         Args:
             user_id: User identifier
-        
+
         Returns:
             Dictionary with portfolio summary
         """
         # TODO: Integrate with actual portfolio service
         # For now, return mock data
-        
+
         return {
             "user_id": user_id,
             "total_value_usd": 28970.00,

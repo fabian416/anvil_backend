@@ -60,9 +60,9 @@ def create_password_reset_router() -> APIRouter:
         token: str = Body(..., embed=True),
         new_password: str = Body(..., embed=True),
     ) -> dict:
-        await handler.execute(ResetPasswordRequest(token=token, new_password=new_password))
+        await handler.execute(
+            ResetPasswordRequest(token=token, new_password=new_password)
+        )
         return {"status": "success", "message": "Password has been reset"}
 
     return router
-
-

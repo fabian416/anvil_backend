@@ -200,7 +200,9 @@ class TestSupplyInteractorAave:
         mock_repository.save_supply_position.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_insufficient_balance_aave(self, supply_interactor, mock_balance_checker):
+    async def test_insufficient_balance_aave(
+        self, supply_interactor, mock_balance_checker
+    ):
         """Test supply fails with insufficient balance."""
         # Set balance lower than required
         mock_balance_checker.get_balance = AsyncMock(return_value=Decimal("500.0"))

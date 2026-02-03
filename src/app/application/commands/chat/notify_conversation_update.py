@@ -58,7 +58,9 @@ class NotifyConversationUpdateInteractor:
         """
         self._notification_adapter = notification_adapter
 
-    async def execute(self, command: NotifyConversationUpdateCommand) -> ChatNotificationId:
+    async def execute(
+        self, command: NotifyConversationUpdateCommand
+    ) -> ChatNotificationId:
         """
         Execute conversation update notification.
 
@@ -73,7 +75,7 @@ class NotifyConversationUpdateInteractor:
         # Determine delivery channels based on command
         channels = {
             NotificationChannel.WEBSOCKET,  # Always send real-time
-            NotificationChannel.IN_APP,     # Always store in-app
+            NotificationChannel.IN_APP,  # Always store in-app
         }
 
         if command.include_email:

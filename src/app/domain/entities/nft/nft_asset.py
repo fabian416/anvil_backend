@@ -48,7 +48,9 @@ class NFTAsset:
             "animation_url": self.animation_url,
             "traits": [t.to_dict() for t in self.traits],
             "rarity_rank": self.rarity_rank,
-            "last_sale_price": str(self.last_sale_price) if self.last_sale_price else None,
+            "last_sale_price": str(self.last_sale_price)
+            if self.last_sale_price
+            else None,
             "last_sale_currency": self.last_sale_currency,
         }
 

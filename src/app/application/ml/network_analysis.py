@@ -18,14 +18,14 @@ from app.domain.ml.services.network_analysis_service import (
 
 class CalculatePageRankInteractor:
     """Calculate PageRank for protocols"""
-    
+
     def __init__(
         self,
         network_service: NetworkAnalysisService,
     ):
         """Initialize interactor"""
         self._network_service = network_service
-    
+
     async def execute(
         self,
         damping_factor: float = 0.85,
@@ -33,11 +33,11 @@ class CalculatePageRankInteractor:
     ) -> List[PageRankResult]:
         """
         Calculate PageRank importance scores.
-        
+
         Args:
             damping_factor: PageRank damping factor
             max_iterations: Maximum iterations
-        
+
         Returns:
             List of protocols ranked by importance
         """
@@ -49,24 +49,24 @@ class CalculatePageRankInteractor:
 
 class DetectCommunitiesInteractor:
     """Detect protocol communities"""
-    
+
     def __init__(
         self,
         network_service: NetworkAnalysisService,
     ):
         """Initialize interactor"""
         self._network_service = network_service
-    
+
     async def execute(
         self,
         algorithm: str = "label_propagation",
     ) -> List[CommunityDetectionResult]:
         """
         Detect communities in protocol network.
-        
+
         Args:
             algorithm: Detection algorithm
-        
+
         Returns:
             List of detected communities
         """
@@ -75,24 +75,24 @@ class DetectCommunitiesInteractor:
 
 class CalculateCentralityInteractor:
     """Calculate centrality metrics"""
-    
+
     def __init__(
         self,
         network_service: NetworkAnalysisService,
     ):
         """Initialize interactor"""
         self._network_service = network_service
-    
+
     async def execute(
         self,
         protocol_id: Optional[UUID] = None,
     ) -> List[CentralityResult]:
         """
         Calculate centrality metrics.
-        
+
         Args:
             protocol_id: Specific protocol (optional)
-        
+
         Returns:
             List of centrality results
         """
@@ -101,14 +101,14 @@ class CalculateCentralityInteractor:
 
 class SimulateContagionInteractor:
     """Simulate cascade risk"""
-    
+
     def __init__(
         self,
         network_service: NetworkAnalysisService,
     ):
         """Initialize interactor"""
         self._network_service = network_service
-    
+
     async def execute(
         self,
         origin_protocol_id: UUID,
@@ -117,12 +117,12 @@ class SimulateContagionInteractor:
     ) -> ContagionSimulation:
         """
         Simulate contagion cascade from protocol failure.
-        
+
         Args:
             origin_protocol_id: Origin of failure
             propagation_probability: Cascade probability
             max_depth: Maximum cascade depth
-        
+
         Returns:
             Contagion simulation result
         """

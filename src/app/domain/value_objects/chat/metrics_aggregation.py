@@ -210,7 +210,9 @@ class MetricsRollup:
     def get_cost_per_request(self) -> float:
         """Calculate average cost per request."""
         return (
-            self.total_cost_usd / self.total_requests if self.total_requests > 0 else 0.0
+            self.total_cost_usd / self.total_requests
+            if self.total_requests > 0
+            else 0.0
         )
 
     def to_dict(self) -> dict:

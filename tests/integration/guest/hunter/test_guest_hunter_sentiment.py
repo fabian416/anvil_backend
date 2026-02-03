@@ -20,7 +20,7 @@ class TestGuestHunterSentiment:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What's the sentiment for ETH?", "language": "en"}
+            json={"content": "What's the sentiment for ETH?", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -49,12 +49,14 @@ class TestGuestHunterSentiment:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_sentiment_sources_breakdown(self, client, llm_validator, csv_tracker):
+    async def test_sentiment_sources_breakdown(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that sentiment shows source breakdown."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "sentiment analysis for BTC", "language": "en"}
+            json={"content": "sentiment analysis for BTC", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -71,7 +73,10 @@ class TestGuestHunterSentiment:
         assert any("twitter" in s or "reddit" in s or "news" in s for s in source_names)
 
         # Should mention sources in content
-        assert any(word in content.lower() for word in ["twitter", "reddit", "news", "sources", "social"])
+        assert any(
+            word in content.lower()
+            for word in ["twitter", "reddit", "news", "sources", "social"]
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -84,7 +89,7 @@ class TestGuestHunterSentiment:
         for token in tokens:
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={"content": f"sentiment for {token}", "language": "en"}
+                json={"content": f"sentiment for {token}", "language": "en"},
             )
             assert response.status_code == 200
             data = response.json()
@@ -95,12 +100,14 @@ class TestGuestHunterSentiment:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_sentiment_classification_types(self, client, llm_validator, csv_tracker):
+    async def test_sentiment_classification_types(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that sentiment returns valid classifications."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What's the sentiment for ETH?", "language": "en"}
+            json={"content": "What's the sentiment for ETH?", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -120,8 +127,7 @@ class TestGuestHunterSentiment:
         """Test that sentiment score is in valid range."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "sentiment BTC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "sentiment BTC", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -137,12 +143,14 @@ class TestGuestHunterSentiment:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_sentiment_multilingual_spanish(self, client, llm_validator, csv_tracker):
+    async def test_sentiment_multilingual_spanish(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test sentiment analysis in Spanish."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "sentimiento de ETH", "language": "es"}
+            json={"content": "sentimiento de ETH", "language": "es"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -155,12 +163,13 @@ class TestGuestHunterSentiment:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_sentiment_with_hunter_tool_tag(self, client, llm_validator, csv_tracker):
+    async def test_sentiment_with_hunter_tool_tag(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that response includes hunter_tool tag."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "sentiment ETH", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "sentiment ETH", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -173,12 +182,13 @@ class TestGuestHunterSentiment:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_sentiment_real_data_sources(self, client, llm_validator, csv_tracker):
+    async def test_sentiment_real_data_sources(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that sentiment uses real data sources."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "ETH sentiment", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "ETH sentiment", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -195,6 +205,7 @@ class TestGuestHunterSentiment:
 
         content = data["agent_message"]["content"]
 
+
 class TestGuestHunterSentimentStorytellingQuality:
     """Test storytelling and UX quality of sentiment responses."""
 
@@ -204,13 +215,14 @@ class TestGuestHunterSentimentStorytellingQuality:
         """Test that sentiment uses emojis for visual appeal."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "sentiment BTC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "sentiment BTC", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
         # Should have emoji indicators
-        has_emojis = any(emoji in content for emoji in ["📊", "📈", "📉", "🐂", "🐻", "⚖️"])
+        has_emojis = any(
+            emoji in content for emoji in ["📊", "📈", "📉", "🐂", "🐻", "⚖️"]
+        )
         assert has_emojis
 
     @pytest.mark.asyncio
@@ -219,8 +231,7 @@ class TestGuestHunterSentimentStorytellingQuality:
         """Test that sentiment has clear visual formatting."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "ETH sentiment", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "ETH sentiment", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -230,16 +241,24 @@ class TestGuestHunterSentimentStorytellingQuality:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_sentiment_actionable_insights(self, client, llm_validator, csv_tracker):
+    async def test_sentiment_actionable_insights(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that sentiment provides actionable context."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "sentiment SOL", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "sentiment SOL", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
         # Should provide context about what sentiment means
-        insights_keywords = ["bullish", "bearish", "neutral", "positive", "negative", "mixed"]
+        insights_keywords = [
+            "bullish",
+            "bearish",
+            "neutral",
+            "positive",
+            "negative",
+            "mixed",
+        ]
         has_insights = any(keyword in content.lower() for keyword in insights_keywords)
         assert has_insights

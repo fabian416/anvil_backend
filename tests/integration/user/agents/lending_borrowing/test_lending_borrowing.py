@@ -42,7 +42,6 @@ LENDING_BORROWING_TESTS = [
         "category": "agent",
         "subcategory": "lending_health",
     },
-    
     # Positions
     {
         "test_id": "lending_position_001",
@@ -65,7 +64,6 @@ LENDING_BORROWING_TESTS = [
         "category": "agent",
         "subcategory": "lending_position",
     },
-    
     # Liquidation Risk
     {
         "test_id": "lending_liquidation_001",
@@ -81,7 +79,6 @@ LENDING_BORROWING_TESTS = [
         "category": "agent",
         "subcategory": "lending_liquidation",
     },
-    
     # Leverage Optimization
     {
         "test_id": "lending_leverage_001",
@@ -114,30 +111,31 @@ def lending_borrowing_reporter() -> CSVReporter:
 @pytest.mark.asyncio
 class TestLendingBorrowingAgent:
     """Test Lending Borrowing agent functionality."""
-    
-    async def test_lending_borrowing_queries(self, authenticated_client, lending_borrowing_reporter):
+
+    async def test_lending_borrowing_queries(
+        self, authenticated_client, lending_borrowing_reporter
+    ):
         """Test lending/borrowing position queries."""
         import asyncio
-        
+
         for test_case in LENDING_BORROWING_TESTS:
             conv_id = await create_conversation(
-                authenticated_client,
-                title=f"Test {test_case['test_id']}"
+                authenticated_client, title=f"Test {test_case['test_id']}"
             )
-            
+
             response_data, response_time = await send_message(
                 authenticated_client,
                 conv_id,
                 test_case["input"],
                 timeout=90.0,
             )
-            
+
             parsed = parse_response(response_data)
-            
+
             expected_agent = test_case.get("expected_agent", "")
             actual_agents = parsed.get("agents_used", "")
             has_error = parsed.get("error", False)
-            
+
             if has_error:
                 status = "FAIL"
             elif expected_agent and expected_agent in actual_agents:
@@ -146,7 +144,7 @@ class TestLendingBorrowingAgent:
                 status = "PARTIAL"
             else:
                 status = "FAIL"
-            
+
             result = TestResult(
                 test_id=test_case["test_id"],
                 category=test_case.get("category", ""),
@@ -160,12 +158,16 @@ class TestLendingBorrowingAgent:
                 status=status,
                 conversation_id=conv_id,
             )
-            
+
             lending_borrowing_reporter.add_result(result)
-            
-            status_emoji = "✅" if status == "PASS" else "⚠️" if status == "PARTIAL" else "❌"
-            print(f"{status_emoji} {test_case['test_id']}: {test_case['input'][:40]}... → {actual_agents} ({response_time}ms)")
-            
+
+            status_emoji = (
+                "✅" if status == "PASS" else "⚠️" if status == "PARTIAL" else "❌"
+            )
+            print(
+                f"{status_emoji} {test_case['test_id']}: {test_case['input'][:40]}... → {actual_agents} ({response_time}ms)"
+            )
+
             await asyncio.sleep(0.5)
 
 

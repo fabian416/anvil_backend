@@ -140,9 +140,7 @@ class ChatRiskInsightsHandler:
             )
             if search_results:
                 # Get node for first result
-                results = await self._graph_repo.get_node(
-                    search_results[0].protocol_id
-                )
+                results = await self._graph_repo.get_node(search_results[0].protocol_id)
                 if results:
                     return results
 
@@ -173,9 +171,7 @@ class ChatRiskInsightsHandler:
         # Generate warning message if needed
         warning_message = None
         if should_warn:
-            warning_message = self._generate_warning_message(
-                prediction, operation_type
-            )
+            warning_message = self._generate_warning_message(prediction, operation_type)
 
         # Enhance recommendations with operation-specific advice
         recommendations = self._enhance_recommendations(
@@ -223,10 +219,10 @@ class ChatRiskInsightsHandler:
                 "For lending, ensure you understand liquidation risks and collateral requirements"
             )
         elif operation_type == "borrow":
+            enhanced.append("Monitor your health factor closely to avoid liquidation")
             enhanced.append(
-                "Monitor your health factor closely to avoid liquidation"
+                "Consider using stablecoins as collateral to reduce volatility risk"
             )
-            enhanced.append("Consider using stablecoins as collateral to reduce volatility risk")
         elif operation_type == "stake":
             enhanced.append("Verify the unbonding period and withdrawal restrictions")
             enhanced.append("Consider the smart contract risk of the staking protocol")

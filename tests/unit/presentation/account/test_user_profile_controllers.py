@@ -19,16 +19,18 @@ class TestGetMeController:
     def mock_get_me_handler(self):
         """Create mock GetMeHandler."""
         handler = AsyncMock()
-        handler.execute = AsyncMock(return_value={
-            "id": str(uuid4()),
-            "email": "user@example.com",
-            "first_name": "Test",
-            "last_name": "User",
-            "role": "USER",
-            "is_active": True,
-            "is_email_verified": True,
-            "created_at": "2024-01-01T00:00:00Z",
-        })
+        handler.execute = AsyncMock(
+            return_value={
+                "id": str(uuid4()),
+                "email": "user@example.com",
+                "first_name": "Test",
+                "last_name": "User",
+                "role": "USER",
+                "is_active": True,
+                "is_email_verified": True,
+                "created_at": "2024-01-01T00:00:00Z",
+            }
+        )
         return handler
 
     def test_get_me_returns_user_profile(self, mock_get_me_handler):
@@ -99,14 +101,16 @@ class TestUpdateMeController:
     def mock_update_me_handler(self):
         """Create mock UpdateMeHandler."""
         handler = AsyncMock()
-        handler.execute = AsyncMock(return_value={
-            "id": str(uuid4()),
-            "email": "user@example.com",
-            "first_name": "Updated",
-            "last_name": "Name",
-            "role": "USER",
-            "is_active": True,
-        })
+        handler.execute = AsyncMock(
+            return_value={
+                "id": str(uuid4()),
+                "email": "user@example.com",
+                "first_name": "Updated",
+                "last_name": "Name",
+                "role": "USER",
+                "is_active": True,
+            }
+        )
         return handler
 
     def test_valid_update_request_structure(self):
@@ -136,7 +140,7 @@ class TestUpdateMeController:
     def test_update_me_response_reflects_changes(self, mock_update_me_handler):
         """Test update response includes updated values."""
         request_data = {"first_name": "Updated"}
-        
+
         response = {
             "id": str(uuid4()),
             "email": "user@example.com",
@@ -196,11 +200,13 @@ class TestChangePasswordController:
     def mock_change_password_handler(self):
         """Create mock ChangeOwnPasswordHandler."""
         handler = AsyncMock()
-        handler.execute = AsyncMock(return_value={
-            "access_token": "new_access_token",
-            "refresh_token": "new_refresh_token",
-            "message": "Password changed successfully",
-        })
+        handler.execute = AsyncMock(
+            return_value={
+                "access_token": "new_access_token",
+                "refresh_token": "new_refresh_token",
+                "message": "Password changed successfully",
+            }
+        )
         return handler
 
     def test_valid_change_password_request_structure(self):
@@ -310,6 +316,7 @@ class TestUserProfileValidation:
     def test_email_validation_patterns(self):
         """Test email validation accepts valid formats."""
         import re
+
         email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
         valid_emails = [
@@ -324,6 +331,7 @@ class TestUserProfileValidation:
     def test_phone_validation_patterns(self):
         """Test phone validation patterns."""
         import re
+
         # E.164 format
         phone_pattern = r"^\+[1-9]\d{1,14}$"
 
@@ -362,6 +370,7 @@ class TestUserProfileValidation:
 
     def test_password_strength_validation(self):
         """Test password strength validation rules."""
+
         def is_strong_password(password: str) -> tuple[bool, list[str]]:
             errors = []
             if len(password) < 8:

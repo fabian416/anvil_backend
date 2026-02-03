@@ -47,10 +47,13 @@ class TestSyncWalletsHandler:
     def mock_wallet_repository(self):
         """Create a mock WalletRepository."""
         from datetime import datetime
+
         repo = MagicMock(spec=WalletRepository)
-        
+
         # Mock upsert to return a wallet
-        async def mock_upsert(user_id, address, provider, privy_wallet_id=None, chain_type=None):
+        async def mock_upsert(
+            user_id, address, provider, privy_wallet_id=None, chain_type=None
+        ):
             now = datetime.utcnow()
             return Wallet(
                 id_=WalletId(1),
@@ -63,7 +66,7 @@ class TestSyncWalletsHandler:
                 created_at=CreatedAt(now),
                 updated_at=UpdatedAt(now),
             )
-        
+
         repo.upsert = AsyncMock(side_effect=mock_upsert)
         return repo
 
@@ -98,13 +101,13 @@ class TestSyncWalletsHandler:
         assert isinstance(result, WalletsResponse)
         assert result.user_id == 123
         assert len(result.wallets) == 2
-        
+
         # First wallet should be primary (matches primary_wallet_address)
         assert result.wallets[0].address == "0x1234567890abcdef1234567890abcdef12345678"
         assert result.wallets[0].is_primary is True
         assert result.wallets[0].wallet_type == "embedded"
         assert result.wallets[0].wallet_id == "wallet_123"
-        
+
         # Second wallet is imported
         assert result.wallets[1].address == "0xabcdef1234567890abcdef1234567890abcdef12"
         assert result.wallets[1].is_primary is False
@@ -150,11 +153,13 @@ class TestSyncWalletsHandler:
         assert result.wallets[0].wallet_type == "imported"
         assert result.wallets[0].source == "frontend"
         assert "imported" in result.message.lower()
-        
+
         # Verify wallet was persisted
         mock_wallet_repository.upsert.assert_called_once()
         call_args = mock_wallet_repository.upsert.call_args
-        assert call_args.kwargs["address"] == "0xnewimportedwallet1234567890abcdef12345678"
+        assert (
+            call_args.kwargs["address"] == "0xnewimportedwallet1234567890abcdef12345678"
+        )
         assert call_args.kwargs["provider"] == WalletProvider.IMPORTED
 
     @pytest.mark.asyncio
@@ -188,7 +193,10 @@ class TestSyncWalletsHandler:
 
         # Find the primary wallet
         primary_wallet = next(w for w in result.wallets if w.is_primary)
-        assert primary_wallet.address.lower() == "0x1234567890abcdef1234567890abcdef12345678"
+        assert (
+            primary_wallet.address.lower()
+            == "0x1234567890abcdef1234567890abcdef12345678"
+        )
 
     @pytest.mark.asyncio
     async def test_sync_wallets_mixed_types(self, handler, mock_wallet_repository):
@@ -217,22 +225,26 @@ class TestSyncWalletsHandler:
         result = await handler.execute(wallet_data)
 
         assert len(result.wallets) == 3
-        
+
         # Check all types are preserved
         types = {w.wallet_type for w in result.wallets}
         assert types == {"embedded", "external", "imported"}
-        
+
         # Check chain types are preserved
         chains = {w.chain_type for w in result.wallets}
         assert chains == {"ethereum", "polygon", "base"}
-        
+
         # Verify only imported wallet was persisted
         assert mock_wallet_repository.upsert.call_count == 1
         call_args = mock_wallet_repository.upsert.call_args
-        assert call_args.kwargs["address"] == "0x3333333333333333333333333333333333333333"
+        assert (
+            call_args.kwargs["address"] == "0x3333333333333333333333333333333333333333"
+        )
 
     @pytest.mark.asyncio
-    async def test_sync_multiple_imported_wallets(self, handler, mock_wallet_repository):
+    async def test_sync_multiple_imported_wallets(
+        self, handler, mock_wallet_repository
+    ):
         """Test syncing multiple imported wallets persists all of them."""
         wallet_data = [
             {
@@ -254,7 +266,7 @@ class TestSyncWalletsHandler:
         assert len(result.wallets) == 2
         assert "2 imported" in result.message
         assert "2 persisted" in result.message
-        
+
         # Verify both wallets were persisted
         assert mock_wallet_repository.upsert.call_count == 2
 
@@ -264,18 +276,18 @@ class TestSyncWalletsHandler:
     ):
         """Test that database errors during sync don't block the response."""
         from app.infrastructure.exceptions.gateway import DataMapperError
-        
+
         # Create a repository that fails on upsert
         mock_wallet_repository = MagicMock(spec=WalletRepository)
         mock_wallet_repository.upsert = AsyncMock(
             side_effect=DataMapperError("Database query failed")
         )
-        
+
         handler = SyncWalletsHandler(
             current_user_service=mock_current_user_service,
             wallet_repository=mock_wallet_repository,
         )
-        
+
         wallet_data = [
             {
                 "address": "0x1111111111111111111111111111111111111111",
@@ -291,7 +303,7 @@ class TestSyncWalletsHandler:
         # Should still return the wallet in the response
         assert len(result.wallets) == 1
         assert result.wallets[0].wallet_type == "imported"
-        
+
         # Message should indicate 1 imported but 0 persisted
         assert "1 imported" in result.message
         assert "0 persisted" in result.message
@@ -303,17 +315,19 @@ class TestSyncWalletsHandler:
         """Test that partial database failures don't affect successful persists."""
         from datetime import datetime
         from app.infrastructure.exceptions.gateway import DataMapperError
-        
+
         call_count = 0
-        
-        async def mock_upsert_partial_fail(user_id, address, provider, privy_wallet_id=None, chain_type=None):
+
+        async def mock_upsert_partial_fail(
+            user_id, address, provider, privy_wallet_id=None, chain_type=None
+        ):
             nonlocal call_count
             call_count += 1
-            
+
             # Fail on the second call
             if call_count == 2:
                 raise DataMapperError("Database query failed")
-            
+
             now = datetime.utcnow()
             return Wallet(
                 id_=WalletId(call_count),
@@ -326,15 +340,15 @@ class TestSyncWalletsHandler:
                 created_at=CreatedAt(now),
                 updated_at=UpdatedAt(now),
             )
-        
+
         mock_wallet_repository = MagicMock(spec=WalletRepository)
         mock_wallet_repository.upsert = AsyncMock(side_effect=mock_upsert_partial_fail)
-        
+
         handler = SyncWalletsHandler(
             current_user_service=mock_current_user_service,
             wallet_repository=mock_wallet_repository,
         )
-        
+
         wallet_data = [
             {
                 "address": "0x1111111111111111111111111111111111111111",
@@ -360,7 +374,7 @@ class TestSyncWalletsHandler:
 
         # All wallets should be in response
         assert len(result.wallets) == 3
-        
+
         # Message should indicate 3 imported but only 2 persisted (one failed)
         assert "3 imported" in result.message
         assert "2 persisted" in result.message

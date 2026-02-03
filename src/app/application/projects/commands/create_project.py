@@ -1,4 +1,5 @@
 """Create project command."""
+
 from typing import Dict, List, Optional, Any
 from uuid import UUID
 
@@ -9,26 +10,26 @@ from app.domain.projects.ports.project_repository import ProjectRepository
 class CreateProject:
     """
     Create a new project.
-    
+
     This orchestrates:
     1. Validate slug uniqueness
     2. Create project entity
     3. Save to repository
     4. Create associated knowledge base (if requested)
     """
-    
+
     def __init__(
         self,
         repository: ProjectRepository,
     ):
         """
         Initialize interactor.
-        
+
         Args:
             repository: Project repository
         """
         self._repository = repository
-    
+
     async def execute(
         self,
         slug: str,
@@ -48,7 +49,7 @@ class CreateProject:
     ) -> Project:
         """
         Execute the command.
-        
+
         Args:
             slug: URL-friendly identifier
             name: Display name
@@ -64,10 +65,10 @@ class CreateProject:
             enabled_chains: Allowed chains
             enabled_tools: Allowed tools
             risk_config: Risk configuration
-        
+
         Returns:
             Created project entity
-        
+
         Raises:
             ValueError: If slug already exists
         """
@@ -75,7 +76,7 @@ class CreateProject:
         existing = await self._repository.get_project_by_slug(slug)
         if existing:
             raise ValueError(f"Project with slug '{slug}' already exists")
-        
+
         # Create project
         project = Project.create(
             slug=slug,
@@ -93,8 +94,8 @@ class CreateProject:
             enabled_tools=enabled_tools,
             risk_config=risk_config,
         )
-        
+
         # Save project
         await self._repository.add_project(project)
-        
+
         return project

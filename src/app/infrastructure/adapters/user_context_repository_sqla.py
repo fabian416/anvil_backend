@@ -23,33 +23,31 @@ logger = logging.getLogger(__name__)
 class UserContextRepositorySqla:
     """
     SQLAlchemy implementation of UserContextRepository.
-    
+
     This adapter handles persistence of user context data used for
     context-aware agent responses.
     """
-    
+
     def __init__(self, session: AsyncSession):
         """
         Initialize repository with database session.
-        
+
         Args:
             session: SQLAlchemy async session
         """
         self._session = session
-    
+
     async def get_by_id(self, context_id: UUID) -> UserContextAware | None:
         """Get user context by its ID."""
-        stmt = select(self._get_table()).where(
-            self._get_table().c.id == context_id
-        )
+        stmt = select(self._get_table()).where(self._get_table().c.id == context_id)
         result = await self._session.execute(stmt)
         row = result.fetchone()
-        
+
         if not row:
             return None
-        
+
         return self._row_to_entity(row._mapping)
-    
+
     async def get_by_chat_user_id(self, chat_user_id: UUID) -> UserContextAware | None:
         """Get user context by chat user ID."""
         stmt = select(self._get_table()).where(
@@ -57,33 +55,35 @@ class UserContextRepositorySqla:
         )
         result = await self._session.execute(stmt)
         row = result.fetchone()
-        
+
         if not row:
             return None
-        
+
         return self._row_to_entity(row._mapping)
-    
-    async def get_by_legacy_user_id(self, legacy_user_id: int) -> UserContextAware | None:
+
+    async def get_by_legacy_user_id(
+        self, legacy_user_id: int
+    ) -> UserContextAware | None:
         """Get user context by legacy user ID."""
         stmt = select(self._get_table()).where(
             self._get_table().c.legacy_user_id == legacy_user_id
         )
         result = await self._session.execute(stmt)
         row = result.fetchone()
-        
+
         if not row:
             return None
-        
+
         return self._row_to_entity(row._mapping)
-    
+
     async def save(self, context: UserContextAware) -> UserContextAware:
         """Save or update user context."""
         table = self._get_table()
-        
+
         # Prepare data for upsert
         data = self._entity_to_dict(context)
         data["updated_at"] = datetime.now(UTC)
-        
+
         # Use PostgreSQL upsert (INSERT ... ON CONFLICT UPDATE)
         stmt = insert(table).values(**data)
         stmt = stmt.on_conflict_do_update(
@@ -94,23 +94,21 @@ class UserContextRepositorySqla:
                 if key not in ("id", "chat_user_id", "created_at")
             },
         )
-        
+
         await self._session.execute(stmt)
         await self._session.commit()
-        
+
         # Fetch the updated record
         return await self.get_by_chat_user_id(context.chat_user_id) or context
-    
+
     async def delete(self, context_id: UUID) -> bool:
         """Delete user context by ID."""
-        stmt = delete(self._get_table()).where(
-            self._get_table().c.id == context_id
-        )
+        stmt = delete(self._get_table()).where(self._get_table().c.id == context_id)
         result = await self._session.execute(stmt)
         await self._session.commit()
-        
+
         return result.rowcount > 0
-    
+
     async def get_eligible_for_update(
         self,
         before: datetime,
@@ -118,19 +116,19 @@ class UserContextRepositorySqla:
     ) -> list[UserContextAware]:
         """Get user contexts eligible for update."""
         table = self._get_table()
-        
+
         stmt = (
             select(table)
             .where(table.c.next_update_eligible_at <= before)
             .order_by(table.c.context_updated_at.asc())
             .limit(limit)
         )
-        
+
         result = await self._session.execute(stmt)
         rows = result.fetchall()
-        
+
         return [self._row_to_entity(row._mapping) for row in rows]
-    
+
     async def get_by_portfolio_state(
         self,
         portfolio_state: str,
@@ -139,7 +137,7 @@ class UserContextRepositorySqla:
     ) -> list[UserContextAware]:
         """Get user contexts by portfolio state."""
         table = self._get_table()
-        
+
         stmt = (
             select(table)
             .where(table.c.portfolio_state == portfolio_state)
@@ -147,12 +145,12 @@ class UserContextRepositorySqla:
             .limit(limit)
             .offset(offset)
         )
-        
+
         result = await self._session.execute(stmt)
         rows = result.fetchall()
-        
+
         return [self._row_to_entity(row._mapping) for row in rows]
-    
+
     async def get_by_activity_level(
         self,
         activity_level: str,
@@ -161,7 +159,7 @@ class UserContextRepositorySqla:
     ) -> list[UserContextAware]:
         """Get user contexts by activity level."""
         table = self._get_table()
-        
+
         stmt = (
             select(table)
             .where(table.c.activity_level == activity_level)
@@ -169,12 +167,12 @@ class UserContextRepositorySqla:
             .limit(limit)
             .offset(offset)
         )
-        
+
         result = await self._session.execute(stmt)
         rows = result.fetchall()
-        
+
         return [self._row_to_entity(row._mapping) for row in rows]
-    
+
     async def get_by_user_type(
         self,
         user_type: str,
@@ -183,7 +181,7 @@ class UserContextRepositorySqla:
     ) -> list[UserContextAware]:
         """Get user contexts by user type."""
         table = self._get_table()
-        
+
         stmt = (
             select(table)
             .where(table.c.user_type == user_type)
@@ -191,63 +189,54 @@ class UserContextRepositorySqla:
             .limit(limit)
             .offset(offset)
         )
-        
+
         result = await self._session.execute(stmt)
         rows = result.fetchall()
-        
+
         return [self._row_to_entity(row._mapping) for row in rows]
-    
+
     async def count_by_portfolio_state(self) -> dict[str, int]:
         """Count users by portfolio state."""
         table = self._get_table()
-        
-        stmt = (
-            select(
-                table.c.portfolio_state,
-                func.count().label("count"),
-            )
-            .group_by(table.c.portfolio_state)
-        )
-        
+
+        stmt = select(
+            table.c.portfolio_state,
+            func.count().label("count"),
+        ).group_by(table.c.portfolio_state)
+
         result = await self._session.execute(stmt)
         rows = result.fetchall()
-        
+
         return {row.portfolio_state: row.count for row in rows}
-    
+
     async def count_by_activity_level(self) -> dict[str, int]:
         """Count users by activity level."""
         table = self._get_table()
-        
-        stmt = (
-            select(
-                table.c.activity_level,
-                func.count().label("count"),
-            )
-            .group_by(table.c.activity_level)
-        )
-        
+
+        stmt = select(
+            table.c.activity_level,
+            func.count().label("count"),
+        ).group_by(table.c.activity_level)
+
         result = await self._session.execute(stmt)
         rows = result.fetchall()
-        
+
         return {row.activity_level: row.count for row in rows}
-    
+
     async def count_by_user_type(self) -> dict[str, int]:
         """Count users by user type."""
         table = self._get_table()
-        
-        stmt = (
-            select(
-                table.c.user_type,
-                func.count().label("count"),
-            )
-            .group_by(table.c.user_type)
-        )
-        
+
+        stmt = select(
+            table.c.user_type,
+            func.count().label("count"),
+        ).group_by(table.c.user_type)
+
         result = await self._session.execute(stmt)
         rows = result.fetchall()
-        
+
         return {row.user_type: row.count for row in rows}
-    
+
     async def get_inactive_users(
         self,
         days_inactive: int = 30,
@@ -256,7 +245,7 @@ class UserContextRepositorySqla:
         """Get users who have been inactive for specified days."""
         table = self._get_table()
         cutoff = datetime.now(UTC) - timedelta(days=days_inactive)
-        
+
         stmt = (
             select(table)
             .where(
@@ -268,30 +257,29 @@ class UserContextRepositorySqla:
             .order_by(table.c.last_active_at.asc())
             .limit(limit)
         )
-        
+
         result = await self._session.execute(stmt)
         rows = result.fetchall()
-        
+
         return [self._row_to_entity(row._mapping) for row in rows]
-    
+
     async def exists_for_chat_user(self, chat_user_id: UUID) -> bool:
         """Check if context exists for a chat user."""
         table = self._get_table()
-        
-        stmt = select(func.count()).where(
-            table.c.chat_user_id == chat_user_id
-        )
-        
+
+        stmt = select(func.count()).where(table.c.chat_user_id == chat_user_id)
+
         result = await self._session.execute(stmt)
         count = result.scalar()
-        
+
         return count > 0
-    
+
     def _get_table(self):
         """Get the user_context_aware table from metadata."""
         from app.infrastructure.persistence_sqla.registry import mapping_registry
+
         return mapping_registry.metadata.tables["user_context_aware"]
-    
+
     def _row_to_entity(self, row: dict[str, Any]) -> UserContextAware:
         """Convert database row to domain entity."""
         return UserContextAware(
@@ -339,7 +327,7 @@ class UserContextRepositorySqla:
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )
-    
+
     def _entity_to_dict(self, entity: UserContextAware) -> dict[str, Any]:
         """Convert domain entity to database row dict."""
         return {
@@ -387,20 +375,20 @@ class UserContextRepositorySqla:
             "created_at": entity.created_at,
             "updated_at": entity.updated_at,
         }
-    
+
     # ═══════════════════════════════════════════════════════════════
     # ANALYTICS AGGREGATIONS
     # ═══════════════════════════════════════════════════════════════
-    
+
     async def get_execution_stats(self) -> dict[str, int]:
         """
         Get aggregated execution statistics across all users.
-        
+
         Returns:
             Dictionary with execution counts by type
         """
         table = self._get_table()
-        
+
         stmt = select(
             func.sum(table.c.total_executions).label("total"),
             func.sum(table.c.swap_count).label("swap"),
@@ -409,10 +397,10 @@ class UserContextRepositorySqla:
             func.sum(table.c.transfer_count).label("transfer"),
             func.sum(table.c.cashout_count).label("cashout"),
         )
-        
+
         result = await self._session.execute(stmt)
         row = result.fetchone()
-        
+
         if not row:
             return {
                 "total": 0,
@@ -422,7 +410,7 @@ class UserContextRepositorySqla:
                 "transfer": 0,
                 "cashout": 0,
             }
-        
+
         return {
             "total": int(row.total or 0),
             "swap": int(row.swap or 0),
@@ -431,18 +419,18 @@ class UserContextRepositorySqla:
             "transfer": int(row.transfer or 0),
             "cashout": int(row.cashout or 0),
         }
-    
+
     async def get_total_balance(self) -> Decimal:
         """
         Get sum of all user wallet balances.
-        
+
         Returns:
             Total USD balance across all users
         """
         table = self._get_table()
-        
+
         stmt = select(func.sum(table.c.wallet_total_usd))
         result = await self._session.execute(stmt)
         total = result.scalar()
-        
+
         return Decimal(str(total or 0))

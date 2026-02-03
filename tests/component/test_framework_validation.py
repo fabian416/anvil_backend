@@ -26,6 +26,7 @@ from app.domain.chat.value_objects.message_role import MessageRole
 # Repository Validation Tests
 # ============================================================================
 
+
 @pytest.mark.asyncio
 class TestInMemoryRepositories:
     """Validate in-memory repository implementations."""
@@ -161,6 +162,7 @@ class TestInMemoryRepositories:
 # Gateway Validation Tests
 # ============================================================================
 
+
 @pytest.mark.asyncio
 class TestMockGateways:
     """Validate mock gateway implementations."""
@@ -269,6 +271,7 @@ class TestMockGateways:
 # Factory Validation Tests
 # ============================================================================
 
+
 class TestFactories:
     """Validate test data factory implementations."""
 
@@ -367,6 +370,7 @@ class TestFactories:
 # Fixture Integration Tests
 # ============================================================================
 
+
 @pytest.mark.asyncio
 class TestFixtureIntegration:
     """Validate that fixtures work together correctly."""
@@ -393,9 +397,7 @@ class TestFixtureIntegration:
         assert test_conversation.user_id == 123
 
         # Assert: Conversation is in repository
-        retrieved = await conversation_repository.get_conversation(
-            test_conversation.id
-        )
+        retrieved = await conversation_repository.get_conversation(test_conversation.id)
         assert retrieved is not None
 
     async def test_conversation_with_messages_fixture(

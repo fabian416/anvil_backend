@@ -293,9 +293,11 @@ class RedditClient:
         }
 
         # Get token-specific subreddits + general crypto subreddits
-        subreddits_to_check = token_subreddits.get(
-            token_upper, []
-        ) + ["cryptocurrency", "cryptomarkets", "defi"]
+        subreddits_to_check = token_subreddits.get(token_upper, []) + [
+            "cryptocurrency",
+            "cryptomarkets",
+            "defi",
+        ]
 
         for subreddit in subreddits_to_check[:5]:  # Limit to 5 subreddits
             # Fetch hot posts (works without auth)
@@ -329,7 +331,7 @@ class RedditClient:
         # Sort by score and recency
         unique_posts.sort(key=lambda p: (p.score, p.created_utc), reverse=True)
 
-        return unique_posts[:limit_per_subreddit * 3]
+        return unique_posts[: limit_per_subreddit * 3]
 
     async def get_subreddit_info(self, subreddit: str) -> SubredditInfo | None:
         """

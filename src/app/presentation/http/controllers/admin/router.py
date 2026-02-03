@@ -28,17 +28,39 @@ def create_admin_router() -> APIRouter:
 
     # Import routers here to avoid circular imports
     from app.presentation.http.controllers.admin.user.router import create_users_router
-    from app.presentation.http.controllers.admin.llm.router import create_llm_admin_router
-    from app.presentation.http.controllers.admin.agent.router import create_admin_agent_router
-    from app.presentation.http.controllers.admin.stats.router import create_admin_stats_router
-    from app.presentation.http.controllers.admin.retry.router import router as retry_router
-    from app.presentation.http.controllers.admin.distillation_router import router as distillation_admin_router
-    from app.presentation.http.controllers.admin.distillation_validation_router import router as distillation_validation_router
-    from app.presentation.http.controllers.admin.projects_router import router as projects_admin_router
-    from app.presentation.http.controllers.telemetry.router import router as telemetry_router
-    from app.presentation.http.controllers.admin.security_dashboard_router import router as security_dashboard_router
-    from app.presentation.http.controllers.admin.chat_dashboard import router as chat_dashboard_router
-    from app.presentation.http.controllers.admin.analytics_router import router as analytics_router
+    from app.presentation.http.controllers.admin.llm.router import (
+        create_llm_admin_router,
+    )
+    from app.presentation.http.controllers.admin.agent.router import (
+        create_admin_agent_router,
+    )
+    from app.presentation.http.controllers.admin.stats.router import (
+        create_admin_stats_router,
+    )
+    from app.presentation.http.controllers.admin.retry.router import (
+        router as retry_router,
+    )
+    from app.presentation.http.controllers.admin.distillation_router import (
+        router as distillation_admin_router,
+    )
+    from app.presentation.http.controllers.admin.distillation_validation_router import (
+        router as distillation_validation_router,
+    )
+    from app.presentation.http.controllers.admin.projects_router import (
+        router as projects_admin_router,
+    )
+    from app.presentation.http.controllers.telemetry.router import (
+        router as telemetry_router,
+    )
+    from app.presentation.http.controllers.admin.security_dashboard_router import (
+        router as security_dashboard_router,
+    )
+    from app.presentation.http.controllers.admin.chat_dashboard import (
+        router as chat_dashboard_router,
+    )
+    from app.presentation.http.controllers.admin.analytics_router import (
+        router as analytics_router,
+    )
 
     # Include all admin routers - they already have their own prefixes
     # But we need to strip /admin/ from their prefixes since we're adding it here

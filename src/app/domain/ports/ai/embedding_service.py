@@ -14,9 +14,9 @@ class EmbeddingInputType(Enum):
     """Type of input text for embedding."""
 
     SEARCH_DOCUMENT = "search_document"  # Text to be indexed/searched
-    SEARCH_QUERY = "search_query"        # Query text for searching
-    CLASSIFICATION = "classification"     # Text for classification
-    CLUSTERING = "clustering"            # Text for clustering
+    SEARCH_QUERY = "search_query"  # Query text for searching
+    CLASSIFICATION = "classification"  # Text for classification
+    CLUSTERING = "clustering"  # Text for clustering
 
 
 @dataclass

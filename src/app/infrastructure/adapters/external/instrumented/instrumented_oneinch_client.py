@@ -33,20 +33,20 @@ from app.infrastructure.telemetry.tracing import (
 class InstrumentedOneInchClient(OneInchClient):
     """
     1inch client with full telemetry instrumentation.
-    
+
     Usage:
         client = InstrumentedOneInchClient(api_key="your_key")
-        
+
         # All calls automatically instrumented
         quote = await client.get_swap_quote(...)
-        
+
         # Get metrics
         telemetry = get_api_telemetry()
         metrics = telemetry.get_metrics("oneinch")
     """
-    
+
     API_NAME = "oneinch"
-    
+
     def __init__(
         self,
         api_key: str | None = None,
@@ -55,7 +55,7 @@ class InstrumentedOneInchClient(OneInchClient):
     ):
         """
         Initialize instrumented 1inch client.
-        
+
         Args:
             api_key: 1inch API key
             telemetry: API telemetry instance
@@ -64,7 +64,7 @@ class InstrumentedOneInchClient(OneInchClient):
         super().__init__(api_key)
         self._telemetry = telemetry or get_api_telemetry()
         self._tracing = tracing or get_tracing_service()
-    
+
     async def get_swap_quote(
         self,
         from_token: str,
@@ -78,7 +78,7 @@ class InstrumentedOneInchClient(OneInchClient):
             from_token=from_token[:10],  # Truncate for logging
             to_token=to_token[:10],
         )
-        
+
         with self._tracing.start_span(
             name=f"{self.API_NAME}.get_swap_quote",
             kind=SpanKind.CLIENT,
@@ -95,13 +95,13 @@ class InstrumentedOneInchClient(OneInchClient):
                     to_token=to_token,
                     amount=amount,
                 )
-                
+
                 ctx.complete(status=APIStatus.SUCCESS, status_code=200)
                 span.set_status(SpanStatus.OK)
                 span.set_attribute("response.to_amount", str(result.to_amount))
-                
+
                 return result
-                
+
             except Exception as e:
                 error_type = self._classify_error(e)
                 ctx.complete(
@@ -111,10 +111,10 @@ class InstrumentedOneInchClient(OneInchClient):
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
-    
+
     async def get_swap_data(
         self,
         from_token: str,
@@ -132,7 +132,7 @@ class InstrumentedOneInchClient(OneInchClient):
             to_token=to_token[:10],
             slippage=slippage,
         )
-        
+
         with self._tracing.start_span(
             name=f"{self.API_NAME}.get_swap_data",
             kind=SpanKind.CLIENT,
@@ -153,13 +153,13 @@ class InstrumentedOneInchClient(OneInchClient):
                     slippage=slippage,
                     disable_estimate=disable_estimate,
                 )
-                
+
                 ctx.complete(status=APIStatus.SUCCESS, status_code=200)
                 span.set_status(SpanStatus.OK)
                 span.set_attribute("response.to", result.to)
-                
+
                 return result
-                
+
             except Exception as e:
                 error_type = self._classify_error(e)
                 ctx.complete(
@@ -169,17 +169,17 @@ class InstrumentedOneInchClient(OneInchClient):
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
-    
+
     async def get_tokens(self) -> list[Token]:
         """Get available tokens with telemetry."""
         ctx = self._telemetry.start_call(
             api=self.API_NAME,
             operation="get_tokens",
         )
-        
+
         with self._tracing.start_span(
             name=f"{self.API_NAME}.get_tokens",
             kind=SpanKind.CLIENT,
@@ -190,13 +190,13 @@ class InstrumentedOneInchClient(OneInchClient):
         ) as span:
             try:
                 result = await super().get_tokens()
-                
+
                 ctx.complete(status=APIStatus.SUCCESS, status_code=200)
                 span.set_status(SpanStatus.OK)
                 span.set_attribute("response.token_count", len(result))
-                
+
                 return result
-                
+
             except Exception as e:
                 error_type = self._classify_error(e)
                 ctx.complete(
@@ -206,17 +206,17 @@ class InstrumentedOneInchClient(OneInchClient):
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
-    
+
     async def get_protocols(self) -> list[dict]:
         """Get available protocols with telemetry."""
         ctx = self._telemetry.start_call(
             api=self.API_NAME,
             operation="get_protocols",
         )
-        
+
         with self._tracing.start_span(
             name=f"{self.API_NAME}.get_protocols",
             kind=SpanKind.CLIENT,
@@ -227,13 +227,13 @@ class InstrumentedOneInchClient(OneInchClient):
         ) as span:
             try:
                 result = await super().get_protocols()
-                
+
                 ctx.complete(status=APIStatus.SUCCESS, status_code=200)
                 span.set_status(SpanStatus.OK)
                 span.set_attribute("response.protocol_count", len(result))
-                
+
                 return result
-                
+
             except Exception as e:
                 error_type = self._classify_error(e)
                 ctx.complete(
@@ -243,18 +243,20 @@ class InstrumentedOneInchClient(OneInchClient):
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
-    
-    async def get_token_price(self, token_address: str, vs_token: str | None = None) -> float:
+
+    async def get_token_price(
+        self, token_address: str, vs_token: str | None = None
+    ) -> float:
         """Get token price with telemetry."""
         ctx = self._telemetry.start_call(
             api=self.API_NAME,
             operation="get_token_price",
             token=token_address[:10],
         )
-        
+
         with self._tracing.start_span(
             name=f"{self.API_NAME}.get_token_price",
             kind=SpanKind.CLIENT,
@@ -266,13 +268,13 @@ class InstrumentedOneInchClient(OneInchClient):
         ) as span:
             try:
                 result = await super().get_token_price(token_address, vs_token)
-                
+
                 ctx.complete(status=APIStatus.SUCCESS, status_code=200)
                 span.set_status(SpanStatus.OK)
                 span.set_attribute("response.price", result)
-                
+
                 return result
-                
+
             except Exception as e:
                 error_type = self._classify_error(e)
                 ctx.complete(
@@ -282,21 +284,21 @@ class InstrumentedOneInchClient(OneInchClient):
                 )
                 span.set_status(SpanStatus.ERROR, str(e))
                 raise
-                
+
             finally:
                 await self._telemetry.record(ctx)
-    
+
     def _classify_error(self, error: Exception) -> APIStatus:
         """Classify error type for telemetry."""
         import httpx
-        
+
         if isinstance(error, httpx.TimeoutException):
             return APIStatus.TIMEOUT
-        
+
         if isinstance(error, httpx.HTTPStatusError):
             if error.response.status_code == 429:
                 return APIStatus.RATE_LIMITED
             if error.response.status_code in (401, 403):
                 return APIStatus.AUTH_FAILURE
-        
+
         return APIStatus.ERROR

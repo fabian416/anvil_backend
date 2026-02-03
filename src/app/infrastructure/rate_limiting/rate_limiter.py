@@ -9,6 +9,7 @@ Implements tiered rate limiting for chat endpoints:
 
 Uses Redis INCR + TTL for atomic operations and automatic expiration.
 """
+
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import NamedTuple, Optional
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class UserTier(str, Enum):
     """User subscription tiers."""
+
     GUEST = "guest"
     FREE = "free"
     PREMIUM = "premium"
@@ -29,6 +31,7 @@ class UserTier(str, Enum):
 
 class RateLimitResult(NamedTuple):
     """Result of rate limit check."""
+
     allowed: bool
     limit: int
     current: int
@@ -229,5 +232,7 @@ class RateLimiter:
     def _get_next_hour_timestamp(self) -> datetime:
         """Get next hour timestamp (for reset_at)."""
         now = datetime.now(timezone.utc)
-        next_hour = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+        next_hour = (now + timedelta(hours=1)).replace(
+            minute=0, second=0, microsecond=0
+        )
         return next_hour

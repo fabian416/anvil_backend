@@ -43,7 +43,9 @@ from app.domain.entities.chat.template_execution import (
     TemplateExecution,
     StepResult,
 )
-from app.presentation.http.auth.access_token_processor_jwt import JwtAccessTokenProcessor
+from app.presentation.http.auth.access_token_processor_jwt import (
+    JwtAccessTokenProcessor,
+)
 
 
 logger = logging.getLogger(__name__)

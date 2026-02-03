@@ -32,82 +32,72 @@ class PromptInjectionGuard:
     # Patterns indicating prompt injection attempts (OWASP LLM01)
     INJECTION_PATTERNS = [
         # System instruction override
-        r'ignore\s+(all\s+)?(previous|prior|above)\s+(instructions?|prompts?|commands?)',
-        r'disregard\s+(all\s+)?(previous|prior|above)',
-        r'forget\s+(all\s+)?(previous|prior|above)',
-        r'override\s+(the\s+)?(system|previous)',
-
+        r"ignore\s+(all\s+)?(previous|prior|above)\s+(instructions?|prompts?|commands?)",
+        r"disregard\s+(all\s+)?(previous|prior|above)",
+        r"forget\s+(all\s+)?(previous|prior|above)",
+        r"override\s+(the\s+)?(system|previous)",
         # Role manipulation
-        r'you\s+are\s+now\s+(a|an)\s+\w+',
-        r'(act|behave|pretend)\s+(like|as)\s+(a|an)\s+\w+',
-        r'from\s+now\s+on\s+you\s+(are|will\s+be)',
-        r'your\s+new\s+role\s+is',
-
+        r"you\s+are\s+now\s+(a|an)\s+\w+",
+        r"(act|behave|pretend)\s+(like|as)\s+(a|an)\s+\w+",
+        r"from\s+now\s+on\s+you\s+(are|will\s+be)",
+        r"your\s+new\s+role\s+is",
         # Instruction injection
-        r'new\s+(instruction|command|directive)',
-        r'instead\s+of\s+that',
-        r'(don\'t|do\s+not)\s+follow',
-        r'(stop|cease)\s+(following|obeying)',
-
+        r"new\s+(instruction|command|directive)",
+        r"instead\s+of\s+that",
+        r"(don\'t|do\s+not)\s+follow",
+        r"(stop|cease)\s+(following|obeying)",
         # Delimiter attacks
-        r'---\s*END\s*(OF\s*)?SYSTEM',
-        r'---\s*BEGIN\s*(USER\s*)?INPUT',
-        r'\[\s*SYSTEM\s*\]',
-        r'\[\s*/SYSTEM\s*\]',
-        r'<\s*system\s*>',
-        r'<\s*/system\s*>',
-
+        r"---\s*END\s*(OF\s*)?SYSTEM",
+        r"---\s*BEGIN\s*(USER\s*)?INPUT",
+        r"\[\s*SYSTEM\s*\]",
+        r"\[\s*/SYSTEM\s*\]",
+        r"<\s*system\s*>",
+        r"<\s*/system\s*>",
         # Jailbreak attempts
-        r'(jailbreak|bypass|circumvent)\s+(the\s+)?(rules|restrictions|limitations)',
-        r'DAN\s+mode',  # "Do Anything Now" jailbreak
-        r'evil\s+mode',
-        r'unrestricted\s+mode',
-
+        r"(jailbreak|bypass|circumvent)\s+(the\s+)?(rules|restrictions|limitations)",
+        r"DAN\s+mode",  # "Do Anything Now" jailbreak
+        r"evil\s+mode",
+        r"unrestricted\s+mode",
         # Output manipulation
-        r'print\s+(your\s+)?(instructions|system\s+prompt|rules)',
-        r'show\s+(me\s+)?(your\s+)?(instructions|system\s+prompt)',
-        r'reveal\s+(your\s+)?(instructions|system\s+prompt)',
-        r'(what\s+is|tell\s+me)\s+your\s+(instructions|system\s+prompt)',
-
+        r"print\s+(your\s+)?(instructions|system\s+prompt|rules)",
+        r"show\s+(me\s+)?(your\s+)?(instructions|system\s+prompt)",
+        r"reveal\s+(your\s+)?(instructions|system\s+prompt)",
+        r"(what\s+is|tell\s+me)\s+your\s+(instructions|system\s+prompt)",
         # Encoding/obfuscation attempts
-        r'base64\s+decode',
-        r'rot13',
-        r'reverse\s+the\s+string',
-
+        r"base64\s+decode",
+        r"rot13",
+        r"reverse\s+the\s+string",
         # Hypothetical scenarios (common jailbreak technique)
-        r'imagine\s+(if|that)\s+you\s+(are|were)',
-        r'hypothetically',
-        r'in\s+a\s+fictional\s+(world|scenario)',
-
+        r"imagine\s+(if|that)\s+you\s+(are|were)",
+        r"hypothetically",
+        r"in\s+a\s+fictional\s+(world|scenario)",
         # System message injection
-        r'SYSTEM:\s*',
-        r'ASSISTANT:\s*',
-        r'USER:\s*',
-
+        r"SYSTEM:\s*",
+        r"ASSISTANT:\s*",
+        r"USER:\s*",
         # Chain-of-thought manipulation
-        r'let\'s\s+think\s+step\s+by\s+step\s+about\s+how\s+to',
-        r'first,?\s+forget',
-
+        r"let\'s\s+think\s+step\s+by\s+step\s+about\s+how\s+to",
+        r"first,?\s+forget",
         # Function calling manipulation
-        r'call\s+the\s+function\s+named',
-        r'execute\s+the\s+(function|tool|command)',
+        r"call\s+the\s+function\s+named",
+        r"execute\s+the\s+(function|tool|command)",
     ]
 
     # Suspicious patterns that may indicate injection attempts
     SUSPICIOUS_PATTERNS = [
-        r'sudo',
-        r'admin\s+mode',
-        r'developer\s+mode',
-        r'debug\s+mode',
-        r'root\s+access',
-        r'elevated\s+privileges',
+        r"sudo",
+        r"admin\s+mode",
+        r"developer\s+mode",
+        r"debug\s+mode",
+        r"root\s+access",
+        r"elevated\s+privileges",
     ]
 
     # Patterns indicating attempts to extract sensitive information
     EXTRACTION_PATTERNS = [
-        r'(what|tell\s+me)\s+(is|are)\s+your\s+(api\s+key|secret|password|token)',
-        r'share\s+your\s+(credentials|api\s+key|secret)',
-        r'(print|show|reveal)\s+(the\s+)?(database|config|environment)',
+        r"(what|tell\s+me)\s+(is|are)\s+your\s+(api\s+key|secret|password|token)",
+        r"share\s+your\s+(credentials|api\s+key|secret)",
+        r"(print|show|reveal)\s+(the\s+)?(database|config|environment)",
     ]
 
     def __init__(
@@ -115,7 +105,7 @@ class PromptInjectionGuard:
         enabled: bool = True,
         block_on_detection: bool = True,
         log_attempts: bool = True,
-        sensitivity: str = "medium"  # low, medium, high
+        sensitivity: str = "medium",  # low, medium, high
     ):
         """
         Initialize Prompt Injection Guard.
@@ -132,11 +122,19 @@ class PromptInjectionGuard:
         self.sensitivity = sensitivity
 
         # Compile patterns for performance
-        self.injection_regexes = [re.compile(pattern, re.IGNORECASE) for pattern in self.INJECTION_PATTERNS]
-        self.suspicious_regexes = [re.compile(pattern, re.IGNORECASE) for pattern in self.SUSPICIOUS_PATTERNS]
-        self.extraction_regexes = [re.compile(pattern, re.IGNORECASE) for pattern in self.EXTRACTION_PATTERNS]
+        self.injection_regexes = [
+            re.compile(pattern, re.IGNORECASE) for pattern in self.INJECTION_PATTERNS
+        ]
+        self.suspicious_regexes = [
+            re.compile(pattern, re.IGNORECASE) for pattern in self.SUSPICIOUS_PATTERNS
+        ]
+        self.extraction_regexes = [
+            re.compile(pattern, re.IGNORECASE) for pattern in self.EXTRACTION_PATTERNS
+        ]
 
-    def check_prompt(self, prompt: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def check_prompt(
+        self, prompt: str, context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Check a prompt for injection attempts.
 
@@ -148,7 +146,12 @@ class PromptInjectionGuard:
             Dict with 'is_safe', 'risk_level', 'detected_patterns', 'should_block'
         """
         if not self.enabled:
-            return {"is_safe": True, "risk_level": "none", "detected_patterns": [], "should_block": False}
+            return {
+                "is_safe": True,
+                "risk_level": "none",
+                "detected_patterns": [],
+                "should_block": False,
+            }
 
         detected_patterns = []
         risk_level = "none"
@@ -160,7 +163,7 @@ class PromptInjectionGuard:
                 detected_patterns.append({
                     "type": "injection",
                     "pattern": pattern_text,
-                    "severity": "critical"
+                    "severity": "critical",
                 })
                 risk_level = "critical"
 
@@ -171,7 +174,7 @@ class PromptInjectionGuard:
                 detected_patterns.append({
                     "type": "extraction",
                     "pattern": pattern_text,
-                    "severity": "high"
+                    "severity": "high",
                 })
                 if risk_level not in ["critical"]:
                     risk_level = "high"
@@ -184,19 +187,21 @@ class PromptInjectionGuard:
                     detected_patterns.append({
                         "type": "suspicious",
                         "pattern": pattern_text,
-                        "severity": "medium"
+                        "severity": "medium",
                     })
                     if risk_level not in ["critical", "high"]:
                         risk_level = "medium"
 
         # Check for excessive special characters (potential obfuscation)
         if self.sensitivity == "high":
-            special_char_ratio = sum(1 for c in prompt if not c.isalnum() and not c.isspace()) / max(len(prompt), 1)
+            special_char_ratio = sum(
+                1 for c in prompt if not c.isalnum() and not c.isspace()
+            ) / max(len(prompt), 1)
             if special_char_ratio > 0.3:  # More than 30% special characters
                 detected_patterns.append({
                     "type": "obfuscation",
                     "pattern": "high_special_char_ratio",
-                    "severity": "medium"
+                    "severity": "medium",
                 })
                 if risk_level == "none":
                     risk_level = "medium"
@@ -222,15 +227,15 @@ class PromptInjectionGuard:
                     "detected_patterns": len(detected_patterns),
                     "patterns": [p["pattern"] for p in detected_patterns],
                     "context": context or {},
-                    "prompt_length": len(prompt)
-                }
+                    "prompt_length": len(prompt),
+                },
             )
 
         return {
             "is_safe": is_safe,
             "risk_level": risk_level,
             "detected_patterns": detected_patterns,
-            "should_block": should_block
+            "should_block": should_block,
         }
 
     async def check_request(self, request: Request) -> Dict[str, Any]:
@@ -247,15 +252,21 @@ class PromptInjectionGuard:
         """
         try:
             body = await request.json()
-            return self.check_request_data(body, {
-                "endpoint": str(request.url.path),
-                "method": request.method
-            })
+            return self.check_request_data(
+                body, {"endpoint": str(request.url.path), "method": request.method}
+            )
         except Exception as e:
             logger.error(f"Error checking request for prompt injection: {e}")
-            return {"is_safe": True, "risk_level": "none", "detected_patterns": [], "should_block": False}
+            return {
+                "is_safe": True,
+                "risk_level": "none",
+                "detected_patterns": [],
+                "should_block": False,
+            }
 
-    def check_request_data(self, data: Any, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def check_request_data(
+        self, data: Any, context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Recursively check request data for prompts.
 
@@ -270,7 +281,15 @@ class PromptInjectionGuard:
         max_risk_level = "none"
 
         # Common field names that typically contain prompts
-        prompt_fields = ["message", "prompt", "query", "text", "content", "input", "messages"]
+        prompt_fields = [
+            "message",
+            "prompt",
+            "query",
+            "text",
+            "content",
+            "input",
+            "messages",
+        ]
 
         def check_recursive(obj: Any, path: str = ""):
             nonlocal all_detected, max_risk_level
@@ -286,7 +305,9 @@ class PromptInjectionGuard:
                             all_detected.extend(result["detected_patterns"])
                             # Update risk level to highest
                             levels = ["none", "low", "medium", "high", "critical"]
-                            if levels.index(result["risk_level"]) > levels.index(max_risk_level):
+                            if levels.index(result["risk_level"]) > levels.index(
+                                max_risk_level
+                            ):
                                 max_risk_level = result["risk_level"]
 
                     # Recurse
@@ -296,14 +317,20 @@ class PromptInjectionGuard:
                 for idx, item in enumerate(obj):
                     check_recursive(item, f"{path}[{idx}]")
 
-            elif isinstance(obj, str) and len(obj) > 10:  # Only check strings longer than 10 chars
+            elif (
+                isinstance(obj, str) and len(obj) > 10
+            ):  # Only check strings longer than 10 chars
                 # If we haven't identified this as a prompt field but it's a long string,
                 # do a quick check if sensitivity is high
                 if self.sensitivity == "high":
                     result = self.check_prompt(obj, context)
-                    if result["risk_level"] == "critical":  # Only alert on critical for non-prompt fields
+                    if (
+                        result["risk_level"] == "critical"
+                    ):  # Only alert on critical for non-prompt fields
                         all_detected.extend(result["detected_patterns"])
-                        if levels.index(result["risk_level"]) > levels.index(max_risk_level):
+                        if levels.index(result["risk_level"]) > levels.index(
+                            max_risk_level
+                        ):
                             max_risk_level = result["risk_level"]
 
         levels = ["none", "low", "medium", "high", "critical"]
@@ -324,7 +351,7 @@ class PromptInjectionGuard:
             "is_safe": is_safe,
             "risk_level": max_risk_level,
             "detected_patterns": all_detected,
-            "should_block": should_block
+            "should_block": should_block,
         }
 
 
@@ -344,14 +371,14 @@ def sanitize_llm_output(output: str) -> str:
     """
     # Remove system-like markers
     patterns_to_remove = [
-        r'\[SYSTEM\].*?\[/SYSTEM\]',
-        r'<system>.*?</system>',
-        r'---\s*SYSTEM.*?---',
+        r"\[SYSTEM\].*?\[/SYSTEM\]",
+        r"<system>.*?</system>",
+        r"---\s*SYSTEM.*?---",
     ]
 
     sanitized = output
     for pattern in patterns_to_remove:
-        sanitized = re.sub(pattern, '', sanitized, flags=re.IGNORECASE | re.DOTALL)
+        sanitized = re.sub(pattern, "", sanitized, flags=re.IGNORECASE | re.DOTALL)
 
     return sanitized.strip()
 
@@ -373,9 +400,9 @@ def extract_safe_content(text: str, max_length: int = 1000) -> str:
     safe_text = text[:max_length]
 
     # Remove delimiter-like patterns that could confuse the LLM
-    safe_text = re.sub(r'---+', '', safe_text)
-    safe_text = re.sub(r'===+', '', safe_text)
-    safe_text = re.sub(r'\[/?SYSTEM\]', '', safe_text, flags=re.IGNORECASE)
-    safe_text = re.sub(r'</?system>', '', safe_text, flags=re.IGNORECASE)
+    safe_text = re.sub(r"---+", "", safe_text)
+    safe_text = re.sub(r"===+", "", safe_text)
+    safe_text = re.sub(r"\[/?SYSTEM\]", "", safe_text, flags=re.IGNORECASE)
+    safe_text = re.sub(r"</?system>", "", safe_text, flags=re.IGNORECASE)
 
     return safe_text.strip()

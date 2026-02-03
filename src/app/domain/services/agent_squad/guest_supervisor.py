@@ -27,7 +27,9 @@ from app.domain.services.agent_squad.supervisor_coordinator import (
 )
 
 if TYPE_CHECKING:
-    from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+    from app.domain.value_objects.agent_squad.conversation_context import (
+        ConversationContext,
+    )
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
     from app.domain.ports.agent_squad.agent_executor_gateway import AgentExecutorPort
 
@@ -37,21 +39,21 @@ logger = logging.getLogger(__name__)
 class GuestSupervisorCoordinator(SupervisorCoordinator):
     """
     Supervisor Coordinator optimized for GUEST (unauthenticated) users.
-    
+
     Key Differences from AuthenticatedSupervisorCoordinator:
     1. No access to real wallet/portfolio data
     2. Restricted actions redirect to auth prompts
     3. Demo mode disclaimers
     4. Lower complexity workflows (5 agents max)
     5. Shorter timeout (120s)
-    
+
     Architecture:
     - Inherits from SupervisorCoordinator for core workflow logic
     - Overrides prompt building for guest-specific routing
     - Uses guest_auth agent for restricted actions
     - Completely isolated from authenticated flow
     """
-    
+
     def __init__(
         self,
         llm_client: "LLMClientGateway",
@@ -61,7 +63,7 @@ class GuestSupervisorCoordinator(SupervisorCoordinator):
     ):
         """
         Initialize guest supervisor.
-        
+
         Args:
             llm_client: LLM client for workflow planning
             agent_executor: Agent executor for running agents
@@ -74,7 +76,7 @@ class GuestSupervisorCoordinator(SupervisorCoordinator):
             max_agents=max_agents,
             timeout_seconds=timeout_seconds,
         )
-    
+
     def _build_planning_prompt(
         self,
         message: MessageContent,
@@ -83,18 +85,18 @@ class GuestSupervisorCoordinator(SupervisorCoordinator):
     ) -> str:
         """
         Build workflow planning prompt for GUEST users.
-        
+
         Guest-specific routing:
         - Wallet/portfolio actions → guest_auth (prompt for login)
         - Price queries → hunter_ai
         - Knowledge queries → knowledge agent
         - Greetings → chat agent
-        
+
         This prompt is ISOLATED from the authenticated prompt to allow
         independent optimization without affecting authenticated users.
         """
         agents_str = ", ".join([agent.value for agent in available_agents])
-        
+
         # Build conversation history context (keep minimal)
         context_section = ""
         if conversation_context.conversation_history:
@@ -107,7 +109,7 @@ class GuestSupervisorCoordinator(SupervisorCoordinator):
                     if content:
                         context_section += f"{role}: {content}\n"
                 context_section += "</context>\n"
-        
+
         return f"""You are a DeFi workflow router for GUEST users. Route the CURRENT request only. JSON only.
 
 <request>{message.value}</request>
@@ -271,23 +273,24 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
     ) -> str:
         """
         Build aggregation message for GUEST users.
-        
+
         Guest-specific aggregation:
         - Include demo mode disclaimers where appropriate
         - Filter out auth-required messages appropriately
         - Provide helpful signup prompts for restricted features
         """
         from app.domain.ports.agent_squad.agent_gateway import AgentResponse
-        
+
         # Get all completed tasks except the CHAT aggregator task
         other_tasks = [
-            task for task in workflow_plan.tasks
+            task
+            for task in workflow_plan.tasks
             if task.status == TaskStatus.COMPLETED and task != chat_task
         ]
-        
+
         if not other_tasks:
             return chat_task.task_description
-        
+
         # Build aggregation message for guests
         parts = [
             "Aggregate and summarize the following responses from specialist agents.",
@@ -301,7 +304,7 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
             "Agent Responses:",
             "",
         ]
-        
+
         for i, task in enumerate(other_tasks, 1):
             if isinstance(task.result, AgentResponse):
                 content = task.result.content or "(No response)"
@@ -309,9 +312,9 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
                 content = task.result
             else:
                 content = str(task.result) if task.result else "(No response)"
-            
+
             parts.append(f"--- Response from {task.agent_type.value.upper()} Agent ---")
             parts.append(content)
             parts.append("")  # Empty line between responses
-        
+
         return "\n".join(parts)

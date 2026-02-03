@@ -95,7 +95,8 @@ class LogTransactionResponse(BaseModel):
     to_address: str | None = Field(None, description="Recipient address")
     created_at: str = Field(..., description="ISO timestamp when logged")
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": 123,
                 "tx_hash": "0x1234567890abcdef...",
@@ -106,7 +107,8 @@ class LogTransactionResponse(BaseModel):
                 "to_address": "0xabcd...",
                 "created_at": "2024-01-15T10:30:00Z",
             }
-        })
+        }
+    )
 
 
 class TransactionHistoryItemResponse(BaseModel):
@@ -150,7 +152,8 @@ class TransactionHistoryResponse(BaseModel):
     limit: int = Field(..., description="Page size")
     offset: int = Field(..., description="Page offset")
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "user_id": 123,
                 "transactions": [
@@ -178,7 +181,8 @@ class TransactionHistoryResponse(BaseModel):
                 "limit": 50,
                 "offset": 0,
             }
-        })
+        }
+    )
 
 
 # ============================================================

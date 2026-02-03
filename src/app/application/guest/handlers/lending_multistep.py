@@ -32,10 +32,10 @@ class LendingMultiStepHandler:
 
     # Vaults with known issues (exclude from selection)
     EXCLUDED_VAULTS = {
-        '0x8773447e6369472D9B72f064Ea62e405216E9084',  # MEV Frontier USDC - consistent transaction failures
-        '0x1D3b1Cd0a0f242d598834b3F2d126dC6bd774657',  # Clearstar USDC Reactor - transaction failures
-        '0xB7890CEE6CF4792cdCC13489D36D9d42726ab863',  # Universal USDC (UUSDC) - deposit fails without revert reason
-        '0x23479229e52Ab6aaD312D0B03DF9F33B46753B5e',  # Extrafi XLend USDC (exmUSDC) - deposit fails (tx: 0xfc677976...)
+        "0x8773447e6369472D9B72f064Ea62e405216E9084",  # MEV Frontier USDC - consistent transaction failures
+        "0x1D3b1Cd0a0f242d598834b3F2d126dC6bd774657",  # Clearstar USDC Reactor - transaction failures
+        "0xB7890CEE6CF4792cdCC13489D36D9d42726ab863",  # Universal USDC (UUSDC) - deposit fails without revert reason
+        "0x23479229e52Ab6aaD312D0B03DF9F33B46753B5e",  # Extrafi XLend USDC (exmUSDC) - deposit fails (tx: 0xfc677976...)
     }
 
     def __init__(
@@ -68,26 +68,42 @@ class LendingMultiStepHandler:
         logger.info(f"[LENDING_MULTISTEP] handle_flow called")
         logger.info(f"[LENDING_MULTISTEP] content: {content}")
         logger.info(f"[LENDING_MULTISTEP] continuation_step: {continuation_step}")
-        logger.info(f"[LENDING_MULTISTEP] previous_lending_info: {previous_lending_info}")
+        logger.info(
+            f"[LENDING_MULTISTEP] previous_lending_info: {previous_lending_info}"
+        )
 
         # Step 1: Try to parse asset and amount from initial request
         if not continuation_step and not previous_lending_info:
-            logger.info("[LENDING_MULTISTEP] Step 1: Parsing initial request for asset/amount")
+            logger.info(
+                "[LENDING_MULTISTEP] Step 1: Parsing initial request for asset/amount"
+            )
             # Try to extract asset and amount from the message
             parsed_asset = self._parse_asset(content)
             parsed_amount = self._parse_amount(content)
-            
+
             if parsed_asset and parsed_amount:
                 # Both asset and amount provided - skip to vault quote
-                logger.info(f"[LENDING_MULTISTEP] Found asset={parsed_asset}, amount={parsed_amount} - skipping to quote")
-                return await self._show_vault_quote(parsed_asset, parsed_amount, language, is_authenticated, wallet_address)
+                logger.info(
+                    f"[LENDING_MULTISTEP] Found asset={parsed_asset}, amount={parsed_amount} - skipping to quote"
+                )
+                return await self._show_vault_quote(
+                    parsed_asset,
+                    parsed_amount,
+                    language,
+                    is_authenticated,
+                    wallet_address,
+                )
             elif parsed_asset:
                 # Only asset provided - ask for amount
-                logger.info(f"[LENDING_MULTISTEP] Found asset={parsed_asset} - asking for amount")
+                logger.info(
+                    f"[LENDING_MULTISTEP] Found asset={parsed_asset} - asking for amount"
+                )
                 return await self._ask_for_amount(parsed_asset, language)
             else:
                 # Neither provided - ask for asset
-                logger.info("[LENDING_MULTISTEP] No asset/amount found - asking for asset")
+                logger.info(
+                    "[LENDING_MULTISTEP] No asset/amount found - asking for asset"
+                )
                 return await self._ask_for_asset(language)
 
         # Step 2: Process asset selection
@@ -118,7 +134,9 @@ class LendingMultiStepHandler:
 
             # For authenticated users: show quote with execute_data (modal will appear)
             # For guests: show quote with confirmation request
-            return await self._show_vault_quote(asset, amount, language, is_authenticated, wallet_address)
+            return await self._show_vault_quote(
+                asset, amount, language, is_authenticated, wallet_address
+            )
 
         # Step 4: Process confirmation
         if continuation_step == "lending_awaiting_confirmation":
@@ -127,7 +145,9 @@ class LendingMultiStepHandler:
             confirmation = self._parse_confirmation(content)
 
             if confirmation:
-                return await self._execute_deposit(asset, amount, language, is_authenticated, wallet_address)
+                return await self._execute_deposit(
+                    asset, amount, language, is_authenticated, wallet_address
+                )
             elif confirmation is False:  # Explicit cancellation
                 return await self._cancel_deposit(language)
             else:
@@ -138,7 +158,9 @@ class LendingMultiStepHandler:
         logger.info("[LENDING_MULTISTEP] Fallback: restarting flow (no step matched)")
         return await self._ask_for_asset(language)
 
-    async def _ask_for_asset(self, language: str, error: bool = False) -> dict[str, Any]:
+    async def _ask_for_asset(
+        self, language: str, error: bool = False
+    ) -> dict[str, Any]:
         """Step 1: Ask user which asset to deposit."""
         messages = {
             "en": {
@@ -171,12 +193,12 @@ class LendingMultiStepHandler:
         error_text = f"\n\n{msg['error']}\n" if error else ""
 
         content = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{msg['title']}
+{msg["title"]}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {error_text}
-{msg['description']}
+{msg["description"]}
 
-**{msg['cta']}**
+**{msg["cta"]}**
 
 1. 💵 **USDC** (USD Coin) - ~8.5% APY
 2. 💵 **USDT** (Tether) - ~7.8% APY
@@ -242,14 +264,14 @@ class LendingMultiStepHandler:
         error_text = f"\n\n{msg['error']}\n" if error else ""
 
         content = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{msg['title']}
+{msg["title"]}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {error_text}
-{msg['description']}
+{msg["description"]}
 
-**{msg['cta']}**
+**{msg["cta"]}**
 
-{msg['examples']}
+{msg["examples"]}
 
 💬 Enter the amount to continue
 """
@@ -277,7 +299,7 @@ class LendingMultiStepHandler:
                 "WBTC": 4.2,
             }
             return fallback_apys.get(asset, 5.0)
-        
+
         try:
             # Fetch vaults for asset on specified chain
             vaults = await self._morpho.get_vaults(
@@ -288,19 +310,24 @@ class LendingMultiStepHandler:
             if vaults and len(vaults) > 0:
                 # Filter for whitelisted vaults only, excluding problematic ones
                 whitelisted_vaults = [
-                    v for v in vaults
+                    v
+                    for v in vaults
                     if v.whitelisted and v.address not in self.EXCLUDED_VAULTS
                 ]
 
                 if whitelisted_vaults:
                     # Sort by APY (highest first) and get best APY directly from vault object
-                    sorted_vaults = sorted(whitelisted_vaults, key=lambda v: v.apy, reverse=True)
+                    sorted_vaults = sorted(
+                        whitelisted_vaults, key=lambda v: v.apy, reverse=True
+                    )
                     best_vault = sorted_vaults[0]
                     best_apy = best_vault.apy
                     logger.info(f"Fetched real Morpho APY for {asset}: {best_apy:.2f}%")
                     return float(best_apy)
                 else:
-                    logger.warning(f"No whitelisted vaults found for {asset} on {chain}")
+                    logger.warning(
+                        f"No whitelisted vaults found for {asset} on {chain}"
+                    )
                     return 5.0  # Fallback
             else:
                 logger.warning(f"No Morpho vaults found for {asset} on {chain}")
@@ -318,7 +345,13 @@ class LendingMultiStepHandler:
             return fallback_apys.get(asset, 5.0)
 
     async def _show_vault_quote(
-        self, asset: str, amount: str, language: str, is_authenticated: bool = False, wallet_address: str | None = None, error: bool = False
+        self,
+        asset: str,
+        amount: str,
+        language: str,
+        is_authenticated: bool = False,
+        wallet_address: str | None = None,
+        error: bool = False,
     ) -> dict[str, Any]:
         """Step 3: Show vault options and quote."""
         try:
@@ -403,19 +436,24 @@ class LendingMultiStepHandler:
 
                 # Filter for whitelisted vaults only, excluding problematic ones
                 whitelisted_vaults = [
-                    v for v in vaults
+                    v
+                    for v in vaults
                     if v.whitelisted and v.address not in self.EXCLUDED_VAULTS
                 ]
 
                 # Sort by APY (highest first)
-                sorted_vaults = sorted(whitelisted_vaults, key=lambda v: v.apy, reverse=True)
+                sorted_vaults = sorted(
+                    whitelisted_vaults, key=lambda v: v.apy, reverse=True
+                )
 
                 best_vault = sorted_vaults[0] if sorted_vaults else None
 
                 if best_vault:
                     logger.info(f"[LENDING_DEBUG] Best vault found: {best_vault.name}")
                     logger.info(f"[LENDING_DEBUG] Vault address: {best_vault.address}")
-                    logger.info(f"[LENDING_DEBUG] Asset address: {best_vault.asset_address}")
+                    logger.info(
+                        f"[LENDING_DEBUG] Asset address: {best_vault.asset_address}"
+                    )
                     logger.info(f"[LENDING_DEBUG] Asset symbol: {best_vault.asset}")
 
                     execute_data = {
@@ -432,9 +470,13 @@ class LendingMultiStepHandler:
                         "vault_apy": best_vault.apy,
                         "vault_tvl": best_vault.total_assets,
                     }
-                    logger.info(f"[LENDING_DEBUG] execute_data generated: {execute_data}")
+                    logger.info(
+                        f"[LENDING_DEBUG] execute_data generated: {execute_data}"
+                    )
                 else:
-                    logger.warning(f"[LENDING_DEBUG] No best vault found for {asset} on base")
+                    logger.warning(
+                        f"[LENDING_DEBUG] No best vault found for {asset} on base"
+                    )
                     # Try Aave V3 fallback
                     execute_data = await self._try_aave_fallback(
                         asset=asset,
@@ -443,26 +485,30 @@ class LendingMultiStepHandler:
                         wallet_address=wallet_address,
                     )
                     if execute_data:
-                        logger.info(f"[LENDING_DEBUG] Using Aave V3 fallback for {asset}")
+                        logger.info(
+                            f"[LENDING_DEBUG] Using Aave V3 fallback for {asset}"
+                        )
             except Exception as e:
-                logger.error(f"Error fetching vault data for execute_data: {e}", exc_info=True)
+                logger.error(
+                    f"Error fetching vault data for execute_data: {e}", exc_info=True
+                )
 
         # Build message content (shown above the modal for authenticated users)
         content = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{msg['title']}
+{msg["title"]}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {error_text}
-**{msg['vault_title']}**
+**{msg["vault_title"]}**
 
-📊 **{msg['deposit']}**: {amount} {asset}
-📈 **{msg['estimated_apy']}**: {apy:.2f}%
-💰 **{msg['monthly']}**: ~{monthly_earnings:.2f} {asset}/month
-💵 **{msg['yearly']}**: ~{yearly_earnings:.2f} {asset}/year
+📊 **{msg["deposit"]}**: {amount} {asset}
+📈 **{msg["estimated_apy"]}**: {apy:.2f}%
+💰 **{msg["monthly"]}**: ~{monthly_earnings:.2f} {asset}/month
+💵 **{msg["yearly"]}**: ~{yearly_earnings:.2f} {asset}/year
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{msg['note_title']}
-{msg['note']}
+{msg["note_title"]}
+{msg["note"]}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
@@ -540,17 +586,17 @@ Desafortunadamente, no hay vaults activos de Morpho para **{asset}** en la red B
                     # signup_url removed - URLs not shown in guest chat
                 },
             }
-            
+
             signup_msg = signup_messages.get(language, signup_messages["en"])
-            
+
             content += f"""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**{signup_msg['signup_title']}**
+**{signup_msg["signup_title"]}**
 
-{signup_msg['signup_description']}
+{signup_msg["signup_description"]}
 
-**{signup_msg['signup_cta']}**
+**{signup_msg["signup_cta"]}**
 """
             return {
                 "content": content,
@@ -568,7 +614,12 @@ Desafortunadamente, no hay vaults activos de Morpho para **{asset}** en la red B
             }
 
     async def _execute_deposit(
-        self, asset: str, amount: str, language: str, is_authenticated: bool, wallet_address: str | None = None
+        self,
+        asset: str,
+        amount: str,
+        language: str,
+        is_authenticated: bool,
+        wallet_address: str | None = None,
     ) -> dict[str, Any]:
         """Step 4: Execute deposit (requires authentication)."""
         asset_info = next(
@@ -623,21 +674,21 @@ Desafortunadamente, no hay vaults activos de Morpho para **{asset}** en la red B
 
             msg = messages.get(language, messages["en"])
 
-            content = f"""🎉 {msg['title']}
+            content = f"""🎉 {msg["title"]}
 
-{msg['summary']}
+{msg["summary"]}
 
-**{msg['wallet_label']}:** `{wallet_address[:6]}...{wallet_address[-4:]}`
+**{msg["wallet_label"]}:** `{wallet_address[:6]}...{wallet_address[-4:]}`
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**{msg['next_steps']}**
+**{msg["next_steps"]}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. ✅ {msg['step1'].format(asset=asset)}
-2. 💰 {msg['step2'].format(amount=amount, asset=asset)}
-3. {emoji} {msg['step3']}
+1. ✅ {msg["step1"].format(asset=asset)}
+2. 💰 {msg["step2"].format(amount=amount, asset=asset)}
+3. {emoji} {msg["step3"]}
 
-👉 **{msg['cta']}**
+👉 **{msg["cta"]}**
 """
 
             # Fetch real vault data from Morpho
@@ -649,12 +700,15 @@ Desafortunadamente, no hay vaults activos de Morpho para **{asset}** en la red B
 
                 # Filter for whitelisted vaults only, excluding problematic ones
                 whitelisted_vaults = [
-                    v for v in vaults
+                    v
+                    for v in vaults
                     if v.whitelisted and v.address not in self.EXCLUDED_VAULTS
                 ]
 
                 # Sort by APY (highest first)
-                sorted_vaults = sorted(whitelisted_vaults, key=lambda v: v.apy, reverse=True)
+                sorted_vaults = sorted(
+                    whitelisted_vaults, key=lambda v: v.apy, reverse=True
+                )
 
                 # Use best vault (highest APY) if available
                 best_vault = sorted_vaults[0] if sorted_vaults else None
@@ -736,19 +790,19 @@ Desafortunadamente, no hay vaults activos de Morpho para **{asset}** en la red B
 
         msg = messages.get(language, messages["en"])
 
-        content = f"""🎉 {msg['title']}
+        content = f"""🎉 {msg["title"]}
 
-{msg['summary']}
+{msg["summary"]}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**{msg['next_steps']}**
+**{msg["next_steps"]}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. {emoji} {msg['step1']}
-2. ✅ {msg['step2']}
-3. 💰 {msg['step3']}
+1. {emoji} {msg["step1"]}
+2. ✅ {msg["step2"]}
+3. 💰 {msg["step3"]}
 
-👉 **{msg['cta']}**
+👉 **{msg["cta"]}**
 """
 
         return {

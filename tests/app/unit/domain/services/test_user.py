@@ -71,7 +71,7 @@ def test_creates_inactive_user_if_specified(
     password_hasher: MagicMock,
 ) -> None:
     """Test that users are created as active by default.
-    
+
     Note: The UserService.create_user() always creates active users.
     There is no 'is_active' parameter in the service method.
     """
@@ -175,6 +175,7 @@ def test_toggles_activation_state(
     is_active: bool,
 ) -> None:
     from app.domain.value_objects.user_status import UserActive
+
     # Arrange - use a non-ADMIN user (ADMIN users can't have their activation changed)
     user = create_user(role=UserRole.USER, is_active=UserActive(is_active))
     sut = UserService(user_id_generator, password_hasher)
@@ -194,6 +195,7 @@ def test_preserves_admin_activation_state(
 ) -> None:
     """Test that ADMIN users cannot have their activation state changed."""
     from app.domain.value_objects.user_status import UserActive
+
     user = create_user(role=UserRole.ADMIN, is_active=UserActive(is_active))
     sut = UserService(user_id_generator, password_hasher)
 
@@ -215,7 +217,7 @@ def test_toggles_role(
     if is_admin:
         # Cannot toggle from ADMIN to USER (ADMIN is not changeable)
         pytest.skip("ADMIN role is not changeable")
-    
+
     user = create_user(role=UserRole.USER)
     sut = UserService(user_id_generator, password_hasher)
 

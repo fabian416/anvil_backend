@@ -191,7 +191,9 @@ class TokenVerificationError(WalletProviderError):
 class RateLimitError(WalletProviderError):
     """Provider rate limit exceeded."""
 
-    def __init__(self, message: str, provider: str = "unknown", retry_after: Optional[int] = None):
+    def __init__(
+        self, message: str, provider: str = "unknown", retry_after: Optional[int] = None
+    ):
         self.retry_after = retry_after
         super().__init__(message, provider)
 
@@ -336,7 +338,9 @@ class EmbeddedWalletProviderPort(Protocol):
         """
         ...
 
-    async def get_wallet_by_address(self, address: str, chain_type: ChainType = ChainType.ETHEREUM) -> Optional[WalletInfo]:
+    async def get_wallet_by_address(
+        self, address: str, chain_type: ChainType = ChainType.ETHEREUM
+    ) -> Optional[WalletInfo]:
         """
         Get wallet information by blockchain address.
 

@@ -70,7 +70,10 @@ class TestInterruptionFlows:
         )
         assert response1.status_code in [200, 201]
         data1 = response1.json()
-        assert "swap" in data1.get("agent_message", {}).get("content", "").lower() or "quote" in data1.get("agent_message", {}).get("content", "").lower()
+        assert (
+            "swap" in data1.get("agent_message", {}).get("content", "").lower()
+            or "quote" in data1.get("agent_message", {}).get("content", "").lower()
+        )
 
         # Step 2: Interrupt with unrelated question
         response2 = await client.post(
@@ -84,7 +87,10 @@ class TestInterruptionFlows:
         assert response2.status_code in [200, 201]
         data2 = response2.json()
         # Should answer the question about Bitcoin
-        assert "bitcoin" in data2.get("agent_message", {}).get("content", "").lower() or "btc" in data2.get("agent_message", {}).get("content", "").lower()
+        assert (
+            "bitcoin" in data2.get("agent_message", {}).get("content", "").lower()
+            or "btc" in data2.get("agent_message", {}).get("content", "").lower()
+        )
 
         # Step 3: Resume swap flow (continue or cancel)
         response3 = await client.post(
@@ -123,7 +129,10 @@ class TestInterruptionFlows:
         assert response1.status_code in [200, 201]
         data1 = response1.json()
         # Should start lending flow
-        assert any(keyword in data1.get("agent_message", {}).get("content", "").lower() for keyword in ["deposit", "vault", "yield", "lend"])
+        assert any(
+            keyword in data1.get("agent_message", {}).get("content", "").lower()
+            for keyword in ["deposit", "vault", "yield", "lend"]
+        )
 
         # Step 2: Interrupt with price check
         response2 = await client.post(
@@ -137,7 +146,10 @@ class TestInterruptionFlows:
         assert response2.status_code in [200, 201]
         data2 = response2.json()
         # Should provide ETH price
-        assert any(keyword in data2.get("agent_message", {}).get("content", "").lower() for keyword in ["eth", "ethereum", "price"])
+        assert any(
+            keyword in data2.get("agent_message", {}).get("content", "").lower()
+            for keyword in ["eth", "ethereum", "price"]
+        )
 
         # Step 3: Try to resume lending flow
         response3 = await client.post(
@@ -226,7 +238,10 @@ class TestInterruptionFlows:
         assert response2.status_code in [200, 201]
         data2 = response2.json()
         # Should provide risk signals
-        assert any(keyword in data2.get("agent_message", {}).get("content", "").lower() for keyword in ["risk", "signal", "eth", "ethereum"])
+        assert any(
+            keyword in data2.get("agent_message", {}).get("content", "").lower()
+            for keyword in ["risk", "signal", "eth", "ethereum"]
+        )
 
         # Original swap flow should be cancelled or pausable
         response3 = await client.post(
@@ -339,7 +354,10 @@ class TestInterruptionFlows:
         assert response1.status_code in [200, 201]
         data1 = response1.json()
         # Verify swap flow started
-        assert "swap" in data1.get("agent_message", {}).get("content", "").lower() or "quote" in data1.get("agent_message", {}).get("content", "").lower()
+        assert (
+            "swap" in data1.get("agent_message", {}).get("content", "").lower()
+            or "quote" in data1.get("agent_message", {}).get("content", "").lower()
+        )
 
         # Step 2: Send off-topic message (system maintains swap context)
         response2 = await client.post(
@@ -350,8 +368,10 @@ class TestInterruptionFlows:
         assert response2.status_code in [200, 201]
         data2 = response2.json()
         # System should maintain swap context
-        assert any(keyword in data2.get("agent_message", {}).get("content", "").lower()
-                  for keyword in ["amount", "usdc", "eth", "swap"])
+        assert any(
+            keyword in data2.get("agent_message", {}).get("content", "").lower()
+            for keyword in ["amount", "usdc", "eth", "swap"]
+        )
 
         # Step 3: Provide valid amount to continue
         response3 = await client.post(
@@ -405,7 +425,9 @@ class TestInterruptionFlows:
                 json={"content": message},
                 headers=auth_headers,
             )
-            assert response.status_code in [200, 201], f"Message {idx} failed: {message}"
+            assert response.status_code in [200, 201], (
+                f"Message {idx} failed: {message}"
+            )
 
         # Verify conversation history preserved
         get_conv_response = await client.get(
@@ -415,7 +437,10 @@ class TestInterruptionFlows:
         assert get_conv_response.status_code == 200
         conv_data = get_conv_response.json()
         # At least 5 user messages + 5 assistant responses = 10
-        assert len(conv_data["messages"]) >= 10 or conv_data["conversation"]["message_count"] >= 10
+        assert (
+            len(conv_data["messages"]) >= 10
+            or conv_data["conversation"]["message_count"] >= 10
+        )
 
 
 @pytest.mark.integration

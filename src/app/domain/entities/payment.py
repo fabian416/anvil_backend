@@ -30,10 +30,11 @@ from app.domain.value_objects.updated_at import UpdatedAt
 class Payment(Entity[PaymentId]):
     """
     Payment entity representing a payment transaction in the system.
-    
+
     This is an anemic model following DDD principles where behavior
     is handled by domain services rather than the entity itself.
     """
+
     user_id: UserId
     subscription_id: Optional[SubscriptionId]
     subscription_user_id: Optional[SubscriptionUserId]

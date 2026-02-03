@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class HandlerResult:
     """Result from a handler."""
-    
+
     content: str
     requires_registration: bool = True
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -180,15 +180,15 @@ CTA_MESSAGES = {
 class RestrictedActionHandler:
     """
     Handler for restricted actions that require registration.
-    
+
     Provides specific, localized messages explaining why registration
     is needed and what features become available.
     """
-    
+
     def __init__(self):
         self._messages = RESTRICTED_MESSAGES
         self._cta = CTA_MESSAGES
-    
+
     async def handle(
         self,
         intent: str,
@@ -196,17 +196,17 @@ class RestrictedActionHandler:
     ) -> HandlerResult:
         """
         Handle a restricted action request.
-        
+
         Args:
             intent: The restricted intent (balance, portfolio, etc.)
             language: Language code
-            
+
         Returns:
             HandlerResult with localized message
         """
         # Map intent to message key
         intent_lower = intent.lower().replace("_", "")
-        
+
         message_key = None
         if "balance" in intent_lower:
             message_key = "balance"
@@ -221,11 +221,13 @@ class RestrictedActionHandler:
         else:
             # Default to portfolio message
             message_key = "portfolio"
-        
+
         # Get localized message
         messages = self._messages.get(message_key, {})
-        content = messages.get(language, messages.get("en", "This action requires registration."))
-        
+        content = messages.get(
+            language, messages.get("en", "This action requires registration.")
+        )
+
         return HandlerResult(
             content=content,
             requires_registration=True,
@@ -236,7 +238,7 @@ class RestrictedActionHandler:
                 "cta": self._cta,
             },
         )
-    
+
     def _get_reason(self, message_key: str) -> str:
         """Get reason code for restricted action."""
         reasons = {
@@ -247,15 +249,17 @@ class RestrictedActionHandler:
             "transfer": "wallet_required",
         }
         return reasons.get(message_key, "account_required")
-    
+
     def get_registration_required_response(
         self,
         reason: str,
         language: str,
     ) -> dict[str, Any]:
         """Build registration_required response object."""
-        messages = RESTRICTED_MESSAGES.get(reason, RESTRICTED_MESSAGES.get("portfolio", {}))
-        
+        messages = RESTRICTED_MESSAGES.get(
+            reason, RESTRICTED_MESSAGES.get("portfolio", {})
+        )
+
         return {
             "required": True,
             "reason": reason,
@@ -263,4 +267,3 @@ class RestrictedActionHandler:
             "cta": CTA_MESSAGES,
             "signup_url": "/signup",
         }
-

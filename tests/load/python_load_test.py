@@ -18,6 +18,7 @@ import statistics
 @dataclass
 class LoadTestConfig:
     """Load test configuration."""
+
     base_url: str = "http://localhost:8000"
     duration_seconds: int = 180  # 3 minutes
     concurrent_users: int = 50
@@ -29,6 +30,7 @@ class LoadTestConfig:
 @dataclass
 class TestResult:
     """Individual request result."""
+
     timestamp: float
     duration: float
     status_code: int
@@ -42,6 +44,7 @@ class TestResult:
 @dataclass
 class LoadTestResults:
     """Aggregated load test results."""
+
     total_requests: int = 0
     successful_requests: int = 0
     failed_requests: int = 0
@@ -71,7 +74,9 @@ class LoadTestResults:
         self.intent_counts[result.intent] = self.intent_counts.get(result.intent, 0) + 1
 
         # Track status codes
-        self.status_codes[result.status_code] = self.status_codes.get(result.status_code, 0) + 1
+        self.status_codes[result.status_code] = (
+            self.status_codes.get(result.status_code, 0) + 1
+        )
 
     def get_percentile(self, percentile: float) -> float:
         """Calculate response time percentile."""
@@ -90,19 +95,27 @@ class LoadTestResults:
         # Overall metrics
         print(f"\n📊 OVERALL METRICS")
         print(f"   Total Requests:      {self.total_requests:,}")
-        print(f"   Successful:          {self.successful_requests:,} ({self.successful_requests/max(self.total_requests, 1)*100:.1f}%)")
-        print(f"   Failed:              {self.failed_requests:,} ({self.failed_requests/max(self.total_requests, 1)*100:.1f}%)")
-        print(f"   Error Rate:          {self.failed_requests/max(self.total_requests, 1)*100:.2f}%")
+        print(
+            f"   Successful:          {self.successful_requests:,} ({self.successful_requests / max(self.total_requests, 1) * 100:.1f}%)"
+        )
+        print(
+            f"   Failed:              {self.failed_requests:,} ({self.failed_requests / max(self.total_requests, 1) * 100:.1f}%)"
+        )
+        print(
+            f"   Error Rate:          {self.failed_requests / max(self.total_requests, 1) * 100:.2f}%"
+        )
 
         # Response times
         if self.response_times:
             print(f"\n⚡ RESPONSE TIMES")
-            print(f"   Average:             {statistics.mean(self.response_times)*1000:.0f}ms")
-            print(f"   Median (P50):        {self.get_percentile(50)*1000:.0f}ms")
-            print(f"   P95:                 {self.get_percentile(95)*1000:.0f}ms")
-            print(f"   P99:                 {self.get_percentile(99)*1000:.0f}ms")
-            print(f"   Min:                 {min(self.response_times)*1000:.0f}ms")
-            print(f"   Max:                 {max(self.response_times)*1000:.0f}ms")
+            print(
+                f"   Average:             {statistics.mean(self.response_times) * 1000:.0f}ms"
+            )
+            print(f"   Median (P50):        {self.get_percentile(50) * 1000:.0f}ms")
+            print(f"   P95:                 {self.get_percentile(95) * 1000:.0f}ms")
+            print(f"   P99:                 {self.get_percentile(99) * 1000:.0f}ms")
+            print(f"   Min:                 {min(self.response_times) * 1000:.0f}ms")
+            print(f"   Max:                 {max(self.response_times) * 1000:.0f}ms")
 
         # Cache performance
         cache_hit_rate = (self.cache_hits / max(self.successful_requests, 1)) * 100
@@ -112,7 +125,9 @@ class LoadTestResults:
 
         # Intent distribution
         print(f"\n🎯 REQUEST DISTRIBUTION")
-        for intent, count in sorted(self.intent_counts.items(), key=lambda x: x[1], reverse=True):
+        for intent, count in sorted(
+            self.intent_counts.items(), key=lambda x: x[1], reverse=True
+        ):
             percentage = (count / max(self.total_requests, 1)) * 100
             print(f"   {intent:20s} {count:>6,} ({percentage:>5.1f}%)")
 
@@ -133,9 +148,15 @@ class LoadTestResults:
         error_rate = (self.failed_requests / max(self.total_requests, 1)) * 100
         p95 = self.get_percentile(95) * 1000 if self.response_times else 0
 
-        print(f"   Error Rate < 1%:     {'✅ PASS' if error_rate < 1.0 else '❌ FAIL'} ({error_rate:.2f}%)")
-        print(f"   P95 < 500ms:         {'✅ PASS' if p95 < 500 else '❌ FAIL'} ({p95:.0f}ms)")
-        print(f"   Cache Hit Rate > 80%: {'✅ PASS' if cache_hit_rate > 80 else '⚠️  WARN'} ({cache_hit_rate:.1f}%)")
+        print(
+            f"   Error Rate < 1%:     {'✅ PASS' if error_rate < 1.0 else '❌ FAIL'} ({error_rate:.2f}%)"
+        )
+        print(
+            f"   P95 < 500ms:         {'✅ PASS' if p95 < 500 else '❌ FAIL'} ({p95:.0f}ms)"
+        )
+        print(
+            f"   Cache Hit Rate > 80%: {'✅ PASS' if cache_hit_rate > 80 else '⚠️  WARN'} ({cache_hit_rate:.1f}%)"
+        )
 
         print("\n" + "=" * 80 + "\n")
 
@@ -143,34 +164,34 @@ class LoadTestResults:
 class GuestChatLoadTest:
     """Guest chat load test runner."""
 
-    TOKENS = ['BTC', 'ETH', 'SOL', 'USDT', 'BNB', 'USDC', 'ADA', 'DOT']
-    LANGUAGES = ['en', 'es', 'pt', 'zh']
+    TOKENS = ["BTC", "ETH", "SOL", "USDT", "BNB", "USDC", "ADA", "DOT"]
+    LANGUAGES = ["en", "es", "pt", "zh"]
 
     QUERIES = {
-        'sentiment': [
-            'What is the sentiment for {token}?',
-            'How does the market feel about {token}?',
-            'Is {token} bullish or bearish?',
+        "sentiment": [
+            "What is the sentiment for {token}?",
+            "How does the market feel about {token}?",
+            "Is {token} bullish or bearish?",
         ],
-        'trading_signals': [
-            'Give me trading signals for {token}',
-            'Should I buy {token}?',
-            'What are the trading signals for {token}?',
+        "trading_signals": [
+            "Give me trading signals for {token}",
+            "Should I buy {token}?",
+            "What are the trading signals for {token}?",
         ],
-        'price_prediction': [
-            'Predict the price of {token}',
-            'Where is {token} going?',
-            'What will {token} price be?',
+        "price_prediction": [
+            "Predict the price of {token}",
+            "Where is {token} going?",
+            "What will {token} price be?",
         ],
-        'patterns': [
-            'What patterns do you see in {token}?',
-            'Are there any chart patterns for {token}?',
-            'Show me patterns for {token}',
+        "patterns": [
+            "What patterns do you see in {token}?",
+            "Are there any chart patterns for {token}?",
+            "Show me patterns for {token}",
         ],
-        'risk': [
-            'What are the risks for {token}?',
-            'Is {token} risky?',
-            'Show me risk analysis for {token}',
+        "risk": [
+            "What are the risks for {token}?",
+            "Is {token} risky?",
+            "Show me risk analysis for {token}",
         ],
     }
 
@@ -186,15 +207,15 @@ class GuestChatLoadTest:
         # Weight intents (sentiment and trading signals more common)
         rand = random.random()
         if rand < 0.4:
-            intent = 'sentiment'
+            intent = "sentiment"
         elif rand < 0.7:
-            intent = 'trading_signals'
+            intent = "trading_signals"
         elif rand < 0.85:
-            intent = 'price_prediction'
+            intent = "price_prediction"
         elif rand < 0.93:
-            intent = 'patterns'
+            intent = "patterns"
         else:
-            intent = 'risk'
+            intent = "risk"
 
         token = random.choice(self.TOKENS)
         language = random.choice(self.LANGUAGES)
@@ -209,8 +230,8 @@ class GuestChatLoadTest:
         content, intent, token, language = self.get_random_request()
 
         payload = {
-            'content': content,
-            'language': language,
+            "content": content,
+            "language": language,
         }
 
         start_time = time.time()
@@ -228,12 +249,13 @@ class GuestChatLoadTest:
                 try:
                     data = await response.json()
                     # Response has agent_message.content structure
-                    has_content = (
-                        'agent_message' in data and
-                        'content' in data.get('agent_message', {})
+                    has_content = "agent_message" in data and "content" in data.get(
+                        "agent_message", {}
                     )
-                    success = (status_code == 200 and has_content)
-                    error = "" if success else f"Missing agent_message.content in response"
+                    success = status_code == 200 and has_content
+                    error = (
+                        "" if success else f"Missing agent_message.content in response"
+                    )
                 except Exception as e:
                     success = False
                     error = f"Failed to parse response: {e}"
@@ -284,8 +306,7 @@ class GuestChatLoadTest:
 
             # Think time
             think_time = random.uniform(
-                self.config.think_time_min,
-                self.config.think_time_max
+                self.config.think_time_min, self.config.think_time_max
             )
             await asyncio.sleep(think_time)
 
@@ -295,8 +316,12 @@ class GuestChatLoadTest:
         print(f"   Base URL: {self.config.base_url}")
         print(f"   Duration: {self.config.duration_seconds}s")
         print(f"   Concurrent Users: {self.config.concurrent_users}")
-        print(f"   Think Time: {self.config.think_time_min}s - {self.config.think_time_max}s")
-        print(f"\n⏱️  Test will run for {self.config.duration_seconds // 60} minutes...\n")
+        print(
+            f"   Think Time: {self.config.think_time_min}s - {self.config.think_time_max}s"
+        )
+        print(
+            f"\n⏱️  Test will run for {self.config.duration_seconds // 60} minutes...\n"
+        )
 
         self.start_time = time.time()
 
@@ -304,7 +329,9 @@ class GuestChatLoadTest:
         connector = aiohttp.TCPConnector(limit=self.config.concurrent_users * 2)
         timeout = aiohttp.ClientTimeout(total=self.config.timeout)
 
-        async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
+        async with aiohttp.ClientSession(
+            connector=connector, timeout=timeout
+        ) as session:
             self.session = session
 
             # Create user tasks
@@ -330,16 +357,16 @@ async def main():
     # Parse command line arguments
     config = LoadTestConfig()
 
-    if '--url' in sys.argv:
-        idx = sys.argv.index('--url')
+    if "--url" in sys.argv:
+        idx = sys.argv.index("--url")
         config.base_url = sys.argv[idx + 1]
 
-    if '--duration' in sys.argv:
-        idx = sys.argv.index('--duration')
+    if "--duration" in sys.argv:
+        idx = sys.argv.index("--duration")
         config.duration_seconds = int(sys.argv[idx + 1])
 
-    if '--users' in sys.argv:
-        idx = sys.argv.index('--users')
+    if "--users" in sys.argv:
+        idx = sys.argv.index("--users")
         config.concurrent_users = int(sys.argv[idx + 1])
 
     # Run test
@@ -356,5 +383,5 @@ async def main():
     sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())

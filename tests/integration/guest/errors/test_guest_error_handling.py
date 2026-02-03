@@ -28,14 +28,18 @@ from app.run import make_app
 async def client():
     """Create test client."""
     app = make_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_invalid_message_format_guest(client: AsyncClient, llm_validator, csv_tracker):
+async def test_error_invalid_message_format_guest(
+    client: AsyncClient, llm_validator, csv_tracker
+):
     """
     Test guest chat with invalid message format (malformed JSON, empty content).
 
@@ -44,13 +48,12 @@ async def test_error_invalid_message_format_guest(client: AsyncClient, llm_valid
     - User-friendly error messages
     """
     # Test empty content
-    response = await client.post(
-        "/api/guest/chat",
-        json={"message": ""}
-    )
+    response = await client.post("/api/guest/chat", json={"message": ""})
 
     # Should handle gracefully (either reject or handle as empty query)
-    assert response.status_code in (200, 400, 422), f"Unexpected status for empty message: {response.status_code}"
+    assert response.status_code in (200, 400, 422), (
+        f"Unexpected status for empty message: {response.status_code}"
+    )
 
     validation = None
     error_message = ""
@@ -60,10 +63,13 @@ async def test_error_invalid_message_format_guest(client: AsyncClient, llm_valid
 
         # PHASE 3: LLM semantic validation with enhanced metrics
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_llm_api_failure_graceful_degradation(client: AsyncClient, llm_validator, csv_tracker):
+async def test_error_llm_api_failure_graceful_degradation(
+    client: AsyncClient, llm_validator, csv_tracker
+):
     """
     Test graceful degradation when LLM API fails or times out.
 
@@ -76,8 +82,7 @@ async def test_error_llm_api_failure_graceful_degradation(client: AsyncClient, l
     # and use LLM validation to verify response quality
 
     response = await client.post(
-        "/api/guest/chat",
-        json={"message": "What is Bitcoin?"}
+        "/api/guest/chat", json={"message": "What is Bitcoin?"}
     )
 
     assert response.status_code == 200
@@ -86,8 +91,9 @@ async def test_error_llm_api_failure_graceful_degradation(client: AsyncClient, l
 
     # Verify we get a meaningful response (not a raw error)
     assert len(content) > 0, "Response should not be empty"
-    assert "error" not in content.lower() or "sorry" in content.lower(), \
+    assert "error" not in content.lower() or "sorry" in content.lower(), (
         "If error is mentioned, should be user-friendly apology"
+    )
 
     # PHASE 3: LLM semantic validation with enhanced metrics
     validation = None
@@ -104,48 +110,82 @@ async def test_error_llm_api_failure_graceful_degradation(client: AsyncClient, l
             ),
             test_func=test_error_llm_api_failure_graceful_degradation,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'graceful_degradation',
-                'scenario': 'potential_llm_failure',
-                'user_type': 'guest'
-            }
+                "test_category": "graceful_degradation",
+                "scenario": "potential_llm_failure",
+                "user_type": "guest",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(f"LLM validation concern: {validation.reasoning}")
 
     # CSV tracking with enhanced fields
-    await csv_tracker("guest", "errors", {
-        "test_id": "guest_errors_llm_graceful_degradation_002",
-        "s_multistep": False,
-        "input": "What is Bitcoin?",
-        "output": content,
-        "test_label_sequence": "errors_graceful_degradation",
-        "output_expected": "Helpful response with graceful error handling if LLM fails",
-        "status": "PASS" if response.status_code == 200 else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        # Standard 11 fields
-        "quality": validation.scoring.overall_score if validation and validation.scoring else None,
-        "qa_status": validation.verdict.value if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-        # Enhanced 12 fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else "errors",
-        "test_type": validation.metadata.test_type if validation and validation.metadata else "error_handling",
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else json.dumps(["graceful_degradation"]),
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "guest",
+        "errors",
+        {
+            "test_id": "guest_errors_llm_graceful_degradation_002",
+            "s_multistep": False,
+            "input": "What is Bitcoin?",
+            "output": content,
+            "test_label_sequence": "errors_graceful_degradation",
+            "output_expected": "Helpful response with graceful error handling if LLM fails",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            # Standard 11 fields
+            "quality": validation.scoring.overall_score
+            if validation and validation.scoring
+            else None,
+            "qa_status": validation.verdict.value if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced 12 fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else "errors",
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else "error_handling",
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else json.dumps(["graceful_degradation"]),
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_database_connection_loss_recovery(client: AsyncClient, llm_validator, csv_tracker):
+async def test_error_database_connection_loss_recovery(
+    client: AsyncClient, llm_validator, csv_tracker
+):
     """
     Test system behavior when database connection is temporarily unavailable.
 
@@ -155,8 +195,7 @@ async def test_error_database_connection_loss_recovery(client: AsyncClient, llm_
     """
     # Test normal operation (database available)
     response = await client.post(
-        "/api/guest/chat",
-        json={"message": "Tell me about DeFi"}
+        "/api/guest/chat", json={"message": "Tell me about DeFi"}
     )
 
     assert response.status_code == 200
@@ -179,37 +218,45 @@ async def test_error_database_connection_loss_recovery(client: AsyncClient, llm_
                 "Any database issues should be transparent to the user with graceful fallbacks."
             ),
             additional_context={
-                'test_category': 'resilience',
-                'scenario': 'database_connection',
-                'user_type': 'guest'
-            }
+                "test_category": "resilience",
+                "scenario": "database_connection",
+                "user_type": "guest",
+            },
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
     # CSV tracking
-    await csv_tracker("guest", "errors", {
-        "test_id": "guest_errors_database_resilience_003",
-        "s_multistep": False,
-        "input": "Tell me about DeFi",
-        "output": content,
-        "test_label_sequence": "errors_database_resilience",
-        "output_expected": "Reliable response with transparent database error handling",
-        "status": "PASS" if response.status_code == 200 else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    })
+    await csv_tracker(
+        "guest",
+        "errors",
+        {
+            "test_id": "guest_errors_database_resilience_003",
+            "s_multistep": False,
+            "input": "Tell me about DeFi",
+            "output": content,
+            "test_label_sequence": "errors_database_resilience",
+            "output_expected": "Reliable response with transparent database error handling",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_rate_limit_exceeded_user_friendly(client: AsyncClient, llm_validator, csv_tracker):
+async def test_error_rate_limit_exceeded_user_friendly(
+    client: AsyncClient, llm_validator, csv_tracker
+):
     """
     Test user-friendly error message when guest rate limit is exceeded.
 
@@ -221,8 +268,7 @@ async def test_error_rate_limit_exceeded_user_friendly(client: AsyncClient, llm_
     responses = []
     for i in range(5):
         response = await client.post(
-            "/api/guest/chat",
-            json={"message": f"Quick test {i}"}
+            "/api/guest/chat", json={"message": f"Quick test {i}"}
         )
         responses.append(response)
 
@@ -243,7 +289,9 @@ async def test_error_rate_limit_exceeded_user_friendly(client: AsyncClient, llm_
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_malformed_agent_response_handling(client: AsyncClient, llm_validator, csv_tracker):
+async def test_error_malformed_agent_response_handling(
+    client: AsyncClient, llm_validator, csv_tracker
+):
     """
     Test system handling when agent returns malformed or unexpected response.
 
@@ -254,7 +302,9 @@ async def test_error_malformed_agent_response_handling(client: AsyncClient, llm_
     # Test with complex query that might produce various response formats
     response = await client.post(
         "/api/guest/chat",
-        json={"message": "Analyze Ethereum and Polygon arbitrage opportunities with detailed calculations"}
+        json={
+            "message": "Analyze Ethereum and Polygon arbitrage opportunities with detailed calculations"
+        },
     )
 
     assert response.status_code == 200
@@ -282,28 +332,34 @@ async def test_error_malformed_agent_response_handling(client: AsyncClient, llm_
                 "System should handle complex responses without corruption or formatting errors."
             ),
             additional_context={
-                'test_category': 'response_validation',
-                'scenario': 'complex_agent_output',
-                'user_type': 'guest'
-            }
+                "test_category": "response_validation",
+                "scenario": "complex_agent_output",
+                "user_type": "guest",
+            },
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
     # CSV tracking
-    await csv_tracker("guest", "errors", {
-        "test_id": "guest_errors_malformed_response_005",
-        "s_multistep": False,
-        "input": "Analyze Ethereum and Polygon arbitrage opportunities with detailed calculations",
-        "output": content,
-        "test_label_sequence": "errors_response_validation",
-        "output_expected": "Coherent analysis with well-formatted content and clear calculations",
-        "status": "PASS" if response.status_code == 200 else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    })
+    await csv_tracker(
+        "guest",
+        "errors",
+        {
+            "test_id": "guest_errors_malformed_response_005",
+            "s_multistep": False,
+            "input": "Analyze Ethereum and Polygon arbitrage opportunities with detailed calculations",
+            "output": content,
+            "test_label_sequence": "errors_response_validation",
+            "output_expected": "Coherent analysis with well-formatted content and clear calculations",
+            "status": "PASS" if response.status_code == 200 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        },
+    )

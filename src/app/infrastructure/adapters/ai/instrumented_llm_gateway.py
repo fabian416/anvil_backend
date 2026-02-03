@@ -47,7 +47,7 @@ from app.infrastructure.telemetry.tracing import (
 class InstrumentedLLMGateway:
     """
     LLM Gateway wrapper with full telemetry instrumentation.
-    
+
     This class wraps any LLMGateway implementation and adds:
     - Request/response logging
     - Token counting and cost estimation
@@ -56,7 +56,7 @@ class InstrumentedLLMGateway:
     - Distributed tracing
     - Budget alerting
     """
-    
+
     # Provider detection based on model names
     PROVIDER_PATTERNS = {
         "vertex_ai": ["gemini", "palm", "codechat", "textembedding"],
@@ -65,7 +65,7 @@ class InstrumentedLLMGateway:
         "deepinfra": ["llama", "mixtral", "mistral", "falcon", "deepinfra"],
         "bedrock": ["anthropic.", "amazon.", "ai21.", "cohere.", "meta."],
     }
-    
+
     def __init__(
         self,
         gateway: LLMGateway,
@@ -75,7 +75,7 @@ class InstrumentedLLMGateway:
     ):
         """
         Initialize instrumented gateway.
-        
+
         Args:
             gateway: The underlying LLM gateway to wrap
             telemetry: LLM telemetry service (uses global if None)
@@ -86,43 +86,43 @@ class InstrumentedLLMGateway:
         self._telemetry = telemetry or get_llm_telemetry()
         self._tracing = tracing or get_tracing_service()
         self._default_provider = default_provider
-    
+
     def _detect_provider(self, model_name: str) -> str:
         """Detect provider from model name."""
         model_lower = model_name.lower()
-        
+
         for provider, patterns in self.PROVIDER_PATTERNS.items():
             for pattern in patterns:
                 if pattern in model_lower:
                     return provider
-        
+
         return self._default_provider
-    
+
     def _classify_error(self, error: Exception) -> LLMCallStatus:
         """Classify error type."""
         error_str = str(error).lower()
         error_type = type(error).__name__.lower()
-        
+
         if "timeout" in error_str or "timeout" in error_type:
             return LLMCallStatus.TIMEOUT
-        
+
         if "rate" in error_str and "limit" in error_str:
             return LLMCallStatus.RATE_LIMITED
-        
+
         if "429" in error_str:
             return LLMCallStatus.RATE_LIMITED
-        
+
         if "auth" in error_str or "401" in error_str or "403" in error_str:
             return LLMCallStatus.AUTH_FAILURE
-        
+
         if "validation" in error_str or "invalid" in error_str:
             return LLMCallStatus.VALIDATION_ERROR
-        
+
         if "circuit" in error_str:
             return LLMCallStatus.CIRCUIT_BREAKER
-        
+
         return LLMCallStatus.ERROR
-    
+
     async def generate(
         self,
         model: str,
@@ -195,7 +195,7 @@ class InstrumentedLLMGateway:
 
             finally:
                 await self._telemetry.record(ctx)
-    
+
     async def generate_with_metadata(
         self,
         model: str,
@@ -240,7 +240,9 @@ class InstrumentedLLMGateway:
                     tools=tools,
                 )
 
-                input_tokens = metadata.get("input_tokens", metadata.get("tokens_used", 0))
+                input_tokens = metadata.get(
+                    "input_tokens", metadata.get("tokens_used", 0)
+                )
                 output_tokens = metadata.get("output_tokens", 0)
                 cost_usd = metadata.get("cost_usd", 0.0)
 
@@ -285,12 +287,12 @@ def create_instrumented_gateway(
 ) -> InstrumentedLLMGateway:
     """
     Factory function to create an instrumented LLM gateway.
-    
+
     Args:
         gateway: The underlying LLM gateway to wrap
         telemetry: Optional LLM telemetry service
         tracing: Optional tracing service
-        
+
     Returns:
         Instrumented gateway with full telemetry
     """

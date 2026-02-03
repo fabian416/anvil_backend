@@ -30,7 +30,9 @@ from dataclasses import dataclass, field
 
 # Type aliases
 PlanTier = Literal["free", "basic", "premium", "enterprise"]
-SubscriptionStatus = Literal["active", "cancelled", "expired", "pending", "past_due", "trialing"]
+SubscriptionStatus = Literal[
+    "active", "cancelled", "expired", "pending", "past_due", "trialing"
+]
 PaymentStatus = Literal["succeeded", "pending", "failed", "refunded"]
 
 
@@ -62,7 +64,9 @@ class TestSubscription:
     stripe_subscription_id: str | None = None
     stripe_customer_id: str | None = None
     current_period_start: datetime = field(default_factory=datetime.utcnow)
-    current_period_end: datetime = field(default_factory=lambda: datetime.utcnow() + timedelta(days=30))
+    current_period_end: datetime = field(
+        default_factory=lambda: datetime.utcnow() + timedelta(days=30)
+    )
     created_at: datetime = field(default_factory=datetime.utcnow)
     cancelled_at: datetime | None = None
     metadata: dict = field(default_factory=dict)
@@ -135,17 +139,35 @@ class SubscriptionBuilder:
 
     # Plan configurations
     PLANS = {
-        "free": {"name": "Free", "price": 0, "features": ["Basic chat", "5 messages/day"]},
-        "basic": {"name": "Basic", "price": 999, "features": ["Unlimited chat", "Basic analytics"]},
+        "free": {
+            "name": "Free",
+            "price": 0,
+            "features": ["Basic chat", "5 messages/day"],
+        },
+        "basic": {
+            "name": "Basic",
+            "price": 999,
+            "features": ["Unlimited chat", "Basic analytics"],
+        },
         "premium": {
             "name": "Premium",
             "price": 2999,
-            "features": ["Unlimited chat", "Advanced analytics", "Priority support", "API access"],
+            "features": [
+                "Unlimited chat",
+                "Advanced analytics",
+                "Priority support",
+                "API access",
+            ],
         },
         "enterprise": {
             "name": "Enterprise",
             "price": 9999,
-            "features": ["Everything in Premium", "Custom integrations", "Dedicated support", "SLA"],
+            "features": [
+                "Everything in Premium",
+                "Custom integrations",
+                "Dedicated support",
+                "SLA",
+            ],
         },
     }
 
@@ -229,7 +251,9 @@ class SubscriptionBuilder:
         self._payment_status = "succeeded"
         return self
 
-    def as_cancelled(self, cancelled_at: datetime | None = None) -> "SubscriptionBuilder":
+    def as_cancelled(
+        self, cancelled_at: datetime | None = None
+    ) -> "SubscriptionBuilder":
         """Configure as cancelled subscription."""
         self._status = "cancelled"
         self._cancelled_at = cancelled_at or datetime.utcnow()
@@ -277,7 +301,9 @@ class SubscriptionBuilder:
         return self.with_plan("enterprise")
 
     # Payment failure scenarios
-    def with_failed_payment(self, reason: str = "card_declined") -> "SubscriptionBuilder":
+    def with_failed_payment(
+        self, reason: str = "card_declined"
+    ) -> "SubscriptionBuilder":
         """Configure with failed payment."""
         self._payment_status = "failed"
         self._metadata["payment_failure_reason"] = reason
@@ -378,7 +404,9 @@ class SubscriptionBuilder:
     @classmethod
     def build_all_plans(cls) -> list[TestSubscriptionPlan]:
         """Build all subscription plans."""
-        return [cls.build_plan(tier) for tier in ["free", "basic", "premium", "enterprise"]]
+        return [
+            cls.build_plan(tier) for tier in ["free", "basic", "premium", "enterprise"]
+        ]
 
 
 # Convenience functions

@@ -17,14 +17,21 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Requires proper LLM mock for multi-step flows"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.multistep]
+pytestmark = [
+    pytest.mark.skip(reason="Requires proper LLM mock for multi-step flows"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.multistep,
+]
 
 
 class TestFlowStatePersistence:
     """Test flow state persistence and data carry-forward."""
 
     @pytest.mark.llm_validation
-    async def test_flow_state_persistence_across_steps(self, client: AsyncClient, llm_validator):
+    async def test_flow_state_persistence_across_steps(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Verify state persists through all flow steps.
 
@@ -33,10 +40,7 @@ class TestFlowStatePersistence:
         # Start swap flow
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "I want to swap 1 ETH for USDC",
-                "language": "en"
-            }
+            json={"content": "I want to swap 1 ETH for USDC", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -52,8 +56,8 @@ class TestFlowStatePersistence:
             json={
                 "content": "yes, continue",
                 "language": "en",
-                "conversation_id": conversation_id
-            }
+                "conversation_id": conversation_id,
+            },
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -66,16 +70,19 @@ class TestFlowStatePersistence:
         agent_response = data2["agent_message"]["content"].lower()
 
         # Should maintain context about swap, ETH, USDC
-        context_maintained = any(keyword in agent_response for keyword in [
-            "swap", "eth", "usdc", "exchange", "trade"
-        ])
+        context_maintained = any(
+            keyword in agent_response
+            for keyword in ["swap", "eth", "usdc", "exchange", "trade"]
+        )
 
         # Note: Full flow state testing requires multiple steps
         # This test verifies basic state persistence
         assert context_maintained or len(agent_response) > 0
 
     @pytest.mark.llm_validation
-    async def test_flow_data_validation_between_steps(self, client: AsyncClient, llm_validator):
+    async def test_flow_data_validation_between_steps(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test data validation at each flow step.
 
@@ -84,10 +91,7 @@ class TestFlowStatePersistence:
         # Start lending flow
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "I want to lend USDC on Aave",
-                "language": "en"
-            }
+            json={"content": "I want to lend USDC on Aave", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -103,8 +107,8 @@ class TestFlowStatePersistence:
             json={
                 "content": "negative amount",
                 "language": "en",
-                "conversation_id": conversation_id
-            }
+                "conversation_id": conversation_id,
+            },
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -118,11 +122,14 @@ class TestFlowStatePersistence:
         agent_response = data2["agent_message"]["content"]
         assert len(agent_response) > 0
 
+
 class TestFlowInterruptionRecovery:
     """Test flow recovery after interruptions."""
 
     @pytest.mark.llm_validation
-    async def test_flow_interruption_and_recovery(self, client: AsyncClient, llm_validator):
+    async def test_flow_interruption_and_recovery(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test graceful recovery after flow interruption.
 
@@ -131,10 +138,7 @@ class TestFlowInterruptionRecovery:
         # Start swap flow
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "I want to swap ETH",
-                "language": "en"
-            }
+            json={"content": "I want to swap ETH", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -147,8 +151,8 @@ class TestFlowInterruptionRecovery:
             json={
                 "content": "What is Bitcoin's price?",
                 "language": "en",
-                "conversation_id": conversation_id
-            }
+                "conversation_id": conversation_id,
+            },
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -161,9 +165,10 @@ class TestFlowInterruptionRecovery:
         agent_response = data2["agent_message"]["content"].lower()
 
         # Should either answer new question or acknowledge interruption
-        handles_interruption = any(keyword in agent_response for keyword in [
-            "bitcoin", "btc", "price", "swap", "eth"
-        ])
+        handles_interruption = any(
+            keyword in agent_response
+            for keyword in ["bitcoin", "btc", "price", "swap", "eth"]
+        )
 
         assert handles_interruption or len(agent_response) > 0
 
@@ -177,10 +182,7 @@ class TestFlowInterruptionRecovery:
         # Start flow
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Let's swap some tokens",
-                "language": "en"
-            }
+            json={"content": "Let's swap some tokens", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -194,8 +196,8 @@ class TestFlowInterruptionRecovery:
             json={
                 "content": "still here",
                 "language": "en",
-                "conversation_id": conversation_id
-            }
+                "conversation_id": conversation_id,
+            },
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -207,6 +209,7 @@ class TestFlowInterruptionRecovery:
         # Agent should handle gracefully
         agent_response = data2["agent_message"]["content"]
         assert len(agent_response) > 0
+
 
 class TestNestedFlowScenarios:
     """Test nested flow scenarios."""
@@ -223,8 +226,8 @@ class TestNestedFlowScenarios:
             "/api/v1/guest/chat",
             json={
                 "content": "I want to swap ETH to USDC and then lend it on Aave",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -237,13 +240,15 @@ class TestNestedFlowScenarios:
         agent_response1 = data1["agent_message"]["content"].lower()
 
         # Agent should acknowledge both actions
-        swap_mentioned = any(keyword in agent_response1 for keyword in [
-            "swap", "exchange", "trade", "eth"
-        ])
+        swap_mentioned = any(
+            keyword in agent_response1
+            for keyword in ["swap", "exchange", "trade", "eth"]
+        )
 
-        lend_mentioned = any(keyword in agent_response1 for keyword in [
-            "lend", "aave", "supply", "deposit"
-        ])
+        lend_mentioned = any(
+            keyword in agent_response1
+            for keyword in ["lend", "aave", "supply", "deposit"]
+        )
 
         # Should acknowledge complex multi-step nature
         complex_acknowledged = swap_mentioned or lend_mentioned
@@ -256,8 +261,8 @@ class TestNestedFlowScenarios:
             json={
                 "content": "yes, let's do that",
                 "language": "en",
-                "conversation_id": conversation_id
-            }
+                "conversation_id": conversation_id,
+            },
         )
 
         assert response2.status_code == status.HTTP_200_OK

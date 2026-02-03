@@ -20,7 +20,12 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.rate_limiting]
+pytestmark = [
+    pytest.mark.skip(reason="Requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.rate_limiting,
+]
 
 
 class TestRateLimitingAdvancedScenarios:
@@ -36,11 +41,7 @@ class TestRateLimitingAdvancedScenarios:
         """
         # Send multiple requests and verify rate limiting
         response1 = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "What is Bitcoin?",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "What is Bitcoin?", "language": "en"}
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -49,10 +50,7 @@ class TestRateLimitingAdvancedScenarios:
         for i in range(3):
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={
-                    "content": f"Tell me about crypto {i}",
-                    "language": "en"
-                }
+                json={"content": f"Tell me about crypto {i}", "language": "en"},
             )
             assert response.status_code == status.HTTP_200_OK
 
@@ -67,10 +65,7 @@ class TestRateLimitingAdvancedScenarios:
         # Make initial request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What is Ethereum?",
-                "language": "en"
-            }
+            json={"content": "What is Ethereum?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -82,10 +77,7 @@ class TestRateLimitingAdvancedScenarios:
 
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Tell me more about Ethereum",
-                "language": "en"
-            }
+            json={"content": "Tell me more about Ethereum", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -103,14 +95,13 @@ class TestRateLimitingAdvancedScenarios:
         for i in range(5):
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={
-                    "content": f"Quick question {i}",
-                    "language": "en"
-                }
+                json={"content": f"Quick question {i}", "language": "en"},
             )
 
             # Each request should either succeed or be rate-limited
-            assert response.status_code in [200, 429], f"Unexpected status: {response.status_code}"
+            assert response.status_code in [200, 429], (
+                f"Unexpected status: {response.status_code}"
+            )
 
             if response.status_code == 200:
                 successful_count += 1
@@ -119,10 +110,14 @@ class TestRateLimitingAdvancedScenarios:
                 assert "agent_message" in data
 
         # At least some requests should succeed (system is handling traffic)
-        assert successful_count >= 2, f"Should handle multiple requests (succeeded: {successful_count}/5)"
+        assert successful_count >= 2, (
+            f"Should handle multiple requests (succeeded: {successful_count}/5)"
+        )
 
     @pytest.mark.llm_validation
-    async def test_rate_limit_storage_edge_cases(self, client: AsyncClient, llm_validator):
+    async def test_rate_limit_storage_edge_cases(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test rate limiting storage resilience.
 
@@ -134,10 +129,7 @@ class TestRateLimitingAdvancedScenarios:
         for i in range(5):
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={
-                    "content": f"Test message {i}",
-                    "language": "en"
-                }
+                json={"content": f"Test message {i}", "language": "en"},
             )
             responses.append(response)
 
@@ -155,11 +147,7 @@ class TestRateLimitingAdvancedScenarios:
         """
         # Guest user requests (IP-based)
         response1 = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Hello from guest",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "Hello from guest", "language": "en"}
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -167,10 +155,7 @@ class TestRateLimitingAdvancedScenarios:
         # Subsequent guest requests should be tracked under same key
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Another guest message",
-                "language": "en"
-            }
+            json={"content": "Another guest message", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK

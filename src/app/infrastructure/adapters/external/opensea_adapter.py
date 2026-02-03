@@ -92,7 +92,9 @@ class OpenSeaAdapter(NFTMarketplaceGateway):
             return [NFTAsset.from_dict(n) for n in cached]
 
         try:
-            chain_enum = Chain(chain.lower()) if chain.lower() != "ethereum" else Chain.ETHEREUM
+            chain_enum = (
+                Chain(chain.lower()) if chain.lower() != "ethereum" else Chain.ETHEREUM
+            )
             raw_nfts = await self._client.get_nfts_by_account(
                 address=address,
                 chain=chain_enum,
@@ -196,7 +198,9 @@ class OpenSeaAdapter(NFTMarketplaceGateway):
             return NFTAsset.from_dict(cached)
 
         try:
-            chain_enum = Chain(chain.lower()) if chain.lower() != "ethereum" else Chain.ETHEREUM
+            chain_enum = (
+                Chain(chain.lower()) if chain.lower() != "ethereum" else Chain.ETHEREUM
+            )
             raw = await self._client.get_nft(
                 contract_address=contract_address,
                 token_id=token_id,
@@ -235,7 +239,9 @@ class OpenSeaAdapter(NFTMarketplaceGateway):
 
         try:
             raw_listings = await self._client.get_listings(collection_slug, limit)
-            listings = [self._transform_listing(l, collection_slug) for l in raw_listings]
+            listings = [
+                self._transform_listing(l, collection_slug) for l in raw_listings
+            ]
 
             await self._cache.set(
                 "opensea",
@@ -322,7 +328,9 @@ class OpenSeaAdapter(NFTMarketplaceGateway):
             seven_day_change=Decimal(str(raw.seven_day_change)),
         )
 
-    def _transform_listing(self, raw: ClientListing, collection_slug: str) -> NFTListing:
+    def _transform_listing(
+        self, raw: ClientListing, collection_slug: str
+    ) -> NFTListing:
         """Transform client listing to domain value object."""
         price = Decimal(str(raw.price))
         return NFTListing(

@@ -15,9 +15,9 @@ class Email(ValueObject[str]):
     Email value object with validation.
     Based on infrastructure layer constraints: 255 chars max, unique, indexed.
     """
-    
+
     value: str
-    
+
     def __post_init__(self) -> None:
         """
         :raises DomainFieldError:
@@ -25,15 +25,13 @@ class Email(ValueObject[str]):
         super().__post_init__()
         self._validate_email_format()
         self._validate_email_length()
-    
+
     def _validate_email_format(self) -> None:
         """Validate email format using regex."""
-        email_pattern = re.compile(
-            r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        )
+        email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
         if not email_pattern.match(self.value):
             raise DomainFieldError("Invalid email format.")
-    
+
     def _validate_email_length(self) -> None:
         """Validate email length based on database constraints."""
         if len(self.value) > 255:

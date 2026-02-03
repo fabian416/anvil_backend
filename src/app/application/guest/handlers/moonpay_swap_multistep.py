@@ -60,7 +60,12 @@ class MoonPaySwapMultiStepHandler:
         # Handle continuation steps
         if continuation_step:
             return await self._handle_continuation(
-                content, content_lower, language, is_authenticated, continuation_step, swap_info
+                content,
+                content_lower,
+                language,
+                is_authenticated,
+                continuation_step,
+                swap_info,
             )
 
         # Parse complete swap request (e.g., "swap 1 BTC to ETH")
@@ -73,7 +78,9 @@ class MoonPaySwapMultiStepHandler:
                 return self._ask_for_amount(swap_info, language, is_authenticated)
             else:
                 # Has everything, show quote and ask confirmation
-                return await self._show_quote_and_confirm(swap_info, language, is_authenticated)
+                return await self._show_quote_and_confirm(
+                    swap_info, language, is_authenticated
+                )
 
         # Initial "swap" command - start flow
         if any(kw in content_lower for kw in ["swap", "exchange", "convert", "trade"]):
@@ -95,22 +102,37 @@ class MoonPaySwapMultiStepHandler:
 
         # Handle confirmation
         if step == "swap_awaiting_confirmation":
-            if any(kw in content_lower for kw in ["confirm", "yes", "ok", "proceed", "go", "sí", "sim"]):
+            if any(
+                kw in content_lower
+                for kw in ["confirm", "yes", "ok", "proceed", "go", "sí", "sim"]
+            ):
                 return self._execute_swap(swap_info, language, is_authenticated)
-            elif any(kw in content_lower for kw in ["cancel", "no", "stop", "cancelar"]):
+            elif any(
+                kw in content_lower for kw in ["cancel", "no", "stop", "cancelar"]
+            ):
                 return self._cancel_swap(language)
-            elif "change" in content_lower or "edit" in content_lower or "modify" in content_lower:
+            elif (
+                "change" in content_lower
+                or "edit" in content_lower
+                or "modify" in content_lower
+            ):
                 # Parse what to change
-                return await self._handle_edit(content, swap_info, language, is_authenticated)
+                return await self._handle_edit(
+                    content, swap_info, language, is_authenticated
+                )
 
         # Handle amount input
         if step == "swap_awaiting_amount":
             amount = self._extract_amount(content)
             if amount:
                 swap_info["amount"] = amount
-                return await self._show_quote_and_confirm(swap_info, language, is_authenticated)
+                return await self._show_quote_and_confirm(
+                    swap_info, language, is_authenticated
+                )
             else:
-                return self._ask_for_amount(swap_info, language, is_authenticated, error=True)
+                return self._ask_for_amount(
+                    swap_info, language, is_authenticated, error=True
+                )
 
         # Handle TO token input
         if step == "swap_awaiting_to_token":
@@ -119,7 +141,9 @@ class MoonPaySwapMultiStepHandler:
                 swap_info["to_token"] = to_token
                 return self._ask_for_amount(swap_info, language, is_authenticated)
             else:
-                return self._ask_for_to_token(swap_info, language, is_authenticated, error=True)
+                return self._ask_for_to_token(
+                    swap_info, language, is_authenticated, error=True
+                )
 
         # Handle FROM token input
         if step == "swap_awaiting_from_token":
@@ -139,8 +163,8 @@ class MoonPaySwapMultiStepHandler:
 
         # Pattern: "swap 1 BTC to ETH" or "BTC to ETH 1"
         pattern = re.compile(
-            r'(?:swap|exchange|convert|trade)?\s*(?:(\d+\.?\d*)\s+)?(\w+)\s+(?:to|for|into)\s+(\w+)(?:\s+(\d+\.?\d*))?',
-            re.IGNORECASE
+            r"(?:swap|exchange|convert|trade)?\s*(?:(\d+\.?\d*)\s+)?(\w+)\s+(?:to|for|into)\s+(\w+)(?:\s+(\d+\.?\d*))?",
+            re.IGNORECASE,
         )
         match = pattern.search(content)
 
@@ -166,11 +190,13 @@ class MoonPaySwapMultiStepHandler:
 
     def _extract_amount(self, content: str) -> str | None:
         """Extract amount from content."""
-        match = re.search(r'(\d+\.?\d*)', content)
+        match = re.search(r"(\d+\.?\d*)", content)
         return match.group(1) if match else None
 
     # Response builders
-    def _ask_for_from_token(self, language: str, is_authenticated: bool, error: bool = False) -> dict:
+    def _ask_for_from_token(
+        self, language: str, is_authenticated: bool, error: bool = False
+    ) -> dict:
         """Ask user which token to swap FROM."""
         translations = {
             "en": {
@@ -178,14 +204,14 @@ class MoonPaySwapMultiStepHandler:
                 "title": "🔄 **Let's Start Your Swap!**\n\n",
                 "intro": "Great choice! Swapping crypto is easy with MoonPay.\n\n",
                 "question": "**Step 1 of 4:** Which crypto do you want to swap FROM?\n\n",
-                "options": "💎 Available tokens:\n• **BTC** (Bitcoin)\n• **ETH** (Ethereum)\n• **SOL** (Solana)\n• **USDC** (USD Coin)\n\n💡 *Just type the token symbol, like \"BTC\"*",
+                "options": '💎 Available tokens:\n• **BTC** (Bitcoin)\n• **ETH** (Ethereum)\n• **SOL** (Solana)\n• **USDC** (USD Coin)\n\n💡 *Just type the token symbol, like "BTC"*',
             },
             "es": {
                 "error": "❌ Hmm, no reconocí ese token. ¡Intentemos de nuevo!\n\n",
                 "title": "🔄 **¡Comencemos tu Swap!**\n\n",
                 "intro": "¡Excelente elección! Intercambiar cripto es fácil con MoonPay.\n\n",
                 "question": "**Paso 1 de 4:** ¿Qué cripto quieres intercambiar?\n\n",
-                "options": "💎 Tokens disponibles:\n• **BTC** (Bitcoin)\n• **ETH** (Ethereum)\n• **SOL** (Solana)\n• **USDC** (USD Coin)\n\n💡 *Solo escribe el símbolo, como \"BTC\"*",
+                "options": '💎 Tokens disponibles:\n• **BTC** (Bitcoin)\n• **ETH** (Ethereum)\n• **SOL** (Solana)\n• **USDC** (USD Coin)\n\n💡 *Solo escribe el símbolo, como "BTC"*',
             },
         }
         t = translations.get(language, translations["en"])
@@ -203,7 +229,13 @@ class MoonPaySwapMultiStepHandler:
             "swap_info": {},
         }
 
-    def _ask_for_to_token(self, swap_info: dict, language: str, is_authenticated: bool, error: bool = False) -> dict:
+    def _ask_for_to_token(
+        self,
+        swap_info: dict,
+        language: str,
+        is_authenticated: bool,
+        error: bool = False,
+    ) -> dict:
         """Ask user which token to swap TO."""
         from_token = swap_info.get("from_token", "").upper()
 
@@ -216,13 +248,13 @@ class MoonPaySwapMultiStepHandler:
                 "error": "❌ Oops! I didn't catch that token. Let's try again.\n\n",
                 "title": f"✨ **Perfect! You're swapping {from_emoji} {from_token}**\n\n",
                 "question": f"**Step 2 of 4:** What crypto would you like to receive?\n\n",
-                "options": "💎 Available tokens:\n• **BTC** ₿ Bitcoin\n• **ETH** Ξ Ethereum\n• **SOL** ◎ Solana\n• **USDC** 💵 USD Coin\n\n💡 *Type the token you want to get, like \"ETH\"*",
+                "options": '💎 Available tokens:\n• **BTC** ₿ Bitcoin\n• **ETH** Ξ Ethereum\n• **SOL** ◎ Solana\n• **USDC** 💵 USD Coin\n\n💡 *Type the token you want to get, like "ETH"*',
             },
             "es": {
                 "error": "❌ ¡Ups! No reconocí ese token. Intentemos de nuevo.\n\n",
                 "title": f"✨ **¡Perfecto! Vas a intercambiar {from_emoji} {from_token}**\n\n",
                 "question": f"**Paso 2 de 4:** ¿Qué cripto te gustaría recibir?\n\n",
-                "options": "💎 Tokens disponibles:\n• **BTC** ₿ Bitcoin\n• **ETH** Ξ Ethereum\n• **SOL** ◎ Solana\n• **USDC** 💵 USD Coin\n\n💡 *Escribe el token que quieres recibir, como \"ETH\"*",
+                "options": '💎 Tokens disponibles:\n• **BTC** ₿ Bitcoin\n• **ETH** Ξ Ethereum\n• **SOL** ◎ Solana\n• **USDC** 💵 USD Coin\n\n💡 *Escribe el token que quieres recibir, como "ETH"*',
             },
         }
         t = translations.get(language, translations["en"])
@@ -240,7 +272,13 @@ class MoonPaySwapMultiStepHandler:
             "swap_info": swap_info,
         }
 
-    def _ask_for_amount(self, swap_info: dict, language: str, is_authenticated: bool, error: bool = False) -> dict:
+    def _ask_for_amount(
+        self,
+        swap_info: dict,
+        language: str,
+        is_authenticated: bool,
+        error: bool = False,
+    ) -> dict:
         """Ask user how much to swap."""
         from_token = swap_info.get("from_token", "").upper()
         to_token = swap_info.get("to_token", "").upper()
@@ -275,13 +313,19 @@ class MoonPaySwapMultiStepHandler:
 
         return {
             "content": content,
-            "enrichment": {"swap_flow": "step3_amount", "from_token": from_token, "to_token": to_token},
+            "enrichment": {
+                "swap_flow": "step3_amount",
+                "from_token": from_token,
+                "to_token": to_token,
+            },
             "requires_registration": not is_authenticated,
             "pending_action": "swap_awaiting_amount",
             "swap_info": swap_info,
         }
 
-    async def _show_quote_and_confirm(self, swap_info: dict, language: str, is_authenticated: bool) -> dict:
+    async def _show_quote_and_confirm(
+        self, swap_info: dict, language: str, is_authenticated: bool
+    ) -> dict:
         """Show quote and ask for confirmation."""
         from_token = swap_info.get("from_token")
         to_token = swap_info.get("to_token")
@@ -293,7 +337,7 @@ class MoonPaySwapMultiStepHandler:
                 from_currency=from_token,
                 to_currency=to_token,
                 amount=amount,
-                language=language
+                language=language,
             )
 
             # Extract quote info
@@ -372,7 +416,9 @@ class MoonPaySwapMultiStepHandler:
                 "requires_registration": not is_authenticated,
             }
 
-    def _execute_swap(self, swap_info: dict, language: str, is_authenticated: bool) -> dict:
+    def _execute_swap(
+        self, swap_info: dict, language: str, is_authenticated: bool
+    ) -> dict:
         """Execute swap (requires authentication)."""
         from_token = swap_info.get("from_token", "").upper()
         to_token = swap_info.get("to_token", "").upper()
@@ -425,7 +471,9 @@ class MoonPaySwapMultiStepHandler:
             "requires_registration": False,
         }
 
-    async def _handle_edit(self, content: str, swap_info: dict, language: str, is_authenticated: bool) -> dict:
+    async def _handle_edit(
+        self, content: str, swap_info: dict, language: str, is_authenticated: bool
+    ) -> dict:
         """Handle edit request."""
         # Extract new amount if mentioned
         if "amount" in content.lower():
@@ -433,12 +481,16 @@ class MoonPaySwapMultiStepHandler:
             if new_amount:
                 swap_info["amount"] = new_amount
                 # Re-show quote
-                return await self._show_quote_and_confirm(swap_info, language, is_authenticated)
+                return await self._show_quote_and_confirm(
+                    swap_info, language, is_authenticated
+                )
 
         # Generic edit response
         return self._ask_for_amount(swap_info, language, is_authenticated)
 
-    async def _show_available_pairs(self, language: str, is_authenticated: bool) -> dict:
+    async def _show_available_pairs(
+        self, language: str, is_authenticated: bool
+    ) -> dict:
         """Show available swap pairs."""
         result = await self._moonpay_handler.get_available_pairs(language=language)
         return {

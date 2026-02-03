@@ -152,7 +152,7 @@ class VertexAIAdapter:
         try:
             # Build headers - use API key if available, otherwise use OAuth token
             headers = {"Content-Type": "application/json"}
-            
+
             if self._api_key:
                 # Use API key authentication (add as query parameter)
                 endpoint_with_key = f"{endpoint}?key={self._api_key}"
@@ -177,7 +177,9 @@ class VertexAIAdapter:
             latency_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
             # Parse response
-            return self._parse_response(data, model_id, latency_ms, request.input_tokens)
+            return self._parse_response(
+                data, model_id, latency_ms, request.input_tokens
+            )
 
         except httpx.HTTPStatusError as e:
             self._handle_http_error(e)
@@ -300,7 +302,9 @@ class VertexAIAdapter:
             if msg.role == "system":
                 system_content += msg.content + "\n\n"
             elif msg.role == "user":
-                content = system_content + msg.content if system_content else msg.content
+                content = (
+                    system_content + msg.content if system_content else msg.content
+                )
                 converted.append({"role": "user", "parts": [{"text": content}]})
                 system_content = ""  # Reset after first user message
             elif msg.role == "assistant":
@@ -324,17 +328,15 @@ class VertexAIAdapter:
         for tool in tools:
             if tool.get("type") == "function":
                 func = tool.get("function", {})
-                vertex_tools.append(
-                    {
-                        "functionDeclarations": [
-                            {
-                                "name": func.get("name"),
-                                "description": func.get("description"),
-                                "parameters": func.get("parameters"),
-                            }
-                        ]
-                    }
-                )
+                vertex_tools.append({
+                    "functionDeclarations": [
+                        {
+                            "name": func.get("name"),
+                            "description": func.get("description"),
+                            "parameters": func.get("parameters"),
+                        }
+                    ]
+                })
 
         return vertex_tools
 

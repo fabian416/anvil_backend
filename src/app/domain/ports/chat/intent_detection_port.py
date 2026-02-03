@@ -29,7 +29,9 @@ class IntentDetectionRequest:
 
     message: str
     conversation_history: Optional[list["Message"]] = None
-    user_context: Optional[dict] = field(default_factory=dict)  # User preferences, tier, etc.
+    user_context: Optional[dict] = field(
+        default_factory=dict
+    )  # User preferences, tier, etc.
 
 
 @dataclass

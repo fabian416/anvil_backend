@@ -123,9 +123,7 @@ async def update_model(model_id: UUID, request: UpdateModelRequest):
     **Permission**: `llm.config.write`
     """
     # TODO: Implement model update
-    return ModelListResponse(
-        data={"model_id": str(model_id), "updated": True}
-    )
+    return ModelListResponse(data={"model_id": str(model_id), "updated": True})
 
 
 @router.get(

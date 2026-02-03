@@ -18,6 +18,7 @@ router = APIRouter(prefix="/user/graph/monitoring", tags=["Graph Monitoring"])
 
 class CacheStats(BaseModel):
     """Cache statistics"""
+
     graph_cache_keys: int
     total_keys: int
     hits: int
@@ -27,6 +28,7 @@ class CacheStats(BaseModel):
 
 class PerformanceMetrics(BaseModel):
     """Performance metrics"""
+
     cache_stats: CacheStats
     message: str
 
@@ -45,17 +47,17 @@ async def get_cache_stats(
 ) -> PerformanceMetrics:
     """
     Get cache performance statistics.
-    
+
     Returns:
     - Number of cached graph queries
     - Cache hit/miss rates
     - Total Redis keys
-    
+
     Use this to monitor cache effectiveness.
     """
-    
+
     stats = await cache.get_stats()
-    
+
     return PerformanceMetrics(
         cache_stats=CacheStats(**stats),
         message=f"Cache hit rate: {stats.get('hit_rate', 0):.1%}",
@@ -75,17 +77,17 @@ async def clear_cache(
 ) -> dict:
     """
     Clear all graph caches.
-    
+
     Use this after:
     - Data updates
     - Schema changes
     - Testing
-    
+
     Note: This may temporarily increase query latency.
     """
-    
+
     await cache.clear_all()
-    
+
     return {
         "message": "Graph cache cleared successfully",
         "status": "ok",

@@ -43,7 +43,12 @@ def create_portfolio_health_check_template(created_by: UUID) -> ConversationTemp
             depends_on=[],
             parallel_execution=False,
             timeout_seconds=30,
-            outputs=["total_value", "num_positions", "top_holdings", "asset_allocation"],
+            outputs=[
+                "total_value",
+                "num_positions",
+                "top_holdings",
+                "asset_allocation",
+            ],
         ),
         AgentStep(
             agent_name="@risk-analyst",

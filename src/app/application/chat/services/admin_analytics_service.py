@@ -126,15 +126,13 @@ class AdminChatAnalyticsService:
             agent_leaderboard = []
             for agent_type, stats in agent_stats.items():
                 agent_cost = cost_by_agent.get(agent_type, 0.0)
-                agent_leaderboard.append(
-                    {
-                        "agent_type": agent_type,
-                        "invocations": stats["total_invocations"],
-                        "success_rate": stats["avg_success_rate"],
-                        "avg_response_time_ms": stats["avg_execution_time_ms"],
-                        "total_cost_usd": agent_cost,
-                    }
-                )
+                agent_leaderboard.append({
+                    "agent_type": agent_type,
+                    "invocations": stats["total_invocations"],
+                    "success_rate": stats["avg_success_rate"],
+                    "avg_response_time_ms": stats["avg_execution_time_ms"],
+                    "total_cost_usd": agent_cost,
+                })
 
             # Sort by invocations
             agent_leaderboard.sort(key=lambda x: x["invocations"], reverse=True)
@@ -280,17 +278,15 @@ class AdminChatAnalyticsService:
                 stats["total_invocations"] * (1 - stats["avg_success_rate"])
             )
 
-            leaderboard_data.append(
-                {
-                    "agent_type": agent_name,
-                    "agent_name": agent_name.replace("_", " ").title(),
-                    "invocations": stats["total_invocations"],
-                    "success_rate": stats["avg_success_rate"],
-                    "avg_response_time_ms": stats["avg_execution_time_ms"],
-                    "total_cost_usd": agent_cost,
-                    "error_count": estimated_errors,
-                }
-            )
+            leaderboard_data.append({
+                "agent_type": agent_name,
+                "agent_name": agent_name.replace("_", " ").title(),
+                "invocations": stats["total_invocations"],
+                "success_rate": stats["avg_success_rate"],
+                "avg_response_time_ms": stats["avg_execution_time_ms"],
+                "total_cost_usd": agent_cost,
+                "error_count": estimated_errors,
+            })
 
         # Sort leaderboard by specified metric
         sort_key_map = {
@@ -521,10 +517,12 @@ class AdminChatAnalyticsService:
         previous_period_start = date_from - period_duration
         previous_period_end = date_from
 
-        previous_aggregates = await self._analytics_repository.get_aggregate_by_date_range(
-            start_date=previous_period_start,
-            end_date=previous_period_end,
-            user_id=None,
+        previous_aggregates = (
+            await self._analytics_repository.get_aggregate_by_date_range(
+                start_date=previous_period_start,
+                end_date=previous_period_end,
+                user_id=None,
+            )
         )
 
         cost_change_percentage = 0.0
@@ -644,7 +642,9 @@ class AdminChatAnalyticsService:
                 ErrorStatistics(
                     error_type="CriticalFailure",
                     count=critical_count,
-                    percentage=(critical_count / total_errors * 100) if total_errors > 0 else 0.0,
+                    percentage=(critical_count / total_errors * 100)
+                    if total_errors > 0
+                    else 0.0,
                     severity="critical",
                     most_common_message="Agent execution failure (< 90% success rate)",
                     affected_agents=[name for name, _ in critical_agents],
@@ -659,7 +659,9 @@ class AdminChatAnalyticsService:
                 ErrorStatistics(
                     error_type="HighErrorRate",
                     count=high_count,
-                    percentage=(high_count / total_errors * 100) if total_errors > 0 else 0.0,
+                    percentage=(high_count / total_errors * 100)
+                    if total_errors > 0
+                    else 0.0,
                     severity="high",
                     most_common_message="Agent execution issues (90-95% success rate)",
                     affected_agents=[name for name, _ in high_agents],
@@ -674,7 +676,9 @@ class AdminChatAnalyticsService:
                 ErrorStatistics(
                     error_type="ModerateErrors",
                     count=medium_count,
-                    percentage=(medium_count / total_errors * 100) if total_errors > 0 else 0.0,
+                    percentage=(medium_count / total_errors * 100)
+                    if total_errors > 0
+                    else 0.0,
                     severity="medium",
                     most_common_message="Occasional agent failures (95-98% success rate)",
                     affected_agents=[name for name, _ in medium_agents],
@@ -692,7 +696,9 @@ class AdminChatAnalyticsService:
         }
 
         # Calculate overall error rate
-        total_invocations = sum(stats["total_invocations"] for stats in agent_stats.values())
+        total_invocations = sum(
+            stats["total_invocations"] for stats in agent_stats.values()
+        )
         error_rate = total_errors / total_invocations if total_invocations > 0 else 0.0
 
         # Critical errors and messages
@@ -700,7 +706,8 @@ class AdminChatAnalyticsService:
         critical_error_messages = []
         if critical_agents:
             critical_error_messages = [
-                f"Agent '{name}' has critical failure rate" for name, _ in critical_agents[:3]
+                f"Agent '{name}' has critical failure rate"
+                for name, _ in critical_agents[:3]
             ]
 
         # Build error rate trend
@@ -946,7 +953,10 @@ class AdminChatAnalyticsService:
         }
 
         agent_usage_list = [
-            {"topic": agent_topic_map.get(agent, agent.replace("_", " ").title()), "count": stats["total_invocations"]}
+            {
+                "topic": agent_topic_map.get(agent, agent.replace("_", " ").title()),
+                "count": stats["total_invocations"],
+            }
             for agent, stats in agent_stats.items()
         ]
         agent_usage_list.sort(key=lambda x: x["count"], reverse=True)
@@ -1029,7 +1039,13 @@ class AdminChatAnalyticsService:
         """
         logger.info(f"Exporting dashboard data in {export_format} format")
 
-        sections = include_sections or ["agents", "costs", "errors", "users", "conversations"]
+        sections = include_sections or [
+            "agents",
+            "costs",
+            "errors",
+            "users",
+            "conversations",
+        ]
 
         # Get all necessary data
         aggregates = await self._analytics_repository.get_aggregate_by_date_range(
@@ -1122,7 +1138,8 @@ class AdminChatAnalyticsService:
             export_data["errors"] = {
                 "total_errors": total_errors,
                 "error_rate": (
-                    total_errors / sum(s["total_invocations"] for s in agent_stats.values())
+                    total_errors
+                    / sum(s["total_invocations"] for s in agent_stats.values())
                     if agent_stats
                     else 0.0
                 ),

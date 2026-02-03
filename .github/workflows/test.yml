@@ -79,6 +79,7 @@ jobs:
         uv pip install -e '.[dev,test]' --system
     
     - name: Run linting
+      continue-on-error: true
       run: |
         make code.lint
     

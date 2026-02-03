@@ -17,14 +17,20 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.knowledge_injection]
+pytestmark = [
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.knowledge_injection,
+]
 
 
 class TestCoinGeckoIntegration:
     """Test CoinGecko API integration for real market data."""
 
     @pytest.mark.llm_validation
-    async def test_coingecko_price_data_injection(self, client: AsyncClient, llm_validator):
+    async def test_coingecko_price_data_injection(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test real CoinGecko price data injection into responses.
 
@@ -34,8 +40,8 @@ class TestCoinGeckoIntegration:
             "/api/v1/guest/chat",
             json={
                 "content": "What is the current price of Ethereum?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -48,14 +54,17 @@ class TestCoinGeckoIntegration:
         agent_response = data["agent_message"]["content"].lower()
 
         # Should mention price/ethereum/eth
-        price_mentioned = any(keyword in agent_response for keyword in [
-            "price", "ethereum", "eth", "$", "usd", "dollar"
-        ])
+        price_mentioned = any(
+            keyword in agent_response
+            for keyword in ["price", "ethereum", "eth", "$", "usd", "dollar"]
+        )
 
         assert price_mentioned, "Response should include price information"
 
     @pytest.mark.llm_validation
-    async def test_coingecko_market_data_injection(self, client: AsyncClient, llm_validator):
+    async def test_coingecko_market_data_injection(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test market data (market cap, volume) injection from CoinGecko.
 
@@ -65,8 +74,8 @@ class TestCoinGeckoIntegration:
             "/api/v1/guest/chat",
             json={
                 "content": "Tell me about Bitcoin's market cap and trading volume",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -78,14 +87,17 @@ class TestCoinGeckoIntegration:
         agent_response = data["agent_message"]["content"].lower()
 
         # Should mention market metrics
-        market_data = any(keyword in agent_response for keyword in [
-            "market", "cap", "volume", "trading", "bitcoin", "btc"
-        ])
+        market_data = any(
+            keyword in agent_response
+            for keyword in ["market", "cap", "volume", "trading", "bitcoin", "btc"]
+        )
 
         assert market_data, "Response should include market data"
 
     @pytest.mark.llm_validation
-    async def test_coingecko_api_failure_handling(self, client: AsyncClient, llm_validator):
+    async def test_coingecko_api_failure_handling(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test graceful degradation when CoinGecko API might be unavailable.
 
@@ -95,8 +107,8 @@ class TestCoinGeckoIntegration:
             "/api/v1/guest/chat",
             json={
                 "content": "What's the price of a very obscure token: XYZABC123?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         # Should succeed even if token doesn't exist or API has issues
@@ -110,11 +122,14 @@ class TestCoinGeckoIntegration:
         agent_response = data["agent_message"]["content"]
         assert len(agent_response) > 0
 
+
 class TestRSSNewsIntegration:
     """Test RSS news feed integration from crypto news sources."""
 
     @pytest.mark.llm_validation
-    async def test_rss_news_injection_coindesk(self, client: AsyncClient, llm_validator):
+    async def test_rss_news_injection_coindesk(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test CoinDesk RSS feed integration.
 
@@ -122,10 +137,7 @@ class TestRSSNewsIntegration:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What's the latest crypto news?",
-                "language": "en"
-            }
+            json={"content": "What's the latest crypto news?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -139,7 +151,9 @@ class TestRSSNewsIntegration:
         assert len(agent_response) > 50, "Response should be substantive"
 
     @pytest.mark.llm_validation
-    async def test_rss_news_injection_cointelegraph(self, client: AsyncClient, llm_validator):
+    async def test_rss_news_injection_cointelegraph(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test CoinTelegraph RSS feed integration.
 
@@ -147,10 +161,7 @@ class TestRSSNewsIntegration:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Any important crypto updates today?",
-                "language": "en"
-            }
+            json={"content": "Any important crypto updates today?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -164,7 +175,9 @@ class TestRSSNewsIntegration:
         assert len(agent_response) > 50, "Response should be substantive"
 
     @pytest.mark.llm_validation
-    async def test_rss_news_multiple_sources_aggregation(self, client: AsyncClient, llm_validator):
+    async def test_rss_news_multiple_sources_aggregation(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test aggregation from multiple RSS news sources.
 
@@ -174,8 +187,8 @@ class TestRSSNewsIntegration:
             "/api/v1/guest/chat",
             json={
                 "content": "Give me a comprehensive overview of crypto market news",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -187,11 +200,21 @@ class TestRSSNewsIntegration:
         agent_response = data["agent_message"]["content"].lower()
 
         # Should provide comprehensive coverage
-        comprehensive = any(keyword in agent_response for keyword in [
-            "market", "crypto", "news", "overview", "bitcoin", "ethereum", "defi"
-        ])
+        comprehensive = any(
+            keyword in agent_response
+            for keyword in [
+                "market",
+                "crypto",
+                "news",
+                "overview",
+                "bitcoin",
+                "ethereum",
+                "defi",
+            ]
+        )
 
         assert comprehensive, "Response should provide comprehensive overview"
+
 
 class TestDataSourcePriority:
     """Test data source priority and failover mechanisms."""
@@ -205,10 +228,7 @@ class TestDataSourcePriority:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What is Ethereum doing right now?",
-                "language": "en"
-            }
+            json={"content": "What is Ethereum doing right now?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -220,14 +240,17 @@ class TestDataSourcePriority:
         # System should provide response using available sources
         agent_response = data["agent_message"]["content"].lower()
 
-        ethereum_info = any(keyword in agent_response for keyword in [
-            "ethereum", "eth", "price", "market", "blockchain"
-        ])
+        ethereum_info = any(
+            keyword in agent_response
+            for keyword in ["ethereum", "eth", "price", "market", "blockchain"]
+        )
 
         assert ethereum_info, "Response should include Ethereum information"
 
     @pytest.mark.llm_validation
-    async def test_data_source_failover_mechanism(self, client: AsyncClient, llm_validator):
+    async def test_data_source_failover_mechanism(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test automatic failover when sources are unavailable.
 
@@ -237,8 +260,8 @@ class TestDataSourcePriority:
             "/api/v1/guest/chat",
             json={
                 "content": "Tell me about DeFi protocols and their current status",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -250,6 +273,15 @@ class TestDataSourcePriority:
         # Should provide useful response even with potential source issues
         agent_response = data["agent_message"]["content"].lower()
 
-        defi_info = any(keyword in agent_response for keyword in [
-            "defi", "protocol", "aave", "compound", "uniswap", "lending", "swap"
-        ])
+        defi_info = any(
+            keyword in agent_response
+            for keyword in [
+                "defi",
+                "protocol",
+                "aave",
+                "compound",
+                "uniswap",
+                "lending",
+                "swap",
+            ]
+        )

@@ -18,9 +18,15 @@ from app.domain.graph.services import GraphService, RiskAnalysisService
 from app.domain.ml.services import RiskPredictionService, NetworkAnalysisService
 from app.infrastructure.persistence_age import GraphRepositoryAge
 from app.infrastructure.external_data.defillama import DeFiLlamaClient
+
 # OpenAI removed - using DeepInfra or Noop for embeddings
-from app.infrastructure.embeddings import DeepInfraEmbeddingService, NoopEmbeddingService
-from app.infrastructure.persistence_sqla.repositories.vector_repository_sqla import VectorRepositorySqla
+from app.infrastructure.embeddings import (
+    DeepInfraEmbeddingService,
+    NoopEmbeddingService,
+)
+from app.infrastructure.persistence_sqla.repositories.vector_repository_sqla import (
+    VectorRepositorySqla,
+)
 from app.infrastructure.cache.graph_cache import GraphQueryCache
 from app.application.graph import (
     PopulateGraphInteractor,
@@ -59,7 +65,7 @@ from app.application.admin.data_source_sync_service import DataSourceSyncService
 class GraphProvider(Provider):
     """
     Dishka provider for graph components.
-    
+
     Registers:
     - GraphRepository implementation (Apache AGE)
     - DefiDataProvider implementation (DeFiLlama)
@@ -73,9 +79,9 @@ class GraphProvider(Provider):
     - GenerateEmbeddingsInteractor
     - HybridRetrievalInteractor
     """
-    
+
     scope = Scope.REQUEST
-    
+
     @provide
     def provide_graph_repository(
         self,
@@ -83,14 +89,14 @@ class GraphProvider(Provider):
     ) -> GraphRepository:
         """
         Provide GraphRepository implementation.
-        
+
         Uses Apache AGE adapter with the default graph name.
         """
         return GraphRepositoryAge(
             session=session,
             graph_name="defi_knowledge_graph",
         )
-    
+
     @provide
     def provide_vector_repository(
         self,
@@ -98,28 +104,28 @@ class GraphProvider(Provider):
     ) -> VectorRepository:
         """Provide VectorRepository implementation"""
         return VectorRepositorySqla(session=session)
-    
+
     @provide
     def provide_defi_data_provider(self) -> DefiDataProvider:
         """Provide DeFi data provider implementation"""
         return DeFiLlamaClient(timeout=30, max_retries=3)
-    
+
     @provide
     def provide_embedding_service(self) -> EmbeddingService:
         """Provide Embedding service implementation.
-        
+
         Uses DeepInfra with multilingual BAAI/bge-m3 model (supports 100+ languages).
         Note: OpenAI removed - using only DeepInfra for embeddings.
-        
+
         Reads API key from .secrets.toml first, then falls back to environment variable.
-        If neither is configured, returns a NoopEmbeddingService that allows the 
+        If neither is configured, returns a NoopEmbeddingService that allows the
         system to function without GraphRAG features.
         """
         import logging
         from app.setup.config.loader import load_full_config, get_current_env
-        
+
         logger = logging.getLogger(__name__)
-        
+
         # Try to load from .secrets.toml first (same pattern as agent_squad_infrastructure.py)
         deepinfra_key = ""
         try:
@@ -127,11 +133,11 @@ class GraphProvider(Provider):
             deepinfra_key = raw_config.get("deepinfra", {}).get("API_KEY", "")
         except Exception as e:
             logger.debug(f"Could not load config from .secrets.toml: {e}")
-        
+
         # Fallback to environment variable for backward compatibility
         if not deepinfra_key:
             deepinfra_key = os.getenv("DEEPINFRA_API_KEY", "")
-        
+
         if not deepinfra_key:
             logger.warning(
                 "DeepInfra API key not configured. GraphRAG search features will be disabled. "
@@ -139,20 +145,20 @@ class GraphProvider(Provider):
             )
             # Return noop service that allows the system to function
             return NoopEmbeddingService()
-        
+
         logger.info("DeepInfra embedding service initialized with API key from config")
         return DeepInfraEmbeddingService(
             api_key=deepinfra_key,
             model="BAAI/bge-m3",  # Multilingual: EN, ES, PT, ZH, FR, etc.
         )
-    
+
     @provide
     async def provide_graph_cache(self) -> GraphQueryCache:
         """Provide Graph query cache"""
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         redis_client = await aioredis.from_url(redis_url, decode_responses=True)
         return GraphQueryCache(redis_client=redis_client)
-    
+
     @provide
     def provide_graph_service(
         self,
@@ -160,7 +166,7 @@ class GraphProvider(Provider):
     ) -> GraphService:
         """Provide GraphService for graph operations"""
         return GraphService(graph_repo=graph_repo)
-    
+
     @provide
     def provide_graph_query_service(
         self,
@@ -168,7 +174,7 @@ class GraphProvider(Provider):
     ) -> GraphQueryService:
         """Provide GraphQueryService for visualization queries"""
         return GraphQueryService(graph_repo=graph_repo)
-    
+
     @provide
     def provide_risk_analysis_service(
         self,
@@ -176,7 +182,7 @@ class GraphProvider(Provider):
     ) -> RiskAnalysisService:
         """Provide RiskAnalysisService for risk analysis"""
         return RiskAnalysisService(graph_repo=graph_repo)
-    
+
     @provide
     def provide_populate_graph_interactor(
         self,
@@ -185,7 +191,7 @@ class GraphProvider(Provider):
     ) -> PopulateGraphInteractor:
         """Provide PopulateGraphInteractor for data ingestion"""
         return PopulateGraphInteractor(graph_repo, data_provider)
-    
+
     @provide
     def provide_validate_graph_interactor(
         self,
@@ -193,7 +199,7 @@ class GraphProvider(Provider):
     ) -> ValidateGraphInteractor:
         """Provide ValidateGraphInteractor for validation"""
         return ValidateGraphInteractor(graph_repo)
-    
+
     @provide
     def provide_graph_analytics_interactor(
         self,
@@ -201,7 +207,7 @@ class GraphProvider(Provider):
     ) -> GraphAnalyticsInteractor:
         """Provide GraphAnalyticsInteractor for analytics"""
         return GraphAnalyticsInteractor(graph_repo)
-    
+
     @provide
     def provide_generate_embeddings_interactor(
         self,
@@ -211,7 +217,7 @@ class GraphProvider(Provider):
     ) -> GenerateEmbeddingsInteractor:
         """Provide GenerateEmbeddingsInteractor for embedding generation"""
         return GenerateEmbeddingsInteractor(graph_repo, embedding_service, vector_repo)
-    
+
     @provide
     def provide_hybrid_retrieval_interactor(
         self,
@@ -229,9 +235,9 @@ class GraphProvider(Provider):
             graph_service,
             risk_service,
         )
-    
+
     # ML Services
-    
+
     @provide
     def provide_risk_prediction_service(
         self,
@@ -239,7 +245,7 @@ class GraphProvider(Provider):
     ) -> RiskPredictionService:
         """Provide ML risk prediction service"""
         return RiskPredictionService(graph_repo)
-    
+
     @provide
     def provide_network_analysis_service(
         self,
@@ -247,9 +253,9 @@ class GraphProvider(Provider):
     ) -> NetworkAnalysisService:
         """Provide network analysis service"""
         return NetworkAnalysisService(graph_repo)
-    
+
     # ML Interactors
-    
+
     @provide
     def provide_predict_risk_interactor(
         self,
@@ -257,7 +263,7 @@ class GraphProvider(Provider):
     ) -> PredictRiskInteractor:
         """Provide PredictRiskInteractor"""
         return PredictRiskInteractor(prediction_service)
-    
+
     @provide
     def provide_predict_batch_risk_interactor(
         self,
@@ -265,7 +271,7 @@ class GraphProvider(Provider):
     ) -> PredictBatchRiskInteractor:
         """Provide PredictBatchRiskInteractor"""
         return PredictBatchRiskInteractor(prediction_service)
-    
+
     @provide
     def provide_detect_anomalies_interactor(
         self,
@@ -273,7 +279,7 @@ class GraphProvider(Provider):
     ) -> DetectAnomaliesInteractor:
         """Provide DetectAnomaliesInteractor"""
         return DetectAnomaliesInteractor(prediction_service)
-    
+
     @provide
     def provide_forecast_risk_interactor(
         self,
@@ -281,7 +287,7 @@ class GraphProvider(Provider):
     ) -> ForecastRiskInteractor:
         """Provide ForecastRiskInteractor"""
         return ForecastRiskInteractor(prediction_service)
-    
+
     @provide
     def provide_calculate_pagerank_interactor(
         self,
@@ -289,7 +295,7 @@ class GraphProvider(Provider):
     ) -> CalculatePageRankInteractor:
         """Provide CalculatePageRankInteractor"""
         return CalculatePageRankInteractor(network_service)
-    
+
     @provide
     def provide_detect_communities_interactor(
         self,
@@ -297,7 +303,7 @@ class GraphProvider(Provider):
     ) -> DetectCommunitiesInteractor:
         """Provide DetectCommunitiesInteractor"""
         return DetectCommunitiesInteractor(network_service)
-    
+
     @provide
     def provide_calculate_centrality_interactor(
         self,
@@ -305,7 +311,7 @@ class GraphProvider(Provider):
     ) -> CalculateCentralityInteractor:
         """Provide CalculateCentralityInteractor"""
         return CalculateCentralityInteractor(network_service)
-    
+
     @provide
     def provide_simulate_contagion_interactor(
         self,
@@ -313,9 +319,9 @@ class GraphProvider(Provider):
     ) -> SimulateContagionInteractor:
         """Provide SimulateContagionInteractor"""
         return SimulateContagionInteractor(network_service)
-    
+
     # Chat Handlers (NEW: GraphRAG + ML integration for chat)
-    
+
     @provide
     def provide_chat_graph_search_handler(
         self,
@@ -324,7 +330,7 @@ class GraphProvider(Provider):
     ) -> ChatGraphSearchHandler:
         """Provide ChatGraphSearchHandler for protocol search from chat"""
         return ChatGraphSearchHandler(hybrid_retrieval, graph_repo)
-    
+
     @provide
     def provide_chat_risk_insights_handler(
         self,
@@ -338,9 +344,9 @@ class GraphProvider(Provider):
             hybrid_retrieval,
             graph_repo,
         )
-    
+
     # Portfolio Risk Analysis (NEW: Portfolio management)
-    
+
     @provide
     def provide_portfolio_risk_analysis(
         self,
@@ -354,9 +360,9 @@ class GraphProvider(Provider):
             network_service,
             graph_repo,
         )
-    
+
     # Risk Alert System (NEW: Alert management)
-    
+
     @provide
     def provide_event_broadcaster(
         self,
@@ -365,7 +371,7 @@ class GraphProvider(Provider):
         """Provide GraphEventBroadcaster for real-time events"""
         # Use same Redis client as cache
         return GraphEventBroadcaster(graph_cache._redis)
-    
+
     @provide
     def provide_risk_alert_service(
         self,
@@ -374,7 +380,7 @@ class GraphProvider(Provider):
     ) -> RiskAlertService:
         """Provide RiskAlertService for alert generation and management"""
         return RiskAlertService(risk_prediction_service, event_broadcaster)
-    
+
     @provide
     def provide_risk_alert_monitor(
         self,
@@ -382,16 +388,16 @@ class GraphProvider(Provider):
     ) -> RiskAlertMonitor:
         """Provide RiskAlertMonitor for background monitoring"""
         return RiskAlertMonitor(alert_service)
-    
+
     # User Preferences (NEW: Personalization)
-    
+
     @provide
     def provide_user_preferences_service(self) -> UserPreferencesService:
         """Provide UserPreferencesService for user personalization"""
         return UserPreferencesService()
-    
+
     # Dashboard Aggregation (NEW: Dashboard insights)
-    
+
     @provide
     def provide_dashboard_aggregation_service(
         self,
@@ -405,35 +411,35 @@ class GraphProvider(Provider):
             preferences_service,
             hybrid_retrieval,
         )
-    
+
     # Search History (NEW: Track user searches)
-    
+
     @provide
     def provide_search_history_service(self) -> SearchHistoryService:
         """Provide SearchHistoryService for tracking user searches"""
         return SearchHistoryService()
-    
+
     # Protocol Comparison (NEW: Side-by-side protocol analysis)
-    
+
     @provide
     def provide_protocol_comparison_service(self) -> ProtocolComparisonService:
         """Provide ProtocolComparisonService for comparing protocols"""
         return ProtocolComparisonService()
-    
+
     # Advanced Markets (NEW: Market data aggregation)
-    
+
     @provide
     def provide_advanced_markets_service(self) -> AdvancedMarketsService:
         """Provide AdvancedMarketsService for market data"""
         return AdvancedMarketsService()
-    
+
     # Admin Services (NEW: Platform administration)
-    
+
     @provide
     def provide_graph_management_service(self) -> GraphManagementService:
         """Provide GraphManagementService for admin graph operations"""
         return GraphManagementService()
-    
+
     @provide
     def provide_data_source_sync_service(self) -> DataSourceSyncService:
         """Provide DataSourceSyncService for data source management"""

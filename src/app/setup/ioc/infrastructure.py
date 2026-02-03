@@ -1,4 +1,3 @@
-
 from dishka import Provider, Scope, provide, provide_all
 
 from app.application.atlas.ports import (
@@ -45,14 +44,23 @@ from app.domain.ports.audit_log_repository import AuditLogRepository
 from app.domain.ports.auth_gateway import AuthGateway
 from app.domain.ports.moonpay_token_repository import MoonPayTokenRepository
 from app.domain.chat.ports.analytics_repository import AnalyticsRepository
+
 # Legacy repositories are bridged to unified chat system
 from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.domain.chat.ports.message_repository import MessageRepository
-from app.infrastructure.adapters.conversation_repository_bridge import ConversationRepositoryBridge
-from app.infrastructure.adapters.message_repository_bridge import MessageRepositoryBridge
-from app.domain.portfolio.ports.portfolio.portfolio_repository import PortfolioRepository
+from app.infrastructure.adapters.conversation_repository_bridge import (
+    ConversationRepositoryBridge,
+)
+from app.infrastructure.adapters.message_repository_bridge import (
+    MessageRepositoryBridge,
+)
+from app.domain.portfolio.ports.portfolio.portfolio_repository import (
+    PortfolioRepository,
+)
 from app.domain.projects.ports.project_repository import ProjectRepository
-from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.ports.transaction.transaction_repository import (
+    TransactionRepository,
+)
 from app.domain.ports.wallet.embedded_wallet_provider import EmbeddedWalletProviderPort
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.infrastructure.adapters.ai.agent_gateway_impl import AgentGatewayImpl
@@ -70,6 +78,7 @@ from app.infrastructure.adapters.chat.analytics_repository_adapter import (
     AnalyticsRepositoryAdapter,
 )
 from app.infrastructure.adapters.city_reader_sqla import SqlaCityReader
+
 # REMOVED: Legacy conversation repository (use ChatConversationRepositorySqla)
 # from app.infrastructure.adapters.conversation_repository_sqla import SqlaConversationRepository
 from app.infrastructure.adapters.country_reader_sqla import SqlaCountryReader
@@ -79,6 +88,7 @@ from app.infrastructure.adapters.email_verification_repository_sqla import (
 from app.infrastructure.adapters.main_transaction_manager_sqla import (
     SqlaMainTransactionManager,
 )
+
 # REMOVED: Legacy message repository (use ChatMessageRepositorySqla)
 # from app.infrastructure.adapters.message_repository_sqla import SqlaMessageRepository
 from app.infrastructure.adapters.notification_repository_sqla import (
@@ -390,7 +400,7 @@ class InfrastructureProvider(Provider):
         provides=LLMGateway,
         scope=Scope.REQUEST,
     )
-    
+
     @provide(scope=Scope.REQUEST)
     def get_squad_storage(
         self,
@@ -398,7 +408,7 @@ class InfrastructureProvider(Provider):
     ) -> AnvilSquadStorage:
         """Provide AnvilSquadStorage with unified chat message repository."""
         return AnvilSquadStorage(message_repo=message_repo)
-    
+
     @provide(scope=Scope.REQUEST)
     def get_message_repository(
         self,
@@ -406,7 +416,7 @@ class InfrastructureProvider(Provider):
     ) -> MessageRepository:
         """Bridge legacy MessageRepository to unified chat system."""
         return MessageRepositoryBridge(chat_message_repo)
-    
+
     @provide(scope=Scope.REQUEST)
     def get_conversation_repository(
         self,
@@ -422,51 +432,55 @@ class InfrastructureProvider(Provider):
         import os
         import logging
         from app.setup.config.loader import load_full_config, get_current_env
-        
+
         logger = logging.getLogger(__name__)
-        
+
         # Try to load from .secrets.toml first (same pattern as EmbeddingService and agent_squad)
         deepinfra_api_key = ""
         vertex_ai_api_key = ""
         vertex_ai_project_id = ""
         vertex_ai_credentials_path = ""
         vertex_ai_location = "us-central1"
-        
+
         try:
             raw_config = load_full_config(env=get_current_env())
-            
+
             # DeepInfra config
             deepinfra_api_key = raw_config.get("deepinfra", {}).get("API_KEY", "")
             if deepinfra_api_key:
-                logger.info("DeepInfra API key loaded from .secrets.toml for LLMProviderFactory")
-            
+                logger.info(
+                    "DeepInfra API key loaded from .secrets.toml for LLMProviderFactory"
+                )
+
             # Vertex AI config
             vertex_config = raw_config.get("vertex_ai", {})
             vertex_ai_api_key = vertex_config.get("API_KEY", "")
             vertex_ai_project_id = vertex_config.get("PROJECT_ID", "")
             vertex_ai_credentials_path = vertex_config.get("CREDENTIALS_PATH", "")
             vertex_ai_location = vertex_config.get("LOCATION", "us-central1")
-            
+
         except Exception as e:
             logger.debug(f"Could not load config from .secrets.toml: {e}")
-        
+
         # Fallback to environment variables for backward compatibility
         if not deepinfra_api_key:
             deepinfra_api_key = os.environ.get("DEEPINFRA_API_KEY", "")
             if deepinfra_api_key:
                 logger.info("DeepInfra API key loaded from environment variable")
-        
+
         if not vertex_ai_api_key:
             vertex_ai_api_key = os.environ.get("VERTEX_AI_API_KEY", "")
         if not vertex_ai_project_id:
             vertex_ai_project_id = os.environ.get("VERTEX_AI_PROJECT_ID", "")
         if not vertex_ai_credentials_path:
-            vertex_ai_credentials_path = os.environ.get("VERTEX_AI_CREDENTIALS_PATH", "")
+            vertex_ai_credentials_path = os.environ.get(
+                "VERTEX_AI_CREDENTIALS_PATH", ""
+            )
         if vertex_ai_location == "us-central1":  # Only override if still default
             vertex_ai_location = os.environ.get("VERTEX_AI_LOCATION", "us-central1")
-        
+
         google_credentials = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
-        
+
         if not deepinfra_api_key:
             logger.warning(
                 "DeepInfra API key not configured for LLMProviderFactory. "

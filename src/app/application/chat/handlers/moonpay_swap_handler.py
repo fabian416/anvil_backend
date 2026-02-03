@@ -160,8 +160,12 @@ class MoonPaySwapHandler:
         Returns:
             Handler result with pairs list
         """
-        logger.info(f"[MoonPaySwapHandler] get_available_pairs called - language: {language}")
-        logger.info(f"[MoonPaySwapHandler] Swap client available: {self._swap_client is not None}")
+        logger.info(
+            f"[MoonPaySwapHandler] get_available_pairs called - language: {language}"
+        )
+        logger.info(
+            f"[MoonPaySwapHandler] Swap client available: {self._swap_client is not None}"
+        )
 
         start_time = time.time()
         lang = language if language in SWAP_MESSAGES else "en"
@@ -186,18 +190,18 @@ class MoonPaySwapHandler:
             ]
 
             # Build response content
-            content = f"""{msgs['title']}
+            content = f"""{msgs["title"]}
 
-{msgs['description']}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-**{msgs['available_pairs']}:**
-{msgs['supported_assets']}
+{msgs["description"]}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**{msgs['pairs_intro']}**
+**{msgs["available_pairs"]}:**
+{msgs["supported_assets"]}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**{msgs["pairs_intro"]}**
 
 """
 
@@ -208,16 +212,16 @@ class MoonPaySwapHandler:
             content += f"""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**{msgs['how_to_swap']}:**
+**{msgs["how_to_swap"]}:**
 
-1. {msgs['step_1']}
-2. {msgs['step_2']}
-3. {msgs['step_3']}
-4. {msgs['step_4']}
+1. {msgs["step_1"]}
+2. {msgs["step_2"]}
+3. {msgs["step_3"]}
+4. {msgs["step_4"]}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{msgs['note']}
+{msgs["note"]}
 """
 
             latency = int((time.time() - start_time) * 1000)
@@ -235,11 +239,11 @@ class MoonPaySwapHandler:
             latency = int((time.time() - start_time) * 1000)
 
             # Fallback response
-            fallback_content = f"""{msgs['title']}
+            fallback_content = f"""{msgs["title"]}
 
 ⚠️ Unable to fetch swap pairs at the moment. Please try again later.
 
-{msgs['note']}
+{msgs["note"]}
 """
 
             return MoonPaySwapHandlerResult(
@@ -297,22 +301,22 @@ class MoonPaySwapHandler:
             }
 
             # Build response content
-            quote_text = msgs['quote_template'].format(
-                base_amount=quote_data['base_amount'],
-                base=quote_data['base'],
-                quote_amount=quote_data['quote_amount'],
-                quote=quote_data['quote'],
-                rate=quote_data['exchange_rate'],
-                fee_usd=quote_data['network_fee_usd'],
+            quote_text = msgs["quote_template"].format(
+                base_amount=quote_data["base_amount"],
+                base=quote_data["base"],
+                quote_amount=quote_data["quote_amount"],
+                quote=quote_data["quote"],
+                rate=quote_data["exchange_rate"],
+                fee_usd=quote_data["network_fee_usd"],
             )
 
-            content = f"""{msgs['title']}
+            content = f"""{msgs["title"]}
 
 {quote_text}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{msgs['note']}
+{msgs["note"]}
 
 💡 **Tip:** Click the swap button to complete this transaction through Privy.
 """
@@ -335,7 +339,7 @@ class MoonPaySwapHandler:
             latency = int((time.time() - start_time) * 1000)
 
             # Fallback response
-            fallback_content = f"""{msgs['title']}
+            fallback_content = f"""{msgs["title"]}
 
 ⚠️ Unable to get swap quote for {from_currency.upper()} → {to_currency.upper()}.
 
@@ -344,7 +348,7 @@ Please check:
 • The amount is within allowed limits
 • Try again in a moment
 
-{msgs['note']}
+{msgs["note"]}
 """
 
             return MoonPaySwapHandlerResult(

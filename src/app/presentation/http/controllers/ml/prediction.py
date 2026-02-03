@@ -41,9 +41,9 @@ async def predict_risk(
     interactor: FromDishka[PredictRiskInteractor],
 ) -> RiskPredictionResponse:
     """Predict protocol risk using ML"""
-    
+
     prediction = await interactor.execute(protocol_id)
-    
+
     return RiskPredictionResponse(
         protocol_id=str(prediction.protocol_id),
         protocol_name=prediction.protocol_name,
@@ -72,10 +72,10 @@ async def predict_batch_risk(
     interactor: FromDishka[PredictBatchRiskInteractor],
 ) -> BatchRiskPredictionResponse:
     """Batch predict protocol risks"""
-    
+
     protocol_ids = [UUID(pid) for pid in request.protocol_ids]
     predictions = await interactor.execute(protocol_ids)
-    
+
     return BatchRiskPredictionResponse(
         predictions=[
             RiskPredictionResponse(
@@ -111,9 +111,9 @@ async def detect_anomalies(
     lookback_days: int = Query(7, ge=1, le=90, description="Days to look back"),
 ) -> AnomalyDetectionResponse:
     """Detect anomalous risk patterns"""
-    
+
     result = await interactor.execute(protocol_id, lookback_days)
-    
+
     return AnomalyDetectionResponse(**result)
 
 
@@ -132,9 +132,9 @@ async def forecast_risk(
     forecast_days: int = Query(7, ge=1, le=30, description="Days to forecast"),
 ) -> RiskForecastResponse:
     """Forecast protocol risk"""
-    
+
     forecast = await interactor.execute(protocol_id, forecast_days)
-    
+
     return RiskForecastResponse(
         protocol_id=str(protocol_id),
         forecast=forecast,

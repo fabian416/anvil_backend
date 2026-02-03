@@ -227,9 +227,7 @@ class ConversationExportService:
             "participants": [str(user_id)],
         }
 
-    def _redact_pii(
-        self, conversation_data: dict, config: PIIRedactionConfig
-    ) -> dict:
+    def _redact_pii(self, conversation_data: dict, config: PIIRedactionConfig) -> dict:
         """Redact PII from conversation data."""
         redacted_data = conversation_data.copy()
 
@@ -242,15 +240,23 @@ class ConversationExportService:
                 if config.redact_emails:
                     content = self._redact_emails(content, config.replacement_text)
                 if config.redact_phone_numbers:
-                    content = self._redact_phone_numbers(content, config.replacement_text)
+                    content = self._redact_phone_numbers(
+                        content, config.replacement_text
+                    )
                 if config.redact_wallet_addresses:
-                    content = self._redact_wallet_addresses(content, config.replacement_text)
+                    content = self._redact_wallet_addresses(
+                        content, config.replacement_text
+                    )
                 if config.redact_ip_addresses:
-                    content = self._redact_ip_addresses(content, config.replacement_text)
+                    content = self._redact_ip_addresses(
+                        content, config.replacement_text
+                    )
                 if config.redact_ssn:
                     content = self._redact_ssn(content, config.replacement_text)
                 if config.redact_credit_cards:
-                    content = self._redact_credit_cards(content, config.replacement_text)
+                    content = self._redact_credit_cards(
+                        content, config.replacement_text
+                    )
 
                 message["content"] = content
                 redacted_messages.append(message)
@@ -261,39 +267,39 @@ class ConversationExportService:
 
     def _redact_emails(self, text: str, replacement: str) -> str:
         """Redact email addresses."""
-        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
         return re.sub(email_pattern, replacement, text)
 
     def _redact_phone_numbers(self, text: str, replacement: str) -> str:
         """Redact phone numbers."""
-        phone_pattern = r'\b(\+?1[-.]?)?\(?\d{3}\)?[-.]?\d{3}[-.]?\d{4}\b'
+        phone_pattern = r"\b(\+?1[-.]?)?\(?\d{3}\)?[-.]?\d{3}[-.]?\d{4}\b"
         return re.sub(phone_pattern, replacement, text)
 
     def _redact_wallet_addresses(self, text: str, replacement: str) -> str:
         """Redact cryptocurrency wallet addresses."""
         # Ethereum addresses
-        eth_pattern = r'\b0x[a-fA-F0-9]{40}\b'
+        eth_pattern = r"\b0x[a-fA-F0-9]{40}\b"
         text = re.sub(eth_pattern, replacement, text)
 
         # Bitcoin addresses
-        btc_pattern = r'\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\b'
+        btc_pattern = r"\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\b"
         text = re.sub(btc_pattern, replacement, text)
 
         return text
 
     def _redact_ip_addresses(self, text: str, replacement: str) -> str:
         """Redact IP addresses."""
-        ip_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+        ip_pattern = r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
         return re.sub(ip_pattern, replacement, text)
 
     def _redact_ssn(self, text: str, replacement: str) -> str:
         """Redact Social Security Numbers."""
-        ssn_pattern = r'\b\d{3}-\d{2}-\d{4}\b'
+        ssn_pattern = r"\b\d{3}-\d{2}-\d{4}\b"
         return re.sub(ssn_pattern, replacement, text)
 
     def _redact_credit_cards(self, text: str, replacement: str) -> str:
         """Redact credit card numbers."""
-        cc_pattern = r'\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b'
+        cc_pattern = r"\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b"
         return re.sub(cc_pattern, replacement, text)
 
     async def _generate_export(
@@ -398,7 +404,7 @@ class ConversationExportService:
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>{data.get('title', 'Conversation Export')}</title>
+    <title>{data.get("title", "Conversation Export")}</title>
     <style>
         body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }}
         .message {{ margin-bottom: 1.5rem; padding: 1rem; background: #f9fafb; border-radius: 8px; }}
@@ -408,9 +414,9 @@ class ConversationExportService:
     </style>
 </head>
 <body>
-    <h1>{data.get('title', 'Conversation')}</h1>
+    <h1>{data.get("title", "Conversation")}</h1>
     <p><strong>Exported:</strong> {datetime.now(UTC).isoformat()}</p>
-    <p><strong>Messages:</strong> {data.get('message_count', 0)}</p>
+    <p><strong>Messages:</strong> {data.get("message_count", 0)}</p>
     {compliance_banner}
     <hr>
 """
@@ -418,9 +424,9 @@ class ConversationExportService:
         for message in data.get("messages", []):
             html += f"""
     <div class="message">
-        <div class="role">{message.get('role', 'unknown').title()}</div>
-        <div class="timestamp">{message.get('timestamp', '')}</div>
-        <div class="content">{message.get('content', '')}</div>
+        <div class="role">{message.get("role", "unknown").title()}</div>
+        <div class="timestamp">{message.get("timestamp", "")}</div>
+        <div class="content">{message.get("content", "")}</div>
     </div>
 """
 

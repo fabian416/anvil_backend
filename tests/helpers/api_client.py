@@ -131,7 +131,9 @@ class AuthenticatedClient:
                     refresh_token=self._refresh_token,
                 )
             else:
-                raise ValueError(f"Login failed: {response.status_code} - {response.text}")
+                raise ValueError(
+                    f"Login failed: {response.status_code} - {response.text}"
+                )
 
         self._update_headers()
         return self
@@ -336,7 +338,10 @@ class AuthenticatedClient:
             Response object
         """
         from httpx import AsyncClient, ASGITransport
-        async with AsyncClient(transport=ASGITransport(app=self.client), base_url=self._base_url) as ac:
+
+        async with AsyncClient(
+            transport=ASGITransport(app=self.client), base_url=self._base_url
+        ) as ac:
             return await ac.get(
                 path,
                 headers={**self._headers, **kwargs.pop("headers", {})},
@@ -357,7 +362,10 @@ class AuthenticatedClient:
             Response object
         """
         from httpx import AsyncClient, ASGITransport
-        async with AsyncClient(transport=ASGITransport(app=self.client), base_url=self._base_url) as ac:
+
+        async with AsyncClient(
+            transport=ASGITransport(app=self.client), base_url=self._base_url
+        ) as ac:
             return await ac.post(
                 path,
                 json=json,
@@ -379,7 +387,10 @@ class AuthenticatedClient:
             Response object
         """
         from httpx import AsyncClient, ASGITransport
-        async with AsyncClient(transport=ASGITransport(app=self.client), base_url=self._base_url) as ac:
+
+        async with AsyncClient(
+            transport=ASGITransport(app=self.client), base_url=self._base_url
+        ) as ac:
             return await ac.put(
                 path,
                 json=json,
@@ -401,7 +412,10 @@ class AuthenticatedClient:
             Response object
         """
         from httpx import AsyncClient, ASGITransport
-        async with AsyncClient(transport=ASGITransport(app=self.client), base_url=self._base_url) as ac:
+
+        async with AsyncClient(
+            transport=ASGITransport(app=self.client), base_url=self._base_url
+        ) as ac:
             return await ac.patch(
                 path,
                 json=json,
@@ -422,7 +436,10 @@ class AuthenticatedClient:
             Response object
         """
         from httpx import AsyncClient, ASGITransport
-        async with AsyncClient(transport=ASGITransport(app=self.client), base_url=self._base_url) as ac:
+
+        async with AsyncClient(
+            transport=ASGITransport(app=self.client), base_url=self._base_url
+        ) as ac:
             return await ac.delete(
                 path,
                 headers={**self._headers, **kwargs.pop("headers", {})},

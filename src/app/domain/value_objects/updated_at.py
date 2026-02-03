@@ -11,4 +11,5 @@ from app.domain.value_objects.base import ValueObject
 @dataclass(frozen=True, repr=False)
 class UpdatedAt(ValueObject[datetime]):
     """Updated at timestamp value object."""
+
     value: datetime

@@ -16,7 +16,9 @@ import warnings
 from datetime import datetime
 
 # Skip - tests require specific multi-step flow states and LLM responses
-pytestmark = pytest.mark.skip(reason="Tests require proper LLM mock setup for multi-step flows")
+pytestmark = pytest.mark.skip(
+    reason="Tests require proper LLM mock setup for multi-step flows"
+)
 
 
 @pytest.mark.integration
@@ -43,8 +45,7 @@ class TestGuestChatMultiStepFlows:
         # Step 1: Initiate lending
         step1_input = "Deposit USDC on Morpho"
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": step1_input, "language": "en"}
+            "/api/v1/guest/chat", json={"content": step1_input, "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -56,13 +57,16 @@ class TestGuestChatMultiStepFlows:
         assert "USDC" in content or "asset" in content.lower()
         assert data["enrichment"]["lending_flow"] == "step1_asset"
         assert data["registration_required"]["required"] is True
-        conversation_steps.append({"user": step1_input, "agent": content, "step": "initiate"})
+        conversation_steps.append({
+            "user": step1_input,
+            "agent": content,
+            "step": "initiate",
+        })
 
         # Step 2: Select USDC (by name)
         step2_input = "USDC"
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": step2_input, "language": "en"}
+            "/api/v1/guest/chat", json={"content": step2_input, "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -73,13 +77,16 @@ class TestGuestChatMultiStepFlows:
         assert "amount" in content.lower() or "how much" in content.lower()
         assert data["enrichment"]["lending_flow"] == "step2_amount"
         assert data["enrichment"]["asset"] == "USDC"
-        conversation_steps.append({"user": step2_input, "agent": content, "step": "asset_selection"})
+        conversation_steps.append({
+            "user": step2_input,
+            "agent": content,
+            "step": "asset_selection",
+        })
 
         # Step 3: Enter amount (1000 USDC)
         step3_input = "1000"
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": step3_input, "language": "en"}
+            "/api/v1/guest/chat", json={"content": step3_input, "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -90,17 +97,23 @@ class TestGuestChatMultiStepFlows:
         assert "APY" in content or "%" in content  # Show APY
         assert "confirm" in content.lower()  # Clear CTA
         assert data["enrichment"]["lending_flow"] == "step3_confirmation"
-        assert data["enrichment"]["amount"] in ["1000", "1000.0"]  # Accept both string and float representation
+        assert data["enrichment"]["amount"] in [
+            "1000",
+            "1000.0",
+        ]  # Accept both string and float representation
         assert "apy" in data["enrichment"]
         assert "monthly_earnings" in data["enrichment"]
         assert "yearly_earnings" in data["enrichment"]
-        conversation_steps.append({"user": step3_input, "agent": content, "step": "amount_confirmation"})
+        conversation_steps.append({
+            "user": step3_input,
+            "agent": content,
+            "step": "amount_confirmation",
+        })
 
         # Step 4: Confirm deposit
         step4_input = "confirm"
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": step4_input, "language": "en"}
+            "/api/v1/guest/chat", json={"content": step4_input, "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -111,19 +124,26 @@ class TestGuestChatMultiStepFlows:
         assert "sign up" in content.lower() or "signup" in content.lower()
         assert data["enrichment"]["lending_flow"] == "execution"
         assert data["registration_required"]["required"] is True
-        conversation_steps.append({"user": step4_input, "agent": content, "step": "execution"})
+        conversation_steps.append({
+            "user": step4_input,
+            "agent": content,
+            "step": "execution",
+        })
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_lending_flow_with_number_selection(self, client: AsyncClient, llm_validator):
+    async def test_lending_flow_with_number_selection(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test LENDING flow using number selection (option 1 = USDC)."""
         # Step 1: Initiate
-        await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
+        )
 
         # Step 2: Select option 1 (USDC)
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "1", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "1", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -139,7 +159,9 @@ class TestGuestChatMultiStepFlows:
         else:
             # If number selection didn't work, just verify flow is progressing
             # This is acceptable behavior - number selection is a nice-to-have
-            pytest.skip("Number selection not fully implemented - using explicit asset names works")
+            pytest.skip(
+                "Number selection not fully implemented - using explicit asset names works"
+            )
 
         # Extract agent response for validation
         agent_response = data["agent_message"]["content"]
@@ -149,14 +171,19 @@ class TestGuestChatMultiStepFlows:
     async def test_lending_flow_cancel(self, client: AsyncClient, llm_validator):
         """Test cancelling LENDING flow at confirmation step."""
         # Navigate to confirmation
-        await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "DAI", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "500", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "DAI", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "500", "language": "en"}
+        )
 
         # Cancel
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "cancel", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "cancel", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -171,10 +198,10 @@ class TestGuestChatMultiStepFlows:
         #
         # Any of these behaviors is acceptable - the key is the flow was interrupted
         is_cancelled = (
-            "❌" in content or
-            "cancel" in content.lower() or
-            enrichment.get("lending_flow") == "cancelled" or
-            ("lending_flow" not in enrichment)  # Flow context cleared
+            "❌" in content
+            or "cancel" in content.lower()
+            or enrichment.get("lending_flow") == "cancelled"
+            or ("lending_flow" not in enrichment)  # Flow context cleared
         )
 
         assert is_cancelled, f"Expected cancellation but got: {content}"
@@ -184,15 +211,16 @@ class TestGuestChatMultiStepFlows:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_lending_all_supported_assets(self, client: AsyncClient, llm_validator):
+    async def test_lending_all_supported_assets(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test LENDING flow supports multiple asset types."""
         # Test two representative assets to prove multi-asset support
         # (Testing more in sequence causes guest session state pollution)
 
         # Test 1: Stablecoin (USDC)
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "Deposit USDC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "Deposit USDC", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -207,7 +235,7 @@ class TestGuestChatMultiStepFlows:
         # Test 2: Non-stablecoin (ETH)
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "I want to earn yield on ETH", "language": "en"}
+            json={"content": "I want to earn yield on ETH", "language": "en"},
         )
         assert response2.status_code == 200
         data2 = response2.json()
@@ -237,8 +265,7 @@ class TestGuestChatMultiStepFlows:
         """
         # Step 1: Initiate swap
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "swap", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "swap", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -251,8 +278,7 @@ class TestGuestChatMultiStepFlows:
 
         # Step 2: Select FROM token (BTC)
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "BTC", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "BTC", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -265,8 +291,7 @@ class TestGuestChatMultiStepFlows:
 
         # Step 3: Select TO token (ETH)
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "ETH", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "ETH", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -278,8 +303,7 @@ class TestGuestChatMultiStepFlows:
 
         # Step 4: Enter amount (0.1 BTC)
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "0.1", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "0.1", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -293,8 +317,7 @@ class TestGuestChatMultiStepFlows:
 
         # Step 5: Confirm swap
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "confirm", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "confirm", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -307,11 +330,13 @@ class TestGuestChatMultiStepFlows:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_moonpay_swap_complete_request_parsing(self, client: AsyncClient, llm_validator):
+    async def test_moonpay_swap_complete_request_parsing(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test SWAP_MOONPAY with complete request: 'swap 0.5 BTC to ETH'."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "swap 0.5 BTC to ETH", "language": "en"}
+            json={"content": "swap 0.5 BTC to ETH", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -341,8 +366,7 @@ class TestGuestChatShortcuts:
 
         for shortcut, expected_asset in shortcuts_with_asset:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": shortcut, "language": "en"}
+                "/api/v1/guest/chat", json={"content": shortcut, "language": "en"}
             )
             assert response.status_code == 200
             data = response.json()
@@ -351,11 +375,16 @@ class TestGuestChatShortcuts:
             content = data["agent_message"]["content"]
 
             # Verify lending flow was triggered
-            assert "lending_flow" in enrichment, f"Shortcut '{shortcut}' didn't trigger lending flow"
+            assert "lending_flow" in enrichment, (
+                f"Shortcut '{shortcut}' didn't trigger lending flow"
+            )
 
             # Ideal: Skips to step2 with asset pre-filled
             # Acceptable: Goes to step1 but asset is mentioned in context
-            if enrichment.get("lending_flow") == "step2_amount" and "asset" in enrichment:
+            if (
+                enrichment.get("lending_flow") == "step2_amount"
+                and "asset" in enrichment
+            ):
                 assert enrichment["asset"] == expected_asset
             else:
                 # Parser didn't extract asset perfectly - verify flow started correctly
@@ -371,8 +400,7 @@ class TestGuestChatShortcuts:
 
         for shortcut in shortcuts_no_asset:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": shortcut, "language": "en"}
+                "/api/v1/guest/chat", json={"content": shortcut, "language": "en"}
             )
             assert response.status_code == 200
             data = response.json()
@@ -381,14 +409,24 @@ class TestGuestChatShortcuts:
 
             # Should start at asset selection or show vault information
             content_lower = data["agent_message"]["content"].lower()
-            has_vault_info = "vault" in content_lower or "lending" in content_lower or "best" in content_lower
+            has_vault_info = (
+                "vault" in content_lower
+                or "lending" in content_lower
+                or "best" in content_lower
+            )
             has_lending_flow = "lending_flow" in enrichment
 
-            assert has_lending_flow or has_vault_info, f"Shortcut '{shortcut}' didn't trigger expected response"
+            assert has_lending_flow or has_vault_info, (
+                f"Shortcut '{shortcut}' didn't trigger expected response"
+            )
 
             if "lending_flow" in enrichment:
                 # Allow any lending flow step as valid - parsing might place us at different steps
-                assert enrichment["lending_flow"] in ["step1_asset", "step2_amount", "vault_display"]
+                assert enrichment["lending_flow"] in [
+                    "step1_asset",
+                    "step2_amount",
+                    "vault_display",
+                ]
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -402,8 +440,7 @@ class TestGuestChatShortcuts:
 
         for shortcut in shortcuts:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": shortcut, "language": "en"}
+                "/api/v1/guest/chat", json={"content": shortcut, "language": "en"}
             )
             assert response.status_code == 200
             data = response.json()
@@ -417,7 +454,7 @@ class TestGuestChatShortcuts:
         """Test balance shortcut for guests."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What's my balance?", "language": "en"}
+            json={"content": "What's my balance?", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -425,12 +462,12 @@ class TestGuestChatShortcuts:
         # Guests should see demo/empty balance OR signup prompt (both valid)
         content = data["agent_message"]["content"]
         is_valid_response = (
-            "$0.00" in content or
-            "empty" in content.lower() or
-            "no balance" in content.lower() or
-            "sign up" in content.lower() or  # Signup prompt is valid for guests
-            "signup" in content.lower() or
-            "wallet access required" in content.lower()
+            "$0.00" in content
+            or "empty" in content.lower()
+            or "no balance" in content.lower()
+            or "sign up" in content.lower()  # Signup prompt is valid for guests
+            or "signup" in content.lower()
+            or "wallet access required" in content.lower()
         )
         assert is_valid_response, f"Unexpected balance response for guest: {content}"
 
@@ -440,7 +477,7 @@ class TestGuestChatShortcuts:
         """Test portfolio shortcut for guests."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "Show my portfolio", "language": "en"}
+            json={"content": "Show my portfolio", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -448,12 +485,12 @@ class TestGuestChatShortcuts:
         # Guests should see empty portfolio OR signup prompt (both valid)
         content = data["agent_message"]["content"]
         is_valid_response = (
-            "empty" in content.lower() or
-            "no holdings" in content.lower() or
-            "$0" in content or
-            "sign up" in content.lower() or  # Signup prompt is valid for guests
-            "signup" in content.lower() or
-            "wallet access required" in content.lower()
+            "empty" in content.lower()
+            or "no holdings" in content.lower()
+            or "$0" in content
+            or "sign up" in content.lower()  # Signup prompt is valid for guests
+            or "signup" in content.lower()
+            or "wallet access required" in content.lower()
         )
         assert is_valid_response, f"Unexpected portfolio response for guest: {content}"
 
@@ -468,8 +505,7 @@ class TestGuestChatProductionQuality:
     async def test_responses_use_emojis(self, client: AsyncClient, llm_validator):
         """Test that responses use emojis for visual appeal."""
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "lending", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -479,7 +515,9 @@ class TestGuestChatProductionQuality:
         has_emoji = any(emoji in content for emoji in emojis)
         has_formatting = "**" in content or "##" in content  # Markdown formatting
 
-        assert has_emoji or has_formatting, f"Response lacks visual appeal (no emojis or formatting): {content[:100]}"
+        assert has_emoji or has_formatting, (
+            f"Response lacks visual appeal (no emojis or formatting): {content[:100]}"
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -487,11 +525,17 @@ class TestGuestChatProductionQuality:
         """Test that confirmation steps have clear calls-to-action."""
         # Navigate step by step to confirmation
         # Step 1: Initiate
-        r1 = await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
+        r1 = await client.post(
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
+        )
         # Step 2: Select asset
-        r2 = await client.post("/api/v1/guest/chat", json={"content": "USDC", "language": "en"})
+        r2 = await client.post(
+            "/api/v1/guest/chat", json={"content": "USDC", "language": "en"}
+        )
         # Step 3: Enter amount - should reach confirmation
-        response = await client.post("/api/v1/guest/chat", json={"content": "1000", "language": "en"})
+        response = await client.post(
+            "/api/v1/guest/chat", json={"content": "1000", "language": "en"}
+        )
 
         data = response.json()
         content = data["agent_message"]["content"]
@@ -501,30 +545,42 @@ class TestGuestChatProductionQuality:
         if enrichment.get("lending_flow") == "step3_confirmation":
             # At confirmation - should have clear CTAs
             has_clear_cta = (
-                "confirm" in content.lower() or
-                "yes" in content.lower() or
-                any(word in content.lower() for word in ["proceed", "cancel", "abort", "back", "continue"])
+                "confirm" in content.lower()
+                or "yes" in content.lower()
+                or any(
+                    word in content.lower()
+                    for word in ["proceed", "cancel", "abort", "back", "continue"]
+                )
             )
             assert has_clear_cta, f"No clear CTA at confirmation step: {content}"
         elif enrichment.get("lending_flow") in ["step1_asset", "step2_amount"]:
             # Still in flow but didn't reach confirmation
-            pytest.skip("Flow didn't reach confirmation step - multi-step navigation needs refinement")
+            pytest.skip(
+                "Flow didn't reach confirmation step - multi-step navigation needs refinement"
+            )
         else:
             # Flow was reset or didn't trigger
-            pytest.skip("Lending flow not maintained across requests - context management issue")
+            pytest.skip(
+                "Lending flow not maintained across requests - context management issue"
+            )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_error_handling_invalid_amount(self, client: AsyncClient, llm_validator):
+    async def test_error_handling_invalid_amount(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test error handling for invalid amount input."""
         # Navigate to amount step first, then send invalid amount
-        await client.post("/api/v1/guest/chat", json={"content": "lending", "language": "en"})
-        await client.post("/api/v1/guest/chat", json={"content": "USDC", "language": "en"})
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "lending", "language": "en"}
+        )
+        await client.post(
+            "/api/v1/guest/chat", json={"content": "USDC", "language": "en"}
+        )
 
         # Now send invalid amount
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "not_a_number", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "not_a_number", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -539,25 +595,26 @@ class TestGuestChatProductionQuality:
         # 3. Staying at amount step
         # 4. Resetting flow (also acceptable)
         is_handled_gracefully = (
-            "❌" in content or
-            "invalid" in content.lower() or
-            "error" in content.lower() or
-            "amount" in content.lower() or  # Re-asking for amount
-            "how much" in content.lower() or
-            "number" in content.lower() or
-            enrichment.get("lending_flow") == "step2_amount" or  # Stayed at amount step
-            enrichment.get("lending_flow") is None  # Flow reset (acceptable)
+            "❌" in content
+            or "invalid" in content.lower()
+            or "error" in content.lower()
+            or "amount" in content.lower()  # Re-asking for amount
+            or "how much" in content.lower()
+            or "number" in content.lower()
+            or enrichment.get("lending_flow") == "step2_amount"  # Stayed at amount step
+            or enrichment.get("lending_flow") is None  # Flow reset (acceptable)
         )
 
         assert is_handled_gracefully, f"Invalid input not handled gracefully: {content}"
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_multilingual_support_spanish(self, client: AsyncClient, llm_validator):
+    async def test_multilingual_support_spanish(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test Spanish language support."""
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "préstamo", "language": "es"}
+            "/api/v1/guest/chat", json={"content": "préstamo", "language": "es"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -574,8 +631,7 @@ class TestGuestChatProductionQuality:
 
         for query in out_of_scope_queries:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": query, "language": "en"}
+                "/api/v1/guest/chat", json={"content": query, "language": "en"}
             )
             assert response.status_code == 200
             data = response.json()
@@ -591,13 +647,12 @@ class TestGuestChatProductionQuality:
         """Test that common typos are handled gracefully."""
         typos = [
             ("porfolio", "portfolio"),  # Typo of portfolio
-            ("balanse", "balance"),     # Typo of balance
-            ("swp", "swap"),            # Typo of swap
+            ("balanse", "balance"),  # Typo of balance
+            ("swp", "swap"),  # Typo of swap
         ]
 
         for typo, expected_intent in typos:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": typo, "language": "en"}
+                "/api/v1/guest/chat", json={"content": typo, "language": "en"}
             )
             assert response.status_code == 200

@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 @dataclass(frozen=True, slots=True)
 class ChangeRoleRequest:
     """Request to change a user's role."""
+
     authorization: str
     target_email: str
     new_role: str
@@ -80,7 +81,7 @@ class ChangeRoleInteractor:
         # Find user by email
         target_email = Email(request_data.target_email)
         target_user = await self._auth_gateway.get_user_by_email(target_email)
-        
+
         if not target_user:
             raise UserNotFoundByEmailError(target_email)
 

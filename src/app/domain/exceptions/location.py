@@ -11,5 +11,3 @@ class CityNotFoundInCountryError(DomainError):
         super().__init__(
             f"City with ID {city_id} not found in country with ID {country_id}"
         )
-
-

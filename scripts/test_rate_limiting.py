@@ -8,6 +8,7 @@ Tests:
 3. Rate limit headers
 4. 429 responses when limits exceeded
 """
+
 import asyncio
 import httpx
 from datetime import datetime
@@ -29,11 +30,8 @@ async def test_guest_rate_limit():
             try:
                 response = await client.post(
                     f"{BASE_URL}/api/v1/chat",
-                    json={
-                        "content": f"Test message {i}",
-                        "language": "en"
-                    },
-                    timeout=30.0
+                    json={"content": f"Test message {i}", "language": "en"},
+                    timeout=30.0,
                 )
 
                 print(f"\nRequest {i}:")
@@ -43,7 +41,9 @@ async def test_guest_rate_limit():
                 if "X-RateLimit-Limit" in response.headers:
                     print(f"  Rate Limit: {response.headers['X-RateLimit-Limit']}")
                     print(f"  Remaining: {response.headers['X-RateLimit-Remaining']}")
-                    print(f"  Reset: {response.headers.get('X-RateLimit-Reset', 'N/A')}")
+                    print(
+                        f"  Reset: {response.headers.get('X-RateLimit-Reset', 'N/A')}"
+                    )
 
                 if response.status_code == 200:
                     print(f"  ✅ Success")
@@ -71,10 +71,10 @@ async def test_authenticated_rate_limit():
                     f"{BASE_URL}/api/v1/chat",
                     json={
                         "content": f"Authenticated test message {i}",
-                        "language": "en"
+                        "language": "en",
                     },
                     headers=headers,
-                    timeout=30.0
+                    timeout=30.0,
                 )
 
                 print(f"\nRequest {i}:")
@@ -84,7 +84,9 @@ async def test_authenticated_rate_limit():
                 if "X-RateLimit-Limit" in response.headers:
                     print(f"  Rate Limit: {response.headers['X-RateLimit-Limit']}")
                     print(f"  Remaining: {response.headers['X-RateLimit-Remaining']}")
-                    print(f"  Reset: {response.headers.get('X-RateLimit-Reset', 'N/A')}")
+                    print(
+                        f"  Reset: {response.headers.get('X-RateLimit-Reset', 'N/A')}"
+                    )
 
                 if response.status_code == 200:
                     print(f"  ✅ Success")
@@ -112,16 +114,13 @@ async def test_rate_limit_exceeded():
             try:
                 response = await client.post(
                     f"{BASE_URL}/api/v1/chat",
-                    json={
-                        "content": f"Rapid test {i}",
-                        "language": "en"
-                    },
-                    timeout=30.0
+                    json={"content": f"Rapid test {i}", "language": "en"},
+                    timeout=30.0,
                 )
 
                 if response.status_code == 200:
                     success_count += 1
-                    remaining = response.headers.get('X-RateLimit-Remaining', 'N/A')
+                    remaining = response.headers.get("X-RateLimit-Remaining", "N/A")
                     print(f"  Request {i}: ✅ Success (Remaining: {remaining})")
                 elif response.status_code == 429:
                     rate_limited_count += 1
@@ -162,6 +161,7 @@ async def main():
     except Exception as e:
         print(f"\n❌ Test suite failed: {e}")
         import traceback
+
         traceback.print_exc()
 
     print("\n" + "=" * 70)

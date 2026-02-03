@@ -22,7 +22,9 @@ pytestmark = pytest.mark.skip(reason="Shortcut patterns may have changed")
 async def client():
     """Create test client."""
     app = make_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
@@ -39,7 +41,7 @@ async def test_shortcuts_api_includes_vault_patterns_english(client: AsyncClient
     lending_commands = data.get("lending", {}).get("commands", [])
     lending_compare = next(
         (cmd for cmd in lending_commands if cmd.get("intent") == "LENDING_COMPARE"),
-        None
+        None,
     )
 
     assert lending_compare is not None, "LENDING_COMPARE intent not found in shortcuts"
@@ -57,15 +59,18 @@ async def test_shortcuts_api_includes_vault_patterns_english(client: AsyncClient
         "vault recommendations",
         "vaults with best apy",
         "list morpho vaults",
-        "find best vaults"
+        "find best vaults",
     ]
 
     for pattern in expected_vault_patterns:
-        assert pattern in patterns_en, \
-            f"Expected vault pattern '{pattern}' not found in shortcuts API. " \
+        assert pattern in patterns_en, (
+            f"Expected vault pattern '{pattern}' not found in shortcuts API. "
             f"Available patterns: {patterns_en}"
+        )
 
-    print(f"\n✅ All {len(expected_vault_patterns)} vault patterns found in shortcuts API")
+    print(
+        f"\n✅ All {len(expected_vault_patterns)} vault patterns found in shortcuts API"
+    )
     print(f"Total patterns in LENDING_COMPARE: {len(patterns_en)}")
 
 
@@ -82,7 +87,7 @@ async def test_shortcuts_api_includes_vault_patterns_spanish(client: AsyncClient
     lending_commands = data.get("lending", {}).get("commands", [])
     lending_compare = next(
         (cmd for cmd in lending_commands if cmd.get("intent") == "LENDING_COMPARE"),
-        None
+        None,
     )
 
     assert lending_compare is not None, "LENDING_COMPARE intent not found in shortcuts"
@@ -94,15 +99,18 @@ async def test_shortcuts_api_includes_vault_patterns_spanish(client: AsyncClient
         "mejores bóvedas de préstamo",
         "mejores bóvedas morpho",
         "comparar bóvedas",
-        "recomendaciones de bóvedas"
+        "recomendaciones de bóvedas",
     ]
 
     for pattern in expected_vault_patterns_es:
-        assert pattern in patterns_es, \
-            f"Expected Spanish vault pattern '{pattern}' not found in shortcuts API. " \
+        assert pattern in patterns_es, (
+            f"Expected Spanish vault pattern '{pattern}' not found in shortcuts API. "
             f"Available patterns: {patterns_es}"
+        )
 
-    print(f"\n✅ All {len(expected_vault_patterns_es)} Spanish vault patterns found in shortcuts API")
+    print(
+        f"\n✅ All {len(expected_vault_patterns_es)} Spanish vault patterns found in shortcuts API"
+    )
     print(f"Total patterns in LENDING_COMPARE (es): {len(patterns_es)}")
 
 
@@ -119,7 +127,7 @@ async def test_shortcuts_api_vault_patterns_match_test_queries(client: AsyncClie
     lending_commands = data.get("lending", {}).get("commands", [])
     lending_compare = next(
         (cmd for cmd in lending_commands if cmd.get("intent") == "LENDING_COMPARE"),
-        None
+        None,
     )
 
     patterns_en = lending_compare.get("patterns", {}).get("en", [])
@@ -127,9 +135,9 @@ async def test_shortcuts_api_vault_patterns_match_test_queries(client: AsyncClie
     # Queries used in test_lending_vaults.py
     test_queries = [
         "Show best lending vaults",  # test 001
-        "top vaults",                # test 002
-        "best morpho vaults",        # test 003
-        "compare vaults",            # test 004
+        "top vaults",  # test 002
+        "best morpho vaults",  # test 003
+        "compare vaults",  # test 004
     ]
 
     # Normalize for comparison (lowercase, remove "show ")
@@ -140,16 +148,17 @@ async def test_shortcuts_api_vault_patterns_match_test_queries(client: AsyncClie
 
         # Check if query matches any pattern
         found = any(
-            query_normalized == pattern or
-            query_normalized in pattern or
-            pattern in query_normalized
+            query_normalized == pattern
+            or query_normalized in pattern
+            or pattern in query_normalized
             for pattern in patterns_normalized
         )
 
-        assert found, \
-            f"Test query '{query}' not represented in shortcuts API patterns. " \
-            f"This means users won't see this example in autocomplete. " \
+        assert found, (
+            f"Test query '{query}' not represented in shortcuts API patterns. "
+            f"This means users won't see this example in autocomplete. "
             f"Available patterns: {patterns_en}"
+        )
 
     print(f"\n✅ All test queries are represented in shortcuts API patterns")
     print("This ensures consistency between tests and user-facing examples.")
@@ -168,7 +177,7 @@ async def test_shortcuts_api_lending_compare_metadata(client: AsyncClient):
     lending_commands = data.get("lending", {}).get("commands", [])
     lending_compare = next(
         (cmd for cmd in lending_commands if cmd.get("intent") == "LENDING_COMPARE"),
-        None
+        None,
     )
 
     assert lending_compare is not None
@@ -207,17 +216,21 @@ async def test_shortcuts_api_multi_language_support(client: AsyncClient):
     for lang in languages:
         response = await client.get(f"/api/v1/chat/shortcuts?lang={lang}")
 
-        assert response.status_code == 200, f"Failed to fetch shortcuts for language: {lang}"
+        assert response.status_code == 200, (
+            f"Failed to fetch shortcuts for language: {lang}"
+        )
         data = response.json()
 
         # Find LENDING_COMPARE
         lending_commands = data.get("lending", {}).get("commands", [])
         lending_compare = next(
             (cmd for cmd in lending_commands if cmd.get("intent") == "LENDING_COMPARE"),
-            None
+            None,
         )
 
-        assert lending_compare is not None, f"LENDING_COMPARE not found for language: {lang}"
+        assert lending_compare is not None, (
+            f"LENDING_COMPARE not found for language: {lang}"
+        )
 
         # Check patterns exist for this language
         patterns = lending_compare.get("patterns", {})

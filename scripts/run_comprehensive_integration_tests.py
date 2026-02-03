@@ -79,9 +79,9 @@ class TestRunner:
         Returns:
             Dictionary with test results
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"Running {test_type.upper()} Integration Tests")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
         test_files = self.test_files.get(test_type, {})
         all_results = []
@@ -119,7 +119,9 @@ class TestRunner:
                 if report_file.exists():
                     with open(report_file, "r") as f:
                         report_data = json.load(f)
-                        all_results.extend(self._parse_json_report(report_data, test_name))
+                        all_results.extend(
+                            self._parse_json_report(report_data, test_name)
+                        )
                 else:
                     print(f"⚠️  Warning: Report file not found: {report_file}")
 
@@ -287,23 +289,27 @@ class TestRunner:
         print(f"✅ Exported {len(results['results'])} test results")
 
         # Print summary
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"Test Summary ({results['test_type'].upper()})")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
         print(f"Total Tests:  {results['total_tests']}")
-        print(f"✅ Passed:    {results['passed']} ({results['passed']/results['total_tests']*100:.1f}%)")
-        print(f"❌ Failed:    {results['failed']} ({results['failed']/results['total_tests']*100:.1f}%)")
+        print(
+            f"✅ Passed:    {results['passed']} ({results['passed'] / results['total_tests'] * 100:.1f}%)"
+        )
+        print(
+            f"❌ Failed:    {results['failed']} ({results['failed'] / results['total_tests'] * 100:.1f}%)"
+        )
         print(f"⚠️  Errors:    {results['errors']}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
     def run(self):
         """Execute test runner."""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("Comprehensive Integration Test Runner")
-        print("="*80)
+        print("=" * 80)
         print(f"Mode: {self.mode.upper()}")
         print(f"Timestamp: {datetime.now().isoformat()}")
-        print("="*80)
+        print("=" * 80)
 
         if self.mode in ["guest", "all"]:
             guest_results = self.run_tests("guest")

@@ -1,4 +1,5 @@
 """Admin API endpoints for distillation management."""
+
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
@@ -36,6 +37,7 @@ router = APIRouter(prefix="/admin/distillation", tags=["Admin - Distillation"])
 
 # ==================== Static Responses ====================
 
+
 @router.post(
     "/static-responses",
     response_model=StaticResponseResponse,
@@ -50,7 +52,7 @@ async def create_static_response(
     from app.domain.entities.distillation import StaticResponse
     from uuid import uuid4
     from datetime import datetime, UTC
-    
+
     static_response = StaticResponse(
         id=uuid4(),
         intent=Intent(data.intent),
@@ -64,9 +66,9 @@ async def create_static_response(
         created_at=datetime.now(UTC),
         updated_at=datetime.now(UTC),
     )
-    
+
     await repository.add_response(static_response)
-    
+
     return StaticResponseResponse(
         id=static_response.id,
         intent=static_response.intent.value,
@@ -97,7 +99,7 @@ async def list_static_responses(
         intent=Intent(intent) if intent else None,
         is_active=is_active,
     )
-    
+
     return [
         StaticResponseResponse(
             id=r.id,
@@ -130,15 +132,16 @@ async def update_static_response(
     response = await repository.get_response_by_id(response_id)
     if not response:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="Static response not found")
-    
+
     if data.response_template is not None:
         response.response_template = data.response_template
     if data.is_active is not None:
         response.is_active = data.is_active
-    
+
     await repository.update_response(response)
-    
+
     return StaticResponseResponse(
         id=response.id,
         intent=response.intent.value,
@@ -169,6 +172,7 @@ async def delete_static_response(
 
 # ==================== Configuration ====================
 
+
 @router.get(
     "/config",
     response_model=DistillationConfigResponse,
@@ -179,7 +183,7 @@ async def get_distillation_config(
 ) -> DistillationConfigResponse:
     """Get current distillation configuration."""
     config = await repository.get_config()
-    
+
     return DistillationConfigResponse(
         enabled=config.enabled,
         cache_enabled=config.cache_enabled,
@@ -202,7 +206,7 @@ async def update_distillation_config(
 ) -> DistillationConfigResponse:
     """Update distillation configuration."""
     config = await repository.get_config()
-    
+
     if data.enabled is not None:
         config.enabled = data.enabled
     if data.cache_enabled is not None:
@@ -217,9 +221,9 @@ async def update_distillation_config(
         config.semantic_similarity_threshold = data.semantic_similarity_threshold
     if data.max_classification_latency_ms is not None:
         config.max_classification_latency_ms = data.max_classification_latency_ms
-    
+
     await repository.update_config(config)
-    
+
     return DistillationConfigResponse(
         enabled=config.enabled,
         cache_enabled=config.cache_enabled,
@@ -232,6 +236,7 @@ async def update_distillation_config(
 
 
 # ==================== Cache Management ====================
+
 
 @router.post(
     "/cache/invalidate",
@@ -263,7 +268,7 @@ async def get_cache_stats(
     """Get cache statistics."""
     exact_stats = await repository.get_exact_cache_stats()
     semantic_stats = await repository.get_semantic_cache_stats()
-    
+
     return CacheStatsResponse(
         exact_cache=exact_stats,
         semantic_cache=semantic_stats,
@@ -271,6 +276,7 @@ async def get_cache_stats(
 
 
 # ==================== Telemetry ====================
+
 
 @router.get(
     "/telemetry/requests",
@@ -291,7 +297,7 @@ async def get_telemetry_requests(
         route_type=route_type,
         limit=limit,
     )
-    
+
     return [
         DistillationTelemetryResponse(
             request_id=str(r.request_id),
@@ -320,7 +326,7 @@ async def get_telemetry_summary(
 ) -> List[DistillationSummaryResponse]:
     """Get hourly distillation telemetry summary."""
     summary = await repository.get_hourly_summary(hours=hours)
-    
+
     return [
         DistillationSummaryResponse(
             hour=s.hour,

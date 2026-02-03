@@ -136,5 +136,7 @@ class ConversationExport:
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
             "error_message": self.error_message,
             "requested_at": self.requested_at.isoformat(),
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
         }

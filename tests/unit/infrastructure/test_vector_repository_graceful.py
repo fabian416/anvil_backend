@@ -57,7 +57,9 @@ async def test_get_embedding_returns_none_when_table_missing(repo, mock_session)
 @pytest.mark.asyncio
 async def test_get_embedding_returns_none_on_does_not_exist(repo, mock_session):
     """get_embedding should return None when table 'does not exist'."""
-    mock_session.execute.side_effect = FakeProgrammingError("relation \"protocol_embeddings\" does not exist")
+    mock_session.execute.side_effect = FakeProgrammingError(
+        'relation "protocol_embeddings" does not exist'
+    )
 
     result = await repo.get_embedding(uuid4())
     assert result is None
@@ -88,14 +90,18 @@ async def test_find_similar_returns_empty_list_when_table_missing(repo, mock_ses
     mock_session.execute.side_effect = FakeProgrammingError("UndefinedTable")
 
     embedding = [0.1] * 512
-    results = await repo.find_similar(query_embedding=embedding, entity_type="Protocol", limit=5)
+    results = await repo.find_similar(
+        query_embedding=embedding, entity_type="Protocol", limit=5
+    )
     assert results == []
 
 
 @pytest.mark.asyncio
 async def test_find_similar_returns_empty_on_does_not_exist(repo, mock_session):
     """find_similar should return [] on 'does not exist' error."""
-    mock_session.execute.side_effect = FakeProgrammingError("relation \"entity_embeddings\" does not exist")
+    mock_session.execute.side_effect = FakeProgrammingError(
+        'relation "entity_embeddings" does not exist'
+    )
 
     embedding = [0.1] * 512
     results = await repo.find_similar(query_embedding=embedding, limit=5)
@@ -119,8 +125,9 @@ async def test_count_embeddings_returns_zero_when_table_missing(repo, mock_sessi
 @pytest.mark.asyncio
 async def test_count_embeddings_returns_zero_on_does_not_exist(repo, mock_session):
     """count_embeddings should return 0 on 'does not exist' error."""
-    mock_session.execute.side_effect = FakeProgrammingError("protocol_embeddings does not exist")
+    mock_session.execute.side_effect = FakeProgrammingError(
+        "protocol_embeddings does not exist"
+    )
 
     count = await repo.count_embeddings(entity_type="Protocol")
     assert count == 0
-

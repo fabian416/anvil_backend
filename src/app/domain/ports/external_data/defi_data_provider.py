@@ -13,6 +13,7 @@ from decimal import Decimal
 @dataclass
 class ProtocolData:
     """Protocol information from external sources"""
+
     name: str
     slug: str
     description: Optional[str]
@@ -33,6 +34,7 @@ class ProtocolData:
 @dataclass
 class TokenData:
     """Token information from external sources"""
+
     symbol: str
     name: str
     address: Optional[str]
@@ -51,6 +53,7 @@ class TokenData:
 @dataclass
 class ChainData:
     """Blockchain information from external sources"""
+
     name: str
     chain_id: Optional[int]
     native_token: str
@@ -63,6 +66,7 @@ class ChainData:
 @dataclass
 class AuditData:
     """Audit information from external sources"""
+
     protocol_name: str
     auditor: str
     date: Optional[datetime]
@@ -76,6 +80,7 @@ class AuditData:
 @dataclass
 class TVLData:
     """TVL time series data"""
+
     protocol: str
     chain: Optional[str]
     tvl: Decimal
@@ -85,83 +90,83 @@ class TVLData:
 class DefiDataProvider(Protocol):
     """
     Port for external DeFi data providers.
-    
+
     Implementations:
     - DeFiLlama
     - The Graph
     - 1inch
     - CoinGecko
     """
-    
+
     async def get_all_protocols(
         self,
         limit: Optional[int] = None,
     ) -> List[ProtocolData]:
         """
         Get all DeFi protocols.
-        
+
         Args:
             limit: Maximum number of protocols to return
-            
+
         Returns:
             List of protocol data
         """
         ...
-    
+
     async def get_protocol(
         self,
         slug: str,
     ) -> Optional[ProtocolData]:
         """
         Get specific protocol by slug.
-        
+
         Args:
             slug: Protocol slug (e.g., 'aave', 'uniswap')
-            
+
         Returns:
             Protocol data if found
         """
         ...
-    
+
     async def get_protocol_tvl(
         self,
         slug: str,
     ) -> List[TVLData]:
         """
         Get TVL history for a protocol.
-        
+
         Args:
             slug: Protocol slug
-            
+
         Returns:
             List of TVL data points
         """
         ...
-    
+
     async def get_chains(self) -> List[ChainData]:
         """
         Get all supported chains.
-        
+
         Returns:
             List of chain data
         """
         ...
-    
+
     async def get_chain_protocols(
         self,
         chain: str,
     ) -> List[ProtocolData]:
         """
         Get all protocols on a specific chain.
-        
+
         Args:
             chain: Chain name (e.g., 'Ethereum', 'Polygon')
-            
+
         Returns:
             List of protocols
         """
         ...
-    
+
     async def get_token_price(
         self,
         address: str,
@@ -169,16 +174,16 @@ class DefiDataProvider(Protocol):
     ) -> Optional[TokenData]:
         """
         Get token price and info.
-        
+
         Args:
             address: Token contract address
             chain: Chain name
-            
+
         Returns:
             Token data if found
         """
         ...
-    
+
     async def search_protocols(
         self,
         query: str,
@@ -186,26 +191,26 @@ class DefiDataProvider(Protocol):
     ) -> List[ProtocolData]:
         """
         Search protocols by name.
-        
+
         Args:
             query: Search query
             limit: Maximum results
-            
+
         Returns:
             List of matching protocols
         """
         ...
-    
+
     async def get_audits(
         self,
         protocol_slug: str,
     ) -> List[AuditData]:
         """
         Get audit information for a protocol.
-        
+
         Args:
             protocol_slug: Protocol slug
-            
+
         Returns:
             List of audits
         """

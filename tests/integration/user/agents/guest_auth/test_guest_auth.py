@@ -91,15 +91,15 @@ def guest_auth_reporter() -> CSVReporter:
 @pytest.mark.asyncio
 class TestGuestAuthAgent:
     """Test Guest Auth agent functionality.
-    
+
     Note: These tests require a guest client, not authenticated client.
     The tests verify that restricted features trigger registration prompts.
     """
-    
+
     async def test_guest_restricted_features(self, guest_client, guest_auth_reporter):
         """Test that restricted features trigger registration prompts for guests."""
         import asyncio
-        
+
         for test_case in GUEST_AUTH_TESTS:
             # For guest tests, we use the guest chat endpoint
             # POST /api/v1/guest/chat
@@ -111,9 +111,9 @@ class TestGuestAuthAgent:
                 },
                 timeout=90.0,
             )
-            
+
             response_time = 0  # Guest endpoint doesn't return timing
-            
+
             if response.status_code == 200:
                 data = response.json()
                 parsed = {
@@ -128,17 +128,24 @@ class TestGuestAuthAgent:
                     "error": True,
                     "error_message": str(response.status_code),
                 }
-            
+
             expected_agent = test_case.get("expected_agent", "")
             actual_agents = parsed.get("agents_used", "")
             has_error = parsed.get("error", False)
-            
+
             # For guest_auth, success means the response contains registration prompt
             content = parsed.get("content", "").lower()
-            has_registration_prompt = any(word in content for word in [
-                "sign up", "register", "create account", "log in", "signup"
-            ])
-            
+            has_registration_prompt = any(
+                word in content
+                for word in [
+                    "sign up",
+                    "register",
+                    "create account",
+                    "log in",
+                    "signup",
+                ]
+            )
+
             if has_error:
                 status = "FAIL"
             elif expected_agent and expected_agent in actual_agents:
@@ -149,7 +156,7 @@ class TestGuestAuthAgent:
                 status = "PARTIAL"
             else:
                 status = "FAIL"
-            
+
             result = TestResult(
                 test_id=test_case["test_id"],
                 category=test_case.get("category", ""),
@@ -162,12 +169,16 @@ class TestGuestAuthAgent:
                 user_type="guest",
                 status=status,
             )
-            
+
             guest_auth_reporter.add_result(result)
-            
-            status_emoji = "✅" if status == "PASS" else "⚠️" if status == "PARTIAL" else "❌"
-            print(f"{status_emoji} {test_case['test_id']}: {test_case['input'][:40]}... → {actual_agents} ({response_time}ms)")
-            
+
+            status_emoji = (
+                "✅" if status == "PASS" else "⚠️" if status == "PARTIAL" else "❌"
+            )
+            print(
+                f"{status_emoji} {test_case['test_id']}: {test_case['input'][:40]}... → {actual_agents} ({response_time}ms)"
+            )
+
             await asyncio.sleep(0.5)
 
 

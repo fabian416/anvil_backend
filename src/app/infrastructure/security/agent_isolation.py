@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class AgentRole(str, Enum):
     """Predefined agent roles with different privilege levels"""
+
     READ_ONLY = "read_only"
     STANDARD = "standard"
     PRIVILEGED = "privileged"
@@ -27,6 +28,7 @@ class AgentRole(str, Enum):
 
 class ResourceType(str, Enum):
     """Types of resources that can be accessed"""
+
     USER_DATA = "user_data"
     SYSTEM_CONFIG = "system_config"
     EXTERNAL_API = "external_api"
@@ -40,6 +42,7 @@ class ResourceType(str, Enum):
 @dataclass
 class AgentPermission:
     """Represents a permission for an agent"""
+
     resource_type: ResourceType
     actions: Set[str]  # e.g., {"read", "write", "delete"}
     scope: Optional[str] = None  # e.g., "user_id:123" for user-scoped access
@@ -71,7 +74,9 @@ class AgentIsolationGuard:
             AgentPermission(ResourceType.USER_DATA, {"read", "write", "delete"}),
             AgentPermission(ResourceType.EXTERNAL_API, {"call"}),
             AgentPermission(ResourceType.DATABASE, {"read", "write"}),
-            AgentPermission(ResourceType.AGENT_COMMUNICATION, {"read", "send", "broadcast"}),
+            AgentPermission(
+                ResourceType.AGENT_COMMUNICATION, {"read", "send", "broadcast"}
+            ),
         ],
         AgentRole.ADMIN: [
             AgentPermission(ResourceType.USER_DATA, {"read", "write", "delete"}),
@@ -80,7 +85,10 @@ class AgentIsolationGuard:
             AgentPermission(ResourceType.DATABASE, {"read", "write", "delete"}),
             AgentPermission(ResourceType.FILE_SYSTEM, {"read", "write"}),
             AgentPermission(ResourceType.WALLET, {"read", "transfer"}),
-            AgentPermission(ResourceType.AGENT_COMMUNICATION, {"read", "send", "broadcast", "terminate"}),
+            AgentPermission(
+                ResourceType.AGENT_COMMUNICATION,
+                {"read", "send", "broadcast", "terminate"},
+            ),
         ],
     }
 
@@ -111,7 +119,7 @@ class AgentIsolationGuard:
         self,
         agent_id: str,
         role: AgentRole,
-        custom_permissions: Optional[List[AgentPermission]] = None
+        custom_permissions: Optional[List[AgentPermission]] = None,
     ):
         """
         Register an agent with specific role and permissions.
@@ -137,8 +145,8 @@ class AgentIsolationGuard:
             extra={
                 "agent_id": agent_id,
                 "role": role.value,
-                "permissions_count": len(permissions)
-            }
+                "permissions_count": len(permissions),
+            },
         )
 
     def check_permission(
@@ -146,7 +154,7 @@ class AgentIsolationGuard:
         agent_id: str,
         resource_type: ResourceType,
         action: str,
-        scope: Optional[str] = None
+        scope: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Check if an agent has permission to perform an action.
@@ -161,7 +169,11 @@ class AgentIsolationGuard:
             Dict with 'allowed', 'reason', 'risk_level'
         """
         if not self.enabled:
-            return {"allowed": True, "reason": "isolation_disabled", "risk_level": "none"}
+            return {
+                "allowed": True,
+                "reason": "isolation_disabled",
+                "risk_level": "none",
+            }
 
         # Check if agent is registered
         if agent_id not in self.agent_permissions:
@@ -169,7 +181,7 @@ class AgentIsolationGuard:
             return {
                 "allowed": False if self.enforce_isolation else True,
                 "reason": "agent_not_registered",
-                "risk_level": "high"
+                "risk_level": "high",
             }
 
         # Get agent permissions
@@ -201,21 +213,21 @@ class AgentIsolationGuard:
                     "resource_type": resource_type.value,
                     "action": action,
                     "scope": scope,
-                    "risk_level": risk_level
-                }
+                    "risk_level": risk_level,
+                },
             )
 
         return {
             "allowed": has_permission if self.enforce_isolation else True,
             "reason": "permission_granted" if has_permission else "permission_denied",
-            "risk_level": risk_level
+            "risk_level": risk_level,
         }
 
     def check_agent_communication(
         self,
         sender_agent_id: str,
         recipient_agent_id: str,
-        message_type: str = "standard"
+        message_type: str = "standard",
     ) -> Dict[str, Any]:
         """
         Check if an agent can communicate with another agent.
@@ -231,9 +243,7 @@ class AgentIsolationGuard:
         # Broadcast messages require special permission
         if message_type == "broadcast":
             return self.check_permission(
-                sender_agent_id,
-                ResourceType.AGENT_COMMUNICATION,
-                "broadcast"
+                sender_agent_id, ResourceType.AGENT_COMMUNICATION, "broadcast"
             )
 
         # Control messages (e.g., terminate) require admin role
@@ -244,26 +254,22 @@ class AgentIsolationGuard:
                     f"Non-admin agent attempted control message",
                     extra={
                         "sender_agent_id": sender_agent_id,
-                        "recipient_agent_id": recipient_agent_id
-                    }
+                        "recipient_agent_id": recipient_agent_id,
+                    },
                 )
                 return {
                     "allowed": False if self.enforce_isolation else True,
                     "reason": "requires_admin_role",
-                    "risk_level": "critical"
+                    "risk_level": "critical",
                 }
 
         # Standard messages require send permission
         return self.check_permission(
-            sender_agent_id,
-            ResourceType.AGENT_COMMUNICATION,
-            "send"
+            sender_agent_id, ResourceType.AGENT_COMMUNICATION, "send"
         )
 
     def validate_agent_routing(
-        self,
-        user_message: str,
-        requested_agents: List[str]
+        self, user_message: str, requested_agents: List[str]
     ) -> Dict[str, Any]:
         """
         Validate that agent routing request is safe.
@@ -281,22 +287,25 @@ class AgentIsolationGuard:
 
         # Check for routing manipulation patterns
         routing_patterns = [
-            r'\[?system\s+instruction\]?',
-            r'route\s+to\s+admin',
-            r'send\s+to\s+privileged',
-            r'escalate\s+to',
-            r'invoke\s+admin',
+            r"\[?system\s+instruction\]?",
+            r"route\s+to\s+admin",
+            r"send\s+to\s+privileged",
+            r"escalate\s+to",
+            r"invoke\s+admin",
         ]
 
         import re
+
         for pattern in routing_patterns:
             if re.search(pattern, user_message, re.IGNORECASE):
                 suspicious_patterns.append(pattern)
 
         # Filter out admin/privileged agents from routing
         allowed_agents = [
-            agent_id for agent_id in requested_agents
-            if self.agent_roles.get(agent_id) not in [AgentRole.ADMIN, AgentRole.PRIVILEGED]
+            agent_id
+            for agent_id in requested_agents
+            if self.agent_roles.get(agent_id)
+            not in [AgentRole.ADMIN, AgentRole.PRIVILEGED]
         ]
 
         is_safe = len(suspicious_patterns) == 0
@@ -306,15 +315,15 @@ class AgentIsolationGuard:
                 "Suspicious agent routing detected",
                 extra={
                     "patterns": suspicious_patterns,
-                    "requested_agents": requested_agents
-                }
+                    "requested_agents": requested_agents,
+                },
             )
 
         return {
             "is_safe": is_safe,
             "suspicious_patterns": suspicious_patterns,
             "allowed_agents": allowed_agents,
-            "blocked_agents": [a for a in requested_agents if a not in allowed_agents]
+            "blocked_agents": [a for a in requested_agents if a not in allowed_agents],
         }
 
     def get_agent_capabilities(self, agent_id: str) -> Dict[str, Any]:
@@ -332,7 +341,7 @@ class AgentIsolationGuard:
                 "agent_id": agent_id,
                 "registered": False,
                 "role": None,
-                "permissions": []
+                "permissions": [],
             }
 
         role = self.agent_roles.get(agent_id)
@@ -351,7 +360,7 @@ class AgentIsolationGuard:
             "registered": True,
             "role": role.value if role else None,
             "permissions": len(permissions),
-            "capabilities": capabilities
+            "capabilities": capabilities,
         }
 
     def revoke_agent_access(self, agent_id: str):
@@ -367,17 +376,12 @@ class AgentIsolationGuard:
         if agent_id in self.agent_roles:
             del self.agent_roles[agent_id]
 
-        logger.info(
-            f"Agent access revoked: {agent_id}",
-            extra={"agent_id": agent_id}
-        )
+        logger.info(f"Agent access revoked: {agent_id}", extra={"agent_id": agent_id})
 
 
 # Utility decorators
 def require_agent_permission(
-    resource_type: ResourceType,
-    action: str,
-    isolation_guard: AgentIsolationGuard
+    resource_type: ResourceType, action: str, isolation_guard: AgentIsolationGuard
 ):
     """
     Decorator to require agent permission for a function.
@@ -387,6 +391,7 @@ def require_agent_permission(
         async def update_user_data(agent_id: str, data: dict):
             ...
     """
+
     def decorator(func):
         async def wrapper(*args, **kwargs):
             agent_id = kwargs.get("agent_id")
@@ -408,4 +413,5 @@ def require_agent_permission(
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator

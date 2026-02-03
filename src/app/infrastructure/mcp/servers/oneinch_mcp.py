@@ -11,7 +11,12 @@ Feature Flag: mcp.servers.oneinch_enabled
 
 from typing import Dict, Any, Optional
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 from app.infrastructure.mcp.base_server import MCPServer
 from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
@@ -19,7 +24,7 @@ from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 
 class OneInchMCPServer(MCPServer):
     """MCP Server for 1inch DEX aggregator."""
-    
+
     def __init__(
         self,
         api_key: str = "",
@@ -28,24 +33,24 @@ class OneInchMCPServer(MCPServer):
     ):
         """
         Initialize 1inch MCP server.
-        
+
         Args:
             api_key: 1inch API key (optional for public endpoints)
             base_url: 1inch API base URL
             settings: MCP configuration settings
-            
+
         Raises:
             MCPServerDisabledError: If 1inch server is disabled
         """
         self.settings = settings or MCPSettings()
-        
+
         # Check if server is enabled
         if not self.settings.enabled or not self.settings.servers.oneinch_enabled:
             raise MCPServerDisabledError(
                 "1inch MCP server is disabled. "
                 "Enable with mcp.servers.oneinch_enabled=true in config."
             )
-        
+
         super().__init__(
             server_name="1inch",
             description="1inch DEX aggregator for best swap routes and prices",
@@ -60,7 +65,7 @@ class OneInchMCPServer(MCPServer):
             },
             timeout=30.0,
         )
-        
+
         # Create retry decorator for this server
         self._retry = retry(
             stop=stop_after_attempt(3),
@@ -68,13 +73,13 @@ class OneInchMCPServer(MCPServer):
             retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
             reraise=True,
         )
-        
+
         # Register tools
         self.setup_tools()
 
     def setup_tools(self):
         """Register all 1inch tools."""
-        
+
         # Tool 1: Get swap quote
         self.register_tool(
             name="get_swap_quote",
@@ -104,7 +109,7 @@ class OneInchMCPServer(MCPServer):
             },
             handler=self._get_swap_quote,
         )
-        
+
         # Tool 2: Get liquidity sources
         self.register_tool(
             name="get_liquidity_sources",
@@ -122,7 +127,7 @@ class OneInchMCPServer(MCPServer):
             },
             handler=self._get_liquidity_sources,
         )
-        
+
         # Tool 3: Get token price
         self.register_tool(
             name="get_token_price",
@@ -144,7 +149,7 @@ class OneInchMCPServer(MCPServer):
             },
             handler=self._get_token_price,
         )
-        
+
         # Tool 4: Get supported chains
         self.register_tool(
             name="get_supported_chains",
@@ -155,7 +160,7 @@ class OneInchMCPServer(MCPServer):
             },
             handler=self._get_supported_chains,
         )
-    
+
     async def _get_swap_quote(
         self,
         chain_id: int,
@@ -165,13 +170,13 @@ class OneInchMCPServer(MCPServer):
     ) -> Dict[str, Any]:
         """
         Get swap quote from 1inch.
-        
+
         Args:
             chain_id: Chain ID
             from_token: Source token address
             to_token: Destination token address
             amount: Amount in wei
-        
+
         Returns:
             Quote details with estimated output, gas, and route
         """
@@ -187,7 +192,7 @@ class OneInchMCPServer(MCPServer):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return {
                 "estimated_output": data.get("toAmount", "0"),
                 "estimated_gas": data.get("estimatedGas", "0"),
@@ -207,27 +212,25 @@ class OneInchMCPServer(MCPServer):
                 "error": f"Error getting quote: {str(e)}",
                 "chain_id": chain_id,
             }
-    
+
     async def _get_liquidity_sources(
         self,
         chain_id: int,
     ) -> Dict[str, Any]:
         """
         Get available liquidity sources.
-        
+
         Args:
             chain_id: Chain ID
-        
+
         Returns:
             List of liquidity sources (DEXes)
         """
         try:
-            response = await self.client.get(
-                f"/swap/v5.2/{chain_id}/liquidity-sources"
-            )
+            response = await self.client.get(f"/swap/v5.2/{chain_id}/liquidity-sources")
             response.raise_for_status()
             data = response.json()
-            
+
             return {
                 "chain_id": chain_id,
                 "sources": data.get("protocols", []),
@@ -243,7 +246,7 @@ class OneInchMCPServer(MCPServer):
                 "error": f"Error getting liquidity sources: {str(e)}",
                 "chain_id": chain_id,
             }
-    
+
     async def _get_token_price(
         self,
         chain_id: int,
@@ -251,21 +254,19 @@ class OneInchMCPServer(MCPServer):
     ) -> Dict[str, Any]:
         """
         Get token price in USD.
-        
+
         Args:
             chain_id: Chain ID
             token_address: Token contract address
-        
+
         Returns:
             Token price in USD
         """
         try:
-            response = await self.client.get(
-                f"/price/v1.1/{chain_id}/{token_address}"
-            )
+            response = await self.client.get(f"/price/v1.1/{chain_id}/{token_address}")
             response.raise_for_status()
             data = response.json()
-            
+
             return {
                 "chain_id": chain_id,
                 "token_address": token_address,
@@ -281,11 +282,11 @@ class OneInchMCPServer(MCPServer):
                 "error": f"Error getting token price: {str(e)}",
                 "chain_id": chain_id,
             }
-    
+
     async def _get_supported_chains(self) -> Dict[str, Any]:
         """
         Get supported chains.
-        
+
         Returns:
             List of supported chains with details
         """
@@ -299,7 +300,7 @@ class OneInchMCPServer(MCPServer):
             ],
             "count": 5,
         }
-    
+
     async def close(self):
         """Close HTTP client."""
         await self.client.aclose()
@@ -309,16 +310,16 @@ class OneInchMCPServer(MCPServer):
 if __name__ == "__main__":
     import os
     import uvicorn
-    
+
     # Get API key from environment
     api_key = os.getenv("ONEINCH_API_KEY", "")
-    
+
     # Create server
     server = OneInchMCPServer(api_key=api_key)
-    
+
     print(f"Starting 1inch MCP Server on http://0.0.0.0:8081")
     print(f"Tools endpoint: http://localhost:8081/tools")
     print(f"Health check: http://localhost:8081/health")
-    
+
     # Run server
     uvicorn.run(server.app, host="0.0.0.0", port=8081)

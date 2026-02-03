@@ -198,9 +198,7 @@ class GoogleTranslateAdapter(TranslationAdapter):
         }
         cached = await self._cache.get("google_translate", "translate", **cache_key)
         if cached:
-            logger.debug(
-                f"Cache hit for Google Translate to {target_language.value}"
-            )
+            logger.debug(f"Cache hit for Google Translate to {target_language.value}")
             return TranslationResult(**cached)
 
         try:
@@ -219,7 +217,9 @@ class GoogleTranslateAdapter(TranslationAdapter):
             )
 
             # Protect technical terms
-            processed_text, term_map = self._protect_terms(text, preserve_terms, is_html)
+            processed_text, term_map = self._protect_terms(
+                text, preserve_terms, is_html
+            )
 
             # Prepare request
             request = {
@@ -242,7 +242,9 @@ class GoogleTranslateAdapter(TranslationAdapter):
             )
 
             # Get detected language
-            detected_code = translation.detected_language_code or source_code or target_code
+            detected_code = (
+                translation.detected_language_code or source_code or target_code
+            )
             detected_lang = self._convert_from_google_code(detected_code)
 
             # Calculate confidence (Google doesn't always provide, estimate)
@@ -430,7 +432,9 @@ class GoogleTranslateAdapter(TranslationAdapter):
                         source_language=source_language or detected_lang,
                         target_language=target_language,
                         confidence_score=confidence,
-                        detected_language=detected_lang if not source_language else None,
+                        detected_language=detected_lang
+                        if not source_language
+                        else None,
                         preserved_terms=list(term_maps[i].values())
                         if term_maps[i]
                         else [],

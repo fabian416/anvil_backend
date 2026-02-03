@@ -50,7 +50,10 @@ class RetryConfig:
         Returns:
             Delay in milliseconds
         """
-        delay = min(self.initial_delay_ms * (self.backoff_multiplier**attempt), self.max_delay_ms)
+        delay = min(
+            self.initial_delay_ms * (self.backoff_multiplier**attempt),
+            self.max_delay_ms,
+        )
 
         if self.jitter:
             import random

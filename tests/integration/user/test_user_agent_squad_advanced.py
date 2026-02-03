@@ -24,7 +24,9 @@ ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ
 async def client():
     """Create test client."""
     app = make_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
@@ -91,11 +93,11 @@ async def test_user_agent_squad_context_preservation_multi_turn(
                 "about Aave and its risks when making the comparison. Should not ask 'what protocol?'"
             ),
             additional_context={
-                'test_category': 'context_preservation',
-                'user_type': 'authenticated',
-                'turns': 3,
-                'conversation_flow': 'Aave -> Risks -> Compare to Compound'
-            }
+                "test_category": "context_preservation",
+                "user_type": "authenticated",
+                "turns": 3,
+                "conversation_flow": "Aave -> Risks -> Compare to Compound",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -104,32 +106,62 @@ async def test_user_agent_squad_context_preservation_multi_turn(
             )
 
     # CSV tracking
-    await csv_tracker("user", "agent_squad", {
-        "test_id": "user_agent_squad_context_preservation_001",
-        "s_multistep": True,
-        "input": "Multi-turn: 1) Tell me about Aave 2) What are its main risks? 3) Compare it to Compound",
-        "output": content,
-        "test_label_sequence": "agent_squad_context_preservation",
-        "output_expected": "Contextual comparison of Aave and Compound based on conversation history",
-        "status": "PASS" if r3.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "agent_squad",
+        {
+            "test_id": "user_agent_squad_context_preservation_001",
+            "s_multistep": True,
+            "input": "Multi-turn: 1) Tell me about Aave 2) What are its main risks? 3) Compare it to Compound",
+            "output": content,
+            "test_label_sequence": "agent_squad_context_preservation",
+            "output_expected": "Contextual comparison of Aave and Compound based on conversation history",
+            "status": "PASS" if r3.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -146,7 +178,7 @@ async def test_user_agent_squad_handoff_transition_smoothness(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
         json={
             "content": "What's the current ETH price and should I buy or provide liquidity?",
-            "language": "en"
+            "language": "en",
         },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
@@ -170,10 +202,10 @@ async def test_user_agent_squad_handoff_transition_smoothness(
             ),
             test_func=self.test_user_agent_squad_handoff_transition_smoothness,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'agent_handoff',
-                'user_type': 'authenticated',
-                'agents_involved': ['hunter', 'ultra']
-            }
+                "test_category": "agent_handoff",
+                "user_type": "authenticated",
+                "agents_involved": ["hunter", "ultra"],
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -182,32 +214,62 @@ async def test_user_agent_squad_handoff_transition_smoothness(
             )
 
     # CSV tracking
-    await csv_tracker("user", "agent_squad", {
-        "test_id": "user_agent_squad_handoff_transition_002",
-        "s_multistep": False,
-        "input": "What's the current ETH price and should I buy or provide liquidity?",
-        "output": content,
-        "test_label_sequence": "agent_squad_handoff_transition",
-        "output_expected": "Smooth handoff between Hunter AI price data and ULTRA strategy recommendations",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "agent_squad",
+        {
+            "test_id": "user_agent_squad_handoff_transition_002",
+            "s_multistep": False,
+            "input": "What's the current ETH price and should I buy or provide liquidity?",
+            "output": content,
+            "test_label_sequence": "agent_squad_handoff_transition",
+            "output_expected": "Smooth handoff between Hunter AI price data and ULTRA strategy recommendations",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -224,7 +286,7 @@ async def test_user_agent_squad_parallel_agent_coordination(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
         json={
             "content": "Analyze Bitcoin from technical, fundamental, and sentiment perspectives",
-            "language": "en"
+            "language": "en",
         },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
@@ -248,10 +310,10 @@ async def test_user_agent_squad_parallel_agent_coordination(
             ),
             test_func=self.test_user_agent_squad_parallel_agent_coordination,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'parallel_coordination',
-                'user_type': 'authenticated',
-                'analysis_types': ['technical', 'fundamental', 'sentiment']
-            }
+                "test_category": "parallel_coordination",
+                "user_type": "authenticated",
+                "analysis_types": ["technical", "fundamental", "sentiment"],
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -260,32 +322,62 @@ async def test_user_agent_squad_parallel_agent_coordination(
             )
 
     # CSV tracking
-    await csv_tracker("user", "agent_squad", {
-        "test_id": "user_agent_squad_parallel_coordination_003",
-        "s_multistep": False,
-        "input": "Analyze Bitcoin from technical, fundamental, and sentiment perspectives",
-        "output": content,
-        "test_label_sequence": "agent_squad_parallel_coordination",
-        "output_expected": "Multi-dimensional Bitcoin analysis integrating technical, fundamental, and sentiment insights",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "agent_squad",
+        {
+            "test_id": "user_agent_squad_parallel_coordination_003",
+            "s_multistep": False,
+            "input": "Analyze Bitcoin from technical, fundamental, and sentiment perspectives",
+            "output": content,
+            "test_label_sequence": "agent_squad_parallel_coordination",
+            "output_expected": "Multi-dimensional Bitcoin analysis integrating technical, fundamental, and sentiment insights",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -302,8 +394,8 @@ async def test_user_agent_squad_specialization_routing_accuracy(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
         json={
             "content": "I want to explore DeFi yields but I'm worried about smart contract risks. "
-                      "What should I consider for Curve vs Convex?",
-            "language": "en"
+            "What should I consider for Curve vs Convex?",
+            "language": "en",
         },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
@@ -319,7 +411,7 @@ async def test_user_agent_squad_specialization_routing_accuracy(
         validation = await llm_validator.validate_single_response(
             test_name="test_user_agent_squad_specialization_routing_accuracy",
             user_input="I want to explore DeFi yields but I'm worried about smart contract risks. "
-                      "What should I consider for Curve vs Convex?",
+            "What should I consider for Curve vs Convex?",
             agent_output=agent_response,
             expected_behavior=(
                 "Should route to appropriate specialist agents (yield analysis + risk assessment). "
@@ -328,11 +420,11 @@ async def test_user_agent_squad_specialization_routing_accuracy(
             ),
             test_func=self.test_user_agent_squad_specialization_routing_accuracy,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'specialization_routing',
-                'user_type': 'authenticated',
-                'query_complexity': 'high',
-                'domains': ['yield_farming', 'security', 'protocol_comparison']
-            }
+                "test_category": "specialization_routing",
+                "user_type": "authenticated",
+                "query_complexity": "high",
+                "domains": ["yield_farming", "security", "protocol_comparison"],
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -341,32 +433,62 @@ async def test_user_agent_squad_specialization_routing_accuracy(
             )
 
     # CSV tracking
-    await csv_tracker("user", "agent_squad", {
-        "test_id": "user_agent_squad_specialization_routing_004",
-        "s_multistep": False,
-        "input": "I want to explore DeFi yields but I'm worried about smart contract risks. What should I consider for Curve vs Convex?",
-        "output": content,
-        "test_label_sequence": "agent_squad_specialization_routing",
-        "output_expected": "Specialized analysis routing to yield and risk agents with Curve vs Convex comparison",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "agent_squad",
+        {
+            "test_id": "user_agent_squad_specialization_routing_004",
+            "s_multistep": False,
+            "input": "I want to explore DeFi yields but I'm worried about smart contract risks. What should I consider for Curve vs Convex?",
+            "output": content,
+            "test_label_sequence": "agent_squad_specialization_routing",
+            "output_expected": "Specialized analysis routing to yield and risk agents with Curve vs Convex comparison",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -381,10 +503,7 @@ async def test_user_agent_squad_fallback_agent_quality(
     """Test Agent Squad fallback handling for ambiguous intents for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={
-            "content": "What's happening with crypto today?",
-            "language": "en"
-        },
+        json={"content": "What's happening with crypto today?", "language": "en"},
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -407,10 +526,10 @@ async def test_user_agent_squad_fallback_agent_quality(
             ),
             test_func=self.test_user_agent_squad_fallback_agent_quality,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'fallback_handling',
-                'user_type': 'authenticated',
-                'query_ambiguity': 'high'
-            }
+                "test_category": "fallback_handling",
+                "user_type": "authenticated",
+                "query_ambiguity": "high",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -419,32 +538,62 @@ async def test_user_agent_squad_fallback_agent_quality(
             )
 
     # CSV tracking
-    await csv_tracker("user", "agent_squad", {
-        "test_id": "user_agent_squad_fallback_quality_005",
-        "s_multistep": False,
-        "input": "What's happening with crypto today?",
-        "output": content,
-        "test_label_sequence": "agent_squad_fallback_handling",
-        "output_expected": "Graceful handling of ambiguous query with relevant crypto market overview",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "agent_squad",
+        {
+            "test_id": "user_agent_squad_fallback_quality_005",
+            "s_multistep": False,
+            "input": "What's happening with crypto today?",
+            "output": content,
+            "test_label_sequence": "agent_squad_fallback_handling",
+            "output_expected": "Graceful handling of ambiguous query with relevant crypto market overview",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -467,7 +616,7 @@ async def test_user_agent_squad_memory_utilization_long_context(
         "Explain position management",
         "What are the risks?",
         "How do I provide liquidity?",
-        "Based on everything we discussed, should a beginner start with V2 or V3?"
+        "Based on everything we discussed, should a beginner start with V2 or V3?",
     ]
 
     responses = []
@@ -498,11 +647,11 @@ async def test_user_agent_squad_memory_utilization_long_context(
             ),
             test_func=self.test_user_agent_squad_memory_utilization_long_context,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'long_context_memory',
-                'user_type': 'authenticated',
-                'conversation_turns': 9,
-                'topic': 'uniswap_v2_vs_v3'
-            }
+                "test_category": "long_context_memory",
+                "user_type": "authenticated",
+                "conversation_turns": 9,
+                "topic": "uniswap_v2_vs_v3",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -511,29 +660,59 @@ async def test_user_agent_squad_memory_utilization_long_context(
             )
 
     # CSV tracking
-    await csv_tracker("user", "agent_squad", {
-        "test_id": "user_agent_squad_memory_utilization_006",
-        "s_multistep": True,
-        "input": "9-turn conversation: Uniswap V3 -> concentrated liquidity -> fee tiers -> V2 comparison -> capital efficiency -> position management -> risks -> providing liquidity -> beginner recommendation",
-        "output": final_content,
-        "test_label_sequence": "agent_squad_long_context_memory",
-        "output_expected": "Synthesized recommendation for beginners based on entire conversation context",
-        "status": "PASS" if responses[-1] and len(final_content) > 100 else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "agent_squad",
+        {
+            "test_id": "user_agent_squad_memory_utilization_006",
+            "s_multistep": True,
+            "input": "9-turn conversation: Uniswap V3 -> concentrated liquidity -> fee tiers -> V2 comparison -> capital efficiency -> position management -> risks -> providing liquidity -> beginner recommendation",
+            "output": final_content,
+            "test_label_sequence": "agent_squad_long_context_memory",
+            "output_expected": "Synthesized recommendation for beginners based on entire conversation context",
+            "status": "PASS" if responses[-1] and len(final_content) > 100 else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )

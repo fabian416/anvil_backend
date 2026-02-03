@@ -204,13 +204,11 @@ async def validation_error_handler(
     for error in errors:
         loc = error.get("loc", [])
         field = ".".join(str(l) for l in loc[1:]) if len(loc) > 1 else "body"
-        details.append(
-            {
-                "field": field,
-                "message": error.get("msg", "Invalid value"),
-                "type": error.get("type", "value_error"),
-            }
-        )
+        details.append({
+            "field": field,
+            "message": error.get("msg", "Invalid value"),
+            "type": error.get("type", "value_error"),
+        })
 
     definition = ErrorCode.VAL_INVALID_FORMAT.value
 

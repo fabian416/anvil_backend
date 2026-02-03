@@ -5,6 +5,7 @@ from app.domain.entities.ai.agent_task import AgentTask
 from app.domain.entities.ai.agent_tool_usage import AgentToolUsage
 from app.infrastructure.adapters.types import MainAsyncSession
 
+
 class AgentExecutionRepositorySqla(AgentExecutionRepository):
     def __init__(self, session: MainAsyncSession):
         self._session = session

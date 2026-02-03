@@ -15,16 +15,16 @@ from uuid import UUID
 @dataclass
 class PortfolioDistribution:
     """Distribution of users by portfolio state."""
-    
+
     empty: int = 0
     starter: int = 0
     active: int = 0
     whale: int = 0
-    
+
     @property
     def total(self) -> int:
         return self.empty + self.starter + self.active + self.whale
-    
+
     def to_dict(self) -> dict[str, int]:
         return {
             "empty": self.empty,
@@ -33,7 +33,7 @@ class PortfolioDistribution:
             "whale": self.whale,
             "total": self.total,
         }
-    
+
     def to_percentages(self) -> dict[str, float]:
         """Convert counts to percentages."""
         total = self.total
@@ -50,7 +50,7 @@ class PortfolioDistribution:
 @dataclass
 class ActivityDistribution:
     """Distribution of users by activity level."""
-    
+
     new: int = 0
     very_active: int = 0
     active: int = 0
@@ -58,20 +58,24 @@ class ActivityDistribution:
     monthly_active: int = 0
     inactive: int = 0
     reactivated: int = 0
-    
+
     @property
     def total(self) -> int:
         return (
-            self.new + self.very_active + self.active +
-            self.weekly_active + self.monthly_active +
-            self.inactive + self.reactivated
+            self.new
+            + self.very_active
+            + self.active
+            + self.weekly_active
+            + self.monthly_active
+            + self.inactive
+            + self.reactivated
         )
-    
+
     @property
     def engaged(self) -> int:
         """Users who are actively engaged (new + very_active + active + weekly)."""
         return self.new + self.very_active + self.active + self.weekly_active
-    
+
     def to_dict(self) -> dict[str, int]:
         return {
             "new": self.new,
@@ -89,22 +93,28 @@ class ActivityDistribution:
 @dataclass
 class UserTypeDistribution:
     """Distribution of users by behavioral type."""
-    
+
     new_user: int = 0
     casual: int = 0
     trader: int = 0
     yield_farmer: int = 0
     power_user: int = 0
-    
+
     @property
     def total(self) -> int:
-        return self.new_user + self.casual + self.trader + self.yield_farmer + self.power_user
-    
+        return (
+            self.new_user
+            + self.casual
+            + self.trader
+            + self.yield_farmer
+            + self.power_user
+        )
+
     @property
     def execution_focused(self) -> int:
         """Users who focus on executions (trader + yield_farmer + power_user)."""
         return self.trader + self.yield_farmer + self.power_user
-    
+
     def to_dict(self) -> dict[str, int]:
         return {
             "new_user": self.new_user,
@@ -120,14 +130,14 @@ class UserTypeDistribution:
 @dataclass
 class ExecutionMetrics:
     """Aggregate execution metrics."""
-    
+
     total: int = 0
     swap: int = 0
     buy: int = 0
     lending: int = 0
     transfer: int = 0
     cashout: int = 0
-    
+
     def to_dict(self) -> dict[str, int]:
         return {
             "total": self.total,
@@ -143,31 +153,31 @@ class ExecutionMetrics:
 class AnalyticsSnapshot:
     """
     Snapshot of user analytics at a point in time.
-    
+
     Stores aggregated metrics about user classifications
     for trend analysis and business insights.
     """
-    
+
     id: UUID
     snapshot_date: date
     snapshot_type: str  # "daily", "weekly", "monthly"
-    
+
     # Distribution data
     portfolio: PortfolioDistribution
     activity: ActivityDistribution
     user_types: UserTypeDistribution
     executions: ExecutionMetrics
-    
+
     # Aggregate totals
     total_users: int = 0
     total_balance_usd: Decimal = Decimal("0")
-    
+
     # Timestamps
     created_at: datetime | None = None
-    
+
     # Additional metrics (flexible)
     additional_metrics: dict[str, Any] = field(default_factory=dict)
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for API responses."""
         return {
@@ -183,7 +193,7 @@ class AnalyticsSnapshot:
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "additional_metrics": self.additional_metrics,
         }
-    
+
     def get_summary(self) -> dict[str, Any]:
         """Get a summary of key metrics."""
         return {
@@ -202,14 +212,14 @@ class AnalyticsTrend:
     """
     Trend data for comparing analytics over time.
     """
-    
+
     metric_name: str
     current_value: int | float
     previous_value: int | float
     change_absolute: int | float
     change_percent: float
     trend: str  # "up", "down", "stable"
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "metric_name": self.metric_name,
@@ -219,7 +229,7 @@ class AnalyticsTrend:
             "change_percent": self.change_percent,
             "trend": self.trend,
         }
-    
+
     @classmethod
     def calculate(
         cls,
@@ -233,14 +243,14 @@ class AnalyticsTrend:
             pct = 100.0 if current > 0 else 0.0
         else:
             pct = round((change / previous) * 100, 1)
-        
+
         if change > 0:
             trend = "up"
         elif change < 0:
             trend = "down"
         else:
             trend = "stable"
-        
+
         return cls(
             metric_name=metric_name,
             current_value=current,
@@ -256,7 +266,7 @@ class CohortAnalysis:
     """
     Cohort analysis for user groups.
     """
-    
+
     cohort_name: str  # e.g., "2026-01", "week-3"
     cohort_size: int
     retention_day_1: float  # Percentage
@@ -264,7 +274,7 @@ class CohortAnalysis:
     retention_day_30: float
     avg_executions: float
     avg_balance_usd: float
-    
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "cohort_name": self.cohort_name,

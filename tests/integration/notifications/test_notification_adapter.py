@@ -14,7 +14,9 @@ from app.domain.value_objects.user_id import UserId
 from app.domain.enums.notification_type import NotificationType
 from app.domain.enums.notification_channel import NotificationChannel
 from app.domain.enums.delivery_status import DeliveryStatus
-from app.infrastructure.adapters.chat.notification_adapter import RedisNotificationAdapter
+from app.infrastructure.adapters.chat.notification_adapter import (
+    RedisNotificationAdapter,
+)
 
 
 @pytest.fixture
@@ -77,10 +79,18 @@ class TestNotificationAdapter:
         retrieved = await notification_adapter.get_notification(sample_notification.id_)
 
         # WebSocket and in-app should be delivered
-        assert retrieved.delivery_status[NotificationChannel.WEBSOCKET] == DeliveryStatus.DELIVERED
-        assert retrieved.delivery_status[NotificationChannel.IN_APP] == DeliveryStatus.DELIVERED
+        assert (
+            retrieved.delivery_status[NotificationChannel.WEBSOCKET]
+            == DeliveryStatus.DELIVERED
+        )
+        assert (
+            retrieved.delivery_status[NotificationChannel.IN_APP]
+            == DeliveryStatus.DELIVERED
+        )
 
-    async def test_get_user_notifications(self, notification_adapter, sample_notification):
+    async def test_get_user_notifications(
+        self, notification_adapter, sample_notification
+    ):
         """Test retrieving notifications for a user."""
         # Send multiple notifications
         notification1 = sample_notification
@@ -88,9 +98,7 @@ class TestNotificationAdapter:
             id_=ChatNotificationId(str(uuid4())),
             user_id=sample_notification.user_id,
             notification_type=NotificationType.ALERT,
-            payload=NotificationPayload(
-                title="Alert", body="Test alert", data={}
-            ),
+            payload=NotificationPayload(title="Alert", body="Test alert", data={}),
             channels={NotificationChannel.IN_APP},
         )
 
@@ -117,9 +125,7 @@ class TestNotificationAdapter:
             id_=ChatNotificationId(str(uuid4())),
             user_id=sample_notification.user_id,
             notification_type=NotificationType.ALERT,
-            payload=NotificationPayload(
-                title="Alert", body="Test alert", data={}
-            ),
+            payload=NotificationPayload(title="Alert", body="Test alert", data={}),
             channels={NotificationChannel.IN_APP},
         )
         await notification_adapter.send(alert_notification)
@@ -132,7 +138,10 @@ class TestNotificationAdapter:
         )
 
         assert len(conversation_updates) == 1
-        assert conversation_updates[0].notification_type == NotificationType.CONVERSATION_UPDATE
+        assert (
+            conversation_updates[0].notification_type
+            == NotificationType.CONVERSATION_UPDATE
+        )
 
     async def test_filter_unread_only(self, notification_adapter, sample_notification):
         """Test filtering unread notifications."""
@@ -172,9 +181,7 @@ class TestNotificationAdapter:
             id_=ChatNotificationId(str(uuid4())),
             user_id=sample_notification.user_id,
             notification_type=NotificationType.ALERT,
-            payload=NotificationPayload(
-                title="Alert", body="Test alert", data={}
-            ),
+            payload=NotificationPayload(title="Alert", body="Test alert", data={}),
             channels={NotificationChannel.IN_APP},
         )
         await notification_adapter.send(notification2)
@@ -185,7 +192,9 @@ class TestNotificationAdapter:
         assert count == 2
 
         # Verify no unread notifications
-        unread_count = await notification_adapter.get_unread_count(sample_notification.user_id)
+        unread_count = await notification_adapter.get_unread_count(
+            sample_notification.user_id
+        )
         assert unread_count == 0
 
     async def test_get_unread_count(self, notification_adapter, sample_notification):

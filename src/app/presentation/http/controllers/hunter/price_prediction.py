@@ -20,14 +20,17 @@ class PricePredictionResponse(BaseModel):
     token_symbol: str = Field(..., description="Token symbol (e.g., ETH, BTC)")
     current_price: float = Field(..., description="Current token price in USD")
     predicted_price: float = Field(..., description="Predicted future price in USD")
-    confidence: float = Field(..., description="Prediction confidence (0-1)", ge=0, le=1)
+    confidence: float = Field(
+        ..., description="Prediction confidence (0-1)", ge=0, le=1
+    )
     prediction_time: str = Field(..., description="Time prediction was made")
     forecast_time: str = Field(..., description="Time of forecasted price")
     horizon_hours: int = Field(..., description="Forecast horizon in hours")
     change_percent: float = Field(..., description="Predicted price change percentage")
     direction: str = Field(..., description="Price direction: up, down, or neutral")
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "token_symbol": "ETH",
                 "current_price": 2450.50,
@@ -39,7 +42,8 @@ class PricePredictionResponse(BaseModel):
                 "change_percent": 5.32,
                 "direction": "up",
             }
-        })
+        }
+    )
 
 
 class MultiHorizonPredictionResponse(BaseModel):
@@ -78,7 +82,9 @@ def create_price_prediction_router() -> APIRouter:
     )
     async def train_model(
         token_symbol: str,
-        days: int = Query(90, ge=30, le=365, description="Days of historical data for training"),
+        days: int = Query(
+            90, ge=30, le=365, description="Days of historical data for training"
+        ),
     ) -> dict:
         """Train LSTM model on historical data.
 

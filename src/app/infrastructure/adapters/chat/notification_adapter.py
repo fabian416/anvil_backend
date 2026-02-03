@@ -189,7 +189,10 @@ class RedisNotificationAdapter(NotificationAdapter):
             )
             if notification:
                 # Filter by type if specified
-                if notification_type and notification.notification_type != notification_type:
+                if (
+                    notification_type
+                    and notification.notification_type != notification_type
+                ):
                     continue
 
                 # Filter unread if specified
@@ -460,11 +463,17 @@ class RedisNotificationAdapter(NotificationAdapter):
                 for channel, status in notification.delivery_status.items()
             },
             "created_at": notification.created_at.isoformat(),
-            "sent_at": notification.sent_at.isoformat() if notification.sent_at else None,
+            "sent_at": notification.sent_at.isoformat()
+            if notification.sent_at
+            else None,
             "delivered_at": (
-                notification.delivered_at.isoformat() if notification.delivered_at else None
+                notification.delivered_at.isoformat()
+                if notification.delivered_at
+                else None
             ),
-            "read_at": notification.read_at.isoformat() if notification.read_at else None,
+            "read_at": notification.read_at.isoformat()
+            if notification.read_at
+            else None,
             "metadata": notification.metadata,
         }
 
@@ -494,12 +503,16 @@ class RedisNotificationAdapter(NotificationAdapter):
                 for channel, status in data["delivery_status"].items()
             },
             created_at=datetime.fromisoformat(data["created_at"]),
-            sent_at=datetime.fromisoformat(data["sent_at"]) if data.get("sent_at") else None,
+            sent_at=datetime.fromisoformat(data["sent_at"])
+            if data.get("sent_at")
+            else None,
             delivered_at=(
                 datetime.fromisoformat(data["delivered_at"])
                 if data.get("delivered_at")
                 else None
             ),
-            read_at=datetime.fromisoformat(data["read_at"]) if data.get("read_at") else None,
+            read_at=datetime.fromisoformat(data["read_at"])
+            if data.get("read_at")
+            else None,
             metadata=data.get("metadata", {}),
         )

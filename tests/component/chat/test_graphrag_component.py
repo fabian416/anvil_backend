@@ -23,7 +23,9 @@ from tests.helpers.test_data_loader import (
 class TestGraphRAGIntentClassification:
     """Component tests for GraphRAG intent classification logic."""
 
-    @pytest.mark.parametrize("test_case", get_graphrag_test_cases(), ids=lambda tc: tc["id"])
+    @pytest.mark.parametrize(
+        "test_case", get_graphrag_test_cases(), ids=lambda tc: tc["id"]
+    )
     async def test_classify_graphrag_intent(
         self,
         mock_intent_classifier,
@@ -37,7 +39,9 @@ class TestGraphRAGIntentClassification:
         """
         # Arrange: Configure mock classifier to return expected intent
         expected_intent = test_case["expected_routing"]["intent"]
-        expected_confidence_min = test_case["expected_routing"].get("confidence_min", 0.5)
+        expected_confidence_min = test_case["expected_routing"].get(
+            "confidence_min", 0.5
+        )
 
         # Get IntentResult class from fixture
         IntentResult = mock_intent_classifier.IntentResult
@@ -266,7 +270,9 @@ class TestGraphRAGHandlerExecution:
 class TestGraphRAGEnrichmentValidation:
     """Component tests for GraphRAG enrichment data structure."""
 
-    @pytest.mark.parametrize("test_case", get_graphrag_test_cases(), ids=lambda tc: tc["id"])
+    @pytest.mark.parametrize(
+        "test_case", get_graphrag_test_cases(), ids=lambda tc: tc["id"]
+    )
     async def test_graphrag_enrichment_structure(
         self,
         mock_graphrag_handler,
@@ -285,7 +291,9 @@ class TestGraphRAGEnrichmentValidation:
         # Configure mock handler with appropriate enrichment
         if subcategory == "protocol_search":
             enrichment = {
-                "protocols": [{"protocol_id": "test", "protocol_name": "Test Protocol"}],
+                "protocols": [
+                    {"protocol_id": "test", "protocol_name": "Test Protocol"}
+                ],
                 "search_context": {"search_type": "protocols"},
             }
         elif subcategory == "risk_assessment":
@@ -296,7 +304,9 @@ class TestGraphRAGEnrichmentValidation:
         elif subcategory == "similar_protocols":
             enrichment = {
                 "base_protocol": "Test Protocol",
-                "similar_protocols": [{"protocol_id": "similar", "similarity_score": 0.85}],
+                "similar_protocols": [
+                    {"protocol_id": "similar", "similarity_score": 0.85}
+                ],
             }
         else:
             enrichment = {}
@@ -316,16 +326,19 @@ class TestGraphRAGEnrichmentValidation:
         result_enrichment = result.get("enrichment", {})
 
         if subcategory == "protocol_search":
-            assert "protocols" in result_enrichment or "search_context" in result_enrichment, (
-                f"Protocol search enrichment missing for {test_case['id']}"
-            )
+            assert (
+                "protocols" in result_enrichment
+                or "search_context" in result_enrichment
+            ), f"Protocol search enrichment missing for {test_case['id']}"
 
         elif subcategory == "risk_assessment":
-            assert "risk_analysis" in result_enrichment or "protocol_name" in result_enrichment, (
-                f"Risk assessment enrichment missing for {test_case['id']}"
-            )
+            assert (
+                "risk_analysis" in result_enrichment
+                or "protocol_name" in result_enrichment
+            ), f"Risk assessment enrichment missing for {test_case['id']}"
 
         elif subcategory == "similar_protocols":
-            assert "similar_protocols" in result_enrichment or "base_protocol" in result_enrichment, (
-                f"Similar protocols enrichment missing for {test_case['id']}"
-            )
+            assert (
+                "similar_protocols" in result_enrichment
+                or "base_protocol" in result_enrichment
+            ), f"Similar protocols enrichment missing for {test_case['id']}"

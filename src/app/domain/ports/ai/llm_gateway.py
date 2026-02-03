@@ -1,5 +1,6 @@
 from typing import Protocol, Optional
 
+
 class LLMGateway(Protocol):
     """
     Unified LLM gateway for all AI interactions.

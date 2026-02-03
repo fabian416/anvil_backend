@@ -98,9 +98,7 @@ class AgentOrchestrationRepositoryAdapter(AgentOrchestrationRepository):
         Returns:
             VotingRound or None if not found
         """
-        stmt = select(VotingRoundModel).where(
-            VotingRoundModel.round_id == round_id
-        )
+        stmt = select(VotingRoundModel).where(VotingRoundModel.round_id == round_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
 
@@ -177,9 +175,7 @@ class AgentOrchestrationRepositoryAdapter(AgentOrchestrationRepository):
         Returns:
             AgentDebate or None if not found
         """
-        stmt = select(AgentDebateModel).where(
-            AgentDebateModel.debate_id == debate_id
-        )
+        stmt = select(AgentDebateModel).where(AgentDebateModel.debate_id == debate_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
 
@@ -309,7 +305,9 @@ class AgentOrchestrationRepositoryAdapter(AgentOrchestrationRepository):
             await self._session.rollback()
             return False
 
-    async def get_top_performing_agents(self, limit: int = 10) -> List[AgentPerformanceMetrics]:
+    async def get_top_performing_agents(
+        self, limit: int = 10
+    ) -> List[AgentPerformanceMetrics]:
         """
         Get top performing agents by success rate.
 
@@ -603,7 +601,9 @@ class AgentOrchestrationRepositoryAdapter(AgentOrchestrationRepository):
                 phase=DebatePhase(stmt_data["phase"]),
                 content=stmt_data["content"],
                 confidence=stmt_data["confidence"],
-                references_statement_indices=stmt_data.get("references_statement_indices", []),
+                references_statement_indices=stmt_data.get(
+                    "references_statement_indices", []
+                ),
                 timestamp=datetime.fromisoformat(stmt_data["timestamp"])
                 if stmt_data.get("timestamp")
                 else None,
@@ -790,7 +790,9 @@ class VotingRoundModel:
     winning_response: Mapped[str | None] = mapped_column(Text, nullable=True)
     winning_vote_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     total_votes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    consensus_confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    consensus_confidence: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.0
+    )
 
     # Votes stored as JSONB
     votes: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
@@ -811,13 +813,17 @@ class AgentDebateModel:
     user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
 
     query: Mapped[str] = mapped_column(Text, nullable=False)
-    participating_agents: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
+    participating_agents: Mapped[list[str]] = mapped_column(
+        ARRAY(String), nullable=False
+    )
     current_phase: Mapped[str] = mapped_column(String(30), nullable=False)
     consensus_status: Mapped[str] = mapped_column(String(20), nullable=False)
 
     # Results
     final_consensus: Mapped[str | None] = mapped_column(Text, nullable=True)
-    consensus_confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    consensus_confidence: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.0
+    )
 
     # Debate data
     statements: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
@@ -841,12 +847,16 @@ class AgentPerformanceMetricsModel:
     successful_requests: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     failed_requests: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
-    avg_response_time_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    avg_response_time_ms: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.0
+    )
     avg_confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     avg_cost_usd: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     total_cost_usd: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
 
-    uptime_percentage: Mapped[float] = mapped_column(Float, nullable=False, default=100.0)
+    uptime_percentage: Mapped[float] = mapped_column(
+        Float, nullable=False, default=100.0
+    )
     last_24h_requests: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -864,7 +874,9 @@ class CustomAgentConfigModel:
     __tablename__ = "custom_agent_configs"
 
     config_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
-    created_by_user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
+    created_by_user_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), nullable=False
+    )
 
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
@@ -874,9 +886,15 @@ class CustomAgentConfigModel:
     capabilities: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
     temperature: Mapped[float] = mapped_column(Float, nullable=False, default=0.7)
     max_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=1000)
-    personality_traits: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
-    expertise_areas: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
-    response_style: Mapped[str] = mapped_column(String(20), nullable=False, default="balanced")
+    personality_traits: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, default=dict
+    )
+    expertise_areas: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String), nullable=True
+    )
+    response_style: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="balanced"
+    )
 
     # LLM settings
     preferred_llm_provider: Mapped[str] = mapped_column(

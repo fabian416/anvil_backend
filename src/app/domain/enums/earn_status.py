@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class EarnStatus(Enum):
     ACTIVE = "active"
     WITHDRAWN = "withdrawn"

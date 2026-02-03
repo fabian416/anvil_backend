@@ -174,9 +174,7 @@ class TwitterSentimentAnalyzer:
             },
         )
 
-    async def _fetch_tweets(
-        self, token_symbol: str, hours: int
-    ) -> List[Dict]:
+    async def _fetch_tweets(self, token_symbol: str, hours: int) -> List[Dict]:
         """Fetch tweets mentioning token.
 
         In production, this would call Twitter API v2.
@@ -314,9 +312,7 @@ class TwitterSentimentAnalyzer:
 
         return weighted_sum / total_weight if total_weight > 0 else 50.0
 
-    def _calculate_confidence(
-        self, tweets: List[Dict], scores: List[float]
-    ) -> float:
+    def _calculate_confidence(self, tweets: List[Dict], scores: List[float]) -> float:
         """Calculate confidence in sentiment analysis.
 
         Args:

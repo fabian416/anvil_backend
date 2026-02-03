@@ -23,10 +23,11 @@ from app.domain.value_objects.wiki_data_id import WikiDataId
 class City(Entity[CityId]):
     """
     City entity representing a city in the system.
-    
+
     This is an anemic model following DDD principles where behavior
     is handled by domain services rather than the entity itself.
     """
+
     name: CityName
     state_id: StateId
     state_code: Optional[StateCode]

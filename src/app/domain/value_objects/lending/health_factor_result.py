@@ -22,6 +22,7 @@ class HealthFactorLevel(str, Enum):
     - CRITICAL: 1.0 <= HF < 1.2 (very high liquidation risk)
     - LIQUIDATABLE: HF < 1.0 (position will be liquidated)
     """
+
     SAFE = "safe"
     CAUTION = "caution"
     DANGER = "danger"
@@ -131,12 +132,18 @@ class HealthFactorResult:
             Dictionary representation
         """
         return {
-            "current_hf": str(self.current_hf) if self.current_hf != Decimal("inf") else "∞",
-            "projected_hf": str(self.projected_hf) if self.projected_hf != Decimal("inf") else "∞",
+            "current_hf": str(self.current_hf)
+            if self.current_hf != Decimal("inf")
+            else "∞",
+            "projected_hf": str(self.projected_hf)
+            if self.projected_hf != Decimal("inf")
+            else "∞",
             "level": self.level.value,
             "is_safe": self.is_safe,
             "warning_message": self.warning_message,
-            "liquidation_price": str(self.liquidation_price) if self.liquidation_price else None,
+            "liquidation_price": str(self.liquidation_price)
+            if self.liquidation_price
+            else None,
             "max_safe_borrow_usd": str(self.max_safe_borrow_usd),
             "collateral_usd": str(self.collateral_usd),
             "current_debt_usd": str(self.current_debt_usd),
@@ -157,6 +164,7 @@ class HealthFactorResult:
         Returns:
             HealthFactorResult instance
         """
+
         def parse_hf(value: str | None) -> Decimal:
             if not value or value in ("∞", "inf", "Infinity"):
                 return Decimal("inf")
@@ -168,7 +176,9 @@ class HealthFactorResult:
             level=HealthFactorLevel(data["level"]),
             is_safe=data["is_safe"],
             warning_message=data["warning_message"],
-            liquidation_price=Decimal(str(data["liquidation_price"])) if data.get("liquidation_price") else None,
+            liquidation_price=Decimal(str(data["liquidation_price"]))
+            if data.get("liquidation_price")
+            else None,
             max_safe_borrow_usd=Decimal(str(data.get("max_safe_borrow_usd", "0"))),
             collateral_usd=Decimal(str(data.get("collateral_usd", "0"))),
             current_debt_usd=Decimal(str(data.get("current_debt_usd", "0"))),

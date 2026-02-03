@@ -18,22 +18,26 @@ import json
 import warnings
 from datetime import datetime
 
-pytestmark = [pytest.mark.skip(reason="Historical chat requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.historical_chat]
+pytestmark = [
+    pytest.mark.skip(reason="Historical chat requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.historical_chat,
+]
 
 
 class TestLargeConversationPagination:
     """Test handling of very large conversation histories."""
 
     @pytest.mark.llm_validation
-    async def test_conversation_with_100_messages(self, client: AsyncClient, llm_validator):
+    async def test_conversation_with_100_messages(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test creating and retrieving large conversation with 100+ messages."""
         # Create a conversation by sending first message
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Start conversation",
-                "language": "en"
-            }
+            json={"content": "Start conversation", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -46,20 +50,13 @@ class TestLargeConversationPagination:
         for i in range(10):
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={
-                    "content": f"Message {i + 2}",
-                    "language": "en"
-                }
+                json={"content": f"Message {i + 2}", "language": "en"},
             )
             assert response.status_code == status.HTTP_200_OK
 
         # Verify conversation continues to work with history
         final_response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Final message",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "Final message", "language": "en"}
         )
 
         assert final_response.status_code == status.HTTP_200_OK
@@ -73,15 +70,13 @@ class TestLargeConversationPagination:
         assert final_data["agent_message"]["content"]
 
     @pytest.mark.llm_validation
-    async def test_pagination_boundary_conditions(self, client: AsyncClient, llm_validator):
+    async def test_pagination_boundary_conditions(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test pagination at boundary conditions."""
         # Create conversation with several messages
         response1 = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "First message",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "First message", "language": "en"}
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -92,10 +87,7 @@ class TestLargeConversationPagination:
         for i in range(5):
             await client.post(
                 "/api/v1/guest/chat",
-                json={
-                    "content": f"Message {i + 2}",
-                    "language": "en"
-                }
+                json={"content": f"Message {i + 2}", "language": "en"},
             )
 
         # Continue conversation - system should handle history properly
@@ -103,8 +95,8 @@ class TestLargeConversationPagination:
             "/api/v1/guest/chat",
             json={
                 "content": "Can you remember what we talked about?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -115,15 +107,13 @@ class TestLargeConversationPagination:
         assert "agent_message" in data
 
     @pytest.mark.llm_validation
-    async def test_large_conversation_performance(self, client: AsyncClient, llm_validator):
+    async def test_large_conversation_performance(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test performance with moderately large conversation."""
         # Create conversation
         response1 = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Start",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "Start", "language": "en"}
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -133,10 +123,7 @@ class TestLargeConversationPagination:
         for i in range(20):
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={
-                    "content": f"Message {i + 2}",
-                    "language": "en"
-                }
+                json={"content": f"Message {i + 2}", "language": "en"},
             )
             assert response.status_code == status.HTTP_200_OK
 
@@ -145,29 +132,25 @@ class TestLargeConversationPagination:
 
         # Verify conversation still works
         final_response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Final",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "Final", "language": "en"}
         )
 
         assert final_response.status_code == status.HTTP_200_OK
         assert final_response.json().get("conversation_id") == conversation_id
 
+
 class TestEmptyConversationHandling:
     """Test handling of empty or newly created conversations."""
 
     @pytest.mark.llm_validation
-    async def test_empty_conversation_retrieval(self, client: AsyncClient, llm_validator):
+    async def test_empty_conversation_retrieval(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test behavior when starting a new conversation."""
         # First message creates a new conversation
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Hello, this is my first message",
-                "language": "en"
-            }
+            json={"content": "Hello, this is my first message", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -182,14 +165,13 @@ class TestEmptyConversationHandling:
         assert data["agent_message"]["content"]
 
     @pytest.mark.llm_validation
-    async def test_new_guest_conversation_first_message(self, client: AsyncClient, llm_validator):
+    async def test_new_guest_conversation_first_message(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test first message initialization for guest."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What is Ethereum?",
-                "language": "en"
-            }
+            json={"content": "What is Ethereum?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -204,48 +186,36 @@ class TestEmptyConversationHandling:
         agent_response = data["agent_message"]["content"].lower()
         assert len(agent_response) > 0
 
+
 class TestDeletedMessageHandling:
     """Test handling of deleted or missing messages."""
 
     @pytest.mark.llm_validation
-    async def test_retrieve_conversation_with_deleted_messages(self, client: AsyncClient, llm_validator):
+    async def test_retrieve_conversation_with_deleted_messages(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test conversation continues after theoretical message deletion."""
         # Create conversation with multiple messages
         response1 = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Message 1",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "Message 1", "language": "en"}
         )
 
         assert response1.status_code == status.HTTP_200_OK
         conversation_id = response1.json().get("conversation_id")
 
         await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Message 2",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "Message 2", "language": "en"}
         )
 
         await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Message 3",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "Message 3", "language": "en"}
         )
 
         # Continue conversation (simulating message deletion scenario)
         # System should handle any gaps in history gracefully
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Continue conversation",
-                "language": "en"
-            }
+            json={"content": "Continue conversation", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -254,15 +224,14 @@ class TestDeletedMessageHandling:
         assert "agent_message" in data
 
     @pytest.mark.llm_validation
-    async def test_reply_to_deleted_message_reference(self, client: AsyncClient, llm_validator):
+    async def test_reply_to_deleted_message_reference(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test conversation flow when context might be missing."""
         # Create conversation
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Let's talk about Bitcoin",
-                "language": "en"
-            }
+            json={"content": "Let's talk about Bitcoin", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -272,8 +241,8 @@ class TestDeletedMessageHandling:
             "/api/v1/guest/chat",
             json={
                 "content": "What else can you tell me about it?",  # "it" refers to Bitcoin
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -282,6 +251,7 @@ class TestDeletedMessageHandling:
         # Should handle contextual reference gracefully
         assert "agent_message" in data
         assert data["agent_message"]["content"]
+
 
 class TestConversationLimitTesting:
     """Test conversation limits and boundaries."""
@@ -295,10 +265,7 @@ class TestConversationLimitTesting:
         for i in range(3):
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={
-                    "content": f"Start conversation {i + 1}",
-                    "language": "en"
-                }
+                json={"content": f"Start conversation {i + 1}", "language": "en"},
             )
 
             assert response.status_code == status.HTTP_200_OK
@@ -313,15 +280,13 @@ class TestConversationLimitTesting:
         assert len(conversation_ids) >= 1
 
     @pytest.mark.llm_validation
-    async def test_message_per_conversation_limit(self, client: AsyncClient, llm_validator):
+    async def test_message_per_conversation_limit(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test adding many messages to single conversation."""
         # Create conversation
         response1 = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Start",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "Start", "language": "en"}
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -331,10 +296,7 @@ class TestConversationLimitTesting:
         for i in range(30):
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={
-                    "content": f"Message {i + 2}",
-                    "language": "en"
-                }
+                json={"content": f"Message {i + 2}", "language": "en"},
             )
 
             # Should continue to work (or gracefully handle limit)
@@ -344,19 +306,19 @@ class TestConversationLimitTesting:
             data = response.json()
             assert data.get("conversation_id") == conversation_id
 
+
 class TestHistoryExportRetrieval:
     """Test retrieving full conversation history."""
 
     @pytest.mark.llm_validation
-    async def test_export_full_conversation_history(self, client: AsyncClient, llm_validator):
+    async def test_export_full_conversation_history(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test retrieving complete conversation history."""
         # Create conversation with multiple messages
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "First message in conversation",
-                "language": "en"
-            }
+            json={"content": "First message in conversation", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -365,28 +327,17 @@ class TestHistoryExportRetrieval:
 
         # Add more messages
         await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Second message",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "Second message", "language": "en"}
         )
 
         await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "Third message",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "Third message", "language": "en"}
         )
 
         # Continue conversation and verify history is maintained
         response_final = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What did we discuss?",
-                "language": "en"
-            }
+            json={"content": "What did we discuss?", "language": "en"},
         )
 
         assert response_final.status_code == status.HTTP_200_OK

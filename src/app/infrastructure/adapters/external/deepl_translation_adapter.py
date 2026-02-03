@@ -407,7 +407,9 @@ class DeepLTranslationAdapter(TranslationAdapter):
                         source_language=source_language or detected_lang,
                         target_language=target_language,
                         confidence_score=confidence,
-                        detected_language=detected_lang if not source_language else None,
+                        detected_language=detected_lang
+                        if not source_language
+                        else None,
                         preserved_terms=list(term_maps[i].values())
                         if term_maps[i]
                         else [],
@@ -579,7 +581,9 @@ class DeepLTranslationAdapter(TranslationAdapter):
 
         # Protect protocols, tokens, technical terms
         all_terms = (
-            preserve_terms.protocols + preserve_terms.tokens + preserve_terms.technical_terms
+            preserve_terms.protocols
+            + preserve_terms.tokens
+            + preserve_terms.technical_terms
         )
 
         for term in all_terms:

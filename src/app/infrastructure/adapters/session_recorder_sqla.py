@@ -17,12 +17,12 @@ from app.application.common.ports.session_recorder import SessionRecorder
 class SqlaSessionRecorder(SessionRecorder):
     """
     No-op session recorder.
-    
+
     The legacy sessions table has been removed. Authentication is now
     handled entirely by auth_sessions via AuthSessionService.
     This adapter exists only for API compatibility during migration.
     """
-    
+
     async def add(
         self,
         *,

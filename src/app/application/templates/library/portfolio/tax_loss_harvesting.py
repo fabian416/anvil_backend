@@ -122,7 +122,11 @@ def create_tax_loss_harvesting_template(created_by: UUID) -> ConversationTemplat
             depends_on=[3],
             parallel_execution=False,
             timeout_seconds=30,
-            outputs=["harvest_strategy", "prioritized_opportunities", "execution_timeline"],
+            outputs=[
+                "harvest_strategy",
+                "prioritized_opportunities",
+                "execution_timeline",
+            ],
         ),
         AgentStep(
             agent_name="@project-manager",

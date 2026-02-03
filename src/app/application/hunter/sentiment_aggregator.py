@@ -102,9 +102,7 @@ class SentimentAggregator:
 
         for reading in readings:
             # Get weight for this source (default to equal if not specified)
-            weight = self.weights.get(
-                reading.source, 1.0 / len(SentimentSource)
-            )
+            weight = self.weights.get(reading.source, 1.0 / len(SentimentSource))
 
             # Apply confidence as additional weighting factor
             effective_weight = weight * reading.confidence
@@ -170,9 +168,7 @@ class SentimentAggregator:
             aggregated_sentiment=aggregated,
         )
 
-    def get_source_breakdown(
-        self, aggregated: AggregatedSentiment
-    ) -> Dict[str, Dict]:
+    def get_source_breakdown(self, aggregated: AggregatedSentiment) -> Dict[str, Dict]:
         """Get detailed breakdown of sentiment by source.
 
         Args:
@@ -241,9 +237,7 @@ class SentimentAggregator:
 
         return max(0.0, min(1.0, consensus))
 
-    def identify_divergence(
-        self, aggregated: AggregatedSentiment
-    ) -> Dict[str, any]:
+    def identify_divergence(self, aggregated: AggregatedSentiment) -> Dict[str, any]:
         """Identify divergence between sources.
 
         Args:

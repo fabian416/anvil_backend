@@ -10,7 +10,7 @@ from app.infrastructure.agents.base_defi_agent import BaseDeFiAgent
 class TradingAgent(BaseDeFiAgent):
     """
     Specialized agent for perpetual futures trading.
-    
+
     Capabilities:
     - Open leveraged positions (long/short)
     - Close existing positions
@@ -18,13 +18,13 @@ class TradingAgent(BaseDeFiAgent):
     - Manage leverage and margin
     - Provide trading insights
     """
-    
+
     def __init__(self, model: str = "gpt-4-turbo"):
         """Initialize TradingAgent."""
-        
+
         name = "TradingAgent"
         description = "Specialized agent for perpetual futures trading operations"
-        
+
         instructions = [
             "You are a DeFi perpetual futures trading specialist.",
             "Your role is to help users trade leveraged positions on platforms like Hyperliquid.",
@@ -73,23 +73,23 @@ class TradingAgent(BaseDeFiAgent):
             "- Never trade with more than you can afford to lose",
             "- Always use stop losses for downside protection",
         ]
-        
+
         super().__init__(
             name=name,
             description=description,
             instructions=instructions,
             model=model,
-            tools=self.get_tools()
+            tools=self.get_tools(),
         )
-    
+
     def get_intent_types(self) -> List[str]:
         """Get intent types handled by TradingAgent."""
         return ["trade_perp_open", "trade_perp_close"]
-    
+
     def get_tools(self) -> List[Any]:
         """
         Get tools for TradingAgent.
-        
+
         Phase 2 implementation with real Hyperliquid integration.
         """
         # Import tools here to avoid circular imports
@@ -103,7 +103,7 @@ class TradingAgent(BaseDeFiAgent):
             calculate_take_profit_tool,
             analyze_position_health_tool,
         )
-        
+
         # Tool metadata for Phase 2
         tools = [
             {
@@ -171,41 +171,37 @@ class TradingAgent(BaseDeFiAgent):
                 "function": analyze_position_health_tool,
             },
         ]
-        
+
         return tools
-    
-    async def run(
-        self,
-        message: str,
-        context: Optional[Dict[str, Any]] = None
-    ) -> str:
+
+    async def run(self, message: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
         Process trading-related messages.
-        
+
         Args:
             message: User message about trading
             context: Optional conversation context
-        
+
         Returns:
             Agent response with trading guidance/execution
         """
         # Add trading-specific context
         enhanced_context = context or {}
         enhanced_context["agent_type"] = "trading"
-        
+
         # Call parent run method
         response = await super().run(message, enhanced_context)
-        
+
         return response
 
 
 def create_trading_agent(model: str = "gpt-4-turbo") -> TradingAgent:
     """
     Factory function to create a TradingAgent.
-    
+
     Args:
         model: LLM model to use
-    
+
     Returns:
         TradingAgent instance
     """

@@ -26,6 +26,7 @@ from app.setup.config.mcp import MCPSettings, MCPServerSettings, MCPRetrySetting
 # Common Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def mcp_settings_enabled():
     """
@@ -81,6 +82,7 @@ def mcp_settings_disabled():
 # =============================================================================
 # Mock Gateway Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def mock_morpho_gateway():
@@ -191,6 +193,7 @@ def mock_layerzero_gateway():
 # HTTP Mock Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def mock_mcp_manager_http(mocker):
     """
@@ -212,9 +215,9 @@ def mock_mcp_manager_http(mocker):
                     "properties": {
                         "protocol": {"type": "string", "description": "Protocol name"}
                     },
-                    "required": ["protocol"]
+                    "required": ["protocol"],
                 },
-                "server_url": "http://localhost:8082"
+                "server_url": "http://localhost:8082",
             },
             {
                 "server": "coingecko",
@@ -226,9 +229,9 @@ def mock_mcp_manager_http(mocker):
                     "properties": {
                         "token_id": {"type": "string", "description": "Token ID"}
                     },
-                    "required": ["token_id"]
+                    "required": ["token_id"],
                 },
-                "server_url": "http://localhost:8084"
+                "server_url": "http://localhost:8084",
             },
         ]
     }
@@ -269,6 +272,7 @@ def mock_mcp_manager_unavailable(mocker):
 # =============================================================================
 # Test Data Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def sample_wallet_address():

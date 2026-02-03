@@ -45,7 +45,7 @@ class UserCommandGateway(Protocol):
     ) -> User | None:
         """
         Find user by Privy user ID.
-        
+
         :raises DataMapperError:
         """
 
@@ -57,6 +57,6 @@ class UserCommandGateway(Protocol):
     ) -> User | None:
         """
         Find user by primary wallet address.
-        
+
         :raises DataMapperError:
         """

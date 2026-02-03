@@ -24,7 +24,9 @@ class InitSubscriptionsHandler:
         self._repo = subscription_repo
         self._tx = transaction_manager
 
-    async def execute(self, _request: InitSubscriptionsRequest | None = None) -> list[dict]:
+    async def execute(
+        self, _request: InitSubscriptionsRequest | None = None
+    ) -> list[dict]:
         definitions = [
             {
                 "name": "PRO",
@@ -95,7 +97,9 @@ class InitSubscriptionsHandler:
 
             settings = load_settings()
             stripe_cfg = getattr(settings, "stripe", None)
-            api_key = getattr(stripe_cfg, "STRIPE_API_KEY", None) if stripe_cfg else None
+            api_key = (
+                getattr(stripe_cfg, "STRIPE_API_KEY", None) if stripe_cfg else None
+            )
             if api_key:
                 stripe.api_key = api_key
                 for item in results:
@@ -131,18 +135,16 @@ class InitSubscriptionsHandler:
             row = await self._repo.read_by_name(d["name"])
             if not row:
                 continue
-            final_results.append(
-                {
-                    "id": int(row["id"]),
-                    "name": d["name"],
-                    "price": float(row.get("price", d["price"]) or d["price"]),
-                    "currency": row.get("currency", d["currency"]) or d["currency"],
-                    "stripe_product_id": row.get("stripe_product_id"),
-                    "stripe_price_id": row.get("stripe_price_id"),
-                    "created": any(r["name"] == d["name"] and r.get("created") for r in results),
-                }
-            )
+            final_results.append({
+                "id": int(row["id"]),
+                "name": d["name"],
+                "price": float(row.get("price", d["price"]) or d["price"]),
+                "currency": row.get("currency", d["currency"]) or d["currency"],
+                "stripe_product_id": row.get("stripe_product_id"),
+                "stripe_price_id": row.get("stripe_price_id"),
+                "created": any(
+                    r["name"] == d["name"] and r.get("created") for r in results
+                ),
+            })
 
         return final_results
-
-

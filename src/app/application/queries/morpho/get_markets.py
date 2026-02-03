@@ -41,15 +41,15 @@ class GetMarkets:
         # Filter by collateral asset
         if request.collateral_asset:
             markets = [
-                m for m in markets
+                m
+                for m in markets
                 if m.collateral_asset.upper() == request.collateral_asset.upper()
             ]
 
         # Filter by loan asset
         if request.loan_asset:
             markets = [
-                m for m in markets
-                if m.loan_asset.upper() == request.loan_asset.upper()
+                m for m in markets if m.loan_asset.upper() == request.loan_asset.upper()
             ]
 
         # Sort

@@ -40,6 +40,7 @@ from app.presentation.http.controllers.auth.router import create_auth_router
 
 # Bitcoin router (transactions + wallet endpoints)
 from app.presentation.http.controllers.bitcoin.router import create_bitcoin_router
+
 # REMOVED: Legacy chat router (deprecated 2026-06-01)
 # from app.presentation.http.controllers.chat.router import create_chat_router
 from app.presentation.http.controllers.chat.websocket_router import (
@@ -81,7 +82,9 @@ from app.presentation.http.controllers.graph.visualization import (
     create_graph_visualization_router,
 )
 from app.presentation.http.controllers.hunter.patterns import create_patterns_router
-from app.presentation.http.controllers.hunter.portfolio import create_portfolio_router as create_hunter_portfolio_router
+from app.presentation.http.controllers.hunter.portfolio import (
+    create_portfolio_router as create_hunter_portfolio_router,
+)
 from app.presentation.http.controllers.hunter.price_prediction import (
     create_price_prediction_router,
 )
@@ -96,7 +99,9 @@ from app.presentation.http.controllers.hunter.trading_signals import (
 # Markets router
 from app.presentation.http.controllers.markets.router import create_markets_router
 from app.presentation.http.controllers.metrics.router import router as metrics_router
-from app.presentation.http.controllers.monitoring.router import router as monitoring_router
+from app.presentation.http.controllers.monitoring.router import (
+    router as monitoring_router,
+)
 
 # ML routers
 from app.presentation.http.controllers.ml import network_router, prediction_router

@@ -19,5 +19,3 @@ class SessionRecorder(Protocol):
         last_activity: datetime,
         is_active: bool,
     ) -> None: ...
-
-

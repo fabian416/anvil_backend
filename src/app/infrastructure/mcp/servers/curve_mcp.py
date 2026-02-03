@@ -20,6 +20,7 @@ Integration Points:
 
 Feature Flag: mcp.servers.curve_enabled
 """
+
 from typing import Dict, Any, List, Optional
 from decimal import Decimal
 
@@ -73,7 +74,9 @@ class CurveMCPServer(MCPServer):
         self.settings = settings or MCPSettings()
 
         # Check if server is enabled
-        if not self.settings.enabled or not getattr(self.settings.servers, 'curve_enabled', False):
+        if not self.settings.enabled or not getattr(
+            self.settings.servers, "curve_enabled", False
+        ):
             raise MCPServerDisabledError(
                 "Curve MCP server is disabled. "
                 "Enable with mcp.servers.curve_enabled=true in config."
@@ -86,7 +89,7 @@ class CurveMCPServer(MCPServer):
         )
 
         self.curve_gateway = curve_gateway
-        
+
         # Register tools
         self.setup_tools()
 
@@ -106,7 +109,13 @@ class CurveMCPServer(MCPServer):
                     "chain": {
                         "type": "string",
                         "default": "ethereum",
-                        "enum": ["ethereum", "arbitrum", "optimism", "polygon", "avalanche"],
+                        "enum": [
+                            "ethereum",
+                            "arbitrum",
+                            "optimism",
+                            "polygon",
+                            "avalanche",
+                        ],
                         "description": "Blockchain network",
                     },
                     "min_tvl": {
@@ -530,7 +539,8 @@ class CurveMCPServer(MCPServer):
             for pool in all_pools:
                 # Check if token is in pool by symbol or address
                 has_token = any(
-                    token_upper in c.symbol.upper() or token.lower() == c.address.lower()
+                    token_upper in c.symbol.upper()
+                    or token.lower() == c.address.lower()
                     for c in pool.coins
                 )
                 if has_token:
@@ -552,7 +562,9 @@ class CurveMCPServer(MCPServer):
             if sort_by == "apy":
                 pools_with_apy.sort(key=lambda x: x[1].total_apy, reverse=True)
             elif sort_by == "tvl":
-                pools_with_apy.sort(key=lambda x: x[0].total_liquidity_usd, reverse=True)
+                pools_with_apy.sort(
+                    key=lambda x: x[0].total_liquidity_usd, reverse=True
+                )
             elif sort_by == "volume":
                 pools_with_apy.sort(key=lambda x: x[0].volume_24h_usd, reverse=True)
 

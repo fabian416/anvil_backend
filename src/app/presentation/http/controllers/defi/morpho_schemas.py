@@ -112,9 +112,7 @@ class VaultAPYResponse(BaseModel):
     apy_30d_avg: str
 
     @classmethod
-    def from_domain(
-        cls, apy: VaultAPY, fee_impact: str = "0"
-    ) -> "VaultAPYResponse":
+    def from_domain(cls, apy: VaultAPY, fee_impact: str = "0") -> "VaultAPYResponse":
         """Create from domain value object."""
         return cls(
             vault_address=apy.vault_address,

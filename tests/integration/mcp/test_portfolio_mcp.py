@@ -26,13 +26,12 @@ class TestPortfolioMCPServerStructure:
 
     def test_portfolio_server_has_setup_tools(self):
         """Test server has setup_tools method."""
-        assert hasattr(PortfolioMCPServer, 'setup_tools')
+        assert hasattr(PortfolioMCPServer, "setup_tools")
 
     def test_portfolio_server_initialization_enabled(self):
         """Test server can be instantiated when enabled."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
 
         server = PortfolioMCPServer(settings=settings)
@@ -44,8 +43,7 @@ class TestPortfolioMCPServerStructure:
     def test_portfolio_server_disabled_raises_error(self):
         """Test server raises error when disabled."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=False)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=False)
         )
 
         with pytest.raises(Exception) as exc_info:
@@ -61,8 +59,7 @@ class TestPortfolioTools:
     def test_setup_tools_registers_all_tools(self):
         """Test setup_tools registers all expected tools."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
 
@@ -78,18 +75,16 @@ class TestPortfolioTools:
     def test_tools_count(self):
         """Test correct number of tools registered."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
-        
+
         assert len(server.tools) == 3
 
     def test_tool_parameters_defined(self):
         """Test all tools have properly defined parameters."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
 
@@ -97,13 +92,14 @@ class TestPortfolioTools:
             assert tool.parameters is not None, f"Tool {tool_name} has no parameters"
             assert "type" in tool.parameters, f"Tool {tool_name} missing type"
             assert tool.parameters["type"] == "object"
-            assert "properties" in tool.parameters, f"Tool {tool_name} missing properties"
+            assert "properties" in tool.parameters, (
+                f"Tool {tool_name} missing properties"
+            )
 
     def test_tool_descriptions_exist(self):
         """Test all tools have descriptions."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
 
@@ -119,28 +115,26 @@ class TestPortfolioHealthEndpoint:
     def test_health_endpoint_returns_200(self):
         """Test health endpoint returns 200 status."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
         client = TestClient(server.app)
-        
+
         response = client.get("/health")
-        
+
         assert response.status_code == 200
 
     def test_health_endpoint_returns_healthy_status(self):
         """Test health endpoint returns healthy status."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
         client = TestClient(server.app)
-        
+
         response = client.get("/health")
         data = response.json()
-        
+
         assert data["status"] == "healthy"
         assert data["name"] == "portfolio"
         assert data["version"] == "1.0.0"
@@ -153,28 +147,26 @@ class TestPortfolioToolsEndpoint:
     def test_tools_endpoint_returns_200(self):
         """Test tools endpoint returns 200 status."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
         client = TestClient(server.app)
-        
+
         response = client.get("/tools")
-        
+
         assert response.status_code == 200
 
     def test_tools_endpoint_returns_all_tools(self):
         """Test tools endpoint returns all registered tools."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
         client = TestClient(server.app)
-        
+
         response = client.get("/tools")
         data = response.json()
-        
+
         assert len(data) == 3
         tool_names = [tool["name"] for tool in data]
         assert "get_user_balance" in tool_names
@@ -190,15 +182,11 @@ class TestPortfolioToolHandlers:
     async def test_get_user_balance_handler(self):
         """Test get_user_balance handler."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
 
-        result = await server._get_user_balance(
-            user_id="test_user_123",
-            chain_id=1
-        )
+        result = await server._get_user_balance(user_id="test_user_123", chain_id=1)
 
         assert "balances" in result or "total_usd" in result or "error" in result
 
@@ -206,14 +194,13 @@ class TestPortfolioToolHandlers:
     async def test_get_user_balance_multi_chain(self):
         """Test get_user_balance handler with multiple chains."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
 
         result = await server._get_user_balance(
             user_id="test_user_123",
-            chain_id=None  # All chains
+            chain_id=None,  # All chains
         )
 
         # Should return multi-chain data or error
@@ -223,14 +210,11 @@ class TestPortfolioToolHandlers:
     async def test_get_user_positions_handler(self):
         """Test get_user_positions handler."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
 
-        result = await server._get_user_positions(
-            user_id="test_user_123"
-        )
+        result = await server._get_user_positions(user_id="test_user_123")
 
         assert "positions" in result or "defi_positions" in result or "error" in result
 
@@ -238,14 +222,12 @@ class TestPortfolioToolHandlers:
     async def test_get_user_positions_by_protocol(self):
         """Test get_user_positions handler filtered by protocol."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
 
         result = await server._get_user_positions(
-            user_id="test_user_123",
-            protocol="aave"
+            user_id="test_user_123", protocol="aave"
         )
 
         assert isinstance(result, dict)
@@ -254,14 +236,11 @@ class TestPortfolioToolHandlers:
     async def test_get_portfolio_summary_handler(self):
         """Test get_portfolio_summary handler."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
 
-        result = await server._get_portfolio_summary(
-            user_id="test_user_123"
-        )
+        result = await server._get_portfolio_summary(user_id="test_user_123")
 
         # Should return summary data
         assert isinstance(result, dict)
@@ -271,14 +250,11 @@ class TestPortfolioToolHandlers:
     async def test_get_user_balance_with_default_chain(self):
         """Test get_user_balance handler with default chain."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
 
-        result = await server._get_user_balance(
-            user_id="test_user_123"
-        )
+        result = await server._get_user_balance(user_id="test_user_123")
 
         assert isinstance(result, dict)
 
@@ -290,56 +266,46 @@ class TestPortfolioToolExecution:
     def test_execute_get_user_balance_via_api(self):
         """Test executing get_user_balance tool via API."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
         client = TestClient(server.app)
-        
+
         response = client.post(
             "/tools/get_user_balance",
-            json={"parameters": {
-                "user_id": "test_user_123",
-                "chain_id": 1
-            }}
+            json={"parameters": {"user_id": "test_user_123", "chain_id": 1}},
         )
-        
+
         assert response.status_code == 200
 
     def test_execute_get_user_positions_via_api(self):
         """Test executing get_user_positions tool via API."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
         client = TestClient(server.app)
-        
+
         response = client.post(
             "/tools/get_user_positions",
-            json={"parameters": {
-                "user_id": "test_user_123"
-            }}
+            json={"parameters": {"user_id": "test_user_123"}},
         )
-        
+
         assert response.status_code == 200
 
     def test_execute_get_portfolio_summary_via_api(self):
         """Test executing get_portfolio_summary tool via API."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
         client = TestClient(server.app)
-        
+
         response = client.post(
             "/tools/get_portfolio_summary",
-            json={"parameters": {
-                "user_id": "test_user_123"
-            }}
+            json={"parameters": {"user_id": "test_user_123"}},
         )
-        
+
         assert response.status_code == 200
 
 
@@ -350,14 +316,13 @@ class TestPortfolioRootEndpoint:
     def test_root_endpoint_returns_server_info(self):
         """Test root endpoint returns server info."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
         client = TestClient(server.app)
-        
+
         response = client.get("/")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "portfolio"
@@ -372,36 +337,31 @@ class TestPortfolioValidation:
     def test_empty_user_id(self):
         """Test handling of empty user_id."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
         client = TestClient(server.app)
-        
+
         response = client.post(
             "/tools/get_user_balance",
-            json={"parameters": {
-                "user_id": "",
-                "chain_id": 1
-            }}
+            json={"parameters": {"user_id": "", "chain_id": 1}},
         )
-        
+
         # Should handle gracefully (either 200 with error or 400)
         assert response.status_code in [200, 400, 422]
 
     def test_missing_required_parameter(self):
         """Test handling of missing required parameter."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(portfolio_enabled=True)
+            enabled=True, servers=MCPServerSettings(portfolio_enabled=True)
         )
         server = PortfolioMCPServer(settings=settings)
         client = TestClient(server.app)
-        
+
         response = client.post(
             "/tools/get_user_balance",
-            json={"parameters": {}}  # Missing user_id
+            json={"parameters": {}},  # Missing user_id
         )
-        
+
         # Should return error
         assert response.status_code in [200, 400, 422]

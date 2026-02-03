@@ -99,7 +99,10 @@ class TestMEVBundle:
         )
 
         with pytest.raises(ValueError, match="below minimum"):
-            await protection.create_bundle(transactions=[tx], expected_profit=Decimal("50"))
+            await protection.create_bundle(
+                transactions=[tx], expected_profit=Decimal("50")
+            )
+
 
 class TestBundleSimulation:
     """Test bundle simulation."""
@@ -151,6 +154,7 @@ class TestBundleSimulation:
 
         assert success is False
         assert "exceeds block limit" in error
+
 
 class TestFlashbotsSubmission:
     """Test Flashbots submission."""
@@ -205,6 +209,7 @@ class TestFlashbotsSubmission:
         assert status is not None
         assert status.bundle_id == bundle.bundle_id
 
+
 class TestArbitrageExecution:
     """Test arbitrage execution."""
 
@@ -241,6 +246,7 @@ class TestArbitrageExecution:
 
             assert result.execution_id is not None
             assert result.bundle_id is not None
+
 
 class TestBundleManagement:
     """Test bundle management."""
@@ -281,6 +287,7 @@ class TestBundleManagement:
         assert "protection_level" in info
         assert "use_flashbots" in info
         assert info["use_flashbots"] is True
+
 
 class TestSerialization:
     """Test data serialization."""

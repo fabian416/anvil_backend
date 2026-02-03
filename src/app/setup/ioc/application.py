@@ -5,7 +5,9 @@ from app.application.chat.commands.send_message import SendMessage
 from app.domain.chat.ports.conversation_repository import ConversationRepository
 from app.domain.ports.ai.agent_gateway import AgentGateway
 
-from app.application.chat.services.admin_analytics_service import AdminChatAnalyticsService
+from app.application.chat.services.admin_analytics_service import (
+    AdminChatAnalyticsService,
+)
 from app.domain.chat.ports.analytics_repository import AnalyticsRepository
 
 from app.application.commands.user.activate_user import ActivateUserInteractor
@@ -18,7 +20,9 @@ from app.application.commands.auth.change_role import ChangeRoleInteractor
 from app.application.commands.auth.privy_login import PrivyLogin
 from app.application.commands.wallet.export_wallet import ExportWallet
 from app.application.commands.wallet.update_privy_wallet import UpdatePrivyWallet
-from app.application.commands.wallet.save_swap_transaction import SaveSwapTransactionHandler
+from app.application.commands.wallet.save_swap_transaction import (
+    SaveSwapTransactionHandler,
+)
 from app.application.commands.policy.create_privy_policy import CreatePrivyPolicy
 from app.application.commands.policy.get_privy_policy import GetPrivyPolicy
 from app.application.commands.policy.update_privy_policy import UpdatePrivyPolicy
@@ -38,7 +42,9 @@ from app.application.common.ports.user_query_gateway import UserQueryGateway
 from app.application.common.services.current_user import CurrentUserService
 from app.application.queries.list_users import ListUsersQueryService
 from app.application.queries.list_wallets import ListWalletsQueryService
-from app.application.queries.wallet.get_privy_wallet_details import GetPrivyWalletDetails
+from app.application.queries.wallet.get_privy_wallet_details import (
+    GetPrivyWalletDetails,
+)
 from app.application.queries.policy.list_privy_policies import ListPrivyPolicies
 from app.application.atlas.queries import (
     SearchCountriesQueryService,
@@ -54,7 +60,9 @@ from app.infrastructure.adapters.user_data_mapper_sqla import (
     SqlaUserDataMapper,
 )
 from app.infrastructure.adapters.user_reader_sqla import SqlaUserReader
-from app.infrastructure.adapters.user_metrics_repository_sqla import UserMetricsRepositorySqla
+from app.infrastructure.adapters.user_metrics_repository_sqla import (
+    UserMetricsRepositorySqla,
+)
 from app.infrastructure.auth.adapters.access_revoker import (
     AuthSessionAccessRevoker,
 )
@@ -67,7 +75,10 @@ from app.domain.services.auth import AuthService
 from app.domain.ports.password_hasher import PasswordHasher
 from app.domain.ports.user_id_generator import UserIdGenerator
 from app.domain.ports.auth_gateway import AuthGateway
-from app.infrastructure.adapters.password_hasher_bcrypt import BcryptPasswordHasher, PasswordPepper
+from app.infrastructure.adapters.password_hasher_bcrypt import (
+    BcryptPasswordHasher,
+    PasswordPepper,
+)
 from app.infrastructure.adapters.user_id_generator_uuid import UuidUserIdGenerator
 from app.setup.config.security import PasswordSettings
 from app.setup.config.privy import PrivySettings
@@ -146,7 +157,7 @@ class ApplicationProvider(Provider):
         source=SqlaUserReader,
         provides=UserQueryGateway,
     )
-    
+
     # Metrics
     metrics_repository = provide(
         source=UserMetricsRepositorySqla,

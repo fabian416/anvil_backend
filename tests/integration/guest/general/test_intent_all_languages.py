@@ -21,7 +21,12 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Intent detection varies; requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.intent_detection]
+pytestmark = [
+    pytest.mark.skip(reason="Intent detection varies; requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.intent_detection,
+]
 
 
 class TestAllLanguageSupport:
@@ -36,10 +41,7 @@ class TestAllLanguageSupport:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "¿Cuál es el precio de Bitcoin?",
-                "language": "es"
-            }
+            json={"content": "¿Cuál es el precio de Bitcoin?", "language": "es"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -51,10 +53,14 @@ class TestAllLanguageSupport:
 
         # Should provide substantive response
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 50, "Should provide substantive response in Spanish"
+        assert len(agent_response) > 50, (
+            "Should provide substantive response in Spanish"
+        )
 
     @pytest.mark.llm_validation
-    async def test_portuguese_language_full_flow(self, client: AsyncClient, llm_validator):
+    async def test_portuguese_language_full_flow(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test Portuguese language end-to-end intent detection.
 
@@ -62,10 +68,7 @@ class TestAllLanguageSupport:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Qual é o preço do Ethereum?",
-                "language": "pt"
-            }
+            json={"content": "Qual é o preço do Ethereum?", "language": "pt"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -76,7 +79,9 @@ class TestAllLanguageSupport:
 
         # Should provide substantive response
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 50, "Should provide substantive response in Portuguese"
+        assert len(agent_response) > 50, (
+            "Should provide substantive response in Portuguese"
+        )
 
     @pytest.mark.llm_validation
     async def test_chinese_language_full_flow(self, client: AsyncClient, llm_validator):
@@ -87,10 +92,7 @@ class TestAllLanguageSupport:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "比特币的价格是多少？",
-                "language": "zh"
-            }
+            json={"content": "比特币的价格是多少？", "language": "zh"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -101,10 +103,14 @@ class TestAllLanguageSupport:
 
         # Should provide substantive response
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 50, "Should provide substantive response in Chinese"
+        assert len(agent_response) > 50, (
+            "Should provide substantive response in Chinese"
+        )
 
     @pytest.mark.llm_validation
-    async def test_unsupported_language_french(self, client: AsyncClient, llm_validator):
+    async def test_unsupported_language_french(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test graceful handling of unsupported language (French).
 
@@ -112,17 +118,16 @@ class TestAllLanguageSupport:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Quel est le prix d'Ethereum?",
-                "language": "fr"
-            }
+            json={"content": "Quel est le prix d'Ethereum?", "language": "fr"},
         )
 
         # Should return 422 for unsupported language
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.llm_validation
-    async def test_unsupported_language_japanese(self, client: AsyncClient, llm_validator):
+    async def test_unsupported_language_japanese(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test graceful handling of unsupported language (Japanese).
 
@@ -130,10 +135,7 @@ class TestAllLanguageSupport:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "ビットコインの価格は何ですか？",
-                "language": "ja"
-            }
+            json={"content": "ビットコインの価格は何ですか？", "language": "ja"},
         )
 
         # Should return 422 for unsupported language
@@ -148,17 +150,16 @@ class TestAllLanguageSupport:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What is Bitcoin price?",
-                "language": "invalid"
-            }
+            json={"content": "What is Bitcoin price?", "language": "invalid"},
         )
 
         # Should return 422 for invalid language
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.llm_validation
-    async def test_supported_languages_coverage(self, client: AsyncClient, llm_validator):
+    async def test_supported_languages_coverage(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test all supported languages (en, es, pt, zh) work correctly.
 
@@ -168,19 +169,17 @@ class TestAllLanguageSupport:
             ("en", "What is the price of Bitcoin?"),
             ("es", "¿Cuál es el precio de Bitcoin?"),
             ("pt", "Qual é o preço do Bitcoin?"),
-            ("zh", "比特币的价格是多少？")
+            ("zh", "比特币的价格是多少？"),
         ]
 
         for lang, query in supported_languages:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={
-                    "content": query,
-                    "language": lang
-                }
+                "/api/v1/guest/chat", json={"content": query, "language": lang}
             )
 
-            assert response.status_code == status.HTTP_200_OK, f"Language {lang} should be supported"
+            assert response.status_code == status.HTTP_200_OK, (
+                f"Language {lang} should be supported"
+            )
             data = response.json()
             assert "agent_message" in data
             assert len(data["agent_message"]["content"]) > 0
@@ -196,8 +195,8 @@ class TestAllLanguageSupport:
             "/api/v1/guest/chat",
             json={
                 "content": "What is the price of Ethereum?",
-                "language": "en"  # Providing English explicitly
-            }
+                "language": "en",  # Providing English explicitly
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK

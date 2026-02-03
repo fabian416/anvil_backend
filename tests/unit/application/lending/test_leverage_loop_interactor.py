@@ -20,25 +20,30 @@ from app.application.lending.interactors.leverage_loop_interactor import (
     UnsupportedAssetError,
 )
 from app.domain.entities.lending.aave_position import AavePosition
-from app.domain.value_objects.lending.health_factor_result import HealthFactorResult, HealthFactorLevel
+from app.domain.value_objects.lending.health_factor_result import (
+    HealthFactorResult,
+    HealthFactorLevel,
+)
 
 
 @pytest.fixture
 def mock_hf_validator_service():
     """Mock health factor validator service."""
     mock = AsyncMock()
-    mock.validate_borrow = AsyncMock(return_value=HealthFactorResult(
-        current_hf=Decimal("5.0"),
-        projected_hf=Decimal("2.5"),
-        level=HealthFactorLevel.SAFE,
-        is_safe=True,
-        warning_message="✅ SAFE",
-        liquidation_price=None,
-        max_safe_borrow_usd=Decimal("10000"),
-        collateral_usd=Decimal("15000"),
-        current_debt_usd=Decimal("0"),
-        projected_debt_usd=Decimal("5000"),
-    ))
+    mock.validate_borrow = AsyncMock(
+        return_value=HealthFactorResult(
+            current_hf=Decimal("5.0"),
+            projected_hf=Decimal("2.5"),
+            level=HealthFactorLevel.SAFE,
+            is_safe=True,
+            warning_message="✅ SAFE",
+            liquidation_price=None,
+            max_safe_borrow_usd=Decimal("10000"),
+            collateral_usd=Decimal("15000"),
+            current_debt_usd=Decimal("0"),
+            projected_debt_usd=Decimal("5000"),
+        )
+    )
     return mock
 
 
@@ -46,8 +51,12 @@ def mock_hf_validator_service():
 def mock_hf_validator_domain():
     """Mock domain health factor validator."""
     mock = Mock()
-    mock._calculate_health_factor = Mock(side_effect=lambda collateral_usd, debt_usd, liquidation_threshold:
-        Decimal("inf") if debt_usd == 0 else (collateral_usd * liquidation_threshold) / debt_usd
+    mock._calculate_health_factor = Mock(
+        side_effect=lambda collateral_usd, debt_usd, liquidation_threshold: Decimal(
+            "inf"
+        )
+        if debt_usd == 0
+        else (collateral_usd * liquidation_threshold) / debt_usd
     )
     mock._determine_level = Mock(return_value=HealthFactorLevel.SAFE)
     mock._calculate_max_safe_borrow = Mock(return_value=Decimal("5000"))
@@ -67,21 +76,25 @@ def mock_balance_checker():
 def mock_swap_executor():
     """Mock swap executor."""
     mock = AsyncMock()
-    mock.get_swap_quote = AsyncMock(return_value={
-        "amount_out": Decimal("0.5"),
-        "rate": Decimal("0.0005"),
-        "price_impact": Decimal("0.1"),
-        "min_amount_out": Decimal("0.495"),
-        "gas_estimate": Decimal("0.001"),
-        "gas_estimate_usd": Decimal("3.0"),
-        "route": ["USDC", "ETH"],
-    })
-    mock.build_swap_execute_data = AsyncMock(return_value={
-        "action_type": "swap",
-        "provider": "1inch",
-        "from_token": "USDC",
-        "to_token": "ETH",
-    })
+    mock.get_swap_quote = AsyncMock(
+        return_value={
+            "amount_out": Decimal("0.5"),
+            "rate": Decimal("0.0005"),
+            "price_impact": Decimal("0.1"),
+            "min_amount_out": Decimal("0.495"),
+            "gas_estimate": Decimal("0.001"),
+            "gas_estimate_usd": Decimal("3.0"),
+            "route": ["USDC", "ETH"],
+        }
+    )
+    mock.build_swap_execute_data = AsyncMock(
+        return_value={
+            "action_type": "swap",
+            "provider": "1inch",
+            "from_token": "USDC",
+            "to_token": "ETH",
+        }
+    )
     return mock
 
 

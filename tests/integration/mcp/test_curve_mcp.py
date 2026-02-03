@@ -27,20 +27,16 @@ class TestCurveMCPServerStructure:
 
     def test_curve_server_has_setup_tools(self):
         """Test server has setup_tools method."""
-        assert hasattr(CurveMCPServer, 'setup_tools')
+        assert hasattr(CurveMCPServer, "setup_tools")
 
     def test_curve_server_initialization_enabled(self):
         """Test server can be instantiated when enabled."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(curve_enabled=True)
+            enabled=True, servers=MCPServerSettings(curve_enabled=True)
         )
         mock_gateway = MagicMock()
 
-        server = CurveMCPServer(
-            curve_gateway=mock_gateway,
-            settings=settings
-        )
+        server = CurveMCPServer(curve_gateway=mock_gateway, settings=settings)
 
         assert server is not None
         assert server.name == "curve"
@@ -54,14 +50,10 @@ class TestCurveTools:
     def test_setup_tools_registers_all_tools(self):
         """Test setup_tools registers all expected tools."""
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(curve_enabled=True)
+            enabled=True, servers=MCPServerSettings(curve_enabled=True)
         )
         mock_gateway = MagicMock()
-        server = CurveMCPServer(
-            curve_gateway=mock_gateway,
-            settings=settings
-        )
+        server = CurveMCPServer(curve_gateway=mock_gateway, settings=settings)
 
         server.setup_tools()
 
@@ -105,13 +97,9 @@ class TestCurveToolHandlers:
         mock_gateway.get_pools.return_value = [mock_pool]
 
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(curve_enabled=True)
+            enabled=True, servers=MCPServerSettings(curve_enabled=True)
         )
-        server = CurveMCPServer(
-            curve_gateway=mock_gateway,
-            settings=settings
-        )
+        server = CurveMCPServer(curve_gateway=mock_gateway, settings=settings)
         server.setup_tools()
 
         result = await server._get_pools_handler(chain="ethereum", limit=20)
@@ -120,7 +108,6 @@ class TestCurveToolHandlers:
         assert len(result["pools"]) == 1
         assert result["pools"][0]["name"] == "3pool"
         assert "USDC" in result["pools"][0]["coins"]
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -146,20 +133,13 @@ class TestCurveToolHandlers:
         mock_gateway.get_pool_apy.return_value = mock_apy
 
         settings = MCPSettings(
-            enabled=True,
-            servers=MCPServerSettings(curve_enabled=True)
+            enabled=True, servers=MCPServerSettings(curve_enabled=True)
         )
-        server = CurveMCPServer(
-            curve_gateway=mock_gateway,
-            settings=settings
-        )
+        server = CurveMCPServer(curve_gateway=mock_gateway, settings=settings)
         server.setup_tools()
 
         result = await server._find_best_pools_handler(
-            token="USDC",
-            sort_by="apy",
-            chain="ethereum",
-            limit=10
+            token="USDC", sort_by="apy", chain="ethereum", limit=10
         )
 
         assert "pools" in result

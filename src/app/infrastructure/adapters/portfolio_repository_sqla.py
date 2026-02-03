@@ -19,7 +19,9 @@ from app.domain.portfolio.entities.portfolio_snapshot import (
 )
 from app.domain.entities.wallet import WalletId
 from app.domain.enums.chain_type import ChainType
-from app.domain.portfolio.ports.portfolio.portfolio_repository import PortfolioRepository
+from app.domain.portfolio.ports.portfolio.portfolio_repository import (
+    PortfolioRepository,
+)
 from app.domain.value_objects.created_at import CreatedAt
 from app.infrastructure.adapters.types import MainAsyncSession
 

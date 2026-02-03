@@ -216,7 +216,9 @@ class AgentLibraryRegistry:
         """Get all available agents."""
         return [entry.create() for entry in self._agents.values()]
 
-    def get_agents_by_category(self, category: AgentCategory) -> List[CustomAgentConfig]:
+    def get_agents_by_category(
+        self, category: AgentCategory
+    ) -> List[CustomAgentConfig]:
         """
         Get all agents in a category.
 
@@ -293,7 +295,11 @@ class AgentLibraryRegistry:
 
         for entry in self._agents.values():
             # Apply category filter
-            if category and category != AgentCategory.ALL and entry.category != category:
+            if (
+                category
+                and category != AgentCategory.ALL
+                and entry.category != category
+            ):
                 continue
 
             # Create agent to access full config
@@ -319,8 +325,16 @@ class AgentLibraryRegistry:
         Returns:
             Dictionary with library statistics
         """
-        defi_count = len([e for e in self._agents.values() if e.category == AgentCategory.DEFI_SPECIALIST])
-        tech_count = len([e for e in self._agents.values() if e.category == AgentCategory.TECHNICAL_EXPERT])
+        defi_count = len([
+            e
+            for e in self._agents.values()
+            if e.category == AgentCategory.DEFI_SPECIALIST
+        ])
+        tech_count = len([
+            e
+            for e in self._agents.values()
+            if e.category == AgentCategory.TECHNICAL_EXPERT
+        ])
 
         all_tags = set()
         for entry in self._agents.values():

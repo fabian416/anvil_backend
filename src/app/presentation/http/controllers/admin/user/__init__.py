@@ -1,2 +1,1 @@
 """Admin users routers package."""
-

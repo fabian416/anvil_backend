@@ -189,7 +189,9 @@ class EnhancedCSVWriter:
 
             # If no error analysis yet, use root cause as analysis
             if not result.error_analysis:
-                result.error_analysis = f"[{error_analysis.error_type.value}] {error_analysis.root_cause}"
+                result.error_analysis = (
+                    f"[{error_analysis.error_type.value}] {error_analysis.root_cause}"
+                )
 
         return result
 
@@ -221,7 +223,11 @@ class EnhancedCSVWriter:
         # Add AI analysis columns if enabled
         if self.enable_ai_columns:
             row["llm_verdict"] = result.llm_verdict or ""
-            row["llm_confidence"] = f"{result.llm_confidence:.2f}" if result.llm_confidence is not None else ""
+            row["llm_confidence"] = (
+                f"{result.llm_confidence:.2f}"
+                if result.llm_confidence is not None
+                else ""
+            )
             row["error_analysis"] = self._clean_cell_value(result.error_analysis or "")
             row["root_cause"] = self._clean_cell_value(result.root_cause or "")
             row["suggested_fix"] = self._clean_cell_value(result.suggested_fix or "")
@@ -298,7 +304,9 @@ class EnhancedCSVWriter:
             result.suggested_fix = error_analysis.suggested_fix
 
             if not result.error_analysis:
-                result.error_analysis = f"[{error_analysis.error_type.value}] {error_analysis.root_cause}"
+                result.error_analysis = (
+                    f"[{error_analysis.error_type.value}] {error_analysis.root_cause}"
+                )
 
         return result
 

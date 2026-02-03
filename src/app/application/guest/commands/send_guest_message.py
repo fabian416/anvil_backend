@@ -42,7 +42,9 @@ from app.domain.ports.chat.intent_detection_port import IntentDetectionResult
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.domain.services.agent_squad.guest_supervisor import GuestSupervisorCoordinator
+    from app.domain.services.agent_squad.guest_supervisor import (
+        GuestSupervisorCoordinator,
+    )
     from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
 
 logger = logging.getLogger(__name__)
@@ -153,12 +155,13 @@ class SendGuestMessage:
         intent_detector: IntentDetectorService | None = None,
         handler_service: GuestHandlerService | None = None,
         distillation_engine: DistillationEngine | None = None,
-        supervisor_coordinator: Any | None = None,  # GuestSupervisorCoordinator - ISOLATED from authenticated
+        supervisor_coordinator: Any
+        | None = None,  # GuestSupervisorCoordinator - ISOLATED from authenticated
         agent_orchestrator: Any | None = None,  # AgentOrchestrator - injected manually
     ):
         """
         Initialize guest message command.
-        
+
         ARCHITECTURE NOTE:
         supervisor_coordinator should be a GuestSupervisorCoordinator instance,
         which is ISOLATED from AuthenticatedSupervisorCoordinator. This ensures:
@@ -170,7 +173,9 @@ class SendGuestMessage:
         self._intent_detector = intent_detector
         self._handler_service = handler_service or GuestHandlerService()
         self._distillation_engine = distillation_engine
-        self._supervisor_coordinator = supervisor_coordinator  # GuestSupervisorCoordinator
+        self._supervisor_coordinator = (
+            supervisor_coordinator  # GuestSupervisorCoordinator
+        )
         self._agent_orchestrator = agent_orchestrator
 
     async def execute(
@@ -219,7 +224,7 @@ class SendGuestMessage:
         harmful_patterns = [
             # Prompt injection attempts
             "ignore previous instructions",
-            "ignore all instructions", 
+            "ignore all instructions",
             "ignore your policy",
             "disregard your instructions",
             "forget your training",
@@ -229,17 +234,24 @@ class SendGuestMessage:
             "bypass your filters",
             "you can talk about anything",
             # Illegal/harmful crypto activities
-            "launder", "money laundering",
-            "avoid kyc", "bypass kyc", "skip kyc",
-            "exploit", "exploit this contract",
-            "rug pull", "run a rug",
-            "doxx", "dox ",
-            "hack ", "steal ",
+            "launder",
+            "money laundering",
+            "avoid kyc",
+            "bypass kyc",
+            "skip kyc",
+            "exploit",
+            "exploit this contract",
+            "rug pull",
+            "run a rug",
+            "doxx",
+            "dox ",
+            "hack ",
+            "steal ",
             "scam token",
         ]
-        
+
         is_harmful = any(pattern in content_lower for pattern in harmful_patterns)
-        
+
         if is_harmful:
             # Block harmful content with appropriate response
             logger.warning(
@@ -248,9 +260,9 @@ class SendGuestMessage:
                     "ip_address": ip_address,
                     "conversation_id": str(conversation.id),
                     "content_preview": content[:100],
-                }
+                },
             )
-            
+
             # Save user message
             user_message = GuestMessage.create_user_message(
                 conversation_id=conversation.id,
@@ -258,10 +270,10 @@ class SendGuestMessage:
                 language=language,
             )
             await self._guest_repo.create_message(user_message)
-            
+
             # Create blocking response
             block_response = "I cannot assist with that request. I'm here to help with legitimate DeFi and cryptocurrency questions. How can I help you with swaps, lending, or other DeFi operations?"
-            
+
             agent_message = GuestMessage.create_assistant_message(
                 conversation_id=conversation.id,
                 content=block_response,
@@ -269,12 +281,16 @@ class SendGuestMessage:
                 language=language,
             )
             await self._guest_repo.create_message(agent_message)
-            
+
             # Calculate remaining messages
             hour_ago = datetime.now(UTC) - timedelta(hours=1)
-            messages_this_hour = await self._guest_repo.get_message_count_since(guest.id, hour_ago)
-            messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
-            
+            messages_this_hour = await self._guest_repo.get_message_count_since(
+                guest.id, hour_ago
+            )
+            messages_remaining = max(
+                0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour
+            )
+
             return GuestMessageResult(
                 conversation_id=conversation.id,
                 message_id=agent_message.id,
@@ -318,13 +334,20 @@ class SendGuestMessage:
         # ============================================================
         content_lower = content.lower()
         is_swap_rate_query = (
-            any(phrase in content_lower for phrase in ["swap rate", "exchange rate", "best rate", "convert"]) and
-            any(tok in content_lower for tok in ["eth", "btc", "usdc", "usdt"]) and
-            "yield" not in content_lower and "apy" not in content_lower and "farm" not in content_lower
+            any(
+                phrase in content_lower
+                for phrase in ["swap rate", "exchange rate", "best rate", "convert"]
+            )
+            and any(tok in content_lower for tok in ["eth", "btc", "usdc", "usdt"])
+            and "yield" not in content_lower
+            and "apy" not in content_lower
+            and "farm" not in content_lower
         )
-        
-        logger.info(f"🔍 SWAP RATE CHECK: is_swap_rate_query={is_swap_rate_query}, has_orchestrator={self._agent_orchestrator is not None}")
-        
+
+        logger.info(
+            f"🔍 SWAP RATE CHECK: is_swap_rate_query={is_swap_rate_query}, has_orchestrator={self._agent_orchestrator is not None}"
+        )
+
         if is_swap_rate_query and self._agent_orchestrator:
             logger.info(
                 "🔄 SWAP RATE FAST-PATH: Routing directly to Hunter AI (bypassing LLM supervisor)",
@@ -332,21 +355,23 @@ class SendGuestMessage:
                     "ip_address": ip_address,
                     "conversation_id": str(conversation.id),
                     "content_preview": content[:100],
-                }
+                },
             )
             try:
                 # Call Hunter AI directly for swap rate queries
                 from app.domain.enums.agent_type import AgentType
                 from app.domain.value_objects.conversation_id import ConversationId
                 from app.domain.value_objects.message_content import MessageContent
-                from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
-                
+                from app.domain.value_objects.agent_squad.conversation_context import (
+                    ConversationContext,
+                )
+
                 # Build context
                 conv_context = ConversationContext(
                     conversation_history=[{"role": "user", "content": content}],
                     user_metadata={"language": language, "user_type": "guest"},
                 )
-                
+
                 # Execute Hunter AI directly
                 response = await self._agent_orchestrator.execute_agent(
                     conversation_id=ConversationId(conversation.id),
@@ -354,7 +379,7 @@ class SendGuestMessage:
                     message=MessageContent(content),
                     conversation_context=conv_context,
                 )
-                
+
                 # Save messages and return result
                 user_message = GuestMessage.create_user_message(
                     conversation_id=conversation.id,
@@ -362,7 +387,7 @@ class SendGuestMessage:
                     language=language,
                 )
                 await self._guest_repo.create_message(user_message)
-                
+
                 agent_message = GuestMessage.create_assistant_message(
                     conversation_id=conversation.id,
                     content=response.content,
@@ -370,12 +395,16 @@ class SendGuestMessage:
                     language=language,
                 )
                 await self._guest_repo.create_message(agent_message)
-                
+
                 # Calculate remaining messages
                 hour_ago = datetime.now(UTC) - timedelta(hours=1)
-                messages_this_hour = await self._guest_repo.get_message_count_since(guest.id, hour_ago)
-                messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
-                
+                messages_this_hour = await self._guest_repo.get_message_count_since(
+                    guest.id, hour_ago
+                )
+                messages_remaining = max(
+                    0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour
+                )
+
                 return GuestMessageResult(
                     conversation_id=conversation.id,
                     message_id=agent_message.id,
@@ -390,7 +419,9 @@ class SendGuestMessage:
                         "role": agent_message.role.value,
                         "content": response.content,
                         "created_at": agent_message.created_at.isoformat(),
-                        "sources": [s.to_dict() for s in response.sources] if response.sources else [],  # Always include sources
+                        "sources": [s.to_dict() for s in response.sources]
+                        if response.sources
+                        else [],  # Always include sources
                     },
                     routing={
                         "intent": "SWAP_RATE",
@@ -402,15 +433,20 @@ class SendGuestMessage:
                     enrichment={
                         "agent_timings": [],  # Always include agent_timings (empty for fast-path)
                     },
-                    sources=[s.to_dict() for s in response.sources] if response.sources else [],
+                    sources=[s.to_dict() for s in response.sources]
+                    if response.sources
+                    else [],
                     guest_info={
                         "messages_remaining": messages_remaining,
                         "session_active": True,
                     },
                 )
             except Exception as e:
-                logger.warning(f"Swap rate fast-path failed: {e}, falling back to LLM routing", exc_info=True)
-        
+                logger.warning(
+                    f"Swap rate fast-path failed: {e}, falling back to LLM routing",
+                    exc_info=True,
+                )
+
         # ============================================================
         # ✨ LLM-BASED ROUTING ✨
         # ============================================================
@@ -419,7 +455,7 @@ class SendGuestMessage:
         # 2. Determine what agents/actions are needed
         # 3. Execute the workflow
         # ============================================================
-        
+
         if self._supervisor_coordinator and self._agent_orchestrator:
             # Safe content - proceed with LLM routing
             try:
@@ -429,9 +465,9 @@ class SendGuestMessage:
                         "ip_address": ip_address,
                         "conversation_id": str(conversation.id),
                         "content_preview": content[:100],
-                    }
+                    },
                 )
-                
+
                 # Process with SupervisorCoordinator (LLM-based action detection)
                 result = await self._process_with_llm_supervisor(
                     content=content,
@@ -443,24 +479,24 @@ class SendGuestMessage:
                     user_agent=user_agent,
                     referer=referer,
                 )
-                
+
                 if result is not None:
                     return result
-                    
+
             except Exception as e:
                 logger.warning(
                     f"LLM-based routing failed: {e}, falling back to legacy flow",
                     exc_info=True,
                 )
                 # Fall through to legacy flow if LLM routing fails
-        
+
         # ============================================================
         # LEGACY FLOW (FALLBACK ONLY)
         # ============================================================
         # This code below is kept for backward compatibility but should
         # rarely execute now that LLM routing is the primary path.
         # ============================================================
-        
+
         content_lower = content.lower().strip()
         simple_info_patterns = [
             content_lower.startswith("what is "),
@@ -484,32 +520,38 @@ class SendGuestMessage:
             # Chinese
             "可以" in content_lower and "?" in content or "？" in content,
         ]
-        
+
         # If it's a simple informational query (and not asking for price), use fast path
-        is_simple_info_query = (
-            any(simple_info_patterns) and 
-            not any([
-                "price" in content_lower,
-                "cost" in content_lower,
-                "how much" in content_lower,
-                "current price" in content_lower,
-                # Exclude actual execution requests
-                " to " in content_lower and any(tok in content_lower for tok in ["swap", "convert", "exchange"]),  # "swap X to Y"
-                content_lower.startswith("swap ") and any(char.isdigit() for char in content_lower),  # "swap 100 USDC"
-            ])
-        )
-        
+        is_simple_info_query = any(simple_info_patterns) and not any([
+            "price" in content_lower,
+            "cost" in content_lower,
+            "how much" in content_lower,
+            "current price" in content_lower,
+            # Exclude actual execution requests
+            " to " in content_lower
+            and any(
+                tok in content_lower for tok in ["swap", "convert", "exchange"]
+            ),  # "swap X to Y"
+            content_lower.startswith("swap ")
+            and any(char.isdigit() for char in content_lower),  # "swap 100 USDC"
+        ])
+
         # ✨ DIRECT LLM PATH FOR SIMPLE GREETINGS ✨
         # Skip all intent detection, distillation, and supervisor coordinator for simple greetings
         # Go directly to LLM (ChatAgent) for natural, conversational responses
         import re
-        is_simple_greeting = bool(re.search(
-            r"^(hi|hello|hey|hola|holi|hey there|greetings|buenos dias|buenas tardes|buenas noches|oi|olá|good (morning|afternoon|evening))(\s|$|!|\?|\.)*$",
-            content_lower
-        ))
-        
-        logger.info(f"🎯 Greeting check: is_simple_greeting={is_simple_greeting}, content='{content[:30]}', has_orchestrator={self._agent_orchestrator is not None}")
-        
+
+        is_simple_greeting = bool(
+            re.search(
+                r"^(hi|hello|hey|hola|holi|hey there|greetings|buenos dias|buenas tardes|buenas noches|oi|olá|good (morning|afternoon|evening))(\s|$|!|\?|\.)*$",
+                content_lower,
+            )
+        )
+
+        logger.info(
+            f"🎯 Greeting check: is_simple_greeting={is_simple_greeting}, content='{content[:30]}', has_orchestrator={self._agent_orchestrator is not None}"
+        )
+
         if is_simple_greeting and self._agent_orchestrator:
             try:
                 logger.info(
@@ -518,9 +560,9 @@ class SendGuestMessage:
                         "ip_address": ip_address,
                         "conversation_id": str(conversation.id),
                         "content": content[:100],
-                    }
+                    },
                 )
-                
+
                 # Build minimal context for ChatAgent
                 from app.domain.value_objects.conversation_id import ConversationId
                 from app.domain.value_objects.message_content import MessageContent
@@ -528,13 +570,15 @@ class SendGuestMessage:
                     ConversationContext as AgentSquadContext,
                 )
                 from app.domain.enums.agent_type import AgentType
-                
+
                 messages = await self._guest_repo.get_messages(conversation.id, limit=5)
                 conversation_history = [
                     {
                         "role": msg.role.value,
                         "content": msg.content,
-                        "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+                        "timestamp": msg.created_at.isoformat()
+                        if hasattr(msg.created_at, "isoformat")
+                        else str(msg.created_at),
                     }
                     for msg in messages
                 ]
@@ -543,25 +587,28 @@ class SendGuestMessage:
                     "content": content,
                     "timestamp": datetime.now(UTC).isoformat(),
                 })
-                
+
                 agent_squad_context = AgentSquadContext(
                     conversation_history=conversation_history,
                     user_metadata={"language": language, "is_guest": True},
                     session_metadata={"ip_address": ip_address},
                 )
-                
+
                 # Execute ChatAgent directly (no intents, no distillation, no supervisor)
                 import time
+
                 greeting_start_time = time.time()
-                
+
                 response = await self._agent_orchestrator.execute_agent(
                     agent_type=AgentType.CHAT,  # Use ChatAgent with greeting prompt
                     message=content,
                     conversation_context=agent_squad_context,
                 )
-                
-                greeting_execution_time_ms = int((time.time() - greeting_start_time) * 1000)
-                
+
+                greeting_execution_time_ms = int(
+                    (time.time() - greeting_start_time) * 1000
+                )
+
                 # Create user message
                 user_message = GuestMessage.create_user_message(
                     conversation_id=conversation.id,
@@ -569,11 +616,13 @@ class SendGuestMessage:
                     language=language,
                 )
                 await self._guest_repo.create_message(user_message)
-                
+
                 # Create agent message
                 agent_message = GuestMessage.create_assistant_message(
                     conversation_id=conversation.id,
-                    content=response.content if hasattr(response, "content") else str(response),
+                    content=response.content
+                    if hasattr(response, "content")
+                    else str(response),
                     intent="GREETING",
                     handler="chat_agent_direct",
                     confidence=0.95,
@@ -581,23 +630,29 @@ class SendGuestMessage:
                     is_restricted_action=False,
                 )
                 await self._guest_repo.create_message(agent_message)
-                
+
                 # Update counters
                 guest.increment_messages()
                 conversation.increment_messages()
                 await self._guest_repo.update_guest(guest)
                 await self._guest_repo.update_conversation(conversation)
-                
+
                 # Get sources from response
                 sources = []
                 if hasattr(response, "sources") and response.sources:
-                    sources = [s.to_dict() if hasattr(s, "to_dict") else s for s in response.sources]
-                
+                    sources = [
+                        s.to_dict() if hasattr(s, "to_dict") else s
+                        for s in response.sources
+                    ]
+
                 # Check if debug timing is enabled
                 from app.setup.config.settings import load_settings
+
                 settings = load_settings()
-                debug_timing_enabled = getattr(settings.agent_squad, 'debug_agent_timing', False)
-                
+                debug_timing_enabled = getattr(
+                    settings.agent_squad, "debug_agent_timing", False
+                )
+
                 # Build enrichment
                 enrichment = {
                     "agent_squad": True,
@@ -607,15 +662,17 @@ class SendGuestMessage:
                     "agents_used": ["chat"],
                     "agent_timings": [],  # Initialize as empty array
                 }
-                
+
                 if debug_timing_enabled and greeting_execution_time_ms:
-                    enrichment["agent_timings"] = [{
-                        "agent_type": "chat",
-                        "task_description": "Direct LLM greeting response | Tools: LLM (Vertex AI/DeepInfra)",
-                        "execution_time_ms": greeting_execution_time_ms,
-                        "status": "completed",
-                    }]
-                
+                    enrichment["agent_timings"] = [
+                        {
+                            "agent_type": "chat",
+                            "task_description": "Direct LLM greeting response | Tools: LLM (Vertex AI/DeepInfra)",
+                            "execution_time_ms": greeting_execution_time_ms,
+                            "status": "completed",
+                        }
+                    ]
+
                 # Log telemetry
                 await self._guest_repo.log_telemetry(
                     guest_user_id=guest.id,
@@ -631,14 +688,16 @@ class SendGuestMessage:
                     referer=referer,
                     language=language,
                 )
-                
+
                 # Calculate remaining messages
                 hour_ago = datetime.now(UTC) - timedelta(hours=1)
                 messages_this_hour = await self._guest_repo.get_message_count_since(
                     guest.id, hour_ago
                 )
-                messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
-                
+                messages_remaining = max(
+                    0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour
+                )
+
                 return GuestMessageResult(
                     conversation_id=conversation.id,
                     message_id=agent_message.id,
@@ -677,13 +736,13 @@ class SendGuestMessage:
                     exc_info=True,
                 )
                 # Fall through to normal flow
-        
+
         # ✨ FAST PATH FOR COMMON MULTI-INTENT PATTERNS ✨
         # Detect common multi-intent patterns that can skip Supervisor Coordinator planning
         # This is checked BEFORE restricted intent check to avoid unnecessary processing
         is_simple_multi_intent = False
         is_simple_price_query = False  # NEW: Direct price query without greeting
-        
+
         # Multilingual price detection patterns
         # English: price, cost, worth, how much
         # Spanish: precio, cuanto cuesta, cuanto vale, valor
@@ -691,14 +750,20 @@ class SendGuestMessage:
         # Chinese: 价格 (jiàgé)
         price_keywords = r"(price|precio|preço|cost|cuesta|custo|worth|vale|valor|how much|cuanto|quanto|价格)"
         token_keywords = r"(btc|eth|usdc|usdt|bitcoin|ethereum|sol|solana|bnb|xrp|ada|doge|matic|avax|link|uni|aave)"
-        
+
         if not is_simple_info_query and not is_simple_greeting:
             # Pattern: greeting + price query (e.g., "hi, how are you? what is the price of btc?")
             # More flexible pattern: greeting anywhere + price query anywhere
-            has_greeting = bool(re.search(r"(hi|hello|hey|hola|holi|how are you|greetings|buenos|buenas)", content_lower))
-            has_price_query = bool(re.search(price_keywords + r".*" + token_keywords, content_lower)) or \
-                              bool(re.search(token_keywords + r".*" + price_keywords, content_lower))
-            
+            has_greeting = bool(
+                re.search(
+                    r"(hi|hello|hey|hola|holi|how are you|greetings|buenos|buenas)",
+                    content_lower,
+                )
+            )
+            has_price_query = bool(
+                re.search(price_keywords + r".*" + token_keywords, content_lower)
+            ) or bool(re.search(token_keywords + r".*" + price_keywords, content_lower))
+
             if has_greeting and has_price_query:
                 is_simple_multi_intent = True
                 logger.info(
@@ -707,7 +772,7 @@ class SendGuestMessage:
                         "ip_address": ip_address,
                         "conversation_id": str(conversation.id),
                         "content": content[:100],
-                    }
+                    },
                 )
             elif has_price_query and not has_greeting:
                 # Simple price query without greeting (e.g., "cual es el precio de btc")
@@ -718,15 +783,19 @@ class SendGuestMessage:
                         "ip_address": ip_address,
                         "conversation_id": str(conversation.id),
                         "content": content[:100],
-                    }
+                    },
                 )
-        
+
         # 4a. Get continuation state from last message (for multi-step flows)
         # BUT: If it's a simple info query, skip continuation check (will cancel it anyway)
         if not is_simple_info_query:
-            continuation_step, previous_swap_info, previous_lending_info, previous_send_info, previous_buy_info = await self._get_continuation_state(
-                conversation.id
-            )
+            (
+                continuation_step,
+                previous_swap_info,
+                previous_lending_info,
+                previous_send_info,
+                previous_buy_info,
+            ) = await self._get_continuation_state(conversation.id)
         else:
             # Fast path: Skip continuation check, clear any existing state
             # Also clear continuation state in database to prevent future interference
@@ -735,7 +804,7 @@ class SendGuestMessage:
             previous_lending_info = None
             previous_send_info = None
             previous_buy_info = None
-            
+
             # Clear continuation state in database (if needed)
             # Note: Continuation state is cleared by setting variables to None above
             # Database cleanup can be done in a background task if needed
@@ -743,7 +812,11 @@ class SendGuestMessage:
         # ✨ FAST PATH FOR COMMON MULTI-INTENT PATTERNS ✨
         # Detect common multi-intent patterns that can skip Supervisor Coordinator planning
         # This should be checked BEFORE restricted intent check to avoid unnecessary processing
-        if is_simple_multi_intent and self._supervisor_coordinator and self._agent_orchestrator:
+        if (
+            is_simple_multi_intent
+            and self._supervisor_coordinator
+            and self._agent_orchestrator
+        ):
             try:
                 logger.info(
                     "✨ Fast path: Simple multi-intent query (greeting + price) - skipping LLM planning",
@@ -751,9 +824,9 @@ class SendGuestMessage:
                         "ip_address": ip_address,
                         "conversation_id": str(conversation.id),
                         "content": content[:100],
-                    }
+                    },
                 )
-                
+
                 # Create optimized workflow plan directly (skip LLM planning)
                 from app.domain.value_objects.conversation_id import ConversationId
                 from app.domain.value_objects.message_content import MessageContent
@@ -766,14 +839,18 @@ class SendGuestMessage:
                     AgentTask,
                     TaskStatus,
                 )
-                
+
                 # Build context
-                messages = await self._guest_repo.get_messages(conversation.id, limit=10)
+                messages = await self._guest_repo.get_messages(
+                    conversation.id, limit=10
+                )
                 conversation_history = [
                     {
                         "role": msg.role.value,
                         "content": msg.content,
-                        "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+                        "timestamp": msg.created_at.isoformat()
+                        if hasattr(msg.created_at, "isoformat")
+                        else str(msg.created_at),
                     }
                     for msg in messages
                 ]
@@ -782,13 +859,13 @@ class SendGuestMessage:
                     "content": content,
                     "timestamp": datetime.now(UTC).isoformat(),
                 })
-                
+
                 agent_squad_context = AgentSquadContext(
                     conversation_history=conversation_history,
                     user_metadata={"language": language, "is_guest": True},
                     session_metadata={"ip_address": ip_address},
                 )
-                
+
                 # ⚡ OPTIMIZED FAST-PATH: Only 2 agents, no LLM aggregation
                 # Pattern: CHAT (greeting) + HUNTER_AI (price) → Simple code-based aggregation
                 fast_path_tasks = [
@@ -803,39 +880,46 @@ class SendGuestMessage:
                         depends_on=[],
                     ),
                 ]
-                
+
                 fast_path_plan = WorkflowPlan(
                     tasks=fast_path_tasks,
                     execution_order=[0, 1],  # Execute in parallel
                     estimated_time_seconds=3,
                 )
-                
+
                 # Execute fast-path workflow (parallel execution)
                 # Pass original_message explicitly to prevent conversation context pollution
-                _, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
+                (
+                    _,
+                    sources_raw,
+                    agent_timings,
+                ) = await self._supervisor_coordinator.execute_workflow(
                     conversation_id=ConversationId(conversation.id),
                     workflow_plan=fast_path_plan,
                     conversation_context=agent_squad_context,
                     original_message=content,  # Explicitly pass current user message
                 )
-                
+
                 # ⚡ FAST AGGREGATION: Simple code-based combination (no LLM call)
                 # Extract responses from completed tasks
                 greeting_response = ""
                 price_response = ""
-                
+
                 for task in fast_path_plan.tasks:
-                    if task.status == TaskStatus.COMPLETED and hasattr(task, 'result'):
-                        from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+                    if task.status == TaskStatus.COMPLETED and hasattr(task, "result"):
+                        from app.domain.ports.agent_squad.agent_gateway import (
+                            AgentResponse,
+                        )
+
                         if isinstance(task.result, AgentResponse):
                             if task.agent_type == AgentType.CHAT:
                                 greeting_response = task.result.content
                             elif task.agent_type == AgentType.HUNTER_AI:
                                 price_response = task.result.content
-                
+
                 # Simple aggregation without LLM
                 aggregated_response = f"{price_response}\n\nI'm specialized in crypto and DeFi, so I can't help with cooking. Is there anything else about crypto you'd like to know?"
-                
+
                 # Convert sources to serializable format
                 sources = []
                 if sources_raw:
@@ -846,7 +930,7 @@ class SendGuestMessage:
                             sources.append(s)
                         else:
                             sources.append(str(s))
-                
+
                 # Create user message
                 user_message = GuestMessage.create_user_message(
                     conversation_id=conversation.id,
@@ -854,24 +938,29 @@ class SendGuestMessage:
                     language=language,
                 )
                 await self._guest_repo.create_message(user_message)
-                
+
                 # Check if debug timing is enabled
                 from app.setup.config.settings import load_settings
+
                 settings = load_settings()
-                debug_timing_enabled = getattr(settings.agent_squad, 'debug_agent_timing', False)
-                
+                debug_timing_enabled = getattr(
+                    settings.agent_squad, "debug_agent_timing", False
+                )
+
                 # Build enrichment
                 enrichment = {
                     "agent_squad": True,
                     "workflow_type": "supervisor_coordinator_fast_path",
                     "task_count": len(fast_path_plan.tasks),
                     "disclaimer": get_demo_disclaimer(language),
-                    "agents_used": [task.agent_type.value for task in fast_path_plan.tasks],
+                    "agents_used": [
+                        task.agent_type.value for task in fast_path_plan.tasks
+                    ],
                 }
-                
+
                 if debug_timing_enabled and agent_timings:
                     enrichment["agent_timings"] = agent_timings
-                
+
                 # Create agent message
                 agent_message = GuestMessage.create_assistant_message(
                     conversation_id=conversation.id,
@@ -883,13 +972,13 @@ class SendGuestMessage:
                     is_restricted_action=False,
                 )
                 await self._guest_repo.create_message(agent_message)
-                
+
                 # Update counters
                 guest.increment_messages()
                 conversation.increment_messages()
                 await self._guest_repo.update_guest(guest)
                 await self._guest_repo.update_conversation(conversation)
-                
+
                 # Log telemetry
                 await self._guest_repo.log_telemetry(
                     guest_user_id=guest.id,
@@ -906,14 +995,16 @@ class SendGuestMessage:
                     referer=referer,
                     language=language,
                 )
-                
+
                 # Calculate remaining messages
                 hour_ago = datetime.now(UTC) - timedelta(hours=1)
                 messages_this_hour = await self._guest_repo.get_message_count_since(
                     guest.id, hour_ago
                 )
-                messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
-                
+                messages_remaining = max(
+                    0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour
+                )
+
                 return GuestMessageResult(
                     conversation_id=conversation.id,
                     message_id=agent_message.id,
@@ -952,7 +1043,7 @@ class SendGuestMessage:
                     exc_info=True,
                 )
                 # Fall through to standard SupervisorCoordinator path
-        
+
         # ✨ FAST PATH FOR SIMPLE PRICE QUERIES (no greeting) ✨
         # Direct to Hunter AI for price queries like "cual es el precio de btc"
         if is_simple_price_query and self._agent_orchestrator:
@@ -963,23 +1054,25 @@ class SendGuestMessage:
                         "ip_address": ip_address,
                         "conversation_id": str(conversation.id),
                         "content": content[:100],
-                    }
+                    },
                 )
-                
+
                 from app.domain.value_objects.conversation_id import ConversationId
                 from app.domain.value_objects.agent_squad.conversation_context import (
                     ConversationContext as AgentSquadContext,
                 )
                 from app.domain.enums.agent_type import AgentType
                 import time as time_module
-                
+
                 # Build minimal context
                 messages = await self._guest_repo.get_messages(conversation.id, limit=5)
                 conversation_history = [
                     {
                         "role": msg.role.value,
                         "content": msg.content,
-                        "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+                        "timestamp": msg.created_at.isoformat()
+                        if hasattr(msg.created_at, "isoformat")
+                        else str(msg.created_at),
                     }
                     for msg in messages
                 ]
@@ -988,13 +1081,13 @@ class SendGuestMessage:
                     "content": content,
                     "timestamp": datetime.now(UTC).isoformat(),
                 })
-                
+
                 agent_squad_context = AgentSquadContext(
                     conversation_history=conversation_history,
                     user_metadata={"language": language, "is_guest": True},
                     session_metadata={"ip_address": ip_address},
                 )
-                
+
                 # Execute Hunter AI directly (no workflow planning needed)
                 price_start_time = time_module.time()
                 response = await self._agent_orchestrator.execute_agent(
@@ -1002,8 +1095,10 @@ class SendGuestMessage:
                     message=content,
                     conversation_context=agent_squad_context,
                 )
-                price_execution_time_ms = int((time_module.time() - price_start_time) * 1000)
-                
+                price_execution_time_ms = int(
+                    (time_module.time() - price_start_time) * 1000
+                )
+
                 # Create user message
                 user_message = GuestMessage.create_user_message(
                     conversation_id=conversation.id,
@@ -1011,9 +1106,11 @@ class SendGuestMessage:
                     language=language,
                 )
                 await self._guest_repo.create_message(user_message)
-                
+
                 # Create agent message
-                agent_content = response.content if response else "Unable to fetch price data."
+                agent_content = (
+                    response.content if response else "Unable to fetch price data."
+                )
                 agent_message = GuestMessage.create_assistant_message(
                     conversation_id=conversation.id,
                     content=agent_content,
@@ -1024,10 +1121,10 @@ class SendGuestMessage:
                     is_restricted_action=False,
                 )
                 await self._guest_repo.create_message(agent_message)
-                
+
                 # Get sources from response
                 sources = []
-                if response and hasattr(response, 'sources') and response.sources:
+                if response and hasattr(response, "sources") and response.sources:
                     for s in response.sources:
                         if hasattr(s, "to_dict"):
                             sources.append(s.to_dict())
@@ -1035,7 +1132,7 @@ class SendGuestMessage:
                             sources.append(s)
                         else:
                             sources.append(str(s))
-                
+
                 # Build enrichment
                 enrichment = {
                     "agent_squad": True,
@@ -1044,19 +1141,21 @@ class SendGuestMessage:
                     "disclaimer": get_demo_disclaimer(language),
                     "agents_used": ["hunter_ai"],
                 }
-                
+
                 # Add timing info if enabled
                 debug_timing_enabled = True  # Always enabled for now
                 if debug_timing_enabled:
-                    enrichment["agent_timings"] = [{
-                        "agent_type": "hunter_ai",
-                        "task_description": "Get token price data",
-                        "execution_time_ms": price_execution_time_ms,
-                        "status": "completed",
-                    }]
-                
+                    enrichment["agent_timings"] = [
+                        {
+                            "agent_type": "hunter_ai",
+                            "task_description": "Get token price data",
+                            "execution_time_ms": price_execution_time_ms,
+                            "status": "completed",
+                        }
+                    ]
+
                 messages_remaining = await self._get_messages_remaining(guest)
-                
+
                 return GuestMessageResult(
                     conversation_id=conversation.id,
                     message_id=agent_message.id,
@@ -1095,21 +1194,25 @@ class SendGuestMessage:
                     exc_info=True,
                 )
                 # Fall through to standard flow
-        
+
         # 4b. ✨ EARLY RESTRICTED INTENT CHECK ✨
         # Check if this is a restricted intent BEFORE Agent Squad processing
         # This ensures custom messages from translations.py are used instead of Agent Squad
         # Detect intent early to check if restricted
-        early_intent, early_confidence, early_handler = await self._detect_intent_with_context(
-            content, context, language, None
-        )
+        (
+            early_intent,
+            early_confidence,
+            early_handler,
+        ) = await self._detect_intent_with_context(content, context, language, None)
         is_restricted_early, reason_early = self._is_restricted_action(early_intent)
-        
+
         # 4b.1. ✨ COMPOUND INTENT DETECTION ✨
         # Check if user wants to cancel current flow and start a new query
         # Example: "cancel, tell me the price of btc" while in a swap flow
         if continuation_step:
-            from app.application.chat.services.flow_cancellation_detector import FlowCancellationDetector
+            from app.application.chat.services.flow_cancellation_detector import (
+                FlowCancellationDetector,
+            )
 
             detector = FlowCancellationDetector()
 
@@ -1122,7 +1225,9 @@ class SendGuestMessage:
                 "zh": ["取消", "停止", "放弃"],
             }
 
-            keywords_for_lang = cancellation_keywords.get(language, cancellation_keywords["en"])
+            keywords_for_lang = cancellation_keywords.get(
+                language, cancellation_keywords["en"]
+            )
             content_lower = content.lower().strip()
 
             matched_keyword = None
@@ -1133,10 +1238,12 @@ class SendGuestMessage:
 
             if matched_keyword:
                 # Extract content after cancellation keyword
-                remaining_content = FlowCancellationDetector.extract_post_cancellation_content(
-                    content,
-                    matched_keyword,
-                    language,
+                remaining_content = (
+                    FlowCancellationDetector.extract_post_cancellation_content(
+                        content,
+                        matched_keyword,
+                        language,
+                    )
                 )
 
                 if remaining_content:
@@ -1150,7 +1257,7 @@ class SendGuestMessage:
                             "extracted_content": remaining_content[:100],
                             "cancelled_flow": continuation_step,
                             "keyword": matched_keyword,
-                        }
+                        },
                     )
 
                     # Clear the flow state
@@ -1167,7 +1274,7 @@ class SendGuestMessage:
                         "🔄 Flow cancelled - detecting intent for new query",
                         extra={
                             "new_content": content[:100],
-                        }
+                        },
                     )
                 else:
                     # Just cancellation, no new query
@@ -1178,7 +1285,7 @@ class SendGuestMessage:
                             "conversation_id": str(conversation.id),
                             "cancelled_flow": continuation_step,
                             "keyword": matched_keyword,
-                        }
+                        },
                     )
 
                     # Clear the flow state
@@ -1195,17 +1302,21 @@ class SendGuestMessage:
         # - General questions → Chat agent (via general_chat intent)
         # - Shortcuts → Multi-step workflows (via appropriate intents: swap_tokens, lending, etc.)
         # - Multi-step operations → SupervisorCoordinator workflows
-        # 
+        #
         # No manual pattern matching needed - fully LLM-based and context-aware
         # BUT: Skip Agent Squad for restricted intents (handled with custom messages in step 8)
-        
+
         supervisor_coordinator = self._supervisor_coordinator
-        
+
         # Verify it's actually a SupervisorCoordinator instance
         # Note: is_simple_info_query is already calculated above (before continuation check)
         # Skip Agent Squad for restricted intents - use custom registration messages instead
         # (is_restricted will be checked in step 6, but we check here to skip Agent Squad early)
-        if supervisor_coordinator and hasattr(supervisor_coordinator, "create_workflow_plan") and not continuation_step:
+        if (
+            supervisor_coordinator
+            and hasattr(supervisor_coordinator, "create_workflow_plan")
+            and not continuation_step
+        ):
             try:
                 # ✨ FAST PATH: Simple informational queries go directly to Knowledge agent (no workflow planning) ✨
                 if is_simple_info_query:
@@ -1215,9 +1326,9 @@ class SendGuestMessage:
                             "ip_address": ip_address,
                             "conversation_id": str(conversation.id),
                             "query_text": content[:100],
-                        }
+                        },
                     )
-                    
+
                     # Execute Chat agent directly (fast path)
                     from app.domain.value_objects.conversation_id import ConversationId
                     from app.domain.value_objects.message_content import MessageContent
@@ -1225,15 +1336,21 @@ class SendGuestMessage:
                         ConversationContext as AgentSquadContext,
                     )
                     from app.domain.enums.agent_type import AgentType
-                    from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
-                    
+                    from app.domain.services.agent_squad.agent_orchestrator import (
+                        AgentOrchestrator,
+                    )
+
                     # Build minimal context
-                    messages = await self._guest_repo.get_messages(conversation.id, limit=5)
+                    messages = await self._guest_repo.get_messages(
+                        conversation.id, limit=5
+                    )
                     conversation_history = [
                         {
                             "role": msg.role.value,
                             "content": msg.content,
-                            "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+                            "timestamp": msg.created_at.isoformat()
+                            if hasattr(msg.created_at, "isoformat")
+                            else str(msg.created_at),
                         }
                         for msg in messages
                     ]
@@ -1242,31 +1359,36 @@ class SendGuestMessage:
                         "content": content,
                         "timestamp": datetime.now(UTC).isoformat(),
                     })
-                    
+
                     agent_squad_context = AgentSquadContext(
                         conversation_history=conversation_history,
                         user_metadata={"language": language, "is_guest": True},
                         session_metadata={"ip_address": ip_address},
                     )
-                    
+
                     # Execute Chat agent directly via orchestrator
                     if not self._agent_orchestrator:
-                        logger.warning("Agent orchestrator not available, falling back to SupervisorCoordinator")
+                        logger.warning(
+                            "Agent orchestrator not available, falling back to SupervisorCoordinator"
+                        )
                         # Fall through to SupervisorCoordinator path below
                     else:
                         try:
                             import time
+
                             fast_path_start_time = time.time()
-                            
+
                             response = await self._agent_orchestrator.execute_agent(
                                 agent_type=AgentType.KNOWLEDGE,  # Use Knowledge agent for educational queries
                                 message=content,
                                 conversation_context=agent_squad_context,
                             )
-                            
+
                             # Calculate execution time (after agent execution completes)
-                            fast_path_execution_time_ms = int((time.time() - fast_path_start_time) * 1000)
-                            
+                            fast_path_execution_time_ms = int(
+                                (time.time() - fast_path_start_time) * 1000
+                            )
+
                             # Create user message
                             user_message = GuestMessage.create_user_message(
                                 conversation_id=conversation.id,
@@ -1274,11 +1396,13 @@ class SendGuestMessage:
                                 language=language,
                             )
                             await self._guest_repo.create_message(user_message)
-                            
+
                             # Create agent message
                             agent_message = GuestMessage.create_assistant_message(
                                 conversation_id=conversation.id,
-                                content=response.content if hasattr(response, "content") else str(response),
+                                content=response.content
+                                if hasattr(response, "content")
+                                else str(response),
                                 intent="COMPLEX_WORKFLOW",
                                 handler="agent_squad_chat_fast",
                                 confidence=0.95,
@@ -1286,23 +1410,26 @@ class SendGuestMessage:
                                 is_restricted_action=False,
                             )
                             await self._guest_repo.create_message(agent_message)
-                            
+
                             # Update counters
                             guest.increment_messages()
                             conversation.increment_messages()
                             await self._guest_repo.update_guest(guest)
                             await self._guest_repo.update_conversation(conversation)
-                            
+
                             # Get sources from response
                             sources = []
                             if hasattr(response, "sources") and response.sources:
                                 sources = [s.to_dict() for s in response.sources]
-                            
+
                             # Check if debug timing is enabled
                             from app.setup.config.settings import load_settings
+
                             settings = load_settings()
-                            debug_timing_enabled = getattr(settings.agent_squad, 'debug_agent_timing', False)
-                            
+                            debug_timing_enabled = getattr(
+                                settings.agent_squad, "debug_agent_timing", False
+                            )
+
                             # Build enrichment with optional timing
                             enrichment = {
                                 "agent_squad": True,
@@ -1311,51 +1438,74 @@ class SendGuestMessage:
                                 "disclaimer": get_demo_disclaimer(language),
                                 "agents_used": ["knowledge"],
                             }
-                            
+
                             # Add timing if debug enabled
                             if debug_timing_enabled:
                                 # Get provider info from response metadata if available
                                 provider_info = None
-                                if hasattr(response, 'metadata') and isinstance(response.metadata, dict):
-                                    provider_info = response.metadata.get('provider')
+                                if hasattr(response, "metadata") and isinstance(
+                                    response.metadata, dict
+                                ):
+                                    provider_info = response.metadata.get("provider")
                                 # Fallback: check if response has provider attribute directly
-                                if not provider_info and hasattr(response, 'provider'):
+                                if not provider_info and hasattr(response, "provider"):
                                     provider_info = response.provider
-                                
+
                                 # Extract tools_used from response
                                 tools_used_info = []
-                                if hasattr(response, 'tools_used'):
-                                    tools_used_info = response.tools_used if response.tools_used else []
-                                
+                                if hasattr(response, "tools_used"):
+                                    tools_used_info = (
+                                        response.tools_used
+                                        if response.tools_used
+                                        else []
+                                    )
+
                                 # Extract data sources from response sources
                                 data_sources = []
-                                if hasattr(response, 'sources') and response.sources:
+                                if hasattr(response, "sources") and response.sources:
                                     for source in response.sources:
-                                        source_type = getattr(source, 'source_type', None)
-                                        source_name = getattr(source, 'source_name', '')
-                                        provider = getattr(source, 'provider', '')
-                                        
+                                        source_type = getattr(
+                                            source, "source_type", None
+                                        )
+                                        source_name = getattr(source, "source_name", "")
+                                        provider = getattr(source, "provider", "")
+
                                         # Map source types to readable names
                                         if source_type:
                                             if source_type.value == "api":
-                                                data_sources.append(f"{source_name} API" if source_name else "External API")
+                                                data_sources.append(
+                                                    f"{source_name} API"
+                                                    if source_name
+                                                    else "External API"
+                                                )
                                             elif source_type.value == "database":
                                                 data_sources.append("Database")
                                             elif source_type.value == "mcp_server":
-                                                data_sources.append(f"MCP: {source_name}" if source_name else "MCP Server")
+                                                data_sources.append(
+                                                    f"MCP: {source_name}"
+                                                    if source_name
+                                                    else "MCP Server"
+                                                )
                                             elif source_type.value == "blockchain":
-                                                data_sources.append(f"Blockchain ({source_name})" if source_name else "Blockchain")
+                                                data_sources.append(
+                                                    f"Blockchain ({source_name})"
+                                                    if source_name
+                                                    else "Blockchain"
+                                                )
                                             elif source_type.value == "knowledge_base":
                                                 data_sources.append("Knowledge Base")
                                             elif source_type.value == "llm":
                                                 # Skip LLM as it's already in provider
                                                 pass
-                                        
+
                                         # Add specific providers
-                                        if provider and provider not in ["Vertex AI", "DeepInfra"]:
+                                        if provider and provider not in [
+                                            "Vertex AI",
+                                            "DeepInfra",
+                                        ]:
                                             if provider not in data_sources:
                                                 data_sources.append(provider)
-                                
+
                                 # Build enhanced task description
                                 task_desc_parts = ["Fast path execution"]
                                 if tools_used_info:
@@ -1363,51 +1513,86 @@ class SendGuestMessage:
                                     tool_names = []
                                     for tool in tools_used_info:
                                         tool_lower = tool.lower()
-                                        if "knowledge_base" in tool_lower or "knowledge" in tool_lower:
+                                        if (
+                                            "knowledge_base" in tool_lower
+                                            or "knowledge" in tool_lower
+                                        ):
                                             tool_names.append("Knowledge Base")
-                                        elif "web3" in tool_lower or "web3_client" in tool_lower:
+                                        elif (
+                                            "web3" in tool_lower
+                                            or "web3_client" in tool_lower
+                                        ):
                                             tool_names.append("Web3Client")
                                         elif "coingecko" in tool_lower:
                                             tool_names.append("CoinGecko API")
-                                        elif "defillama" in tool_lower or "defi_llama" in tool_lower:
+                                        elif (
+                                            "defillama" in tool_lower
+                                            or "defi_llama" in tool_lower
+                                        ):
                                             tool_names.append("DeFiLlama API")
-                                        elif "1inch" in tool_lower or "oneinch" in tool_lower:
+                                        elif (
+                                            "1inch" in tool_lower
+                                            or "oneinch" in tool_lower
+                                        ):
                                             tool_names.append("1inch API")
                                         elif "morpho" in tool_lower:
                                             tool_names.append("Morpho")
-                                        elif "graphrag" in tool_lower or "graph_rag" in tool_lower:
+                                        elif (
+                                            "graphrag" in tool_lower
+                                            or "graph_rag" in tool_lower
+                                        ):
                                             tool_names.append("GraphRAG")
-                                        elif "database" in tool_lower or "db" in tool_lower:
+                                        elif (
+                                            "database" in tool_lower
+                                            or "db" in tool_lower
+                                        ):
                                             tool_names.append("Database")
-                                        elif "llm" in tool_lower or "llm_gateway" in tool_lower:
+                                        elif (
+                                            "llm" in tool_lower
+                                            or "llm_gateway" in tool_lower
+                                        ):
                                             tool_names.append("LLM Gateway")
                                         else:
-                                            tool_names.append(tool.replace("_", " ").title())
-                                    
+                                            tool_names.append(
+                                                tool.replace("_", " ").title()
+                                            )
+
                                     if tool_names:
-                                        task_desc_parts.append(f"Tools: {', '.join(tool_names)}")
-                                
+                                        task_desc_parts.append(
+                                            f"Tools: {', '.join(tool_names)}"
+                                        )
+
                                 if data_sources:
-                                    task_desc_parts.append(f"Data Sources: {', '.join(data_sources)}")
-                                
+                                    task_desc_parts.append(
+                                        f"Data Sources: {', '.join(data_sources)}"
+                                    )
+
                                 enhanced_task_description = " | ".join(task_desc_parts)
-                                
-                                enrichment["agent_timings"] = [{
-                                    "agent_type": response.agent_type.value if hasattr(response, 'agent_type') else "knowledge",
-                                    "task_description": enhanced_task_description,
-                                    "execution_time_ms": fast_path_execution_time_ms,
-                                    "status": "completed",
-                                    "provider": provider_info,  # Include LLM provider for debugging
-                                    "tools_used": tools_used_info,  # Include tools used
-                                }]
-                            
+
+                                enrichment["agent_timings"] = [
+                                    {
+                                        "agent_type": response.agent_type.value
+                                        if hasattr(response, "agent_type")
+                                        else "knowledge",
+                                        "task_description": enhanced_task_description,
+                                        "execution_time_ms": fast_path_execution_time_ms,
+                                        "status": "completed",
+                                        "provider": provider_info,  # Include LLM provider for debugging
+                                        "tools_used": tools_used_info,  # Include tools used
+                                    }
+                                ]
+
                             # Calculate remaining messages
                             hour_ago = datetime.now(UTC) - timedelta(hours=1)
-                            messages_this_hour = await self._guest_repo.get_message_count_since(
-                                guest.id, hour_ago
+                            messages_this_hour = (
+                                await self._guest_repo.get_message_count_since(
+                                    guest.id, hour_ago
+                                )
                             )
-                            messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
-                            
+                            messages_remaining = max(
+                                0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour
+                            )
+
                             return GuestMessageResult(
                                 conversation_id=conversation.id,
                                 message_id=agent_message.id,
@@ -1420,7 +1605,9 @@ class SendGuestMessage:
                                 agent_message={
                                     "id": str(agent_message.id),
                                     "role": agent_message.role.value,
-                                    "content": response.content if hasattr(response, "content") else str(response),
+                                    "content": response.content
+                                    if hasattr(response, "content")
+                                    else str(response),
                                     "created_at": agent_message.created_at.isoformat(),
                                     "sources": sources,
                                 },
@@ -1441,19 +1628,24 @@ class SendGuestMessage:
                                 },
                             )
                         except Exception as e:
-                            logger.error(f"Fast path execution failed: {e}, falling back to SupervisorCoordinator", exc_info=True)
+                            logger.error(
+                                f"Fast path execution failed: {e}, falling back to SupervisorCoordinator",
+                                exc_info=True,
+                            )
                             # Fall through to SupervisorCoordinator path below
-                
+
                 # Standard path: Use SupervisorCoordinator for complex queries
                 logger.info(
                     "🎭 Routing to Agent Squad Supervisor (primary handler)",
                     extra={
                         "ip_address": ip_address,
                         "conversation_id": str(conversation.id),
-                        "query_text": content[:100],  # Changed from "message" to avoid LogRecord conflict
-                    }
+                        "query_text": content[
+                            :100
+                        ],  # Changed from "message" to avoid LogRecord conflict
+                    },
                 )
-                
+
                 agent_squad_result = await self._handle_with_agent_squad(
                     content=content,
                     language=language,
@@ -1465,17 +1657,17 @@ class SendGuestMessage:
                     referer=referer,
                     distillation_timing_ms=None,  # No distillation in legacy path
                 )
-                
+
                 if agent_squad_result is not None:
                     logger.info(
                         "✅ Agent Squad Supervisor handled query successfully",
-                        extra={"conversation_id": str(conversation.id)}
+                        extra={"conversation_id": str(conversation.id)},
                     )
                     return agent_squad_result
                 else:
                     logger.info(
                         "⚠️ Agent Squad Supervisor returned None, falling back to normal flow",
-                        extra={"conversation_id": str(conversation.id)}
+                        extra={"conversation_id": str(conversation.id)},
                     )
             except Exception as e:
                 logger.warning(
@@ -1484,7 +1676,7 @@ class SendGuestMessage:
                     extra={
                         "ip_address": ip_address,
                         "conversation_id": str(conversation.id),
-                    }
+                    },
                 )
 
         # 4e. ✨ DISTILLATION CHECK ✨
@@ -1495,8 +1687,9 @@ class SendGuestMessage:
         if self._distillation_engine and not continuation_step:
             try:
                 import time
+
                 distillation_start_time = time.time()
-                
+
                 # Build conversation history for context-aware classification
                 conversation_history_for_distillation = []
                 if context:
@@ -1506,17 +1699,19 @@ class SendGuestMessage:
                             "role": msg.get("role", "user"),
                             "content": msg.get("content", ""),
                         })
-                
+
                 distillation_result = await self._distillation_engine.distill(
                     query=content,
                     user_id=None,  # Guest users don't have UUID
                     user_context={"language": language},
                     conversation_history=conversation_history_for_distillation,  # Pass conversation history
                 )
-                
+
                 # Calculate distillation timing
-                distillation_timing_ms = int((time.time() - distillation_start_time) * 1000)
-                
+                distillation_timing_ms = int(
+                    (time.time() - distillation_start_time) * 1000
+                )
+
                 # ✨ NO STATIC RESPONSES - Everything goes to LLM ✨
                 # Distillation now only checks cache, then routes to LLM
                 # If cache hit, use cached response
@@ -1530,9 +1725,9 @@ class SendGuestMessage:
                             "ip_address": ip_address,
                             "conversation_id": str(conversation.id),
                             "route_type": distillation_result.route_type.value,
-                        }
+                        },
                     )
-                    
+
                     # Create user message
                     user_message = GuestMessage.create_user_message(
                         conversation_id=conversation.id,
@@ -1540,7 +1735,7 @@ class SendGuestMessage:
                         language=language,
                     )
                     await self._guest_repo.create_message(user_message)
-                    
+
                     # Create agent message with cached response
                     agent_message = GuestMessage.create_assistant_message(
                         conversation_id=conversation.id,
@@ -1552,13 +1747,13 @@ class SendGuestMessage:
                         is_restricted_action=False,
                     )
                     await self._guest_repo.create_message(agent_message)
-                    
+
                     # Update counters
                     guest.increment_messages()
                     conversation.increment_messages()
                     await self._guest_repo.update_guest(guest)
                     await self._guest_repo.update_conversation(conversation)
-                    
+
                     # Log telemetry
                     await self._guest_repo.log_telemetry(
                         guest_user_id=guest.id,
@@ -1574,14 +1769,16 @@ class SendGuestMessage:
                         referer=referer,
                         language=language,
                     )
-                    
+
                     # Calculate remaining messages
                     hour_ago = datetime.now(UTC) - timedelta(hours=1)
                     messages_this_hour = await self._guest_repo.get_message_count_since(
                         guest.id, hour_ago
                     )
-                    messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
-                    
+                    messages_remaining = max(
+                        0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour
+                    )
+
                     return GuestMessageResult(
                         conversation_id=conversation.id,
                         message_id=agent_message.id,
@@ -1614,7 +1811,7 @@ class SendGuestMessage:
                             "session_active": True,
                         },
                     )
-                
+
                 # If distillation routes to LLM (which is always now), continue to Agent Squad
                 # Distillation result is only used for cache hits and timing
                 logger.debug(
@@ -1622,7 +1819,7 @@ class SendGuestMessage:
                     extra={
                         "route_type": distillation_result.route_type.value,
                         "should_process": distillation_result.should_process,
-                    }
+                    },
                 )
             except Exception as e:
                 # If distillation fails, continue with normal flow
@@ -1632,7 +1829,7 @@ class SendGuestMessage:
                         "ip_address": ip_address,
                         "conversation_id": str(conversation.id),
                         "error": str(e),
-                    }
+                    },
                 )
                 distillation_result = None
 
@@ -1645,17 +1842,23 @@ class SendGuestMessage:
                 intent = ChatIntent.SWAP_MOONPAY
                 handler = "moonpay_swap"
                 confidence = 1.0
-                logger.info(f"[Continuation] Using swap intent from pending action: {continuation_step}")
+                logger.info(
+                    f"[Continuation] Using swap intent from pending action: {continuation_step}"
+                )
             elif "lending" in continuation_step:
                 intent = ChatIntent.LENDING
                 handler = "lending"
                 confidence = 1.0
-                logger.info(f"[Continuation] Using lending intent from pending action: {continuation_step}")
+                logger.info(
+                    f"[Continuation] Using lending intent from pending action: {continuation_step}"
+                )
             elif "buy" in continuation_step:
                 intent = ChatIntent.BUY
                 handler = "buy"
                 confidence = 1.0
-                logger.info(f"[Continuation] Using buy intent from pending action: {continuation_step}")
+                logger.info(
+                    f"[Continuation] Using buy intent from pending action: {continuation_step}"
+                )
             else:
                 # Unknown continuation step, fall back to intent detection
                 intent, confidence, handler = await self._detect_intent_with_context(
@@ -1803,7 +2006,7 @@ class SendGuestMessage:
         # Build enrichment - use handler enrichment if available, otherwise disclaimer
         final_enrichment = enrichment if enrichment else {}
         final_enrichment["disclaimer"] = get_demo_disclaimer(language)
-        
+
         # Ensure agent_timings is always present (even if empty)
         if "agent_timings" not in final_enrichment:
             final_enrichment["agent_timings"] = []
@@ -1821,7 +2024,9 @@ class SendGuestMessage:
             "role": agent_message.role.value,
             "content": agent_message.content,
             "created_at": agent_message.created_at.isoformat(),
-            "sources": sources if sources else [],  # Always include sources inside agent_message (even if empty array)
+            "sources": sources
+            if sources
+            else [],  # Always include sources inside agent_message (even if empty array)
         }
 
         return GuestMessageResult(
@@ -1922,14 +2127,14 @@ class SendGuestMessage:
     ) -> GuestMessageResult | None:
         """
         Process message with LLM-based SupervisorCoordinator.
-        
+
         NO INTENTS. NO REGEX PATTERNS.
-        
+
         The Supervisor uses LLM to:
         1. Understand the user's request semantically
-        2. Determine what agents/actions are needed  
+        2. Determine what agents/actions are needed
         3. Create and execute workflow plan
-        
+
         Returns:
             GuestMessageResult if successful, None to fall back to legacy flow
         """
@@ -1940,16 +2145,18 @@ class SendGuestMessage:
         )
         from app.domain.enums.agent_type import AgentType
         import time as time_module
-        
+
         start_time = time_module.time()
-        
+
         # Build conversation context for agents
         messages = await self._guest_repo.get_messages(conversation.id, limit=10)
         conversation_history = [
             {
                 "role": msg.role.value,
                 "content": msg.content,
-                "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+                "timestamp": msg.created_at.isoformat()
+                if hasattr(msg.created_at, "isoformat")
+                else str(msg.created_at),
             }
             for msg in messages
         ]
@@ -1958,13 +2165,13 @@ class SendGuestMessage:
             "content": content,
             "timestamp": datetime.now(UTC).isoformat(),
         })
-        
+
         agent_squad_context = AgentSquadContext(
             conversation_history=conversation_history,
             user_metadata={"language": language, "is_guest": True},
             session_metadata={"ip_address": ip_address},
         )
-        
+
         # Available agents for guest users
         available_agents = [
             AgentType.CHAT,
@@ -1975,7 +2182,7 @@ class SendGuestMessage:
             AgentType.GAS_OPTIMIZER,
             AgentType.GUEST_AUTH,  # For restricted features
         ]
-        
+
         # === LLM-BASED WORKFLOW PLANNING ===
         # The Supervisor uses LLM to understand the query and create workflow
         workflow_plan = await self._supervisor_coordinator.create_workflow_plan(
@@ -1984,27 +2191,31 @@ class SendGuestMessage:
             conversation_context=agent_squad_context,
             available_agents=available_agents,
         )
-        
+
         logger.info(
             f"📋 LLM Workflow: {len(workflow_plan.tasks)} tasks planned",
             extra={
                 "tasks": [t.agent_type.value for t in workflow_plan.tasks],
                 "conversation_id": str(conversation.id),
-            }
+            },
         )
-        
+
         # === EXECUTE WORKFLOW ===
         # Pass original_message explicitly to prevent conversation context pollution
-        response_content, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
+        (
+            response_content,
+            sources_raw,
+            agent_timings,
+        ) = await self._supervisor_coordinator.execute_workflow(
             conversation_id=ConversationId(conversation.id),
             workflow_plan=workflow_plan,
             conversation_context=agent_squad_context,
             original_message=content,  # Explicitly pass current user message
         )
-        
+
         # Calculate total time
         total_time_ms = int((time_module.time() - start_time) * 1000)
-        
+
         # Convert sources to serializable format
         sources = []
         if sources_raw:
@@ -2015,7 +2226,7 @@ class SendGuestMessage:
                     sources.append(s)
                 else:
                     sources.append(str(s))
-        
+
         # Create user message
         user_message = GuestMessage.create_user_message(
             conversation_id=conversation.id,
@@ -2023,10 +2234,12 @@ class SendGuestMessage:
             language=language,
         )
         await self._guest_repo.create_message(user_message)
-        
+
         # Check if GUEST_AUTH agent was used (indicates restricted action)
         registration_required = None
-        used_guest_auth = any(t.agent_type == AgentType.GUEST_AUTH for t in workflow_plan.tasks)
+        used_guest_auth = any(
+            t.agent_type == AgentType.GUEST_AUTH for t in workflow_plan.tasks
+        )
         if used_guest_auth:
             # Build registration required response for restricted actions
             registration_required = {
@@ -2041,7 +2254,7 @@ class SendGuestMessage:
                 "cta": GUEST_CTA_MESSAGES,
                 # signup_url removed - URLs not shown in guest chat
             }
-        
+
         # Create agent message
         # Set is_restricted_action=True if GUEST_AUTH agent was used
         agent_message = GuestMessage.create_assistant_message(
@@ -2054,20 +2267,20 @@ class SendGuestMessage:
             is_restricted_action=used_guest_auth,  # Set based on whether GUEST_AUTH was used
         )
         await self._guest_repo.create_message(agent_message)
-        
+
         # Update counters
         guest.increment_messages()
         conversation.increment_messages()
         await self._guest_repo.update_guest(guest)
         await self._guest_repo.update_conversation(conversation)
-        
+
         # Calculate messages remaining
         hour_ago = datetime.now(UTC) - timedelta(hours=1)
         messages_this_hour = await self._guest_repo.get_message_count_since(
             guest.id, hour_ago
         )
         messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
-        
+
         # Build enrichment
         enrichment = {
             "agent_squad": True,
@@ -2076,7 +2289,9 @@ class SendGuestMessage:
             "agents_used": [t.agent_type.value for t in workflow_plan.tasks],
             "total_time_ms": total_time_ms,
             "disclaimer": get_demo_disclaimer(language),
-            "agent_timings": agent_timings if agent_timings else [],  # Always include agent_timings (even if empty)
+            "agent_timings": agent_timings
+            if agent_timings
+            else [],  # Always include agent_timings (even if empty)
         }
 
         return GuestMessageResult(
@@ -2093,7 +2308,9 @@ class SendGuestMessage:
                 "role": "assistant",
                 "content": response_content,
                 "created_at": agent_message.created_at.isoformat(),
-                "sources": sources if sources else [],  # Always include sources (even if empty array)
+                "sources": sources
+                if sources
+                else [],  # Always include sources (even if empty array)
             },
             routing={
                 "intent": "LLM_WORKFLOW",
@@ -2105,7 +2322,9 @@ class SendGuestMessage:
                 "is_llm_based": True,
             },
             enrichment=enrichment,
-            sources=sources if sources else [],  # Always include sources at top level (even if empty)
+            sources=sources
+            if sources
+            else [],  # Always include sources at top level (even if empty)
             registration_required=registration_required,
             guest_info={
                 "messages_remaining": messages_remaining,
@@ -2136,7 +2355,9 @@ class SendGuestMessage:
             for msg in messages:
                 role = "User" if msg.role.value == "user" else "Assistant"
                 # Truncate long messages in context
-                content = msg.content[:200] + "..." if len(msg.content) > 200 else msg.content
+                content = (
+                    msg.content[:200] + "..." if len(msg.content) > 200 else msg.content
+                )
                 context_lines.append(f"{role}: {content}")
 
             return "\n".join(context_lines)
@@ -2144,7 +2365,9 @@ class SendGuestMessage:
             logger.warning(f"Failed to build conversation context: {e}")
             return ""
 
-    async def _get_continuation_state(self, conversation_id: UUID) -> tuple[str | None, dict | None, dict | None, dict | None, dict | None]:
+    async def _get_continuation_state(
+        self, conversation_id: UUID
+    ) -> tuple[str | None, dict | None, dict | None, dict | None, dict | None]:
         """
         Get continuation state from the last assistant message.
 
@@ -2177,18 +2400,30 @@ class SendGuestMessage:
             previous_send_info = metadata.get("send_info")
             previous_buy_info = metadata.get("buy_info")
 
-            logger.info(f"[Continuation] Found state: step={continuation_step}, swap_info={previous_swap_info}, send_info={previous_send_info}, buy_info={previous_buy_info}")
-            return continuation_step, previous_swap_info, previous_lending_info, previous_send_info, previous_buy_info
+            logger.info(
+                f"[Continuation] Found state: step={continuation_step}, swap_info={previous_swap_info}, send_info={previous_send_info}, buy_info={previous_buy_info}"
+            )
+            return (
+                continuation_step,
+                previous_swap_info,
+                previous_lending_info,
+                previous_send_info,
+                previous_buy_info,
+            )
         except Exception as e:
             logger.warning(f"Failed to get continuation state: {e}")
             return None, None, None, None, None
 
     async def _detect_intent_with_context(
-        self, content: str, context: str, language: str, intent_result: "IntentDetectionResult | None" = None
+        self,
+        content: str,
+        context: str,
+        language: str,
+        intent_result: "IntentDetectionResult | None" = None,
     ) -> tuple[ChatIntent | None, float | None, str | None]:
         """
         Detect intent from message content with conversational context.
-        
+
         Uses context to:
         1. Resolve follow-up references (e.g., "And what about Bitcoin?")
         2. Complete partial commands (e.g., "de USDC" after "quiero swap")
@@ -2199,31 +2434,55 @@ class SendGuestMessage:
         if context:
             context_lower = context.lower()
             content_lower = content.lower()
-            
+
             # Detect follow-up patterns
             follow_up_patterns = [
-                "and what about", "what about", "how about", "and for",
-                "y qué hay de", "qué tal", "y para", "y sobre",  # Spanish
+                "and what about",
+                "what about",
+                "how about",
+                "and for",
+                "y qué hay de",
+                "qué tal",
+                "y para",
+                "y sobre",  # Spanish
             ]
-            
+
             for pattern in follow_up_patterns:
                 if pattern in content_lower:
                     # Check if previous context was about price/sentiment
-                    if any(kw in context_lower for kw in ["price", "precio", "sentiment", "sentimiento"]):
+                    if any(
+                        kw in context_lower
+                        for kw in ["price", "precio", "sentiment", "sentimiento"]
+                    ):
                         # Extract token and return same intent type
-                        if any(kw in context_lower for kw in ["sentiment", "sentimiento"]):
+                        if any(
+                            kw in context_lower for kw in ["sentiment", "sentimiento"]
+                        ):
                             logger.info(f"Detected sentiment follow-up: {content}")
-                            return ChatIntent.HUNTER_SENTIMENT, 0.90, "hunter_sentiment_handler"
-                        if any(kw in context_lower for kw in ["price", "precio", "prediction", "predecir"]):
-                            logger.info(f"Detected price prediction follow-up: {content}")
-                            return ChatIntent.HUNTER_PRICE_PREDICTION, 0.90, "hunter_prediction_handler"
-        
+                            return (
+                                ChatIntent.HUNTER_SENTIMENT,
+                                0.90,
+                                "hunter_sentiment_handler",
+                            )
+                        if any(
+                            kw in context_lower
+                            for kw in ["price", "precio", "prediction", "predecir"]
+                        ):
+                            logger.info(
+                                f"Detected price prediction follow-up: {content}"
+                            )
+                            return (
+                                ChatIntent.HUNTER_PRICE_PREDICTION,
+                                0.90,
+                                "hunter_prediction_handler",
+                            )
+
         # Try external intent detector (but follow-ups already handled above)
         # Reuse intent_result if already detected (from compound intent check)
         if intent_result:
             handler = self._get_handler_for_intent(intent_result.intent)
             return intent_result.intent, intent_result.confidence, handler
-        
+
         if self._intent_detector:
             try:
                 result = await self._intent_detector.detect_intent(content)
@@ -2232,23 +2491,48 @@ class SendGuestMessage:
                 if result.intent == ChatIntent.GENERAL_CONVERSATION and context:
                     context_lower = context.lower()
                     content_lower = content.lower()
-                    
+
                     # Check for follow-up patterns
                     follow_up_patterns = [
-                        "and what about", "what about", "how about", "and for",
-                        "y qué hay de", "qué tal", "y para", "y sobre",
+                        "and what about",
+                        "what about",
+                        "how about",
+                        "and for",
+                        "y qué hay de",
+                        "qué tal",
+                        "y para",
+                        "y sobre",
                     ]
-                    
-                    is_follow_up = any(pattern in content_lower for pattern in follow_up_patterns)
-                    
+
+                    is_follow_up = any(
+                        pattern in content_lower for pattern in follow_up_patterns
+                    )
+
                     if is_follow_up:
-                        if any(kw in context_lower for kw in ["sentiment", "sentimiento"]):
-                            logger.info(f"Overriding general_conversation with sentiment follow-up: {content}")
-                            return ChatIntent.HUNTER_SENTIMENT, 0.90, "hunter_sentiment_handler"
-                        if any(kw in context_lower for kw in ["price", "precio", "prediction", "predecir"]):
-                            logger.info(f"Overriding general_conversation with price prediction follow-up: {content}")
-                            return ChatIntent.HUNTER_PRICE_PREDICTION, 0.90, "hunter_prediction_handler"
-                
+                        if any(
+                            kw in context_lower for kw in ["sentiment", "sentimiento"]
+                        ):
+                            logger.info(
+                                f"Overriding general_conversation with sentiment follow-up: {content}"
+                            )
+                            return (
+                                ChatIntent.HUNTER_SENTIMENT,
+                                0.90,
+                                "hunter_sentiment_handler",
+                            )
+                        if any(
+                            kw in context_lower
+                            for kw in ["price", "precio", "prediction", "predecir"]
+                        ):
+                            logger.info(
+                                f"Overriding general_conversation with price prediction follow-up: {content}"
+                            )
+                            return (
+                                ChatIntent.HUNTER_PRICE_PREDICTION,
+                                0.90,
+                                "hunter_prediction_handler",
+                            )
+
                 handler = self._get_handler_for_intent(result.intent)
                 return result.intent, result.confidence, handler
             except Exception as e:
@@ -2273,18 +2557,16 @@ class SendGuestMessage:
         # Fallback to keyword-based detection for guest chat
         return self._detect_intent_by_keywords(content)
 
-    def _detect_intent_by_keywords(
-        self, content: str
-    ) -> tuple[ChatIntent, float, str]:
+    def _detect_intent_by_keywords(self, content: str) -> tuple[ChatIntent, float, str]:
         """Simple keyword-based intent detection for guest chat."""
         return self._detect_intent_by_keywords_with_context(content, "", "en")
-    
+
     def _detect_intent_by_keywords_with_context(
         self, content: str, context: str, language: str
     ) -> tuple[ChatIntent, float, str]:
         """
         Context-aware keyword-based intent detection for guest chat.
-        
+
         Supports:
         - English and Spanish keywords
         - Context-based intent resolution for follow-up messages
@@ -2301,113 +2583,267 @@ class SendGuestMessage:
         restricted_patterns = {
             ChatIntent.BALANCE: [
                 # English
-                "my balance", "show balance", "check balance", "wallet balance",
-                "how much do i have", "my portfolio value", "total value",
-                "show my wallet", "what's in my wallet", "my funds",
-                "how much money do i have", "what's my balance", "check my balance",
-                "show my usdc balance", "my usdc balance", "usdc balance",
+                "my balance",
+                "show balance",
+                "check balance",
+                "wallet balance",
+                "how much do i have",
+                "my portfolio value",
+                "total value",
+                "show my wallet",
+                "what's in my wallet",
+                "my funds",
+                "how much money do i have",
+                "what's my balance",
+                "check my balance",
+                "show my usdc balance",
+                "my usdc balance",
+                "usdc balance",
                 # Spanish
-                "mi saldo", "ver saldo", "mostrar saldo", "mi balance",
-                "cuánto tengo", "mis fondos", "mi cartera",
-                "cuánto dinero tengo", "cuál es mi saldo", "verificar mi saldo",
-                "mostrar mi saldo usdc", "mi saldo usdc",
+                "mi saldo",
+                "ver saldo",
+                "mostrar saldo",
+                "mi balance",
+                "cuánto tengo",
+                "mis fondos",
+                "mi cartera",
+                "cuánto dinero tengo",
+                "cuál es mi saldo",
+                "verificar mi saldo",
+                "mostrar mi saldo usdc",
+                "mi saldo usdc",
                 # Portuguese
-                "meu saldo", "ver saldo", "mostrar saldo", "minha carteira",
-                "quanto eu tenho", "quanto dinheiro eu tenho", "qual é meu saldo",
-                "mostrar meu saldo usdc", "meu saldo usdc",
+                "meu saldo",
+                "ver saldo",
+                "mostrar saldo",
+                "minha carteira",
+                "quanto eu tenho",
+                "quanto dinheiro eu tenho",
+                "qual é meu saldo",
+                "mostrar meu saldo usdc",
+                "meu saldo usdc",
                 # Chinese
-                "我的余额", "查看余额", "我的钱包", "我有多少钱", "显示我的USDC余额",
+                "我的余额",
+                "查看余额",
+                "我的钱包",
+                "我有多少钱",
+                "显示我的USDC余额",
             ],
             ChatIntent.PORTFOLIO: [
                 # English
-                "my portfolio", "show portfolio", "portfolio performance",
-                "my positions", "my investments", "my assets",
-                "what tokens do i have", "what tokens do i own", "list my tokens",
-                "list my holdings", "show my holdings", "my holdings",
-                "what do i own", "what assets do i have", "show my assets",
-                "my token holdings", "token portfolio", "all my tokens",
+                "my portfolio",
+                "show portfolio",
+                "portfolio performance",
+                "my positions",
+                "my investments",
+                "my assets",
+                "what tokens do i have",
+                "what tokens do i own",
+                "list my tokens",
+                "list my holdings",
+                "show my holdings",
+                "my holdings",
+                "what do i own",
+                "what assets do i have",
+                "show my assets",
+                "my token holdings",
+                "token portfolio",
+                "all my tokens",
                 # Spanish
-                "mi portafolio", "ver portafolio", "mis posiciones",
-                "mis inversiones", "rendimiento de mi cartera",
-                "qué tokens tengo", "qué tokens poseo", "lista mis tokens",
-                "lista mis holdings", "mostrar mis holdings", "mis holdings",
-                "qué poseo", "qué activos tengo", "mostrar mis activos",
+                "mi portafolio",
+                "ver portafolio",
+                "mis posiciones",
+                "mis inversiones",
+                "rendimiento de mi cartera",
+                "qué tokens tengo",
+                "qué tokens poseo",
+                "lista mis tokens",
+                "lista mis holdings",
+                "mostrar mis holdings",
+                "mis holdings",
+                "qué poseo",
+                "qué activos tengo",
+                "mostrar mis activos",
                 # Portuguese
-                "meu portfólio", "ver portfólio", "minhas posições",
-                "quais tokens eu tenho", "quais tokens eu possuo", "listar meus tokens",
-                "listar meus holdings", "mostrar meus holdings", "meus holdings",
-                "o que eu possuo", "quais ativos eu tenho", "mostrar meus ativos",
+                "meu portfólio",
+                "ver portfólio",
+                "minhas posições",
+                "quais tokens eu tenho",
+                "quais tokens eu possuo",
+                "listar meus tokens",
+                "listar meus holdings",
+                "mostrar meus holdings",
+                "meus holdings",
+                "o que eu possuo",
+                "quais ativos eu tenho",
+                "mostrar meus ativos",
                 # Chinese
-                "我的投资组合", "显示我的投资组合", "我的持仓",
-                "我有什么代币", "列出我的代币", "我的资产",
+                "我的投资组合",
+                "显示我的投资组合",
+                "我的持仓",
+                "我有什么代币",
+                "列出我的代币",
+                "我的资产",
             ],
             ChatIntent.ACTIVITY: [
                 # English
-                "my activity", "transaction history", "my transactions",
-                "my trades", "trade history", "my swaps",
-                "recent activity", "activity history", "show activity",
-                "what did i do", "what did i do today", "my history",
+                "my activity",
+                "transaction history",
+                "my transactions",
+                "my trades",
+                "trade history",
+                "my swaps",
+                "recent activity",
+                "activity history",
+                "show activity",
+                "what did i do",
+                "what did i do today",
+                "my history",
                 # Spanish
-                "mi actividad", "historial de transacciones", "mis transacciones",
-                "mis intercambios", "historial de trades",
-                "actividad reciente", "historial de actividad", "mostrar actividad",
-                "qué hice", "qué hice hoy", "mi historial",
+                "mi actividad",
+                "historial de transacciones",
+                "mis transacciones",
+                "mis intercambios",
+                "historial de trades",
+                "actividad reciente",
+                "historial de actividad",
+                "mostrar actividad",
+                "qué hice",
+                "qué hice hoy",
+                "mi historial",
                 # Portuguese
-                "minha atividade", "histórico de transações", "minhas transações",
-                "atividade recente", "histórico de atividade",
+                "minha atividade",
+                "histórico de transações",
+                "minhas transações",
+                "atividade recente",
+                "histórico de atividade",
                 # Chinese
-                "我的活动", "交易历史", "最近活动", "活动历史",
+                "我的活动",
+                "交易历史",
+                "最近活动",
+                "活动历史",
             ],
             ChatIntent.RECEIVE: [
                 # English
-                "receive address", "my address", "deposit address",
-                "wallet address", "receive crypto",
-                "give me my qr code", "my qr code", "qr code",
-                "show qr", "get qr", "qr code address",
+                "receive address",
+                "my address",
+                "deposit address",
+                "wallet address",
+                "receive crypto",
+                "give me my qr code",
+                "my qr code",
+                "qr code",
+                "show qr",
+                "get qr",
+                "qr code address",
                 # Spanish
-                "dirección de recepción", "mi dirección", "dirección de depósito",
-                "recibir cripto", "dame mi código qr", "mi código qr",
+                "dirección de recepción",
+                "mi dirección",
+                "dirección de depósito",
+                "recibir cripto",
+                "dame mi código qr",
+                "mi código qr",
                 # Portuguese
-                "endereço de recebimento", "meu endereço", "receber cripto",
-                "me dê meu código qr", "meu código qr",
+                "endereço de recebimento",
+                "meu endereço",
+                "receber cripto",
+                "me dê meu código qr",
+                "meu código qr",
                 # Chinese
-                "接收地址", "我的地址", "接收加密货币", "给我二维码", "我的二维码",
+                "接收地址",
+                "我的地址",
+                "接收加密货币",
+                "给我二维码",
+                "我的二维码",
             ],
             ChatIntent.BUY: [
                 # English
-                "buy crypto", "buy bitcoin", "buy eth", "buy ethereum",
-                "buy usdc", "buy tokens", "purchase crypto", "purchase bitcoin",
-                "buy with card", "buy with fiat", "on-ramp", "onramp",
-                "i want to buy", "how to buy", "where to buy",
+                "buy crypto",
+                "buy bitcoin",
+                "buy eth",
+                "buy ethereum",
+                "buy usdc",
+                "buy tokens",
+                "purchase crypto",
+                "purchase bitcoin",
+                "buy with card",
+                "buy with fiat",
+                "on-ramp",
+                "onramp",
+                "i want to buy",
+                "how to buy",
+                "where to buy",
                 # Spanish
-                "comprar cripto", "comprar bitcoin", "comprar eth", "comprar ethereum",
-                "comprar usdc", "comprar tokens", "quiero comprar",
-                "comprar con tarjeta", "cómo comprar", "dónde comprar",
+                "comprar cripto",
+                "comprar bitcoin",
+                "comprar eth",
+                "comprar ethereum",
+                "comprar usdc",
+                "comprar tokens",
+                "quiero comprar",
+                "comprar con tarjeta",
+                "cómo comprar",
+                "dónde comprar",
                 # Portuguese
-                "comprar cripto", "comprar bitcoin", "comprar eth",
-                "quero comprar", "como comprar", "onde comprar",
+                "comprar cripto",
+                "comprar bitcoin",
+                "comprar eth",
+                "quero comprar",
+                "como comprar",
+                "onde comprar",
                 # Chinese
-                "购买加密货币", "购买比特币", "购买以太坊", "我想买",
+                "购买加密货币",
+                "购买比特币",
+                "购买以太坊",
+                "我想买",
             ],
             ChatIntent.SEND: [
                 # English
-                "send crypto", "send bitcoin", "send eth", "send usdc",
-                "send tokens", "transfer to", "send to wallet",
-                "i want to send", "how to send", "transfer crypto",
-                "transfer eth to", "transfer to another wallet", "send to another",
-                "transfer to wallet", "send to address",
+                "send crypto",
+                "send bitcoin",
+                "send eth",
+                "send usdc",
+                "send tokens",
+                "transfer to",
+                "send to wallet",
+                "i want to send",
+                "how to send",
+                "transfer crypto",
+                "transfer eth to",
+                "transfer to another wallet",
+                "send to another",
+                "transfer to wallet",
+                "send to address",
                 # Spanish
-                "enviar cripto", "enviar bitcoin", "enviar eth", "enviar usdc",
-                "enviar tokens", "transferir a", "enviar a billetera",
-                "quiero enviar", "cómo enviar", "transferir cripto",
-                "transferir eth a", "transferir a otra billetera",
+                "enviar cripto",
+                "enviar bitcoin",
+                "enviar eth",
+                "enviar usdc",
+                "enviar tokens",
+                "transferir a",
+                "enviar a billetera",
+                "quiero enviar",
+                "cómo enviar",
+                "transferir cripto",
+                "transferir eth a",
+                "transferir a otra billetera",
                 # Portuguese
-                "enviar cripto", "enviar bitcoin", "enviar eth",
-                "quero enviar", "como enviar", "transferir para",
-                "transferir eth para", "transferir para outra carteira",
+                "enviar cripto",
+                "enviar bitcoin",
+                "enviar eth",
+                "quero enviar",
+                "como enviar",
+                "transferir para",
+                "transferir eth para",
+                "transferir para outra carteira",
                 # Chinese
-                "发送加密货币", "发送比特币", "发送以太坊", "我想发送", "转账",
-                "转账ETH到", "转账到另一个钱包",
+                "发送加密货币",
+                "发送比特币",
+                "发送以太坊",
+                "我想发送",
+                "转账",
+                "转账ETH到",
+                "转账到另一个钱包",
             ],
         }
 
@@ -2425,18 +2861,37 @@ class SendGuestMessage:
         if context_lower:
             # Detect follow-up price queries: "And what about Bitcoin?"
             follow_up_patterns = [
-                "and what about", "what about", "how about", "and for",
-                "y qué hay de", "qué tal", "y para", "y sobre",  # Spanish
+                "and what about",
+                "what about",
+                "how about",
+                "and for",
+                "y qué hay de",
+                "qué tal",
+                "y para",
+                "y sobre",  # Spanish
             ]
             for pattern in follow_up_patterns:
                 if pattern in content_lower:
                     # Check if previous context was about price/sentiment
-                    if any(kw in context_lower for kw in ["price", "precio", "sentiment", "sentimiento"]):
+                    if any(
+                        kw in context_lower
+                        for kw in ["price", "precio", "sentiment", "sentimiento"]
+                    ):
                         # Extract token and return same intent type
-                        if any(kw in context_lower for kw in ["sentiment", "sentimiento"]):
-                            return ChatIntent.HUNTER_SENTIMENT, 0.85, "hunter_sentiment_handler"
-                        return ChatIntent.HUNTER_PRICE_PREDICTION, 0.85, "hunter_prediction_handler"
-            
+                        if any(
+                            kw in context_lower for kw in ["sentiment", "sentimiento"]
+                        ):
+                            return (
+                                ChatIntent.HUNTER_SENTIMENT,
+                                0.85,
+                                "hunter_sentiment_handler",
+                            )
+                        return (
+                            ChatIntent.HUNTER_PRICE_PREDICTION,
+                            0.85,
+                            "hunter_prediction_handler",
+                        )
+
             # Detect multi-turn swap flow: "quiero swap" → "de USDC" → "a ETH" → "100"
             swap_context_keywords = ["swap", "cambiar", "intercambiar", "exchange"]
             if any(kw in context_lower for kw in swap_context_keywords):
@@ -2445,38 +2900,87 @@ class SendGuestMessage:
                 # (e.g. "precio de bitcoin" includes "de").
                 new_intent_breakers = [
                     # Price (ES/EN/PT)
-                    "precio", "cuál es el precio", "precio de", "precio actual", "cuánto vale", "cuánto cuesta",
-                    "price", "current price", "price of", "how much is", "what is the price", "what's the price",
-                    "preço", "qual é o preço", "preço de", "preço atual", "quanto vale", "quanto custa",
+                    "precio",
+                    "cuál es el precio",
+                    "precio de",
+                    "precio actual",
+                    "cuánto vale",
+                    "cuánto cuesta",
+                    "price",
+                    "current price",
+                    "price of",
+                    "how much is",
+                    "what is the price",
+                    "what's the price",
+                    "preço",
+                    "qual é o preço",
+                    "preço de",
+                    "preço atual",
+                    "quanto vale",
+                    "quanto custa",
                     # Sentiment (ES/EN/PT)
-                    "sentimiento", "sentimiento de", "sentimiento del mercado", "alcista", "bajista",
-                    "sentiment", "market sentiment", "bullish", "bearish", "mood",
-                    "sentimento", "altista", "baixista", "humor",
+                    "sentimiento",
+                    "sentimiento de",
+                    "sentimiento del mercado",
+                    "alcista",
+                    "bajista",
+                    "sentiment",
+                    "market sentiment",
+                    "bullish",
+                    "bearish",
+                    "mood",
+                    "sentimento",
+                    "altista",
+                    "baixista",
+                    "humor",
                     # Risk / protocol search (common question-y breakers)
-                    "riesgo", "risk", "protocol", "protocolo", "protocolos",
+                    "riesgo",
+                    "risk",
+                    "protocol",
+                    "protocolo",
+                    "protocolos",
                 ]
                 if any(breaker in content_lower for breaker in new_intent_breakers):
                     # Let normal detection below decide the real intent
                     pass
                 else:
-                # This is a follow-up to a swap request
+                    # This is a follow-up to a swap request
                     # Only treat as swap continuation if it looks like an explicit swap field answer,
                     # not a generic phrase containing "de"/"a"/"to" somewhere in the middle.
-                    token_words = r"(usdc|eth|btc|usdt|dai|weth|wbtc|sol|matic|arb|op)\b"
+                    token_words = (
+                        r"(usdc|eth|btc|usdt|dai|weth|wbtc|sol|matic|arb|op)\b"
+                    )
                     partial_swap_patterns = [
-                        rf"^(?:de|from|del)\s+{token_words}",           # Source token
-                        rf"^(?:a|to|hacia|por|for)\s+{token_words}",     # Target token
+                        rf"^(?:de|from|del)\s+{token_words}",  # Source token
+                        rf"^(?:a|to|hacia|por|for)\s+{token_words}",  # Target token
                     ]
                     for pattern in partial_swap_patterns:
                         if re.match(pattern, content_lower, re.IGNORECASE):
                             return ChatIntent.SWAP, 0.90, "swap_handler"
-                
+
                     # Check for amount only (number at start)
-                    if content_lower.strip().replace(".", "").replace(",", "").isdigit():
+                    if (
+                        content_lower.strip()
+                        .replace(".", "")
+                        .replace(",", "")
+                        .isdigit()
+                    ):
                         return ChatIntent.SWAP, 0.90, "swap_handler"
-                
+
                     # Check for token symbols as standalone message (e.g. "USDC", "ETH")
-                    tokens = ["usdc", "eth", "btc", "usdt", "dai", "weth", "wbtc", "sol", "matic", "arb", "op"]
+                    tokens = [
+                        "usdc",
+                        "eth",
+                        "btc",
+                        "usdt",
+                        "dai",
+                        "weth",
+                        "wbtc",
+                        "sol",
+                        "matic",
+                        "arb",
+                        "op",
+                    ]
                     if content_lower.strip() in tokens:
                         return ChatIntent.SWAP, 0.90, "swap_handler"
 
@@ -2486,65 +2990,159 @@ class SendGuestMessage:
         hunter_patterns = {
             ChatIntent.HUNTER_SENTIMENT: [
                 # English
-                "sentiment", "feeling", "mood", "bullish", "bearish",
-                "twitter", "reddit", "social", "news", "hype",
-                "what do people think", "market mood", "community sentiment",
+                "sentiment",
+                "feeling",
+                "mood",
+                "bullish",
+                "bearish",
+                "twitter",
+                "reddit",
+                "social",
+                "news",
+                "hype",
+                "what do people think",
+                "market mood",
+                "community sentiment",
                 # Spanish
-                "sentimiento", "opinión", "opiniones", "alcista", "bajista",
-                "qué opina", "qué piensan", "clima del mercado", "percepción",
-                "sentimiento de mercado", "sentimiento para",
+                "sentimiento",
+                "opinión",
+                "opiniones",
+                "alcista",
+                "bajista",
+                "qué opina",
+                "qué piensan",
+                "clima del mercado",
+                "percepción",
+                "sentimiento de mercado",
+                "sentimiento para",
             ],
             ChatIntent.HUNTER_PRICE_PREDICTION: [
                 # English
-                "predict", "prediction", "forecast", "price target",
-                "will go", "where will", "price tomorrow", "future price",
-                "price of", "what's the price", "current price", "how much is",
-                "what is the price", "price for",
+                "predict",
+                "prediction",
+                "forecast",
+                "price target",
+                "will go",
+                "where will",
+                "price tomorrow",
+                "future price",
+                "price of",
+                "what's the price",
+                "current price",
+                "how much is",
+                "what is the price",
+                "price for",
                 # Spanish
-                "predecir", "predicción", "pronóstico", "objetivo de precio",
-                "a dónde irá", "precio de", "cuál es el precio", "precio actual",
-                "precio futuro", "va a subir", "va a bajar", "cuánto vale",
+                "predecir",
+                "predicción",
+                "pronóstico",
+                "objetivo de precio",
+                "a dónde irá",
+                "precio de",
+                "cuál es el precio",
+                "precio actual",
+                "precio futuro",
+                "va a subir",
+                "va a bajar",
+                "cuánto vale",
                 "cuánto cuesta",
             ],
             ChatIntent.HUNTER_RISK_SIGNALS: [
                 # English
-                "risk signal", "market risk", "whale", "liquidation",
-                "danger", "warning", "alert", "crash",
+                "risk signal",
+                "market risk",
+                "whale",
+                "liquidation",
+                "danger",
+                "warning",
+                "alert",
+                "crash",
                 # Spanish
-                "señal de riesgo", "riesgo de mercado", "ballena", "liquidación",
-                "peligro", "advertencia", "alerta", "caída",
+                "señal de riesgo",
+                "riesgo de mercado",
+                "ballena",
+                "liquidación",
+                "peligro",
+                "advertencia",
+                "alerta",
+                "caída",
             ],
             ChatIntent.HUNTER_TRADING_SIGNALS: [
                 # English
-                "trading signal", "buy signal", "sell signal",
-                "should i buy", "should i sell", "entry point", "exit point",
+                "trading signal",
+                "buy signal",
+                "sell signal",
+                "should i buy",
+                "should i sell",
+                "entry point",
+                "exit point",
                 # Spanish
-                "señal de trading", "señal de compra", "señal de venta",
-                "debería comprar", "debería vender", "punto de entrada", "punto de salida",
+                "señal de trading",
+                "señal de compra",
+                "señal de venta",
+                "debería comprar",
+                "debería vender",
+                "punto de entrada",
+                "punto de salida",
             ],
             ChatIntent.HUNTER_PATTERNS: [
                 # English
-                "chart pattern", "head and shoulders", "double bottom",
-                "flag pattern", "triangle", "breakout", "technical analysis",
-                "what patterns", "patterns do you see", "patterns in",
-                "see in.*chart", "chart patterns", "pattern recognition",
-                "detect pattern", "identify pattern", "find pattern",
-                "pattern", "patterns", "chart", "technical pattern",
+                "chart pattern",
+                "head and shoulders",
+                "double bottom",
+                "flag pattern",
+                "triangle",
+                "breakout",
+                "technical analysis",
+                "what patterns",
+                "patterns do you see",
+                "patterns in",
+                "see in.*chart",
+                "chart patterns",
+                "pattern recognition",
+                "detect pattern",
+                "identify pattern",
+                "find pattern",
+                "pattern",
+                "patterns",
+                "chart",
+                "technical pattern",
                 # Spanish
-                "patrón de gráfico", "hombro cabeza hombro", "doble suelo",
-                "patrón de bandera", "triángulo", "ruptura", "análisis técnico",
-                "qué patrones", "patrones ves", "patrones en",
-                "patrón", "patrones", "gráfico", "patrón técnico",
+                "patrón de gráfico",
+                "hombro cabeza hombro",
+                "doble suelo",
+                "patrón de bandera",
+                "triángulo",
+                "ruptura",
+                "análisis técnico",
+                "qué patrones",
+                "patrones ves",
+                "patrones en",
+                "patrón",
+                "patrones",
+                "gráfico",
+                "patrón técnico",
             ],
             ChatIntent.HUNTER_PORTFOLIO: [
                 # English
-                "optimize portfolio", "optimize my portfolio", "portfolio allocation",
-                "rebalance", "diversify", "risk adjusted", "sharpe ratio",
-                "portfolio optimization", "best allocation",
+                "optimize portfolio",
+                "optimize my portfolio",
+                "portfolio allocation",
+                "rebalance",
+                "diversify",
+                "risk adjusted",
+                "sharpe ratio",
+                "portfolio optimization",
+                "best allocation",
                 # Spanish
-                "optimizar portafolio", "optimizar mi portafolio", "asignación de portafolio",
-                "rebalancear", "diversificar", "ajustado al riesgo",
-                "optimización de portafolio", "mejor asignación",
+                "optimizar portafolio",
+                "optimizar mi portafolio",
+                "asignación de portafolio",
+                "rebalancear",
+                "diversificar",
+                "ajustado al riesgo",
+                "optimización de portafolio",
+                "mejor asignación",
             ],
         }
 
@@ -2554,32 +3152,59 @@ class SendGuestMessage:
         ultra_patterns = {
             ChatIntent.ULTRA_ARBITRAGE: [
                 # English
-                "arbitrage", "arb", "price difference", "spread",
-                "profit opportunity", "cross dex",
+                "arbitrage",
+                "arb",
+                "price difference",
+                "spread",
+                "profit opportunity",
+                "cross dex",
                 # Spanish
-                "arbitraje", "diferencia de precio", "oportunidad de ganancia",
+                "arbitraje",
+                "diferencia de precio",
+                "oportunidad de ganancia",
             ],
             ChatIntent.ULTRA_FLASH_LOANS: [
                 # English
-                "flash loan", "flashloan", "flash borrow",
-                "instant loan", "uncollateralized",
+                "flash loan",
+                "flashloan",
+                "flash borrow",
+                "instant loan",
+                "uncollateralized",
                 # Spanish
-                "préstamo flash", "préstamo instantáneo", "sin colateral",
+                "préstamo flash",
+                "préstamo instantáneo",
+                "sin colateral",
             ],
             ChatIntent.ULTRA_MEV_PROTECTION: [
                 # English
-                "mev", "front run", "frontrun", "sandwich",
-                "flashbots", "private transaction", "protected",
+                "mev",
+                "front run",
+                "frontrun",
+                "sandwich",
+                "flashbots",
+                "private transaction",
+                "protected",
                 # Spanish
-                "protección mev", "transacción privada", "protegido",
+                "protección mev",
+                "transacción privada",
+                "protegido",
             ],
             ChatIntent.ULTRA_AUTO_EXECUTOR: [
                 # English
-                "auto execute", "automated trading", "trading bot",
-                "dca", "limit order", "stop loss", "auto trade",
+                "auto execute",
+                "automated trading",
+                "trading bot",
+                "dca",
+                "limit order",
+                "stop loss",
+                "auto trade",
                 # Spanish
-                "ejecución automática", "trading automatizado", "bot de trading",
-                "orden límite", "stop loss", "trade automático",
+                "ejecución automática",
+                "trading automatizado",
+                "bot de trading",
+                "orden límite",
+                "stop loss",
+                "trade automático",
             ],
         }
 
@@ -2589,42 +3214,86 @@ class SendGuestMessage:
         graphrag_patterns = {
             ChatIntent.PROTOCOL_SEARCH: [
                 # English
-                "find protocols", "find defi", "list protocols", "show protocols",
-                "search protocols", "discover protocols", "explore protocols",
-                "best protocols", "top protocols", "safest protocols",
-                "compare protocols", "protocol comparison",
-                "protocols on ethereum", "protocols on arbitrum", "protocols on base",
-                "protocols on polygon", "protocols on optimism",
-                "lending protocols", "dex protocols", "staking protocols",
-                "bridge protocols", "yield protocols", "cdp protocols",
-                "low risk protocols", "high tvl protocols",
+                "find protocols",
+                "find defi",
+                "list protocols",
+                "show protocols",
+                "search protocols",
+                "discover protocols",
+                "explore protocols",
+                "best protocols",
+                "top protocols",
+                "safest protocols",
+                "compare protocols",
+                "protocol comparison",
+                "protocols on ethereum",
+                "protocols on arbitrum",
+                "protocols on base",
+                "protocols on polygon",
+                "protocols on optimism",
+                "lending protocols",
+                "dex protocols",
+                "staking protocols",
+                "bridge protocols",
+                "yield protocols",
+                "cdp protocols",
+                "low risk protocols",
+                "high tvl protocols",
                 # Spanish
-                "buscar protocolos", "encontrar protocolos", "listar protocolos",
-                "mostrar protocolos", "mejores protocolos", "protocolos seguros",
-                "comparar protocolos", "protocolos de préstamo", "protocolos de staking",
+                "buscar protocolos",
+                "encontrar protocolos",
+                "listar protocolos",
+                "mostrar protocolos",
+                "mejores protocolos",
+                "protocolos seguros",
+                "comparar protocolos",
+                "protocolos de préstamo",
+                "protocolos de staking",
                 "protocolos de bajo riesgo",
             ],
             ChatIntent.RISK_ASSESSMENT: [
                 # English
-                "is it safe", "how safe", "safe to use",
-                "what are the risks", "risks of", "risk assessment",
-                "is aave safe", "is uniswap safe", "is compound safe",
-                "is morpho safe", "is curve safe", "is lido safe",
+                "is it safe",
+                "how safe",
+                "safe to use",
+                "what are the risks",
+                "risks of",
+                "risk assessment",
+                "is aave safe",
+                "is uniswap safe",
+                "is compound safe",
+                "is morpho safe",
+                "is curve safe",
+                "is lido safe",
                 # Spanish
-                "es seguro", "es seguro usar", "qué tan seguro",
-                "cuáles son los riesgos", "riesgos de", "evaluación de riesgo",
+                "es seguro",
+                "es seguro usar",
+                "qué tan seguro",
+                "cuáles son los riesgos",
+                "riesgos de",
+                "evaluación de riesgo",
                 # Portuguese
-                "é seguro", "é seguro usar",
+                "é seguro",
+                "é seguro usar",
                 # Chinese
-                "安全吗", "安全使用",
+                "安全吗",
+                "安全使用",
             ],
             ChatIntent.SIMILAR_PROTOCOLS: [
                 # English
-                "similar to", "like", "alternative to", "alternatives for",
-                "protocols like", "similar protocols",
+                "similar to",
+                "like",
+                "alternative to",
+                "alternatives for",
+                "protocols like",
+                "similar protocols",
                 # Spanish
-                "similar a", "parecido a", "alternativa a", "alternativas para",
-                "protocolos como", "protocolos similares",
+                "similar a",
+                "parecido a",
+                "alternativa a",
+                "alternativas para",
+                "protocolos como",
+                "protocolos similares",
             ],
         }
 
@@ -2634,80 +3303,190 @@ class SendGuestMessage:
         defi_patterns = {
             ChatIntent.LENDING: [
                 # English
-                "deposit usdc", "deposit eth", "earn on morpho",
-                "supply to aave", "lend my", "earn yield",
-                "lending vault", "lending vaults", "best vault", "best vaults",
-                "show vault", "show vaults", "morpho vault", "morpho vaults",
+                "deposit usdc",
+                "deposit eth",
+                "earn on morpho",
+                "supply to aave",
+                "lend my",
+                "earn yield",
+                "lending vault",
+                "lending vaults",
+                "best vault",
+                "best vaults",
+                "show vault",
+                "show vaults",
+                "morpho vault",
+                "morpho vaults",
                 # Spanish
-                "depositar usdc", "depositar eth", "ganar en morpho",
-                "prestar en aave", "prestar mi", "ganar rendimiento",
-                "bóveda de préstamo", "bóvedas de préstamo", "mejor bóveda", "mejores bóvedas",
+                "depositar usdc",
+                "depositar eth",
+                "ganar en morpho",
+                "prestar en aave",
+                "prestar mi",
+                "ganar rendimiento",
+                "bóveda de préstamo",
+                "bóvedas de préstamo",
+                "mejor bóveda",
+                "mejores bóvedas",
             ],
             ChatIntent.MONEY_MARKET: [
                 # English
-                "money market", "compare aave", "compound vs aave",
-                "borrow rate", "lending rate",
-                "where should i supply", "where to supply", "where can i supply",
-                "best place to supply", "where to deposit", "where should i deposit",
-                "supply eth", "supply usdc", "supply dai", "supply usdt",
-                "compare rates", "best rates", "best lending rates",
-                "aave vs compound", "compound vs aave", "compare aave compound",
-                "where supply", "where deposit", "best supply", "best deposit",
+                "money market",
+                "compare aave",
+                "compound vs aave",
+                "borrow rate",
+                "lending rate",
+                "where should i supply",
+                "where to supply",
+                "where can i supply",
+                "best place to supply",
+                "where to deposit",
+                "where should i deposit",
+                "supply eth",
+                "supply usdc",
+                "supply dai",
+                "supply usdt",
+                "compare rates",
+                "best rates",
+                "best lending rates",
+                "aave vs compound",
+                "compound vs aave",
+                "compare aave compound",
+                "where supply",
+                "where deposit",
+                "best supply",
+                "best deposit",
                 # Spanish
-                "mercado de dinero", "comparar aave", "compound vs aave",
-                "tasa de préstamo", "tasa de interés",
-                "dónde debería depositar", "dónde depositar", "dónde puedo depositar",
-                "mejor lugar para depositar", "dónde suministrar", "dónde debería suministrar",
-                "suministrar eth", "suministrar usdc", "suministrar dai",
-                "comparar tasas", "mejores tasas", "mejores tasas de préstamo",
-                "aave vs compound", "compound vs aave", "comparar aave compound",
+                "mercado de dinero",
+                "comparar aave",
+                "compound vs aave",
+                "tasa de préstamo",
+                "tasa de interés",
+                "dónde debería depositar",
+                "dónde depositar",
+                "dónde puedo depositar",
+                "mejor lugar para depositar",
+                "dónde suministrar",
+                "dónde debería suministrar",
+                "suministrar eth",
+                "suministrar usdc",
+                "suministrar dai",
+                "comparar tasas",
+                "mejores tasas",
+                "mejores tasas de préstamo",
+                "aave vs compound",
+                "compound vs aave",
+                "comparar aave compound",
                 # Portuguese
-                "onde devo depositar", "onde depositar", "onde posso depositar",
-                "melhor lugar para depositar", "onde fornecer", "onde devo fornecer",
-                "fornecer eth", "fornecer usdc", "fornecer dai",
-                "comparar taxas", "melhores taxas", "melhores taxas de empréstimo",
+                "onde devo depositar",
+                "onde depositar",
+                "onde posso depositar",
+                "melhor lugar para depositar",
+                "onde fornecer",
+                "onde devo fornecer",
+                "fornecer eth",
+                "fornecer usdc",
+                "fornecer dai",
+                "comparar taxas",
+                "melhores taxas",
+                "melhores taxas de empréstimo",
                 # Chinese
-                "在哪里供应", "应该在哪里供应", "在哪里存款",
-                "最佳供应地点", "比较利率", "最佳利率",
+                "在哪里供应",
+                "应该在哪里供应",
+                "在哪里存款",
+                "最佳供应地点",
+                "比较利率",
+                "最佳利率",
             ],
             ChatIntent.SWAP_MOONPAY: [
                 # This pattern should be checked by external detector (keyword_intent_detection_adapter.py)
                 # which properly handles: swap_action + 2 MoonPay tokens (btc/eth/sol/usdc) + direction
                 # These keywords force explicit MoonPay routing
-                "moonpay swap", "swap via moonpay", "via moonpay",
-                "moonpay", "moon pay",
+                "moonpay swap",
+                "swap via moonpay",
+                "via moonpay",
+                "moonpay",
+                "moon pay",
                 # Spanish
-                "intercambio moonpay", "swap cripto a cripto",
+                "intercambio moonpay",
+                "swap cripto a cripto",
                 # Portuguese
-                "troca moonpay", "trocar cripto por cripto",
+                "troca moonpay",
+                "trocar cripto por cripto",
                 # French
-                "échange moonpay", "échanger crypto contre crypto",
+                "échange moonpay",
+                "échanger crypto contre crypto",
                 # Chinese
-                "moonpay交换", "加密货币互换",
+                "moonpay交换",
+                "加密货币互换",
             ],
             ChatIntent.SWAP: [
                 # English
-                "swap", "exchange", "trade", "convert",
-                "1inch", "uniswap", "lifi", "hyperliquid",
-                "swap.*for", "swap.*to", "exchange.*for", "exchange.*to",
-                "convert.*to", "convert.*for", "trade.*for", "trade.*to",
-                "bridge", "bridge.*from", "bridge.*to", "cross.*chain",
-                "best swap rate", "best rate", "swap rate", "exchange rate",
-                "swap.*usdc.*eth", "swap.*eth.*usdc", "swap.*usdt.*eth",
-                "bridge.*ethereum.*base", "bridge.*base.*ethereum",
-                "bridge.*arbitrum", "bridge.*optimism", "bridge.*polygon",
+                "swap",
+                "exchange",
+                "trade",
+                "convert",
+                "1inch",
+                "uniswap",
+                "lifi",
+                "hyperliquid",
+                "swap.*for",
+                "swap.*to",
+                "exchange.*for",
+                "exchange.*to",
+                "convert.*to",
+                "convert.*for",
+                "trade.*for",
+                "trade.*to",
+                "bridge",
+                "bridge.*from",
+                "bridge.*to",
+                "cross.*chain",
+                "best swap rate",
+                "best rate",
+                "swap rate",
+                "exchange rate",
+                "swap.*usdc.*eth",
+                "swap.*eth.*usdc",
+                "swap.*usdt.*eth",
+                "bridge.*ethereum.*base",
+                "bridge.*base.*ethereum",
+                "bridge.*arbitrum",
+                "bridge.*optimism",
+                "bridge.*polygon",
                 # Spanish
-                "cambiar", "intercambiar", "convertir", "canjear",
-                "quiero swap", "hacer swap", "swap de",
-                "puente", "hacer puente", "cruzar.*cadena",
-                "mejor tasa", "tasa de cambio", "cotización",
+                "cambiar",
+                "intercambiar",
+                "convertir",
+                "canjear",
+                "quiero swap",
+                "hacer swap",
+                "swap de",
+                "puente",
+                "hacer puente",
+                "cruzar.*cadena",
+                "mejor tasa",
+                "tasa de cambio",
+                "cotización",
                 # Portuguese
-                "trocar", "troca", "converter", "câmbio",
-                "ponte", "fazer ponte", "cruzar.*cadeia",
-                "melhor taxa", "taxa de câmbio", "cotação",
+                "trocar",
+                "troca",
+                "converter",
+                "câmbio",
+                "ponte",
+                "fazer ponte",
+                "cruzar.*cadeia",
+                "melhor taxa",
+                "taxa de câmbio",
+                "cotação",
                 # Chinese
-                "交换", "兑换", "交易", "桥接",
-                "最佳汇率", "汇率", "报价",
+                "交换",
+                "兑换",
+                "交易",
+                "桥接",
+                "最佳汇率",
+                "汇率",
+                "报价",
             ],
         }
 
@@ -2772,7 +3551,7 @@ class SendGuestMessage:
     ) -> tuple[bool, str | None]:
         """
         Check if intent requires registration.
-        
+
         Restricted intents are actions that require a connected wallet:
         - BALANCE: Viewing wallet balance
         - PORTFOLIO: Viewing portfolio positions
@@ -2838,17 +3617,18 @@ class SendGuestMessage:
         ip_address: str,
         user_agent: str | None = None,
         referer: str | None = None,
-        distillation_timing_ms: int | None = None,  # Pass distillation timing from caller
+        distillation_timing_ms: int
+        | None = None,  # Pass distillation timing from caller
     ) -> GuestMessageResult:
         """
         Handle complex query with Agent Squad SupervisorCoordinator.
-        
+
         This method:
         1. Creates a workflow plan using SupervisorCoordinator
         2. Executes the workflow with multiple agents
         3. Aggregates results into a structured response
         4. Saves messages and logs telemetry
-        
+
         Args:
             content: User message content
             language: Language code
@@ -2858,7 +3638,7 @@ class SendGuestMessage:
             ip_address: User IP address
             user_agent: User agent string
             referer: Referer header
-            
+
         Returns:
             GuestMessageResult with Agent Squad response, or None if should fallback
         """
@@ -2866,23 +3646,23 @@ class SendGuestMessage:
             # Fallback to single intent if Agent Squad not available
             logger.warning("Agent Squad not available, falling back to single intent")
             return None  # type: ignore
-        
+
         # Type guard: Ensure it's actually a SupervisorCoordinator
         if not hasattr(self._supervisor_coordinator, "create_workflow_plan"):
             logger.warning(
                 "SupervisorCoordinator has wrong type, skipping Agent Squad",
-                extra={"type": type(self._supervisor_coordinator).__name__}
+                extra={"type": type(self._supervisor_coordinator).__name__},
             )
             return None
-        
+
         logger.info(
             "🎭 Agent Squad Supervisor: Creating workflow plan",
             extra={
                 "conversation_id": str(conversation.id),
                 "message_length": len(content),
-            }
+            },
         )
-        
+
         try:
             from app.domain.value_objects.conversation_id import ConversationId
             from app.domain.value_objects.message_content import MessageContent
@@ -2902,40 +3682,41 @@ class SendGuestMessage:
                 AgentType.DEFI_YIELD,  # Lending rates (read-only)
                 AgentType.GUEST_AUTH,  # Authentication prompts for restricted features
             ]
-            
+
             # Build Agent Squad conversation context
             # Get actual message objects from repository (context is a string)
-            messages = await self._guest_repo.get_messages(
-                conversation.id, limit=10
-            )
-            
+            messages = await self._guest_repo.get_messages(conversation.id, limit=10)
+
             # Build conversation history with current message included
             conversation_history = [
                 {
                     "role": msg.role.value,
                     "content": msg.content,
-                    "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+                    "timestamp": msg.created_at.isoformat()
+                    if hasattr(msg.created_at, "isoformat")
+                    else str(msg.created_at),
                 }
                 for msg in messages
             ]
-            
+
             # Add current user message to history for context
             conversation_history.append({
                 "role": "user",
                 "content": content,
                 "timestamp": datetime.now(UTC).isoformat(),
             })
-            
+
             agent_squad_context = AgentSquadContext(
                 conversation_history=conversation_history,
                 user_metadata={"language": language, "is_guest": True},
                 session_metadata={"ip_address": ip_address},
             )
-            
+
             # Track supervisor coordinator planning time
             import time
+
             supervisor_planning_start = time.time()
-            
+
             # Create workflow plan
             workflow_plan = await self._supervisor_coordinator.create_workflow_plan(
                 conversation_id=ConversationId(conversation.id),
@@ -2943,9 +3724,11 @@ class SendGuestMessage:
                 conversation_context=agent_squad_context,
                 available_agents=GUEST_ACCESSIBLE_AGENTS,
             )
-            
-            supervisor_planning_time_ms = int((time.time() - supervisor_planning_start) * 1000)
-            
+
+            supervisor_planning_time_ms = int(
+                (time.time() - supervisor_planning_start) * 1000
+            )
+
             logger.info(
                 "🎭 Agent Squad workflow plan created",
                 extra={
@@ -2953,18 +3736,22 @@ class SendGuestMessage:
                     "conversation_id": str(conversation.id),
                     "task_count": len(workflow_plan.tasks),
                     "estimated_time": workflow_plan.estimated_time_seconds,
-                }
+                },
             )
-            
+
             # Execute workflow
             # Pass original_message explicitly to prevent conversation context pollution
-            aggregated_response, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
+            (
+                aggregated_response,
+                sources_raw,
+                agent_timings,
+            ) = await self._supervisor_coordinator.execute_workflow(
                 conversation_id=ConversationId(conversation.id),
                 workflow_plan=workflow_plan,
                 conversation_context=agent_squad_context,
                 original_message=content,  # Explicitly pass current user message
             )
-            
+
             # Convert sources to serializable format (always initialize as list)
             sources = []
             if sources_raw:
@@ -2975,7 +3762,7 @@ class SendGuestMessage:
                         sources.append(s)
                     else:
                         sources.append(str(s))
-            
+
             # Create user message
             user_message = GuestMessage.create_user_message(
                 conversation_id=conversation.id,
@@ -2983,16 +3770,19 @@ class SendGuestMessage:
                 language=language,
             )
             await self._guest_repo.create_message(user_message)
-            
+
             # Check if debug timing is enabled
             from app.setup.config.settings import load_settings
+
             settings = load_settings()
-            debug_timing_enabled = getattr(settings.agent_squad, 'debug_agent_timing', False)
-            
+            debug_timing_enabled = getattr(
+                settings.agent_squad, "debug_agent_timing", False
+            )
+
             # Build enrichment with timing (always include agent_timings, even if empty)
             # Initialize agent_timings list
             all_timings = []
-            
+
             # Add timing if debug enabled
             if debug_timing_enabled:
                 # Add distillation timing if available
@@ -3003,7 +3793,7 @@ class SendGuestMessage:
                         "execution_time_ms": distillation_timing_ms,
                         "status": "completed",
                     })
-                
+
                 # Add supervisor coordinator planning timing
                 all_timings.append({
                     "agent_type": "supervisor_coordinator",
@@ -3011,11 +3801,11 @@ class SendGuestMessage:
                     "execution_time_ms": supervisor_planning_time_ms,
                     "status": "completed",
                 })
-                
+
                 # Add agent execution timings from workflow
                 if agent_timings:
                     all_timings.extend(agent_timings)
-            
+
             enrichment = {
                 "agent_squad": True,
                 "workflow_type": "supervisor_coordinator",
@@ -3024,10 +3814,12 @@ class SendGuestMessage:
                 "agents_used": [task.agent_type.value for task in workflow_plan.tasks],
                 "agent_timings": all_timings,  # Always include agent_timings (even if empty)
             }
-            
+
             # Check if GUEST_AUTH agent was used (indicates restricted action)
             registration_required = None
-            used_guest_auth = any(task.agent_type == AgentType.GUEST_AUTH for task in workflow_plan.tasks)
+            used_guest_auth = any(
+                task.agent_type == AgentType.GUEST_AUTH for task in workflow_plan.tasks
+            )
             if used_guest_auth:
                 # Build registration required response for restricted actions
                 registration_required = {
@@ -3042,7 +3834,7 @@ class SendGuestMessage:
                     "cta": GUEST_CTA_MESSAGES,
                     # signup_url removed - URLs not shown in guest chat
                 }
-            
+
             # Create agent message with aggregated response
             # Set is_restricted_action=True if GUEST_AUTH agent was used
             agent_message = GuestMessage.create_assistant_message(
@@ -3084,7 +3876,9 @@ class SendGuestMessage:
             messages_this_hour = await self._guest_repo.get_message_count_since(
                 guest.id, hour_ago
             )
-            messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
+            messages_remaining = max(
+                0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour
+            )
 
             return GuestMessageResult(
                 conversation_id=conversation.id,
@@ -3100,7 +3894,9 @@ class SendGuestMessage:
                     "role": agent_message.role.value,
                     "content": agent_message.content,
                     "created_at": agent_message.created_at.isoformat(),
-                    "sources": sources if sources else [],  # Always include sources (even if empty array)
+                    "sources": sources
+                    if sources
+                    else [],  # Always include sources (even if empty array)
                 },
                 routing={
                     "intent": "COMPLEX_WORKFLOW",
@@ -3112,7 +3908,9 @@ class SendGuestMessage:
                     "workflow_tasks": len(workflow_plan.tasks),
                 },
                 enrichment=enrichment,
-                sources=sources if sources else [],  # Always include sources at top level (even if empty)
+                sources=sources
+                if sources
+                else [],  # Always include sources at top level (even if empty)
                 registration_required=registration_required,
                 guest_info={
                     "messages_remaining": messages_remaining,
@@ -3120,7 +3918,7 @@ class SendGuestMessage:
                 },
                 rate_limited=False,
             )
-            
+
         except Exception as e:
             logger.error(
                 "❌ Agent Squad workflow execution failed",
@@ -3140,26 +3938,42 @@ class SendGuestMessage:
     def _check_informational_query(self, content: str, language: str) -> str | None:
         """
         Check if query is an informational question and return educational response.
-        
+
         This is a fallback for queries that might have been missed by distillation.
         Handles patterns like "what is btc?", "what is bitcoin?", "whats btc and eth", etc.
         Supports both single and compound queries (multiple tokens).
-        
+
         Args:
             content: User query text
             language: Language code
-            
+
         Returns:
             Educational response if found, None otherwise
         """
-        from app.infrastructure.distillation.educational_responses import get_educational_response
+        from app.infrastructure.distillation.educational_responses import (
+            get_educational_response,
+        )
         import re
-        
+
         content_lower = content.lower().strip()
-        
+
         # Known tokens for validation
-        known_tokens = ["btc", "eth", "usdc", "usdt", "dai", "sol", "bitcoin", "ethereum", "defi", "nft", "dao", "stablecoin", "solana"]
-        
+        known_tokens = [
+            "btc",
+            "eth",
+            "usdc",
+            "usdt",
+            "dai",
+            "sol",
+            "bitcoin",
+            "ethereum",
+            "defi",
+            "nft",
+            "dao",
+            "stablecoin",
+            "solana",
+        ]
+
         # ✨ COMPOUND QUERY DETECTION ✨
         # Check for multiple tokens in query (e.g., "whats btc and eth", "what is bitcoin and ethereum")
         compound_patterns = [
@@ -3167,24 +3981,24 @@ class SendGuestMessage:
             r"what(?:'s|s| is) (.+?)\s+(?:and|,|&)\s+(.+?)(?:\?|$)",  # "what is bitcoin and ethereum"
             r"^(.+?)(?:\s+and\s+|\s*,\s*|\s+&\s+)(.+?)(?:\?|$)",  # "btc and eth"
         ]
-        
+
         found_tokens = []
         for pattern in compound_patterns:
             match = re.search(pattern, content_lower, re.IGNORECASE)
             if match:
                 token1 = match.group(1).strip().lower()
                 token2 = match.group(2).strip().lower()
-                
+
                 # Normalize tokens (remove common words)
                 token1 = re.sub(r"^(?:a |an |the )", "", token1)
                 token2 = re.sub(r"^(?:a |an |the )", "", token2)
-                
+
                 # Check if both are known tokens
                 if token1 in known_tokens:
                     found_tokens.append(token1)
                 if token2 in known_tokens:
                     found_tokens.append(token2)
-                
+
                 if len(found_tokens) >= 2:
                     # Build compound response
                     responses = []
@@ -3192,13 +4006,13 @@ class SendGuestMessage:
                         response = get_educational_response(token, language)
                         if response:
                             responses.append(response)
-                    
+
                     if len(responses) >= 2:
                         # Combine responses with separator
                         separator = "\n\n---\n\n"
                         combined = separator.join(responses)
                         return combined
-        
+
         # ✨ SINGLE TOKEN QUERIES ✨
         # Patterns for informational queries (single token)
         informational_patterns = {
@@ -3221,22 +4035,22 @@ class SendGuestMessage:
                 r"(?:告诉我关于|解释)(?:一个 )?(bitcoin|btc|ethereum|eth|usdc|usdt|dai|solana|sol|defi|nft|dao|stablecoin)",
             ],
         }
-        
+
         # Get patterns for language (fallback to English)
         patterns = informational_patterns.get(language, informational_patterns["en"])
-        
+
         # Try each pattern
         for pattern in patterns:
             match = re.search(pattern, content_lower, re.IGNORECASE)
             if match:
                 # Extract the token/term
                 token = match.group(1).lower()
-                
+
                 # Get educational response
                 response = get_educational_response(token, language)
                 if response:
                     return response
-        
+
         # Also check for simple "what is X" where X might be a token
         # This catches cases like "what is btc" (without the word "bitcoin")
         simple_pattern = r"what (?:is|'s) (\w+)"
@@ -3248,7 +4062,7 @@ class SendGuestMessage:
                 response = get_educational_response(potential_token, language)
                 if response:
                     return response
-        
+
         return None
 
     async def _generate_demo_response(

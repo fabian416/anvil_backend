@@ -13,7 +13,7 @@ from datetime import datetime
 @pytest.mark.asyncio
 class TestCompleteConversationFlow:
     """Integration tests for complete conversation flows."""
-    
+
     @pytest.mark.llm_validation
     async def test_create_send_retrieve_conversation_flow(self):
         """Test complete flow: create -> send message -> retrieve."""
@@ -24,10 +24,10 @@ class TestCompleteConversationFlow:
         # 3. Agent processes and responds
         # 4. Retrieve conversation with all messages
         # 5. Verify message order and content
-        
+
         user_id = 12345
         message_content = "What is DeFi?"
-        
+
         assert user_id > 0
         assert len(message_content) > 0
 
@@ -41,7 +41,7 @@ class TestCompleteConversationFlow:
         # 3. Send message 2 (referencing message 1)
         # 4. Agent response shows context awareness
         # 5. All messages linked to same conversation
-        
+
         assert True
 
     @pytest.mark.llm_validation
@@ -54,7 +54,7 @@ class TestCompleteConversationFlow:
         # 3. Both messages processed
         # 4. Responses maintain order
         # 5. No race conditions
-        
+
         assert True
 
     @pytest.mark.llm_validation
@@ -67,10 +67,10 @@ class TestCompleteConversationFlow:
         # 3. Receive 10 conversations
         # 4. Request page 2
         # 5. Receive next 10
-        
+
         total_conversations = 25
         page_size = 10
-        
+
         assert total_conversations > page_size
 
     @pytest.mark.llm_validation
@@ -83,7 +83,7 @@ class TestCompleteConversationFlow:
         # 3. Retrieve messages
         # 4. All 5 messages returned
         # 5. Correct order (chronological)
-        
+
         message_count = 5
         assert message_count > 0
 
@@ -92,7 +92,7 @@ class TestCompleteConversationFlow:
 @pytest.mark.asyncio
 class TestConversationAgentInteraction:
     """Integration tests for conversation-agent interactions."""
-    
+
     @pytest.mark.llm_validation
     async def test_agent_selection_based_on_intent(self):
         """Test correct agent selected based on message intent."""
@@ -103,10 +103,10 @@ class TestConversationAgentInteraction:
         # 3. Send yield farming message
         # 4. Yield farming agent selected
         # 5. Agent responses appropriate
-        
+
         trading_message = "I want to swap ETH for USDC"
         yield_message = "What are the best yield farms?"
-        
+
         assert "swap" in trading_message.lower()
         assert "yield" in yield_message.lower()
 
@@ -119,9 +119,9 @@ class TestConversationAgentInteraction:
         # 2. Agent breaks down query
         # 3. Addresses all parts
         # 4. Response is comprehensive
-        
+
         complex_query = "Compare Uniswap v3 and Curve, considering fees, TVL, and risks"
-        
+
         # Query has multiple parts to address
         assert "Uniswap" in complex_query
         assert "Curve" in complex_query
@@ -136,7 +136,7 @@ class TestConversationAgentInteraction:
         # 2. Agent queries GraphRAG
         # 3. Response includes protocol data
         # 4. Citations to data sources
-        
+
         assert True
 
     @pytest.mark.llm_validation
@@ -149,7 +149,7 @@ class TestConversationAgentInteraction:
         # 3. Ask "What about fees?"
         # 4. Agent understands context
         # 5. Response about Uniswap fees
-        
+
         assert True
 
 
@@ -157,7 +157,7 @@ class TestConversationAgentInteraction:
 @pytest.mark.asyncio
 class TestConversationUserIsolation:
     """Integration tests for user data isolation."""
-    
+
     @pytest.mark.llm_validation
     async def test_user_only_sees_own_conversations(self):
         """Test user can only see their own conversations."""
@@ -168,7 +168,7 @@ class TestConversationUserIsolation:
         # 3. User A lists conversations
         # 4. Only sees their own
         # 5. User B cannot access User A's
-        
+
         assert True
 
     @pytest.mark.llm_validation
@@ -180,7 +180,7 @@ class TestConversationUserIsolation:
         # 2. User B tries to access
         # 3. Access denied (403)
         # 4. User B cannot see messages
-        
+
         assert True
 
     @pytest.mark.llm_validation
@@ -192,7 +192,7 @@ class TestConversationUserIsolation:
         # 2. Admin requests all conversations
         # 3. Admin sees all conversations
         # 4. Regular users still isolated
-        
+
         assert True
 
 
@@ -200,7 +200,7 @@ class TestConversationUserIsolation:
 @pytest.mark.asyncio
 class TestConversationMetadata:
     """Integration tests for conversation metadata."""
-    
+
     @pytest.mark.llm_validation
     async def test_conversation_timestamps_accurate(self):
         """Test conversation timestamps are accurate."""
@@ -211,7 +211,7 @@ class TestConversationMetadata:
         # 3. Send message
         # 4. Check updated_at timestamp
         # 5. Timestamps accurate within 1 second
-        
+
         assert True
 
     @pytest.mark.llm_validation
@@ -223,7 +223,7 @@ class TestConversationMetadata:
         # 2. Send first message
         # 3. Title auto-generated
         # 4. Title summarizes message
-        
+
         assert True
 
     @pytest.mark.llm_validation
@@ -235,7 +235,7 @@ class TestConversationMetadata:
         # 2. Send 5 messages
         # 3. Message count = 5
         # 4. Count includes both user and agent
-        
+
         expected_count = 5
         assert expected_count > 0
 
@@ -244,7 +244,7 @@ class TestConversationMetadata:
 @pytest.mark.asyncio
 class TestConversationErrorHandling:
     """Integration tests for conversation error handling."""
-    
+
     @pytest.mark.llm_validation
     async def test_empty_message_rejected(self):
         """Test empty message is rejected."""
@@ -253,7 +253,7 @@ class TestConversationErrorHandling:
         # 1. Try to send empty message
         # 2. Receive validation error
         # 3. Conversation unaffected
-        
+
         assert True
 
     @pytest.mark.llm_validation
@@ -264,7 +264,7 @@ class TestConversationErrorHandling:
         # 1. Send 50,000 character message
         # 2. Rejected with error
         # 3. Max length indicated
-        
+
         max_length = 10000
         assert max_length > 0
 
@@ -277,7 +277,7 @@ class TestConversationErrorHandling:
         # 2. Error message returned
         # 3. Conversation continues
         # 4. Next message works
-        
+
         assert True
 
     @pytest.mark.llm_validation
@@ -288,7 +288,7 @@ class TestConversationErrorHandling:
         # 1. Request conversation with fake ID
         # 2. Receive 404 Not Found
         # 3. Error message clear
-        
+
         fake_conversation_id = uuid4()
         assert fake_conversation_id is not None
 
@@ -297,7 +297,7 @@ class TestConversationErrorHandling:
 @pytest.mark.asyncio
 class TestConversationDeletion:
     """Integration tests for conversation deletion."""
-    
+
     @pytest.mark.llm_validation
     async def test_delete_conversation_removes_all_data(self):
         """Test deleting conversation removes all associated data."""
@@ -308,7 +308,7 @@ class TestConversationDeletion:
         # 3. Conversation gone
         # 4. All messages deleted
         # 5. Cannot retrieve
-        
+
         assert True
 
     @pytest.mark.llm_validation
@@ -320,7 +320,7 @@ class TestConversationDeletion:
         # 2. Hard delete: data removed from DB
         # 3. Soft deleted can be restored
         # 4. Hard deleted cannot
-        
+
         assert True
 
 
@@ -328,7 +328,7 @@ class TestConversationDeletion:
 @pytest.mark.asyncio
 class TestConversationSearch:
     """Integration tests for conversation search."""
-    
+
     @pytest.mark.llm_validation
     async def test_search_conversations_by_content(self):
         """Test searching conversations by message content."""
@@ -338,7 +338,7 @@ class TestConversationSearch:
         # 2. Search for "Uniswap"
         # 3. Only relevant conversations returned
         # 4. Results ranked by relevance
-        
+
         search_query = "Uniswap"
         assert len(search_query) > 0
 
@@ -351,7 +351,7 @@ class TestConversationSearch:
         # 2. Search with agent type
         # 3. Only matching results
         # 4. Filters combine correctly
-        
+
         assert True
 
 
@@ -359,7 +359,7 @@ class TestConversationSearch:
 @pytest.mark.asyncio
 class TestConversationPerformance:
     """Performance tests for conversation operations."""
-    
+
     @pytest.mark.llm_validation
     async def test_create_conversation_performance(self):
         """Test conversation creation performance."""
@@ -368,7 +368,7 @@ class TestConversationPerformance:
         # 1. Create conversation
         # 2. Measure time
         # 3. Should complete < 100ms
-        
+
         max_time_ms = 100
         assert max_time_ms > 0
 
@@ -380,10 +380,10 @@ class TestConversationPerformance:
         # 1. Conversation with 100 messages
         # 2. Retrieve all messages
         # 3. Should complete < 200ms
-        
+
         message_count = 100
         max_time_ms = 200
-        
+
         assert message_count > 0
         assert max_time_ms > 0
 
@@ -396,5 +396,5 @@ class TestConversationPerformance:
         # 2. All succeed
         # 3. No race conditions
         # 4. All have unique IDs
-        
+
         concurrent_count = 10

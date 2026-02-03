@@ -21,14 +21,15 @@ from app.application.chat.queries.get_messages import GetMessages
 # Mock Transaction Manager
 # ============================================================================
 
+
 @pytest.fixture
 def mock_transaction_manager():
     """
     Mock transaction manager for component tests.
-    
+
     Returns:
         Mock with async commit/rollback methods
-    
+
     Note: In-memory repositories don't need real transactions
     """
     tx = MagicMock()
@@ -41,14 +42,15 @@ def mock_transaction_manager():
 # Mock Agent Gateway
 # ============================================================================
 
+
 @pytest.fixture
 def mock_agent_gateway():
     """
     Mock agent gateway for chat tests.
-    
+
     Returns:
         Mock with configurable responses
-    
+
     Example:
         mock_agent_gateway.process_message.return_value = "DeFi is..."
     """
@@ -61,14 +63,15 @@ def mock_agent_gateway():
 # Command Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def create_conversation_command(conversation_repository, mock_transaction_manager):
     """
     CreateConversation command fixture.
-    
+
     Returns:
         CreateConversation command instance
-    
+
     Example:
         conversation = await create_conversation_command.execute(
             user_id=123,
@@ -89,10 +92,10 @@ def send_message_command(
 ):
     """
     SendMessage command fixture (simplified).
-    
+
     Returns:
         SendMessage command instance without Hunter/ULTRA tool executors
-    
+
     Example:
         user_msg, agent_msg = await send_message_command.execute(
             user_id=123,
@@ -114,14 +117,15 @@ def send_message_command(
 # Query Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def list_conversations_query(conversation_repository):
     """
     ListConversations query fixture.
-    
+
     Returns:
         ListConversations query instance
-    
+
     Example:
         conversations = await list_conversations_query.execute(
             user_id=123,
@@ -136,10 +140,10 @@ def list_conversations_query(conversation_repository):
 def get_conversation_query(conversation_repository):
     """
     GetConversation query fixture.
-    
+
     Returns:
         GetConversation query instance
-    
+
     Example:
         conversation = await get_conversation_query.execute(
             user_id=123,
@@ -153,10 +157,10 @@ def get_conversation_query(conversation_repository):
 def get_messages_query(conversation_repository):
     """
     GetMessages query fixture.
-    
+
     Returns:
         GetMessages query instance
-    
+
     Example:
         messages = await get_messages_query.execute(
             user_id=123,
@@ -170,6 +174,7 @@ def get_messages_query(conversation_repository):
 # ============================================================================
 # Test User Fixture
 # ============================================================================
+
 
 @pytest.fixture
 def test_user():
@@ -193,6 +198,7 @@ def test_user():
 # ============================================================================
 # Unified Chat Component Test Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def mock_intent_classifier():
@@ -222,6 +228,7 @@ def mock_intent_classifier():
     @dataclass
     class IntentResult:
         """Simple intent classification result for tests."""
+
         intent: str
         confidence: float
         reasoning: str
@@ -278,7 +285,9 @@ def mock_handler_router():
         "general_chat": "chat_handler",
     }
 
-    router.get_handler.side_effect = lambda intent: intent_to_handler.get(intent, "chat_handler")
+    router.get_handler.side_effect = lambda intent: intent_to_handler.get(
+        intent, "chat_handler"
+    )
     return router
 
 

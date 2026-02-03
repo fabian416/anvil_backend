@@ -18,7 +18,12 @@ import json
 import warnings
 from datetime import datetime
 
-pytestmark = [pytest.mark.skip(reason="Intent detection varies; requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.intent_detection]
+pytestmark = [
+    pytest.mark.skip(reason="Intent detection varies; requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.intent_detection,
+]
 
 
 class TestAmbiguousQueryHandling:
@@ -29,10 +34,7 @@ class TestAmbiguousQueryHandling:
         """Test ambiguous query that could be swap intent or price query."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What's the best token to swap?",
-                "language": "en"
-            }
+            json={"content": "What's the best token to swap?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -53,10 +55,7 @@ class TestAmbiguousQueryHandling:
         """Test query that could be lending intent or advice query."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Should I lend USDC?",
-                "language": "en"
-            }
+            json={"content": "Should I lend USDC?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -77,8 +76,8 @@ class TestAmbiguousQueryHandling:
             "/api/v1/guest/chat",
             json={
                 "content": "Tell me about Aave and then do something",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -97,10 +96,7 @@ class TestAmbiguousQueryHandling:
         """Test extremely vague query with unclear intent."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Help me with crypto",
-                "language": "en"
-            }
+            json={"content": "Help me with crypto", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -114,18 +110,21 @@ class TestAmbiguousQueryHandling:
         # Should provide helpful response or ask for clarification
         assert len(agent_response) > 0
 
+
 class TestMultiIntentQueries:
     """Test queries containing multiple intents in one message."""
 
     @pytest.mark.llm_validation
-    async def test_swap_then_lend_multi_intent(self, client: AsyncClient, llm_validator):
+    async def test_swap_then_lend_multi_intent(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test compound intent with multiple actions."""
         response = await client.post(
             "/api/v1/guest/chat",
             json={
                 "content": "Swap ETH for USDC then lend it on Aave",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -147,8 +146,8 @@ class TestMultiIntentQueries:
             "/api/v1/guest/chat",
             json={
                 "content": "What's the gas price and swap 1 ETH for DAI?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -163,14 +162,16 @@ class TestMultiIntentQueries:
         assert len(agent_response) > 0
 
     @pytest.mark.llm_validation
-    async def test_multiple_queries_single_message(self, client: AsyncClient, llm_validator):
+    async def test_multiple_queries_single_message(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test multiple query intents in one message."""
         response = await client.post(
             "/api/v1/guest/chat",
             json={
                 "content": "What's ETH price? What's BTC price? What's SOL price?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -191,8 +192,8 @@ class TestMultiIntentQueries:
             "/api/v1/guest/chat",
             json={
                 "content": "Swap ETH but actually don't do anything",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -206,18 +207,21 @@ class TestMultiIntentQueries:
         # Should ask for clarification or acknowledge the contradiction
         assert len(agent_response) > 0
 
+
 class TestLanguageMixingScenarios:
     """Test handling of mixed-language inputs."""
 
     @pytest.mark.llm_validation
-    async def test_english_with_spanish_tokens(self, client: AsyncClient, llm_validator):
+    async def test_english_with_spanish_tokens(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test mixed English and Spanish in query."""
         response = await client.post(
             "/api/v1/guest/chat",
             json={
                 "content": "Swap ETH por USDC",  # "por" is Spanish for "for"
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -232,14 +236,16 @@ class TestLanguageMixingScenarios:
         assert len(agent_response) > 0
 
     @pytest.mark.llm_validation
-    async def test_query_language_code_mismatch(self, client: AsyncClient, llm_validator):
+    async def test_query_language_code_mismatch(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test Spanish query with English language parameter."""
         response = await client.post(
             "/api/v1/guest/chat",
             json={
                 "content": "¿Cuál es el precio de ETH?",  # Spanish: "What is the price of ETH?"
-                "language": "en"  # But language set to English
-            }
+                "language": "en",  # But language set to English
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -253,14 +259,16 @@ class TestLanguageMixingScenarios:
         assert len(agent_response) > 0
 
     @pytest.mark.llm_validation
-    async def test_unsupported_language_fallback(self, client: AsyncClient, llm_validator):
+    async def test_unsupported_language_fallback(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test query in unsupported language."""
         response = await client.post(
             "/api/v1/guest/chat",
             json={
                 "content": "What is the price of ETH?",
-                "language": "fr"  # French - may not be supported
-            }
+                "language": "fr",  # French - may not be supported
+            },
         )
 
         # Should either support French or fallback gracefully
@@ -268,13 +276,14 @@ class TestLanguageMixingScenarios:
         assert response.status_code in [
             status.HTTP_200_OK,
             status.HTTP_400_BAD_REQUEST,
-            status.HTTP_422_UNPROCESSABLE_ENTITY
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
         ]
 
         if response.status_code == status.HTTP_200_OK:
             data = response.json()
             assert "agent_message" in data
             assert data["agent_message"]["content"]
+
 
 class TestTypoAndMisspellingHandling:
     """Test robustness against common typos and misspellings."""
@@ -286,8 +295,8 @@ class TestTypoAndMisspellingHandling:
             "/api/v1/guest/chat",
             json={
                 "content": "Lend on Aavee",  # Typo: Aavee → Aave
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -307,8 +316,8 @@ class TestTypoAndMisspellingHandling:
             "/api/v1/guest/chat",
             json={
                 "content": "Sawp ETH for USDC",  # Typo: Sawp → Swap
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -328,8 +337,8 @@ class TestTypoAndMisspellingHandling:
             "/api/v1/guest/chat",
             json={
                 "content": "Wat iz the prce of etherum?",  # Multiple typos
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -348,10 +357,7 @@ class TestTypoAndMisspellingHandling:
         """Test completely garbled/nonsense input."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "asdfghjkl qwerty zxcvbnm",
-                "language": "en"
-            }
+            json={"content": "asdfghjkl qwerty zxcvbnm", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -365,18 +371,18 @@ class TestTypoAndMisspellingHandling:
         # Should indicate unable to understand or ask for clarification
         assert len(agent_response) > 0
 
+
 class TestConfidenceThresholdBehavior:
     """Test intent detection confidence scoring and thresholds."""
 
     @pytest.mark.llm_validation
-    async def test_high_confidence_intent_executes(self, client: AsyncClient, llm_validator):
+    async def test_high_confidence_intent_executes(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test clear, unambiguous query gets processed immediately."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What is the current price of ETH?",
-                "language": "en"
-            }
+            json={"content": "What is the current price of ETH?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -391,14 +397,12 @@ class TestConfidenceThresholdBehavior:
         assert len(agent_response) > 0
 
     @pytest.mark.llm_validation
-    async def test_low_confidence_asks_clarification(self, client: AsyncClient, llm_validator):
+    async def test_low_confidence_asks_clarification(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test vague query results in clarification request."""
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "I need help",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "I need help", "language": "en"}
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -413,14 +417,13 @@ class TestConfidenceThresholdBehavior:
         assert len(agent_response) > 0
 
     @pytest.mark.llm_validation
-    async def test_medium_confidence_provides_suggestions(self, client: AsyncClient, llm_validator):
+    async def test_medium_confidence_provides_suggestions(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test somewhat clear query gets helpful suggestions."""
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "Tell me about DeFi",
-                "language": "en"
-            }
+            json={"content": "Tell me about DeFi", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK

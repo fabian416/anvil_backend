@@ -28,9 +28,7 @@ class MoneyMarketPreferenceAdapterSqla(MoneyMarketPreferenceGateway):
 
     def __init__(self, session: MainAsyncSession):
         self._session = session
-        self._table = mapping_registry.metadata.tables[
-            "money_market_user_preferences"
-        ]
+        self._table = mapping_registry.metadata.tables["money_market_user_preferences"]
 
     # ═══════════════════════════════════════════════════════════════
     # PREFERENCE CRUD
@@ -105,9 +103,7 @@ class MoneyMarketPreferenceAdapterSqla(MoneyMarketPreferenceGateway):
         user_id: UUID,
     ) -> bool:
         """Delete user's preferences."""
-        delete_stmt = delete(self._table).where(
-            self._table.c.user_id == user_id
-        )
+        delete_stmt = delete(self._table).where(self._table.c.user_id == user_id)
 
         result = await self._session.execute(delete_stmt)
         await self._session.commit()
@@ -123,24 +119,19 @@ class MoneyMarketPreferenceAdapterSqla(MoneyMarketPreferenceGateway):
         chain: str | None = None,
     ) -> list[MoneyMarketUserPreference]:
         """Get all users with rate alerts enabled."""
-        query = select(self._table).where(
-            self._table.c.enable_rate_alerts == True
-        )
+        query = select(self._table).where(self._table.c.enable_rate_alerts == True)
 
         # Filter by asset if provided (check if asset in preferred_chains array)
         if chain:
             query = query.where(
-                func.array_position(self._table.c.preferred_chains, chain)
-                > 0
+                func.array_position(self._table.c.preferred_chains, chain) > 0
             )
 
         result = await self._session.execute(query)
         rows = result.fetchall()
 
         preferences = [self._row_to_entity(row) for row in rows]
-        logger.debug(
-            f"Found {len(preferences)} users with rate alerts enabled"
-        )
+        logger.debug(f"Found {len(preferences)} users with rate alerts enabled")
         return preferences
 
     async def get_preferences_by_protocol(
@@ -149,8 +140,7 @@ class MoneyMarketPreferenceAdapterSqla(MoneyMarketPreferenceGateway):
     ) -> list[MoneyMarketUserPreference]:
         """Get users who prefer a specific protocol."""
         query = select(self._table).where(
-            func.array_position(self._table.c.preferred_protocols, protocol)
-            > 0
+            func.array_position(self._table.c.preferred_protocols, protocol) > 0
         )
 
         result = await self._session.execute(query)
@@ -173,8 +163,10 @@ class MoneyMarketPreferenceAdapterSqla(MoneyMarketPreferenceGateway):
         chain: str,
     ) -> int:
         """Count users watching a specific chain."""
-        query = select(func.count()).select_from(self._table).where(
-            func.array_position(self._table.c.preferred_chains, chain) > 0
+        query = (
+            select(func.count())
+            .select_from(self._table)
+            .where(func.array_position(self._table.c.preferred_chains, chain) > 0)
         )
 
         result = await self._session.execute(query)
@@ -184,9 +176,7 @@ class MoneyMarketPreferenceAdapterSqla(MoneyMarketPreferenceGateway):
         self,
     ) -> list[MoneyMarketUserPreference]:
         """Get all users with notifications enabled."""
-        query = select(self._table).where(
-            self._table.c.enable_rate_alerts == True
-        )
+        query = select(self._table).where(self._table.c.enable_rate_alerts == True)
 
         result = await self._session.execute(query)
         rows = result.fetchall()
@@ -211,8 +201,7 @@ class MoneyMarketPreferenceAdapterSqla(MoneyMarketPreferenceGateway):
             id=row.id,
             user_id=row.user_id,
             enable_rate_alerts=row.enable_rate_alerts,
-            alert_threshold_apy_change=row.min_supply_apy
-            or 0.5,  # Default 0.5%
+            alert_threshold_apy_change=row.min_supply_apy or 0.5,  # Default 0.5%
             watched_assets=[],  # Not in table schema
             watched_chains=watched_chains,
             preferred_protocol=preferred_protocol,

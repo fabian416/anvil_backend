@@ -19,7 +19,7 @@ MAX_CONTEXT_MESSAGES = 10
 
 class MessageRepositoryProtocol(Protocol):
     """Protocol for message repository."""
-    
+
     async def get_recent_messages(
         self,
         conversation_id: UUID,
@@ -32,7 +32,7 @@ class MessageRepositoryProtocol(Protocol):
 @dataclass
 class ConversationContext:
     """Container for conversation context."""
-    
+
     messages: list[ChatMessage] = field(default_factory=list)
     summary: str = ""
     detected_entities: dict[str, Any] = field(default_factory=dict)
@@ -44,12 +44,12 @@ class ConversationContext:
     pending_activity_info: dict[str, Any] | None = None
     pending_money_market_info: dict[str, Any] | None = None
     pending_buy_info: dict[str, Any] | None = None
-    
+
     @property
     def has_context(self) -> bool:
         """Check if there's any context."""
         return len(self.messages) > 0
-    
+
     @property
     def message_count(self) -> int:
         """Number of messages in context."""
@@ -59,10 +59,10 @@ class ConversationContext:
 class ConversationMemory:
     """
     Service for managing conversational memory.
-    
+
     Retrieves context from previous messages for multi-turn conversations.
     """
-    
+
     def __init__(
         self,
         message_repository: MessageRepositoryProtocol,
@@ -70,14 +70,14 @@ class ConversationMemory:
     ):
         self._message_repo = message_repository
         self._max_messages = max_context_messages
-    
+
     async def get_context(self, conversation_id: UUID) -> ConversationContext:
         """
         Get conversation context from recent messages.
-        
+
         Args:
             conversation_id: Conversation UUID
-            
+
         Returns:
             ConversationContext with messages, summary, entities, and pending intent
         """
@@ -86,7 +86,7 @@ class ConversationMemory:
                 conversation_id=conversation_id,
                 limit=self._max_messages,
             )
-            
+
             return ConversationContext(
                 messages=messages,
                 summary=self._build_summary(messages),
@@ -103,17 +103,17 @@ class ConversationMemory:
         except Exception as e:
             logger.warning(f"Failed to get conversation context: {e}")
             return ConversationContext()
-    
+
     def _build_summary(self, messages: list[ChatMessage]) -> str:
         """
         Build text summary for context.
-        
+
         Creates a formatted string of recent messages for use in
         intent detection and response generation.
         """
         if not messages:
             return ""
-        
+
         lines = []
         for msg in messages:
             role = "User" if msg.role.value == "user" else "Assistant"
@@ -123,13 +123,13 @@ class ConversationMemory:
             if len(msg.content) > 200:
                 content += "..."
             lines.append(f"{role}{intent_info}: {content}")
-        
+
         return "\n".join(lines)
-    
+
     def _extract_entities(self, messages: list[ChatMessage]) -> dict[str, Any]:
         """
         Extract entities mentioned in conversation.
-        
+
         Collects tokens, amounts, protocols, and other entities
         from message metadata.
         """
@@ -139,35 +139,35 @@ class ConversationMemory:
             "protocols": set(),
             "chains": set(),
         }
-        
+
         for msg in messages:
             if not msg.metadata:
                 continue
-            
+
             msg_entities = msg.get_extracted_entities()
-            
+
             # Collect tokens
             if "token" in msg_entities:
                 entities["tokens"].add(msg_entities["token"])
             if "tokens" in msg_entities:
                 for token in msg_entities["tokens"]:
                     entities["tokens"].add(token)
-            
+
             # Collect amounts
             if "amount" in msg_entities:
                 entities["amounts"].append(msg_entities["amount"])
-            
+
             # Collect protocols
             if "protocol" in msg_entities:
                 entities["protocols"].add(msg_entities["protocol"])
             if "protocols" in msg_entities:
                 for protocol in msg_entities["protocols"]:
                     entities["protocols"].add(protocol)
-            
+
             # Collect chains
             if "chain" in msg_entities:
                 entities["chains"].add(msg_entities["chain"])
-        
+
         # Convert sets to lists for JSON serialization
         return {
             "tokens": list(entities["tokens"]),
@@ -175,7 +175,7 @@ class ConversationMemory:
             "protocols": list(entities["protocols"]),
             "chains": list(entities["chains"]),
         }
-    
+
     def _get_pending_intent(self, messages: list[ChatMessage]) -> str | None:
         """
         Detect if there's a pending/incomplete flow.
@@ -191,7 +191,9 @@ class ConversationMemory:
         for msg in messages:
             if msg.is_assistant_message:
                 pending = msg.get_pending_action()
-                logger.debug(f"[CONV_MEM] Found assistant message, pending_action = {pending}, metadata = {msg.metadata}")
+                logger.debug(
+                    f"[CONV_MEM] Found assistant message, pending_action = {pending}, metadata = {msg.metadata}"
+                )
                 if pending:
                     logger.info(f"[CONV_MEM] Returning pending_intent: {pending}")
                     return pending
@@ -199,8 +201,10 @@ class ConversationMemory:
 
         logger.debug("[CONV_MEM] No pending_intent found")
         return None
-    
-    def _get_pending_swap_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+
+    def _get_pending_swap_info(
+        self, messages: list[ChatMessage]
+    ) -> dict[str, Any] | None:
         """
         Get swap info from the last assistant message if there's a pending swap flow or complete swap.
 
@@ -227,8 +231,10 @@ class ConversationMemory:
                 break
 
         return None
-    
-    def _get_pending_buy_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+
+    def _get_pending_buy_info(
+        self, messages: list[ChatMessage]
+    ) -> dict[str, Any] | None:
         """
         Get buy info from the last assistant message if there's a pending buy flow.
 
@@ -250,8 +256,10 @@ class ConversationMemory:
                 break
 
         return None
-    
-    def _get_pending_moonpay_swap_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+
+    def _get_pending_moonpay_swap_info(
+        self, messages: list[ChatMessage]
+    ) -> dict[str, Any] | None:
         """
         Get MoonPay swap info from the last assistant message if there's a pending swap flow.
 
@@ -268,7 +276,9 @@ class ConversationMemory:
                 pending = msg.get_pending_action()
                 if pending and pending.startswith("moonpay_swap_"):
                     # Get swap info from metadata
-                    moonpay_swap_info = msg.metadata.get("moonpay_swap_info") if msg.metadata else None
+                    moonpay_swap_info = (
+                        msg.metadata.get("moonpay_swap_info") if msg.metadata else None
+                    )
                     if moonpay_swap_info:
                         return moonpay_swap_info
                     # Also check for swap_info in metadata (fallback)
@@ -284,7 +294,9 @@ class ConversationMemory:
 
         return None
 
-    def _get_pending_lending_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+    def _get_pending_lending_info(
+        self, messages: list[ChatMessage]
+    ) -> dict[str, Any] | None:
         """
         Get lending info from the last assistant message if there's a pending lending flow.
 
@@ -298,7 +310,9 @@ class ConversationMemory:
         for msg in messages:
             if msg.is_assistant_message:
                 pending = msg.get_pending_action()
-                logger.debug(f"[CONV_MEM] Checking lending_info - pending_action: {pending}, metadata keys: {list(msg.metadata.keys())}")
+                logger.debug(
+                    f"[CONV_MEM] Checking lending_info - pending_action: {pending}, metadata keys: {list(msg.metadata.keys())}"
+                )
                 if pending and pending.startswith("lending_"):
                     lending_info = msg.metadata.get("lending_info")
                     logger.info(f"[CONV_MEM] Found lending_info: {lending_info}")
@@ -309,7 +323,9 @@ class ConversationMemory:
         logger.debug("[CONV_MEM] No lending_info found")
         return None
 
-    def _get_pending_portfolio_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+    def _get_pending_portfolio_info(
+        self, messages: list[ChatMessage]
+    ) -> dict[str, Any] | None:
         """
         Get portfolio info from the last assistant message if there's a pending portfolio flow.
 
@@ -330,7 +346,9 @@ class ConversationMemory:
 
         return None
 
-    def _get_pending_activity_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+    def _get_pending_activity_info(
+        self, messages: list[ChatMessage]
+    ) -> dict[str, Any] | None:
         """
         Get activity info from the last assistant message if there's a pending activity flow.
 
@@ -351,7 +369,9 @@ class ConversationMemory:
 
         return None
 
-    def _get_pending_money_market_info(self, messages: list[ChatMessage]) -> dict[str, Any] | None:
+    def _get_pending_money_market_info(
+        self, messages: list[ChatMessage]
+    ) -> dict[str, Any] | None:
         """
         Get money market info from the last assistant message if there's a pending money market flow.
 
@@ -371,24 +391,23 @@ class ConversationMemory:
                 break
 
         return None
-    
+
     def build_context_string(self, context: ConversationContext) -> str:
         """
         Build a context string for handlers.
-        
+
         Combines summary and entity information.
         """
         parts = []
-        
+
         if context.summary:
             parts.append(context.summary)
-        
+
         if context.detected_entities.get("tokens"):
             tokens = ", ".join(context.detected_entities["tokens"])
             parts.append(f"[Mentioned tokens: {tokens}]")
-        
+
         if context.pending_intent:
             parts.append(f"[Pending action: {context.pending_intent}]")
-        
-        return "\n".join(parts)
 
+        return "\n".join(parts)

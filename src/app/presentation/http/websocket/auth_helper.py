@@ -86,7 +86,9 @@ class WebSocketAuthHelper:
             user_id = await self._validate_token_and_get_user_id(token)
 
             if not user_id:
-                logger.warning("[WS Auth] Token validation failed: no user ID extracted")
+                logger.warning(
+                    "[WS Auth] Token validation failed: no user ID extracted"
+                )
                 return None
 
             # Retrieve user from gateway
@@ -119,7 +121,9 @@ class WebSocketAuthHelper:
             return None
 
         except Exception as e:
-            logger.error(f"[WS Auth] Unexpected authentication error: {e}", exc_info=True)
+            logger.error(
+                f"[WS Auth] Unexpected authentication error: {e}", exc_info=True
+            )
             return None
 
     async def _validate_token_and_get_user_id(self, token: str) -> Optional[int]:

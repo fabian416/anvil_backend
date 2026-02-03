@@ -13,5 +13,3 @@ class AuthSessionRepository(Protocol):
 class PasswordResetRepository(Protocol):
     @abstractmethod
     async def delete_expired(self, now: datetime) -> int: ...
-
-

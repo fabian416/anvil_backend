@@ -12,13 +12,13 @@ from pydantic import BaseModel, Field, ConfigDict
 # Request schemas
 class CreateConversationRequest(BaseModel):
     """Request to create a new conversation."""
-    
+
     title: Optional[str] = Field(None, max_length=200)
 
 
 class SendMessageRequest(BaseModel):
     """Request to send a message."""
-    
+
     content: str = Field(..., min_length=1, max_length=10000)
     language: Optional[str] = Field(
         default="en",
@@ -30,19 +30,19 @@ class SendMessageRequest(BaseModel):
 # Response schemas
 class ConversationResponse(BaseModel):
     """Conversation response."""
-    
+
     id: UUID
     user_id: int
     title: Optional[str]
     created_at: datetime
     updated_at: datetime
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
 class SourceInfoResponse(BaseModel):
     """Source information response for frontend."""
-    
+
     source_type: str  # api, database, mcp_server, rss_feed, social_media, blockchain, llm, aggregated
     source_name: str
     source_id: Optional[str] = None
@@ -60,7 +60,7 @@ class SourceInfoResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     """Message response with source attribution."""
-    
+
     id: UUID
     conversation_id: UUID
     role: str
@@ -69,15 +69,15 @@ class MessageResponse(BaseModel):
     sources: List[SourceInfoResponse] = Field(default_factory=list)  # NEW
     created_at: datetime
     metadata: Optional[dict] = None  # For swap quotes, enrichment data, etc.
-    
+
     model_config = ConfigDict(from_attributes=True)
-    
+
     @classmethod
     def from_domain(cls, message: "Message") -> "MessageResponse":
         """Create response from domain entity."""
         from app.domain.entities.message import Message as DomainMessage
         from app.domain.value_objects.chat.source_info import SourceInfo
-        
+
         # Extract sources from metadata
         sources = []
         if message.metadata and "sources" in message.metadata:
@@ -89,11 +89,13 @@ class MessageResponse(BaseModel):
                         sources.append(SourceInfoResponse(**s))
                     elif hasattr(s, "to_dict"):
                         sources.append(SourceInfoResponse(**s.to_dict()))
-        
+
         return cls(
             id=message.id,
             conversation_id=message.conversation_id,
-            role=message.role.value if hasattr(message.role, "value") else str(message.role),
+            role=message.role.value
+            if hasattr(message.role, "value")
+            else str(message.role),
             content=message.content,
             agent_type=message.agent_type,
             sources=sources,
@@ -110,6 +112,7 @@ class SendMessageResponse(BaseModel):
 
 
 # NEW: Unified Routing Schemas
+
 
 class RoutingMetadata(BaseModel):
     """Routing metadata for unified chat responses."""
@@ -159,15 +162,21 @@ class EnrichmentData(BaseModel):
     total_latency_ms: Optional[int] = None
 
     # For Hunter AI
-    hunter_tool: Optional[str] = None  # sentiment_analysis, price_prediction, risk_signals, trading_signals, pattern_detection, portfolio_optimization
+    hunter_tool: Optional[str] = (
+        None  # sentiment_analysis, price_prediction, risk_signals, trading_signals, pattern_detection, portfolio_optimization
+    )
     token_symbol: Optional[str] = None  # Primary token (BTC, ETH, SOL, etc.)
     tokens: Optional[List[str]] = None  # Multiple tokens for portfolio optimization
     time_horizon: Optional[str] = None  # 24h, 7d, 30d
-    sources: Optional[List[str]] = None  # twitter, reddit, discord, news (for sentiment)
+    sources: Optional[List[str]] = (
+        None  # twitter, reddit, discord, news (for sentiment)
+    )
     risk_tolerance: Optional[float] = None  # 0.0-1.0 (for portfolio optimization)
 
     # For ULTRA (DeFi Automation & MEV)
-    ultra_tool: Optional[str] = None  # arbitrage_discovery, flash_loan_engine, mev_protection, auto_executor
+    ultra_tool: Optional[str] = (
+        None  # arbitrage_discovery, flash_loan_engine, mev_protection, auto_executor
+    )
     capital: Optional[float] = None  # Capital amount for arbitrage discovery
     arb_type: Optional[str] = None  # 2hop, 3hop, triangle, all
     amount: Optional[float] = None  # Flash loan amount
@@ -185,45 +194,100 @@ class EnrichmentData(BaseModel):
 class ExecuteActionData(BaseModel):
     """Execute action data for executable intents (swap, deposit, withdraw, etc.)."""
 
-    action_type: str = Field(..., description="Type of action: swap, deposit, withdraw, transfer, approve, bridge")
-    provider: Optional[str] = Field(default=None, description="Execution provider: privy_0x for Privy + 0x swaps")
+    action_type: str = Field(
+        ...,
+        description="Type of action: swap, deposit, withdraw, transfer, approve, bridge",
+    )
+    provider: Optional[str] = Field(
+        default=None, description="Execution provider: privy_0x for Privy + 0x swaps"
+    )
     chain: str = Field(default="base", description="Blockchain to execute on")
-    from_token: Optional[str] = Field(default=None, description="Source token symbol or address")
-    to_token: Optional[str] = Field(default=None, description="Destination token symbol (for swap)")
-    amount: Optional[str] = Field(default=None, description="Amount to execute (human readable)")
-    protocol: Optional[str] = Field(default=None, description="Protocol name (for deposit/withdraw)")
-    vault_address: Optional[str] = Field(default=None, description="Vault address (for Morpho deposits)")
-    asset_address: Optional[str] = Field(default=None, description="Asset token address")
+    from_token: Optional[str] = Field(
+        default=None, description="Source token symbol or address"
+    )
+    to_token: Optional[str] = Field(
+        default=None, description="Destination token symbol (for swap)"
+    )
+    amount: Optional[str] = Field(
+        default=None, description="Amount to execute (human readable)"
+    )
+    protocol: Optional[str] = Field(
+        default=None, description="Protocol name (for deposit/withdraw)"
+    )
+    vault_address: Optional[str] = Field(
+        default=None, description="Vault address (for Morpho deposits)"
+    )
+    asset_address: Optional[str] = Field(
+        default=None, description="Asset token address"
+    )
     asset_symbol: Optional[str] = Field(default=None, description="Asset token symbol")
-    pool_address: Optional[str] = Field(default=None, description="Pool address (for liquidity operations)")
-    referral_code: Optional[str] = Field(default=None, description="Referral code for the transaction")
-    supply_apy: Optional[str] = Field(default=None, description="Supply APY for lending protocols")
-    available_liquidity_usd: Optional[str] = Field(default=None, description="Available liquidity in USD")
-    recipient: Optional[str] = Field(default=None, description="Recipient address (for transfer)")
-    slippage: Optional[float] = Field(default=1.0, description="Slippage tolerance in percent")
-    to_chain: Optional[str] = Field(default=None, description="Destination chain (for cross-chain swap/bridge)")
+    pool_address: Optional[str] = Field(
+        default=None, description="Pool address (for liquidity operations)"
+    )
+    referral_code: Optional[str] = Field(
+        default=None, description="Referral code for the transaction"
+    )
+    supply_apy: Optional[str] = Field(
+        default=None, description="Supply APY for lending protocols"
+    )
+    available_liquidity_usd: Optional[str] = Field(
+        default=None, description="Available liquidity in USD"
+    )
+    recipient: Optional[str] = Field(
+        default=None, description="Recipient address (for transfer)"
+    )
+    slippage: Optional[float] = Field(
+        default=1.0, description="Slippage tolerance in percent"
+    )
+    to_chain: Optional[str] = Field(
+        default=None, description="Destination chain (for cross-chain swap/bridge)"
+    )
 
     # Quote preview fields (for display before execution)
     quote_id: Optional[str] = Field(default=None, description="Quote identifier")
-    quote_amount: Optional[str] = Field(default=None, description="Estimated output amount")
-    min_amount_out: Optional[str] = Field(default=None, description="Minimum output amount with slippage")
-    exchange_rate: Optional[str] = Field(default=None, description="Exchange rate for the swap")
-    network_fee_usd: Optional[str] = Field(default=None, description="Estimated network fee in USD")
-    expires_at: Optional[str] = Field(default=None, description="Quote expiration timestamp")
-    
+    quote_amount: Optional[str] = Field(
+        default=None, description="Estimated output amount"
+    )
+    min_amount_out: Optional[str] = Field(
+        default=None, description="Minimum output amount with slippage"
+    )
+    exchange_rate: Optional[str] = Field(
+        default=None, description="Exchange rate for the swap"
+    )
+    network_fee_usd: Optional[str] = Field(
+        default=None, description="Estimated network fee in USD"
+    )
+    expires_at: Optional[str] = Field(
+        default=None, description="Quote expiration timestamp"
+    )
+
     # Price impact and gas fields
-    price_impact: Optional[str] = Field(default=None, description="Price impact percentage")
+    price_impact: Optional[str] = Field(
+        default=None, description="Price impact percentage"
+    )
     gas_estimate: Optional[str] = Field(default=None, description="Estimated gas units")
-    
+
     # Token address fields
-    from_token_address: Optional[str] = Field(default=None, description="Source token contract address")
-    to_token_address: Optional[str] = Field(default=None, description="Destination token contract address")
-    
+    from_token_address: Optional[str] = Field(
+        default=None, description="Source token contract address"
+    )
+    to_token_address: Optional[str] = Field(
+        default=None, description="Destination token contract address"
+    )
+
     # Market data fields
-    from_token_price_usd: Optional[str] = Field(default=None, description="Source token price in USD")
-    to_token_price_usd: Optional[str] = Field(default=None, description="Destination token price in USD")
-    from_token_24h_change: Optional[str] = Field(default=None, description="Source token 24h price change %")
-    value_usd: Optional[str] = Field(default=None, description="Total transaction value in USD")
+    from_token_price_usd: Optional[str] = Field(
+        default=None, description="Source token price in USD"
+    )
+    to_token_price_usd: Optional[str] = Field(
+        default=None, description="Destination token price in USD"
+    )
+    from_token_24h_change: Optional[str] = Field(
+        default=None, description="Source token 24h price change %"
+    )
+    value_usd: Optional[str] = Field(
+        default=None, description="Total transaction value in USD"
+    )
 
 
 class UnifiedChatResponse(BaseModel):
@@ -233,32 +297,35 @@ class UnifiedChatResponse(BaseModel):
     agent_message: dict  # Agent response data with sources
     routing: RoutingMetadata  # Routing information
     enrichment: Optional[EnrichmentData] = None  # Handler-specific data
-    sources: List[SourceInfoResponse] = Field(default_factory=list)  # NEW: Aggregated sources
+    sources: List[SourceInfoResponse] = Field(
+        default_factory=list
+    )  # NEW: Aggregated sources
     execute: Optional[ExecuteActionData] = Field(
         default=None,
-        description="Execute action data for executable intents (swap, deposit, withdraw, etc.)"
+        description="Execute action data for executable intents (swap, deposit, withdraw, etc.)",
     )
 
 
 class ConversationListResponse(BaseModel):
     """List of conversations response."""
-    
+
     conversations: List[ConversationResponse]
     total: int
 
 
 class MessageListResponse(BaseModel):
     """List of messages response."""
-    
+
     messages: List[MessageResponse]
     total: int
 
 
 # NEW: GraphRAG and ML Integration Schemas
 
+
 class ChatProtocolSearchRequest(BaseModel):
     """Request to search protocols from chat with GraphRAG."""
-    
+
     conversation_id: UUID
     query: str = Field(..., min_length=1, max_length=500)
     user_preferences: Optional[dict] = None
@@ -267,7 +334,7 @@ class ChatProtocolSearchRequest(BaseModel):
 
 class ProtocolSearchResult(BaseModel):
     """Protocol search result for chat."""
-    
+
     protocol_id: str
     protocol_name: str
     similarity_score: float
@@ -284,7 +351,7 @@ class ProtocolSearchResult(BaseModel):
 
 class ChatProtocolSearchResponse(BaseModel):
     """Response for protocol search from chat."""
-    
+
     results: List[ProtocolSearchResult]
     search_context: str
     recommendations: List[str]
@@ -292,16 +359,18 @@ class ChatProtocolSearchResponse(BaseModel):
 
 class ChatRiskAnalysisRequest(BaseModel):
     """Request to analyze protocol risk from chat."""
-    
+
     conversation_id: UUID
     protocol_name: str = Field(..., min_length=1, max_length=200)
-    operation_type: Optional[str] = Field(None, pattern="^(supply|borrow|swap|stake|bridge)$")
+    operation_type: Optional[str] = Field(
+        None, pattern="^(supply|borrow|swap|stake|bridge)$"
+    )
     amount_usd: Optional[float] = Field(None, gt=0)
 
 
 class RiskFactor(BaseModel):
     """Risk factor for chat."""
-    
+
     factor: str
     impact: float
     description: str
@@ -310,7 +379,7 @@ class RiskFactor(BaseModel):
 
 class RiskAnalysis(BaseModel):
     """Risk analysis for chat."""
-    
+
     protocol_id: str
     protocol_name: str
     risk_score: float
@@ -324,7 +393,7 @@ class RiskAnalysis(BaseModel):
 
 class AlternativeProtocol(BaseModel):
     """Alternative protocol suggestion."""
-    
+
     protocol_id: str
     protocol_name: str
     similarity_score: float
@@ -337,7 +406,7 @@ class AlternativeProtocol(BaseModel):
 
 class ChatRiskAnalysisResponse(BaseModel):
     """Response for risk analysis from chat."""
-    
+
     risk_analysis: RiskAnalysis
     alternatives: List[AlternativeProtocol]
     contextual_message: str
@@ -345,7 +414,7 @@ class ChatRiskAnalysisResponse(BaseModel):
 
 class ChatSimilarProtocolsRequest(BaseModel):
     """Request to find similar protocols from chat."""
-    
+
     conversation_id: UUID
     protocol_name: str = Field(..., min_length=1, max_length=200)
     limit: Optional[int] = Field(5, ge=1, le=20)
@@ -353,7 +422,7 @@ class ChatSimilarProtocolsRequest(BaseModel):
 
 class BaseProtocolInfo(BaseModel):
     """Base protocol information."""
-    
+
     protocol_id: str
     protocol_name: str
     risk_score: float
@@ -364,7 +433,7 @@ class BaseProtocolInfo(BaseModel):
 
 class SimilarProtocolInfo(BaseModel):
     """Similar protocol information."""
-    
+
     protocol_id: str
     protocol_name: str
     similarity_score: float
@@ -376,7 +445,7 @@ class SimilarProtocolInfo(BaseModel):
 
 class ChatSimilarProtocolsResponse(BaseModel):
     """Response for similar protocols from chat."""
-    
+
     base_protocol: BaseProtocolInfo
     similar_protocols: List[SimilarProtocolInfo]
 
@@ -385,16 +454,21 @@ class ChatSimilarProtocolsResponse(BaseModel):
 # Agent Squad Schemas
 # ========================================
 
+
 class AgentSquadMessageRequest(BaseModel):
     """Request to send message with Agent Squad routing."""
-    
-    content: str = Field(..., min_length=1, max_length=10000, description="User message")
-    force_agent: Optional[str] = Field(None, description="Force specific agent (chat, hunter_ai, etc.)")
+
+    content: str = Field(
+        ..., min_length=1, max_length=10000, description="User message"
+    )
+    force_agent: Optional[str] = Field(
+        None, description="Force specific agent (chat, hunter_ai, etc.)"
+    )
 
 
 class AgentSquadMessageResponse(BaseModel):
     """Response from Agent Squad message."""
-    
+
     user_message_id: UUID
     agent_message_id: UUID
     agent_type: str  # Which agent handled the message
@@ -408,15 +482,17 @@ class AgentSquadMessageResponse(BaseModel):
 
 class SupervisorWorkflowRequest(BaseModel):
     """Request for supervisor-coordinated multi-agent workflow."""
-    
-    content: str = Field(..., min_length=1, max_length=10000, description="Complex task description")
+
+    content: str = Field(
+        ..., min_length=1, max_length=10000, description="Complex task description"
+    )
     max_agents: int = Field(5, ge=1, le=10, description="Maximum agents to use")
     timeout_seconds: int = Field(120, ge=30, le=300, description="Workflow timeout")
 
 
 class WorkflowTaskResponse(BaseModel):
     """Single task in workflow."""
-    
+
     agent_type: str
     task_description: str
     status: str  # pending, in_progress, completed, failed
@@ -425,7 +501,7 @@ class WorkflowTaskResponse(BaseModel):
 
 class SupervisorWorkflowResponse(BaseModel):
     """Response from supervisor workflow."""
-    
+
     workflow_id: UUID
     conversation_id: UUID
     status: str  # in_progress, completed, failed
@@ -437,7 +513,7 @@ class SupervisorWorkflowResponse(BaseModel):
 
 class AgentCapability(BaseModel):
     """Agent capability information."""
-    
+
     agent_type: str
     name: str
     description: str
@@ -449,7 +525,7 @@ class AgentCapability(BaseModel):
 
 class ListEnabledAgentsResponse(BaseModel):
     """Response with list of enabled agents."""
-    
+
     agents: List[AgentCapability]
     total: int
     core_agents: int  # Number of core agents
@@ -460,24 +536,31 @@ class ListEnabledAgentsResponse(BaseModel):
 # Intent Detection Schemas
 # ========================================
 
+
 class DetectIntentRequest(BaseModel):
     """Request to detect intent from user message."""
-    
-    message: str = Field(..., min_length=1, max_length=10000, description="User message to analyze")
-    conversation_id: Optional[UUID] = Field(None, description="Optional conversation ID for context")
-    include_suggestions: bool = Field(True, description="Whether to include agent suggestions")
+
+    message: str = Field(
+        ..., min_length=1, max_length=10000, description="User message to analyze"
+    )
+    conversation_id: Optional[UUID] = Field(
+        None, description="Optional conversation ID for context"
+    )
+    include_suggestions: bool = Field(
+        True, description="Whether to include agent suggestions"
+    )
 
 
 class AlternativeIntent(BaseModel):
     """Alternative intent prediction."""
-    
+
     intent_type: str
     confidence: float = Field(..., ge=0.0, le=1.0)
 
 
 class IntentPredictionResponse(BaseModel):
     """Intent prediction response."""
-    
+
     intent_type: str
     confidence: float = Field(..., ge=0.0, le=1.0)
     confidence_level: str  # low, medium, high
@@ -491,7 +574,7 @@ class IntentPredictionResponse(BaseModel):
 
 class AgentSuggestionResponse(BaseModel):
     """Agent suggestion response."""
-    
+
     agent_name: str
     confidence: float = Field(..., ge=0.0, le=1.0)
     reasoning: Optional[str]
@@ -502,7 +585,7 @@ class AgentSuggestionResponse(BaseModel):
 
 class DetectIntentResponse(BaseModel):
     """Response for intent detection."""
-    
+
     intent: IntentPredictionResponse
     suggested_agents: List[AgentSuggestionResponse]
     processing_time_ms: int
@@ -510,14 +593,14 @@ class DetectIntentResponse(BaseModel):
 
 class AutocompleteRequest(BaseModel):
     """Request for autocomplete suggestions."""
-    
+
     partial_message: str = Field(..., min_length=1, max_length=1000)
     limit: int = Field(10, ge=1, le=50)
 
 
 class AutocompleteSuggestionResponse(BaseModel):
     """Autocomplete suggestion response."""
-    
+
     completion_text: str
     display_text: str
     confidence: float = Field(..., ge=0.0, le=1.0)
@@ -528,14 +611,14 @@ class AutocompleteSuggestionResponse(BaseModel):
 
 class AutocompleteResponse(BaseModel):
     """Response for autocomplete."""
-    
+
     suggestions: List[AutocompleteSuggestionResponse]
     processing_time_ms: int
 
 
 class SimilarConversationsRequest(BaseModel):
     """Request to find similar conversations."""
-    
+
     message: str = Field(..., min_length=1, max_length=10000)
     limit: int = Field(5, ge=1, le=20)
     similarity_threshold: float = Field(0.7, ge=0.0, le=1.0)
@@ -543,7 +626,7 @@ class SimilarConversationsRequest(BaseModel):
 
 class ConversationMatchResponse(BaseModel):
     """Similar conversation match response."""
-    
+
     conversation_id: UUID
     title: Optional[str]
     similarity_score: float = Field(..., ge=0.0, le=1.0)
@@ -555,6 +638,6 @@ class ConversationMatchResponse(BaseModel):
 
 class SimilarConversationsResponse(BaseModel):
     """Response for similar conversations."""
-    
+
     matches: List[ConversationMatchResponse]
     processing_time_ms: int

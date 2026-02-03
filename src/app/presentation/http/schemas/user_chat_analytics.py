@@ -41,7 +41,9 @@ class AgentPreferenceEntry(BaseModel):
     avg_response_time_ms: float
     total_cost_usd: float
     last_used: Optional[datetime] = None
-    personal_rating: Optional[float] = Field(None, ge=1, le=5, description="User rating if available")
+    personal_rating: Optional[float] = Field(
+        None, ge=1, le=5, description="User rating if available"
+    )
 
 
 class ConversationSummary(BaseModel):
@@ -79,12 +81,11 @@ class ConversationInsights(BaseModel):
     most_discussed_topics: List[TopicDistribution]
     question_types: Dict[str, int] = Field(
         ...,
-        description="Distribution of question types (informational, analytical, etc.)"
+        description="Distribution of question types (informational, analytical, etc.)",
     )
     avg_time_to_decision_minutes: Optional[float] = None
     most_productive_time: str = Field(
-        ...,
-        description="Time period when conversations are most productive"
+        ..., description="Time period when conversations are most productive"
     )
 
 
@@ -127,10 +128,7 @@ class UserAnalyticsDashboardResponse(BaseModel):
     # Quick insights
     conversation_completion_rate: float = Field(..., ge=0, le=1)
     avg_response_satisfaction: Optional[float] = Field(
-        None,
-        ge=1,
-        le=5,
-        description="Average satisfaction rating if available"
+        None, ge=1, le=5, description="Average satisfaction rating if available"
     )
 
     # Top agents (condensed)
@@ -190,12 +188,10 @@ class ConversationInsightsResponse(BaseModel):
 
     # Recommendations
     recommended_agents: List[str] = Field(
-        ...,
-        description="Agents recommended based on your patterns"
+        ..., description="Agents recommended based on your patterns"
     )
     productivity_tips: List[str] = Field(
-        ...,
-        description="Tips to improve conversation productivity"
+        ..., description="Tips to improve conversation productivity"
     )
 
 
@@ -219,8 +215,7 @@ class PersonalCostBreakdownResponse(BaseModel):
 
     # Savings recommendations
     cost_saving_tips: List[str] = Field(
-        ...,
-        description="Tips to reduce costs while maintaining quality"
+        ..., description="Tips to reduce costs while maintaining quality"
     )
 
 
@@ -236,8 +231,7 @@ class FavoriteAgentsResponse(BaseModel):
     # Usage patterns
     agent_switching_frequency: float
     preferred_agent_for_task: Dict[str, str] = Field(
-        ...,
-        description="Preferred agent by task type"
+        ..., description="Preferred agent by task type"
     )
 
     # Performance comparison
@@ -247,8 +241,7 @@ class FavoriteAgentsResponse(BaseModel):
 
     # Recommendations
     recommended_new_agents: List[str] = Field(
-        ...,
-        description="Agents you haven't tried that might be useful"
+        ..., description="Agents you haven't tried that might be useful"
     )
 
 
@@ -267,18 +260,12 @@ class HistoricalTrendsResponse(BaseModel):
     # Activity patterns
     peak_usage_times: List[Dict[str, Any]]
     activity_consistency_score: float = Field(
-        ...,
-        ge=0,
-        le=1,
-        description="How consistent your usage pattern is (0.0-1.0)"
+        ..., ge=0, le=1, description="How consistent your usage pattern is (0.0-1.0)"
     )
 
     # Comparative metrics
     percentile_rank: Optional[int] = Field(
-        None,
-        ge=1,
-        le=100,
-        description="Your activity percentile among all users"
+        None, ge=1, le=100, description="Your activity percentile among all users"
     )
 
 
@@ -303,9 +290,7 @@ class ConversationHistoryResponse(BaseModel):
 
     # Insights
     most_productive_conversations: List[ConversationSummary] = Field(
-        ...,
-        max_length=5,
-        description="Your most productive conversations"
+        ..., max_length=5, description="Your most productive conversations"
     )
 
 
@@ -318,10 +303,7 @@ class UserExportDataResponse(BaseModel):
     includes_conversations: bool
 
     # Export data
-    data: Dict[str, Any] = Field(
-        ...,
-        description="Exported analytics data"
-    )
+    data: Dict[str, Any] = Field(..., description="Exported analytics data")
 
     # Metadata
     generated_at: datetime
@@ -330,10 +312,8 @@ class UserExportDataResponse(BaseModel):
 
     # Download info
     download_url: Optional[str] = Field(
-        None,
-        description="Temporary download URL if file is large"
+        None, description="Temporary download URL if file is large"
     )
     expires_at: Optional[datetime] = Field(
-        None,
-        description="Expiration time for download URL"
+        None, description="Expiration time for download URL"
     )

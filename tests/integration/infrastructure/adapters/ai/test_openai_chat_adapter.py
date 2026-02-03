@@ -140,9 +140,7 @@ async def test_different_models(openai_adapter):
 async def test_max_tokens_limit(openai_adapter):
     """Test max_tokens limit is respected."""
     request = LLMRequest(
-        messages=[
-            LLMMessage(role="user", content="Write a long essay about Python.")
-        ],
+        messages=[LLMMessage(role="user", content="Write a long essay about Python.")],
         model_id="gpt-3.5-turbo",
         max_tokens=10,  # Very low limit
         temperature=Decimal("0.5"),
@@ -173,9 +171,10 @@ async def test_temperature_zero_deterministic(openai_adapter):
     assert response1.content
     assert response2.content
     # At least some overlap in tokens
-    assert response1.output_tokens == response2.output_tokens or abs(
-        response1.output_tokens - response2.output_tokens
-    ) <= 2
+    assert (
+        response1.output_tokens == response2.output_tokens
+        or abs(response1.output_tokens - response2.output_tokens) <= 2
+    )
 
 
 @pytest.mark.integration

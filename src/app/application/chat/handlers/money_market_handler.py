@@ -142,8 +142,12 @@ class MoneyMarketHandler:
         supply_rates = [r for r in rates if r.get("supply_apy")]
         borrow_rates = [r for r in rates if r.get("borrow_apy")]
 
-        best_supply = max(supply_rates, key=lambda r: r["supply_apy"]) if supply_rates else None
-        best_borrow = min(borrow_rates, key=lambda r: r["borrow_apy"]) if borrow_rates else None
+        best_supply = (
+            max(supply_rates, key=lambda r: r["supply_apy"]) if supply_rates else None
+        )
+        best_borrow = (
+            min(borrow_rates, key=lambda r: r["borrow_apy"]) if borrow_rates else None
+        )
 
         # Format response with i18n
         content = self._format_comparison_response(
@@ -313,7 +317,14 @@ class MoneyMarketHandler:
             return self._get_aave_fallback(asset, chain)
 
         try:
-            supported_chains = ["ethereum", "polygon", "arbitrum", "optimism", "base", "avalanche"]
+            supported_chains = [
+                "ethereum",
+                "polygon",
+                "arbitrum",
+                "optimism",
+                "base",
+                "avalanche",
+            ]
             target_chain = chain if chain.lower() in supported_chains else "ethereum"
 
             aave_market = await self._aave.get_market_details(
@@ -327,8 +338,12 @@ class MoneyMarketHandler:
                     "supply_apy": float(aave_market.supply_apy) * 100,
                     "borrow_apy": float(aave_market.borrow_apy_variable) * 100,
                     "chain": target_chain,
-                    "tvl_usd": float(aave_market.total_supplied_usd) if hasattr(aave_market, 'total_supplied_usd') else None,
-                    "utilization": float(aave_market.utilization_rate) if hasattr(aave_market, 'utilization_rate') else None,
+                    "tvl_usd": float(aave_market.total_supplied_usd)
+                    if hasattr(aave_market, "total_supplied_usd")
+                    else None,
+                    "utilization": float(aave_market.utilization_rate)
+                    if hasattr(aave_market, "utilization_rate")
+                    else None,
                     "source": "on_chain",
                 }
             return self._get_aave_fallback(asset, chain)
@@ -403,9 +418,9 @@ class MoneyMarketHandler:
             "WETH": {"supply": 2.1, "borrow": 3.5},
             "WBTC": {"supply": 0.5, "borrow": 2.0},
         }
-        
+
         asset_rates = rates_map.get(asset.upper(), {"supply": 3.0, "borrow": 4.0})
-        
+
         return {
             "protocol": "Aave V3",
             "type": "lending_pool",
@@ -418,7 +433,7 @@ class MoneyMarketHandler:
     def _get_compound_fallback(self, asset: str, chain: str) -> Optional[dict]:
         """
         Get fallback Compound V3 rates when gateway unavailable.
-        
+
         Compound V3 (Comet) is available on:
         - Ethereum: USDC, WETH markets
         - Base: USDC, WETH markets
@@ -429,15 +444,15 @@ class MoneyMarketHandler:
         supported_assets = ["USDC", "WETH", "ETH"]
         if asset.upper() not in supported_assets:
             return None
-            
+
         rates_map = {
             "USDC": {"supply": 4.2, "borrow": 5.5},
             "WETH": {"supply": 1.8, "borrow": 3.2},
             "ETH": {"supply": 1.8, "borrow": 3.2},
         }
-        
+
         asset_rates = rates_map.get(asset.upper(), {"supply": 3.0, "borrow": 4.0})
-        
+
         return {
             "protocol": "Compound V3",
             "type": "lending_pool",
@@ -458,7 +473,7 @@ class MoneyMarketHandler:
     ) -> str:
         """Format comparison data as chat response with i18n support."""
         from app.application.chat.i18n import t
-        
+
         if not rates:
             # Localized "no rates found" message with improved formatting
             no_rates_msgs = {
@@ -468,9 +483,13 @@ class MoneyMarketHandler:
                     "header": "What would you like to try?",
                     "options": [
                         ("💎", "Try a different asset", "USDC, USDT, DAI, ETH, WETH"),
-                        ("🌐", "Try a different chain", "Ethereum, Base, Arbitrum, Polygon"),
-                        ("💡", "Check back later", "Rates may be available soon")
-                    ]
+                        (
+                            "🌐",
+                            "Try a different chain",
+                            "Ethereum, Base, Arbitrum, Polygon",
+                        ),
+                        ("💡", "Check back later", "Rates may be available soon"),
+                    ],
                 },
                 "es": {
                     "title": f"Tasas de Mercado Monetario - {asset}",
@@ -478,9 +497,17 @@ class MoneyMarketHandler:
                     "header": "¿Qué te gustaría intentar?",
                     "options": [
                         ("💎", "Probar otro activo", "USDC, USDT, DAI, ETH, WETH"),
-                        ("🌐", "Probar otra cadena", "Ethereum, Base, Arbitrum, Polygon"),
-                        ("💡", "Verificar más tarde", "Las tasas pueden estar disponibles pronto")
-                    ]
+                        (
+                            "🌐",
+                            "Probar otra cadena",
+                            "Ethereum, Base, Arbitrum, Polygon",
+                        ),
+                        (
+                            "💡",
+                            "Verificar más tarde",
+                            "Las tasas pueden estar disponibles pronto",
+                        ),
+                    ],
                 },
                 "pt": {
                     "title": f"Taxas de Mercado Monetário - {asset}",
@@ -488,9 +515,17 @@ class MoneyMarketHandler:
                     "header": "O que você gostaria de tentar?",
                     "options": [
                         ("💎", "Tentar outro ativo", "USDC, USDT, DAI, ETH, WETH"),
-                        ("🌐", "Tentar outra rede", "Ethereum, Base, Arbitrum, Polygon"),
-                        ("💡", "Verificar mais tarde", "As taxas podem estar disponíveis em breve")
-                    ]
+                        (
+                            "🌐",
+                            "Tentar outra rede",
+                            "Ethereum, Base, Arbitrum, Polygon",
+                        ),
+                        (
+                            "💡",
+                            "Verificar mais tarde",
+                            "As taxas podem estar disponíveis em breve",
+                        ),
+                    ],
                 },
                 "zh": {
                     "title": f"货币市场利率 - {asset}",
@@ -499,17 +534,17 @@ class MoneyMarketHandler:
                     "options": [
                         ("💎", "尝试其他资产", "USDC, USDT, DAI, ETH, WETH"),
                         ("🌐", "尝试其他链", "Ethereum, Base, Arbitrum, Polygon"),
-                        ("💡", "稍后查看", "利率可能很快可用")
-                    ]
+                        ("💡", "稍后查看", "利率可能很快可用"),
+                    ],
                 },
             }
-            
+
             msgs = no_rates_msgs.get(language, no_rates_msgs["en"])
             options_text = "\n".join([
-                f"**{i}.** {emoji} **{title}**\n   {details}" 
+                f"**{i}.** {emoji} **{title}**\n   {details}"
                 for i, (emoji, title, details) in enumerate(msgs["options"], 1)
             ])
-            
+
             return f"""📊 **{msgs["title"]}**
 
 {msgs["message"]}
@@ -563,12 +598,12 @@ class MoneyMarketHandler:
             response += f"""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**🎯 {best_supply_label}:** {best_supply['protocol']} ({best_supply['supply_apy']:.2f}% APY)
+**🎯 {best_supply_label}:** {best_supply["protocol"]} ({best_supply["supply_apy"]:.2f}% APY)
 """
 
         if best_borrow:
             best_borrow_label = t("money_market", "best_borrow", language)
-            response += f"""**🎯 {best_borrow_label}:** {best_borrow['protocol']} ({best_borrow['borrow_apy']:.2f}% APY)
+            response += f"""**🎯 {best_borrow_label}:** {best_borrow["protocol"]} ({best_borrow["borrow_apy"]:.2f}% APY)
 """
 
         response += f"""
@@ -638,22 +673,22 @@ class MoneyMarketHandler:
             },
             "requires_registration": False,  # View-only, no registration needed
         }
-    
+
     def _extract_params_from_message(self, message: str) -> tuple[str, str]:
         """
         Extract asset and chain from user message.
-        
+
         Examples:
         - "compare Aave vs Compound" -> ("USDC", "ethereum")
         - "money market rates for USDC" -> ("USDC", "ethereum")
         - "compare Aave vs Compound on Base" -> ("USDC", "base")
         - "best borrow rates for ETH" -> ("ETH", "ethereum")
-        
+
         Returns:
             Tuple of (asset, chain)
         """
         message_lower = message.lower()
-        
+
         # Detect chain
         if "base" in message_lower:
             chain = "base"
@@ -669,7 +704,7 @@ class MoneyMarketHandler:
             chain = "ethereum"
         else:
             chain = "ethereum"  # Default to Ethereum
-        
+
         # Detect asset
         asset_patterns = {
             "USDC": ["usdc"],
@@ -679,11 +714,11 @@ class MoneyMarketHandler:
             "WETH": ["weth", "wrapped eth", "wrapped ether"],
             "WBTC": ["wbtc", "wrapped btc", "wrapped bitcoin"],
         }
-        
+
         for asset_symbol, patterns in asset_patterns.items():
             for pattern in patterns:
                 if pattern in message_lower:
                     return asset_symbol, chain
-        
+
         # Default to USDC if no asset detected
         return "USDC", chain

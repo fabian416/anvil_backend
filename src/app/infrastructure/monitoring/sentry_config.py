@@ -11,6 +11,7 @@ Features:
 - Cache error tracking
 - Rate limiting violation tracking
 """
+
 import logging
 from typing import Any, Optional
 
@@ -188,9 +189,7 @@ class GuestChatMonitoring:
             )
 
     @staticmethod
-    def capture_cache_error(
-        operation: str, key: str, error: Exception
-    ) -> None:
+    def capture_cache_error(operation: str, key: str, error: Exception) -> None:
         """Capture Redis cache errors.
 
         Args:
@@ -233,7 +232,10 @@ class GuestChatMonitoring:
 
         with sentry_sdk.push_scope() as scope:
             scope.set_tag("violation_type", "rate_limit")
-            scope.set_tag("ip_subnet", f"{parts[0]}.{parts[1]}.0.0/16" if len(parts) >= 2 else "unknown")
+            scope.set_tag(
+                "ip_subnet",
+                f"{parts[0]}.{parts[1]}.0.0/16" if len(parts) >= 2 else "unknown",
+            )
 
             scope.set_context(
                 "rate_limit",
@@ -276,9 +278,7 @@ class GuestChatMonitoring:
             )
 
             sentry_sdk.capture_exception(error)
-            logger.error(
-                f"External API error: {service} - {endpoint} - {error}"
-            )
+            logger.error(f"External API error: {service} - {endpoint} - {error}")
 
     @staticmethod
     def start_transaction(name: str, op: str) -> Any:
@@ -299,9 +299,7 @@ class GuestChatMonitoring:
         return sentry_sdk.start_transaction(name=name, op=op)
 
     @staticmethod
-    def capture_message(
-        message: str, level: str = "info", **extra: Any
-    ) -> None:
+    def capture_message(message: str, level: str = "info", **extra: Any) -> None:
         """Capture a custom message with context.
 
         Args:

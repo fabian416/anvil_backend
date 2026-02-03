@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class PIIType(str, Enum):
     """Types of PII that can be detected"""
+
     EMAIL = "email"
     PHONE = "phone"
     SSN = "ssn"
@@ -43,14 +44,14 @@ class PIIRedactionService:
 
     # PII detection patterns
     PII_PATTERNS = {
-        PIIType.EMAIL: r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-        PIIType.PHONE: r'\b(?:\+?1[-.]?)?(?:\(?\d{3}\)?[-.]?)?\d{3}[-.]?\d{4}\b',
-        PIIType.SSN: r'\b\d{3}-\d{2}-\d{4}\b',
-        PIIType.CREDIT_CARD: r'\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b',
-        PIIType.IP_ADDRESS: r'\b(?:\d{1,3}\.){3}\d{1,3}\b',
-        PIIType.WALLET_ADDRESS: r'\b0x[a-fA-F0-9]{40}\b',
-        PIIType.API_KEY: r'\b[A-Za-z0-9_-]{32,}\b',  # Generic API key pattern
-        PIIType.JWT_TOKEN: r'\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b',
+        PIIType.EMAIL: r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+        PIIType.PHONE: r"\b(?:\+?1[-.]?)?(?:\(?\d{3}\)?[-.]?)?\d{3}[-.]?\d{4}\b",
+        PIIType.SSN: r"\b\d{3}-\d{2}-\d{4}\b",
+        PIIType.CREDIT_CARD: r"\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b",
+        PIIType.IP_ADDRESS: r"\b(?:\d{1,3}\.){3}\d{1,3}\b",
+        PIIType.WALLET_ADDRESS: r"\b0x[a-fA-F0-9]{40}\b",
+        PIIType.API_KEY: r"\b[A-Za-z0-9_-]{32,}\b",  # Generic API key pattern
+        PIIType.JWT_TOKEN: r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b",
     }
 
     # Redaction templates
@@ -73,7 +74,7 @@ class PIIRedactionService:
         redact_financial: bool = True,
         redact_crypto: bool = True,
         redact_credentials: bool = True,
-        log_detections: bool = True
+        log_detections: bool = True,
     ):
         """
         Initialize PII Redaction Service.
@@ -127,7 +128,9 @@ class PIIRedactionService:
 
         return detected
 
-    def redact_pii(self, text: str, preserve_structure: bool = False) -> Tuple[str, List[PIIType]]:
+    def redact_pii(
+        self, text: str, preserve_structure: bool = False
+    ) -> Tuple[str, List[PIIType]]:
         """
         Redact PII from text.
 
@@ -156,7 +159,9 @@ class PIIRedactionService:
 
                 if preserve_structure:
                     # Partial redaction (e.g., email@*****.com)
-                    redacted_text = self._partial_redact(redacted_text, pii_type, pattern)
+                    redacted_text = self._partial_redact(
+                        redacted_text, pii_type, pattern
+                    )
                 else:
                     # Full redaction
                     replacement = self.REDACTION_TEMPLATES.get(pii_type, "[REDACTED]")
@@ -168,8 +173,8 @@ class PIIRedactionService:
                 f"PII detected and redacted",
                 extra={
                     "pii_types": [pt.value for pt in pii_types_found],
-                    "count": len(pii_types_found)
-                }
+                    "count": len(pii_types_found),
+                },
             )
 
         return redacted_text, pii_types_found
@@ -231,23 +236,24 @@ class PIIRedactionService:
         - email@example.com -> e****@example.com
         - 555-123-4567 -> ***-***-4567
         """
+
         def replace_func(match):
             matched_text = match.group(0)
 
             if pii_type == PIIType.EMAIL:
                 # Show first letter and domain
-                parts = matched_text.split('@')
+                parts = matched_text.split("@")
                 if len(parts) == 2:
                     return f"{parts[0][0]}****@{parts[1]}"
 
             elif pii_type == PIIType.PHONE:
                 # Show last 4 digits
-                digits = re.sub(r'\D', '', matched_text)
+                digits = re.sub(r"\D", "", matched_text)
                 return f"***-***-{digits[-4:]}"
 
             elif pii_type == PIIType.CREDIT_CARD:
                 # Show last 4 digits
-                digits = re.sub(r'\D', '', matched_text)
+                digits = re.sub(r"\D", "", matched_text)
                 return f"****-****-****-{digits[-4:]}"
 
             elif pii_type == PIIType.WALLET_ADDRESS:
@@ -283,7 +289,9 @@ class PIIRedactionService:
             PIIType.IP_ADDRESS: 3,
         }
 
-        total_risk_score = sum(risk_scores.get(pii_type, 0) for pii_type, _ in detected_pii)
+        total_risk_score = sum(
+            risk_scores.get(pii_type, 0) for pii_type, _ in detected_pii
+        )
 
         # Determine risk level
         if total_risk_score >= 15:
@@ -300,7 +308,10 @@ class PIIRedactionService:
             "risk_score": total_risk_score,
             "pii_count": len(detected_pii),
             "pii_types": list(set(pii_type.value for pii_type, _ in detected_pii)),
-            "contains_sensitive_pii": any(pii_type in [PIIType.SSN, PIIType.CREDIT_CARD, PIIType.PASSPORT] for pii_type, _ in detected_pii)
+            "contains_sensitive_pii": any(
+                pii_type in [PIIType.SSN, PIIType.CREDIT_CARD, PIIType.PASSPORT]
+                for pii_type, _ in detected_pii
+            ),
         }
 
 

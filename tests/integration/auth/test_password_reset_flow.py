@@ -30,8 +30,7 @@ class TestPasswordResetRequest:
         }
 
         response = await client.post(
-            "/api/v1/account/forgot-password",
-            json=reset_request
+            "/api/v1/account/forgot-password", json=reset_request
         )
 
         # Should return 200/202 (accepted) even if email doesn't exist
@@ -48,8 +47,7 @@ class TestPasswordResetRequest:
         }
 
         response = await client.post(
-            "/api/v1/account/forgot-password",
-            json=reset_request
+            "/api/v1/account/forgot-password", json=reset_request
         )
 
         # Should return 200/202 for security reasons
@@ -65,8 +63,7 @@ class TestPasswordResetRequest:
         }
 
         response = await client.post(
-            "/api/v1/account/forgot-password",
-            json=reset_request
+            "/api/v1/account/forgot-password", json=reset_request
         )
 
         # Should return 400 or 422 for validation error
@@ -77,10 +74,7 @@ class TestPasswordResetRequest:
         WHEN user requests reset without email
         THEN system SHALL return validation error
         """
-        response = await client.post(
-            "/api/v1/account/forgot-password",
-            json={}
-        )
+        response = await client.post("/api/v1/account/forgot-password", json={})
 
         assert response.status_code == 422
 
@@ -102,10 +96,7 @@ class TestPasswordResetConfirmation:
             "new_password": "NewSecurePassword123!",
         }
 
-        response = await client.post(
-            "/api/v1/account/reset-password",
-            json=reset_data
-        )
+        response = await client.post("/api/v1/account/reset-password", json=reset_data)
 
         # Token likely invalid in test - expect 400/404
         assert response.status_code in (200, 400, 404)
@@ -120,10 +111,7 @@ class TestPasswordResetConfirmation:
             "new_password": "NewSecurePassword123!",
         }
 
-        response = await client.post(
-            "/api/v1/account/reset-password",
-            json=reset_data
-        )
+        response = await client.post("/api/v1/account/reset-password", json=reset_data)
 
         # Should return 400 or 404 for invalid token
         assert response.status_code in (400, 404)
@@ -138,10 +126,7 @@ class TestPasswordResetConfirmation:
             "new_password": "NewSecurePassword123!",
         }
 
-        response = await client.post(
-            "/api/v1/account/reset-password",
-            json=reset_data
-        )
+        response = await client.post("/api/v1/account/reset-password", json=reset_data)
 
         # Should return 400 or 404 for expired token
         assert response.status_code in (400, 404)
@@ -156,10 +141,7 @@ class TestPasswordResetConfirmation:
             "new_password": "weak",
         }
 
-        response = await client.post(
-            "/api/v1/account/reset-password",
-            json=reset_data
-        )
+        response = await client.post("/api/v1/account/reset-password", json=reset_data)
 
         # Should return 400 or 422 for weak password
         assert response.status_code in (400, 422)
@@ -174,10 +156,7 @@ class TestPasswordResetConfirmation:
             # Missing new_password
         }
 
-        response = await client.post(
-            "/api/v1/account/reset-password",
-            json=reset_data
-        )
+        response = await client.post("/api/v1/account/reset-password", json=reset_data)
 
         assert response.status_code == 422
 
@@ -199,14 +178,8 @@ class TestPasswordResetSecurityBehavior:
         }
 
         # Both requests should fail (token invalid/used)
-        response1 = await client.post(
-            "/api/v1/account/reset-password",
-            json=reset_data
-        )
-        response2 = await client.post(
-            "/api/v1/account/reset-password",
-            json=reset_data
-        )
+        response1 = await client.post("/api/v1/account/reset-password", json=reset_data)
+        response2 = await client.post("/api/v1/account/reset-password", json=reset_data)
 
         # Both should return error
         assert response1.status_code in (400, 404)
@@ -223,8 +196,7 @@ class TestPasswordResetSecurityBehavior:
         responses = []
         for _ in range(5):
             response = await client.post(
-                "/api/v1/account/forgot-password",
-                json=reset_request
+                "/api/v1/account/forgot-password", json=reset_request
             )
             responses.append(response.status_code)
 

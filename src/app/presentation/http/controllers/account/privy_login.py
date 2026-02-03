@@ -25,27 +25,33 @@ from app.presentation.http.errors.translators import ServiceUnavailableTranslato
 
 class PrivyLoginRequestSchema(BaseModel):
     """Request schema for Privy login."""
+
     privy_user_id: str = Field(..., description="The Privy user ID (did:privy:xxxxx)")
     email: Optional[str] = Field(None, description="User email if available")
     wallet_address: Optional[str] = Field(None, description="Primary wallet address")
-    auth_provider: str = Field("privy", description="Auth provider: privy, wallet, google, apple, etc.")
+    auth_provider: str = Field(
+        "privy", description="Auth provider: privy, wallet, google, apple, etc."
+    )
     first_name: Optional[str] = Field(None, description="User first name")
     last_name: Optional[str] = Field(None, description="User last name")
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "privy_user_id": "did:privy:abc123xyz",
-            "email": "user@example.com",
-            "wallet_address": "0x1234567890abcdef1234567890abcdef12345678",
-            "auth_provider": "wallet",
-            "first_name": "John",
-            "last_name": "Doe"
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "privy_user_id": "did:privy:abc123xyz",
+                "email": "user@example.com",
+                "wallet_address": "0x1234567890abcdef1234567890abcdef12345678",
+                "auth_provider": "wallet",
+                "first_name": "John",
+                "last_name": "Doe",
+            }
         }
-    })
+    )
 
 
 class PrivyLoginResponseSchema(BaseModel):
     """Response schema for Privy login."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -119,17 +125,19 @@ def create_privy_login_router() -> APIRouter:
                             "token_type": "bearer",
                             "user_id": 123,
                             "email": "user@example.com",
-                            "is_new_user": False
+                            "is_new_user": False,
                         }
                     }
-                }
+                },
             },
-            400: {"description": "Invalid request data (privy_user_id, email, or wallet_address)"},
+            400: {
+                "description": "Invalid request data (privy_user_id, email, or wallet_address)"
+            },
             401: {"description": "Authentication failed"},
             409: {"description": "Email already exists with different auth provider"},
             500: {"description": "Internal server error"},
             503: {"description": "Service temporarily unavailable"},
-        }
+        },
     )
     @inject
     async def privy_login(
@@ -139,13 +147,13 @@ def create_privy_login_router() -> APIRouter:
     ) -> PrivyLoginResponseSchema:
         """
         Authenticate user via Privy.
-        
+
         This is the main entry point for Privy-based authentication.
         """
         # Extract client info for session tracking
         ip_address = http_request.client.host if http_request.client else None
         user_agent = http_request.headers.get("user-agent")
-        
+
         login_request = PrivyLoginRequest(
             privy_user_id=request_body.privy_user_id,
             email=request_body.email,
@@ -156,7 +164,7 @@ def create_privy_login_router() -> APIRouter:
             ip_address=ip_address,
             user_agent=user_agent,
         )
-        
+
         response = await interactor.execute(login_request)
         return PrivyLoginResponseSchema.from_response(response)
 

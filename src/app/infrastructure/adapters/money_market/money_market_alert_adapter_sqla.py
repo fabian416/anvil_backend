@@ -25,9 +25,7 @@ class MoneyMarketAlertAdapterSqla(MoneyMarketAlertGateway):
 
     def __init__(self, session: MainAsyncSession):
         self._session = session
-        self._table = mapping_registry.metadata.tables[
-            "money_market_alert_history"
-        ]
+        self._table = mapping_registry.metadata.tables["money_market_alert_history"]
 
     # ═══════════════════════════════════════════════════════════════
     # ALERT CRUD
@@ -234,9 +232,7 @@ class MoneyMarketAlertAdapterSqla(MoneyMarketAlertGateway):
     ) -> bool:
         """Update alert notification status."""
         if notification_sent and not sent_at:
-            raise ValueError(
-                "sent_at is required when notification_sent=True"
-            )
+            raise ValueError("sent_at is required when notification_sent=True")
 
         update_stmt = (
             self._table.update()
@@ -289,9 +285,7 @@ class MoneyMarketAlertAdapterSqla(MoneyMarketAlertGateway):
 
         for row in rows:
             # Count by type
-            alerts_by_type[row.alert_type] = (
-                alerts_by_type.get(row.alert_type, 0) + 1
-            )
+            alerts_by_type[row.alert_type] = alerts_by_type.get(row.alert_type, 0) + 1
 
             # Count by protocol
             alerts_by_protocol[row.protocol_name] = (
@@ -322,9 +316,7 @@ class MoneyMarketAlertAdapterSqla(MoneyMarketAlertGateway):
         previous_apy = row.threshold_value or row.current_rate
         new_apy = row.current_rate
         apy_change_percent = (
-            ((new_apy - previous_apy) / previous_apy * 100)
-            if previous_apy > 0
-            else 0
+            ((new_apy - previous_apy) / previous_apy * 100) if previous_apy > 0 else 0
         )
 
         # Determine severity from alert_type

@@ -76,16 +76,14 @@ class MoneyMarketAlert:
         valid_types = ("rate_increase", "rate_decrease", "new_best_rate")
         if self.alert_type not in valid_types:
             raise ValueError(
-                f"Invalid alert_type: {self.alert_type}. "
-                f"Must be one of {valid_types}."
+                f"Invalid alert_type: {self.alert_type}. Must be one of {valid_types}."
             )
 
         # Validate protocol
         valid_protocols = ("aave_v3", "compound_v3")
         if self.protocol not in valid_protocols:
             raise ValueError(
-                f"Invalid protocol: {self.protocol}. "
-                f"Must be one of {valid_protocols}."
+                f"Invalid protocol: {self.protocol}. Must be one of {valid_protocols}."
             )
 
         # Validate asset symbol
@@ -106,13 +104,14 @@ class MoneyMarketAlert:
             )
         if self.new_apy < Decimal("0") or self.new_apy > Decimal("100"):
             raise ValueError(
-                f"Invalid new_apy: {self.new_apy}. "
-                "Must be between 0 and 100%."
+                f"Invalid new_apy: {self.new_apy}. Must be between 0 and 100%."
             )
 
         # Validate apy_change_percent matches calculation
         # Allow small floating point differences (0.001%)
-        expected_change = ((self.new_apy - self.previous_apy) / self.previous_apy) * Decimal("100")
+        expected_change = (
+            (self.new_apy - self.previous_apy) / self.previous_apy
+        ) * Decimal("100")
         diff = abs(self.apy_change_percent - expected_change)
         if diff > Decimal("0.001"):
             raise ValueError(
@@ -125,8 +124,7 @@ class MoneyMarketAlert:
         valid_severities = ("info", "warning")
         if self.severity not in valid_severities:
             raise ValueError(
-                f"Invalid severity: {self.severity}. "
-                f"Must be one of {valid_severities}."
+                f"Invalid severity: {self.severity}. Must be one of {valid_severities}."
             )
 
         # Validate message

@@ -8,13 +8,13 @@ from typing import Protocol
 class LLMClientGateway(Protocol):
     """
     LLM Client Gateway port.
-    
+
     Implementing adapters:
     - LLMClientVertexAI (Google Vertex AI) - Primary
     - LLMClientDeepInfra (DeepInfra API) - Fallback
     Note: LLMClientOpenAI removed - using only Vertex AI and DeepInfra
     """
-    
+
     async def classify_intent(
         self,
         prompt: str,
@@ -22,16 +22,16 @@ class LLMClientGateway(Protocol):
     ) -> dict:
         """
         Classify intent using LLM.
-        
+
         Args:
             prompt: Classification prompt
             model: Model to use (e.g., "gpt-4o-mini")
-            
+
         Returns:
             dict with intent, confidence, reasoning
         """
         ...
-    
+
     async def recommend_agents(
         self,
         prompt: str,
@@ -39,16 +39,16 @@ class LLMClientGateway(Protocol):
     ) -> dict:
         """
         Recommend agents for complex task.
-        
+
         Args:
             prompt: Recommendation prompt
             model: Model to use
-            
+
         Returns:
             dict with agents list and reasoning
         """
         ...
-    
+
     async def plan_workflow(
         self,
         prompt: str,
@@ -56,16 +56,16 @@ class LLMClientGateway(Protocol):
     ) -> dict:
         """
         Plan multi-agent workflow.
-        
+
         Args:
             prompt: Planning prompt
             max_agents: Maximum agents
-            
+
         Returns:
             dict with tasks list
         """
         ...
-    
+
     async def chat(
         self,
         messages: list[dict],

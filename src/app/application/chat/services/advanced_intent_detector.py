@@ -25,13 +25,13 @@ logger = logging.getLogger(__name__)
 
 class ChatMessageRepositoryProtocol(Protocol):
     """Protocol for chat message repository (unified chat system)."""
-    
+
     async def list_for_conversation(
         self,
         conversation_id: UUID,
         limit: int = 50,
     ) -> list[ChatMessage]: ...
-    
+
     async def search_user_messages(
         self,
         user_id: UUID,
@@ -171,7 +171,7 @@ class AdvancedIntentDetector:
     ):
         """
         Initialize intent detector.
-        
+
         Args:
             message_repository: Optional unified chat message repository for
                                finding similar conversations
@@ -234,7 +234,9 @@ class AdvancedIntentDetector:
             confidence=best_confidence,
             suggested_agent=suggested_agent,
             extracted_entities=entities,
-            reasoning=f"Pattern match for '{best_intent.value}'" if best_confidence > 0 else "No clear intent detected",
+            reasoning=f"Pattern match for '{best_intent.value}'"
+            if best_confidence > 0
+            else "No clear intent detected",
             alternative_intents=alternatives,
         )
 
@@ -263,8 +265,11 @@ class AdvancedIntentDetector:
 
         # Suggest DeFi protocols
         for protocol in self.DEFI_PROTOCOLS:
-            if protocol.lower().startswith(partial_lower) or partial_lower in protocol.lower():
-                completion = partial_message + protocol[len(partial_message):]
+            if (
+                protocol.lower().startswith(partial_lower)
+                or partial_lower in protocol.lower()
+            ):
+                completion = partial_message + protocol[len(partial_message) :]
                 suggestions.append(
                     AutocompleteSuggestion.create(
                         completion_text=completion,
@@ -281,7 +286,7 @@ class AdvancedIntentDetector:
             if token.lower().startswith(partial_lower):
                 suggestions.append(
                     AutocompleteSuggestion.create(
-                        completion_text=f"{partial_message}{token[len(partial_message):]}",
+                        completion_text=f"{partial_message}{token[len(partial_message) :]}",
                         display_text=f"Analyze {token} position",
                         confidence=0.85,
                         suggestion_type="token",
@@ -332,7 +337,9 @@ class AdvancedIntentDetector:
                     confidence=detected_intent.confidence,
                     reasoning=f"Best agent for {detected_intent.intent_type.value}",
                     agent_description=self._get_agent_description(primary_agent),
-                    estimated_response_time_seconds=self._estimate_response_time(primary_agent),
+                    estimated_response_time_seconds=self._estimate_response_time(
+                        primary_agent
+                    ),
                 )
             )
 
@@ -347,7 +354,9 @@ class AdvancedIntentDetector:
                             confidence=alt_conf,
                             reasoning=f"Alternative for {alt_intent.value}",
                             agent_description=self._get_agent_description(alt_agent),
-                            estimated_response_time_seconds=self._estimate_response_time(alt_agent),
+                            estimated_response_time_seconds=self._estimate_response_time(
+                                alt_agent
+                            ),
                         )
                     )
 
@@ -375,31 +384,31 @@ class AdvancedIntentDetector:
         if not self._message_repository:
             logger.debug("Message repository not available for similarity search")
             return []
-        
+
         # Extract key terms from current message for keyword-based matching
         keywords = self._extract_search_keywords(current_message)
         if not keywords:
             return []
-        
+
         matches = []
-        
+
         try:
             # Search user's past messages for similar content
             # Note: For better results, implement semantic search with embeddings
             for keyword in keywords[:3]:  # Limit to top 3 keywords
-                if hasattr(self._message_repository, 'search_user_messages'):
+                if hasattr(self._message_repository, "search_user_messages"):
                     results = await self._message_repository.search_user_messages(
                         user_id=user_id,
                         query=keyword,
                         limit=limit,
                     )
-                    
+
                     for msg in results:
                         # Calculate simple keyword similarity score
                         similarity = self._calculate_keyword_similarity(
                             current_message, msg.content
                         )
-                        
+
                         if similarity >= similarity_threshold:
                             matches.append(
                                 ConversationMatch.create(
@@ -414,7 +423,7 @@ class AdvancedIntentDetector:
         except Exception as e:
             logger.warning(f"Error searching similar conversations: {e}")
             return []
-        
+
         # Deduplicate by conversation_id and sort by similarity
         seen_convs = set()
         unique_matches = []
@@ -424,47 +433,122 @@ class AdvancedIntentDetector:
                 unique_matches.append(match)
                 if len(unique_matches) >= limit:
                     break
-        
+
         return unique_matches
-    
+
     def _extract_search_keywords(self, message: str) -> List[str]:
         """
         Extract meaningful keywords from message for search.
-        
+
         Args:
             message: User message
-            
+
         Returns:
             List of keywords
         """
         # Remove common words and extract meaningful terms
         stopwords = {
-            'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been',
-            'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
-            'would', 'could', 'should', 'may', 'might', 'must', 'shall',
-            'can', 'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by',
-            'from', 'as', 'into', 'through', 'during', 'before', 'after',
-            'above', 'below', 'between', 'under', 'again', 'further',
-            'then', 'once', 'here', 'there', 'when', 'where', 'why',
-            'how', 'all', 'each', 'few', 'more', 'most', 'other', 'some',
-            'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so',
-            'than', 'too', 'very', 'just', 'i', 'me', 'my', 'myself',
-            'we', 'our', 'you', 'your', 'he', 'she', 'it', 'they', 'what',
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "must",
+            "shall",
+            "can",
+            "to",
+            "of",
+            "in",
+            "for",
+            "on",
+            "with",
+            "at",
+            "by",
+            "from",
+            "as",
+            "into",
+            "through",
+            "during",
+            "before",
+            "after",
+            "above",
+            "below",
+            "between",
+            "under",
+            "again",
+            "further",
+            "then",
+            "once",
+            "here",
+            "there",
+            "when",
+            "where",
+            "why",
+            "how",
+            "all",
+            "each",
+            "few",
+            "more",
+            "most",
+            "other",
+            "some",
+            "such",
+            "no",
+            "nor",
+            "not",
+            "only",
+            "own",
+            "same",
+            "so",
+            "than",
+            "too",
+            "very",
+            "just",
+            "i",
+            "me",
+            "my",
+            "myself",
+            "we",
+            "our",
+            "you",
+            "your",
+            "he",
+            "she",
+            "it",
+            "they",
+            "what",
         }
-        
+
         # Tokenize and filter
-        words = re.findall(r'\b[a-zA-Z]{3,}\b', message.lower())
+        words = re.findall(r"\b[a-zA-Z]{3,}\b", message.lower())
         keywords = [w for w in words if w not in stopwords]
-        
+
         # Add extracted entities (protocols, tokens) as high-priority keywords
         entities = self._extract_entities(message)
-        if 'protocols' in entities:
-            keywords = entities['protocols'] + keywords
-        if 'tokens' in entities:
-            keywords = entities['tokens'] + keywords
-        
+        if "protocols" in entities:
+            keywords = entities["protocols"] + keywords
+        if "tokens" in entities:
+            keywords = entities["tokens"] + keywords
+
         return keywords[:10]  # Limit keywords
-    
+
     def _calculate_keyword_similarity(
         self,
         message1: str,
@@ -472,24 +556,24 @@ class AdvancedIntentDetector:
     ) -> float:
         """
         Calculate simple keyword-based similarity between messages.
-        
+
         Args:
             message1: First message
             message2: Second message
-            
+
         Returns:
             Similarity score between 0 and 1
         """
         keywords1 = set(self._extract_search_keywords(message1))
         keywords2 = set(self._extract_search_keywords(message2))
-        
+
         if not keywords1 or not keywords2:
             return 0.0
-        
+
         # Jaccard similarity
         intersection = len(keywords1 & keywords2)
         union = len(keywords1 | keywords2)
-        
+
         return intersection / union if union > 0 else 0.0
 
     def _extract_entities(self, message: str) -> Dict[str, Any]:

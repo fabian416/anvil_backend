@@ -1,6 +1,9 @@
 """Morpho Protocol application queries."""
 
-from app.application.queries.morpho.compare_yields import CompareYields, CompareYieldsRequest
+from app.application.queries.morpho.compare_yields import (
+    CompareYields,
+    CompareYieldsRequest,
+)
 from app.application.queries.morpho.get_markets import GetMarkets, GetMarketsRequest
 from app.application.queries.morpho.get_user_positions import (
     GetUserPositions,

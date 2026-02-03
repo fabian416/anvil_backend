@@ -352,7 +352,9 @@ class TranslationService:
 
     def _extract_translation_mode(self, command: str) -> TranslationMode:
         """Extract translation display mode from command."""
-        if any(keyword in command for keyword in ["side by side", "side-by-side", "both"]):
+        if any(
+            keyword in command for keyword in ["side by side", "side-by-side", "both"]
+        ):
             return TranslationMode.SIDE_BY_SIDE
         elif any(keyword in command for keyword in ["inline", "below"]):
             return TranslationMode.INLINE
@@ -460,7 +462,9 @@ class TranslationService:
         translations: List[str] = []
 
         for message in conversation.messages:
-            result = await self.translate_message(message, target_language, preserve_terms)
+            result = await self.translate_message(
+                message, target_language, preserve_terms
+            )
             formatted = self.format_bilingual_message(result, mode)
             translations.append(
                 f"**{message.role.value}** ({message.timestamp.strftime('%H:%M')}):\n{formatted}"
@@ -491,11 +495,11 @@ class TranslationService:
         translations: List[str] = []
 
         for message in recent_messages:
-            result = await self.translate_message(message, target_language, preserve_terms)
-            formatted = self.format_bilingual_message(result, mode)
-            translations.append(
-                f"**{message.role.value}**:\n{formatted}"
+            result = await self.translate_message(
+                message, target_language, preserve_terms
             )
+            formatted = self.format_bilingual_message(result, mode)
+            translations.append(f"**{message.role.value}**:\n{formatted}")
 
         response = (
             f"✅ Translated last {count} messages to {target_language.value}\n\n"
@@ -565,7 +569,8 @@ class TranslationService:
 
         # Check if preserved terms appear in translated text
         preserved_count = sum(
-            1 for term in translation_result.preserved_terms
+            1
+            for term in translation_result.preserved_terms
             if term in translation_result.translated_text
         )
 

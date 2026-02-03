@@ -90,20 +90,21 @@ def create_portfolio_router() -> APIRouter:
             if not address:
                 return False
             return (
-                address.startswith("bc1") or  # Mainnet SegWit
-                address.startswith("tb1") or  # Testnet SegWit
-                address.startswith("1") or    # Mainnet P2PKH
-                address.startswith("3") or    # Mainnet P2SH
-                address.startswith("m") or    # Testnet P2PKH
-                address.startswith("n") or    # Testnet P2PKH
-                address.startswith("2")       # Testnet P2SH
+                address.startswith("bc1")  # Mainnet SegWit
+                or address.startswith("tb1")  # Testnet SegWit
+                or address.startswith("1")  # Mainnet P2PKH
+                or address.startswith("3")  # Mainnet P2SH
+                or address.startswith("m")  # Testnet P2PKH
+                or address.startswith("n")  # Testnet P2PKH
+                or address.startswith("2")  # Testnet P2SH
             )
 
         # Filter to only EVM wallets (exclude Bitcoin wallets for portfolio)
         # Portfolio tracking is for EVM tokens, not Bitcoin
         # Check BOTH by chain_type AND by address pattern (in case DB has wrong chain_type)
         evm_wallets = [
-            w for w in all_wallets 
+            w
+            for w in all_wallets
             if w.default_chain not in (ChainType.BITCOIN, ChainType.BITCOIN_TESTNET)
             and not is_bitcoin_address(w.address)
         ]

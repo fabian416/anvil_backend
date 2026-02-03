@@ -158,9 +158,7 @@ class RetryEngine:
 
                 except NonRetryableError as e:
                     # Don't retry non-retryable errors
-                    logger.error(
-                        f"Non-retryable error on attempt {attempt}: {e}"
-                    )
+                    logger.error(f"Non-retryable error on attempt {attempt}: {e}")
                     last_error = e
                     break  # Skip to next model
 

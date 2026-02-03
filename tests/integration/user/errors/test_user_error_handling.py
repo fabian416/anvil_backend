@@ -33,14 +33,18 @@ ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ
 async def client():
     """Create test client."""
     app = make_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_invalid_message_format_user(client: AsyncClient, llm_validator, csv_tracker):
+async def test_error_invalid_message_format_user(
+    client: AsyncClient, llm_validator, csv_tracker
+):
     """
     Test authenticated user chat with invalid message format.
 
@@ -64,7 +68,9 @@ async def test_error_invalid_message_format_user(client: AsyncClient, llm_valida
     )
 
     # Should handle gracefully
-    assert response.status_code in (200, 400, 422), f"Unexpected status for empty message: {response.status_code}"
+    assert response.status_code in (200, 400, 422), (
+        f"Unexpected status for empty message: {response.status_code}"
+    )
 
     validation = None
     error_message = ""
@@ -76,7 +82,9 @@ async def test_error_invalid_message_format_user(client: AsyncClient, llm_valida
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_context_corruption_detection(client: AsyncClient, llm_validator, csv_tracker):
+async def test_error_context_corruption_detection(
+    client: AsyncClient, llm_validator, csv_tracker
+):
     """
     Test detection and handling of conversation state/context corruption.
 
@@ -94,11 +102,7 @@ async def test_error_context_corruption_detection(client: AsyncClient, llm_valid
     conv_id = conv_response.json()["id"]
 
     # Send multiple messages to build context
-    messages = [
-        "Tell me about Bitcoin",
-        "What about Ethereum?",
-        "Compare them for me"
-    ]
+    messages = ["Tell me about Bitcoin", "What about Ethereum?", "Compare them for me"]
 
     responses = []
     for msg in messages:
@@ -128,11 +132,11 @@ async def test_error_context_corruption_detection(client: AsyncClient, llm_valid
                 "Comparison should be relevant and informed by earlier discussion."
             ),
             additional_context={
-                'test_category': 'context_integrity',
-                'scenario': 'multi_turn_conversation',
-                'user_type': 'authenticated',
-                'conversation_history': messages
-            }
+                "test_category": "context_integrity",
+                "scenario": "multi_turn_conversation",
+                "user_type": "authenticated",
+                "conversation_history": messages,
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -141,38 +145,70 @@ async def test_error_context_corruption_detection(client: AsyncClient, llm_valid
             )
 
     # CSV tracking
-    await csv_tracker("user", "errors", {
-        "test_id": "user_errors_context_corruption_002",
-        "s_multistep": True,
-        "input": "Multi-turn: 1) Tell me about Bitcoin 2) What about Ethereum? 3) Compare them for me",
-        "output": content,
-        "test_label_sequence": "errors_context_integrity",
-        "output_expected": "Context-aware comparison of Bitcoin and Ethereum based on conversation history",
-        "status": "PASS" if last_response and content else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "errors",
+        {
+            "test_id": "user_errors_context_corruption_002",
+            "s_multistep": True,
+            "input": "Multi-turn: 1) Tell me about Bitcoin 2) What about Ethereum? 3) Compare them for me",
+            "output": content,
+            "test_label_sequence": "errors_context_integrity",
+            "output_expected": "Context-aware comparison of Bitcoin and Ethereum based on conversation history",
+            "status": "PASS" if last_response and content else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_error_concurrent_request_conflicts(client: AsyncClient, llm_validator, csv_tracker):
+async def test_error_concurrent_request_conflicts(
+    client: AsyncClient, llm_validator, csv_tracker
+):
     """
     Test handling of concurrent requests to same conversation.
 
@@ -202,8 +238,9 @@ async def test_error_concurrent_request_conflicts(client: AsyncClient, llm_valid
 
     # All requests should succeed or be handled gracefully
     for i, response in enumerate(responses):
-        assert response.status_code in (200, 201, 429), \
+        assert response.status_code in (200, 201, 429), (
             f"Request {i} should succeed or be rate limited, got {response.status_code}"
+        )
 
     # Check first successful response
     successful_responses = [r for r in responses if r.status_code in (200, 201)]

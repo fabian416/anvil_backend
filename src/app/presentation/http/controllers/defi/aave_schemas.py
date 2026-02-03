@@ -189,7 +189,9 @@ class HealthFactorResponse(BaseModel):
         description="Risk classification: safe, moderate, high, critical, liquidatable"
     )
     is_liquidatable: bool
-    distance_to_liquidation: str = Field(description="Percentage above liquidation threshold")
+    distance_to_liquidation: str = Field(
+        description="Percentage above liquidation threshold"
+    )
     max_withdrawable_pct: str = Field(description="Max collateral withdrawal %")
     max_borrowable_pct: str = Field(description="Max additional borrow %")
 

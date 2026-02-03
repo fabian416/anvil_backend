@@ -37,7 +37,9 @@ from dishka.integrations.fastapi import FromDishka
 from app.presentation.http.websocket.connection_manager import ConnectionManager
 from app.domain.ports.analytics_repository import AnalyticsRepository
 from app.domain.entities.chat.conversation_analytics import ConversationAnalytics
-from app.presentation.http.auth.access_token_processor_jwt import JwtAccessTokenProcessor
+from app.presentation.http.auth.access_token_processor_jwt import (
+    JwtAccessTokenProcessor,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -442,8 +444,10 @@ class AnalyticsWebSocketHandler:
 
         # Performance alert (high response time)
         if (
-            "alerts" in subscriptions or "performance" in subscriptions
-        ) and analytics.p95_response_time_ms and analytics.p95_response_time_ms > self.response_time_threshold_ms:
+            ("alerts" in subscriptions or "performance" in subscriptions)
+            and analytics.p95_response_time_ms
+            and analytics.p95_response_time_ms > self.response_time_threshold_ms
+        ):
             await self.connection_manager.send_to_user(
                 user_id=user_id,
                 message={
@@ -465,8 +469,10 @@ class AnalyticsWebSocketHandler:
 
         # Quality alert
         if (
-            "alerts" in subscriptions or "quality" in subscriptions
-        ) and analytics.quality_score and analytics.quality_score < self.quality_threshold:
+            ("alerts" in subscriptions or "quality" in subscriptions)
+            and analytics.quality_score
+            and analytics.quality_score < self.quality_threshold
+        ):
             await self.connection_manager.send_to_user(
                 user_id=user_id,
                 message={

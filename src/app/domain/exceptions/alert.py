@@ -68,7 +68,9 @@ class InvalidThresholdError(ApplicationError):
             details["max_value"] = max_value
         if reason:
             details["reason"] = reason
-        super().__init__(ErrorCode.ALRT_INVALID_THRESHOLD, details=details, field="threshold")
+        super().__init__(
+            ErrorCode.ALRT_INVALID_THRESHOLD, details=details, field="threshold"
+        )
 
 
 class InvalidAlertConditionError(ApplicationError):
@@ -87,7 +89,9 @@ class InvalidAlertConditionError(ApplicationError):
             details["valid_conditions"] = valid_conditions
         if reason:
             details["reason"] = reason
-        super().__init__(ErrorCode.ALRT_INVALID_CONDITION, details=details, field="condition")
+        super().__init__(
+            ErrorCode.ALRT_INVALID_CONDITION, details=details, field="condition"
+        )
 
 
 class AlertLimitExceededError(ApplicationError):
@@ -110,6 +114,7 @@ class AlertLimitExceededError(ApplicationError):
 
 
 # Additional alert-specific exceptions
+
 
 class AlertDisabledError(ApplicationError):
     """Raised when trying to modify a disabled alert."""

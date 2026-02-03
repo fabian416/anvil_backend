@@ -29,12 +29,12 @@ class TestAaveMCPServerStructure:
 
     def test_aave_server_has_setup_tools(self):
         """Test server has setup_tools method."""
-        assert hasattr(AaveMCPServer, 'setup_tools')
+        assert hasattr(AaveMCPServer, "setup_tools")
 
     def test_aave_server_initialization(self):
         """Test server can be instantiated."""
         server = AaveMCPServer()
-        
+
         assert server is not None
         assert server.name == "aave"
         assert server.version == "1.0.0"
@@ -79,9 +79,13 @@ class TestAaveTools:
 
         for tool_name, tool in server.tools.items():
             assert tool.parameters is not None, f"Tool {tool_name} has no parameters"
-            assert "type" in tool.parameters, f"Tool {tool_name} missing type in parameters"
+            assert "type" in tool.parameters, (
+                f"Tool {tool_name} missing type in parameters"
+            )
             assert tool.parameters["type"] == "object"
-            assert "properties" in tool.parameters, f"Tool {tool_name} missing properties"
+            assert "properties" in tool.parameters, (
+                f"Tool {tool_name} missing properties"
+            )
 
     def test_tool_descriptions_exist(self):
         """Test all tools have descriptions."""
@@ -100,19 +104,19 @@ class TestAaveHealthEndpoint:
         """Test health endpoint returns 200 status."""
         server = AaveMCPServer()
         client = TestClient(server.app)
-        
+
         response = client.get("/health")
-        
+
         assert response.status_code == 200
 
     def test_health_endpoint_returns_healthy_status(self):
         """Test health endpoint returns healthy status."""
         server = AaveMCPServer()
         client = TestClient(server.app)
-        
+
         response = client.get("/health")
         data = response.json()
-        
+
         assert data["status"] == "healthy"
         assert data["name"] == "aave"
         assert data["version"] == "1.0.0"
@@ -126,19 +130,19 @@ class TestAaveToolsEndpoint:
         """Test tools endpoint returns 200 status."""
         server = AaveMCPServer()
         client = TestClient(server.app)
-        
+
         response = client.get("/tools")
-        
+
         assert response.status_code == 200
 
     def test_tools_endpoint_returns_all_tools(self):
         """Test tools endpoint returns all registered tools."""
         server = AaveMCPServer()
         client = TestClient(server.app)
-        
+
         response = client.get("/tools")
         data = response.json()
-        
+
         assert len(data) == 9
         tool_names = [tool["name"] for tool in data]
         assert "get_market_data" in tool_names
@@ -179,8 +183,7 @@ class TestAaveToolHandlers:
         server = AaveMCPServer()
 
         result = await server._get_user_positions(
-            chain_id=1,
-            user_address="0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7"
+            chain_id=1, user_address="0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7"
         )
 
         assert "user_address" in result
@@ -193,8 +196,7 @@ class TestAaveToolHandlers:
         server = AaveMCPServer()
 
         result = await server._calculate_health_factor(
-            chain_id=1,
-            user_address="0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7"
+            chain_id=1, user_address="0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7"
         )
 
         assert "health_factor" in result or "error" in result
@@ -209,7 +211,7 @@ class TestAaveToolHandlers:
         result = await server._get_available_to_borrow(
             chain_id=1,
             user_address="0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7",
-            asset="USDC"
+            asset="USDC",
         )
 
         assert "asset" in result or "available_amount" in result or "error" in result
@@ -224,7 +226,7 @@ class TestAaveToolHandlers:
             chain_id=1,
             from_address="0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7",
             asset="USDC",
-            amount="1000"
+            amount="1000",
         )
 
         # Should return transaction info or error
@@ -241,7 +243,7 @@ class TestAaveToolHandlers:
             from_address="0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7",
             asset="USDC",
             amount="500",
-            rate_mode="variable"
+            rate_mode="variable",
         )
 
         assert "transaction" in result or "error" in result or "success" in result
@@ -256,7 +258,7 @@ class TestAaveToolHandlers:
             chain_id=1,
             from_address="0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7",
             asset="USDC",
-            amount="250"
+            amount="250",
         )
 
         assert "transaction" in result or "error" in result or "success" in result
@@ -271,7 +273,7 @@ class TestAaveToolHandlers:
             chain_id=1,
             from_address="0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7",
             asset="USDC",
-            amount="100"
+            amount="100",
         )
 
         assert "transaction" in result or "error" in result or "success" in result
@@ -282,8 +284,7 @@ class TestAaveToolHandlers:
         server = AaveMCPServer()
 
         result = await server._get_liquidation_risk(
-            chain_id=1,
-            user_address="0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7"
+            chain_id=1, user_address="0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7"
         )
 
         assert "risk_level" in result or "health_factor" in result or "error" in result
@@ -297,12 +298,12 @@ class TestAaveToolExecution:
         """Test executing get_market_data tool via API."""
         server = AaveMCPServer()
         client = TestClient(server.app)
-        
+
         response = client.post(
             "/tools/get_market_data",
-            json={"parameters": {"chain_id": 1, "assets": ["USDC"]}}
+            json={"parameters": {"chain_id": 1, "assets": ["USDC"]}},
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True or "error" in data
@@ -311,30 +312,34 @@ class TestAaveToolExecution:
         """Test executing get_user_positions tool via API."""
         server = AaveMCPServer()
         client = TestClient(server.app)
-        
+
         response = client.post(
             "/tools/get_user_positions",
-            json={"parameters": {
-                "chain_id": 1,
-                "user_address": "0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7"
-            }}
+            json={
+                "parameters": {
+                    "chain_id": 1,
+                    "user_address": "0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7",
+                }
+            },
         )
-        
+
         assert response.status_code == 200
 
     def test_execute_calculate_health_factor_via_api(self):
         """Test executing calculate_health_factor tool via API."""
         server = AaveMCPServer()
         client = TestClient(server.app)
-        
+
         response = client.post(
             "/tools/calculate_health_factor",
-            json={"parameters": {
-                "chain_id": 1,
-                "user_address": "0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7"
-            }}
+            json={
+                "parameters": {
+                    "chain_id": 1,
+                    "user_address": "0x742d35Cc6634C0532925a3b844Bc9e7595f3eF7",
+                }
+            },
         )
-        
+
         assert response.status_code == 200
 
 
@@ -342,13 +347,16 @@ class TestAaveToolExecution:
 class TestAaveChainSupport:
     """Tests for Aave multi-chain support."""
 
-    @pytest.mark.parametrize("chain_id,chain_name", [
-        (1, "Ethereum"),
-        (137, "Polygon"),
-        (42161, "Arbitrum"),
-        (10, "Optimism"),
-        (43114, "Avalanche"),
-    ])
+    @pytest.mark.parametrize(
+        "chain_id,chain_name",
+        [
+            (1, "Ethereum"),
+            (137, "Polygon"),
+            (42161, "Arbitrum"),
+            (10, "Optimism"),
+            (43114, "Avalanche"),
+        ],
+    )
     @pytest.mark.asyncio
     async def test_supported_chains(self, chain_id, chain_name):
         """Test market data retrieval for all supported chains."""
@@ -357,7 +365,10 @@ class TestAaveChainSupport:
         result = await server._get_market_data(chain_id=chain_id)
 
         # Should not raise an error for supported chains
-        assert "error" not in result or "unsupported" not in str(result.get("error", "")).lower()
+        assert (
+            "error" not in result
+            or "unsupported" not in str(result.get("error", "")).lower()
+        )
 
 
 @pytest.mark.integration
@@ -368,9 +379,9 @@ class TestAaveRootEndpoint:
         """Test root endpoint returns server info."""
         server = AaveMCPServer()
         client = TestClient(server.app)
-        
+
         response = client.get("/")
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "aave"

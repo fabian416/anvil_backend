@@ -57,7 +57,9 @@ class MorphoPosition:
             "assets": str(self.assets),
             "deposited_assets": str(self.deposited_assets),
             "apy": str(self.apy),
-            "deposited_at": self.deposited_at.isoformat() if self.deposited_at else None,
+            "deposited_at": self.deposited_at.isoformat()
+            if self.deposited_at
+            else None,
             "earnings": str(self.earnings),
             "earnings_pct": str(self.earnings_pct),
         }

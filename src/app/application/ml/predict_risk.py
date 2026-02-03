@@ -15,24 +15,24 @@ from app.domain.ml.services.risk_prediction_service import (
 
 class PredictRiskInteractor:
     """Predict protocol risk using ML models"""
-    
+
     def __init__(
         self,
         prediction_service: RiskPredictionService,
     ):
         """Initialize interactor"""
         self._prediction_service = prediction_service
-    
+
     async def execute(
         self,
         protocol_id: UUID,
     ) -> RiskPrediction:
         """
         Predict protocol risk.
-        
+
         Args:
             protocol_id: Protocol identifier
-        
+
         Returns:
             ML risk prediction
         """
@@ -41,24 +41,24 @@ class PredictRiskInteractor:
 
 class PredictBatchRiskInteractor:
     """Predict risk for multiple protocols"""
-    
+
     def __init__(
         self,
         prediction_service: RiskPredictionService,
     ):
         """Initialize interactor"""
         self._prediction_service = prediction_service
-    
+
     async def execute(
         self,
         protocol_ids: List[UUID],
     ) -> List[RiskPrediction]:
         """
         Predict risk for multiple protocols.
-        
+
         Args:
             protocol_ids: List of protocol identifiers
-        
+
         Returns:
             List of ML risk predictions
         """
@@ -67,14 +67,14 @@ class PredictBatchRiskInteractor:
 
 class DetectAnomaliesInteractor:
     """Detect anomalous risk patterns"""
-    
+
     def __init__(
         self,
         prediction_service: RiskPredictionService,
     ):
         """Initialize interactor"""
         self._prediction_service = prediction_service
-    
+
     async def execute(
         self,
         protocol_id: UUID,
@@ -82,11 +82,11 @@ class DetectAnomaliesInteractor:
     ) -> dict:
         """
         Detect anomalies in protocol risk.
-        
+
         Args:
             protocol_id: Protocol identifier
             lookback_days: Days to look back
-        
+
         Returns:
             Anomaly detection result
         """
@@ -98,14 +98,14 @@ class DetectAnomaliesInteractor:
 
 class ForecastRiskInteractor:
     """Forecast future risk trajectory"""
-    
+
     def __init__(
         self,
         prediction_service: RiskPredictionService,
     ):
         """Initialize interactor"""
         self._prediction_service = prediction_service
-    
+
     async def execute(
         self,
         protocol_id: UUID,
@@ -113,11 +113,11 @@ class ForecastRiskInteractor:
     ) -> List[dict]:
         """
         Forecast protocol risk for next N days.
-        
+
         Args:
             protocol_id: Protocol identifier
             forecast_days: Days to forecast
-        
+
         Returns:
             Risk forecast
         """

@@ -37,23 +37,30 @@ class TestHyperliquidAdapterStructure:
 
     def test_hyperliquid_adapter_imports(self):
         """Test HyperliquidAdapter can be imported."""
-        from app.infrastructure.adapters.external.hyperliquid_adapter import HyperliquidAdapter
+        from app.infrastructure.adapters.external.hyperliquid_adapter import (
+            HyperliquidAdapter,
+        )
+
         assert HyperliquidAdapter is not None
 
     def test_hyperliquid_adapter_implements_gateway(self):
         """Test HyperliquidAdapter implements PerpetualGateway protocol."""
-        from app.infrastructure.adapters.external.hyperliquid_adapter import HyperliquidAdapter
-        
+        from app.infrastructure.adapters.external.hyperliquid_adapter import (
+            HyperliquidAdapter,
+        )
+
         # Verify it has all required methods from the protocol
-        assert hasattr(HyperliquidAdapter, 'get_markets')
-        assert hasattr(HyperliquidAdapter, 'get_funding_rates')
-        assert hasattr(HyperliquidAdapter, 'get_order_book')
-        assert hasattr(HyperliquidAdapter, 'get_positions')
+        assert hasattr(HyperliquidAdapter, "get_markets")
+        assert hasattr(HyperliquidAdapter, "get_funding_rates")
+        assert hasattr(HyperliquidAdapter, "get_order_book")
+        assert hasattr(HyperliquidAdapter, "get_positions")
 
     def test_hyperliquid_adapter_init(self, mock_hyperliquid_client, mock_cache):
         """Test HyperliquidAdapter can be initialized."""
-        from app.infrastructure.adapters.external.hyperliquid_adapter import HyperliquidAdapter
-        
+        from app.infrastructure.adapters.external.hyperliquid_adapter import (
+            HyperliquidAdapter,
+        )
+
         adapter = HyperliquidAdapter(client=mock_hyperliquid_client, cache=mock_cache)
         assert adapter is not None
 
@@ -65,37 +72,45 @@ class TestHyperliquidAdapterMethods:
     @pytest.mark.asyncio
     async def test_get_markets_exists(self, mock_hyperliquid_client, mock_cache):
         """Test get_markets method exists."""
-        from app.infrastructure.adapters.external.hyperliquid_adapter import HyperliquidAdapter
-        
+        from app.infrastructure.adapters.external.hyperliquid_adapter import (
+            HyperliquidAdapter,
+        )
+
         adapter = HyperliquidAdapter(client=mock_hyperliquid_client, cache=mock_cache)
-        assert hasattr(adapter, 'get_markets')
+        assert hasattr(adapter, "get_markets")
         assert callable(adapter.get_markets)
 
     @pytest.mark.asyncio
     async def test_get_funding_rates_exists(self, mock_hyperliquid_client, mock_cache):
         """Test get_funding_rates method exists."""
-        from app.infrastructure.adapters.external.hyperliquid_adapter import HyperliquidAdapter
-        
+        from app.infrastructure.adapters.external.hyperliquid_adapter import (
+            HyperliquidAdapter,
+        )
+
         adapter = HyperliquidAdapter(client=mock_hyperliquid_client, cache=mock_cache)
-        assert hasattr(adapter, 'get_funding_rates')
+        assert hasattr(adapter, "get_funding_rates")
         assert callable(adapter.get_funding_rates)
 
     @pytest.mark.asyncio
     async def test_get_order_book_exists(self, mock_hyperliquid_client, mock_cache):
         """Test get_order_book method exists."""
-        from app.infrastructure.adapters.external.hyperliquid_adapter import HyperliquidAdapter
-        
+        from app.infrastructure.adapters.external.hyperliquid_adapter import (
+            HyperliquidAdapter,
+        )
+
         adapter = HyperliquidAdapter(client=mock_hyperliquid_client, cache=mock_cache)
-        assert hasattr(adapter, 'get_order_book')
+        assert hasattr(adapter, "get_order_book")
         assert callable(adapter.get_order_book)
 
     @pytest.mark.asyncio
     async def test_get_positions_exists(self, mock_hyperliquid_client, mock_cache):
         """Test get_positions method exists."""
-        from app.infrastructure.adapters.external.hyperliquid_adapter import HyperliquidAdapter
-        
+        from app.infrastructure.adapters.external.hyperliquid_adapter import (
+            HyperliquidAdapter,
+        )
+
         adapter = HyperliquidAdapter(client=mock_hyperliquid_client, cache=mock_cache)
-        assert hasattr(adapter, 'get_positions')
+        assert hasattr(adapter, "get_positions")
         assert callable(adapter.get_positions)
 
 
@@ -105,20 +120,23 @@ class TestHyperliquidClientStructure:
 
     def test_hyperliquid_client_imports(self):
         """Test HyperliquidClient can be imported."""
-        from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+        from app.infrastructure.adapters.external.hyperliquid_client import (
+            HyperliquidClient,
+        )
+
         assert HyperliquidClient is not None
 
     def test_funding_rate_dataclass(self):
         """Test FundingRate dataclass."""
         from app.infrastructure.adapters.external.hyperliquid_client import FundingRate
-        
+
         rate = FundingRate(
             symbol="BTC-PERP",
             funding_rate=Decimal("0.0001"),
             next_funding_time="2024-01-01T00:00:00Z",
             timestamp=1704067200,
         )
-        
+
         assert rate.symbol == "BTC-PERP"
         assert rate.funding_rate == Decimal("0.0001")
 
@@ -131,6 +149,7 @@ class TestHyperliquidExceptions:
         """Test HyperliquidAPIError exists."""
         try:
             from app.domain.exceptions.perpetual import HyperliquidAPIError
+
             error = HyperliquidAPIError("Test error")
             assert "Test error" in str(error)
         except ImportError:
@@ -140,6 +159,7 @@ class TestHyperliquidExceptions:
         """Test MarketNotFoundError exists."""
         try:
             from app.domain.exceptions.perpetual import MarketNotFoundError
+
             error = MarketNotFoundError("BTC-PERP")
             assert "BTC-PERP" in str(error)
         except ImportError:

@@ -75,7 +75,9 @@ CONTEXT_PRESERVATION_FLOWS = [
             {"input": "What are the fee tiers?"},
             {"input": "Compare it to V2"},
             {"input": "What about capital efficiency?"},
-            {"input": "Based on everything we discussed, should a beginner start with V2 or V3?"},
+            {
+                "input": "Based on everything we discussed, should a beginner start with V2 or V3?"
+            },
         ],
         "category": "agent_squad",
         "subcategory": "long_context_memory",
@@ -87,15 +89,17 @@ CONTEXT_PRESERVATION_FLOWS = [
 @pytest.mark.integration
 class TestAgentSquadSingleTurn:
     """Tests for single-turn agent squad coordination."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, conversation_id, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
-    
-    @pytest.mark.parametrize("test_case", AGENT_SQUAD_SINGLE_TURN, ids=lambda t: t["test_id"])
+
+    @pytest.mark.parametrize(
+        "test_case", AGENT_SQUAD_SINGLE_TURN, ids=lambda t: t["test_id"]
+    )
     async def test_agent_squad_coordination(self, test_case: dict):
         """Test agent squad routing and coordination."""
         response_data, response_time_ms = await send_message(
@@ -103,7 +107,7 @@ class TestAgentSquadSingleTurn:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -111,15 +115,15 @@ class TestAgentSquadSingleTurn:
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         # Assertions
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "")
-        
+
         # Agent squad responses should be comprehensive
         assert len(content) > 80, f"Agent squad response too short: {content[:200]}"
 
@@ -128,31 +132,32 @@ class TestAgentSquadSingleTurn:
 @pytest.mark.integration
 class TestAgentSquadContextPreservation:
     """Tests for context preservation across agent handoffs."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.reporter = csv_reporter
-    
-    @pytest.mark.parametrize("flow", CONTEXT_PRESERVATION_FLOWS, ids=lambda f: f["test_id"])
+
+    @pytest.mark.parametrize(
+        "flow", CONTEXT_PRESERVATION_FLOWS, ids=lambda f: f["test_id"]
+    )
     async def test_context_preservation(self, flow: dict):
         """Test context is preserved across multiple turns."""
         conv_id = await create_conversation(
-            self.client,
-            title=f"Context Test: {flow['name']}"
+            self.client, title=f"Context Test: {flow['name']}"
         )
-        
+
         steps = flow["steps"]
         total_steps = len(steps)
-        
+
         for step_num, step in enumerate(steps, 1):
             response_data, response_time_ms = await send_message(
                 self.client,
                 conv_id,
                 step["input"],
             )
-            
+
             step_test_case = {
                 "input": step["input"],
                 "expected_agent": "",
@@ -162,7 +167,7 @@ class TestAgentSquadContextPreservation:
                 "step_number": step_num,
                 "total_steps": total_steps,
             }
-            
+
             result = create_test_result(
                 test_id=f"{flow['test_id']}_step{step_num}",
                 test_case=step_test_case,
@@ -170,20 +175,24 @@ class TestAgentSquadContextPreservation:
                 response_time_ms=response_time_ms,
                 conversation_id=conv_id,
             )
-            
+
             self.reporter.add_result(result)
-            
-            assert not response_data.get("error"), f"Step {step_num} failed: {response_data}"
-            
+
+            assert not response_data.get("error"), (
+                f"Step {step_num} failed: {response_data}"
+            )
+
             parsed = parse_response(response_data)
             content = parsed.get("content", "")
-            
+
             # Each response should be meaningful
-            assert len(content) > 50, f"Step {step_num} response too short: {content[:200]}"
-        
+            assert len(content) > 50, (
+                f"Step {step_num} response too short: {content[:200]}"
+            )
+
         # Final response should demonstrate context awareness
         final_content = parsed.get("content", "").lower()
-        
+
         if "uniswap" in flow["name"].lower():
             # Should reference V2/V3 comparison from earlier turns
             assert any(

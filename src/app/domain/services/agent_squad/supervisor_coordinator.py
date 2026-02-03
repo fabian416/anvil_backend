@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 class TaskStatus(Enum):
     """Task status enum."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -26,7 +27,7 @@ class TaskStatus(Enum):
 class AgentTask:
     """
     Task for a single agent in complex workflow.
-    
+
     Contains:
     - agent_type: Which agent to use
     - task_description: What the agent should do
@@ -36,14 +37,17 @@ class AgentTask:
     - error: str | None (error message if failed)
     - execution_time_ms: int | None (execution time in milliseconds, for debug)
     """
+
     agent_type: AgentType
     task_description: str
     depends_on: list[int]  # Task indices that must complete first
     status: TaskStatus = TaskStatus.PENDING
-    result: "AgentResponse | str | None" = None  # AgentResponse (preferred) or str (fallback)
+    result: "AgentResponse | str | None" = (
+        None  # AgentResponse (preferred) or str (fallback)
+    )
     error: str | None = None
     execution_time_ms: int | None = None  # Execution time in milliseconds (for debug)
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
@@ -61,25 +65,26 @@ class AgentTask:
 class WorkflowPlan:
     """
     Multi-agent workflow plan.
-    
+
     Contains:
     - tasks: List of agent tasks
     - execution_order: Optimal execution order
     - estimated_time: Estimated completion time
     """
+
     tasks: list[AgentTask]
     execution_order: list[int]  # Task indices in execution order
     estimated_time_seconds: int
-    
+
     def get_next_task(self) -> AgentTask | None:
         """Get next pending task with satisfied dependencies."""
         # Build mapping from agent_type to task for dependency resolution
         agent_type_to_task = {t.agent_type.value: t for t in self.tasks}
-        
+
         for task in self.tasks:
             if task.status != TaskStatus.PENDING:
                 continue
-            
+
             # Check dependencies (deps can be string agent types or int indices)
             dependencies_satisfied = True
             for dep in task.depends_on:
@@ -92,17 +97,17 @@ class WorkflowPlan:
                     if self.tasks[dep].status != TaskStatus.COMPLETED:
                         dependencies_satisfied = False
                         break
-            
+
             if dependencies_satisfied:
                 return task
-        
+
         return None
-    
+
     @property
     def is_complete(self) -> bool:
         """Check if all tasks are completed."""
         return all(task.status == TaskStatus.COMPLETED for task in self.tasks)
-    
+
     @property
     def has_failures(self) -> bool:
         """Check if any tasks failed."""
@@ -112,22 +117,22 @@ class WorkflowPlan:
 class SupervisorCoordinator:
     """
     Supervisor Coordinator domain service.
-    
+
     Responsibilities:
     - Coordinate complex multi-agent workflows
     - Break down complex tasks into agent subtasks
     - Manage task dependencies and execution order
     - Aggregate results from multiple agents
     - Handle partial failures
-    
+
     Architecture:
     - Domain service (framework-agnostic)
     - Uses LLM port for task planning
     - Uses agent executor port for running agents
-    
+
     Example Workflow:
     User: "Create a balanced DeFi portfolio"
-    
+
     Supervisor Plan:
     1. Research agent: Find top protocols
     2. Risk analyzer: Assess protocol risks
@@ -135,7 +140,7 @@ class SupervisorCoordinator:
     4. Tax optimizer: Suggest tax-efficient timing
     5. Chat agent: Summarize recommendations
     """
-    
+
     def __init__(
         self,
         llm_client: "LLMClientPort",
@@ -145,7 +150,7 @@ class SupervisorCoordinator:
     ):
         """
         Initialize supervisor coordinator.
-        
+
         Args:
             llm_client: LLM client for task planning
             agent_executor: Agent executor for running agents
@@ -156,7 +161,7 @@ class SupervisorCoordinator:
         self._agent_executor = agent_executor
         self._max_agents = max_agents
         self._timeout_seconds = timeout_seconds
-    
+
     async def create_workflow_plan(
         self,
         conversation_id: ConversationId,
@@ -166,13 +171,13 @@ class SupervisorCoordinator:
     ) -> WorkflowPlan:
         """
         Create multi-agent workflow plan for complex task.
-        
+
         Args:
             conversation_id: Conversation identifier
             message: User message
             conversation_context: Conversation history
             available_agents: Available agents for workflow
-            
+
         Returns:
             WorkflowPlan with agent tasks and execution order
         """
@@ -182,53 +187,63 @@ class SupervisorCoordinator:
             conversation_context,
             available_agents,
         )
-        
+
         # Detect if this is a simple multi-intent query (for faster model selection)
         is_simple_multi_intent = self._is_simple_multi_intent(message.value)
-        
+
         # Call LLM for workflow planning
         # Use faster model for simple multi-intent queries to reduce latency
         response = await self._llm_client.plan_workflow(
             prompt=prompt,
             max_agents=self._max_agents,
         )
-        
+
         # Parse workflow plan
         tasks = []
         import logging
+
         logger = logging.getLogger(__name__)
-        
+
         for task_data in response.get("tasks", []):
             # Support both "agent_type" and "agent" for backward compatibility
-            agent_type_str = task_data.get("agent_type") or task_data.get("agent", "chat")
+            agent_type_str = task_data.get("agent_type") or task_data.get(
+                "agent", "chat"
+            )
             # Normalize agent names (hunter_ai -> HUNTER_AI, hunter-ai -> HUNTER_AI, etc.)
             agent_type_str = agent_type_str.replace("-", "_").replace(" ", "_").lower()
-            
-            logger.info(f"🔍 Parsing workflow task: agent_type_str={agent_type_str}, task_data={task_data}")
-            
+
+            logger.info(
+                f"🔍 Parsing workflow task: agent_type_str={agent_type_str}, task_data={task_data}"
+            )
+
             try:
                 agent_type = AgentType[agent_type_str.upper()]
-                logger.info(f"✅ Mapped '{agent_type_str}' to AgentType.{agent_type.name}")
+                logger.info(
+                    f"✅ Mapped '{agent_type_str}' to AgentType.{agent_type.name}"
+                )
             except KeyError:
                 # Default to CHAT if agent type not recognized
-                logger.warning(f"⚠️ Unknown agent type '{agent_type_str}', defaulting to CHAT. Available: {[e.name for e in AgentType]}")
+                logger.warning(
+                    f"⚠️ Unknown agent type '{agent_type_str}', defaulting to CHAT. Available: {[e.name for e in AgentType]}"
+                )
                 agent_type = AgentType.CHAT
-            
+
             task = AgentTask(
                 agent_type=agent_type,
                 task_description=task_data.get("task_description", ""),
                 depends_on=task_data.get("depends_on", []),
             )
             tasks.append(task)
-        
+
         # For multi-agent workflows (3+ tasks), ensure CHAT agent is added as final aggregator
         if len(tasks) >= 3:
             # Check if CHAT agent already exists as aggregator
             has_chat_aggregator = any(
-                task.agent_type.value == "chat" and "aggregate" in task.task_description.lower()
+                task.agent_type.value == "chat"
+                and "aggregate" in task.task_description.lower()
                 for task in tasks
             )
-            
+
             if not has_chat_aggregator:
                 # Add CHAT agent as final aggregator
                 all_previous_indices = list(range(len(tasks)))
@@ -238,19 +253,19 @@ class SupervisorCoordinator:
                     depends_on=all_previous_indices,
                 )
                 tasks.append(chat_task)
-        
+
         # Determine execution order
         execution_order = self._calculate_execution_order(tasks)
-        
+
         # Estimate time (rough: 10s per agent)
         estimated_time = len(tasks) * 10
-        
+
         return WorkflowPlan(
             tasks=tasks,
             execution_order=execution_order,
             estimated_time_seconds=estimated_time,
         )
-    
+
     async def execute_workflow(
         self,
         conversation_id: ConversationId,
@@ -260,16 +275,16 @@ class SupervisorCoordinator:
     ) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]]]:
         """
         Execute multi-agent workflow.
-        
+
         Args:
             conversation_id: Conversation identifier
             workflow_plan: Workflow plan to execute
             conversation_context: Conversation context
             original_message: The current user message (CRITICAL: don't use history[-1])
-            
+
         Returns:
             Tuple of (response_content, sources_list, agent_timings_list)
-            
+
         Note:
             The original_message parameter is essential to prevent conversation
             context pollution. Do NOT extract the message from conversation_history
@@ -280,102 +295,135 @@ class SupervisorCoordinator:
         if len(workflow_plan.tasks) == 1:
             task = workflow_plan.tasks[0]
             task.status = TaskStatus.IN_PROGRESS
-            
+
             try:
                 import time
+
                 start_time = time.time()
-                
+
                 from app.domain.value_objects.message_content import MessageContent
-                
+
                 # CRITICAL: Use the explicitly passed original_message, NOT conversation_history[-1]
                 # conversation_history may contain PREVIOUS messages, not the current user message
                 # This prevents conversation context pollution where old messages affect routing
                 user_message = original_message or task.task_description
-                
+
                 # For off-topic/decline instructions, format message with [SYSTEM INSTRUCTION:]
                 # so ChatAgent knows to decline politely
                 task_desc_lower = task.task_description.lower()
                 if "decline" in task_desc_lower or "off-topic" in task_desc_lower:
-                    formatted_message = f"[SYSTEM INSTRUCTION: {task.task_description}]\n\nUser message: \"{user_message}\""
+                    formatted_message = f'[SYSTEM INSTRUCTION: {task.task_description}]\n\nUser message: "{user_message}"'
                 else:
                     formatted_message = user_message
-                
+
                 result = await self._agent_executor.execute_agent(
                     conversation_id=conversation_id,
                     agent_type=task.agent_type,
                     message=MessageContent(formatted_message),
                     conversation_context=conversation_context,
                 )
-                
+
                 # Calculate execution time
                 execution_time_ms = int((time.time() - start_time) * 1000)
                 task.execution_time_ms = execution_time_ms
-                
+
                 task.result = result
                 task.status = TaskStatus.COMPLETED
                 # Return content and sources from AgentResponse
                 from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+
                 if isinstance(result, AgentResponse):
-                    sources = [s.to_dict() for s in result.sources] if result.sources else []
+                    sources = (
+                        [s.to_dict() for s in result.sources] if result.sources else []
+                    )
                     # Include timing for single-agent workflow
                     provider_info = None
                     if isinstance(result, AgentResponse):
-                        if hasattr(result, 'metadata') and isinstance(result.metadata, dict):
-                            provider_info = result.metadata.get('provider')
-                        elif hasattr(result, 'provider'):
+                        if hasattr(result, "metadata") and isinstance(
+                            result.metadata, dict
+                        ):
+                            provider_info = result.metadata.get("provider")
+                        elif hasattr(result, "provider"):
                             provider_info = result.provider
-                    
+
                     # Extract tools_used from AgentResponse if available
                     tools_used_info = []
                     if isinstance(result, AgentResponse):
-                        if hasattr(result, 'tools_used'):
-                            tools_used_info = result.tools_used if result.tools_used else []
-                    
+                        if hasattr(result, "tools_used"):
+                            tools_used_info = (
+                                result.tools_used if result.tools_used else []
+                            )
+
                     # Extract data sources from AgentResponse sources
                     data_sources = []
-                    if isinstance(result, AgentResponse) and hasattr(result, 'sources') and result.sources:
+                    if (
+                        isinstance(result, AgentResponse)
+                        and hasattr(result, "sources")
+                        and result.sources
+                    ):
                         for source in result.sources:
-                            source_type = getattr(source, 'source_type', None)
-                            source_name = getattr(source, 'source_name', '')
-                            provider = getattr(source, 'provider', '')
-                            
+                            source_type = getattr(source, "source_type", None)
+                            source_name = getattr(source, "source_name", "")
+                            provider = getattr(source, "provider", "")
+
                             # Map source types to readable names
                             if source_type:
                                 if source_type.value == "api":
-                                    data_sources.append(f"{source_name} API" if source_name else "External API")
+                                    data_sources.append(
+                                        f"{source_name} API"
+                                        if source_name
+                                        else "External API"
+                                    )
                                 elif source_type.value == "database":
                                     data_sources.append("Database")
                                 elif source_type.value == "mcp_server":
-                                    data_sources.append(f"MCP: {source_name}" if source_name else "MCP Server")
+                                    data_sources.append(
+                                        f"MCP: {source_name}"
+                                        if source_name
+                                        else "MCP Server"
+                                    )
                                 elif source_type.value == "blockchain":
-                                    data_sources.append(f"Blockchain ({source_name})" if source_name else "Blockchain")
+                                    data_sources.append(
+                                        f"Blockchain ({source_name})"
+                                        if source_name
+                                        else "Blockchain"
+                                    )
                                 elif source_type.value == "knowledge_base":
                                     data_sources.append("Knowledge Base")
                                 elif source_type.value == "rss_feed":
                                     data_sources.append("RSS Feed")
                                 elif source_type.value == "social_media":
-                                    data_sources.append(f"Social Media ({source_name})" if source_name else "Social Media")
-                            
+                                    data_sources.append(
+                                        f"Social Media ({source_name})"
+                                        if source_name
+                                        else "Social Media"
+                                    )
+
                             # Add specific providers (non-LLM)
                             if provider and provider not in ["Vertex AI", "DeepInfra"]:
                                 if provider not in data_sources:
                                     data_sources.append(provider)
-                    
+
                     # Build enhanced task description
                     task_desc_parts = [task.task_description]
-                    
+
                     # Add tools information
                     if tools_used_info:
                         tool_names = []
                         for tool in tools_used_info:
                             tool_lower = tool.lower()
-                            if "knowledge_base" in tool_lower or "knowledge" in tool_lower:
+                            if (
+                                "knowledge_base" in tool_lower
+                                or "knowledge" in tool_lower
+                            ):
                                 tool_names.append("Knowledge Base")
                             elif "web3" in tool_lower or "web3_client" in tool_lower:
                                 tool_names.append("Web3Client")
                             elif "coingecko" in tool_lower:
                                 tool_names.append("CoinGecko API")
-                            elif "defillama" in tool_lower or "defi_llama" in tool_lower:
+                            elif (
+                                "defillama" in tool_lower or "defi_llama" in tool_lower
+                            ):
                                 tool_names.append("DeFiLlama API")
                             elif "1inch" in tool_lower or "oneinch" in tool_lower:
                                 tool_names.append("1inch API")
@@ -393,114 +441,143 @@ class SupervisorCoordinator:
                                 tool_names.append("The Graph")
                             else:
                                 tool_names.append(tool.replace("_", " ").title())
-                        
+
                         if tool_names:
                             task_desc_parts.append(f"Tools: {', '.join(tool_names)}")
-                    
+
                     # Add data sources information
                     if data_sources:
-                        task_desc_parts.append(f"Data Sources: {', '.join(data_sources)}")
-                    
+                        task_desc_parts.append(
+                            f"Data Sources: {', '.join(data_sources)}"
+                        )
+
                     enhanced_task_description = " | ".join(task_desc_parts)
-                    
-                    agent_timings = [{
-                        "agent_type": task.agent_type.value,
-                        "task_description": enhanced_task_description,  # Enhanced with tools and data sources
-                        "execution_time_ms": task.execution_time_ms,
-                        "status": task.status.value,
-                        "provider": provider_info,  # Include LLM provider for debugging
-                        "tools_used": tools_used_info if tools_used_info else [],  # Include tools used (API clients, etc.)
-                    }] if hasattr(task, 'execution_time_ms') and task.execution_time_ms is not None else []
+
+                    agent_timings = (
+                        [
+                            {
+                                "agent_type": task.agent_type.value,
+                                "task_description": enhanced_task_description,  # Enhanced with tools and data sources
+                                "execution_time_ms": task.execution_time_ms,
+                                "status": task.status.value,
+                                "provider": provider_info,  # Include LLM provider for debugging
+                                "tools_used": tools_used_info
+                                if tools_used_info
+                                else [],  # Include tools used (API clients, etc.)
+                            }
+                        ]
+                        if hasattr(task, "execution_time_ms")
+                        and task.execution_time_ms is not None
+                        else []
+                    )
                     return result.content, sources, agent_timings
                 # Fallback if result is already a string (shouldn't happen with updated port)
                 import logging
+
                 logger = logging.getLogger(__name__)
-                logger.warning(f"⚠️ Agent executor returned non-AgentResponse: {type(result)}")
+                logger.warning(
+                    f"⚠️ Agent executor returned non-AgentResponse: {type(result)}"
+                )
                 return str(result), [], []
             except Exception as e:
                 task.status = TaskStatus.FAILED
                 task.error = str(e)
                 raise
-        
+
         # ✨ MULTI-AGENT WORKFLOW WITH PARALLEL EXECUTION ✨
         # Execute independent tasks in parallel for better performance
         import logging
         import asyncio
         import time
+
         logger = logging.getLogger(__name__)
-        
+
         from app.domain.value_objects.message_content import MessageContent
-        
+
         async def execute_single_task(task: AgentTask) -> None:
             """Execute a single task and update its status."""
             task.status = TaskStatus.IN_PROGRESS
-            logger.info(f"🔄 Executing task: {task.agent_type.value} - {task.task_description[:50]}...")
-            
+            logger.info(
+                f"🔄 Executing task: {task.agent_type.value} - {task.task_description[:50]}..."
+            )
+
             try:
                 start_time = time.time()
-                
+
                 # CRITICAL: Use the explicitly passed original_message, NOT conversation_history[-1]
                 # conversation_history may contain PREVIOUS messages, not the current user message
                 # This prevents conversation context pollution
                 user_message = original_message or task.task_description
-                
+
                 # Determine message content based on task type
                 task_desc_lower = task.task_description.lower()
-                
+
                 if task.agent_type.value == "chat" and "aggregate" in task_desc_lower:
                     # Aggregation tasks: pass aggregated content from other agents
-                    aggregated_content = self._build_aggregation_message(workflow_plan, task)
+                    aggregated_content = self._build_aggregation_message(
+                        workflow_plan, task
+                    )
                     message_content = MessageContent(aggregated_content)
-                elif "decline" in task_desc_lower or "off-topic" in task_desc_lower or "politely" in task_desc_lower:
+                elif (
+                    "decline" in task_desc_lower
+                    or "off-topic" in task_desc_lower
+                    or "politely" in task_desc_lower
+                ):
                     # Off-topic handling: include instruction in message
                     logger.info(f"🚫 OFF-TOPIC detected: {task.task_description}")
-                    message_content = MessageContent(f"[SYSTEM INSTRUCTION: {task.task_description}]\n\nUser message: \"{user_message}\"")
+                    message_content = MessageContent(
+                        f'[SYSTEM INSTRUCTION: {task.task_description}]\n\nUser message: "{user_message}"'
+                    )
                 else:
                     # Normal tasks: use original user message
                     message_content = MessageContent(user_message)
-                
+
                 result = await self._agent_executor.execute_agent(
                     conversation_id=conversation_id,
                     agent_type=task.agent_type,
                     message=message_content,
                     conversation_context=conversation_context,
                 )
-                
+
                 # Calculate execution time
                 execution_time_ms = int((time.time() - start_time) * 1000)
                 task.execution_time_ms = execution_time_ms
-                
+
                 # Store full AgentResponse in task result
                 task.result = result
                 task.status = TaskStatus.COMPLETED
-                logger.info(f"✅ Task completed: {task.agent_type.value} ({execution_time_ms}ms)")
-                
+                logger.info(
+                    f"✅ Task completed: {task.agent_type.value} ({execution_time_ms}ms)"
+                )
+
                 # Check for workflow redirect signal (user switched to different workflow)
-                if hasattr(result, 'metadata') and isinstance(result.metadata, dict):
-                    redirect_to = result.metadata.get('redirect_to')
-                    if redirect_to and result.metadata.get('workflow_cancelled'):
+                if hasattr(result, "metadata") and isinstance(result.metadata, dict):
+                    redirect_to = result.metadata.get("redirect_to")
+                    if redirect_to and result.metadata.get("workflow_cancelled"):
                         logger.info(
                             f"🔄 Workflow redirect detected: {task.agent_type.value} → {redirect_to}"
                         )
                         # Mark this task as needing redirect (handled in aggregation)
                         task.needs_redirect = True
                         task.redirect_to = redirect_to
-                
+
             except Exception as e:
                 task.error = str(e)
                 task.status = TaskStatus.FAILED
-                logger.error(f"❌ Task failed: {task.agent_type.value} - {str(e)}", exc_info=True)
-        
+                logger.error(
+                    f"❌ Task failed: {task.agent_type.value} - {str(e)}", exc_info=True
+                )
+
         def get_ready_tasks() -> list[AgentTask]:
             """Get all tasks that are ready to execute (dependencies satisfied)."""
             # Build mapping from agent_type to task for dependency resolution
             agent_type_to_task = {t.agent_type.value: t for t in workflow_plan.tasks}
-            
+
             ready = []
             for task in workflow_plan.tasks:
                 if task.status != TaskStatus.PENDING:
                     continue
-                
+
                 # Check dependencies (deps can be string agent types or int indices)
                 dependencies_satisfied = True
                 for dep in task.depends_on:
@@ -513,31 +590,31 @@ class SupervisorCoordinator:
                         if workflow_plan.tasks[dep].status != TaskStatus.COMPLETED:
                             dependencies_satisfied = False
                             break
-                
+
                 if dependencies_satisfied:
                     ready.append(task)
             return ready
-        
+
         # Execute tasks in waves - parallel execution of independent tasks
         max_iterations = len(workflow_plan.tasks) + 1  # Safety limit
         iteration = 0
-        
+
         while iteration < max_iterations:
             iteration += 1
             ready_tasks = get_ready_tasks()
-            
+
             if not ready_tasks:
                 # No more tasks ready to execute
                 break
-            
+
             if len(ready_tasks) == 1:
                 # Single task - execute directly
                 await execute_single_task(ready_tasks[0])
-                
+
                 # Check for workflow redirect after single task
                 task = ready_tasks[0]
-                if hasattr(task, 'needs_redirect') and task.needs_redirect:
-                    redirect_to = getattr(task, 'redirect_to', None)
+                if hasattr(task, "needs_redirect") and task.needs_redirect:
+                    redirect_to = getattr(task, "redirect_to", None)
                     if redirect_to:
                         logger.info(f"🔄 Re-routing to {redirect_to} workflow")
                         # Create new plan for the correct workflow
@@ -553,87 +630,126 @@ class SupervisorCoordinator:
                                 workflow_plan.tasks.append(redirect_task)
             else:
                 # Multiple tasks ready - execute in parallel
-                logger.info(f"⚡ Executing {len(ready_tasks)} tasks in parallel: {[t.agent_type.value for t in ready_tasks]}")
-                await asyncio.gather(*[execute_single_task(task) for task in ready_tasks])
-        
+                logger.info(
+                    f"⚡ Executing {len(ready_tasks)} tasks in parallel: {[t.agent_type.value for t in ready_tasks]}"
+                )
+                await asyncio.gather(*[
+                    execute_single_task(task) for task in ready_tasks
+                ])
+
         # Check for any redirects and filter out cancelled workflow tasks
-        redirect_tasks = [t for t in workflow_plan.tasks if hasattr(t, 'needs_redirect') and t.needs_redirect]
+        redirect_tasks = [
+            t
+            for t in workflow_plan.tasks
+            if hasattr(t, "needs_redirect") and t.needs_redirect
+        ]
         if redirect_tasks:
             # Filter out cancelled workflow from final aggregation
             workflow_plan.tasks = [
-                t for t in workflow_plan.tasks 
-                if not (hasattr(t, 'needs_redirect') and t.needs_redirect)
+                t
+                for t in workflow_plan.tasks
+                if not (hasattr(t, "needs_redirect") and t.needs_redirect)
             ]
-        
+
         # Aggregate results
         final_response = await self._aggregate_results(workflow_plan)
-        
+
         # Collect sources from all completed tasks
         all_sources = []
         for task in workflow_plan.tasks:
-            if task.status == TaskStatus.COMPLETED and hasattr(task, 'result'):
+            if task.status == TaskStatus.COMPLETED and hasattr(task, "result"):
                 from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+
                 if isinstance(task.result, AgentResponse) and task.result.sources:
                     all_sources.extend([s.to_dict() for s in task.result.sources])
-        
+
         # Collect timing information for debug mode
         agent_timings = []
         for task in workflow_plan.tasks:
-            if hasattr(task, 'execution_time_ms') and task.execution_time_ms is not None:
+            if (
+                hasattr(task, "execution_time_ms")
+                and task.execution_time_ms is not None
+            ):
                 # Extract provider info from task result if available
                 provider_info = None
-                if hasattr(task, 'result') and task.result:
+                if hasattr(task, "result") and task.result:
                     # AgentResponse has metadata dict
-                    if hasattr(task.result, 'metadata') and isinstance(task.result.metadata, dict):
-                        provider_info = task.result.metadata.get('provider')
+                    if hasattr(task.result, "metadata") and isinstance(
+                        task.result.metadata, dict
+                    ):
+                        provider_info = task.result.metadata.get("provider")
                     # Fallback: check if result has provider attribute directly
-                    elif hasattr(task.result, 'provider'):
+                    elif hasattr(task.result, "provider"):
                         provider_info = task.result.provider
-                
+
                 # Extract tools_used from AgentResponse if available
                 tools_used_info = []
-                if hasattr(task, 'result') and task.result:
+                if hasattr(task, "result") and task.result:
                     from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+
                     if isinstance(task.result, AgentResponse):
-                        if hasattr(task.result, 'tools_used'):
-                            tools_used_info = task.result.tools_used if task.result.tools_used else []
-                
+                        if hasattr(task.result, "tools_used"):
+                            tools_used_info = (
+                                task.result.tools_used if task.result.tools_used else []
+                            )
+
                 # Extract data sources from AgentResponse sources
                 data_sources = []
-                if hasattr(task, 'result') and task.result:
+                if hasattr(task, "result") and task.result:
                     from app.domain.ports.agent_squad.agent_gateway import AgentResponse
-                    if isinstance(task.result, AgentResponse) and hasattr(task.result, 'sources') and task.result.sources:
+
+                    if (
+                        isinstance(task.result, AgentResponse)
+                        and hasattr(task.result, "sources")
+                        and task.result.sources
+                    ):
                         for source in task.result.sources:
-                            source_type = getattr(source, 'source_type', None)
-                            source_name = getattr(source, 'source_name', '')
-                            provider = getattr(source, 'provider', '')
-                            
+                            source_type = getattr(source, "source_type", None)
+                            source_name = getattr(source, "source_name", "")
+                            provider = getattr(source, "provider", "")
+
                             # Map source types to readable names
                             if source_type:
                                 if source_type.value == "api":
-                                    data_sources.append(f"{source_name} API" if source_name else "External API")
+                                    data_sources.append(
+                                        f"{source_name} API"
+                                        if source_name
+                                        else "External API"
+                                    )
                                 elif source_type.value == "database":
                                     data_sources.append("Database")
                                 elif source_type.value == "mcp_server":
-                                    data_sources.append(f"MCP: {source_name}" if source_name else "MCP Server")
+                                    data_sources.append(
+                                        f"MCP: {source_name}"
+                                        if source_name
+                                        else "MCP Server"
+                                    )
                                 elif source_type.value == "blockchain":
-                                    data_sources.append(f"Blockchain ({source_name})" if source_name else "Blockchain")
+                                    data_sources.append(
+                                        f"Blockchain ({source_name})"
+                                        if source_name
+                                        else "Blockchain"
+                                    )
                                 elif source_type.value == "knowledge_base":
                                     data_sources.append("Knowledge Base")
                                 elif source_type.value == "rss_feed":
                                     data_sources.append("RSS Feed")
                                 elif source_type.value == "social_media":
-                                    data_sources.append(f"Social Media ({source_name})" if source_name else "Social Media")
+                                    data_sources.append(
+                                        f"Social Media ({source_name})"
+                                        if source_name
+                                        else "Social Media"
+                                    )
                                 # Skip LLM as it's already in provider
-                            
+
                             # Add specific providers (non-LLM)
                             if provider and provider not in ["Vertex AI", "DeepInfra"]:
                                 if provider not in data_sources:
                                     data_sources.append(provider)
-                
+
                 # Build enhanced task description with tools and data sources
                 task_desc_parts = [task.task_description]
-                
+
                 # Add tools information
                 if tools_used_info:
                     tool_names = []
@@ -663,27 +779,29 @@ class SupervisorCoordinator:
                             tool_names.append("The Graph")
                         else:
                             tool_names.append(tool.replace("_", " ").title())
-                    
+
                     if tool_names:
                         task_desc_parts.append(f"Tools: {', '.join(tool_names)}")
-                
+
                 # Add data sources information
                 if data_sources:
                     task_desc_parts.append(f"Data Sources: {', '.join(data_sources)}")
-                
+
                 enhanced_task_description = " | ".join(task_desc_parts)
-                
+
                 agent_timings.append({
                     "agent_type": task.agent_type.value,
                     "task_description": enhanced_task_description,  # Enhanced with tools and data sources
                     "execution_time_ms": task.execution_time_ms,
                     "status": task.status.value,
                     "provider": provider_info,  # Include LLM provider for debugging
-                    "tools_used": tools_used_info if tools_used_info else [],  # Include tools used (API clients, etc.)
+                    "tools_used": tools_used_info
+                    if tools_used_info
+                    else [],  # Include tools used (API clients, etc.)
                 })
-        
+
         return final_response, all_sources, agent_timings
-    
+
     def _build_planning_prompt(
         self,
         message: MessageContent,
@@ -692,7 +810,7 @@ class SupervisorCoordinator:
     ) -> str:
         """
         Build optimized workflow planning prompt for LLM.
-        
+
         Prompt Engineering Techniques Used:
         - Clear role definition
         - Structured output format with examples
@@ -701,7 +819,7 @@ class SupervisorCoordinator:
         - Concise guidelines (reduced from ~100 lines to ~50)
         """
         agents_str = ", ".join([agent.value for agent in available_agents])
-        
+
         # Build conversation history context (keep minimal)
         context_section = ""
         if conversation_context.conversation_history:
@@ -714,7 +832,7 @@ class SupervisorCoordinator:
                     if content:
                         context_section += f"{role}: {content}\n"
                 context_section += "</context>\n"
-        
+
         return f"""You are a DeFi workflow router. Route the CURRENT request only. JSON only.
 
 <request>{message.value}</request>
@@ -841,7 +959,7 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
 (Swap rate = token exchange price, NOT yield/APY!)
 
 {{"tasks":[{{"agent_type":"...","task_description":"...","depends_on":[]}}]}}"""
-    
+
     def _calculate_execution_order(
         self,
         tasks: list[AgentTask],
@@ -853,15 +971,15 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
         for idx, task in enumerate(tasks):
             agent_type_to_idx[task.agent_type.value] = idx
             agent_type_to_idx[str(idx)] = idx  # Also support string indices
-        
+
         # Topological sort
         order = []
         visited = set()
-        
+
         def visit(task_idx: int):
             if task_idx in visited:
                 return
-            
+
             task = tasks[task_idx]
             for dep in task.depends_on:
                 # Convert dependency to index (can be string agent type or int index)
@@ -875,36 +993,37 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
                             continue  # Skip unknown dependencies
                 else:
                     dep_idx = dep
-                
+
                 if dep_idx is not None and dep_idx < len(tasks):
                     visit(dep_idx)
-            
+
             visited.add(task_idx)
             order.append(task_idx)
-        
+
         for idx in range(len(tasks)):
             visit(idx)
-        
+
         return order
-    
+
     def _is_simple_multi_intent(self, message: str) -> bool:
         """
         Detect simple multi-intent patterns that can use faster LLM model.
-        
+
         Simple patterns:
         - Greeting + price query
         - Greeting + knowledge query
         - Price query + knowledge query
-        
+
         Args:
             message: User message text
-            
+
         Returns:
             True if this is a simple multi-intent query
         """
         import re
+
         message_lower = message.lower()
-    
+
     async def _create_redirect_plan(
         self,
         redirect_to: str,
@@ -912,19 +1031,19 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
     ) -> "WorkflowPlan | None":
         """
         Create a workflow plan for a redirect target.
-        
+
         When a workflow detects that the user's message is intended for a
         different workflow, this creates a plan to execute that workflow.
-        
+
         Args:
             redirect_to: Target workflow name (e.g., "lending_workflow")
             original_message: Original user message to process
-            
+
         Returns:
             WorkflowPlan for the redirect target, or None if unknown
         """
         from app.domain.enums.agent_type import AgentType
-        
+
         # Map workflow names to agent types
         workflow_to_agent = {
             "swap_workflow": AgentType.SWAP_WORKFLOW,
@@ -933,75 +1052,84 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
             "transfer_workflow": AgentType.TRANSFER_WORKFLOW,
             "money_market_workflow": AgentType.MONEY_MARKET_WORKFLOW,
         }
-        
+
         agent_type = workflow_to_agent.get(redirect_to)
         if not agent_type:
             logger.warning(f"Unknown redirect target: {redirect_to}")
             return None
-        
-        logger.info(f"🔄 Creating redirect plan for {redirect_to} (agent: {agent_type.value})")
-        
+
+        logger.info(
+            f"🔄 Creating redirect plan for {redirect_to} (agent: {agent_type.value})"
+        )
+
         task = AgentTask(
             agent_type=agent_type,
             task_description=f"Process redirected request: {original_message[:100]}",
             depends_on=[],
         )
-        
+
         return WorkflowPlan(
             tasks=[task],
             execution_order=[0],
             estimated_time_seconds=10,
         )
-    
+
     def _is_simple_multi_intent(self, message: str) -> bool:
         """
         Detect simple multi-intent patterns that can use faster LLM model.
         """
         import re
+
         message_lower = message.lower()
-        
+
         # Pattern: greeting + price
         greeting_price_pattern = r"(hi|hello|hey|hola|how are you).*(price|cost|worth).*(btc|eth|usdc|bitcoin|ethereum)"
         if re.search(greeting_price_pattern, message_lower):
             return True
-        
+
         # Pattern: greeting + knowledge
-        greeting_knowledge_pattern = r"(hi|hello|hey|hola|how are you).*(what is|explain|tell me about)"
+        greeting_knowledge_pattern = (
+            r"(hi|hello|hey|hola|how are you).*(what is|explain|tell me about)"
+        )
         if re.search(greeting_knowledge_pattern, message_lower):
             return True
-        
+
         # Pattern: price + knowledge
         price_knowledge_pattern = r"(price|cost|worth).*(btc|eth|usdc|bitcoin|ethereum).*(what is|explain|tell me about)"
         if re.search(price_knowledge_pattern, message_lower):
             return True
-        
+
         return False
-    
+
     async def _aggregate_results(
         self,
         workflow_plan: WorkflowPlan,
     ) -> str:
         """Aggregate results from all completed tasks."""
         completed_tasks = [
-            task for task in workflow_plan.tasks
-            if task.status == TaskStatus.COMPLETED
+            task for task in workflow_plan.tasks if task.status == TaskStatus.COMPLETED
         ]
-        
+
         failed_tasks = [
-            task for task in workflow_plan.tasks
-            if task.status == TaskStatus.FAILED
+            task for task in workflow_plan.tasks if task.status == TaskStatus.FAILED
         ]
-        
+
         if not completed_tasks:
             # Check if all tasks failed due to rate limiting
             rate_limit_errors = [
-                task for task in failed_tasks
-                if task.error and ("429" in str(task.error) or "rate limit" in str(task.error).lower() or "resource exhausted" in str(task.error).lower())
+                task
+                for task in failed_tasks
+                if task.error
+                and (
+                    "429" in str(task.error)
+                    or "rate limit" in str(task.error).lower()
+                    or "resource exhausted" in str(task.error).lower()
+                )
             ]
-            
+
             if rate_limit_errors:
                 return "I'm currently experiencing high demand. Please try again in a few moments. If the issue persists, the service may be temporarily unavailable."
-            
+
             # Check if all tasks failed for other reasons
             if failed_tasks:
                 error_summary = f"Unable to process your request. {len(failed_tasks)} task(s) failed."
@@ -1013,63 +1141,69 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
                     elif len(error_msg) < 200:  # Only include short error messages
                         error_summary += f" Error: {error_msg[:100]}"
                 return error_summary
-            
+
             return "No tasks completed successfully. Please try again."
-        
+
         # If only one task, return its content directly (no aggregation header)
         if len(completed_tasks) == 1:
             task = completed_tasks[0]
             from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+
             if isinstance(task.result, AgentResponse):
                 return task.result.content or "(No response)"
             elif isinstance(task.result, str):
                 return task.result
             else:
                 return str(task.result) if task.result else "(No response)"
-        
+
         # Multiple tasks - check if CHAT agent is the final aggregator
         chat_task = None
         other_tasks = []
         for task in completed_tasks:
-            if task.agent_type.value == "chat" and "aggregate" in task.task_description.lower():
+            if (
+                task.agent_type.value == "chat"
+                and "aggregate" in task.task_description.lower()
+            ):
                 chat_task = task
             else:
                 other_tasks.append(task)
-        
+
         # If CHAT agent was used as aggregator, use its response (it should have summarized)
         if chat_task:
             from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+
             if isinstance(chat_task.result, AgentResponse):
                 return chat_task.result.content or "(No response)"
             elif isinstance(chat_task.result, str):
                 return chat_task.result
             else:
                 return str(chat_task.result) if chat_task.result else "(No response)"
-        
+
         # No CHAT aggregator - intelligently combine responses with deduplication
         parts = []
         seen_content = set()  # Track seen content to avoid duplicates
-        
+
         for task in completed_tasks:
             # Extract content from AgentResponse if needed
             from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+
             if isinstance(task.result, AgentResponse):
                 content = task.result.content or "(No response)"
             elif isinstance(task.result, str):
                 content = task.result
             else:
                 content = str(task.result) if task.result else "(No response)"
-            
+
             # Simple deduplication: check if similar content already exists
             # Use first 100 chars as a signature to detect duplicates
             content_sig = content[:100].lower().strip()
             if content_sig and content_sig not in seen_content:
                 parts.append(content)
                 seen_content.add(content_sig)
-        
+
         # Join with double newline for readability
         return "\n\n".join(parts)
-    
+
     def _build_aggregation_message(
         self,
         workflow_plan: WorkflowPlan,
@@ -1078,14 +1212,15 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
         """Build message for CHAT agent to aggregate other agent responses."""
         # Get all completed tasks except the CHAT aggregator task
         other_tasks = [
-            task for task in workflow_plan.tasks
+            task
+            for task in workflow_plan.tasks
             if task.status == TaskStatus.COMPLETED and task != chat_task
         ]
-        
+
         if not other_tasks:
             # No other tasks to aggregate, use original message
             return chat_task.task_description
-        
+
         # Build aggregation message
         parts = [
             "Aggregate and summarize the following responses from specialist agents.",
@@ -1096,33 +1231,47 @@ CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history
             "Agent Responses:",
             "",
         ]
-        
+
         for i, task in enumerate(other_tasks, 1):
             from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+
             if isinstance(task.result, AgentResponse):
                 content = task.result.content or "(No response)"
             elif isinstance(task.result, str):
                 content = task.result
             else:
                 content = str(task.result) if task.result else "(No response)"
-            
+
             # Skip authentication messages unless explicitly about auth
-            if content and any(kw in content.lower() for kw in ["account required", "wallet required", "sign up", "create an account"]) and "what type" in chat_task.task_description.lower():
+            if (
+                content
+                and any(
+                    kw in content.lower()
+                    for kw in [
+                        "account required",
+                        "wallet required",
+                        "sign up",
+                        "create an account",
+                    ]
+                )
+                and "what type" in chat_task.task_description.lower()
+            ):
                 # This is likely an error - skip it
                 continue
-            
+
             parts.append(f"--- Response from {task.agent_type.value.upper()} Agent ---")
             parts.append(content)
             parts.append("")  # Empty line between responses
-        
+
         return "\n".join(parts)
 
 
 # Ports (interfaces) for dependency injection
 
+
 class LLMClientPort(Protocol):
     """Port for LLM client (workflow planning)."""
-    
+
     async def plan_workflow(
         self,
         prompt: str,
@@ -1134,7 +1283,7 @@ class LLMClientPort(Protocol):
 
 class AgentExecutorPort(Protocol):
     """Port for agent execution."""
-    
+
     async def execute_agent(
         self,
         conversation_id: ConversationId,

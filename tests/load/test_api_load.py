@@ -55,7 +55,9 @@ class TestAuthenticationLoad:
         start_time = time.time()
 
         with ThreadPoolExecutor(max_workers=concurrent_requests) as executor:
-            futures = [executor.submit(login_attempt) for _ in range(concurrent_requests)]
+            futures = [
+                executor.submit(login_attempt) for _ in range(concurrent_requests)
+            ]
             responses = [f.result() for f in futures]
 
         elapsed = time.time() - start_time
@@ -65,7 +67,7 @@ class TestAuthenticationLoad:
 
         # Most should succeed (rate limiting may kick in)
         success_count = sum(1 for r in responses if r.status_code in (200, 201))
-        
+
         # At least some should succeed
         assert success_count >= 1
 
@@ -118,7 +120,9 @@ class TestChatThroughput:
         start_time = time.time()
 
         with ThreadPoolExecutor(max_workers=concurrent_messages) as executor:
-            futures = [executor.submit(send_message, i) for i in range(concurrent_messages)]
+            futures = [
+                executor.submit(send_message, i) for i in range(concurrent_messages)
+            ]
             responses = [f.result() for f in futures]
 
         elapsed = time.time() - start_time
@@ -147,7 +151,9 @@ class TestChatThroughput:
         concurrent_requests = 10
 
         with ThreadPoolExecutor(max_workers=concurrent_requests) as executor:
-            futures = [executor.submit(list_conversations) for _ in range(concurrent_requests)]
+            futures = [
+                executor.submit(list_conversations) for _ in range(concurrent_requests)
+            ]
             responses = [f.result() for f in futures]
 
         # All should complete

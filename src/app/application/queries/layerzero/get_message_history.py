@@ -41,7 +41,9 @@ class GetMessageHistory:
         """Initialize query."""
         self._gateway = gateway
 
-    async def execute(self, request: GetMessageHistoryRequest) -> MessageHistoryResponse:
+    async def execute(
+        self, request: GetMessageHistoryRequest
+    ) -> MessageHistoryResponse:
         """Execute query to get message history."""
         messages = await self._gateway.get_message_history(
             address=request.address,

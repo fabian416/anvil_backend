@@ -57,9 +57,11 @@ logger = logging.getLogger(__name__)
 # Safety Check Data Structures
 # ========================================
 
+
 @dataclass
 class SafetyCheck:
     """Result of a single safety check."""
+
     name: str
     status: str  # "pass", "warn", "fail"
     emoji: str
@@ -69,6 +71,7 @@ class SafetyCheck:
 @dataclass
 class RecipientSafetyAnalysis:
     """Complete safety analysis for a recipient address."""
+
     address: str
     safety_score: int  # 0-100
     risk_level: str  # "low", "medium", "high", "critical"
@@ -77,7 +80,7 @@ class RecipientSafetyAnalysis:
     checks: list[SafetyCheck] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     blockers: list[str] = field(default_factory=list)
-    
+
     @property
     def risk_emoji(self) -> str:
         """Get emoji for risk level."""
@@ -87,7 +90,7 @@ class RecipientSafetyAnalysis:
             "high": "🟠",
             "critical": "🔴",
         }.get(self.risk_level, "⚪")
-    
+
     @property
     def is_safe(self) -> bool:
         """Check if transfer should be allowed."""
@@ -97,11 +100,27 @@ class RecipientSafetyAnalysis:
 # Known contract labels (exchanges, protocols, etc.)
 KNOWN_CONTRACTS = {
     # Exchanges (Base chain)
-    "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad": {"name": "Uniswap Universal Router", "category": "exchange", "safe": True},
-    "0x2626664c2603336e57b271c5c0b26f421741e481": {"name": "Uniswap V3 Router", "category": "exchange", "safe": True},
-    "0x6131b5fae19ea4f9d964eac0408e4408b66337b5": {"name": "Hyperliquid Bridge", "category": "bridge", "safe": True},
+    "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad": {
+        "name": "Uniswap Universal Router",
+        "category": "exchange",
+        "safe": True,
+    },
+    "0x2626664c2603336e57b271c5c0b26f421741e481": {
+        "name": "Uniswap V3 Router",
+        "category": "exchange",
+        "safe": True,
+    },
+    "0x6131b5fae19ea4f9d964eac0408e4408b66337b5": {
+        "name": "Hyperliquid Bridge",
+        "category": "bridge",
+        "safe": True,
+    },
     # Coinbase
-    "0xcdac0d6c6c59727a65f871236188350531885c43": {"name": "Coinbase Commerce", "category": "exchange", "safe": True},
+    "0xcdac0d6c6c59727a65f871236188350531885c43": {
+        "name": "Coinbase Commerce",
+        "category": "exchange",
+        "safe": True,
+    },
     # Add more known addresses as needed
 }
 
@@ -112,7 +131,12 @@ KNOWN_RISKY_ADDRESSES: set[str] = set()  # TODO: Integrate with external scam da
 # Supported tokens for transfer
 SUPPORTED_TOKENS = {
     "eth": {"symbol": "ETH", "name": "Ethereum", "emoji": "Ξ", "decimals": 18},
-    "weth": {"symbol": "WETH", "name": "Wrapped Ethereum", "emoji": "Ξ", "decimals": 18},
+    "weth": {
+        "symbol": "WETH",
+        "name": "Wrapped Ethereum",
+        "emoji": "Ξ",
+        "decimals": 18,
+    },
     "usdc": {"symbol": "USDC", "name": "USD Coin", "emoji": "💵", "decimals": 6},
     "usdt": {"symbol": "USDT", "name": "Tether", "emoji": "💵", "decimals": 6},
     "dai": {"symbol": "DAI", "name": "Dai", "emoji": "💰", "decimals": 18},
@@ -139,14 +163,14 @@ CHAIN_IDS = {
 class TransferWorkflowAgent(BaseWorkflowAgent):
     """
     AGNO-based multi-step token transfer workflow agent.
-    
+
     Steps:
     1. parse_request: Extract token, amount, recipient
     2. validate: Validate address format and detect network
     3. safety_check: Analyze recipient wallet safety
     4. confirm: Show transfer details with safety info, wait for confirmation
     5. execute: Generate execute_data for frontend
-    
+
     Features:
     - Natural language parameter extraction
     - Multi-chain address validation
@@ -154,14 +178,14 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
     - Wallet safety analysis (EOA vs Contract, first-time detection)
     - User modification support
     - Multi-language support
-    
+
     Safety Features:
     - EOA vs Smart Contract detection
     - First-time recipient warning
     - Known address labeling (exchanges, protocols)
     - Safety score (0-100) with risk level
     """
-    
+
     def __init__(
         self,
         llm_client: "LLMClientGateway | None" = None,
@@ -170,7 +194,7 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
     ):
         """
         Initialize transfer workflow agent.
-        
+
         Args:
             llm_client: LLM client for parameter extraction
             web3_client: Web3 client for blockchain queries (contract detection)
@@ -179,15 +203,15 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         super().__init__(llm_client=llm_client)
         self._web3_client = web3_client
         self._etherscan_client = etherscan_client
-    
+
     @property
     def agent_type(self) -> AgentType:
         return AgentType.TRANSFER_WORKFLOW
-    
+
     @property
     def workflow_name(self) -> str:
         return "TransferWorkflow"
-    
+
     async def process_step(
         self,
         message: MessageContent,
@@ -195,55 +219,71 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
         """Process transfer workflow step."""
-        
+
         step = state.step
         language = user_context.language
         text_lower = message.value.lower().strip()
-        
-        logger.info(f"[TransferWorkflow] Processing step={step}, message={message.value[:50]}...")
-        
+
+        logger.info(
+            f"[TransferWorkflow] Processing step={step}, message={message.value[:50]}..."
+        )
+
         # Check if user wants to start a NEW transfer flow (restart detection)
         # This resets state when user says "send", "transfer", etc.
         # while already in an ongoing flow (FETCH_DATA, CONFIRM, or EXECUTE step)
-        if step not in (WorkflowStep.PARSE_REQUEST.value, WorkflowStep.CANCELLED.value, WorkflowStep.COMPLETED.value):
+        if step not in (
+            WorkflowStep.PARSE_REQUEST.value,
+            WorkflowStep.CANCELLED.value,
+            WorkflowStep.COMPLETED.value,
+        ):
             restart_keywords = [
-                "send", "transfer", "enviar", "transferir",
-                "i want to send", "i want to transfer",
-                "quiero enviar", "quiero transferir",
+                "send",
+                "transfer",
+                "enviar",
+                "transferir",
+                "i want to send",
+                "i want to transfer",
+                "quiero enviar",
+                "quiero transferir",
             ]
-            is_restart_request = any(text_lower.startswith(kw) or f" {kw}" in f" {text_lower}" for kw in restart_keywords)
-            
+            is_restart_request = any(
+                text_lower.startswith(kw) or f" {kw}" in f" {text_lower}"
+                for kw in restart_keywords
+            )
+
             if is_restart_request:
-                logger.info(f"[TransferWorkflow] Restart detected - user starting new transfer flow, resetting state")
+                logger.info(
+                    f"[TransferWorkflow] Restart detected - user starting new transfer flow, resetting state"
+                )
                 state = WorkflowState()
                 state.step = WorkflowStep.PARSE_REQUEST.value
                 return await self._handle_parse_request(message, state, user_context)
-        
+
         # Step 1: Parse request
         if step == WorkflowStep.PARSE_REQUEST.value:
             return await self._handle_parse_request(message, state, user_context)
-        
+
         # Step 2: Fetch/Validate (validate address)
         if step == WorkflowStep.FETCH_DATA.value:
             return await self._handle_validate(message, state, user_context)
-        
+
         # Step 3: Confirm
         if step == WorkflowStep.CONFIRM.value:
             return await self._handle_confirm(message, state, user_context)
-        
+
         # Step 4: Execute
         if step == WorkflowStep.EXECUTE.value:
             return await self._handle_execute(message, state, user_context)
-        
+
         # Unknown step - reset
         logger.warning(f"[TransferWorkflow] Unknown step: {step}")
         state.step = WorkflowStep.PARSE_REQUEST.value
         return await self._handle_parse_request(message, state, user_context)
-    
+
     # ========================================
     # Step Handlers
     # ========================================
-    
+
     async def _handle_parse_request(
         self,
         message: MessageContent,
@@ -251,25 +291,27 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
         """Parse transfer request from user message."""
-        
+
         language = user_context.language
         text = message.value.lower().strip()
         original_text = message.value
-        
+
         # Check if we already have some params from previous turn and user is just providing missing info
         existing_token = state.data.get("token", "").upper()
         existing_amount = state.data.get("amount")
         existing_recipient = state.data.get("recipient")
-        
+
         # If we already have token and amount, and user provides just an address, treat as recipient
         if existing_token and existing_amount and not existing_recipient:
             potential_address = self._extract_address(original_text)
             if potential_address:
-                logger.info(f"[TransferWorkflow] User provided recipient address: {potential_address[:10]}...")
+                logger.info(
+                    f"[TransferWorkflow] User provided recipient address: {potential_address[:10]}..."
+                )
                 state.data["recipient"] = potential_address
                 state.step = WorkflowStep.FETCH_DATA.value
                 return await self._handle_validate(message, state, user_context)
-        
+
         # If we have token but no amount, and user provides just a number, treat as amount
         if existing_token and not existing_amount:
             clean_input = text.replace("$", "").replace(",", "").strip()
@@ -278,15 +320,15 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
                 state.data["amount"] = clean_input
                 # Now ask for recipient
                 return self._ask_for_recipient(state.data, language), state
-        
+
         # Try to extract parameters from message
         params = await self._extract_transfer_params(text, original_text)
-        
+
         # Merge with existing state
         token = params.get("token") or existing_token
         amount = params.get("amount") or existing_amount
         recipient = params.get("recipient") or existing_recipient
-        
+
         # If we have all parameters, proceed to validate
         if token and amount and recipient:
             state.data["token"] = token.upper()
@@ -295,23 +337,23 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
             state.data["chain"] = params.get("chain", state.data.get("chain", "base"))
             state.step = WorkflowStep.FETCH_DATA.value
             return await self._handle_validate(message, state, user_context)
-        
+
         # If we have token and amount but no recipient, ask for recipient
         if token and amount and not recipient:
             state.data["token"] = token.upper()
             state.data["amount"] = amount
             state.data["chain"] = params.get("chain", state.data.get("chain", "base"))
             return self._ask_for_recipient(state.data, language), state
-        
+
         # If we have token but no amount, ask for amount
         if token and not amount:
             state.data["token"] = token.upper()
             state.data["chain"] = params.get("chain", state.data.get("chain", "base"))
             return self._ask_for_amount(state.data, language), state
-        
+
         # No token detected - ask user to specify
         return self._ask_for_token(language), state
-    
+
     async def _handle_validate(
         self,
         message: MessageContent,
@@ -319,18 +361,18 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
         """Validate recipient address and perform safety checks.
-        
+
         If user has insufficient funds, shows a helpful recommendation to buy crypto
         but still provides transfer information so they know what to expect.
         """
-        
+
         language = user_context.language
-        
+
         # First, check if we're receiving the address from user input
         # This happens when user provides address after we asked for it
         user_input = message.value.strip()
         recipient = state.data.get("recipient")
-        
+
         # If no recipient in state, try to extract from user message
         if not recipient:
             # Check if user message looks like an address
@@ -338,25 +380,29 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
             if potential_address:
                 recipient = potential_address
                 state.data["recipient"] = recipient
-                logger.info(f"[TransferWorkflow] Extracted recipient from user input: {recipient[:10]}...")
+                logger.info(
+                    f"[TransferWorkflow] Extracted recipient from user input: {recipient[:10]}..."
+                )
             else:
                 # User input doesn't contain a valid address
-                logger.info(f"[TransferWorkflow] No valid address in user input: {user_input[:30]}...")
+                logger.info(
+                    f"[TransferWorkflow] No valid address in user input: {user_input[:30]}..."
+                )
                 response = self._format_invalid_address(user_input or "empty", language)
                 return response, state
-        
+
         # Validate address format
         validation = self._validate_address(recipient)
-        
+
         if not validation["valid"]:
             # Invalid address
             response = self._format_invalid_address(recipient or "empty", language)
             state.data["recipient"] = None  # Clear invalid address
             return response, state
-        
+
         # Store network info
         state.data["network"] = validation["network"]
-        
+
         # Check user balance and prepare recommendation if insufficient
         funding_recommendation = ""
         if user_context.needs_funding_recommendation:
@@ -370,13 +416,13 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
                 token=token,
                 language=language,
             )
-        
+
         # Perform safety analysis on recipient
         safety_analysis = await self._analyze_recipient_safety(
             recipient=recipient,
             user_context=user_context,
         )
-        
+
         # Store safety analysis in state
         state.data["safety_analysis"] = {
             "score": safety_analysis.safety_score,
@@ -386,18 +432,18 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
             "warnings": safety_analysis.warnings,
             "blockers": safety_analysis.blockers,
         }
-        
+
         # Check for blockers (critical safety issues)
         if not safety_analysis.is_safe:
             response = self._format_blocked_transfer(safety_analysis, language)
             state.error = "safety_blocked"
             return response, state
-        
+
         # Only move to confirm step if user has sufficient funds
         # If user needs funding, stay in informational mode
         if not user_context.needs_funding_recommendation:
             state.step = WorkflowStep.CONFIRM.value
-            
+
             # Build execute_data only if user has funds
             state.execute_data = self._build_transfer_execute_data(
                 token=state.data.get("token", "ETH"),
@@ -413,24 +459,24 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
             logger.info(
                 f"[TransferWorkflow] Not advancing to confirm - user needs funding first"
             )
-        
+
         # Format confirmation response with user balance section
         response = self._format_transfer_review(
             state.data,
             language,
             user_context=user_context,
         )
-        
+
         # Prepend funding recommendation if user has insufficient funds
         if funding_recommendation:
             response = funding_recommendation + "\n" + response
-        
+
         return response, state
-    
+
     def _get_funding_recommendation(self, token: str, language: str) -> str:
         """
         Get a helpful recommendation for users with insufficient funds.
-        
+
         This is shown before the transfer details to guide users on how to fund their wallet.
         """
         recommendations = {
@@ -476,7 +522,7 @@ Aqui estão os detalhes da transferência que você solicitou:
 """,
         }
         return recommendations.get(language, recommendations["en"])
-    
+
     async def _handle_confirm(
         self,
         message: MessageContent,
@@ -484,23 +530,23 @@ Aqui estão os detalhes da transferência que você solicitou:
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
         """Handle user confirmation or modification."""
-        
+
         language = user_context.language
         text = message.value.lower().strip()
-        
+
         # Check for confirmation
         if self._is_confirmation(text):
             state.confirmed = True
             state.step = WorkflowStep.EXECUTE.value
             # Call _handle_execute directly to check balance before showing "Ready"
             return await self._handle_execute(message, state, user_context)
-        
+
         # Check for cancellation
         if self._is_cancellation(text):
             state.cancelled = True
             state.step = WorkflowStep.CANCELLED.value
             return self._format_cancelled(language), state
-        
+
         # Check for modification
         modification = await self._parse_modification(text, message.value)
         if modification:
@@ -513,7 +559,7 @@ Aqui estão os detalhes da transferência que você solicitou:
                 # Re-validate new recipient
                 state.step = WorkflowStep.FETCH_DATA.value
                 return await self._handle_validate(message, state, user_context)
-            
+
             # Rebuild execute_data with modifications
             state.execute_data = self._build_transfer_execute_data(
                 token=state.data.get("token", "ETH"),
@@ -521,21 +567,23 @@ Aqui estão os detalhes da transferência que você solicitou:
                 recipient=state.data.get("recipient", ""),
                 chain=state.data.get("chain", "base"),
             )
-            
+
             # Show updated review
-            response = self._format_transfer_review(state.data, language, user_context=user_context)
+            response = self._format_transfer_review(
+                state.data, language, user_context=user_context
+            )
             return response, state
-        
+
         # Check if user is providing a missing recipient
         potential_address = self._extract_address(message.value)
         if potential_address and not state.data.get("recipient"):
             state.data["recipient"] = potential_address
             state.step = WorkflowStep.FETCH_DATA.value
             return await self._handle_validate(message, state, user_context)
-        
+
         # Unclear response - ask again
         return self._ask_for_confirmation(language), state
-    
+
     async def _handle_execute(
         self,
         message: MessageContent,
@@ -543,7 +591,7 @@ Aqui estão os detalhes da transferência que você solicitou:
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
         """Handle execute step - transaction is done by frontend.
-        
+
         IMPORTANT: Checks user balance before allowing execution.
         If user has insufficient funds, shows helpful message to buy crypto.
         """
@@ -552,7 +600,7 @@ Aqui estão os detalhes da transferência que você solicitou:
         token = (state.data.get("token") or "ETH").upper()
         amount = state.data.get("amount") or "0"
         recipient = state.data.get("recipient") or ""
-        
+
         # Check user balance before allowing execution
         if user_context.needs_funding_recommendation:
             logger.info(
@@ -569,12 +617,12 @@ Aqui estão os detalhes da transferência que você solicitou:
             )
             state.error = "insufficient_balance"
             return response, state
-        
+
         # The actual transaction is handled by the frontend using execute_data
         state.step = WorkflowStep.COMPLETED.value
-        
+
         return self._format_execution_pending(state.data, language), state
-    
+
     def _build_insufficient_balance_message(
         self,
         token: str,
@@ -584,7 +632,9 @@ Aqui estão os detalhes da transferência que você solicitou:
         language: str,
     ) -> str:
         """Build message when user has insufficient balance to execute transfer."""
-        short_recipient = f"{recipient[:8]}...{recipient[-6:]}" if len(recipient) > 16 else recipient
+        short_recipient = (
+            f"{recipient[:8]}...{recipient[-6:]}" if len(recipient) > 16 else recipient
+        )
         messages = {
             "en": f"""❌ **Unable to execute transfer**
 
@@ -632,20 +682,20 @@ Você não tem {token} suficiente na sua carteira.
 """,
         }
         return messages.get(language, messages["en"])
-    
+
     # ========================================
     # Parameter Extraction
     # ========================================
-    
+
     async def _extract_transfer_params(
         self,
         text: str,
         original_text: str,
     ) -> dict[str, Any]:
         """Extract transfer parameters from text."""
-        
+
         params: dict[str, Any] = {}
-        
+
         # Try LLM extraction first
         if self._llm:
             try:
@@ -660,11 +710,11 @@ Você não tem {token} suficiente na sua carteira.
                     examples=[
                         {
                             "input": "send 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-                            "output": '{"token": "USDC", "amount": "100", "recipient": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e", "chain": "base"}'
+                            "output": '{"token": "USDC", "amount": "100", "recipient": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e", "chain": "base"}',
                         },
                         {
                             "input": "transfer 0.5 ETH to 0xABC123...",
-                            "output": '{"token": "ETH", "amount": "0.5", "recipient": "0xABC123...", "chain": "base"}'
+                            "output": '{"token": "ETH", "amount": "0.5", "recipient": "0xABC123...", "chain": "base"}',
                         },
                     ],
                 )
@@ -672,7 +722,7 @@ Você não tem {token} suficiente na sua carteira.
                     params.update(llm_params)
             except Exception as e:
                 logger.warning(f"[TransferWorkflow] LLM extraction failed: {e}")
-        
+
         # Regex fallback for amount
         if not params.get("amount"):
             amount_match = re.search(
@@ -682,70 +732,70 @@ Você não tem {token} suficiente na sua carteira.
             )
             if amount_match:
                 params["amount"] = amount_match.group(1).replace(",", "")
-        
+
         # Regex fallback for token
         if not params.get("token"):
             for key, info in SUPPORTED_TOKENS.items():
                 if key in text or info["symbol"].lower() in text:
                     params["token"] = info["symbol"]
                     break
-        
+
         # Regex fallback for recipient address
         if not params.get("recipient"):
             address = self._extract_address(original_text)
             if address:
                 params["recipient"] = address
-        
+
         # Default chain
         if not params.get("chain"):
             params["chain"] = "base"
-        
+
         return params
-    
+
     def _extract_address(self, text: str) -> str | None:
         """Extract wallet address from text."""
-        
+
         # Ethereum/EVM address (0x + 40 hex chars)
         eth_match = re.search(r"(0x[a-fA-F0-9]{40})", text)
         if eth_match:
             return eth_match.group(1)
-        
+
         # Solana address (base58, 32-44 chars)
         sol_match = re.search(r"\b([1-9A-HJ-NP-Za-km-z]{32,44})\b", text)
         if sol_match:
             return sol_match.group(1)
-        
+
         return None
-    
+
     def _validate_address(self, address: str) -> dict[str, Any]:
         """Validate wallet address format."""
-        
+
         if not address:
             return {"valid": False, "network": None, "error": "No address provided"}
-        
+
         # Check EVM format
         if re.match(NETWORK_PATTERNS["ethereum"], address):
             return {"valid": True, "network": "ethereum", "error": None}
-        
+
         # Check Solana format
         if re.match(NETWORK_PATTERNS["solana"], address):
             return {"valid": True, "network": "solana", "error": None}
-        
+
         # Check Bitcoin format
         if re.match(NETWORK_PATTERNS["bitcoin"], address):
             return {"valid": True, "network": "bitcoin", "error": None}
-        
+
         return {"valid": False, "network": None, "error": "Invalid address format"}
-    
+
     async def _parse_modification(
         self,
         text: str,
         original_text: str,
     ) -> dict[str, Any] | None:
         """Parse modification request from user."""
-        
+
         modification: dict[str, Any] = {}
-        
+
         # Check for amount modification
         amount_match = re.search(
             r"(?:change|update|make it|use)\s+(?:to\s+)?(\d+(?:,\d{3})*(?:\.\d+)?)",
@@ -754,27 +804,27 @@ Você não tem {token} suficiente na sua carteira.
         )
         if amount_match:
             modification["amount"] = amount_match.group(1).replace(",", "")
-        
+
         # Check for token change
         for key, info in SUPPORTED_TOKENS.items():
             if key in text or info["symbol"].lower() in text:
                 modification["token"] = info["symbol"]
                 break
-        
+
         # Check for recipient change
         address_match = self._extract_address(original_text)
         if address_match and "address" in text.lower():
             modification["recipient"] = address_match
-        
+
         return modification if modification else None
-    
+
     # ========================================
     # Response Formatting
     # ========================================
-    
+
     def _ask_for_token(self, language: str) -> str:
         """Ask user which token to send."""
-        
+
         msgs = {
             "en": """📤 **Send Crypto to Another Wallet**
 
@@ -788,7 +838,6 @@ Which token would you like to send?
 5. ₿ **WBTC** (Wrapped Bitcoin)
 
 💬 Reply with the token name and amount (e.g., "100 USDC")""",
-            
             "es": """📤 **Enviar Cripto a Otra Billetera**
 
 ¿Qué token te gustaría enviar?
@@ -801,7 +850,6 @@ Which token would you like to send?
 5. ₿ **WBTC** (Wrapped Bitcoin)
 
 💬 Responde con el nombre del token y la cantidad (ej: "100 USDC")""",
-            
             "pt": """📤 **Enviar Cripto para Outra Carteira**
 
 Qual token você gostaria de enviar?
@@ -814,7 +862,6 @@ Qual token você gostaria de enviar?
 5. ₿ **WBTC** (Wrapped Bitcoin)
 
 💬 Responda com o nome do token e a quantia (ex: "100 USDC")""",
-            
             "zh": """📤 **发送加密货币到另一个钱包**
 
 您想发送哪种代币？
@@ -828,16 +875,16 @@ Qual token você gostaria de enviar?
 
 💬 回复代币名称和金额（例如："100 USDC"）""",
         }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     def _ask_for_amount(self, data: dict[str, Any], language: str) -> str:
         """Ask user for transfer amount."""
-        
+
         token = data.get("token", "ETH")
         token_info = SUPPORTED_TOKENS.get(token.lower(), {"emoji": "💎"})
         emoji = token_info.get("emoji", "💎")
-        
+
         msgs = {
             "en": f"""{emoji} **Send {token}**
 
@@ -849,7 +896,6 @@ How much **{token}** would you like to send?
 • `1000` (one thousand {token})
 
 💬 Enter the amount to continue""",
-            
             "es": f"""{emoji} **Enviar {token}**
 
 ¿Cuánto **{token}** te gustaría enviar?
@@ -860,7 +906,6 @@ How much **{token}** would you like to send?
 • `1000` (mil {token})
 
 💬 Ingresa la cantidad para continuar""",
-            
             "pt": f"""{emoji} **Enviar {token}**
 
 Quanto **{token}** você gostaria de enviar?
@@ -871,7 +916,6 @@ Quanto **{token}** você gostaria de enviar?
 • `1000` (mil {token})
 
 💬 Digite a quantia para continuar""",
-            
             "zh": f"""{emoji} **发送 {token}**
 
 您想发送多少 **{token}**？
@@ -883,17 +927,17 @@ Quanto **{token}** você gostaria de enviar?
 
 💬 输入金额以继续""",
         }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     def _ask_for_recipient(self, data: dict[str, Any], language: str) -> str:
         """Ask user for recipient address."""
-        
+
         token = data.get("token", "ETH")
         amount = data.get("amount", "0")
         token_info = SUPPORTED_TOKENS.get(token.lower(), {"emoji": "💎"})
         emoji = token_info.get("emoji", "💎")
-        
+
         msgs = {
             "en": f"""📤 **Sending {amount} {emoji} {token}**
 
@@ -907,7 +951,6 @@ Where should I send this?
 • Copy-paste recommended (avoid typing)
 
 💬 Paste the recipient's wallet address""",
-            
             "es": f"""📤 **Enviando {amount} {emoji} {token}**
 
 ¿A dónde debo enviarlo?
@@ -920,7 +963,6 @@ Where should I send this?
 • Se recomienda copiar-pegar (evita escribir)
 
 💬 Pega la dirección de la billetera del destinatario""",
-            
             "pt": f"""📤 **Enviando {amount} {emoji} {token}**
 
 Para onde devo enviar?
@@ -933,7 +975,6 @@ Para onde devo enviar?
 • Recomenda-se copiar-colar (evite digitar)
 
 💬 Cole o endereço da carteira do destinatário""",
-            
             "zh": f"""📤 **发送 {amount} {emoji} {token}**
 
 我应该发送到哪里？
@@ -947,18 +988,18 @@ Para onde devo enviar?
 
 💬 粘贴收件人的钱包地址""",
         }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     def _format_invalid_address(self, address: str | None, language: str) -> str:
         """Format invalid address error message."""
-        
+
         # Handle None or empty address
         if not address:
             address = "empty"
-        
+
         truncated = f"{address[:10]}..." if len(address) > 10 else address
-        
+
         msgs = {
             "en": f"""❌ **Invalid Address**
 
@@ -969,7 +1010,6 @@ The address `{truncated}` doesn't appear to be valid.
 • Solana: 32-44 alphanumeric characters
 
 Please paste a valid wallet address.""",
-            
             "es": f"""❌ **Dirección Inválida**
 
 La dirección `{truncated}` no parece ser válida.
@@ -979,7 +1019,6 @@ La dirección `{truncated}` no parece ser válida.
 • Solana: 32-44 caracteres alfanuméricos
 
 Por favor pega una dirección de billetera válida.""",
-            
             "pt": f"""❌ **Endereço Inválido**
 
 O endereço `{truncated}` não parece ser válido.
@@ -989,7 +1028,6 @@ O endereço `{truncated}` não parece ser válido.
 • Solana: 32-44 caracteres alfanuméricos
 
 Por favor cole um endereço de carteira válido.""",
-            
             "zh": f"""❌ **地址无效**
 
 地址 `{truncated}` 似乎无效。
@@ -1000,9 +1038,9 @@ Por favor cole um endereço de carteira válido.""",
 
 请粘贴有效的钱包地址。""",
         }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     def _format_transfer_review(
         self,
         data: dict[str, Any],
@@ -1010,22 +1048,24 @@ Por favor cole um endereço de carteira válido.""",
         user_context: UserContext | None = None,
     ) -> str:
         """Format transfer review for confirmation with safety info and user balance."""
-        
+
         token = data.get("token", "ETH")
         amount = data.get("amount", "0")
         recipient = data.get("recipient", "")
         network = data.get("network", "ethereum")
         safety = data.get("safety_analysis", {})
-        
+
         token_info = SUPPORTED_TOKENS.get(token.lower(), {"emoji": "💎"})
         emoji = token_info.get("emoji", "💎")
-        
+
         # Truncate address for display
-        display_addr = f"{recipient[:8]}...{recipient[-6:]}" if len(recipient) > 14 else recipient
-        
+        display_addr = (
+            f"{recipient[:8]}...{recipient[-6:]}" if len(recipient) > 14 else recipient
+        )
+
         # Build safety section
         safety_section = self._format_safety_section(safety, language)
-        
+
         # Build user balance section
         user_balance_section = self._build_transfer_user_balance_section(
             user_context=user_context,
@@ -1033,7 +1073,7 @@ Por favor cole um endereço de carteira válido.""",
             amount=amount,
             language=language,
         )
-        
+
         msgs = {
             "en": f"""🔍 **Review Your Transfer**
 
@@ -1053,7 +1093,6 @@ Por favor cole um endereço de carteira válido.""",
 ⚠️ **REMINDER:**
 • Once confirmed, this transaction CANNOT be reversed
 • Double-check the destination address""",
-            
             "es": f"""🔍 **Revisa Tu Transferencia**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1072,7 +1111,6 @@ Por favor cole um endereço de carteira válido.""",
 ⚠️ **RECORDATORIO:**
 • Una vez confirmado, esta transacción NO SE PUEDE REVERTIR
 • Verifica la dirección de destino""",
-            
             "pt": f"""🔍 **Revise Sua Transferência**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1091,7 +1129,6 @@ Por favor cole um endereço de carteira válido.""",
 ⚠️ **AVISO:**
 • Uma vez confirmado, esta transação NÃO PODE ser revertida
 • Verifique o endereço de destino""",
-            
             "zh": f"""🔍 **审核您的转账**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1109,9 +1146,9 @@ Por favor cole um endereço de carteira válido.""",
 • 一旦确认，此交易无法撤销
 • 仔细核对目标地址""",
         }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     def _build_transfer_user_balance_section(
         self,
         user_context: UserContext | None,
@@ -1122,15 +1159,15 @@ Por favor cole um endereço de carteira válido.""",
         """Build user balance context section for transfer."""
         if not user_context or not user_context.is_authenticated:
             return ""
-        
+
         balance = user_context.total_balance_usd
         portfolio_state = user_context.portfolio_state
-        
+
         try:
             transfer_amount = float(amount)
         except (ValueError, TypeError):
             transfer_amount = 0
-        
+
         # Check if user has enough balance
         if portfolio_state == "empty" or balance < 1:
             msgs = {
@@ -1153,36 +1190,38 @@ Por favor cole um endereço de carteira válido.""",
                 "pt": f"💰 **Seu Saldo:** ~${balance:,.2f} ✅",
                 "zh": f"💰 **您的余额：** ~${balance:,.2f} ✅",
             }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     def _ask_for_confirmation(self, language: str) -> str:
         """Ask user to confirm (not used - frontend handles via execute_data card)."""
-        
+
         msgs = {
             "en": "Review the transfer details above.",
             "es": "Revisa los detalles de la transferencia.",
             "pt": "Revise os detalhes da transferência.",
             "zh": "查看上方的转账详情。",
         }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     def _format_ready_to_execute(
         self,
         data: dict[str, Any],
         language: str,
     ) -> str:
         """Format ready-to-execute message."""
-        
+
         token = data.get("token", "ETH")
         amount = data.get("amount", "0")
         recipient = data.get("recipient", "")
-        
-        display_addr = f"{recipient[:8]}...{recipient[-6:]}" if len(recipient) > 14 else recipient
+
+        display_addr = (
+            f"{recipient[:8]}...{recipient[-6:]}" if len(recipient) > 14 else recipient
+        )
         token_info = SUPPORTED_TOKENS.get(token.lower(), {"emoji": "💎"})
         emoji = token_info.get("emoji", "💎")
-        
+
         msgs = {
             "en": f"""✅ **Transfer Ready to Execute**
 
@@ -1193,7 +1232,6 @@ Por favor cole um endereço de carteira válido.""",
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Click **Confirm** to execute the transfer.""",
-            
             "es": f"""✅ **Transferencia Lista para Ejecutar**
 
 🔄 **Enviando:** {amount} {token} {emoji}
@@ -1203,7 +1241,6 @@ Click **Confirm** to execute the transfer.""",
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Haz clic en **Confirmar** para ejecutar la transferencia.""",
-            
             "pt": f"""✅ **Transferência Pronta para Executar**
 
 🔄 **Enviando:** {amount} {token} {emoji}
@@ -1213,7 +1250,6 @@ Haz clic en **Confirmar** para ejecutar la transferencia.""",
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Clique em **Confirmar** para executar a transferência.""",
-            
             "zh": f"""✅ **转账准备执行**
 
 🔄 **发送：** {amount} {token} {emoji}
@@ -1224,66 +1260,65 @@ Clique em **Confirmar** para executar a transferência.""",
 
 点击 **确认** 执行转账。""",
         }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     def _format_cancelled(self, language: str) -> str:
         """Format cancellation message."""
-        
+
         msgs = {
             "en": "❌ Transfer cancelled. Your crypto is safe! Let me know if you'd like to try again.",
             "es": "❌ Transferencia cancelada. ¡Tu cripto está seguro! Avísame si quieres intentarlo de nuevo.",
             "pt": "❌ Transferência cancelada. Sua cripto está segura! Me avise se quiser tentar novamente.",
             "zh": "❌ 转账已取消。您的加密货币是安全的！如果您想再试一次，请告诉我。",
         }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     def _format_execution_pending(
         self,
         data: dict[str, Any],
         language: str,
     ) -> str:
         """Format message while execution is pending."""
-        
+
         token = data.get("token", "ETH")
         amount = data.get("amount", "0")
         recipient = data.get("recipient", "")
-        
-        display_addr = f"{recipient[:8]}...{recipient[-6:]}" if len(recipient) > 14 else recipient
-        
+
+        display_addr = (
+            f"{recipient[:8]}...{recipient[-6:]}" if len(recipient) > 14 else recipient
+        )
+
         msgs = {
             "en": f"""⏳ **Processing Transfer**
 
 Sending **{amount} {token}** to `{display_addr}`...
 
 Please confirm the transaction in your wallet.""",
-            
             "es": f"""⏳ **Procesando Transferencia**
 
 Enviando **{amount} {token}** a `{display_addr}`...
 
 Por favor confirma la transacción en tu wallet.""",
-            
             "pt": f"""⏳ **Processando Transferência**
 
 Enviando **{amount} {token}** para `{display_addr}`...
 
 Por favor confirme a transação na sua carteira.""",
-            
             "zh": f"""⏳ **处理转账中**
 
 正在发送 **{amount} {token}** 到 `{display_addr}`...
 
 请在您的钱包中确认交易。""",
         }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     # ========================================
     # Execute Data Builder
     # ========================================
-    
+
     def _build_transfer_execute_data(
         self,
         token: str,
@@ -1292,7 +1327,7 @@ Por favor confirme a transação na sua carteira.""",
         chain: str,
     ) -> dict[str, Any]:
         """Build execute_data for transfer action."""
-        
+
         return {
             "action_type": "transfer",
             "provider": "privy",
@@ -1302,11 +1337,11 @@ Por favor confirme a transação na sua carteira.""",
             "recipient": recipient,
             "slippage": 0.5,
         }
-    
+
     # ========================================
     # Safety Check Methods
     # ========================================
-    
+
     async def _analyze_recipient_safety(
         self,
         recipient: str,
@@ -1314,14 +1349,14 @@ Por favor confirme a transação na sua carteira.""",
     ) -> RecipientSafetyAnalysis:
         """
         Analyze recipient wallet safety (Phase 2 - Enhanced).
-        
+
         Checks:
         1. EOA vs Smart Contract detection (web3)
         2. Known address labels - local + Etherscan API
         3. First-time recipient detection via Etherscan interaction history
         4. Known risky addresses (local blocklist)
         5. Contract verification status (Etherscan)
-        
+
         Returns:
             RecipientSafetyAnalysis with score, risk level, and warnings
         """
@@ -1329,7 +1364,7 @@ Por favor confirme a transação na sua carteira.""",
         checks: list[SafetyCheck] = []
         warnings: list[str] = []
         blockers: list[str] = []
-        
+
         # Initialize defaults
         address_type = "unknown"
         is_contract = False
@@ -1339,7 +1374,7 @@ Por favor confirme a transação na sua carteira.""",
         is_verified_contract = False
         etherscan_label: str | None = None
         previous_interactions = 0
-        
+
         # ========================================
         # Check 1: Known addresses (local database)
         # ========================================
@@ -1349,80 +1384,103 @@ Por favor confirme a transação na sua carteira.""",
             label_name = known_info.get("name", "Known Address")
             label_category = known_info.get("category", "unknown")
             is_known_safe = known_info.get("safe", False)
-            
+
             if is_known_safe:
-                checks.append(SafetyCheck(
-                    name="Known Address",
-                    status="pass",
-                    emoji="✅",
-                    details=f"{label_name} ({label_category})",
-                ))
+                checks.append(
+                    SafetyCheck(
+                        name="Known Address",
+                        status="pass",
+                        emoji="✅",
+                        details=f"{label_name} ({label_category})",
+                    )
+                )
             else:
-                checks.append(SafetyCheck(
-                    name="Known Address",
-                    status="warn",
-                    emoji="⚠️",
-                    details=f"{label_name} - Use caution",
-                ))
+                checks.append(
+                    SafetyCheck(
+                        name="Known Address",
+                        status="warn",
+                        emoji="⚠️",
+                        details=f"{label_name} - Use caution",
+                    )
+                )
                 warnings.append(f"Known risky address: {label_name}")
-        
+
         # ========================================
         # Check 2: Etherscan API label lookup (Phase 2)
         # ========================================
         if self._etherscan_client and not known_info:
             try:
                 label_info = await self._etherscan_client.get_address_label(recipient)
-                
+
                 if label_info and label_info.label:
                     etherscan_label = label_info.label
                     is_known = True
                     is_verified_contract = label_info.is_verified
-                    
+
                     # Check for risky categories
                     if label_info.is_risky:
-                        checks.append(SafetyCheck(
-                            name="Address Label",
-                            status="fail",
-                            emoji="🚫",
-                            details=f"{etherscan_label} (Flagged)",
-                        ))
+                        checks.append(
+                            SafetyCheck(
+                                name="Address Label",
+                                status="fail",
+                                emoji="🚫",
+                                details=f"{etherscan_label} (Flagged)",
+                            )
+                        )
                         blockers.append(f"Address flagged as: {label_info.category}")
                     else:
-                        is_known_safe = label_info.address_type.value in ("exchange", "defi", "dex")
-                        checks.append(SafetyCheck(
-                            name="Address Label",
-                            status="pass",
-                            emoji="🏷️",
-                            details=f"{etherscan_label} ({label_info.category or 'verified'})",
-                        ))
-                        
+                        is_known_safe = label_info.address_type.value in (
+                            "exchange",
+                            "defi",
+                            "dex",
+                        )
+                        checks.append(
+                            SafetyCheck(
+                                name="Address Label",
+                                status="pass",
+                                emoji="🏷️",
+                                details=f"{etherscan_label} ({label_info.category or 'verified'})",
+                            )
+                        )
+
                         # Use Etherscan type as address type
                         if label_info.address_type.value != "unknown":
                             address_type = label_info.address_type.value
-                            if address_type in ("contract", "defi", "dex", "token", "nft", "bridge"):
+                            if address_type in (
+                                "contract",
+                                "defi",
+                                "dex",
+                                "token",
+                                "nft",
+                                "bridge",
+                            ):
                                 is_contract = True
             except Exception as e:
                 logger.warning(f"[TransferWorkflow] Etherscan label lookup failed: {e}")
-        
+
         # ========================================
         # Check 3: Known risky/scam addresses (local blocklist)
         # ========================================
         if recipient_lower in KNOWN_RISKY_ADDRESSES:
-            checks.append(SafetyCheck(
-                name="Scam Check",
-                status="fail",
-                emoji="🚫",
-                details="Address flagged as risky",
-            ))
+            checks.append(
+                SafetyCheck(
+                    name="Scam Check",
+                    status="fail",
+                    emoji="🚫",
+                    details="Address flagged as risky",
+                )
+            )
             blockers.append("This address has been flagged as potentially risky")
         else:
-            checks.append(SafetyCheck(
-                name="Scam Check",
-                status="pass",
-                emoji="✅",
-                details="Not in blocklist",
-            ))
-        
+            checks.append(
+                SafetyCheck(
+                    name="Scam Check",
+                    status="pass",
+                    emoji="✅",
+                    details="Not in blocklist",
+                )
+            )
+
         # ========================================
         # Check 4: EOA vs Contract detection (web3)
         # ========================================
@@ -1430,65 +1488,85 @@ Por favor confirme a transação na sua carteira.""",
             try:
                 is_contract = await self._web3_client.is_contract(recipient)
                 address_type = "contract" if is_contract else "eoa"
-                
+
                 if is_contract:
                     # Contract - check if known or verified
                     if is_known or is_verified_contract:
-                        contract_detail = etherscan_label or known_info.get("name", "Known") if known_info else "Verified"
-                        checks.append(SafetyCheck(
-                            name="Address Type",
-                            status="pass",
-                            emoji="📄",
-                            details=f"Smart Contract ({contract_detail})",
-                        ))
+                        contract_detail = (
+                            etherscan_label or known_info.get("name", "Known")
+                            if known_info
+                            else "Verified"
+                        )
+                        checks.append(
+                            SafetyCheck(
+                                name="Address Type",
+                                status="pass",
+                                emoji="📄",
+                                details=f"Smart Contract ({contract_detail})",
+                            )
+                        )
                     else:
                         # Unknown, unverified contract - warn
-                        checks.append(SafetyCheck(
-                            name="Address Type",
-                            status="warn",
-                            emoji="📄",
-                            details="Smart Contract (Unverified)",
-                        ))
+                        checks.append(
+                            SafetyCheck(
+                                name="Address Type",
+                                status="warn",
+                                emoji="📄",
+                                details="Smart Contract (Unverified)",
+                            )
+                        )
                         warnings.append("Sending to an unverified smart contract")
                 else:
                     # EOA - regular wallet
-                    checks.append(SafetyCheck(
-                        name="Address Type",
-                        status="pass",
-                        emoji="👤",
-                        details="External Wallet (EOA)",
-                    ))
+                    checks.append(
+                        SafetyCheck(
+                            name="Address Type",
+                            status="pass",
+                            emoji="👤",
+                            details="External Wallet (EOA)",
+                        )
+                    )
             except Exception as e:
-                logger.warning(f"[TransferWorkflow] Failed to check contract status: {e}")
-                checks.append(SafetyCheck(
+                logger.warning(
+                    f"[TransferWorkflow] Failed to check contract status: {e}"
+                )
+                checks.append(
+                    SafetyCheck(
+                        name="Address Type",
+                        status="warn",
+                        emoji="❓",
+                        details="Unable to verify",
+                    )
+                )
+        elif address_type != "unknown":
+            # Already determined from Etherscan
+            type_label = (
+                address_type.upper() if address_type == "eoa" else address_type.title()
+            )
+            checks.append(
+                SafetyCheck(
+                    name="Address Type",
+                    status="pass",
+                    emoji="📄" if is_contract else "👤",
+                    details=f"{type_label} ({etherscan_label or 'Identified'})",
+                )
+            )
+        else:
+            # No web3 client - skip contract check
+            checks.append(
+                SafetyCheck(
                     name="Address Type",
                     status="warn",
                     emoji="❓",
-                    details="Unable to verify",
-                ))
-        elif address_type != "unknown":
-            # Already determined from Etherscan
-            type_label = address_type.upper() if address_type == "eoa" else address_type.title()
-            checks.append(SafetyCheck(
-                name="Address Type",
-                status="pass",
-                emoji="📄" if is_contract else "👤",
-                details=f"{type_label} ({etherscan_label or 'Identified'})",
-            ))
-        else:
-            # No web3 client - skip contract check
-            checks.append(SafetyCheck(
-                name="Address Type",
-                status="warn",
-                emoji="❓",
-                details="Verification unavailable",
-            ))
-        
+                    details="Verification unavailable",
+                )
+            )
+
         # ========================================
         # Check 5: Interaction history (Etherscan - Phase 2)
         # ========================================
         user_wallet = user_context.wallet_address if user_context else None
-        
+
         if self._etherscan_client and user_wallet:
             try:
                 interactions = await self._etherscan_client.get_recent_interactions(
@@ -1496,47 +1574,57 @@ Por favor confirme a transação na sua carteira.""",
                     to_address=recipient,
                     limit=5,
                 )
-                
+
                 previous_interactions = len(interactions)
                 is_first_time = previous_interactions == 0
-                
+
                 if not is_first_time:
                     # Has previous interactions - safer
-                    checks.append(SafetyCheck(
-                        name="Interaction History",
-                        status="pass",
-                        emoji="✅",
-                        details=f"Previously sent ({previous_interactions}x)",
-                    ))
+                    checks.append(
+                        SafetyCheck(
+                            name="Interaction History",
+                            status="pass",
+                            emoji="✅",
+                            details=f"Previously sent ({previous_interactions}x)",
+                        )
+                    )
                 else:
                     # First time - warn
-                    checks.append(SafetyCheck(
+                    checks.append(
+                        SafetyCheck(
+                            name="Interaction History",
+                            status="warn",
+                            emoji="🆕",
+                            details="First-time recipient",
+                        )
+                    )
+                    warnings.append("You haven't sent to this address before")
+            except Exception as e:
+                logger.warning(
+                    f"[TransferWorkflow] Interaction history check failed: {e}"
+                )
+                # Fall back to first-time assumption
+                checks.append(
+                    SafetyCheck(
                         name="Interaction History",
                         status="warn",
                         emoji="🆕",
-                        details="First-time recipient",
-                    ))
-                    warnings.append("You haven't sent to this address before")
-            except Exception as e:
-                logger.warning(f"[TransferWorkflow] Interaction history check failed: {e}")
-                # Fall back to first-time assumption
-                checks.append(SafetyCheck(
-                    name="Interaction History",
-                    status="warn",
-                    emoji="🆕",
-                    details="First-time recipient (assumed)",
-                ))
+                        details="First-time recipient (assumed)",
+                    )
+                )
                 warnings.append("You haven't sent to this address before")
         else:
             # No Etherscan client or no wallet - default to first-time warning
-            checks.append(SafetyCheck(
-                name="Interaction History",
-                status="warn",
-                emoji="🆕",
-                details="First-time recipient",
-            ))
+            checks.append(
+                SafetyCheck(
+                    name="Interaction History",
+                    status="warn",
+                    emoji="🆕",
+                    details="First-time recipient",
+                )
+            )
             warnings.append("You haven't sent to this address before")
-        
+
         # ========================================
         # Calculate safety score
         # ========================================
@@ -1549,7 +1637,7 @@ Por favor confirme a transação na sua carteira.""",
             is_verified=is_verified_contract,
             previous_interactions=previous_interactions,
         )
-        
+
         # Determine risk level
         if safety_score >= 80:
             risk_level = "low"
@@ -1559,7 +1647,7 @@ Por favor confirme a transação na sua carteira.""",
             risk_level = "high"
         else:
             risk_level = "critical"
-        
+
         return RecipientSafetyAnalysis(
             address=recipient,
             safety_score=safety_score,
@@ -1570,7 +1658,7 @@ Por favor confirme a transação na sua carteira.""",
             warnings=warnings,
             blockers=blockers,
         )
-    
+
     def _calculate_safety_score(
         self,
         is_contract: bool,
@@ -1583,7 +1671,7 @@ Por favor confirme a transação na sua carteira.""",
     ) -> int:
         """
         Calculate safety score (0-100) based on checks (Phase 2 enhanced).
-        
+
         Scoring:
         - Base score: 70
         - Known safe address: +20
@@ -1597,16 +1685,16 @@ Por favor confirme a transação na sua carteira.""",
         - Has blockers: -50
         """
         score = 70  # Base score
-        
+
         if has_blockers:
             return max(0, score - 50)
-        
+
         # Known address bonuses
         if is_known_safe:
             score += 20
         elif is_known:
             score += 10
-        
+
         # Contract type scoring
         if not is_contract:
             # EOA is generally safer for personal transfers
@@ -1621,7 +1709,7 @@ Por favor confirme a transação na sua carteira.""",
             else:
                 # Known but unverified
                 score -= 5
-        
+
         # Interaction history (Phase 2)
         if previous_interactions > 0:
             # Previous interactions increase trust
@@ -1630,12 +1718,12 @@ Por favor confirme a transação na sua carteira.""",
             elif previous_interactions >= 2:
                 score += 10  # Multiple interactions
             else:
-                score += 5   # At least one previous interaction
+                score += 5  # At least one previous interaction
         elif is_first_time:
             score -= 10
-        
+
         return max(0, min(100, score))
-    
+
     def _format_safety_section(
         self,
         safety: dict[str, Any],
@@ -1644,12 +1732,12 @@ Por favor confirme a transação na sua carteira.""",
         """Format safety analysis section for display."""
         if not safety:
             return ""
-        
+
         score = safety.get("score", 0)
         risk_level = safety.get("risk_level", "unknown")
         address_type = safety.get("address_type", "unknown")
         warnings = safety.get("warnings", [])
-        
+
         # Risk emoji and label
         risk_config = {
             "low": ("🟢", "Low Risk"),
@@ -1658,7 +1746,7 @@ Por favor confirme a transação na sua carteira.""",
             "critical": ("🔴", "Critical Risk"),
         }
         risk_emoji, risk_label = risk_config.get(risk_level, ("⚪", "Unknown"))
-        
+
         # Address type label
         type_labels = {
             "eoa": "👤 External Wallet",
@@ -1666,7 +1754,7 @@ Por favor confirme a transação na sua carteira.""",
             "unknown": "❓ Unknown",
         }
         type_label = type_labels.get(address_type, "❓ Unknown")
-        
+
         # Build section
         section = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔒 **Safety Analysis**
@@ -1675,15 +1763,15 @@ Por favor confirme a transação na sua carteira.""",
 {risk_emoji} **Safety Score:** {score}/100 ({risk_label})
 {type_label}
 """
-        
+
         # Add warnings if any
         if warnings:
             section += "\n**⚠️ Warnings:**\n"
             for warning in warnings:
                 section += f"• {warning}\n"
-        
+
         return section.strip()
-    
+
     def _format_blocked_transfer(
         self,
         safety: RecipientSafetyAnalysis,
@@ -1692,7 +1780,7 @@ Por favor confirme a transação na sua carteira.""",
         """Format message when transfer is blocked due to safety issues."""
         display_addr = f"{safety.address[:8]}...{safety.address[-6:]}"
         blockers_text = "\n".join(f"• {b}" for b in safety.blockers)
-        
+
         msgs = {
             "en": f"""🚫 **Transfer Blocked - Safety Issue**
 
@@ -1707,7 +1795,6 @@ The transfer to `{display_addr}` has been blocked for your protection.
 • Use a different recipient address
 
 Safety is our priority. We block transfers to known risky addresses.""",
-            
             "es": f"""🚫 **Transferencia Bloqueada - Problema de Seguridad**
 
 La transferencia a `{display_addr}` ha sido bloqueada para tu protección.
@@ -1719,7 +1806,6 @@ La transferencia a `{display_addr}` ha sido bloqueada para tu protección.
 • Verifica la dirección del destinatario
 • Contacta soporte si crees que es un error
 • Usa una dirección diferente""",
-            
             "pt": f"""🚫 **Transferência Bloqueada - Problema de Segurança**
 
 A transferência para `{display_addr}` foi bloqueada para sua proteção.
@@ -1732,28 +1818,55 @@ A transferência para `{display_addr}` foi bloqueada para sua proteção.
 • Contate o suporte se acredita ser um erro
 • Use um endereço diferente""",
         }
-        
+
         return msgs.get(language, msgs["en"])
-    
+
     # ========================================
     # Helpers
     # ========================================
-    
+
     def _is_confirmation(self, text: str) -> bool:
         """Check if text is a confirmation."""
         confirm_words = [
-            "yes", "y", "confirm", "ok", "proceed", "continue", "do it", "execute", "send",
-            "sí", "si", "confirmar", "vale", "continuar",
-            "sim", "confirmar", "prosseguir",
-            "是", "确认", "好", "继续",
+            "yes",
+            "y",
+            "confirm",
+            "ok",
+            "proceed",
+            "continue",
+            "do it",
+            "execute",
+            "send",
+            "sí",
+            "si",
+            "confirmar",
+            "vale",
+            "continuar",
+            "sim",
+            "confirmar",
+            "prosseguir",
+            "是",
+            "确认",
+            "好",
+            "继续",
         ]
         return any(word in text for word in confirm_words)
-    
+
     def _is_cancellation(self, text: str) -> bool:
         """Check if text is a cancellation."""
         cancel_words = [
-            "no", "n", "cancel", "abort", "stop", "nevermind", "forget it",
-            "cancelar", "abortar", "parar",
-            "取消", "不", "停止",
+            "no",
+            "n",
+            "cancel",
+            "abort",
+            "stop",
+            "nevermind",
+            "forget it",
+            "cancelar",
+            "abortar",
+            "parar",
+            "取消",
+            "不",
+            "停止",
         ]
         return any(word in text for word in cancel_words)

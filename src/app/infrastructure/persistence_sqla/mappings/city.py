@@ -13,14 +13,14 @@ def map_cities_table() -> None:
     # Idempotency guard: don't remap if already present
     if "cities" in mapping_registry.metadata.tables:
         return
-    
+
     @mapping_registry.mapped
     class CitiesTable:
         __tablename__ = "cities"
-        
+
         # Primary key
         id = mapped_column(Integer, primary_key=True, index=True)
-        
+
         # City information
         city_id = mapped_column(Integer, index=True)
         name = mapped_column(String(100), nullable=False, index=True)
@@ -33,12 +33,17 @@ def map_cities_table() -> None:
         latitude = mapped_column(Float, nullable=True)
         longitude = mapped_column(Float, nullable=True)
         wikiDataId = mapped_column(String(50), nullable=True, index=True)
-        
+
         # Add constraints for coordinates
         __table_args__ = (
-            CheckConstraint('latitude >= -90 AND latitude <= 90', name='check_city_latitude_range'),
-            CheckConstraint('longitude >= -180 AND longitude <= 180', name='check_city_longitude_range'),
-            UniqueConstraint('city_id', 'country_id', name='uq_cities_city_country'),
+            CheckConstraint(
+                "latitude >= -90 AND latitude <= 90", name="check_city_latitude_range"
+            ),
+            CheckConstraint(
+                "longitude >= -180 AND longitude <= 180",
+                name="check_city_longitude_range",
+            ),
+            UniqueConstraint("city_id", "country_id", name="uq_cities_city_country"),
         )
-    
+
     # Keep only table metadata for create_all

@@ -62,7 +62,9 @@ AnalyticsSnapshotTable = Table(
     # Totals
     Column("total_users", Integer, nullable=False, default=0),
     Column("total_executions", Integer, nullable=False, default=0),
-    Column("total_balance_usd", Numeric(precision=20, scale=2), nullable=False, default=0),
+    Column(
+        "total_balance_usd", Numeric(precision=20, scale=2), nullable=False, default=0
+    ),
     # Execution counts
     Column("exec_swap_count", Integer, nullable=False, default=0),
     Column("exec_buy_count", Integer, nullable=False, default=0),
@@ -79,7 +81,9 @@ AnalyticsSnapshotTable = Table(
     # Additional metrics
     Column("additional_metrics", JSONB, nullable=False, default={}),
     # Constraints
-    UniqueConstraint("snapshot_date", "snapshot_type", name="uq_analytics_snapshot_date_type"),
+    UniqueConstraint(
+        "snapshot_date", "snapshot_type", name="uq_analytics_snapshot_date_type"
+    ),
     # Indexes
     Index("idx_analytics_snapshot_date", "snapshot_date"),
     Index("idx_analytics_snapshot_type", "snapshot_type"),
@@ -89,7 +93,7 @@ AnalyticsSnapshotTable = Table(
 def map_analytics_snapshot_table() -> None:
     """
     Map the AnalyticsSnapshot entity to the analytics_snapshots table.
-    
+
     Note: This uses a simple dataclass, so we don't use SQLAlchemy ORM mapping.
     Instead, we use the table directly in the repository adapter.
     """

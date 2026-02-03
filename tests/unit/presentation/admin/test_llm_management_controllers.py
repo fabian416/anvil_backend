@@ -20,22 +20,24 @@ class TestProvidersController:
     def mock_providers_service(self):
         """Create mock providers service."""
         service = AsyncMock()
-        service.list_providers = AsyncMock(return_value=[
-            {
-                "id": "openai",
-                "name": "OpenAI",
-                "is_enabled": True,
-                "is_healthy": True,
-                "models_count": 4,
-            },
-            {
-                "id": "anthropic",
-                "name": "Anthropic",
-                "is_enabled": True,
-                "is_healthy": True,
-                "models_count": 3,
-            },
-        ])
+        service.list_providers = AsyncMock(
+            return_value=[
+                {
+                    "id": "openai",
+                    "name": "OpenAI",
+                    "is_enabled": True,
+                    "is_healthy": True,
+                    "models_count": 4,
+                },
+                {
+                    "id": "anthropic",
+                    "name": "Anthropic",
+                    "is_enabled": True,
+                    "is_healthy": True,
+                    "models_count": 3,
+                },
+            ]
+        )
         return service
 
     def test_list_providers_response_structure(self, mock_providers_service):
@@ -90,24 +92,26 @@ class TestModelsController:
     def mock_models_service(self):
         """Create mock models service."""
         service = AsyncMock()
-        service.list_models = AsyncMock(return_value=[
-            {
-                "id": "gpt-4",
-                "provider_id": "openai",
-                "name": "GPT-4",
-                "is_enabled": True,
-                "context_window": 8192,
-                "cost_per_1k_tokens": 0.03,
-            },
-            {
-                "id": "claude-3-opus",
-                "provider_id": "anthropic",
-                "name": "Claude 3 Opus",
-                "is_enabled": True,
-                "context_window": 200000,
-                "cost_per_1k_tokens": 0.015,
-            },
-        ])
+        service.list_models = AsyncMock(
+            return_value=[
+                {
+                    "id": "gpt-4",
+                    "provider_id": "openai",
+                    "name": "GPT-4",
+                    "is_enabled": True,
+                    "context_window": 8192,
+                    "cost_per_1k_tokens": 0.03,
+                },
+                {
+                    "id": "claude-3-opus",
+                    "provider_id": "anthropic",
+                    "name": "Claude 3 Opus",
+                    "is_enabled": True,
+                    "context_window": 200000,
+                    "cost_per_1k_tokens": 0.015,
+                },
+            ]
+        )
         return service
 
     def test_list_models_response_structure(self, mock_models_service):
@@ -162,11 +166,13 @@ class TestRankingController:
     def mock_ranking_service(self):
         """Create mock ranking service."""
         service = AsyncMock()
-        service.get_carousel_order = AsyncMock(return_value=[
-            {"model_id": "gpt-4", "position": 1},
-            {"model_id": "claude-3-opus", "position": 2},
-            {"model_id": "claude-3-sonnet", "position": 3},
-        ])
+        service.get_carousel_order = AsyncMock(
+            return_value=[
+                {"model_id": "gpt-4", "position": 1},
+                {"model_id": "claude-3-opus", "position": 2},
+                {"model_id": "claude-3-sonnet", "position": 3},
+            ]
+        )
         return service
 
     def test_get_carousel_order_response(self, mock_ranking_service):

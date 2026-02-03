@@ -25,4 +25,3 @@ class PrivyPolicyDTO:
             rules=list(data.get("rules", []) or []),
             owner_id=data.get("owner_id"),
         )
-

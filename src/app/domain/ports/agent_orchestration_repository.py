@@ -212,7 +212,9 @@ class AgentOrchestrationRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_performance_metrics(self, agent_name: str) -> Optional[AgentPerformanceMetrics]:
+    async def get_performance_metrics(
+        self, agent_name: str
+    ) -> Optional[AgentPerformanceMetrics]:
         """
         Get current performance metrics for agent.
 

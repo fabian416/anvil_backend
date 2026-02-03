@@ -33,13 +33,9 @@ class ApyRate(ValueObject[Decimal]):
     def _validate_range(self) -> None:
         """Validate APY is within valid range (0-100%)."""
         if self.value < Decimal("0"):
-            raise DomainFieldError(
-                f"APY rate cannot be negative: {self.value}%"
-            )
+            raise DomainFieldError(f"APY rate cannot be negative: {self.value}%")
         if self.value > Decimal("100"):
-            raise DomainFieldError(
-                f"APY rate cannot exceed 100%: {self.value}%"
-            )
+            raise DomainFieldError(f"APY rate cannot exceed 100%: {self.value}%")
 
     def _validate_precision(self) -> None:
         """Validate APY has reasonable precision (max 4 decimal places)."""

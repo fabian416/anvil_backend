@@ -48,7 +48,9 @@ class ChangeOwnPasswordHandler:
         user = await self._current_user_service.get_current_user()
 
         # Validate current password
-        if not self._user_service.is_password_valid(user, RawPassword(request.current_password)):
+        if not self._user_service.is_password_valid(
+            user, RawPassword(request.current_password)
+        ):
             raise AuthenticationError("Invalid current password")
 
         # Apply new password
@@ -58,7 +60,9 @@ class ChangeOwnPasswordHandler:
 
         # Invalidate all sessions and create a fresh one
         await self._auth_session_service.invalidate_all_sessions_for_user(user.id_)
-        auth_session, access_token = await self._auth_session_service.create_session(user.id_)
+        auth_session, access_token = await self._auth_session_service.create_session(
+            user.id_
+        )
 
         # Record session row
         await self._session_recorder.add(
@@ -84,5 +88,3 @@ class ChangeOwnPasswordHandler:
                 "expires_in": 900,
             },
         }
-
-

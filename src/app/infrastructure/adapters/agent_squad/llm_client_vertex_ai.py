@@ -44,6 +44,7 @@ class LLMClientVertexAI:
         """
         try:
             import google.genai as genai
+
             self._client = genai.Client(api_key=api_key)
             self._genai = genai
             logger.info("Vertex AI LLM client initialized with Google Genai SDK")
@@ -57,23 +58,23 @@ class LLMClientVertexAI:
     def _resolve_model(self, model: str) -> str:
         """
         Resolve model name, using default if empty or invalid.
-        
+
         For intent classification, we prefer gemini-2.0-flash (fast, cost-effective).
         If model is not a Gemini model, use default (for fallback scenarios).
         """
         # For intent classification, prefer fast Gemini model
         if not model:
             return "gemini-2.0-flash"  # Fast model for classification
-        
+
         # If it's already a Gemini model, use it
         if model.startswith("gemini"):
             return model
-        
+
         # If it's a DeepInfra model name (for fallback), return default
         # The fallback handler will map it correctly
         if model.startswith("meta-llama/"):
             return self._default_model
-        
+
         # Unknown model - use fast Gemini model for classification
         return "gemini-2.0-flash"
 
@@ -92,8 +93,8 @@ class LLMClientVertexAI:
         """
         # Use fast Gemini model for classification (optimized for speed and cost)
         gemini_model = self._resolve_model(model)
-        
-        # If model is not a Gemini model (e.g., DeepInfra model for fallback), 
+
+        # If model is not a Gemini model (e.g., DeepInfra model for fallback),
         # this will be handled by the fallback mechanism
         if not gemini_model.startswith("gemini"):
             # This shouldn't happen, but if it does, use default
@@ -211,7 +212,7 @@ class LLMClientVertexAI:
         prompt_tokens = 0
         completion_tokens = 0
 
-        if hasattr(response, 'usage_metadata'):
+        if hasattr(response, "usage_metadata"):
             prompt_tokens = response.usage_metadata.prompt_token_count or 0
             completion_tokens = response.usage_metadata.candidates_token_count or 0
             tokens_used = prompt_tokens + completion_tokens

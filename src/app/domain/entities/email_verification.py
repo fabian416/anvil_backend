@@ -21,10 +21,11 @@ from app.domain.value_objects.updated_at import UpdatedAt
 class EmailVerification(Entity[EmailVerificationId]):
     """
     EmailVerification entity representing an email verification in the system.
-    
+
     This is an anemic model following DDD principles where behavior
     is handled by domain services rather than the entity itself.
     """
+
     user_id: UserId
     token: VerificationToken
     expires_at: ExpirationTime

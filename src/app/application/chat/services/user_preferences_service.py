@@ -10,7 +10,9 @@ from typing import Optional, List
 from uuid import UUID
 
 from app.domain.entities.chat.user_chat_preferences import UserChatPreferences
-from app.domain.preferences.ports.user_preferences_repository import UserPreferencesRepository
+from app.domain.preferences.ports.user_preferences_repository import (
+    UserPreferencesRepository,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -62,17 +64,25 @@ class UserPreferencesService:
             return await self._update_response_style(
                 preferences, "brief", "I'll keep my responses brief and to the point."
             )
-        elif any(keyword in command_lower for keyword in ["detailed", "verbose", "thorough"]):
+        elif any(
+            keyword in command_lower for keyword in ["detailed", "verbose", "thorough"]
+        ):
             return await self._update_response_style(
-                preferences, "detailed", "I'll provide detailed, comprehensive responses."
+                preferences,
+                "detailed",
+                "I'll provide detailed, comprehensive responses.",
             )
         elif "technical" in command_lower:
             return await self._update_response_style(
-                preferences, "technical", "I'll use technical language and include implementation details."
+                preferences,
+                "technical",
+                "I'll use technical language and include implementation details.",
             )
         elif "executive" in command_lower:
             return await self._update_response_style(
-                preferences, "executive", "I'll provide executive summaries focused on key insights."
+                preferences,
+                "executive",
+                "I'll provide executive summaries focused on key insights.",
             )
 
         # Verbosity level commands
@@ -99,7 +109,9 @@ class UserPreferencesService:
             await self._repository.save(preferences)
             return True, f"Conversation retention set to {days} days."
 
-        elif "analytics opt-out" in command_lower or "disable analytics" in command_lower:
+        elif (
+            "analytics opt-out" in command_lower or "disable analytics" in command_lower
+        ):
             preferences.update_privacy_settings(analytics_opt_in=False)
             await self._repository.save(preferences)
             return True, "Analytics disabled. Your data won't be used for analytics."
@@ -125,8 +137,13 @@ class UserPreferencesService:
             return True, f"Screen reader optimization {status}."
 
         elif "font size" in command_lower:
-            size = "small" if "small" in command_lower else \
-                   "large" if "large" in command_lower else "medium"
+            size = (
+                "small"
+                if "small" in command_lower
+                else "large"
+                if "large" in command_lower
+                else "medium"
+            )
             preferences.update_accessibility_settings(font_size=size)
             await self._repository.save(preferences)
             return True, f"Font size set to {size}."
@@ -196,7 +213,10 @@ class UserPreferencesService:
         if agent_name and query_type:
             preferences.set_agent_preference(query_type, [agent_name])
             await self._repository.save(preferences)
-            return True, f"I'll prefer {agent_name.replace('_', ' ').title()} for {query_type} questions."
+            return (
+                True,
+                f"I'll prefer {agent_name.replace('_', ' ').title()} for {query_type} questions.",
+            )
         else:
             return False, (
                 "Please specify both an agent and query type. Example:\n"
@@ -205,7 +225,7 @@ class UserPreferencesService:
 
     def _extract_number(self, text: str, default: int) -> int:
         """Extract first number from text."""
-        match = re.search(r'\d+', text)
+        match = re.search(r"\d+", text)
         return int(match.group()) if match else default
 
     def _format_preferences_summary(self, preferences: UserChatPreferences) -> str:

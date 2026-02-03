@@ -154,7 +154,14 @@ Reference real-world scams and hacks to illustrate points."""
 AGENT_METADATA = {
     "category": "technical_expert",
     "domain": "security",
-    "tags": ["wallet", "security", "phishing", "hardware-wallet", "seed-phrase", "scams"],
+    "tags": [
+        "wallet",
+        "security",
+        "phishing",
+        "hardware-wallet",
+        "seed-phrase",
+        "scams",
+    ],
     "use_cases": [
         "Wallet setup and security",
         "Phishing scam detection",

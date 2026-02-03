@@ -7,7 +7,9 @@ import time
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
-from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.domain.value_objects.agent_squad.conversation_context import (
+    ConversationContext,
+)
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentResponse
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
@@ -15,11 +17,11 @@ from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 class TaxOptimizerAgent:
     """
     Tax Optimizer Agent implementation.
-    
+
     Implements: AgentGateway
-    
+
     Purpose: Tax-loss harvesting & tax optimization
-    
+
     Capabilities:
     - Tax-loss harvesting opportunities
     - Capital gains calculation (short-term, long-term)
@@ -27,11 +29,11 @@ class TaxOptimizerAgent:
     - Wash sale rule compliance
     - Tax reporting (Form 8949, Schedule D)
     - FIFO/LIFO/HIFO cost basis selection
-    
+
     Model: gemini-2.0-flash (Vertex AI, complex tax reasoning)
     Temperature: 0.2 (factual, precise)
     """
-    
+
     def __init__(
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
@@ -44,12 +46,12 @@ class TaxOptimizerAgent:
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
-    
+
     @property
     def agent_type(self) -> AgentType:
         """Get agent type."""
         return AgentType.TAX_OPTIMIZER
-    
+
     async def execute(
         self,
         conversation_id: ConversationId,
@@ -58,51 +60,55 @@ class TaxOptimizerAgent:
     ) -> AgentResponse:
         """Execute tax optimizer agent - Tax strategies."""
         start_time = time.time()
-        
+
         # TODO: Integrate with user transaction history
         # TODO: Calculate real capital gains
         # TODO: Identify tax-loss harvesting opportunities
-        
+
         messages = [
             {"role": "system", "content": self._get_system_prompt()},
             {"role": "user", "content": message.value},
         ]
-        
+
         response = await self._llm_client.chat(
             messages=messages,
             model=self._model,
             temperature=self._temperature,
             max_tokens=self._max_tokens,
         )
-        
+
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         # Collect sources
         from datetime import datetime, UTC
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_llm_source,
             create_database_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add database source (transaction history)
-        sources.append(create_database_source(
-            citation_text="Your transaction history from Anvil",
-            fetched_at=fetched_at,
-            metadata={"query_type": "transaction_history"},
-        ))
-        
+        sources.append(
+            create_database_source(
+                citation_text="Your transaction history from Anvil",
+                fetched_at=fetched_at,
+                metadata={"query_type": "transaction_history"},
+            )
+        )
+
         # Add LLM source
         model_name = response.get("model", "Unknown")
-        sources.append(create_llm_source(
-            model=model_name,
-            fetched_at=fetched_at,
-        ))
-        
+        sources.append(
+            create_llm_source(
+                model=model_name,
+                fetched_at=fetched_at,
+            )
+        )
+
         # TODO: Add tax calculation API sources when integrated
-        
+
         return AgentResponse(
             content=response["content"],
             agent_type=self.agent_type,
@@ -114,11 +120,11 @@ class TaxOptimizerAgent:
                 "model": response.get("model"),
             },
         )
-    
+
     async def is_available(self) -> bool:
         """Check if agent is available."""
         return True
-    
+
     def _get_system_prompt(self) -> str:
         """Get system prompt for tax optimizer agent."""
         return """You are the Tax Optimizer, Anvil's tax strategy specialist.

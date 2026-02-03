@@ -118,7 +118,7 @@ def example_library_stats():
     print(f"Unique Tags: {stats['unique_tags']}")
     print(f"\nAll Tags: {', '.join(stats['tags'])}")
     print(f"\nAll Agent IDs:")
-    for agent_id in stats['agent_ids']:
+    for agent_id in stats["agent_ids"]:
         print(f"  - {agent_id}")
 
 
@@ -200,7 +200,7 @@ def example_use_case_matching():
     for query, expected_agent_id in use_cases:
         agent = get_agent(expected_agent_id)
         if agent:
-            print(f"\nQuery: \"{query}\"")
+            print(f'\nQuery: "{query}"')
             print(f"→ Matched Agent: {agent.name}")
             print(f"  Expertise: {', '.join(agent.expertise_areas[:3])}...")
 

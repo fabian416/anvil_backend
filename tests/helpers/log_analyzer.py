@@ -101,7 +101,11 @@ class LogAnalyzer:
             enabled: Whether to enable analysis (defaults to ENABLE_LOG_ANALYSIS env var)
         """
         # Check if log analysis is enabled
-        self._enabled = enabled if enabled is not None else os.getenv("ENABLE_LOG_ANALYSIS", "false").lower() == "true"
+        self._enabled = (
+            enabled
+            if enabled is not None
+            else os.getenv("ENABLE_LOG_ANALYSIS", "false").lower() == "true"
+        )
 
         # Only enable on localhost for security
         if self._enabled and not self._is_localhost():
@@ -109,7 +113,9 @@ class LogAnalyzer:
             self._enabled = False
 
         if not self._enabled:
-            logger.info("Log analysis is DISABLED (set ENABLE_LOG_ANALYSIS=true to enable)")
+            logger.info(
+                "Log analysis is DISABLED (set ENABLE_LOG_ANALYSIS=true to enable)"
+            )
             self._client = None
             return
 
@@ -131,7 +137,9 @@ class LogAnalyzer:
         # Set logs directory
         self._logs_dir = Path(logs_dir) if logs_dir else Path("./logs")
         if not self._logs_dir.exists():
-            logger.warning(f"Logs directory not found: {self._logs_dir} - log analysis will be limited")
+            logger.warning(
+                f"Logs directory not found: {self._logs_dir} - log analysis will be limited"
+            )
 
         logger.info(f"Log analyzer initialized with logs_dir={self._logs_dir}")
 
@@ -186,7 +194,9 @@ class LogAnalyzer:
                 relevant_logs=[],
                 suggested_fix="Check if application logs are being written correctly",
                 confidence=0.0,
-                analysis_time_ms=int((datetime.utcnow() - start_time).total_seconds() * 1000),
+                analysis_time_ms=int(
+                    (datetime.utcnow() - start_time).total_seconds() * 1000
+                ),
                 timestamp=datetime.utcnow(),
             )
 
@@ -251,14 +261,12 @@ class LogAnalyzer:
         """Check if running on localhost."""
         # Check common indicators of localhost
         hostname = os.getenv("HOSTNAME", "").lower()
-        is_local = any(
-            [
-                hostname == "localhost",
-                hostname.startswith("ubuntu"),  # Common dev hostname
-                os.path.exists("/.dockerenv") is False,  # Not in Docker
-                os.getenv("APP_ENV", "").lower() in ["local", "dev", "development"],
-            ]
-        )
+        is_local = any([
+            hostname == "localhost",
+            hostname.startswith("ubuntu"),  # Common dev hostname
+            os.path.exists("/.dockerenv") is False,  # Not in Docker
+            os.getenv("APP_ENV", "").lower() in ["local", "dev", "development"],
+        ])
         return is_local
 
     def _extract_logs_in_window(
@@ -396,7 +404,11 @@ class LogAnalyzer:
             return ErrorType.DATABASE_ERROR
         elif "validation" in error_lower or "invalid" in error_lower:
             return ErrorType.VALIDATION_ERROR
-        elif "auth" in error_lower or "unauthorized" in error_lower or "forbidden" in error_lower:
+        elif (
+            "auth" in error_lower
+            or "unauthorized" in error_lower
+            or "forbidden" in error_lower
+        ):
             return ErrorType.AUTHENTICATION_ERROR
         elif "rate limit" in error_lower or "too many requests" in error_lower:
             return ErrorType.RATE_LIMIT_ERROR
@@ -412,7 +424,10 @@ class LogAnalyzer:
     ) -> str:
         """Build prompt for LLM log analysis."""
         # Format logs for prompt
-        logs_str = "\n".join([f"[{log.timestamp.isoformat()}] {log.source.upper()} {log.level}: {log.message}" for log in relevant_logs[-20:]])  # Last 20 logs
+        logs_str = "\n".join([
+            f"[{log.timestamp.isoformat()}] {log.source.upper()} {log.level}: {log.message}"
+            for log in relevant_logs[-20:]
+        ])  # Last 20 logs
 
         return f"""Analyze these application logs to identify the root cause of a test failure:
 

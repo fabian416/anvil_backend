@@ -39,67 +39,57 @@ class XSSGuardMiddleware(BaseHTTPMiddleware):
     # Critical XSS patterns that should be blocked
     DANGER_PATTERNS = [
         # Script tags (various encodings and obfuscations)
-        r'<\s*script[^>]*>.*?</\s*script\s*>',
-        r'<\s*script[^>]*>',
-        r'</\s*script\s*>',
-
+        r"<\s*script[^>]*>.*?</\s*script\s*>",
+        r"<\s*script[^>]*>",
+        r"</\s*script\s*>",
         # Event handlers
         r'on\w+\s*=\s*["\']?[^"\']*["\']?',
-        r'on(?:load|error|click|mouse|key|focus|blur|change|submit|resize|scroll)',
-
+        r"on(?:load|error|click|mouse|key|focus|blur|change|submit|resize|scroll)",
         # JavaScript protocol
-        r'javascript\s*:',
-        r'vbscript\s*:',
-
+        r"javascript\s*:",
+        r"vbscript\s*:",
         # Data URIs with JavaScript
-        r'data:text/html',
-        r'data:.*base64.*script',
-
+        r"data:text/html",
+        r"data:.*base64.*script",
         # SVG-based XSS
-        r'<\s*svg[^>]*>',
-        r'<\s*iframe[^>]*>',
-        r'<\s*embed[^>]*>',
-        r'<\s*object[^>]*>',
-
+        r"<\s*svg[^>]*>",
+        r"<\s*iframe[^>]*>",
+        r"<\s*embed[^>]*>",
+        r"<\s*object[^>]*>",
         # Meta refresh XSS
         r'<\s*meta[^>]*http-equiv\s*=\s*["\']?refresh',
-
         # Link with JavaScript
-        r'<\s*link[^>]*>.*javascript:',
-
+        r"<\s*link[^>]*>.*javascript:",
         # Form action XSS
         r'<\s*form[^>]*action\s*=\s*["\']?javascript:',
-
         # Import statements
-        r'<\s*import[^>]*>',
-
+        r"<\s*import[^>]*>",
         # Expression evaluation
-        r'expression\s*\(',
-        r'eval\s*\(',
-        r'setTimeout\s*\(',
-        r'setInterval\s*\(',
-
+        r"expression\s*\(",
+        r"eval\s*\(",
+        r"setTimeout\s*\(",
+        r"setInterval\s*\(",
         # HTML entities that decode to dangerous characters
-        r'&#x?[0-9a-f]+;',  # Will validate these separately
+        r"&#x?[0-9a-f]+;",  # Will validate these separately
     ]
 
     # Suspicious patterns that should be logged but may not be blocked
     SUSPICIOUS_PATTERNS = [
-        r'<.*?>',  # Any HTML tag
-        r'\\u[0-9a-f]{4}',  # Unicode escapes
-        r'\\x[0-9a-f]{2}',  # Hex escapes
-        r'fromCharCode',
-        r'String\.fromCharCode',
-        r'unescape',
-        r'decodeURI',
-        r'atob',  # Base64 decode
+        r"<.*?>",  # Any HTML tag
+        r"\\u[0-9a-f]{4}",  # Unicode escapes
+        r"\\x[0-9a-f]{2}",  # Hex escapes
+        r"fromCharCode",
+        r"String\.fromCharCode",
+        r"unescape",
+        r"decodeURI",
+        r"atob",  # Base64 decode
     ]
 
     # Paths to exclude from XSS checking (e.g., admin endpoints that handle raw HTML)
     EXCLUDED_PATHS = [
-        r'/api/admin/.*',  # Admin endpoints may need to handle HTML
-        r'/health',  # Health checks
-        r'/metrics',  # Metrics endpoints
+        r"/api/admin/.*",  # Admin endpoints may need to handle HTML
+        r"/health",  # Health checks
+        r"/metrics",  # Metrics endpoints
     ]
 
     def __init__(
@@ -108,7 +98,7 @@ class XSSGuardMiddleware(BaseHTTPMiddleware):
         enabled: bool = True,
         block_on_detection: bool = True,
         log_suspicious: bool = True,
-        excluded_paths: Optional[List[str]] = None
+        excluded_paths: Optional[List[str]] = None,
     ):
         """
         Initialize XSS Guard Middleware.
@@ -129,8 +119,12 @@ class XSSGuardMiddleware(BaseHTTPMiddleware):
             self.EXCLUDED_PATHS.extend(excluded_paths)
 
         # Compile patterns for performance
-        self.danger_regexes = [re.compile(pattern, re.IGNORECASE) for pattern in self.DANGER_PATTERNS]
-        self.suspicious_regexes = [re.compile(pattern, re.IGNORECASE) for pattern in self.SUSPICIOUS_PATTERNS]
+        self.danger_regexes = [
+            re.compile(pattern, re.IGNORECASE) for pattern in self.DANGER_PATTERNS
+        ]
+        self.suspicious_regexes = [
+            re.compile(pattern, re.IGNORECASE) for pattern in self.SUSPICIOUS_PATTERNS
+        ]
         self.excluded_regexes = [re.compile(pattern) for pattern in self.EXCLUDED_PATHS]
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
@@ -151,13 +145,12 @@ class XSSGuardMiddleware(BaseHTTPMiddleware):
                     "path": request.url.path,
                     "method": request.method,
                     "query": str(request.query_params),
-                    "detected_patterns": xss_found_in_query
-                }
+                    "detected_patterns": xss_found_in_query,
+                },
             )
             if self.block_on_detection:
                 return self._create_block_response(
-                    "XSS attack detected in query parameters",
-                    xss_found_in_query
+                    "XSS attack detected in query parameters", xss_found_in_query
                 )
 
         # Check request body for POST/PUT/PATCH
@@ -169,13 +162,12 @@ class XSSGuardMiddleware(BaseHTTPMiddleware):
                     extra={
                         "path": request.url.path,
                         "method": request.method,
-                        "detected_patterns": xss_found_in_body
-                    }
+                        "detected_patterns": xss_found_in_body,
+                    },
                 )
                 if self.block_on_detection:
                     return self._create_block_response(
-                        "XSS attack detected in request body",
-                        xss_found_in_body
+                        "XSS attack detected in request body", xss_found_in_body
                     )
 
         # Check headers
@@ -186,13 +178,12 @@ class XSSGuardMiddleware(BaseHTTPMiddleware):
                 extra={
                     "path": request.url.path,
                     "method": request.method,
-                    "detected_patterns": xss_found_in_headers
-                }
+                    "detected_patterns": xss_found_in_headers,
+                },
             )
             if self.block_on_detection:
                 return self._create_block_response(
-                    "XSS attack detected in headers",
-                    xss_found_in_headers
+                    "XSS attack detected in headers", xss_found_in_headers
                 )
 
         # Process request
@@ -202,7 +193,9 @@ class XSSGuardMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; object-src 'none'"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self'; object-src 'none'"
+        )
 
         return response
 
@@ -229,7 +222,7 @@ class XSSGuardMiddleware(BaseHTTPMiddleware):
                     if regex.search(decoded_value):
                         logger.info(
                             f"Suspicious pattern in query param {key}",
-                            extra={"pattern": self.SUSPICIOUS_PATTERNS[pattern_idx]}
+                            extra={"pattern": self.SUSPICIOUS_PATTERNS[pattern_idx]},
                         )
 
         return detected
@@ -277,7 +270,9 @@ class XSSGuardMiddleware(BaseHTTPMiddleware):
             if header_value:
                 for pattern_idx, regex in enumerate(self.danger_regexes):
                     if regex.search(header_value):
-                        detected.append(f"header.{header_name}: {self.DANGER_PATTERNS[pattern_idx]}")
+                        detected.append(
+                            f"header.{header_name}: {self.DANGER_PATTERNS[pattern_idx]}"
+                        )
 
         return detected
 
@@ -317,11 +312,15 @@ class XSSGuardMiddleware(BaseHTTPMiddleware):
             unescaped = html.unescape(decoded_text)
             for pattern_idx, regex in enumerate(self.danger_regexes):
                 if regex.search(unescaped):
-                    detected.append(f"{location}: HTML entity encoding of {self.DANGER_PATTERNS[pattern_idx]}")
+                    detected.append(
+                        f"{location}: HTML entity encoding of {self.DANGER_PATTERNS[pattern_idx]}"
+                    )
 
         return detected
 
-    def _create_block_response(self, message: str, detected_patterns: List[str]) -> JSONResponse:
+    def _create_block_response(
+        self, message: str, detected_patterns: List[str]
+    ) -> JSONResponse:
         """Create a blocked response."""
         return JSONResponse(
             status_code=400,
@@ -331,13 +330,13 @@ class XSSGuardMiddleware(BaseHTTPMiddleware):
                 "details": "Request blocked due to potential XSS attack",
                 "security_info": {
                     "detected_patterns": len(detected_patterns),
-                    "protection": "Helios XSS Guard"
-                }
+                    "protection": "Helios XSS Guard",
+                },
             },
             headers={
                 "X-XSS-Protection": "1; mode=block",
-                "X-Content-Type-Options": "nosniff"
-            }
+                "X-Content-Type-Options": "nosniff",
+            },
         )
 
 

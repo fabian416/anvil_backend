@@ -23,7 +23,9 @@ from tests.helpers.test_data_loader import (
 class TestULTRAIntentClassification:
     """Component tests for ULTRA intent classification logic."""
 
-    @pytest.mark.parametrize("test_case", get_ultra_test_cases(), ids=lambda tc: tc["id"])
+    @pytest.mark.parametrize(
+        "test_case", get_ultra_test_cases(), ids=lambda tc: tc["id"]
+    )
     async def test_classify_ultra_intent(
         self,
         mock_intent_classifier,
@@ -37,7 +39,9 @@ class TestULTRAIntentClassification:
         """
         # Arrange: Configure mock classifier to return expected intent
         expected_intent = test_case["expected_routing"]["intent"]
-        expected_confidence_min = test_case["expected_routing"].get("confidence_min", 0.5)
+        expected_confidence_min = test_case["expected_routing"].get(
+            "confidence_min", 0.5
+        )
 
         # Get IntentResult class from fixture
         IntentResult = mock_intent_classifier.IntentResult
@@ -147,9 +151,7 @@ class TestULTRAHandlerExecution:
 
         # Assert: Verify enrichment data
         enrichment = result["enrichment"]
-        assert "ultra_tool" in enrichment, (
-            "ULTRA enrichment must include ultra_tool"
-        )
+        assert "ultra_tool" in enrichment, "ULTRA enrichment must include ultra_tool"
         assert "capital" in enrichment or "opportunities" in enrichment, (
             "Arbitrage enrichment must include capital or opportunities"
         )
@@ -233,9 +235,9 @@ class TestULTRAHandlerExecution:
         # Assert: Verify flash loan enrichment
         enrichment = result["enrichment"]
         assert "ultra_tool" in enrichment
-        assert "token_symbol" in enrichment or "protocol_recommendations" in enrichment, (
-            "Flash loan enrichment must include token_symbol or protocol_recommendations"
-        )
+        assert (
+            "token_symbol" in enrichment or "protocol_recommendations" in enrichment
+        ), "Flash loan enrichment must include token_symbol or protocol_recommendations"
 
     async def test_ultra_mev_protection_execution(
         self,
@@ -256,7 +258,11 @@ class TestULTRAHandlerExecution:
                 "protection_method": "flashbots_rpc",
                 "recommendations": [
                     {"method": "flashbots", "priority_fee": 2.5, "success_rate": 0.95},
-                    {"method": "private_relay", "priority_fee": 3.0, "success_rate": 0.98},
+                    {
+                        "method": "private_relay",
+                        "priority_fee": 3.0,
+                        "success_rate": 0.98,
+                    },
                 ],
             },
         }
@@ -283,7 +289,9 @@ class TestULTRAHandlerExecution:
 class TestULTRAEnrichmentValidation:
     """Component tests for ULTRA enrichment data structure."""
 
-    @pytest.mark.parametrize("test_case", get_ultra_test_cases(), ids=lambda tc: tc["id"])
+    @pytest.mark.parametrize(
+        "test_case", get_ultra_test_cases(), ids=lambda tc: tc["id"]
+    )
     async def test_ultra_enrichment_structure(
         self,
         mock_ultra_handler,
@@ -305,9 +313,7 @@ class TestULTRAEnrichmentValidation:
                 "ultra_tool": "arbitrage_scanner",
                 "capital": 10000,
                 "arb_type": "cross_dex",
-                "opportunities": [
-                    {"dex_pair": "Uni-Sushi", "profit_usd": 100.0}
-                ],
+                "opportunities": [{"dex_pair": "Uni-Sushi", "profit_usd": 100.0}],
             }
         elif subcategory == "auto_executor":
             enrichment = {
@@ -320,18 +326,14 @@ class TestULTRAEnrichmentValidation:
                 "ultra_tool": "flash_loan_analyzer",
                 "token_symbol": "DAI",
                 "amount": 1000000,
-                "protocol_recommendations": [
-                    {"protocol": "Aave", "fee": 0.09}
-                ],
+                "protocol_recommendations": [{"protocol": "Aave", "fee": 0.09}],
             }
         elif subcategory == "mev_protection":
             enrichment = {
                 "ultra_tool": "mev_protector",
                 "opportunity_id": "arb_001",
                 "protection_method": "flashbots",
-                "recommendations": [
-                    {"method": "flashbots", "priority_fee": 2.5}
-                ],
+                "recommendations": [{"method": "flashbots", "priority_fee": 2.5}],
             }
         else:
             enrichment = {}
@@ -357,7 +359,9 @@ class TestULTRAEnrichmentValidation:
 
         # Verify subcategory-specific enrichment
         if subcategory == "arbitrage":
-            assert "capital" in result_enrichment or "opportunities" in result_enrichment, (
+            assert (
+                "capital" in result_enrichment or "opportunities" in result_enrichment
+            ), (
                 f"Arbitrage enrichment missing capital or opportunities for {test_case['id']}"
             )
 
@@ -367,11 +371,17 @@ class TestULTRAEnrichmentValidation:
             )
 
         elif subcategory == "flash_loans":
-            assert "token_symbol" in result_enrichment or "protocol_recommendations" in result_enrichment, (
+            assert (
+                "token_symbol" in result_enrichment
+                or "protocol_recommendations" in result_enrichment
+            ), (
                 f"Flash loan enrichment missing token_symbol or protocol_recommendations for {test_case['id']}"
             )
 
         elif subcategory == "mev_protection":
-            assert "protection_method" in result_enrichment or "recommendations" in result_enrichment, (
+            assert (
+                "protection_method" in result_enrichment
+                or "recommendations" in result_enrichment
+            ), (
                 f"MEV protection enrichment missing protection_method or recommendations for {test_case['id']}"
             )

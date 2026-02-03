@@ -10,20 +10,20 @@ from app.infrastructure.agents.base_defi_agent import BaseDeFiAgent
 class SwapAgent(BaseDeFiAgent):
     """
     Specialized agent for DeFi token swaps.
-    
+
     Capabilities:
     - Quote swap prices
     - Execute token swaps via DEX aggregators (1inch, 0x)
     - Provide swap recommendations
     - Explain swap mechanics
     """
-    
+
     def __init__(self, model: str = "gpt-4-turbo"):
         """Initialize SwapAgent."""
-        
+
         name = "SwapAgent"
         description = "Specialized agent for DeFi token swap operations"
-        
+
         instructions = [
             "You are a DeFi swap specialist that helps users exchange tokens.",
             "Your primary role is to facilitate token swaps via DEX aggregators like 1inch and 0x.",
@@ -54,23 +54,23 @@ class SwapAgent(BaseDeFiAgent):
             "- Suggest splitting large orders if needed",
             "- Never execute swaps without explicit user confirmation",
         ]
-        
+
         super().__init__(
             name=name,
             description=description,
             instructions=instructions,
             model=model,
-            tools=self.get_tools()
+            tools=self.get_tools(),
         )
-    
+
     def get_intent_types(self) -> List[str]:
         """Get intent types handled by SwapAgent."""
         return ["trade_swap"]
-    
+
     def get_tools(self) -> List[Any]:
         """
         Get tools for SwapAgent.
-        
+
         Phase 2 implementation with real 1inch integration.
         """
         # Import tools here to avoid circular imports
@@ -84,7 +84,7 @@ class SwapAgent(BaseDeFiAgent):
             estimate_price_impact_tool,
             suggest_optimal_swap_time_tool,
         )
-        
+
         # In Phase 2, these will be actual callable tools
         # For now, we define tool metadata
         tools = [
@@ -145,41 +145,37 @@ class SwapAgent(BaseDeFiAgent):
                 "function": suggest_optimal_swap_time_tool,
             },
         ]
-        
+
         return tools
-    
-    async def run(
-        self,
-        message: str,
-        context: Optional[Dict[str, Any]] = None
-    ) -> str:
+
+    async def run(self, message: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
         Process swap-related messages.
-        
+
         Args:
             message: User message about swapping
             context: Optional conversation context
-        
+
         Returns:
             Agent response with swap guidance/execution
         """
         # Add swap-specific context
         enhanced_context = context or {}
         enhanced_context["agent_type"] = "swap"
-        
+
         # Call parent run method
         response = await super().run(message, enhanced_context)
-        
+
         return response
 
 
 def create_swap_agent(model: str = "gpt-4-turbo") -> SwapAgent:
     """
     Factory function to create a SwapAgent.
-    
+
     Args:
         model: LLM model to use
-    
+
     Returns:
         SwapAgent instance
     """

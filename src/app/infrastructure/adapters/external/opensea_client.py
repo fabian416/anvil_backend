@@ -14,6 +14,7 @@ import httpx
 
 class Chain(str, Enum):
     """Supported blockchain networks."""
+
     ETHEREUM = "ethereum"
     POLYGON = "polygon"
     ARBITRUM = "arbitrum"
@@ -24,6 +25,7 @@ class Chain(str, Enum):
 @dataclass
 class NFTTrait:
     """NFT trait/attribute."""
+
     trait_type: str
     value: str
     display_type: Optional[str] = None
@@ -33,6 +35,7 @@ class NFTTrait:
 @dataclass
 class NFTAsset:
     """NFT asset from API."""
+
     identifier: str
     collection: str
     contract: str
@@ -56,6 +59,7 @@ class NFTAsset:
 @dataclass
 class NFTCollection:
     """NFT collection from API."""
+
     collection: str  # Collection identifier
     name: str
     slug: str = ""  # Collection slug for URL
@@ -84,6 +88,7 @@ class NFTCollection:
 @dataclass
 class CollectionStats:
     """Collection statistics from API."""
+
     total_supply: int
     num_owners: int
     slug: str = ""  # Collection slug identifier
@@ -111,6 +116,7 @@ class CollectionStats:
 @dataclass
 class NFTListing:
     """NFT listing from API."""
+
     order_hash: str
     chain: str
     protocol_address: str
@@ -127,10 +133,10 @@ class NFTListing:
 class OpenSeaClient:
     """
     OpenSea API client.
-    
+
     Provides access to NFT collections, assets, listings, and statistics.
     """
-    
+
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -143,7 +149,7 @@ class OpenSeaClient:
         if api_key:
             headers["X-API-KEY"] = api_key
         self.client = httpx.AsyncClient(timeout=timeout, headers=headers)
-    
+
     async def get_nfts_by_owner(
         self,
         owner_address: str,
@@ -152,14 +158,14 @@ class OpenSeaClient:
     ) -> List[NFTAsset]:
         """Get NFTs owned by an address."""
         return []
-    
+
     async def get_collection(self, collection_slug: str) -> NFTCollection:
         """Get collection by slug."""
         return NFTCollection(
             collection=collection_slug,
             name=collection_slug.replace("-", " ").title(),
         )
-    
+
     async def get_collection_stats(self, collection_slug: str) -> CollectionStats:
         """Get collection statistics."""
         return CollectionStats(
@@ -167,7 +173,7 @@ class OpenSeaClient:
             num_owners=5000,
             floor_price=Decimal("0.1"),
         )
-    
+
     async def get_nft(
         self,
         collection_slug: str,
@@ -181,7 +187,7 @@ class OpenSeaClient:
             token_standard="ERC721",
             name=f"{collection_slug} #{token_id}",
         )
-    
+
     async def get_listings(
         self,
         collection_slug: str,
@@ -189,14 +195,14 @@ class OpenSeaClient:
     ) -> List[NFTListing]:
         """Get active listings for a collection."""
         return []
-    
+
     async def get_floor_price(
         self,
         collection_slug: str,
     ) -> Optional[Decimal]:
         """Get floor price for a collection."""
         return Decimal("0.1")
-    
+
     async def close(self):
         """Close the HTTP client."""
         await self.client.aclose()

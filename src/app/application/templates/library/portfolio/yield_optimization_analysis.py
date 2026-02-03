@@ -14,7 +14,9 @@ from app.domain.entities.chat.conversation_template import (
 )
 
 
-def create_yield_optimization_analysis_template(created_by: UUID) -> ConversationTemplate:
+def create_yield_optimization_analysis_template(
+    created_by: UUID,
+) -> ConversationTemplate:
     """
     Create yield optimization analysis template.
 
@@ -47,7 +49,12 @@ def create_yield_optimization_analysis_template(created_by: UUID) -> Conversatio
             depends_on=[],
             parallel_execution=False,
             timeout_seconds=30,
-            outputs=["current_yield_positions", "total_annual_yield", "idle_assets", "avg_portfolio_yield"],
+            outputs=[
+                "current_yield_positions",
+                "total_annual_yield",
+                "idle_assets",
+                "avg_portfolio_yield",
+            ],
         ),
         AgentStep(
             agent_name="@defi-specialist",
@@ -108,7 +115,11 @@ def create_yield_optimization_analysis_template(created_by: UUID) -> Conversatio
             depends_on=[3],
             parallel_execution=False,
             timeout_seconds=30,
-            outputs=["optimal_allocation", "expected_yield_increase", "allocation_table"],
+            outputs=[
+                "optimal_allocation",
+                "expected_yield_increase",
+                "allocation_table",
+            ],
         ),
         AgentStep(
             agent_name="@project-manager",

@@ -32,9 +32,7 @@ def map_lending_health_checks_table() -> None:
             sa.Index("idx_lending_health_checks_user_id", "user_id"),
             sa.Index("idx_lending_health_checks_checked_at", "checked_at"),
             sa.Index("idx_lending_health_checks_health_level", "health_factor_level"),
-            sa.Index(
-                "idx_lending_health_checks_user_protocol", "user_id", "protocol"
-            ),
+            sa.Index("idx_lending_health_checks_user_protocol", "user_id", "protocol"),
             {"extend_existing": True},
         )
 
@@ -44,9 +42,7 @@ def map_lending_health_checks_table() -> None:
             server_default=sa.text("gen_random_uuid()"),
             default=uuid.uuid4,
         )
-        user_id = mapped_column(
-            UUID(as_uuid=True), nullable=False, index=True
-        )
+        user_id = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
         protocol = mapped_column(String(20), nullable=False)
         chain = mapped_column(String(50), nullable=False)
         health_factor = mapped_column(Numeric(10, 2), nullable=False)

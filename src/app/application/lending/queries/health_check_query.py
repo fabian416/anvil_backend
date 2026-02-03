@@ -49,7 +49,14 @@ class HealthCheckQuery:
             )
 
         # Validate chain
-        supported_chains = {"ethereum", "base", "arbitrum", "polygon", "optimism", "avalanche"}
+        supported_chains = {
+            "ethereum",
+            "base",
+            "arbitrum",
+            "polygon",
+            "optimism",
+            "avalanche",
+        }
         if self.chain.lower() not in supported_chains:
             raise ValueError(
                 f"Unsupported chain: {self.chain}. Supported: {supported_chains}"
@@ -155,7 +162,9 @@ class HealthCheckResult:
         """
         return {
             "health_factor": {
-                "value": str(self.current_hf) if self.current_hf != Decimal("inf") else "infinity",
+                "value": str(self.current_hf)
+                if self.current_hf != Decimal("inf")
+                else "infinity",
                 "level": self.level,
                 "emoji": self.emoji,
                 "color": self.color,
@@ -167,7 +176,9 @@ class HealthCheckResult:
                 "total_debt_usd": str(self.total_debt_usd),
                 "available_to_borrow_usd": str(self.available_to_borrow_usd),
                 "liquidation_threshold": str(self.liquidation_threshold),
-                "liquidation_price": str(self.liquidation_price) if self.liquidation_price else None,
+                "liquidation_price": str(self.liquidation_price)
+                if self.liquidation_price
+                else None,
             },
             "recommendations": self.recommendations,
             "protocol": self.protocol,

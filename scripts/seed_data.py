@@ -1,4 +1,5 @@
 """Seed initial data for production deployment."""
+
 import asyncio
 import sys
 from pathlib import Path
@@ -14,22 +15,22 @@ from app.setup.ioc.provider_registry import get_providers
 async def seed_distillation_config():
     """Seed default distillation configuration."""
     print("🌱 Seeding distillation configuration...")
-    
+
     from app.infrastructure.persistence_sqla.repositories.distillation_config_repository import (
         DistillationConfigRepositorySqla,
     )
     from app.domain.value_objects.distillation import DistillationConfig
-    
+
     settings = load_settings()
     container = create_async_ioc_container(
         providers=get_providers(),
         settings=settings,
     )
-    
+
     try:
         async with container() as request_container:
             config_repo = await request_container.get(DistillationConfigRepositorySqla)
-            
+
             # Try to get existing config
             try:
                 existing_config = await config_repo.get_config()
@@ -38,7 +39,7 @@ async def seed_distillation_config():
             except:
                 # Config doesn't exist, create it
                 pass
-            
+
             # Create default config
             default_config = DistillationConfig(
                 enabled=True,
@@ -52,10 +53,10 @@ async def seed_distillation_config():
                 semantic_cache_ttl_hours=48,
                 static_response_ttl_hours=168,  # 1 week
             )
-            
+
             await config_repo.update_config(default_config)
             print("  ✅ Created default distillation configuration")
-            
+
     finally:
         await container.close()
 
@@ -63,7 +64,7 @@ async def seed_distillation_config():
 async def seed_static_responses():
     """Seed default static response templates."""
     print("🌱 Seeding static response templates...")
-    
+
     from app.infrastructure.persistence_sqla.repositories.distillation_static_repository import (
         DistillationStaticRepositorySqla,
     )
@@ -71,13 +72,13 @@ async def seed_static_responses():
     from app.domain.value_objects.distillation import Intent
     from uuid import uuid4
     from datetime import datetime
-    
+
     settings = load_settings()
     container = create_async_ioc_container(
         providers=get_providers(),
         settings=settings,
     )
-    
+
     # Define default static responses
     default_responses = [
         {
@@ -102,17 +103,19 @@ async def seed_static_responses():
             "priority": 1,
         },
     ]
-    
+
     try:
         async with container() as request_container:
             static_repo = await request_container.get(DistillationStaticRepositorySqla)
-            
+
             # Check if responses already exist
             existing = await static_repo.list_responses()
             if existing:
-                print(f"  ✅ {len(existing)} static responses already exist, skipping...")
+                print(
+                    f"  ✅ {len(existing)} static responses already exist, skipping..."
+                )
                 return
-            
+
             # Create default responses
             for response_data in default_responses:
                 response = StaticResponse(
@@ -129,9 +132,9 @@ async def seed_static_responses():
                     updated_at=datetime.utcnow(),
                 )
                 await static_repo.add_response(response)
-            
+
             print(f"  ✅ Created {len(default_responses)} static response templates")
-            
+
     finally:
         await container.close()
 
@@ -139,26 +142,28 @@ async def seed_static_responses():
 async def verify_projects():
     """Verify that default projects exist (created by migration)."""
     print("🔍 Verifying default projects...")
-    
+
     from app.infrastructure.persistence_sqla.repositories.project_repository import (
         ProjectRepositorySqla,
     )
-    
+
     settings = load_settings()
     container = create_async_ioc_container(
         providers=get_providers(),
         settings=settings,
     )
-    
+
     try:
         async with container() as request_container:
             project_repo = await request_container.get(ProjectRepositorySqla)
-            
+
             # List all projects
             projects = await project_repo.list_projects(limit=100)
-            
+
             if not projects:
-                print("  ⚠️  No projects found! Run migration 20251201_002_add_projects_system.py")
+                print(
+                    "  ⚠️  No projects found! Run migration 20251201_002_add_projects_system.py"
+                )
                 print("      Command: alembic upgrade head")
             else:
                 print(f"  ✅ Found {len(projects)} projects:")
@@ -166,7 +171,7 @@ async def verify_projects():
                     print(f"      - {project.name} ({project.slug}) [{project.status}]")
                 if len(projects) > 5:
                     print(f"      ... and {len(projects) - 5} more")
-            
+
     finally:
         await container.close()
 
@@ -174,25 +179,26 @@ async def verify_projects():
 async def main():
     """Run all seed operations."""
     print("\n🚀 Starting seed data script...\n")
-    
+
     try:
         # Seed distillation configuration
         await seed_distillation_config()
         print()
-        
+
         # Seed static responses
         await seed_static_responses()
         print()
-        
+
         # Verify projects
         await verify_projects()
         print()
-        
+
         print("✅ Seed data complete!\n")
-        
+
     except Exception as e:
         print(f"\n❌ Error during seeding: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -203,9 +209,9 @@ if __name__ == "__main__":
 ║           Anvil Backend - Seed Data Script              ║
 ╚══════════════════════════════════════════════════════════╝
     """)
-    
+
     asyncio.run(main())
-    
+
     print("""
 ╔══════════════════════════════════════════════════════════╗
 ║                    Next Steps:                           ║

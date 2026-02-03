@@ -50,8 +50,12 @@ class CancelSubscriptionHandler:
                 pass
 
         # Update statuses
-        await self._subs_user.update_status(id_=int(subs_user["id"]), status="cancelled")
-        payments = await self._payments.list_by_subscription_user(subscription_user_id=int(subs_user["id"]))
+        await self._subs_user.update_status(
+            id_=int(subs_user["id"]), status="cancelled"
+        )
+        payments = await self._payments.list_by_subscription_user(
+            subscription_user_id=int(subs_user["id"])
+        )
         for p in payments:
             await self._payments.update_status(id_=int(p["id"]), status="cancelled")
         await self._tx.commit()
@@ -62,5 +66,3 @@ class CancelSubscriptionHandler:
             "subscription_id": int(subs_user["id"]),
             "cancelled_payments": len(payments),
         }
-
-

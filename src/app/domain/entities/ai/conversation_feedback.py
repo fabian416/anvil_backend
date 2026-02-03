@@ -1,6 +1,7 @@
 """
 Conversation Feedback entity.
 """
+
 from dataclasses import dataclass
 from typing import Optional
 from datetime import datetime
@@ -12,9 +13,11 @@ from app.domain.entities.ai.llm_conversation import LLMConversationId
 from app.domain.enums.ai.feedback_type import FeedbackType
 from app.domain.value_objects.created_at import CreatedAt
 
+
 @dataclass(frozen=True, repr=False)
 class ConversationFeedbackId(ValueObject):
     value: int
+
 
 @dataclass(eq=False, kw_only=True)
 class ConversationFeedback(Entity[ConversationFeedbackId]):

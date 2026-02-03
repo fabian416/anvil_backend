@@ -19,12 +19,14 @@ class TestExportWalletController:
     def mock_export_wallet_cmd(self):
         """Create mock ExportWallet command."""
         cmd = AsyncMock()
-        cmd.execute = AsyncMock(return_value=MagicMock(
-            wallet_id="g1644aqvat8qxkfqsfzvpuq0",
-            address="0x19BFe2684Aedcbd57454bA80440C24a412CE04C7",
-            private_key="0x1234567890abcdef...",
-            chain_type="ethereum",
-        ))
+        cmd.execute = AsyncMock(
+            return_value=MagicMock(
+                wallet_id="g1644aqvat8qxkfqsfzvpuq0",
+                address="0x19BFe2684Aedcbd57454bA80440C24a412CE04C7",
+                private_key="0x1234567890abcdef...",
+                chain_type="ethereum",
+            )
+        )
         return cmd
 
     def test_export_wallet_request_structure(self):
@@ -88,7 +90,7 @@ class TestExportWalletController:
         """Test wallet address format validation."""
         # Ethereum addresses should start with 0x
         valid_address = "0x19BFe2684Aedcbd57454bA80440C24a412CE04C7"
-        
+
         assert valid_address.startswith("0x")
         assert len(valid_address) == 42  # 0x + 40 hex chars
 
@@ -101,7 +103,7 @@ class TestWalletSecurityConsiderations:
         # This is a design principle - verify via code review
         # In production, private keys should never be logged
         sensitive_data = ["private_key", "secret", "password"]
-        
+
         # These should be excluded from logging
         for field in sensitive_data:
             assert field in sensitive_data  # Placeholder test

@@ -25,8 +25,12 @@ from app.infrastructure.auth.session.id_generator_str import StrAuthSessionIdGen
 from app.infrastructure.auth.session.timer_utc import UtcAuthSessionTimer
 from app.infrastructure.auth.refresh_token.generator import RefreshTokenGenerator
 from app.infrastructure.auth.adapters.data_mapper_sqla import SqlaAuthSessionDataMapper
-from app.infrastructure.auth.adapters.transaction_manager_sqla import SqlaAuthSessionTransactionManager
-from app.presentation.http.auth.access_token_processor_jwt import JwtAccessTokenProcessor
+from app.infrastructure.auth.adapters.transaction_manager_sqla import (
+    SqlaAuthSessionTransactionManager,
+)
+from app.presentation.http.auth.access_token_processor_jwt import (
+    JwtAccessTokenProcessor,
+)
 from app.infrastructure.auth.session.model import AuthSession
 from app.domain.value_objects.user_id import UserId
 from app.setup.config.security import SecuritySettings
@@ -36,33 +40,35 @@ async def get_or_create_token(email: str) -> str | None:
     """Get or create access token for user."""
     settings = load_settings()
     database_url = settings.postgres.dsn
-    
+
     map_tables()
-    
+
     engine = create_async_engine(database_url, echo=False)
-    async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+    async_session_maker = async_sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
+
     async with async_session_maker() as session:
         users_table = mapping_registry.metadata.tables.get("users")
         sessions_table = mapping_registry.metadata.tables.get("sessions")
-        
+
         if users_table is None or sessions_table is None:
             await engine.dispose()
             return None
-        
+
         # Find user
         stmt = select(users_table.c.id).where(users_table.c.email == email)
         result = await session.execute(stmt)
         user_row = result.first()
-        
+
         if not user_row:
             print(f"❌ User {email} not found")
             await engine.dispose()
             return None
-        
+
         user_id = user_row.id
         print(f"✓ Found user: {email} (ID: {user_id})")
-        
+
         # Try to get existing token
         stmt = (
             select(sessions_table.c.access_token)
@@ -72,54 +78,55 @@ async def get_or_create_token(email: str) -> str | None:
             .order_by(sessions_table.c.expires_at.desc())
             .limit(1)
         )
-        
+
         result = await session.execute(stmt)
         token_row = result.first()
-        
+
         if token_row:
             token = token_row.access_token
             print(f"✓ Found existing token")
             await engine.dispose()
             return token
-        
+
         # Create new session
         print("⚠️  Creating new session...")
-        
+
         # Get security settings from loaded config
         settings = load_settings()
         security_settings = settings.security
-        
+
         jwt_processor = JwtAccessTokenProcessor(
             secret=security_settings.auth.jwt_secret,
             algorithm=security_settings.auth.jwt_algorithm,
         )
-        
+
         session_id_gen = StrAuthSessionIdGenerator()
         session_timer = UtcAuthSessionTimer(
             auth_session_ttl_min=security_settings.auth.session_ttl_min,
             auth_session_refresh_threshold=security_settings.auth.session_refresh_threshold,
         )
         refresh_gen = RefreshTokenGenerator()
-        
+
         session_id = session_id_gen()
         expiration = session_timer.auth_session_expiration  # Property, not method
         refresh_token = refresh_gen()
-        
+
         auth_session = AuthSession(
             id_=session_id,
             user_id=UserId(value=user_id),
             expiration=expiration,
             refresh_token=refresh_token,
         )
-        
+
         access_token = jwt_processor.encode(auth_session)
-        
+
         # Save to auth_sessions
         auth_mapper = SqlaAuthSessionDataMapper(session)
         auth_mapper.add(auth_session)
-        
+
         # Save to sessions table
         from datetime import datetime
+
         insert_stmt = sessions_table.insert().values(
             user_id=user_id,
             access_token=access_token,
@@ -132,7 +139,7 @@ async def get_or_create_token(email: str) -> str | None:
         )
         await session.execute(insert_stmt)
         await session.commit()
-        
+
         print(f"✓ Created new token")
         await engine.dispose()
         return access_token
@@ -410,7 +417,7 @@ async def test_user_shortcut_examples_have_meaningful_content(
         )
         pytest.fail(f"Content quality issues:\\n{{error_msg}}")
 '''
-    
+
     # Replace placeholder with actual token
     return template.replace("{ACCESS_TOKEN}", token)
 
@@ -419,22 +426,22 @@ async def main():
     """Main entry point."""
     email = "ops@anvilcrypto.com"
     print(f"Getting token for: {email}")
-    
+
     token = await get_or_create_token(email)
-    
+
     if not token:
         print("❌ Could not get or create token")
         sys.exit(1)
-    
+
     print(f"✓ Token obtained: {token[:30]}...")
-    
+
     # Generate test file
     test_content = generate_test_file(token)
     test_file_path = "tests/integration/user/test_user_shortcuts_examples.py"
-    
+
     with open(test_file_path, "w") as f:
         f.write(test_content)
-    
+
     print(f"\n✅ Generated test file: {test_file_path}")
     print(f"   Token embedded in file")
     print(f"\nRun tests with:")

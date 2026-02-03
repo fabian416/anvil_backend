@@ -135,7 +135,7 @@ class OneInchSwapExecutor(ISwapExecutor):
 
             # Convert amount to smallest units (wei)
             token_in_decimals = self.TOKEN_DECIMALS.get(token_in.upper(), 18)
-            amount_in_wei = int(amount_in * Decimal(10 ** token_in_decimals))
+            amount_in_wei = int(amount_in * Decimal(10**token_in_decimals))
 
             # Call 1inch MCP quote tool
             quote_response = await self._mcp_client.call_tool(
@@ -153,7 +153,7 @@ class OneInchSwapExecutor(ISwapExecutor):
             # Parse response
             token_out_decimals = self.TOKEN_DECIMALS.get(token_out.upper(), 18)
             amount_out = Decimal(quote_response["dst_amount"]) / Decimal(
-                10 ** token_out_decimals
+                10**token_out_decimals
             )
 
             # Calculate rate
@@ -232,8 +232,8 @@ class OneInchSwapExecutor(ISwapExecutor):
             token_in_decimals = self.TOKEN_DECIMALS.get(token_in.upper(), 18)
             token_out_decimals = self.TOKEN_DECIMALS.get(token_out.upper(), 18)
 
-            amount_in_wei = int(amount_in * Decimal(10 ** token_in_decimals))
-            min_amount_out_wei = int(min_amount_out * Decimal(10 ** token_out_decimals))
+            amount_in_wei = int(amount_in * Decimal(10**token_in_decimals))
+            min_amount_out_wei = int(min_amount_out * Decimal(10**token_out_decimals))
 
             # Build execute_data following SwapHandlerV2 pattern
             execute_data = {

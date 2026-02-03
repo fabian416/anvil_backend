@@ -8,40 +8,40 @@ from typing import Dict, List
 class DeFiIntentClassifier:
     """
     Classifies user intents for DeFi operations.
-    
+
     This classifier helps Agent Squad route messages to the appropriate
     specialized agent based on the user's intent.
     """
-    
+
     # All supported intents
     INTENTS = [
-        "trade_swap",           # "swap 100 USDC to ETH"
-        "trade_perp_open",      # "open 10x long on BTC"
-        "trade_perp_close",     # "close my ETH position"
-        "lend_supply",          # "lend 1000 USDC on Aave"
-        "lend_borrow",          # "borrow ETH against my USDC"
-        "earn_stake",           # "stake ETH for yield"
-        "portfolio_view",       # "show my portfolio"
-        "market_info",          # "what's the funding rate on BTC?"
-        "risk_analysis",        # "analyze my position risk"
-        "save_schedule",        # "save $100 weekly to USDC"
-        "general_question",     # "how does Aave work?"
+        "trade_swap",  # "swap 100 USDC to ETH"
+        "trade_perp_open",  # "open 10x long on BTC"
+        "trade_perp_close",  # "close my ETH position"
+        "lend_supply",  # "lend 1000 USDC on Aave"
+        "lend_borrow",  # "borrow ETH against my USDC"
+        "earn_stake",  # "stake ETH for yield"
+        "portfolio_view",  # "show my portfolio"
+        "market_info",  # "what's the funding rate on BTC?"
+        "risk_analysis",  # "analyze my position risk"
+        "save_schedule",  # "save $100 weekly to USDC"
+        "general_question",  # "how does Aave work?"
     ]
-    
+
     def __init__(self, model: str = "gpt-4-turbo"):
         """
         Initialize DeFi intent classifier.
-        
+
         Args:
             model: LLM model to use for classification
         """
         self.model = model
         self.examples = self._get_examples()
-    
+
     def _get_examples(self) -> Dict[str, List[str]]:
         """
         Get training examples for each intent.
-        
+
         Returns:
             Dictionary mapping intents to example phrases
         """
@@ -137,11 +137,11 @@ class DeFiIntentClassifier:
                 "tell me about lending",
             ],
         }
-    
+
     def get_intent_descriptions(self) -> Dict[str, str]:
         """
         Get human-readable descriptions for each intent.
-        
+
         Returns:
             Dictionary mapping intents to descriptions
         """
@@ -158,11 +158,11 @@ class DeFiIntentClassifier:
             "save_schedule": "User wants to set up recurring buy/save schedule",
             "general_question": "User has a general question about DeFi concepts",
         }
-    
+
     def get_intent_to_agent_mapping(self) -> Dict[str, str]:
         """
         Map intents to appropriate agent names.
-        
+
         Returns:
             Dictionary mapping intents to agent names
         """
@@ -185,10 +185,10 @@ class DeFiIntentClassifier:
 def get_defi_intent_classifier(model: str = "gpt-4-turbo") -> DeFiIntentClassifier:
     """
     Get a configured DeFi intent classifier.
-    
+
     Args:
         model: LLM model to use
-    
+
     Returns:
         DeFiIntentClassifier instance
     """

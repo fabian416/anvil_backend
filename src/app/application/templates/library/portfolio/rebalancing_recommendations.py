@@ -14,7 +14,9 @@ from app.domain.entities.chat.conversation_template import (
 )
 
 
-def create_rebalancing_recommendations_template(created_by: UUID) -> ConversationTemplate:
+def create_rebalancing_recommendations_template(
+    created_by: UUID,
+) -> ConversationTemplate:
     """
     Create rebalancing recommendations template.
 
@@ -100,7 +102,11 @@ def create_rebalancing_recommendations_template(created_by: UUID) -> Conversatio
             depends_on=[2],
             parallel_execution=True,
             timeout_seconds=45,
-            outputs=["tax_implications", "tax_optimization_suggestions", "estimated_tax"],
+            outputs=[
+                "tax_implications",
+                "tax_optimization_suggestions",
+                "estimated_tax",
+            ],
         ),
         AgentStep(
             agent_name="@quantitative-analyst",
@@ -172,7 +178,11 @@ def create_rebalancing_recommendations_template(created_by: UUID) -> Conversatio
             depends_on=[5, 6],
             parallel_execution=False,
             timeout_seconds=30,
-            outputs=["rebalancing_recommendation", "next_rebalance_date", "monitoring_plan"],
+            outputs=[
+                "rebalancing_recommendation",
+                "next_rebalance_date",
+                "monitoring_plan",
+            ],
         ),
     ]
 
@@ -193,7 +203,7 @@ def create_rebalancing_recommendations_template(created_by: UUID) -> Conversatio
             type="string",
             required=False,
             description=(
-                "Custom target allocation as JSON (e.g., '{\"stables\": 30, \"btc\": 25, \"eth\": 25, \"alts\": 20}'). "
+                'Custom target allocation as JSON (e.g., \'{"stables": 30, "btc": 25, "eth": 25, "alts": 20}\'). '
                 "If not provided, uses strategy_type."
             ),
             default=None,

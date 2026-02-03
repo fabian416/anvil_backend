@@ -3,6 +3,7 @@ Retry telemetry repository.
 
 SQLAlchemy implementation for retry telemetry data persistence.
 """
+
 from typing import Dict, Any, List, Optional
 from uuid import UUID
 from datetime import datetime, timedelta, date, UTC as Date
@@ -21,16 +22,16 @@ from app.infrastructure.persistence_sqla.mappings.retry_telemetry import (
 
 class RetryTelemetryRepository:
     """Repository for retry telemetry data."""
-    
+
     def __init__(self, session: AsyncSession):
         """
         Initialize repository.
-        
+
         Args:
             session: SQLAlchemy async session
         """
         self.session = session
-    
+
     async def create_attempt(
         self,
         service_name: str,
@@ -52,10 +53,10 @@ class RetryTelemetryRepository:
             success=success,
             created_at=datetime.now(UTC),
         )
-        
+
         await self.session.execute(query)
         await self.session.commit()
-    
+
     async def create_circuit_event(
         self,
         service_name: str,
@@ -75,10 +76,10 @@ class RetryTelemetryRepository:
             success_count=success_count,
             created_at=datetime.now(UTC),
         )
-        
+
         await self.session.execute(query)
         await self.session.commit()
-    
+
     async def create_override_event(
         self,
         service_name: str,
@@ -96,10 +97,10 @@ class RetryTelemetryRepository:
             duration_minutes=duration_minutes,
             created_at=datetime.now(UTC),
         )
-        
+
         await self.session.execute(query)
         await self.session.commit()
-    
+
     async def increment_success(
         self,
         service_name: str,
@@ -107,88 +108,88 @@ class RetryTelemetryRepository:
     ) -> None:
         """Increment success count in daily aggregate."""
         today = datetime.now(UTC).date()
-        
+
         # Get or create aggregate
         aggregate = await self._get_or_create_aggregate(service_name, today)
-        
+
         # Update counts
-        aggregate['total_requests'] += 1
-        aggregate['successful_requests'] += 1
-        
+        aggregate["total_requests"] += 1
+        aggregate["successful_requests"] += 1
+
         # Update average latency
-        total = aggregate['total_requests']
-        current_avg = aggregate['avg_latency_ms'] or 0
+        total = aggregate["total_requests"]
+        current_avg = aggregate["avg_latency_ms"] or 0
         new_avg = ((current_avg * (total - 1)) + latency_ms) / total
-        aggregate['avg_latency_ms'] = new_avg
-        aggregate['updated_at'] = datetime.now(UTC)
-        
+        aggregate["avg_latency_ms"] = new_avg
+        aggregate["updated_at"] = datetime.now(UTC)
+
         # Upsert
         query = insert(retry_metrics_aggregate).values(**aggregate)
         query = query.on_conflict_do_update(
-            index_elements=['service_name', 'date'],
+            index_elements=["service_name", "date"],
             set_=dict(
-                total_requests=aggregate['total_requests'],
-                successful_requests=aggregate['successful_requests'],
-                avg_latency_ms=aggregate['avg_latency_ms'],
-                updated_at=aggregate['updated_at'],
-            )
+                total_requests=aggregate["total_requests"],
+                successful_requests=aggregate["successful_requests"],
+                avg_latency_ms=aggregate["avg_latency_ms"],
+                updated_at=aggregate["updated_at"],
+            ),
         )
-        
+
         await self.session.execute(query)
         await self.session.commit()
-    
+
     async def increment_failure(
         self,
         service_name: str,
     ) -> None:
         """Increment failure count in daily aggregate."""
         today = datetime.now(UTC).date()
-        
+
         aggregate = await self._get_or_create_aggregate(service_name, today)
-        
-        aggregate['total_requests'] += 1
-        aggregate['failed_requests'] += 1
-        aggregate['retry_attempts'] += 1
-        aggregate['updated_at'] = datetime.now(UTC)
-        
+
+        aggregate["total_requests"] += 1
+        aggregate["failed_requests"] += 1
+        aggregate["retry_attempts"] += 1
+        aggregate["updated_at"] = datetime.now(UTC)
+
         query = insert(retry_metrics_aggregate).values(**aggregate)
         query = query.on_conflict_do_update(
-            index_elements=['service_name', 'date'],
+            index_elements=["service_name", "date"],
             set_=dict(
-                total_requests=aggregate['total_requests'],
-                failed_requests=aggregate['failed_requests'],
-                retry_attempts=aggregate['retry_attempts'],
-                updated_at=aggregate['updated_at'],
-            )
+                total_requests=aggregate["total_requests"],
+                failed_requests=aggregate["failed_requests"],
+                retry_attempts=aggregate["retry_attempts"],
+                updated_at=aggregate["updated_at"],
+            ),
         )
-        
+
         await self.session.execute(query)
         await self.session.commit()
-    
+
     async def increment_circuit_open(
         self,
         service_name: str,
     ) -> None:
         """Increment circuit breaker open count."""
         today = datetime.now(UTC).date()
-        
+
         aggregate = await self._get_or_create_aggregate(service_name, today)
-        
-        aggregate['circuit_breaker_opens'] += 1
-        aggregate['updated_at'] = datetime.now(UTC)
-        
+
+        aggregate["circuit_breaker_opens"] += 1
+        aggregate["updated_at"] = datetime.now(UTC)
+
         query = insert(retry_metrics_aggregate).values(**aggregate)
         query = query.on_conflict_do_update(
-            index_elements=['service_name', 'date'],
+            index_elements=["service_name", "date"],
             set_=dict(
-                circuit_breaker_opens=aggregate['circuit_breaker_opens'],
-                updated_at=aggregate['updated_at'],
-            )
+                circuit_breaker_opens=aggregate["circuit_breaker_opens"],
+                updated_at=aggregate["updated_at"],
+            ),
         )
-        
+
         await self.session.execute(query)
         await self.session.commit()
-    
+
     async def get_aggregated_metrics(
         self,
         service_name: str,
@@ -196,7 +197,7 @@ class RetryTelemetryRepository:
     ) -> List[Dict[str, Any]]:
         """Get aggregated metrics for a service."""
         start_date = datetime.now(UTC).date() - timedelta(days=days)
-        
+
         query = (
             select(retry_metrics_aggregate)
             .where(
@@ -207,10 +208,10 @@ class RetryTelemetryRepository:
             )
             .order_by(desc(retry_metrics_aggregate.c.date))
         )
-        
+
         result = await self.session.execute(query)
         rows = result.all()
-        
+
         return [
             {
                 "date": row.date.isoformat(),
@@ -218,7 +219,9 @@ class RetryTelemetryRepository:
                 "successful_requests": row.successful_requests,
                 "failed_requests": row.failed_requests,
                 "retry_attempts": row.retry_attempts,
-                "avg_latency_ms": float(row.avg_latency_ms) if row.avg_latency_ms else 0,
+                "avg_latency_ms": float(row.avg_latency_ms)
+                if row.avg_latency_ms
+                else 0,
                 "circuit_breaker_opens": row.circuit_breaker_opens,
                 "success_rate": (
                     row.successful_requests / row.total_requests
@@ -228,7 +231,7 @@ class RetryTelemetryRepository:
             }
             for row in rows
         ]
-    
+
     async def _get_or_create_aggregate(
         self,
         service_name: str,
@@ -241,33 +244,35 @@ class RetryTelemetryRepository:
                 retry_metrics_aggregate.c.date == date,
             )
         )
-        
+
         result = await self.session.execute(query)
         row = result.one_or_none()
-        
+
         if row:
             return {
-                'service_name': row.service_name,
-                'date': row.date,
-                'total_requests': row.total_requests,
-                'successful_requests': row.successful_requests,
-                'failed_requests': row.failed_requests,
-                'retry_attempts': row.retry_attempts,
-                'avg_latency_ms': float(row.avg_latency_ms) if row.avg_latency_ms else 0.0,
-                'circuit_breaker_opens': row.circuit_breaker_opens,
-                'created_at': row.created_at,
-                'updated_at': row.updated_at,
+                "service_name": row.service_name,
+                "date": row.date,
+                "total_requests": row.total_requests,
+                "successful_requests": row.successful_requests,
+                "failed_requests": row.failed_requests,
+                "retry_attempts": row.retry_attempts,
+                "avg_latency_ms": float(row.avg_latency_ms)
+                if row.avg_latency_ms
+                else 0.0,
+                "circuit_breaker_opens": row.circuit_breaker_opens,
+                "created_at": row.created_at,
+                "updated_at": row.updated_at,
             }
         else:
             return {
-                'service_name': service_name,
-                'date': date,
-                'total_requests': 0,
-                'successful_requests': 0,
-                'failed_requests': 0,
-                'retry_attempts': 0,
-                'avg_latency_ms': 0.0,
-                'circuit_breaker_opens': 0,
-                'created_at': datetime.now(UTC),
-                'updated_at': datetime.now(UTC),
+                "service_name": service_name,
+                "date": date,
+                "total_requests": 0,
+                "successful_requests": 0,
+                "failed_requests": 0,
+                "retry_attempts": 0,
+                "avg_latency_ms": 0.0,
+                "circuit_breaker_opens": 0,
+                "created_at": datetime.now(UTC),
+                "updated_at": datetime.now(UTC),
             }

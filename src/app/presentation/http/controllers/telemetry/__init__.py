@@ -8,6 +8,8 @@ Provides endpoints for:
 - Health and performance monitoring
 """
 
-from app.presentation.http.controllers.telemetry.router import router as telemetry_router
+from app.presentation.http.controllers.telemetry.router import (
+    router as telemetry_router,
+)
 
 __all__ = ["telemetry_router"]

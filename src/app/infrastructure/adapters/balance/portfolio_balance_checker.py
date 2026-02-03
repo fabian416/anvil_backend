@@ -207,9 +207,7 @@ class PortfolioBalanceChecker(IBalanceChecker):
 
             # Get minimum gas requirement for chain
             if min_gas_amount is None:
-                min_gas_amount = self.MIN_GAS_AMOUNTS.get(
-                    chain_type, Decimal("0.01")
-                )
+                min_gas_amount = self.MIN_GAS_AMOUNTS.get(chain_type, Decimal("0.01"))
 
             # Get native token balance
             native_balance = await self.get_balance(

@@ -13,10 +13,10 @@ Structure:
 Usage:
     # Run all user tests
     JWT_TEST_TOKEN=<token> pytest tests/integration/user/ -v
-    
+
     # Run specific category
     JWT_TEST_TOKEN=<token> pytest tests/integration/user/workflows/ -v
-    
+
     # Run with CSV output
     JWT_TEST_TOKEN=<token> pytest tests/integration/user/ -v --tb=short
 """

@@ -1,6 +1,7 @@
 """
 Chain Address entity.
 """
+
 from dataclasses import dataclass
 from typing import Optional
 from decimal import Decimal
@@ -11,9 +12,11 @@ from app.domain.value_objects.base import ValueObject
 from app.domain.enums.chain_type import ChainType
 from app.domain.value_objects.created_at import CreatedAt
 
+
 @dataclass(frozen=True, repr=False)
 class ChainAddressId(ValueObject):
     value: int
+
 
 @dataclass(eq=False, kw_only=True)
 class ChainAddress(Entity[ChainAddressId]):

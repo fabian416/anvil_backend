@@ -1,4 +1,5 @@
 """Repository ports for distillation system."""
+
 from abc import abstractmethod
 from datetime import datetime
 from typing import List, Optional, Protocol
@@ -16,12 +17,12 @@ from app.domain.value_objects.distillation import (
 
 class DistillationConfigRepository(Protocol):
     """Port for distillation configuration storage."""
-    
+
     @abstractmethod
     async def get_config(self) -> DistillationConfig:
         """Get current distillation configuration."""
         ...
-    
+
     @abstractmethod
     async def update_config(
         self,
@@ -35,7 +36,7 @@ class DistillationConfigRepository(Protocol):
 
 class StaticResponseRepository(Protocol):
     """Port for static response storage."""
-    
+
     @abstractmethod
     async def get_response(
         self,
@@ -44,7 +45,7 @@ class StaticResponseRepository(Protocol):
     ) -> Optional[StaticResponse]:
         """Get static response for intent and variant."""
         ...
-    
+
     @abstractmethod
     async def list_responses(
         self,
@@ -53,12 +54,12 @@ class StaticResponseRepository(Protocol):
     ) -> List[StaticResponse]:
         """List static responses with optional filtering."""
         ...
-    
+
     @abstractmethod
     async def create_response(self, response: StaticResponse) -> StaticResponse:
         """Create new static response."""
         ...
-    
+
     @abstractmethod
     async def update_response(
         self,
@@ -67,7 +68,7 @@ class StaticResponseRepository(Protocol):
     ) -> StaticResponse:
         """Update existing static response."""
         ...
-    
+
     @abstractmethod
     async def delete_response(self, response_id: UUID) -> None:
         """Delete static response."""
@@ -76,12 +77,12 @@ class StaticResponseRepository(Protocol):
 
 class CacheRepository(Protocol):
     """Port for distillation cache storage."""
-    
+
     @abstractmethod
     async def get_exact(self, cache_key: str) -> Optional[CachedResponse]:
         """Get exact cache match by key."""
         ...
-    
+
     @abstractmethod
     async def get_semantic(
         self,
@@ -90,7 +91,7 @@ class CacheRepository(Protocol):
     ) -> Optional[CachedResponse]:
         """Get semantic cache match by embedding similarity."""
         ...
-    
+
     @abstractmethod
     async def set_exact(
         self,
@@ -103,7 +104,7 @@ class CacheRepository(Protocol):
     ) -> None:
         """Set exact cache entry."""
         ...
-    
+
     @abstractmethod
     async def set_semantic(
         self,
@@ -116,7 +117,7 @@ class CacheRepository(Protocol):
     ) -> None:
         """Set semantic cache entry."""
         ...
-    
+
     @abstractmethod
     async def invalidate(
         self,
@@ -125,7 +126,7 @@ class CacheRepository(Protocol):
     ) -> int:
         """Invalidate cache entries. Returns count of invalidated entries."""
         ...
-    
+
     @abstractmethod
     async def get_stats(self) -> dict:
         """Get cache statistics."""
@@ -134,12 +135,12 @@ class CacheRepository(Protocol):
 
 class DistillationTelemetryRepository(Protocol):
     """Port for distillation telemetry storage."""
-    
+
     @abstractmethod
     async def log_request(self, telemetry: DistillationTelemetry) -> None:
         """Log distillation request."""
         ...
-    
+
     @abstractmethod
     async def get_metrics(
         self,
@@ -148,7 +149,7 @@ class DistillationTelemetryRepository(Protocol):
     ) -> TelemetryMetrics:
         """Get aggregated metrics for time period."""
         ...
-    
+
     @abstractmethod
     async def get_hourly_metrics(
         self,
@@ -156,7 +157,7 @@ class DistillationTelemetryRepository(Protocol):
     ) -> List[TelemetryMetrics]:
         """Get pre-aggregated hourly metrics."""
         ...
-    
+
     @abstractmethod
     async def get_intent_distribution(
         self,

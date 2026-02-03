@@ -44,7 +44,13 @@ class InitCitiesHandler:
             if csv_candidate.exists():
                 csv_path = csv_candidate
             else:
-                csv_path = base.parents[3] / "infrastructure" / "persistence_sqla" / "dump" / "cities.csv"
+                csv_path = (
+                    base.parents[3]
+                    / "infrastructure"
+                    / "persistence_sqla"
+                    / "dump"
+                    / "cities.csv"
+                )
 
         if not csv_path.exists():
             raise FileNotFoundError(f"Cities data file not found: {csv_path}")
@@ -72,12 +78,14 @@ class InitCitiesHandler:
                         country_id_ext = int(row[5])
                         country_code = str(row[6]) if row[6] else None
                         country_name = str(row[7]) if row[7] else None
+
                         # coordinates
                         def parse_float(v):
                             try:
                                 return float(v)
                             except Exception:
                                 return None
+
                         latitude = parse_float(row[8]) if len(row) > 8 else None
                         longitude = parse_float(row[9]) if len(row) > 9 else None
                         wikiDataId = str(row[10]) if len(row) > 10 and row[10] else None
@@ -161,5 +169,3 @@ class InitCitiesHandler:
             skipped_cities=skipped,
             error_cities=errors,
         )
-
-

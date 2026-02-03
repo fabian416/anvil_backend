@@ -24,15 +24,25 @@ from app.presentation.http.errors.translators import ServiceUnavailableTranslato
 
 class TrackEventRequest(BaseModel):
     """Request schema for tracking an event."""
-    event_type: str = Field(..., description="Type of event (e.g., 'login', 'swap_completed')")
-    event_category: str | None = Field(None, description="Category (e.g., 'auth', 'trading')")
-    properties: dict[str, Any] | None = Field(default_factory=dict, description="Event-specific properties")
-    device_type: str | None = Field(None, description="Device type: mobile, desktop, tablet")
+
+    event_type: str = Field(
+        ..., description="Type of event (e.g., 'login', 'swap_completed')"
+    )
+    event_category: str | None = Field(
+        None, description="Category (e.g., 'auth', 'trading')"
+    )
+    properties: dict[str, Any] | None = Field(
+        default_factory=dict, description="Event-specific properties"
+    )
+    device_type: str | None = Field(
+        None, description="Device type: mobile, desktop, tablet"
+    )
     platform: str | None = Field(None, description="Platform: ios, android, web")
     app_version: str | None = Field(None, description="App version")
     session_id: str | None = Field(None, description="Session identifier")
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "event_type": "swap_completed",
                 "event_category": "trading",
@@ -40,18 +50,20 @@ class TrackEventRequest(BaseModel):
                     "from_token": "ETH",
                     "to_token": "USDC",
                     "amount": "1.5",
-                    "chain": "ethereum"
+                    "chain": "ethereum",
                 },
                 "device_type": "mobile",
                 "platform": "ios",
                 "app_version": "1.0.0",
-                "session_id": "sess_abc123"
+                "session_id": "sess_abc123",
             }
-        })
+        }
+    )
 
 
 class TrackEventResponse(BaseModel):
     """Response schema for track event."""
+
     success: bool
     event_id: int
     message: str = "Event tracked successfully"

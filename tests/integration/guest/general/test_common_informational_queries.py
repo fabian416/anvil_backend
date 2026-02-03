@@ -25,8 +25,7 @@ class TestCommonQueriesGuest:
     async def guest_conversation_id(self, client: AsyncClient) -> str:
         """Create a guest conversation."""
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "Hello", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "Hello", "language": "en"}
         )
         assert response.status_code in [200, 201]
         data = response.json()
@@ -40,8 +39,7 @@ class TestCommonQueriesGuest:
         Expected: Returns information about Bitcoin without signup prompt.
         """
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "What is Bitcoin?", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "What is Bitcoin?", "language": "en"}
         )
 
         assert response.status_code in [200, 201]
@@ -49,13 +47,26 @@ class TestCommonQueriesGuest:
         content = data.get("agent_message", {}).get("content", "")
 
         # Should contain information about Bitcoin or provide a helpful response
-        assert len(content) > 50, f"Should provide a meaningful response: {content[:200]}"
-        assert any(word in content.lower() for word in ["bitcoin", "btc", "protocol", "defi", "crypto", "token", "assist"]), \
-            f"Should mention relevant crypto/defi topics: {content[:200]}"
+        assert len(content) > 50, (
+            f"Should provide a meaningful response: {content[:200]}"
+        )
+        assert any(
+            word in content.lower()
+            for word in [
+                "bitcoin",
+                "btc",
+                "protocol",
+                "defi",
+                "crypto",
+                "token",
+                "assist",
+            ]
+        ), f"Should mention relevant crypto/defi topics: {content[:200]}"
 
         # Should NOT require signup for informational query
-        assert not data.get("requires_registration"), \
+        assert not data.get("requires_registration"), (
             "Informational queries should not require registration"
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -66,16 +77,30 @@ class TestCommonQueriesGuest:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What is Ethereum?", "language": "en"}
+            json={"content": "What is Ethereum?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "")
 
-        assert len(content) > 50, f"Should provide a meaningful response: {content[:200]}"
-        assert any(word in content.lower() for word in ["ethereum", "eth", "protocol", "defi", "crypto", "token", "assist", "smart contract", "blockchain"]), \
-            f"Should mention relevant crypto/defi topics: {content[:200]}"
+        assert len(content) > 50, (
+            f"Should provide a meaningful response: {content[:200]}"
+        )
+        assert any(
+            word in content.lower()
+            for word in [
+                "ethereum",
+                "eth",
+                "protocol",
+                "defi",
+                "crypto",
+                "token",
+                "assist",
+                "smart contract",
+                "blockchain",
+            ]
+        ), f"Should mention relevant crypto/defi topics: {content[:200]}"
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -86,7 +111,7 @@ class TestCommonQueriesGuest:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What is the price of Bitcoin?", "language": "en"}
+            json={"content": "What is the price of Bitcoin?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -94,8 +119,9 @@ class TestCommonQueriesGuest:
         content = data.get("agent_message", {}).get("content", "")
 
         # Should contain price information
-        assert any(word in content.lower() for word in ["price", "$", "usd", "btc"]), \
+        assert any(word in content.lower() for word in ["price", "$", "usd", "btc"]), (
             f"Should show price information: {content[:200]}"
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -106,15 +132,16 @@ class TestCommonQueriesGuest:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "How much is Ethereum?", "language": "en"}
+            json={"content": "How much is Ethereum?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "")
 
-        assert any(word in content.lower() for word in ["price", "$", "usd", "eth", "ethereum"]), \
-            f"Should show price information: {content[:200]}"
+        assert any(
+            word in content.lower() for word in ["price", "$", "usd", "eth", "ethereum"]
+        ), f"Should show price information: {content[:200]}"
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -124,8 +151,7 @@ class TestCommonQueriesGuest:
         Expected: Returns current ETH price with shorthand query.
         """
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "ETH price?", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "ETH price?", "language": "en"}
         )
 
         assert response.status_code in [200, 201]
@@ -143,7 +169,7 @@ class TestCommonQueriesGuest:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What do people think about Bitcoin?", "language": "en"}
+            json={"content": "What do people think about Bitcoin?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -160,8 +186,7 @@ class TestCommonQueriesGuest:
         Expected: Returns information about DeFi.
         """
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "What is DeFi?", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "What is DeFi?", "language": "en"}
         )
 
         assert response.status_code in [200, 201]
@@ -169,8 +194,10 @@ class TestCommonQueriesGuest:
         content = data.get("agent_message", {}).get("content", "")
 
         assert len(content) > 50, "Should provide a meaningful response"
-        assert any(word in content.lower() for word in ["defi", "decentralized", "finance", "protocol"]), \
-            f"Should mention DeFi topics: {content[:200]}"
+        assert any(
+            word in content.lower()
+            for word in ["defi", "decentralized", "finance", "protocol"]
+        ), f"Should mention DeFi topics: {content[:200]}"
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -180,8 +207,7 @@ class TestCommonQueriesGuest:
         Expected: Returns information about USDC stablecoin.
         """
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "What is USDC?", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "What is USDC?", "language": "en"}
         )
 
         assert response.status_code in [200, 201]
@@ -199,7 +225,10 @@ class TestCommonQueriesGuest:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What are the prices of Bitcoin and Ethereum?", "language": "en"}
+            json={
+                "content": "What are the prices of Bitcoin and Ethereum?",
+                "language": "en",
+            },
         )
 
         assert response.status_code in [200, 201]
@@ -208,8 +237,10 @@ class TestCommonQueriesGuest:
 
         # Should contain meaningful price/market information
         assert len(content) > 50, "Should provide a meaningful response"
-        assert any(word in content.lower() for word in ["bitcoin", "btc", "ethereum", "eth", "price", "$"]), \
-            f"Should mention crypto prices: {content[:200]}"
+        assert any(
+            word in content.lower()
+            for word in ["bitcoin", "btc", "ethereum", "eth", "price", "$"]
+        ), f"Should mention crypto prices: {content[:200]}"
 
 
 class TestCommonQueriesAuthenticated:
@@ -220,7 +251,7 @@ class TestCommonQueriesAuthenticated:
         """Create test auth headers."""
         return {
             "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ0ZXN0LXNlc3Npb24iLCJleHAiOjk5OTk5OTk5OTl9.test",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
     @pytest_asyncio.fixture
@@ -229,7 +260,7 @@ class TestCommonQueriesAuthenticated:
         response = await client.post(
             "/api/v1/conversations",
             headers=auth_headers,
-            json={"title": "Test Conversation"}
+            json={"title": "Test Conversation"},
         )
         assert response.status_code in [200, 201]
         data = response.json()
@@ -247,14 +278,16 @@ class TestCommonQueriesAuthenticated:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "What is Bitcoin?", "language": "en"}
+            json={"content": "What is Bitcoin?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "")
 
-        assert len(content) > 50, f"Should provide a meaningful response: {content[:200]}"
+        assert len(content) > 50, (
+            f"Should provide a meaningful response: {content[:200]}"
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -268,14 +301,16 @@ class TestCommonQueriesAuthenticated:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "What is Ethereum?", "language": "en"}
+            json={"content": "What is Ethereum?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "")
 
-        assert len(content) > 50, f"Should provide a meaningful response: {content[:200]}"
+        assert len(content) > 50, (
+            f"Should provide a meaningful response: {content[:200]}"
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -289,15 +324,16 @@ class TestCommonQueriesAuthenticated:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "What is the price of Bitcoin?", "language": "en"}
+            json={"content": "What is the price of Bitcoin?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "")
 
-        assert any(word in content.lower() for word in ["price", "$", "usd", "btc"]), \
+        assert any(word in content.lower() for word in ["price", "$", "usd", "btc"]), (
             f"Should show price information: {content[:200]}"
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -311,15 +347,16 @@ class TestCommonQueriesAuthenticated:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "How much is Ethereum?", "language": "en"}
+            json={"content": "How much is Ethereum?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
         data = response.json()
         content = data.get("agent_message", {}).get("content", "")
 
-        assert any(word in content.lower() for word in ["price", "$", "usd", "eth", "ethereum"]), \
-            f"Should show price information: {content[:200]}"
+        assert any(
+            word in content.lower() for word in ["price", "$", "usd", "eth", "ethereum"]
+        ), f"Should show price information: {content[:200]}"
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -333,7 +370,7 @@ class TestCommonQueriesAuthenticated:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "ETH price?", "language": "en"}
+            json={"content": "ETH price?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -354,7 +391,7 @@ class TestCommonQueriesAuthenticated:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "What do people think about Bitcoin?", "language": "en"}
+            json={"content": "What do people think about Bitcoin?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -375,7 +412,7 @@ class TestCommonQueriesAuthenticated:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "What is DeFi?", "language": "en"}
+            json={"content": "What is DeFi?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -396,7 +433,7 @@ class TestCommonQueriesAuthenticated:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "What is USDC?", "language": "en"}
+            json={"content": "What is USDC?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -417,7 +454,10 @@ class TestCommonQueriesAuthenticated:
         response = await client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
             headers=auth_headers,
-            json={"content": "What are the prices of Bitcoin and Ethereum?", "language": "en"}
+            json={
+                "content": "What are the prices of Bitcoin and Ethereum?",
+                "language": "en",
+            },
         )
 
         assert response.status_code in [200, 201]
@@ -439,7 +479,7 @@ class TestCommonQueriesMultiLanguage:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "¿Cuál es el precio de Bitcoin?", "language": "es"}
+            json={"content": "¿Cuál es el precio de Bitcoin?", "language": "es"},
         )
 
         assert response.status_code in [200, 201]
@@ -457,7 +497,7 @@ class TestCommonQueriesMultiLanguage:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "O que é Ethereum?", "language": "pt"}
+            json={"content": "O que é Ethereum?", "language": "pt"},
         )
 
         assert response.status_code in [200, 201]
@@ -474,8 +514,7 @@ class TestCommonQueriesMultiLanguage:
         Expected: Returns info about Bitcoin.
         """
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "什么是比特币？", "language": "zh"}
+            "/api/v1/guest/chat", json={"content": "什么是比特币？", "language": "zh"}
         )
 
         assert response.status_code in [200, 201]
@@ -497,7 +536,7 @@ class TestCommonQueriesEdgeCases:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What is UNKNOWNTOKEN?", "language": "en"}
+            json={"content": "What is UNKNOWNTOKEN?", "language": "en"},
         )
 
         assert response.status_code in [200, 201]
@@ -521,8 +560,7 @@ class TestCommonQueriesEdgeCases:
 
         for query in queries:
             response = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": query, "language": "en"}
+                "/api/v1/guest/chat", json={"content": query, "language": "en"}
             )
 
             assert response.status_code in [200, 201], f"Failed for query: {query}"
@@ -538,7 +576,7 @@ class TestCommonQueriesEdgeCases:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What is Bitconi?", "language": "en"}  # Typo in Bitcoin
+            json={"content": "What is Bitconi?", "language": "en"},  # Typo in Bitcoin
         )
 
         assert response.status_code in [200, 201]

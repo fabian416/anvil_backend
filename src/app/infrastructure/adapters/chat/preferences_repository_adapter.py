@@ -10,24 +10,31 @@ from uuid import UUID
 from sqlalchemy import select
 
 from app.infrastructure.adapters.types import MainAsyncSession
-from app.domain.preferences.ports.user_preferences_repository import UserPreferencesRepository
+from app.domain.preferences.ports.user_preferences_repository import (
+    UserPreferencesRepository,
+)
 from app.domain.chat.entities.chat.user_chat_preferences import UserChatPreferences
+
 
 # TODO: These value objects don't exist yet, stubbing for now
 class VerbosityLevel(int):
     pass
 
+
 class ToneStyle(str):
     pass
 
+
 class ResponseFormat(str):
     pass
+
 
 class NotificationPreferences:
     def __init__(self, enabled=True, email=True, push=False):
         self.enabled = enabled
         self.email = email
         self.push = push
+
 
 class DisplayPreferences:
     def __init__(self, theme="light", compact=False):
@@ -240,7 +247,9 @@ class UserPreferencesRepositoryAdapter(UserPreferencesRepository):
         model.timezone = preferences.timezone
         model.include_code_examples = preferences.include_code_examples
         model.include_references = preferences.include_references
-        model.notification_conversation_updates = preferences.notifications.conversation_updates
+        model.notification_conversation_updates = (
+            preferences.notifications.conversation_updates
+        )
         model.notification_agent_responses = preferences.notifications.agent_responses
         model.notification_daily_summary = preferences.notifications.daily_summary
         model.notification_insight_alerts = preferences.notifications.insight_alerts
@@ -290,7 +299,9 @@ class UserChatPreferencesModel:
     include_references: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     # Notification preferences
-    notification_conversation_updates: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    notification_conversation_updates: Mapped[bool] = mapped_column(
+        Boolean, nullable=False
+    )
     notification_agent_responses: Mapped[bool] = mapped_column(Boolean, nullable=False)
     notification_daily_summary: Mapped[bool] = mapped_column(Boolean, nullable=False)
     notification_insight_alerts: Mapped[bool] = mapped_column(Boolean, nullable=False)

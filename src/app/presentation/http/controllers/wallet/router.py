@@ -15,10 +15,17 @@ from fastapi import APIRouter
 def create_wallet_router() -> APIRouter:
     """Create and configure the wallet router."""
     # Import here to avoid circular imports
-    from app.presentation.http.controllers.wallet.complete_swap import router as complete_swap_router
+    from app.presentation.http.controllers.wallet.complete_swap import (
+        router as complete_swap_router,
+    )
+
     # from app.presentation.http.controllers.wallet.execute_swap import router as execute_swap_router
-    from app.presentation.http.controllers.wallet.export_wallet import router as export_router
-    from app.presentation.http.controllers.wallet.my_wallets import create_my_wallets_router
+    from app.presentation.http.controllers.wallet.export_wallet import (
+        router as export_router,
+    )
+    from app.presentation.http.controllers.wallet.my_wallets import (
+        create_my_wallets_router,
+    )
 
     main_router = APIRouter(prefix="/wallet", tags=["wallet"])
 
@@ -40,4 +47,3 @@ def create_wallet_router() -> APIRouter:
 
 # Keep a simple router for the endpoint file to use
 router = APIRouter(tags=["wallet"])
-

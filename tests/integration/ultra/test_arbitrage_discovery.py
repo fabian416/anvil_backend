@@ -137,6 +137,7 @@ class Test2HopArbitrage:
             # Should use different DEXes
             assert path[0].dex != path[1].dex
 
+
 class Test3HopArbitrage:
     """Test 3-hop arbitrage discovery."""
 
@@ -193,6 +194,7 @@ class Test3HopArbitrage:
 
             # Should have 3 unique tokens
             assert len(set(tokens)) == 3
+
 
 class TestTriangleArbitrage:
     """Test triangle arbitrage discovery."""
@@ -252,6 +254,7 @@ class TestTriangleArbitrage:
             # Start and end with same token
             assert path[0].token_in == path[-1].token_out
 
+
 class TestAllOpportunitiesDiscovery:
     """Test discovering all opportunity types."""
 
@@ -295,6 +298,7 @@ class TestAllOpportunitiesDiscovery:
             # Should have at least one type
             assert len(types) >= 1
 
+
 class TestOpportunityRetrieval:
     """Test opportunity retrieval."""
 
@@ -326,6 +330,7 @@ class TestOpportunityRetrieval:
         found = await discovery.get_opportunity_by_id("INVALID-ID", opportunities)
 
         assert found is None
+
 
 class TestOpportunitySimulation:
     """Test opportunity simulation."""
@@ -365,6 +370,7 @@ class TestOpportunitySimulation:
 
             assert simulated <= expected
 
+
 class TestProfitCalculation:
     """Test profit calculation."""
 
@@ -396,6 +402,7 @@ class TestProfitCalculation:
 
             # Allow small floating point difference
             assert abs(opp.profit_percentage - expected_pct) < Decimal("0.0001")
+
 
 class TestOpportunitySerialization:
     """Test opportunity serialization."""

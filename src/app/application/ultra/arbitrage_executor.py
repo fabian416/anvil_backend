@@ -62,10 +62,14 @@ class ArbitrageExecutionResult:
             "opportunity_id": self.opportunity_id,
             "status": self.status.value,
             "flash_loan_protocol": self.flash_loan_protocol,
-            "flash_loan_amount": str(self.flash_loan_amount) if self.flash_loan_amount else None,
+            "flash_loan_amount": str(self.flash_loan_amount)
+            if self.flash_loan_amount
+            else None,
             "bundle_id": self.bundle_id,
             "expected_profit": str(self.expected_profit),
-            "realized_profit": str(self.realized_profit) if self.realized_profit else None,
+            "realized_profit": str(self.realized_profit)
+            if self.realized_profit
+            else None,
             "gas_cost": str(self.gas_cost),
             "execution_time": self.execution_time.isoformat(),
             "error_message": self.error_message,

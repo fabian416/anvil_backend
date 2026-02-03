@@ -16,13 +16,14 @@ from pydantic import BaseModel
 class MCPTool:
     """
     MCP Tool definition.
-    
+
     Attributes:
         name: Tool name (e.g., "get_swap_quote")
         description: Human-readable tool description
         parameters: JSON Schema for parameters
         handler: Async function that executes the tool
     """
+
     name: str
     description: str
     parameters: Dict[str, Any]  # JSON Schema
@@ -31,11 +32,13 @@ class MCPTool:
 
 class MCPToolExecutionRequest(BaseModel):
     """Request model for tool execution."""
+
     params: Dict[str, Any]
 
 
 class MCPToolExecutionResponse(BaseModel):
     """Response model for tool execution."""
+
     success: bool
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
@@ -44,24 +47,24 @@ class MCPToolExecutionResponse(BaseModel):
 class MCPServer:
     """
     Base MCP Server implementation.
-    
+
     Provides:
     - Tool registration
     - Discovery endpoint (/tools)
     - Execution endpoint (/execute/{tool_name})
     - Error handling
     - FastAPI application
-    
+
     Usage:
         server = MCPServer(server_name="1inch", description="DEX aggregator")
         server.register_tool("get_quote", "Get swap quote", schema, handler)
         app = server.app
     """
-    
+
     def __init__(self, server_name: str, description: str, port: int = 8080):
         """
         Initialize MCP server.
-        
+
         Args:
             server_name: Unique server identifier (e.g., "1inch", "defillama")
             description: Server description
@@ -76,10 +79,10 @@ class MCPServer:
             description=description,
             version="1.0.0",
         )
-        
+
         # Register MCP endpoints
         self._setup_routes()
-    
+
     def register_tool(
         self,
         name: str,
@@ -89,17 +92,17 @@ class MCPServer:
     ):
         """
         Register a tool with this MCP server.
-        
+
         Args:
             name: Tool name (e.g., "get_swap_quote")
             description: Tool description
             parameters: JSON Schema for parameters
             handler: Async function that executes the tool
-        
+
         Example:
             def handler(**params):
                 return {"result": "success"}
-            
+
             server.register_tool(
                 name="get_quote",
                 description="Get swap quote",
@@ -121,12 +124,12 @@ class MCPServer:
             handler=handler,
         )
         self.tools[name] = tool
-        
+
         print(f"[{self.server_name}] Registered tool: {name}")
-    
+
     def _setup_routes(self):
         """Set up FastAPI routes for MCP protocol."""
-        
+
         @self.app.get("/")
         async def root():
             """Root endpoint with server information."""
@@ -139,7 +142,7 @@ class MCPServer:
                     "execute": f"http://localhost:{self.port}/execute/{{tool_name}}",
                 },
             }
-        
+
         @self.app.get("/health")
         async def health():
             """Health check endpoint."""
@@ -148,12 +151,12 @@ class MCPServer:
                 "server": self.server_name,
                 "tools_registered": len(self.tools),
             }
-        
+
         @self.app.get("/tools")
         async def list_tools():
             """
             List all available tools (MCP discovery endpoint).
-            
+
             Returns:
                 Dictionary with server info and tool list
             """
@@ -168,36 +171,36 @@ class MCPServer:
                         "parameters": tool.parameters,
                     }
                     for tool in self.tools.values()
-                ]
+                ],
             }
-        
+
         @self.app.post("/execute/{tool_name}", response_model=MCPToolExecutionResponse)
         async def execute_tool(tool_name: str, request: MCPToolExecutionRequest):
             """
             Execute a specific tool (MCP execution endpoint).
-            
+
             Args:
                 tool_name: Name of the tool to execute
                 request: Execution request with parameters
-            
+
             Returns:
                 Execution response with success status and result
-            
+
             Raises:
                 HTTPException: If tool not found or execution fails
             """
             if tool_name not in self.tools:
                 raise HTTPException(
-                    status_code=404, 
-                    detail=f"Tool '{tool_name}' not found on server '{self.server_name}'"
+                    status_code=404,
+                    detail=f"Tool '{tool_name}' not found on server '{self.server_name}'",
                 )
-            
+
             tool = self.tools[tool_name]
-            
+
             try:
                 # Execute tool handler with provided parameters
                 result = await tool.handler(**request.params)
-                
+
                 return MCPToolExecutionResponse(
                     success=True,
                     result=result,
@@ -205,24 +208,25 @@ class MCPServer:
             except Exception as e:
                 # Log error
                 print(f"[{self.server_name}] Error executing {tool_name}: {str(e)}")
-                
+
                 return MCPToolExecutionResponse(
                     success=False,
                     error=str(e),
                 )
-    
+
     def run(self, host: str = "0.0.0.0"):
         """
         Run the MCP server.
-        
+
         Args:
             host: Host address (default: 0.0.0.0)
-        
+
         Example:
             import uvicorn
             server = MCPServer("1inch", "DEX aggregator")
             uvicorn.run(server.app, host="0.0.0.0", port=8081)
         """
         import uvicorn
+
         print(f"Starting {self.server_name} MCP Server on http://{host}:{self.port}")
         uvicorn.run(self.app, host=host, port=self.port)

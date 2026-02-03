@@ -35,7 +35,6 @@ ERROR_HANDLING_TESTS = [
         "category": "edge_case",
         "subcategory": "invalid_token",
     },
-    
     # Invalid Amounts
     {
         "test_id": "error_amount_001",
@@ -58,7 +57,6 @@ ERROR_HANDLING_TESTS = [
         "category": "edge_case",
         "subcategory": "invalid_amount",
     },
-    
     # Invalid Addresses
     {
         "test_id": "error_address_001",
@@ -74,7 +72,6 @@ ERROR_HANDLING_TESTS = [
         "category": "edge_case",
         "subcategory": "invalid_address",
     },
-    
     # Empty/Minimal Input
     {
         "test_id": "error_empty_001",
@@ -97,7 +94,6 @@ ERROR_HANDLING_TESTS = [
         "category": "edge_case",
         "subcategory": "minimal_input",
     },
-    
     # Gibberish
     {
         "test_id": "error_gibberish_001",
@@ -113,7 +109,6 @@ ERROR_HANDLING_TESTS = [
         "category": "edge_case",
         "subcategory": "gibberish",
     },
-    
     # Off-Topic
     {
         "test_id": "error_offtopic_001",
@@ -136,7 +131,6 @@ ERROR_HANDLING_TESTS = [
         "category": "edge_case",
         "subcategory": "off_topic",
     },
-    
     # Typos
     {
         "test_id": "error_typo_001",
@@ -166,27 +160,29 @@ ERROR_HANDLING_TESTS = [
 @pytest.mark.integration
 class TestErrorHandling:
     """Tests for error handling and edge cases."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, conversation_id, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
-    
-    @pytest.mark.parametrize("test_case", ERROR_HANDLING_TESTS, ids=lambda t: t["test_id"])
+
+    @pytest.mark.parametrize(
+        "test_case", ERROR_HANDLING_TESTS, ids=lambda t: t["test_id"]
+    )
     async def test_error_handling(self, test_case: dict):
         """Test error handling for edge cases."""
         # Skip empty input test (would fail validation)
         if not test_case["input"]:
             pytest.skip("Empty input not supported")
-        
+
         response_data, response_time_ms = await send_message(
             self.client,
             self.conversation_id,
             test_case["input"],
         )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -194,14 +190,15 @@ class TestErrorHandling:
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         # For edge cases, we mainly verify the system doesn't crash
         # The response should be graceful even for invalid inputs
         parsed = parse_response(response_data)
         content = parsed.get("content", "")
-        
+
         # Should have some response (even if it's an error message)
-        assert len(content) > 0 or response_data.get("error"), \
+        assert len(content) > 0 or response_data.get("error"), (
             "Should provide some response for edge cases"
+        )

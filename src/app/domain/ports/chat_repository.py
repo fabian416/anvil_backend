@@ -4,6 +4,7 @@ This module defines the interfaces (ports) for chat persistence operations,
 following hexagonal architecture principles. Concrete implementations will be
 in the infrastructure layer.
 """
+
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Optional, List

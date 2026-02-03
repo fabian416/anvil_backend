@@ -18,14 +18,21 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.shortcuts]
+pytestmark = [
+    pytest.mark.skip(reason="Requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.shortcuts,
+]
 
 
 class TestShortcutsAdvancedCombinations:
     """Test advanced shortcut combinations and functionality."""
 
     @pytest.mark.llm_validation
-    async def test_shortcut_with_multiple_parameters(self, client: AsyncClient, llm_validator):
+    async def test_shortcut_with_multiple_parameters(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test shortcuts with complex parameter combinations.
 
@@ -36,8 +43,8 @@ class TestShortcutsAdvancedCombinations:
             "/api/v1/guest/chat",
             json={
                 "content": "How much is 100 USDC worth in Bitcoin?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -62,8 +69,8 @@ class TestShortcutsAdvancedCombinations:
             "/api/v1/guest/chat",
             json={
                 "content": "Check Bitcoin price and compare it to yesterday",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -77,7 +84,9 @@ class TestShortcutsAdvancedCombinations:
         assert len(agent_response) > 80, "Should provide current price and comparison"
 
     @pytest.mark.llm_validation
-    async def test_shortcut_dynamic_generation(self, client: AsyncClient, llm_validator):
+    async def test_shortcut_dynamic_generation(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test shortcuts generated based on query patterns.
 
@@ -88,8 +97,8 @@ class TestShortcutsAdvancedCombinations:
             "/api/v1/guest/chat",
             json={
                 "content": "What's the best strategy for staking ETH right now?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -100,10 +109,14 @@ class TestShortcutsAdvancedCombinations:
 
         # Should recognize staking strategy pattern
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 100, "Should provide comprehensive staking guidance"
+        assert len(agent_response) > 100, (
+            "Should provide comprehensive staking guidance"
+        )
 
     @pytest.mark.llm_validation
-    async def test_shortcut_performance_optimization(self, client: AsyncClient, llm_validator):
+    async def test_shortcut_performance_optimization(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test shortcut caching and performance across conversation.
 
@@ -113,10 +126,7 @@ class TestShortcutsAdvancedCombinations:
         # First query
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What is Ethereum?",
-                "language": "en"
-            }
+            json={"content": "What is Ethereum?", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -128,8 +138,8 @@ class TestShortcutsAdvancedCombinations:
             f"/api/v1/guest/chat?conversation_id={conversation_id}",
             json={
                 "content": "Tell me more about Ethereum's capabilities",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response2.status_code == status.HTTP_200_OK

@@ -22,6 +22,7 @@ class TestPrivyApiClient:
         THEN import SHALL succeed
         """
         from app.infrastructure.adapters.privy.privy_api_client import PrivyApiClient
+
         assert PrivyApiClient is not None
 
     def test_privy_api_client_initialization(self):
@@ -31,12 +32,12 @@ class TestPrivyApiClient:
         """
         from app.infrastructure.adapters.privy.privy_api_client import PrivyApiClient
         from app.setup.config.privy import PrivySettings
-        
+
         settings = PrivySettings(
             APP_ID="test_app_id",
             APP_SECRET="test_secret",
         )
-        
+
         client = PrivyApiClient(settings)
         assert client is not None
 
@@ -47,15 +48,15 @@ class TestPrivyApiClient:
         """
         from app.infrastructure.adapters.privy.privy_api_client import PrivyApiClient
         from app.setup.config.privy import PrivySettings
-        
+
         settings = PrivySettings(
             APP_ID="test_app_id",
             APP_SECRET="test_secret",
         )
-        
+
         client = PrivyApiClient(settings)
         headers = client._get_headers()
-        
+
         assert "Authorization" in headers
         assert headers["Authorization"].startswith("Basic ")
         assert headers["privy-app-id"] == "test_app_id"
@@ -72,7 +73,7 @@ class TestPrivyWalletSync:
         THEN all fields SHALL be set correctly
         """
         from app.infrastructure.adapters.privy.privy_api_client import PrivyWallet
-        
+
         wallet = PrivyWallet(
             wallet_id="test_wallet_id",
             address="0x1234567890123456789012345678901234567890",
@@ -81,7 +82,7 @@ class TestPrivyWalletSync:
             connector_type="embedded",
             is_imported=False,
         )
-        
+
         assert wallet.wallet_id == "test_wallet_id"
         assert wallet.address == "0x1234567890123456789012345678901234567890"
         assert wallet.chain_type == "ethereum"
@@ -96,7 +97,7 @@ class TestPrivyWalletSync:
             PrivyUserData,
             PrivyWallet,
         )
-        
+
         wallet = PrivyWallet(
             wallet_id="test_wallet_id",
             address="0x1234567890123456789012345678901234567890",
@@ -105,14 +106,14 @@ class TestPrivyWalletSync:
             connector_type="embedded",
             is_imported=False,
         )
-        
+
         user_data = PrivyUserData(
             privy_user_id="did:privy:test123",
             wallets=[wallet],
             email="test@example.com",
             name="Test User",
         )
-        
+
         assert user_data.privy_user_id == "did:privy:test123"
         assert len(user_data.wallets) == 1
         assert user_data.wallets[0].wallet_id == "test_wallet_id"
@@ -131,6 +132,7 @@ class TestPrivyBalanceSyncTask:
         from app.infrastructure.celery.tasks.privy_balance_tasks import (
             sync_wallet_balances,
         )
+
         assert sync_wallet_balances is not None
         assert callable(sync_wallet_balances)
 
@@ -142,6 +144,7 @@ class TestPrivyBalanceSyncTask:
         from app.infrastructure.celery.tasks.privy_balance_tasks import (
             sync_single_wallet_balance,
         )
+
         assert sync_single_wallet_balance is not None
         assert callable(sync_single_wallet_balance)
 
@@ -153,6 +156,7 @@ class TestPrivyBalanceSyncTask:
         from app.infrastructure.celery.tasks.privy_balance_tasks import (
             fetch_privy_wallet_balance,
         )
+
         assert fetch_privy_wallet_balance is not None
 
     def test_chain_id_map_configured(self):
@@ -161,7 +165,7 @@ class TestPrivyBalanceSyncTask:
         THEN common chains SHALL be mapped
         """
         from app.infrastructure.celery.tasks.privy_balance_tasks import CHAIN_ID_MAP
-        
+
         assert "base" in CHAIN_ID_MAP
         assert "ethereum" in CHAIN_ID_MAP or "arbitrum" in CHAIN_ID_MAP
 
@@ -179,14 +183,14 @@ class TestPrivyLoginIntegration:
         """
         from app.infrastructure.adapters.privy.privy_api_client import PrivyApiClient
         from app.setup.config.privy import PrivySettings
-        
+
         settings = PrivySettings(
             APP_ID="test_app_id",
             APP_SECRET="test_secret",
         )
-        
+
         client = PrivyApiClient(settings)
-        
+
         # Mock Privy API response
         mock_response = {
             "id": "did:privy:test123",
@@ -207,12 +211,14 @@ class TestPrivyLoginIntegration:
                 },
             ],
         }
-        
+
         user_data = client._parse_user_response(mock_response)
-        
+
         assert user_data.privy_user_id == "did:privy:test123"
         assert len(user_data.wallets) == 1
         assert user_data.wallets[0].wallet_id == "wallet_abc123"
-        assert user_data.wallets[0].address == "0x1234567890123456789012345678901234567890"
+        assert (
+            user_data.wallets[0].address == "0x1234567890123456789012345678901234567890"
+        )
         assert user_data.email == "test@example.com"
         assert user_data.name == "Test User"

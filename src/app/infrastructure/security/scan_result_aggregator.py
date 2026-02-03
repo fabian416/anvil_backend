@@ -15,6 +15,7 @@ from enum import Enum
 
 class ScanStatus(str, Enum):
     """Status of a security scan"""
+
     PASS = "pass"
     FAIL = "fail"
     WARNING = "warning"
@@ -23,6 +24,7 @@ class ScanStatus(str, Enum):
 
 class VulnerabilitySeverity(str, Enum):
     """Vulnerability severity levels"""
+
     CRITICAL = "CRITICAL"
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
@@ -33,6 +35,7 @@ class VulnerabilitySeverity(str, Enum):
 @dataclass
 class VulnerabilitySummary:
     """Summary of vulnerabilities by severity"""
+
     critical: int = 0
     high: int = 0
     medium: int = 0
@@ -50,6 +53,7 @@ class VulnerabilitySummary:
 @dataclass
 class SecurityScanResult:
     """Represents results from a single security scan"""
+
     scan_id: str
     scan_date: datetime
     status: ScanStatus
@@ -69,13 +73,14 @@ class SecurityScanResult:
             "vulnerabilities": self.vulnerabilities.to_dict(),
             "reports_path": self.reports_path,
             "duration_seconds": self.duration_seconds,
-            "errors": self.errors or []
+            "errors": self.errors or [],
         }
 
 
 @dataclass
 class ToolScanResult:
     """Results from a single security tool"""
+
     tool_name: str
     scan_date: datetime
     status: str
@@ -90,7 +95,7 @@ class ToolScanResult:
             "status": self.status,
             "vulnerabilities_found": self.vulnerabilities_found,
             "report_path": self.report_path,
-            "details": self.details
+            "details": self.details,
         }
 
 
@@ -143,13 +148,7 @@ class ScanResultAggregator:
         """
         scan_dirs = self._get_scan_directories()
 
-        trends = {
-            "dates": [],
-            "critical": [],
-            "high": [],
-            "medium": [],
-            "low": []
-        }
+        trends = {"dates": [], "critical": [], "high": [], "medium": [], "low": []}
 
         for scan_dir in scan_dirs[:days]:
             result = self._parse_scan_directory(scan_dir)
@@ -176,7 +175,7 @@ class ScanResultAggregator:
             "safety": "Safety",
             "helios": "Helios",
             "llmexploiter": "LLMExploiter",
-            "nettacker": "Nettacker"
+            "nettacker": "Nettacker",
         }
 
         for pattern, tool_name in tool_patterns.items():
@@ -194,8 +193,9 @@ class ScanResultAggregator:
             return []
 
         scan_dirs = [
-            d for d in self.reports_base_dir.iterdir()
-            if d.is_dir() and not d.name.startswith('.')
+            d
+            for d in self.reports_base_dir.iterdir()
+            if d.is_dir() and not d.name.startswith(".")
         ]
 
         # Sort by modification time (newest first)
@@ -247,7 +247,7 @@ class ScanResultAggregator:
                 tools_executed=tools_executed,
                 vulnerabilities=vulnerabilities,
                 reports_path=str(scan_dir),
-                errors=errors if errors else None
+                errors=errors if errors else None,
             )
 
         except Exception as e:
@@ -261,7 +261,7 @@ class ScanResultAggregator:
             "safety": "Safety",
             "helios": "Helios",
             "llmexploiter": "LLMExploiter",
-            "nettacker": "Nettacker"
+            "nettacker": "Nettacker",
         }
 
         filename_lower = filename.lower()
@@ -271,12 +271,14 @@ class ScanResultAggregator:
 
         return None
 
-    def _count_vulnerabilities(self, report_file: Path, tool_name: str) -> Dict[str, int]:
+    def _count_vulnerabilities(
+        self, report_file: Path, tool_name: str
+    ) -> Dict[str, int]:
         """Count vulnerabilities by severity from a tool report"""
         counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
 
         try:
-            with open(report_file, 'r') as f:
+            with open(report_file, "r") as f:
                 data = json.load(f)
 
             if tool_name == "Bandit":
@@ -309,10 +311,12 @@ class ScanResultAggregator:
 
         return counts
 
-    def _parse_tool_report(self, report_file: Path, tool_name: str) -> Optional[ToolScanResult]:
+    def _parse_tool_report(
+        self, report_file: Path, tool_name: str
+    ) -> Optional[ToolScanResult]:
         """Parse individual tool report"""
         try:
-            with open(report_file, 'r') as f:
+            with open(report_file, "r") as f:
                 data = json.load(f)
 
             vuln_counts = self._count_vulnerabilities(report_file, tool_name)
@@ -324,7 +328,7 @@ class ScanResultAggregator:
                 status="completed",
                 vulnerabilities_found=total_vulns,
                 report_path=str(report_file),
-                details=vuln_counts
+                details=vuln_counts,
             )
 
         except Exception as e:

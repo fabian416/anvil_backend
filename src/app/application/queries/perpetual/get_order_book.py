@@ -76,7 +76,9 @@ class GetOrderBook:
             )
 
         # Check for thin liquidity
-        if order_book.bid_depth < Decimal("100") or order_book.ask_depth < Decimal("100"):
+        if order_book.bid_depth < Decimal("100") or order_book.ask_depth < Decimal(
+            "100"
+        ):
             warnings.append(
                 "Low liquidity detected. Large orders may have significant slippage."
             )

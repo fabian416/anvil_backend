@@ -37,7 +37,9 @@ def create_payment_router() -> APIRouter:
     ) -> dict:
         current_user = await current_user_service.get_current_user()
         offset = (page - 1) * per_page
-        items = await payments.read_by_user_paginated(user_id=current_user.id_.value, offset=offset, limit=per_page)
+        items = await payments.read_by_user_paginated(
+            user_id=current_user.id_.value, offset=offset, limit=per_page
+        )
         return {"items": items, "page": page, "per_page": per_page}
 
     @router.post(
@@ -73,5 +75,3 @@ def create_payment_router() -> APIRouter:
         return {"status": "success", "payment": result}
 
     return router
-
-

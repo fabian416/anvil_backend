@@ -158,11 +158,11 @@ TRANSLATIONS = {
             "pt": "Estimado",
         },
         "tip_morpho": {
-            "en": "For higher yields on stablecoins, try: \"deposit USDC on Morpho\"",
-            "es": "Para mayores rendimientos en stablecoins, prueba: \"depositar USDC en Morpho\"",
-            "fr": "Pour des rendements plus élevés sur les stablecoins, essayez: \"déposer USDC sur Morpho\"",
-            "zh": "要获得更高的稳定币收益，请尝试: \"在 Morpho 存入 USDC\"",
-            "pt": "Para maiores rendimentos em stablecoins, tente: \"depositar USDC no Morpho\"",
+            "en": 'For higher yields on stablecoins, try: "deposit USDC on Morpho"',
+            "es": 'Para mayores rendimientos en stablecoins, prueba: "depositar USDC en Morpho"',
+            "fr": 'Pour des rendements plus élevés sur les stablecoins, essayez: "déposer USDC sur Morpho"',
+            "zh": '要获得更高的稳定币收益，请尝试: "在 Morpho 存入 USDC"',
+            "pt": 'Para maiores rendimentos em stablecoins, tente: "depositar USDC no Morpho"',
         },
     },
     # Swap Handler translations

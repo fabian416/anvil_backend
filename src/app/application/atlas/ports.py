@@ -1,7 +1,11 @@
 from abc import abstractmethod
 from typing import Protocol
 
-from app.application.atlas.query_models import CityQueryModel, CountryQueryModel, StateQueryModel
+from app.application.atlas.query_models import (
+    CityQueryModel,
+    CountryQueryModel,
+    StateQueryModel,
+)
 
 
 class CountryReader(Protocol):
@@ -37,6 +41,6 @@ class CityReader(Protocol):
     ) -> tuple[list[CityQueryModel], int]: ...
 
     @abstractmethod
-    async def list_states_by_country(self, country_id: int) -> list[StateQueryModel]: ...
-
-
+    async def list_states_by_country(
+        self, country_id: int
+    ) -> list[StateQueryModel]: ...

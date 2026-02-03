@@ -13,10 +13,10 @@ from app.domain.value_objects.message_role import MessageRole
 class Message:
     """
     Message entity representing a single message in a conversation.
-    
+
     Messages can be from users or agents.
     """
-    
+
     def __init__(
         self,
         id: UUID,
@@ -29,7 +29,7 @@ class Message:
     ):
         """
         Initialize message.
-        
+
         Args:
             id: Message identifier
             conversation_id: Parent conversation identifier
@@ -46,7 +46,7 @@ class Message:
         self.agent_type = agent_type
         self.created_at = created_at or utc_now()
         self.metadata = metadata or {}
-    
+
     @classmethod
     def create(
         cls,
@@ -58,14 +58,14 @@ class Message:
     ) -> "Message":
         """
         Create a new message with auto-generated ID and timestamp.
-        
+
         Args:
             conversation_id: Parent conversation identifier
             role: Message role (user/agent/system)
             content: Message content
             agent_type: Optional agent type if from agent
             metadata: Optional metadata dictionary
-        
+
         Returns:
             New message instance
         """
@@ -77,7 +77,7 @@ class Message:
             agent_type=agent_type,
             metadata=metadata,
         )
-    
+
     @classmethod
     def create_user_message(
         cls,
@@ -86,11 +86,11 @@ class Message:
     ) -> "Message":
         """
         Create a user message.
-        
+
         Args:
             conversation_id: Parent conversation identifier
             content: Message content
-        
+
         Returns:
             New user message instance
         """
@@ -100,7 +100,7 @@ class Message:
             role=MessageRole.USER,
             content=content,
         )
-    
+
     @classmethod
     def create_agent_message(
         cls,
@@ -111,13 +111,13 @@ class Message:
     ) -> "Message":
         """
         Create an agent message.
-        
+
         Args:
             conversation_id: Parent conversation identifier
             content: Message content
             agent_type: Optional agent type
             metadata: Optional metadata dictionary
-        
+
         Returns:
             New agent message instance
         """
@@ -129,7 +129,7 @@ class Message:
             agent_type=agent_type,
             metadata=metadata,
         )
-    
+
     @classmethod
     def create_system_message(
         cls,
@@ -138,11 +138,11 @@ class Message:
     ) -> "Message":
         """
         Create a system message.
-        
+
         Args:
             conversation_id: Parent conversation identifier
             content: Message content
-        
+
         Returns:
             New system message instance
         """

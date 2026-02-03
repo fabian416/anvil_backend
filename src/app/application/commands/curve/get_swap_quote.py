@@ -107,8 +107,7 @@ class GetSwapQuote:
         # Check for very small output (potential issue)
         if quote.amount_out <= Decimal("0"):
             warnings.append(
-                "Output amount is zero or negative. "
-                "Check token addresses and amount."
+                "Output amount is zero or negative. Check token addresses and amount."
             )
 
         return warnings

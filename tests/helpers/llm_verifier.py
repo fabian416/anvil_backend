@@ -446,7 +446,9 @@ def verify_defi_data_format(data: dict) -> bool:
     return True
 
 
-def get_full_verification(response: dict, query: str | None = None) -> LLMVerificationResult:
+def get_full_verification(
+    response: dict, query: str | None = None
+) -> LLMVerificationResult:
     """
     Perform full verification of LLM response.
 

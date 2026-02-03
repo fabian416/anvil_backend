@@ -15,6 +15,7 @@ import httpx
 @dataclass
 class LayerZeroChain:
     """LayerZero supported chain."""
+
     chain_id: int
     name: str
     endpoint_id: int
@@ -24,6 +25,7 @@ class LayerZeroChain:
 @dataclass
 class MessageFeeEstimate:
     """Message fee estimate from API."""
+
     source_chain_id: int
     dest_chain_id: int
     native_fee: Decimal
@@ -34,6 +36,7 @@ class MessageFeeEstimate:
 @dataclass
 class CrossChainMessage:
     """Cross-chain message data."""
+
     tx_hash: str
     source_chain_id: int
     dest_chain_id: int
@@ -49,6 +52,7 @@ class CrossChainMessage:
 @dataclass
 class OFTTransfer:
     """Omnichain Fungible Token transfer."""
+
     tx_hash: str
     source_chain_id: int
     dest_chain_id: int
@@ -62,10 +66,10 @@ class OFTTransfer:
 class LayerZeroClient:
     """
     LayerZero Protocol API client.
-    
+
     Provides access to cross-chain messaging, fee estimation, and status tracking.
     """
-    
+
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -75,7 +79,7 @@ class LayerZeroClient:
         self.api_key = api_key
         self.base_url = base_url
         self.client = httpx.AsyncClient(timeout=timeout)
-    
+
     async def get_chains(self) -> List[LayerZeroChain]:
         """Get supported chains."""
         return [
@@ -83,7 +87,7 @@ class LayerZeroClient:
             LayerZeroChain(chain_id=137, name="Polygon", endpoint_id=109),
             LayerZeroChain(chain_id=42161, name="Arbitrum", endpoint_id=110),
         ]
-    
+
     async def estimate_message_fee(
         self,
         source_chain_id: int,
@@ -98,7 +102,7 @@ class LayerZeroClient:
             zro_fee=Decimal("0"),
             total_fee_usd=Decimal("2.5"),
         )
-    
+
     async def track_message(self, tx_hash: str) -> CrossChainMessage:
         """Track cross-chain message status."""
         return CrossChainMessage(
@@ -111,7 +115,7 @@ class LayerZeroClient:
             receiver="0x0000000000000000000000000000000000000000",
             created_at=datetime.now(UTC),
         )
-    
+
     async def get_oft_transfer(self, tx_hash: str) -> OFTTransfer:
         """Get OFT transfer details."""
         return OFTTransfer(
@@ -124,7 +128,7 @@ class LayerZeroClient:
             recipient="0x0000000000000000000000000000000000000000",
             status="pending",
         )
-    
+
     async def close(self):
         """Close the HTTP client."""
         await self.client.aclose()

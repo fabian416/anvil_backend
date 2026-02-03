@@ -46,5 +46,3 @@ def create_init_atlas_router() -> APIRouter:
         return await handler.execute()
 
     return router
-
-

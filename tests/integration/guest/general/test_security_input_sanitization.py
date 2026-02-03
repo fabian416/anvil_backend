@@ -17,7 +17,12 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.security]
+pytestmark = [
+    pytest.mark.skip(reason="Requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.security,
+]
 
 
 class TestSecurityInputSanitization:
@@ -44,8 +49,8 @@ class TestSecurityInputSanitization:
                 "/api/v1/guest/chat",
                 json={
                     "content": f"Tell me about {payload} in crypto",
-                    "language": "en"
-                }
+                    "language": "en",
+                },
             )
 
             # Should process safely without errors
@@ -55,11 +60,15 @@ class TestSecurityInputSanitization:
             assert "agent_message" in data
             assert data["agent_message"]["content"]
             # Should not cause database errors or return error messages
-            assert "error" not in data["agent_message"]["content"].lower() or \
-                   len(data["agent_message"]["content"]) > 50
+            assert (
+                "error" not in data["agent_message"]["content"].lower()
+                or len(data["agent_message"]["content"]) > 50
+            )
 
     @pytest.mark.llm_validation
-    async def test_command_injection_prevention(self, client: AsyncClient, llm_validator):
+    async def test_command_injection_prevention(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test command injection attack prevention.
 
@@ -77,10 +86,7 @@ class TestSecurityInputSanitization:
         for payload in command_injection_payloads:
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={
-                    "content": f"Explain DeFi {payload}",
-                    "language": "en"
-                }
+                json={"content": f"Explain DeFi {payload}", "language": "en"},
             )
 
             # Should process safely
@@ -117,8 +123,8 @@ class TestSecurityInputSanitization:
                 "/api/v1/guest/chat",
                 json={
                     "content": f"Show me information about {payload}",
-                    "language": "en"
-                }
+                    "language": "en",
+                },
             )
 
             # Should process safely

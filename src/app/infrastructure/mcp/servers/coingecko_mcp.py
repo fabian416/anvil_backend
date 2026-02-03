@@ -12,7 +12,12 @@ Feature Flag: mcp.servers.coingecko_enabled
 
 from typing import Dict, Any, Optional, List
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 from app.infrastructure.mcp.base_server import MCPServer
 from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
@@ -20,7 +25,7 @@ from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 
 class CoinGeckoMCPServer(MCPServer):
     """MCP Server for CoinGecko market data."""
-    
+
     def __init__(
         self,
         api_key: str = "",
@@ -29,24 +34,24 @@ class CoinGeckoMCPServer(MCPServer):
     ):
         """
         Initialize CoinGecko MCP server.
-        
+
         Args:
             api_key: CoinGecko API key (optional for public API)
             base_url: CoinGecko API base URL
             settings: MCP configuration settings
-            
+
         Raises:
             MCPServerDisabledError: If CoinGecko server is disabled
         """
         self.settings = settings or MCPSettings()
-        
+
         # Check if server is enabled
         if not self.settings.enabled or not self.settings.servers.coingecko_enabled:
             raise MCPServerDisabledError(
                 "CoinGecko MCP server is disabled. "
                 "Enable with mcp.servers.coingecko_enabled=true in config."
             )
-        
+
         super().__init__(
             server_name="coingecko",
             description="CoinGecko market data and token prices",
@@ -61,7 +66,7 @@ class CoinGeckoMCPServer(MCPServer):
             },
             timeout=30.0,
         )
-        
+
         # Create retry decorator for this server
         self._retry = retry(
             stop=stop_after_attempt(3),
@@ -69,13 +74,13 @@ class CoinGeckoMCPServer(MCPServer):
             retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
             reraise=True,
         )
-        
+
         # Register tools
         self.setup_tools()
 
     def setup_tools(self):
         """Register all CoinGecko tools."""
-        
+
         # Tool 1: Get token price
         self.register_tool(
             name="get_token_price",
@@ -97,7 +102,7 @@ class CoinGeckoMCPServer(MCPServer):
             },
             handler=self._get_token_price,
         )
-        
+
         # Tool 2: Get token market data
         self.register_tool(
             name="get_token_market_data",
@@ -114,7 +119,7 @@ class CoinGeckoMCPServer(MCPServer):
             },
             handler=self._get_token_market_data,
         )
-        
+
         # Tool 3: Get historical price
         self.register_tool(
             name="get_historical_price",
@@ -136,7 +141,7 @@ class CoinGeckoMCPServer(MCPServer):
             },
             handler=self._get_historical_price,
         )
-        
+
         # Tool 4: Get trending tokens
         self.register_tool(
             name="get_trending_tokens",
@@ -147,7 +152,7 @@ class CoinGeckoMCPServer(MCPServer):
             },
             handler=self._get_trending_tokens,
         )
-        
+
         # Tool 5: Search tokens
         self.register_tool(
             name="search_tokens",
@@ -164,7 +169,7 @@ class CoinGeckoMCPServer(MCPServer):
             },
             handler=self._search_tokens,
         )
-        
+
         # Tool 6: Get top tokens by market cap
         self.register_tool(
             name="get_top_tokens",
@@ -181,7 +186,7 @@ class CoinGeckoMCPServer(MCPServer):
             },
             handler=self._get_top_tokens,
         )
-    
+
     async def _get_token_price(
         self,
         token_ids: str,
@@ -189,11 +194,11 @@ class CoinGeckoMCPServer(MCPServer):
     ) -> Dict[str, Any]:
         """
         Get current token prices.
-        
+
         Args:
             token_ids: Comma-separated token IDs
             vs_currency: Currency to compare against
-        
+
         Returns:
             Token prices
         """
@@ -209,7 +214,7 @@ class CoinGeckoMCPServer(MCPServer):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return {
                 "prices": data,
                 "currency": vs_currency,
@@ -225,14 +230,14 @@ class CoinGeckoMCPServer(MCPServer):
                 "error": f"Error getting token price: {str(e)}",
                 "token_ids": token_ids,
             }
-    
+
     async def _get_token_market_data(self, token_id: str) -> Dict[str, Any]:
         """
         Get comprehensive market data.
-        
+
         Args:
             token_id: Token ID
-        
+
         Returns:
             Market data
         """
@@ -240,9 +245,9 @@ class CoinGeckoMCPServer(MCPServer):
             response = await self.client.get(f"/coins/{token_id}")
             response.raise_for_status()
             data = response.json()
-            
+
             market_data = data.get("market_data", {})
-            
+
             return {
                 "token_id": token_id,
                 "name": data.get("name"),
@@ -266,7 +271,7 @@ class CoinGeckoMCPServer(MCPServer):
                 "error": f"Error getting market data: {str(e)}",
                 "token_id": token_id,
             }
-    
+
     async def _get_historical_price(
         self,
         token_id: str,
@@ -274,11 +279,11 @@ class CoinGeckoMCPServer(MCPServer):
     ) -> Dict[str, Any]:
         """
         Get historical price data.
-        
+
         Args:
             token_id: Token ID
             days: Number of days
-        
+
         Returns:
             Historical price data
         """
@@ -292,9 +297,9 @@ class CoinGeckoMCPServer(MCPServer):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             prices = data.get("prices", [])
-            
+
             return {
                 "token_id": token_id,
                 "days": days,
@@ -317,11 +322,11 @@ class CoinGeckoMCPServer(MCPServer):
                 "error": f"Error getting historical price: {str(e)}",
                 "token_id": token_id,
             }
-    
+
     async def _get_trending_tokens(self) -> Dict[str, Any]:
         """
         Get trending tokens.
-        
+
         Returns:
             Trending tokens list
         """
@@ -329,9 +334,9 @@ class CoinGeckoMCPServer(MCPServer):
             response = await self.client.get("/search/trending")
             response.raise_for_status()
             data = response.json()
-            
+
             trending = data.get("coins", [])
-            
+
             return {
                 "trending": [
                     {
@@ -349,14 +354,14 @@ class CoinGeckoMCPServer(MCPServer):
             return {"error": f"CoinGecko API error: {str(e)}"}
         except Exception as e:
             return {"error": f"Error getting trending tokens: {str(e)}"}
-    
+
     async def _search_tokens(self, query: str) -> Dict[str, Any]:
         """
         Search for tokens.
-        
+
         Args:
             query: Search query
-        
+
         Returns:
             Search results
         """
@@ -367,9 +372,9 @@ class CoinGeckoMCPServer(MCPServer):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             coins = data.get("coins", [])[:10]  # Top 10 results
-            
+
             return {
                 "query": query,
                 "results": [
@@ -393,14 +398,14 @@ class CoinGeckoMCPServer(MCPServer):
                 "error": f"Error searching tokens: {str(e)}",
                 "query": query,
             }
-    
+
     async def _get_top_tokens(self, limit: int = 20) -> Dict[str, Any]:
         """
         Get top tokens by market cap.
-        
+
         Args:
             limit: Number of tokens
-        
+
         Returns:
             Top tokens list
         """
@@ -416,7 +421,7 @@ class CoinGeckoMCPServer(MCPServer):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return {
                 "tokens": [
                     {
@@ -436,7 +441,7 @@ class CoinGeckoMCPServer(MCPServer):
             return {"error": f"CoinGecko API error: {str(e)}"}
         except Exception as e:
             return {"error": f"Error getting top tokens: {str(e)}"}
-    
+
     async def close(self):
         """Close HTTP client."""
         await self.client.aclose()
@@ -446,16 +451,16 @@ class CoinGeckoMCPServer(MCPServer):
 if __name__ == "__main__":
     import os
     import uvicorn
-    
+
     # Get API key from environment
     api_key = os.getenv("COINGECKO_API_KEY", "")
-    
+
     # Create server
     server = CoinGeckoMCPServer(api_key=api_key)
-    
+
     print(f"Starting CoinGecko MCP Server on http://0.0.0.0:8084")
     print(f"Tools endpoint: http://localhost:8084/tools")
     print(f"Health check: http://localhost:8084/health")
-    
+
     # Run server
     uvicorn.run(server.app, host="0.0.0.0", port=8084)

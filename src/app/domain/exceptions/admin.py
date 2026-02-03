@@ -106,7 +106,9 @@ class InvalidConfigurationError(ApplicationError):
             details["expected_type"] = expected_type
         if valid_values:
             details["valid_values"] = valid_values
-        super().__init__(ErrorCode.ADM_INVALID_CONFIG, details=details, field=config_key)
+        super().__init__(
+            ErrorCode.ADM_INVALID_CONFIG, details=details, field=config_key
+        )
 
 
 class AdminServiceUnavailableError(ApplicationError):
@@ -126,6 +128,7 @@ class AdminServiceUnavailableError(ApplicationError):
 
 
 # Additional admin-specific exceptions
+
 
 class BulkOperationFailedError(ApplicationError):
     """Raised when a bulk operation fails."""

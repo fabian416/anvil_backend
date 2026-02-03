@@ -25,13 +25,13 @@ async def init_database() -> None:
     This function ensures all SQLAlchemy mappings are registered and tables are created.
     """
     logger = logging.getLogger(__name__)
-    
+
     try:
         print("📋 Loading settings...")
         # Load settings
         settings = load_settings()
         print(f"📊 Database DSN: {settings.postgres.dsn}")
-        
+
         print("🔧 Creating async engine...")
         # Create async engine
         engine = create_async_engine(
@@ -40,14 +40,14 @@ async def init_database() -> None:
             echo_pool=settings.sqla.echo_pool,
             pool_size=settings.sqla.pool_size,
             max_overflow=settings.sqla.max_overflow,
-            connect_args={'connect_timeout': 5},
+            connect_args={"connect_timeout": 5},
             pool_pre_ping=True,
         )
-        
+
         print("🗺️ Mapping tables...")
         # Ensure all table mappings are registered
         map_tables()
-        
+
         # Import entities to ensure they are registered
         from app.domain.entities.user import User
         from app.domain.entities.country import Country
@@ -59,7 +59,7 @@ async def init_database() -> None:
         from app.domain.entities.session import Session
         from app.domain.entities.subscription import Subscription
         from app.domain.entities.subscription_user import SubscriptionUser
-        
+
         print("🧹 Dropping existing tables (local env)...")
         async with engine.begin() as conn:
             # For local/dev environment, drop all known tables first
@@ -68,13 +68,13 @@ async def init_database() -> None:
         print("🏗️ Creating database tables...")
         async with engine.begin() as conn:
             await conn.run_sync(mapping_registry.metadata.create_all)
-        
+
         logger.info("Database tables created successfully")
         print("✅ Database tables created successfully")
-        
+
         # Clean up
         await engine.dispose()
-        
+
     except Exception as e:
         logger.error(f"Error creating database tables: {str(e)}")
         raise
@@ -85,9 +85,9 @@ async def main():
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
-    
+
     try:
         print("🚀 Starting database initialization...")
         print(f"🌍 APP_ENV: {os.environ.get('APP_ENV', 'Not set')}")
@@ -96,6 +96,7 @@ async def main():
     except Exception as e:
         print(f"❌ Database initialization failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

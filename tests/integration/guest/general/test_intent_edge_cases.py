@@ -19,14 +19,21 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Intent detection varies; requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.intent_detection]
+pytestmark = [
+    pytest.mark.skip(reason="Intent detection varies; requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.intent_detection,
+]
 
 
 class TestIntentEdgeCases:
     """Test intent detection edge cases and boundary conditions."""
 
     @pytest.mark.llm_validation
-    async def test_extremely_long_query_intent(self, client: AsyncClient, llm_validator):
+    async def test_extremely_long_query_intent(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test very long query (1000+ characters).
 
@@ -56,18 +63,16 @@ class TestIntentEdgeCases:
         )
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": long_query,
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": long_query, "language": "en"}
         )
 
         # Should return 422 for extremely long query (proper validation)
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
     @pytest.mark.llm_validation
-    async def test_extremely_short_query_intent(self, client: AsyncClient, llm_validator):
+    async def test_extremely_short_query_intent(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test very short query (1-2 words).
 
@@ -75,11 +80,7 @@ class TestIntentEdgeCases:
         and provide helpful response.
         """
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "ETH price?",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "ETH price?", "language": "en"}
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -90,7 +91,9 @@ class TestIntentEdgeCases:
 
         # Should handle short query appropriately
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 20, "Should provide helpful response to short query"
+        assert len(agent_response) > 20, (
+            "Should provide helpful response to short query"
+        )
 
     @pytest.mark.llm_validation
     async def test_emoji_only_query_intent(self, client: AsyncClient, llm_validator):
@@ -101,11 +104,7 @@ class TestIntentEdgeCases:
         a helpful response or asking for clarification.
         """
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": "🚀💰📈",
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": "🚀💰📈", "language": "en"}
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -116,10 +115,14 @@ class TestIntentEdgeCases:
 
         # Should handle emoji query gracefully
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 20, "Should provide graceful response to emoji query"
+        assert len(agent_response) > 20, (
+            "Should provide graceful response to emoji query"
+        )
 
     @pytest.mark.llm_validation
-    async def test_special_characters_query_intent(self, client: AsyncClient, llm_validator):
+    async def test_special_characters_query_intent(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test special characters and symbols.
 
@@ -130,8 +133,8 @@ class TestIntentEdgeCases:
             "/api/v1/guest/chat",
             json={
                 "content": "What's the price of $ETH vs. @BTC & #DeFi protocols (Uniswap/Aave)?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -142,10 +145,14 @@ class TestIntentEdgeCases:
 
         # Should handle special characters appropriately
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 50, "Should handle special characters and provide response"
+        assert len(agent_response) > 50, (
+            "Should handle special characters and provide response"
+        )
 
     @pytest.mark.llm_validation
-    async def test_code_snippet_in_query_intent(self, client: AsyncClient, llm_validator):
+    async def test_code_snippet_in_query_intent(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test code snippet or address in query.
 
@@ -156,9 +163,9 @@ class TestIntentEdgeCases:
             "/api/v1/guest/chat",
             json={
                 "content": "Can you check this address 0x1234567890abcdef1234567890abcdef12345678 "
-                          "and tell me about the transactions?",
-                "language": "en"
-            }
+                "and tell me about the transactions?",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK

@@ -18,5 +18,3 @@ class PasswordResetRepository(Protocol):
 
     @abstractmethod
     async def delete_by_id(self, *, id_: int) -> None: ...
-
-

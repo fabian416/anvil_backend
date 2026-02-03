@@ -42,7 +42,6 @@ COMPLEX_INPUT_TESTS = [
         "category": "edge_case",
         "subcategory": "multi_intent",
     },
-    
     # Conditional Requests
     {
         "test_id": "complex_conditional_001",
@@ -58,7 +57,6 @@ COMPLEX_INPUT_TESTS = [
         "category": "edge_case",
         "subcategory": "conditional",
     },
-    
     # Vague Amounts
     {
         "test_id": "complex_vague_amount_001",
@@ -88,7 +86,6 @@ COMPLEX_INPUT_TESTS = [
         "category": "edge_case",
         "subcategory": "vague_amount",
     },
-    
     # Informal Language
     {
         "test_id": "complex_informal_001",
@@ -111,7 +108,6 @@ COMPLEX_INPUT_TESTS = [
         "category": "edge_case",
         "subcategory": "informal",
     },
-    
     # Technical Jargon
     {
         "test_id": "complex_jargon_001",
@@ -134,7 +130,6 @@ COMPLEX_INPUT_TESTS = [
         "category": "edge_case",
         "subcategory": "jargon",
     },
-    
     # Misspellings
     {
         "test_id": "complex_misspell_001",
@@ -157,7 +152,6 @@ COMPLEX_INPUT_TESTS = [
         "category": "edge_case",
         "subcategory": "misspelling",
     },
-    
     # Mixed Case
     {
         "test_id": "complex_case_001",
@@ -173,7 +167,6 @@ COMPLEX_INPUT_TESTS = [
         "category": "edge_case",
         "subcategory": "mixed_case",
     },
-    
     # Numbers in Words
     {
         "test_id": "complex_numbers_001",
@@ -189,7 +182,6 @@ COMPLEX_INPUT_TESTS = [
         "category": "edge_case",
         "subcategory": "number_words",
     },
-    
     # Abbreviations
     {
         "test_id": "complex_abbrev_001",
@@ -212,15 +204,17 @@ COMPLEX_INPUT_TESTS = [
 @pytest.mark.integration
 class TestComplexInputs:
     """Tests for complex and challenging inputs."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, conversation_id, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
-    
-    @pytest.mark.parametrize("test_case", COMPLEX_INPUT_TESTS, ids=lambda t: t["test_id"])
+
+    @pytest.mark.parametrize(
+        "test_case", COMPLEX_INPUT_TESTS, ids=lambda t: t["test_id"]
+    )
     async def test_complex_input(self, test_case: dict):
         """Test handling of complex inputs."""
         response_data, response_time_ms = await send_message(
@@ -228,7 +222,7 @@ class TestComplexInputs:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -236,22 +230,24 @@ class TestComplexInputs:
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         # For complex inputs, we mainly verify:
         # 1. No crash/error
         # 2. Some meaningful response
         # 3. Reasonable agent routing (if expected)
-        
+
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "")
-        
+
         # Should have some response
-        assert len(content) > 10, f"Complex input should get meaningful response: {content[:200]}"
-        
+        assert len(content) > 10, (
+            f"Complex input should get meaningful response: {content[:200]}"
+        )
+
         # If expected agent is specified, verify routing
         expected = test_case.get("expected_agent")
         if expected:

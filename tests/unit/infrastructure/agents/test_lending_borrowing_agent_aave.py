@@ -16,7 +16,9 @@ from uuid import uuid4
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
-from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.domain.value_objects.agent_squad.conversation_context import (
+    ConversationContext,
+)
 
 
 # =============================================================================
@@ -156,7 +158,9 @@ class TestLendingBorrowingAgentAvailability:
 class TestLendingBorrowingAgentExecute:
     """Test agent execution."""
 
-    async def test_agent_execute_returns_response(self, mock_llm_client, mock_aave_client):
+    async def test_agent_execute_returns_response(
+        self, mock_llm_client, mock_aave_client
+    ):
         """Test agent execute returns AgentResponse."""
         from app.infrastructure.adapters.agent_squad.agents.advanced.lending_borrowing_agent_aave import (
             LendingBorrowingAgentAave,
@@ -212,7 +216,9 @@ class TestLendingBorrowingAgentExecute:
 class TestLendingBorrowingAgentReports:
     """Test agent report generation."""
 
-    async def test_generate_report_with_healthy_position(self, mock_llm_client, mock_aave_client):
+    async def test_generate_report_with_healthy_position(
+        self, mock_llm_client, mock_aave_client
+    ):
         """Test report generation for healthy position."""
         from app.infrastructure.adapters.agent_squad.agents.advanced.lending_borrowing_agent_aave import (
             LendingBorrowingAgentAave,
@@ -229,7 +235,9 @@ class TestLendingBorrowingAgentReports:
             "borrowed_usd": 2000,
             "health_factor": 3.0,
             "collateral_assets": [{"token": "ETH", "amount": 5, "value_usd": 10000}],
-            "borrowed_assets": [{"token": "USDC", "amount": 2000, "value_usd": 2000, "apy": 5.0}],
+            "borrowed_assets": [
+                {"token": "USDC", "amount": 2000, "value_usd": 2000, "apy": 5.0}
+            ],
         }
 
         rates = {
@@ -243,7 +251,9 @@ class TestLendingBorrowingAgentReports:
         assert "Position is Healthy" in report
         assert "$10,000.00" in report
 
-    async def test_generate_report_with_moderate_position(self, mock_llm_client, mock_aave_client):
+    async def test_generate_report_with_moderate_position(
+        self, mock_llm_client, mock_aave_client
+    ):
         """Test report generation for moderate risk position."""
         from app.infrastructure.adapters.agent_squad.agents.advanced.lending_borrowing_agent_aave import (
             LendingBorrowingAgentAave,
@@ -260,7 +270,9 @@ class TestLendingBorrowingAgentReports:
             "borrowed_usd": 5500,
             "health_factor": 1.7,
             "collateral_assets": [{"token": "ETH", "amount": 5, "value_usd": 10000}],
-            "borrowed_assets": [{"token": "USDC", "amount": 5500, "value_usd": 5500, "apy": 5.0}],
+            "borrowed_assets": [
+                {"token": "USDC", "amount": 5500, "value_usd": 5500, "apy": 5.0}
+            ],
         }
 
         rates = {
@@ -273,7 +285,9 @@ class TestLendingBorrowingAgentReports:
         assert "MODERATE" in report
         assert "Position Requires Monitoring" in report
 
-    async def test_generate_report_with_risky_position(self, mock_llm_client, mock_aave_client):
+    async def test_generate_report_with_risky_position(
+        self, mock_llm_client, mock_aave_client
+    ):
         """Test report generation for high risk position."""
         from app.infrastructure.adapters.agent_squad.agents.advanced.lending_borrowing_agent_aave import (
             LendingBorrowingAgentAave,
@@ -290,7 +304,9 @@ class TestLendingBorrowingAgentReports:
             "borrowed_usd": 8000,
             "health_factor": 1.2,
             "collateral_assets": [{"token": "ETH", "amount": 5, "value_usd": 10000}],
-            "borrowed_assets": [{"token": "USDC", "amount": 8000, "value_usd": 8000, "apy": 5.0}],
+            "borrowed_assets": [
+                {"token": "USDC", "amount": 8000, "value_usd": 8000, "apy": 5.0}
+            ],
         }
 
         rates = {
@@ -389,14 +405,16 @@ class TestLendingBorrowingAgentPositions:
         )
 
         # Setup proper async mock for aave_client
-        mock_aave_client.get_user_account_data = AsyncMock(return_value={
-            "totalCollateralBase": "50000000000",
-            "totalDebtBase": "25000000000",
-            "availableBorrowsBase": "10000000000",
-            "currentLiquidationThreshold": "8500",
-            "ltv": "8000",
-            "healthFactor": "1800000000000000000",
-        })
+        mock_aave_client.get_user_account_data = AsyncMock(
+            return_value={
+                "totalCollateralBase": "50000000000",
+                "totalDebtBase": "25000000000",
+                "availableBorrowsBase": "10000000000",
+                "currentLiquidationThreshold": "8500",
+                "ltv": "8000",
+                "healthFactor": "1800000000000000000",
+            }
+        )
 
         agent = LendingBorrowingAgentAave(
             llm_client=mock_llm_client,

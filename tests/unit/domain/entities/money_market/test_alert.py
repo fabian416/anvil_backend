@@ -172,7 +172,9 @@ class TestMoneyMarketAlert:
         valid_alert_data["notification_sent"] = True
         valid_alert_data["sent_at"] = None
 
-        with pytest.raises(ValueError, match="notification_sent is True but sent_at is None"):
+        with pytest.raises(
+            ValueError, match="notification_sent is True but sent_at is None"
+        ):
             MoneyMarketAlert(**valid_alert_data)
 
     def test_formatted_change_property(self, valid_alert_data):

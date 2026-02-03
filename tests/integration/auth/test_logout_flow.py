@@ -43,7 +43,7 @@ class TestLogoutFlow:
         """
         response = await client.delete(
             "/api/v1/account/logout",
-            headers={"Authorization": "Bearer invalid-token-12345"}
+            headers={"Authorization": "Bearer invalid-token-12345"},
         )
 
         assert response.status_code == 401
@@ -72,8 +72,7 @@ class TestLogoutSessionInvalidation:
         # This test would require a valid session
         # Testing without session - expect 401
         response = await client.get(
-            "/api/v1/account/me",
-            headers={"Authorization": "Bearer fake-token"}
+            "/api/v1/account/me", headers={"Authorization": "Bearer fake-token"}
         )
 
         assert response.status_code == 401
@@ -85,7 +84,7 @@ class TestLogoutSessionInvalidation:
         """
         response = await client.post(
             "/api/v1/account/refresh-token",
-            json={"refresh_token": "fake-refresh-token"}
+            json={"refresh_token": "fake-refresh-token"},
         )
 
         # Should return 401 for invalid token
@@ -154,8 +153,7 @@ class TestLogoutErrorHandling:
         THEN system SHALL return appropriate error
         """
         response = await client.delete(
-            "/api/v1/account/logout",
-            headers={"Authorization": "Bearer expired-token"}
+            "/api/v1/account/logout", headers={"Authorization": "Bearer expired-token"}
         )
 
         assert response.status_code == 401

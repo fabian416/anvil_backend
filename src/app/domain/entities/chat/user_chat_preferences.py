@@ -72,7 +72,9 @@ class UserChatPreferences:
             user_id=user_id,
         )
 
-    def update_response_style(self, style: str, verbosity: Optional[int] = None) -> None:
+    def update_response_style(
+        self, style: str, verbosity: Optional[int] = None
+    ) -> None:
         """
         Update response style preferences.
 

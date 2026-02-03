@@ -20,7 +20,12 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Intent detection varies; requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.intent_detection]
+pytestmark = [
+    pytest.mark.skip(reason="Intent detection varies; requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.intent_detection,
+]
 
 
 class TestComplexIntentCombos:
@@ -38,9 +43,9 @@ class TestComplexIntentCombos:
             "/api/v1/guest/chat",
             json={
                 "content": "What's the price of ETH, how do I swap it for USDC, "
-                          "can I lend it on Aave, and where can I stake it?",
-                "language": "en"
-            }
+                "can I lend it on Aave, and where can I stake it?",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -52,10 +57,14 @@ class TestComplexIntentCombos:
 
         # Should provide comprehensive response addressing multiple intents
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 150, "Should provide comprehensive response for multiple intents (150+ chars)"
+        assert len(agent_response) > 150, (
+            "Should provide comprehensive response for multiple intents (150+ chars)"
+        )
 
     @pytest.mark.llm_validation
-    async def test_recursive_intent_dependency(self, client: AsyncClient, llm_validator):
+    async def test_recursive_intent_dependency(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test intents dependent on previous results.
 
@@ -66,9 +75,9 @@ class TestComplexIntentCombos:
             "/api/v1/guest/chat",
             json={
                 "content": "If Bitcoin price goes above $50k, what are the best "
-                          "lending protocols to deposit it, and what APY can I expect?",
-                "language": "en"
-            }
+                "lending protocols to deposit it, and what APY can I expect?",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -79,10 +88,14 @@ class TestComplexIntentCombos:
 
         # Should provide logical, sequential response
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 100, "Should provide comprehensive sequential response (100+ chars)"
+        assert len(agent_response) > 100, (
+            "Should provide comprehensive sequential response (100+ chars)"
+        )
 
     @pytest.mark.llm_validation
-    async def test_parallel_independent_intents(self, client: AsyncClient, llm_validator):
+    async def test_parallel_independent_intents(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test multiple independent intents.
 
@@ -93,9 +106,9 @@ class TestComplexIntentCombos:
             "/api/v1/guest/chat",
             json={
                 "content": "What's the market cap of Solana? Also, what are the gas "
-                          "fees on Ethereum right now? And what's the latest news on Bitcoin?",
-                "language": "en"
-            }
+                "fees on Ethereum right now? And what's the latest news on Bitcoin?",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -106,10 +119,14 @@ class TestComplexIntentCombos:
 
         # Should address all independent intents
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 100, "Should address all independent intents (100+ chars)"
+        assert len(agent_response) > 100, (
+            "Should address all independent intents (100+ chars)"
+        )
 
     @pytest.mark.llm_validation
-    async def test_intent_with_multiple_conditions(self, client: AsyncClient, llm_validator):
+    async def test_intent_with_multiple_conditions(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test complex conditional intents.
 
@@ -120,9 +137,9 @@ class TestComplexIntentCombos:
             "/api/v1/guest/chat",
             json={
                 "content": "If ETH is above $2000 and gas fees are below 50 gwei, "
-                          "should I swap now or wait for better conditions?",
-                "language": "en"
-            }
+                "should I swap now or wait for better conditions?",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -133,7 +150,9 @@ class TestComplexIntentCombos:
 
         # Should handle conditional logic appropriately
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 50, "Should provide thoughtful conditional response"
+        assert len(agent_response) > 50, (
+            "Should provide thoughtful conditional response"
+        )
 
     @pytest.mark.llm_validation
     async def test_intent_priority_resolution(self, client: AsyncClient, llm_validator):
@@ -147,9 +166,9 @@ class TestComplexIntentCombos:
             "/api/v1/guest/chat",
             json={
                 "content": "I need to urgently swap my USDC for ETH, but also want to "
-                          "know general market trends and check my portfolio balance",
-                "language": "en"
-            }
+                "know general market trends and check my portfolio balance",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -160,10 +179,14 @@ class TestComplexIntentCombos:
 
         # Should prioritize urgent action while addressing other intents
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 50, "Should handle priority resolution appropriately"
+        assert len(agent_response) > 50, (
+            "Should handle priority resolution appropriately"
+        )
 
     @pytest.mark.llm_validation
-    async def test_ambiguous_multi_intent_resolution(self, client: AsyncClient, llm_validator):
+    async def test_ambiguous_multi_intent_resolution(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test resolving ambiguous multi-intent queries.
 
@@ -174,9 +197,9 @@ class TestComplexIntentCombos:
             "/api/v1/guest/chat",
             json={
                 "content": "I want to invest in crypto but not sure where to start, "
-                          "maybe DeFi or just buy and hold?",
-                "language": "en"
-            }
+                "maybe DeFi or just buy and hold?",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK

@@ -21,10 +21,11 @@ from app.domain.value_objects.updated_at import UpdatedAt
 class PasswordReset(Entity[PasswordResetId]):
     """
     PasswordReset entity representing a password reset in the system.
-    
+
     This is an anemic model following DDD principles where behavior
     is handled by domain services rather than the entity itself.
     """
+
     user_id: UserId
     token: ResetToken
     expires_at: ExpirationTime

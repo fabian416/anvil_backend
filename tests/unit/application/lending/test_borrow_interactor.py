@@ -253,7 +253,9 @@ class TestBorrowInteractorUnsafeBorrow:
         assert exc_info.value.validation_result.level == HealthFactorLevel.DANGER
 
     @pytest.mark.asyncio
-    async def test_critical_health_factor_blocked(self, borrow_interactor, mock_hf_validator):
+    async def test_critical_health_factor_blocked(
+        self, borrow_interactor, mock_hf_validator
+    ):
         """Test borrow blocked with critical health factor."""
         # Mock critical validation result
         mock_hf_validator.validate_borrow = AsyncMock(

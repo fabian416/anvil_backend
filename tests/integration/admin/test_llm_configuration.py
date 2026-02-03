@@ -74,8 +74,7 @@ class TestLLMModels:
         """
         model_id = str(uuid4())
         response = await client.put(
-            f"/api/v1/admin/llm/models/{model_id}",
-            json={"is_enabled": True}
+            f"/api/v1/admin/llm/models/{model_id}", json={"is_enabled": True}
         )
 
         # Without auth, expect 401
@@ -88,8 +87,7 @@ class TestLLMModels:
         """
         model_id = str(uuid4())
         response = await client.put(
-            f"/api/v1/admin/llm/models/{model_id}",
-            json={"is_enabled": False}
+            f"/api/v1/admin/llm/models/{model_id}", json={"is_enabled": False}
         )
 
         assert response.status_code in (200, 401, 403, 404, 405, 500, 501)
@@ -99,9 +97,7 @@ class TestLLMModels:
         WHEN admin requests non-existent model
         THEN system SHALL return 404 (or 401/200 if route not matched)
         """
-        response = await client.get(
-            f"/api/v1/admin/llm/models/{uuid4()}"
-        )
+        response = await client.get(f"/api/v1/admin/llm/models/{uuid4()}")
 
         # Route may not exist (404), require auth (401/403), or return model data (200)
         assert response.status_code in (200, 401, 403, 404, 405, 500, 501)
@@ -134,10 +130,7 @@ class TestLLMRanking:
             ]
         }
 
-        response = await client.put(
-            "/api/v1/admin/llm/rankings",
-            json=ranking_data
-        )
+        response = await client.put("/api/v1/admin/llm/rankings", json=ranking_data)
 
         assert response.status_code in (200, 401, 403, 404, 405, 422, 500, 501)
 
@@ -169,10 +162,7 @@ class TestAgentModelConfig:
             "max_tokens": 2048,
         }
 
-        response = await client.put(
-            "/api/v1/admin/llm/agent-config",
-            json=config_data
-        )
+        response = await client.put("/api/v1/admin/llm/agent-config", json=config_data)
 
         assert response.status_code in (200, 401, 403, 404, 405, 422, 500, 501)
 
@@ -199,10 +189,7 @@ class TestLLMTelemetry:
         """
         response = await client.get(
             "/api/v1/admin/llm/telemetry",
-            params={
-                "start_date": "2025-12-01",
-                "end_date": "2025-12-07"
-            }
+            params={"start_date": "2025-12-01", "end_date": "2025-12-07"},
         )
 
         assert response.status_code in (200, 401, 403, 404, 405, 422, 500, 501)
@@ -233,10 +220,7 @@ class TestLLMBudgets:
             "monthly_limit": 2000.0,
         }
 
-        response = await client.post(
-            "/api/v1/admin/llm/budgets",
-            json=budget_data
-        )
+        response = await client.post("/api/v1/admin/llm/budgets", json=budget_data)
 
         assert response.status_code in (200, 201, 401, 403, 404, 405, 422)
 

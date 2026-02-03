@@ -33,7 +33,9 @@ ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ
 async def client():
     """Create test client."""
     app = make_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
@@ -71,12 +73,14 @@ async def test_cancellation_mid_hunter_analysis(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
         json={
             "content": "Analyze Bitcoin market sentiment and provide detailed arbitrage opportunities across 5 exchanges",
-            "language": "en"
+            "language": "en",
         },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
-    assert response.status_code in (200, 201), f"Failed to start analysis: {response.status_code}"
+    assert response.status_code in (200, 201), (
+        f"Failed to start analysis: {response.status_code}"
+    )
     data = response.json()
     content = data["agent_message"]["content"]
 
@@ -98,31 +102,37 @@ async def test_cancellation_mid_hunter_analysis(
                 "User should understand what happened and what data is reliable."
             ),
             additional_context={
-                'test_category': 'cancellation_handling',
-                'workflow_type': 'hunter_analysis',
-                'user_type': 'authenticated'
-            }
+                "test_category": "cancellation_handling",
+                "workflow_type": "hunter_analysis",
+                "user_type": "authenticated",
+            },
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
     # CSV tracking
-    await csv_tracker("user", "workflows", {
-        "test_id": "user_workflows_cancellation_hunter_001",
-        "s_multistep": False,
-        "input": "Analyze Bitcoin market sentiment and provide detailed arbitrage opportunities across 5 exchanges",
-        "output": content,
-        "test_label_sequence": "workflows_cancellation_hunter",
-        "output_expected": "Market analysis with graceful cancellation acknowledgment if interrupted",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    })
+    await csv_tracker(
+        "user",
+        "workflows",
+        {
+            "test_id": "user_workflows_cancellation_hunter_001",
+            "s_multistep": False,
+            "input": "Analyze Bitcoin market sentiment and provide detailed arbitrage opportunities across 5 exchanges",
+            "output": content,
+            "test_label_sequence": "workflows_cancellation_hunter",
+            "output_expected": "Market analysis with graceful cancellation acknowledgment if interrupted",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -147,12 +157,14 @@ async def test_cancellation_mid_ultra_execution(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
         json={
             "content": "Execute a multi-hop swap: ETH → USDC → DAI with best routing",
-            "language": "en"
+            "language": "en",
         },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
-    assert response.status_code in (200, 201), f"Failed to start execution: {response.status_code}"
+    assert response.status_code in (200, 201), (
+        f"Failed to start execution: {response.status_code}"
+    )
     data = response.json()
     content = data["agent_message"]["content"]
 
@@ -173,32 +185,38 @@ async def test_cancellation_mid_ultra_execution(
                 "User should understand cancellation means no funds were moved."
             ),
             additional_context={
-                'test_category': 'cancellation_handling',
-                'workflow_type': 'ultra_execution',
-                'user_type': 'authenticated',
-                'critical_transaction': True
-            }
+                "test_category": "cancellation_handling",
+                "workflow_type": "ultra_execution",
+                "user_type": "authenticated",
+                "critical_transaction": True,
+            },
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
     # CSV tracking
-    await csv_tracker("user", "workflows", {
-        "test_id": "user_workflows_cancellation_ultra_002",
-        "s_multistep": False,
-        "input": "Execute a multi-hop swap: ETH → USDC → DAI with best routing",
-        "output": content,
-        "test_label_sequence": "workflows_cancellation_ultra",
-        "output_expected": "Swap routing strategy with atomic transaction guarantee on cancellation",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    })
+    await csv_tracker(
+        "user",
+        "workflows",
+        {
+            "test_id": "user_workflows_cancellation_ultra_002",
+            "s_multistep": False,
+            "input": "Execute a multi-hop swap: ETH → USDC → DAI with best routing",
+            "output": content,
+            "test_label_sequence": "workflows_cancellation_ultra",
+            "output_expected": "Swap routing strategy with atomic transaction guarantee on cancellation",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -252,32 +270,38 @@ async def test_cancellation_multi_step_workflow_cleanup(
                 "No hanging references or corrupted state."
             ),
             additional_context={
-                'test_category': 'resource_cleanup',
-                'workflow_type': 'multi_agent',
-                'user_type': 'authenticated',
-                'agent_handoffs': True
-            }
+                "test_category": "resource_cleanup",
+                "workflow_type": "multi_agent",
+                "user_type": "authenticated",
+                "agent_handoffs": True,
+            },
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
     # CSV tracking
-    await csv_tracker("user", "workflows", {
-        "test_id": "user_workflows_multi_step_cleanup_003",
-        "s_multistep": True,
-        "input": "Multi-turn: 1) What are the best DeFi yield opportunities? 2) Now execute the top opportunity",
-        "output": content,
-        "test_label_sequence": "workflows_multi_step_cleanup",
-        "output_expected": "Execution plan referencing previous yield analysis with proper resource cleanup",
-        "status": "PASS" if last_response and content else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    })
+    await csv_tracker(
+        "user",
+        "workflows",
+        {
+            "test_id": "user_workflows_multi_step_cleanup_003",
+            "s_multistep": True,
+            "input": "Multi-turn: 1) What are the best DeFi yield opportunities? 2) Now execute the top opportunity",
+            "output": content,
+            "test_label_sequence": "workflows_multi_step_cleanup",
+            "output_expected": "Execution plan referencing previous yield analysis with proper resource cleanup",
+            "status": "PASS" if last_response and content else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -338,32 +362,38 @@ async def test_cancellation_conversation_state_consistency(
                 "Response should be coherent and contextually aware."
             ),
             additional_context={
-                'test_category': 'state_consistency',
-                'workflow_type': 'conversation_continuation',
-                'user_type': 'authenticated',
-                'message_sequence': ['staking_intro', 'risks', 'validator_comparison']
-            }
+                "test_category": "state_consistency",
+                "workflow_type": "conversation_continuation",
+                "user_type": "authenticated",
+                "message_sequence": ["staking_intro", "risks", "validator_comparison"],
+            },
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
     # CSV tracking
-    await csv_tracker("user", "workflows", {
-        "test_id": "user_workflows_state_consistency_004",
-        "s_multistep": True,
-        "input": "Multi-turn: 1) Tell me about Ethereum staking 2) What are the risks? 3) Compare staking rewards across validators",
-        "output": content,
-        "test_label_sequence": "workflows_state_consistency",
-        "output_expected": "Validator comparison maintaining context from earlier staking discussion",
-        "status": "PASS" if response3.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    })
+    await csv_tracker(
+        "user",
+        "workflows",
+        {
+            "test_id": "user_workflows_state_consistency_004",
+            "s_multistep": True,
+            "input": "Multi-turn: 1) Tell me about Ethereum staking 2) What are the risks? 3) Compare staking rewards across validators",
+            "output": content,
+            "test_label_sequence": "workflows_state_consistency",
+            "output_expected": "Validator comparison maintaining context from earlier staking discussion",
+            "status": "PASS" if response3.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -388,12 +418,14 @@ async def test_cancellation_resource_cleanup_verified(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
         json={
             "content": "Analyze top 10 DeFi protocols with TVL, APY, and risk scores",
-            "language": "en"
+            "language": "en",
         },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
-    assert response.status_code in (200, 201), f"Failed to execute workflow: {response.status_code}"
+    assert response.status_code in (200, 201), (
+        f"Failed to execute workflow: {response.status_code}"
+    )
     data = response.json()
     content = data["agent_message"]["content"]
 
@@ -414,32 +446,40 @@ async def test_cancellation_resource_cleanup_verified(
                 "No hanging resources or memory leaks."
             ),
             additional_context={
-                'test_category': 'resource_management',
-                'workflow_type': 'data_intensive',
-                'user_type': 'authenticated',
-                'resource_checks': ['db_connections', 'api_calls', 'memory']
-            }
+                "test_category": "resource_management",
+                "workflow_type": "data_intensive",
+                "user_type": "authenticated",
+                "resource_checks": ["db_connections", "api_calls", "memory"],
+            },
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
     # CSV tracking
-    await csv_tracker("user", "workflows", {
-        "test_id": "user_workflows_resource_cleanup_005",
-        "s_multistep": False,
-        "input": "Analyze top 10 DeFi protocols with TVL, APY, and risk scores",
-        "output": content,
-        "test_label_sequence": "workflows_resource_cleanup",
-        "output_expected": "DeFi protocol analysis with efficient resource management and cleanup",
-        "status": "PASS" if response.status_code in (200, 201) and len(content) > 100 else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    })
+    await csv_tracker(
+        "user",
+        "workflows",
+        {
+            "test_id": "user_workflows_resource_cleanup_005",
+            "s_multistep": False,
+            "input": "Analyze top 10 DeFi protocols with TVL, APY, and risk scores",
+            "output": content,
+            "test_label_sequence": "workflows_resource_cleanup",
+            "output_expected": "DeFi protocol analysis with efficient resource management and cleanup",
+            "status": "PASS"
+            if response.status_code in (200, 201) and len(content) > 100
+            else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -488,29 +528,35 @@ async def test_cancellation_idempotency_guarantee(
                 "State should remain consistent regardless of redundant cancels."
             ),
             additional_context={
-                'test_category': 'idempotency',
-                'workflow_type': 'cancellation_handling',
-                'user_type': 'authenticated',
-                'safety_property': 'idempotent_cancellation'
-            }
+                "test_category": "idempotency",
+                "workflow_type": "cancellation_handling",
+                "user_type": "authenticated",
+                "safety_property": "idempotent_cancellation",
+            },
         )
         if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
+            pytest.warn(
+                UserWarning(
+                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
+                    f"{validation.reasoning}"
+                )
+            )
 
     # CSV tracking
-    await csv_tracker("user", "workflows", {
-        "test_id": "user_workflows_idempotency_006",
-        "s_multistep": False,
-        "input": "Explain flash loans in detail",
-        "output": content,
-        "test_label_sequence": "workflows_idempotency",
-        "output_expected": "Flash loan explanation with idempotent cancellation handling",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    })
+    await csv_tracker(
+        "user",
+        "workflows",
+        {
+            "test_id": "user_workflows_idempotency_006",
+            "s_multistep": False,
+            "input": "Explain flash loans in detail",
+            "output": content,
+            "test_label_sequence": "workflows_idempotency",
+            "output_expected": "Flash loan explanation with idempotent cancellation handling",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+        },
+    )

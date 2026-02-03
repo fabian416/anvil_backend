@@ -69,9 +69,9 @@ async def test_balance_checker_interface():
     """Test that MockBalanceChecker implements the expected methods."""
     # Verify our mock has all required methods
     checker = MockBalanceChecker()
-    assert hasattr(checker, 'check_balance')
-    assert hasattr(checker, 'get_balance')
-    assert hasattr(checker, 'check_gas_balance')
+    assert hasattr(checker, "check_balance")
+    assert hasattr(checker, "get_balance")
+    assert hasattr(checker, "check_gas_balance")
     assert callable(checker.check_balance)
     assert callable(checker.get_balance)
     assert callable(checker.check_gas_balance)

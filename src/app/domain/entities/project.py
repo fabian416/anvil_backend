@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 class Project:
     """
     Project entity representing an admin-configured DeFi assistant project.
-    
+
     Each project has:
     - Custom branding and identity
     - Specialized system prompt
@@ -18,7 +18,7 @@ class Project:
     - Knowledge base for RAG
     - User assignments
     """
-    
+
     def __init__(
         self,
         id: UUID,
@@ -45,7 +45,7 @@ class Project:
     ):
         """
         Initialize project.
-        
+
         Args:
             id: Project identifier
             slug: URL-friendly identifier
@@ -90,7 +90,7 @@ class Project:
         self.created_by = created_by
         self.created_at = created_at or datetime.now(UTC)
         self.updated_at = updated_at or datetime.now(UTC)
-    
+
     @classmethod
     def create(
         cls,
@@ -114,7 +114,7 @@ class Project:
     ) -> "Project":
         """
         Create a new project.
-        
+
         Args:
             slug: URL-friendly identifier
             name: Display name
@@ -158,7 +158,7 @@ class Project:
             is_featured=is_featured,
             created_by=created_by,
         )
-    
+
     def update(
         self,
         name: Optional[str] = None,
@@ -178,7 +178,7 @@ class Project:
     ) -> None:
         """
         Update project details.
-        
+
         Args:
             name: New name
             description: New description
@@ -223,103 +223,97 @@ class Project:
             self.display_order = display_order
         if is_featured is not None:
             self.is_featured = is_featured
-        
+
         self.updated_at = datetime.now(UTC)
-    
+
     def activate(self) -> None:
         """Activate the project."""
         self.status = "active"
         self.updated_at = datetime.now(UTC)
-    
+
     def pause(self) -> None:
         """Pause the project."""
         self.status = "paused"
         self.updated_at = datetime.now(UTC)
-    
+
     def archive(self) -> None:
         """Archive the project."""
         self.status = "archived"
         self.updated_at = datetime.now(UTC)
-    
+
     def is_active(self) -> bool:
         """Check if project is active."""
         return self.status == "active"
-    
+
     def is_public(self) -> bool:
         """Check if project is public."""
         return self.visibility == "public"
-    
+
     def can_accept_users(self, current_user_count: int) -> bool:
         """
         Check if project can accept more users.
-        
+
         Args:
             current_user_count: Current number of users
-        
+
         Returns:
             True if project can accept more users
         """
         if self.max_users is None:
             return True
         return current_user_count < self.max_users
-    
+
     def has_protocol(self, protocol: str) -> bool:
         """Check if protocol is enabled."""
         return protocol in self.enabled_protocols
-    
+
     def has_chain(self, chain: str) -> bool:
         """Check if chain is enabled."""
         return chain in self.enabled_chains
-    
+
     def has_tool(self, tool: str) -> bool:
         """Check if tool is enabled."""
         return tool in self.enabled_tools
-    
+
     @property
     def hunter_tools_enabled(self) -> List[str]:
         """
         Get enabled Hunter AI tools.
-        
+
         Returns:
             List of Hunter AI tool names enabled for this project
         """
-        return [
-            tool for tool in self.enabled_tools
-            if tool.startswith("hunter_")
-        ]
-    
+        return [tool for tool in self.enabled_tools if tool.startswith("hunter_")]
+
     @property
     def ultra_tools_enabled(self) -> List[str]:
         """
         Get enabled ULTRA Arbitrage tools.
-        
+
         Returns:
             List of ULTRA tool names enabled for this project
         """
-        return [
-            tool for tool in self.enabled_tools
-            if tool.startswith("ultra_")
-        ]
-    
+        return [tool for tool in self.enabled_tools if tool.startswith("ultra_")]
+
     def can_use_hunter_tool(self, tool_name: str) -> bool:
         """
         Check if Hunter AI tool is enabled for this project.
-        
+
         Args:
             tool_name: Hunter AI tool name (e.g., "hunter_sentiment_analysis")
-        
+
         Returns:
             True if tool is enabled
         """
         return tool_name in self.enabled_tools
-    
+
     def can_use_ultra_tool(self, tool_name: str) -> bool:
         """
         Check if ULTRA tool is enabled for this project.
-        
+
         Args:
             tool_name: ULTRA tool name (e.g., "ultra_flash_loans")
-        
+
         Returns:
             True if tool is enabled
         """

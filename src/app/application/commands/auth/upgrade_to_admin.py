@@ -24,6 +24,7 @@ log = logging.getLogger(__name__)
 @dataclass(frozen=True, slots=True)
 class UpgradeToAdminRequest:
     """Request to upgrade a user to admin role."""
+
     authorization: str
 
 

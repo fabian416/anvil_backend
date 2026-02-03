@@ -9,12 +9,13 @@ from app.application.common.ports.agent_task_queue import AgentTaskQueue
 
 from app.domain.value_objects.message_content import MessageContent
 
+
 class SendMessage:
     def __init__(
         self,
         repo: LLMConversationRepository,
         tx: TransactionManager,
-        task_queue: AgentTaskQueue
+        task_queue: AgentTaskQueue,
     ):
         self.repo = repo
         self.tx = tx
@@ -28,14 +29,14 @@ class SendMessage:
             role=MessageRole.USER,
             content=content,
             agent_type=None,
-            created_at=None
+            created_at=None,
         )
-        
+
         # Save Message
         # async with self.tx:
         #     await self.repo.add_message(message)
-        
+
         # Trigger Async Processing
         await self.task_queue.enqueue_message_processing(conversation_id, message_id)
-        
+
         return message

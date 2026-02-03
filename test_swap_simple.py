@@ -32,7 +32,7 @@ class SimpleMoonPayTester:
 
     def _extract_amount(self, content: str) -> str | None:
         """Extract amount from content."""
-        match = re.search(r'(\d+\.?\d*)', content)
+        match = re.search(r"(\d+\.?\d*)", content)
         return match.group(1) if match else None
 
     def handle_flow(
@@ -119,8 +119,8 @@ def test_flow():
     print("\n2. User: 'BTC'")
     result = tester.handle_flow(
         content="BTC",
-        continuation_step=result.get('pending_action'),
-        previous_swap_info=result.get('swap_info'),
+        continuation_step=result.get("pending_action"),
+        previous_swap_info=result.get("swap_info"),
     )
     print(f"   Bot: {result.get('message')}")
     print(f"   Next state: {result.get('pending_action')}")
@@ -130,8 +130,8 @@ def test_flow():
     print("\n3. User: 'ETH'")
     result = tester.handle_flow(
         content="ETH",
-        continuation_step=result.get('pending_action'),
-        previous_swap_info=result.get('swap_info'),
+        continuation_step=result.get("pending_action"),
+        previous_swap_info=result.get("swap_info"),
     )
     print(f"   Bot: {result.get('message')}")
     print(f"   Next state: {result.get('pending_action')}")
@@ -141,8 +141,8 @@ def test_flow():
     print("\n4. User: '1'")
     result = tester.handle_flow(
         content="1",
-        continuation_step=result.get('pending_action'),
-        previous_swap_info=result.get('swap_info'),
+        continuation_step=result.get("pending_action"),
+        previous_swap_info=result.get("swap_info"),
     )
     print(f"   Bot: {result.get('message')}")
     print(f"   Next state: {result.get('pending_action')}")
@@ -152,8 +152,8 @@ def test_flow():
     print("\n5. User: 'confirm'")
     result = tester.handle_flow(
         content="confirm",
-        continuation_step=result.get('pending_action'),
-        previous_swap_info=result.get('swap_info'),
+        continuation_step=result.get("pending_action"),
+        previous_swap_info=result.get("swap_info"),
     )
     print(f"   Bot: {result.get('message')}")
     print(f"   Requires registration: {result.get('requires_registration')}")

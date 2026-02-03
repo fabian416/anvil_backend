@@ -11,7 +11,9 @@ from fastapi.exceptions import HTTPException
 
 from app.presentation.http.auth.fastapi_openapi_markers import bearer_scheme
 from app.application.common.services.current_user import CurrentUserService
-from app.application.chat.services.advanced_intent_detector import AdvancedIntentDetector
+from app.application.chat.services.advanced_intent_detector import (
+    AdvancedIntentDetector,
+)
 from app.presentation.http.schemas.chat import (
     DetectIntentRequest,
     DetectIntentResponse,

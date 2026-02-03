@@ -49,7 +49,6 @@ KNOWLEDGE_TESTS = [
         "category": "agent",
         "subcategory": "knowledge_concept",
     },
-    
     # Protocol Information
     {
         "test_id": "knowledge_protocol_001",
@@ -72,7 +71,6 @@ KNOWLEDGE_TESTS = [
         "category": "agent",
         "subcategory": "knowledge_protocol",
     },
-    
     # Educational
     {
         "test_id": "knowledge_education_001",
@@ -105,30 +103,29 @@ def knowledge_reporter() -> CSVReporter:
 @pytest.mark.asyncio
 class TestKnowledgeAgent:
     """Test Knowledge agent functionality."""
-    
+
     async def test_knowledge_queries(self, authenticated_client, knowledge_reporter):
         """Test knowledge/educational queries."""
         import asyncio
-        
+
         for test_case in KNOWLEDGE_TESTS:
             conv_id = await create_conversation(
-                authenticated_client,
-                title=f"Test {test_case['test_id']}"
+                authenticated_client, title=f"Test {test_case['test_id']}"
             )
-            
+
             response_data, response_time = await send_message(
                 authenticated_client,
                 conv_id,
                 test_case["input"],
                 timeout=90.0,
             )
-            
+
             parsed = parse_response(response_data)
-            
+
             expected_agent = test_case.get("expected_agent", "")
             actual_agents = parsed.get("agents_used", "")
             has_error = parsed.get("error", False)
-            
+
             if has_error:
                 status = "FAIL"
             elif expected_agent and expected_agent in actual_agents:
@@ -137,7 +134,7 @@ class TestKnowledgeAgent:
                 status = "PARTIAL"
             else:
                 status = "FAIL"
-            
+
             result = TestResult(
                 test_id=test_case["test_id"],
                 category=test_case.get("category", ""),
@@ -151,12 +148,16 @@ class TestKnowledgeAgent:
                 status=status,
                 conversation_id=conv_id,
             )
-            
+
             knowledge_reporter.add_result(result)
-            
-            status_emoji = "✅" if status == "PASS" else "⚠️" if status == "PARTIAL" else "❌"
-            print(f"{status_emoji} {test_case['test_id']}: {test_case['input'][:40]}... → {actual_agents} ({response_time}ms)")
-            
+
+            status_emoji = (
+                "✅" if status == "PASS" else "⚠️" if status == "PARTIAL" else "❌"
+            )
+            print(
+                f"{status_emoji} {test_case['test_id']}: {test_case['input'][:40]}... → {actual_agents} ({response_time}ms)"
+            )
+
             await asyncio.sleep(0.5)
 
 

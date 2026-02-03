@@ -78,7 +78,9 @@ class PriceDataService:
     - Train/test split
     """
 
-    def __init__(self, config: PriceDataConfig = None, coingecko_client: CoinGeckoClient = None):
+    def __init__(
+        self, config: PriceDataConfig = None, coingecko_client: CoinGeckoClient = None
+    ):
         """Initialize price data service.
 
         Args:

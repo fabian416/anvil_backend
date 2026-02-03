@@ -40,7 +40,16 @@ class MoonPaySwapInfo:
 
     # MoonPay supported tokens for swaps
     SUPPORTED_TOKENS: list[str] = field(
-        default_factory=lambda: ["ETH", "USDC", "USDT", "DAI", "BTC", "SOL", "WBTC", "WETH"]
+        default_factory=lambda: [
+            "ETH",
+            "USDC",
+            "USDT",
+            "DAI",
+            "BTC",
+            "SOL",
+            "WBTC",
+            "WETH",
+        ]
     )
 
     @property
@@ -108,7 +117,6 @@ Great choice! Swapping crypto is easy with Privy + 0x.
 {options}
 
 💡 *Just type the token symbol, like "ETH"*""",
-
         "ask_to_token": """✨ **Perfect! You're swapping {from_emoji} {from_token}**
 
 **Step 2 of 3:** What crypto would you like to receive?
@@ -116,7 +124,6 @@ Great choice! Swapping crypto is easy with Privy + 0x.
 {options}
 
 💡 *Type the token you want to get, like "USDC"*""",
-
         "ask_amount": """🎯 **Almost There!**
 
 Swapping {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
@@ -127,7 +134,6 @@ Swapping {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
 • `1` (one {from_token})
 • `0.5` (half a {from_token})
 • `100` (one hundred {from_token})""",
-
         "quote_ready": """✅ **Swap Ready to Execute**
 
 🔄 **Swap:** {amount} {from_token} → ~{quote_amount} {to_token}
@@ -138,15 +144,12 @@ Swapping {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Click **Confirm** to execute via Privy + 0x Protocol.""",
-
         "error_invalid_token": """❌ I didn't recognize that token. Let's try again!
 
 {options}""",
-
         "error_invalid_amount": """❌ That doesn't look like a valid amount. Let's try again!
 
 💡 *Enter a number like: 1, 0.5, or 100*""",
-
         "error_quote_failed": """⚠️ Unable to get quote for {from_token} → {to_token}.
 
 Please try again or choose different tokens.""",
@@ -161,7 +164,6 @@ Please try again or choose different tokens.""",
 {options}
 
 💡 *Solo escribe el símbolo, como "ETH"*""",
-
         "ask_to_token": """✨ **¡Perfecto! Vas a intercambiar {from_emoji} {from_token}**
 
 **Paso 2 de 3:** ¿Qué cripto te gustaría recibir?
@@ -169,7 +171,6 @@ Please try again or choose different tokens.""",
 {options}
 
 💡 *Escribe el token que quieres recibir, como "USDC"*""",
-
         "ask_amount": """🎯 **¡Casi Listo!**
 
 Intercambiando {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
@@ -180,7 +181,6 @@ Intercambiando {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
 • `1` (un {from_token})
 • `0.5` (medio {from_token})
 • `100` (cien {from_token})""",
-
         "quote_ready": """✅ **Swap Listo para Ejecutar**
 
 🔄 **Intercambio:** {amount} {from_token} → ~{quote_amount} {to_token}
@@ -191,15 +191,12 @@ Intercambiando {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Haz clic en **Confirmar** para ejecutar vía Privy + 0x Protocol.""",
-
         "error_invalid_token": """❌ No reconocí ese token. ¡Intentemos de nuevo!
 
 {options}""",
-
         "error_invalid_amount": """❌ Eso no parece una cantidad válida. ¡Intentemos de nuevo!
 
 💡 *Ingresa un número como: 1, 0.5, o 100*""",
-
         "error_quote_failed": """⚠️ No se pudo obtener cotización para {from_token} → {to_token}.
 
 Por favor intenta de nuevo o elige tokens diferentes.""",
@@ -214,7 +211,6 @@ Por favor intenta de nuevo o elige tokens diferentes.""",
 {options}
 
 💡 *Apenas digite o símbolo, como "ETH"*""",
-
         "ask_to_token": """✨ **Perfeito! Você vai trocar {from_emoji} {from_token}**
 
 **Passo 2 de 3:** Qual cripto você gostaria de receber?
@@ -222,7 +218,6 @@ Por favor intenta de nuevo o elige tokens diferentes.""",
 {options}
 
 💡 *Digite o token que você quer receber, como "USDC"*""",
-
         "ask_amount": """🎯 **Quase Lá!**
 
 Trocando {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
@@ -233,7 +228,6 @@ Trocando {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
 • `1` (um {from_token})
 • `0.5` (meio {from_token})
 • `100` (cem {from_token})""",
-
         "quote_ready": """✅ **Swap Pronto para Executar**
 
 🔄 **Troca:** {amount} {from_token} → ~{quote_amount} {to_token}
@@ -244,15 +238,12 @@ Trocando {from_emoji} **{from_token}** → {to_emoji} **{to_token}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Clique em **Confirmar** para executar via Privy + 0x Protocol.""",
-
         "error_invalid_token": """❌ Não reconheci esse token. Vamos tentar de novo!
 
 {options}""",
-
         "error_invalid_amount": """❌ Isso não parece uma quantidade válida. Vamos tentar de novo!
 
 💡 *Digite um número como: 1, 0.5, ou 100*""",
-
         "error_quote_failed": """⚠️ Não foi possível obter cotação para {from_token} → {to_token}.
 
 Por favor tente novamente ou escolha tokens diferentes.""",
@@ -287,7 +278,9 @@ class MoonPaySwapFlowHandler:
     5. User confirms → Frontend executes via Privy
     """
 
-    def __init__(self, moonpay_swap_handler=None, ox_client=None, wallet_repository=None):
+    def __init__(
+        self, moonpay_swap_handler=None, ox_client=None, wallet_repository=None
+    ):
         """
         Initialize the handler.
 
@@ -299,7 +292,16 @@ class MoonPaySwapFlowHandler:
         self._moonpay_handler = moonpay_swap_handler
         self._ox_client = ox_client
         self._wallet_repository = wallet_repository
-        self._supported_tokens = ["ETH", "USDC", "USDT", "DAI", "BTC", "SOL", "WBTC", "WETH"]
+        self._supported_tokens = [
+            "ETH",
+            "USDC",
+            "USDT",
+            "DAI",
+            "BTC",
+            "SOL",
+            "WBTC",
+            "WETH",
+        ]
 
     # ========================================================================
     # Main Entry Point
@@ -387,7 +389,9 @@ class MoonPaySwapFlowHandler:
 
         # Phase 2: Ask for TO token
         if not swap_info.to_token:
-            available_tokens = [t for t in self._supported_tokens if t != swap_info.from_token]
+            available_tokens = [
+                t for t in self._supported_tokens if t != swap_info.from_token
+            ]
             options = self._format_token_options(available_tokens)
             from_emoji = TOKEN_EMOJIS.get(swap_info.from_token, "💎")
             return MoonPaySwapHandlerResult(
@@ -456,7 +460,9 @@ class MoonPaySwapFlowHandler:
                         user_wallet_address = user_wallets[0].address
                         logger.info(f"[SWAP_FLOW] Using wallet: {user_wallet_address}")
                     else:
-                        logger.warning(f"[SWAP_FLOW] No wallet found for user {user_id}")
+                        logger.warning(
+                            f"[SWAP_FLOW] No wallet found for user {user_id}"
+                        )
                         use_demo_quote = True
 
                     if user_wallet_address:
@@ -477,10 +483,10 @@ class MoonPaySwapFlowHandler:
                             ),
                             "exchange_rate": ox_quote.price,
                             "network_fee_usd": "0.01",  # Estimated, actual fee from transaction
-                            "quote_id": ox_quote.quote_id or f"0x-{datetime.utcnow().timestamp()}",
-                            "expires_at": ox_quote.expires_at or (
-                                datetime.utcnow() + timedelta(minutes=1)
-                            ).isoformat(),
+                            "quote_id": ox_quote.quote_id
+                            or f"0x-{datetime.utcnow().timestamp()}",
+                            "expires_at": ox_quote.expires_at
+                            or (datetime.utcnow() + timedelta(minutes=1)).isoformat(),
                             "transaction": ox_quote.transaction,
                             "permit2": ox_quote.permit2,
                             "gas_estimate": ox_quote.gas_estimate,
@@ -521,29 +527,37 @@ class MoonPaySwapFlowHandler:
                 logger.info(f"[SWAP_FLOW] Using DEMO quote: {quote}")
 
             # Extract quote data with fallback to multiple API response formats
-            quote_amount = quote.get("quote_amount") or self._calculate_demo_output(swap_info)
+            quote_amount = quote.get("quote_amount") or self._calculate_demo_output(
+                swap_info
+            )
             exchange_rate = (
-                quote.get("exchange_rate") or
-                quote.get("exchangeRate") or
-                self._get_demo_rate(swap_info.from_token, swap_info.to_token)
+                quote.get("exchange_rate")
+                or quote.get("exchangeRate")
+                or self._get_demo_rate(swap_info.from_token, swap_info.to_token)
             )
             network_fee = (
-                quote.get("network_fee_usd") or
-                quote.get("networkFee") or
-                "0.01"
+                quote.get("network_fee_usd") or quote.get("networkFee") or "0.01"
             )
             quote_id = quote.get("id", f"quote-{datetime.now(UTC).timestamp()}")
-            expires_at = quote.get("expires_at") or quote.get("expiresAt") or (datetime.now(UTC) + timedelta(minutes=1)).isoformat()
+            expires_at = (
+                quote.get("expires_at")
+                or quote.get("expiresAt")
+                or (datetime.now(UTC) + timedelta(minutes=1)).isoformat()
+            )
 
             # Final validation - ensure we have valid amounts
             try:
                 quote_amount_float = float(quote_amount)
                 if quote_amount_float <= 0:
                     quote_amount = self._calculate_demo_output(swap_info)
-                    exchange_rate = self._get_demo_rate(swap_info.from_token, swap_info.to_token)
+                    exchange_rate = self._get_demo_rate(
+                        swap_info.from_token, swap_info.to_token
+                    )
             except (ValueError, TypeError):
                 quote_amount = self._calculate_demo_output(swap_info)
-                exchange_rate = self._get_demo_rate(swap_info.from_token, swap_info.to_token)
+                exchange_rate = self._get_demo_rate(
+                    swap_info.from_token, swap_info.to_token
+                )
 
             # Format the response
             content = msgs["quote_ready"].format(
@@ -574,16 +588,13 @@ class MoonPaySwapFlowHandler:
                 # Core action identification
                 "action_type": "swap",  # Use "swap" for ExecutionConfirmationBanner compatibility
                 "provider": "privy_0x",  # CRITICAL: Tells frontend to use Privy + 0x flow
-
                 # Token pair
                 "from_token": swap_info.from_token.upper(),
                 "to_token": swap_info.to_token.upper(),
                 "amount": swap_info.amount,
-
                 # Network configuration
                 "chain": "base",  # Default chain for swaps
                 "slippage": 1.0,  # 1% default slippage
-
                 # Quote preview data (frontend will get live quote from 0x)
                 "quote_id": quote_id,
                 "quote_amount": str(quote_amount),
@@ -607,7 +618,6 @@ class MoonPaySwapFlowHandler:
                     "provider": "privy_0x",
                     "chain": "base",
                     "frontend_execution": True,  # Signal that frontend handles execution
-
                     # Swap quote details
                     "swap_quote": {
                         "from_token": swap_info.from_token.upper(),
@@ -662,7 +672,7 @@ class MoonPaySwapFlowHandler:
         # Pattern 1: "swap 1 ETH por USDC" / "intercambiar 100 USDC por ETH"
         pattern1 = re.compile(
             r"(?:swap|intercambiar|cambiar|convertir|trocar)\s+(\d+(?:\.\d+)?)\s*(\w+)\s+(?:por|a|to|for|en|para)\s+(\w+)",
-            re.IGNORECASE
+            re.IGNORECASE,
         )
         match = pattern1.search(message_lower)
         if match:
@@ -677,8 +687,7 @@ class MoonPaySwapFlowHandler:
 
         # Pattern 2: "1 ETH a USDC" (without verb)
         pattern2 = re.compile(
-            r"(\d+(?:\.\d+)?)\s*(\w+)\s+(?:a|por|to|for|en|para)\s+(\w+)",
-            re.IGNORECASE
+            r"(\d+(?:\.\d+)?)\s*(\w+)\s+(?:a|por|to|for|en|para)\s+(\w+)", re.IGNORECASE
         )
         match = pattern2.search(message_lower)
         if match:
@@ -694,7 +703,7 @@ class MoonPaySwapFlowHandler:
         # Pattern 3: "swap ETH por USDC" (tokens without amount)
         pattern3 = re.compile(
             r"(?:swap|intercambiar|cambiar|convertir|trocar)\s+(\w+)\s+(?:por|a|to|for|en|para)\s+(\w+)",
-            re.IGNORECASE
+            re.IGNORECASE,
         )
         match = pattern3.search(message_lower)
         if match:
@@ -708,8 +717,7 @@ class MoonPaySwapFlowHandler:
 
         # Pattern 4: "swap ETH" (single token)
         pattern4 = re.compile(
-            r"(?:swap|intercambiar|cambiar|convertir|trocar)\s+(\w+)",
-            re.IGNORECASE
+            r"(?:swap|intercambiar|cambiar|convertir|trocar)\s+(\w+)", re.IGNORECASE
         )
         match = pattern4.search(message_lower)
         if match:
@@ -739,7 +747,9 @@ class MoonPaySwapFlowHandler:
                     swap_info.from_token = self._supported_tokens[option_num - 1]
                     return swap_info
             elif step == "to_token":
-                available_tokens = [t for t in self._supported_tokens if t != swap_info.from_token]
+                available_tokens = [
+                    t for t in self._supported_tokens if t != swap_info.from_token
+                ]
                 if 1 <= option_num <= len(available_tokens):
                     swap_info.to_token = available_tokens[option_num - 1]
                     return swap_info
@@ -819,4 +829,3 @@ class MoonPaySwapFlowHandler:
         rate = self._get_demo_rate(swap_info.from_token, swap_info.to_token)
         amount = float(swap_info.amount or "1")
         return str(amount * rate)
-

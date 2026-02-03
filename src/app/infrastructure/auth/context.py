@@ -18,20 +18,19 @@ async def get_current_user_id(
 ) -> int:
     """
     Get current authenticated user ID.
-    
+
     FastAPI dependency that extracts the current user ID from the authenticated session.
-    
+
     Args:
         current_user_service: Injected current user service
         authorization: Bearer token from request
-        
+
     Returns:
         Current user ID as integer
-        
+
     Raises:
         AuthenticationError: If user is not authenticated
         AuthorizationError: If user is not found
     """
     user = await current_user_service.get_current_user()
     return user.id_.value
-

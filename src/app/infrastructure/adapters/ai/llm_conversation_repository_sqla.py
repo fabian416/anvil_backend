@@ -7,6 +7,7 @@ from app.domain.entities.ai.conversation_feedback import ConversationFeedback
 from app.infrastructure.persistence_sqla.registry import mapping_registry
 from app.infrastructure.adapters.types import MainAsyncSession
 
+
 class LLMConversationRepositorySqla(LLMConversationRepository):
     def __init__(self, session: MainAsyncSession):
         self._session = session
@@ -18,8 +19,10 @@ class LLMConversationRepositorySqla(LLMConversationRepository):
         await self._session.flush()
 
     async def get_by_id(self, id: LLMConversationId) -> LLMConversation | None:
-        LLMConversationsTable = mapping_registry.metadata.tables["llm_conversations"] # type: ignore
-        stmt = select(LLMConversationsTable).where(LLMConversationsTable.c.id == id.value)
+        LLMConversationsTable = mapping_registry.metadata.tables["llm_conversations"]  # type: ignore
+        stmt = select(LLMConversationsTable).where(
+            LLMConversationsTable.c.id == id.value
+        )
         # Note: This requires a proper data mapper from Row to Entity, similar to user_data_mapper_sqla.py
         # Simplified for this step
         return await self._session.scalar(stmt)

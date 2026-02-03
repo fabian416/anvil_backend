@@ -37,7 +37,9 @@ from app.presentation.http.schemas.admin_chat_dashboard import (
     AgentLeaderboardEntry,
     CostBreakdownEntry,
 )
-from app.application.chat.services.admin_analytics_service import AdminChatAnalyticsService
+from app.application.chat.services.admin_analytics_service import (
+    AdminChatAnalyticsService,
+)
 from app.application.common.exceptions.authorization import AuthorizationError
 from app.domain.enums.user_role import UserRole
 from app.domain.exceptions.auth import InsufficientPermissionsError
@@ -85,12 +87,10 @@ async def get_chat_dashboard(
     analytics_service: FromDishka[AdminChatAnalyticsService],
     current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(
-        None,
-        description="Start date for analytics (defaults to 30 days ago)"
+        None, description="Start date for analytics (defaults to 30 days ago)"
     ),
     date_to: Optional[datetime] = Query(
-        None,
-        description="End date for analytics (defaults to now)"
+        None, description="End date for analytics (defaults to now)"
     ),
 ) -> AdminChatDashboardSummaryResponse:
     """
@@ -144,11 +144,13 @@ async def get_agent_performance(
     current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
-    agent_type: Optional[str] = Query(None, description="Filter by specific agent type"),
+    agent_type: Optional[str] = Query(
+        None, description="Filter by specific agent type"
+    ),
     sort_by: str = Query(
         "invocations",
         pattern="^(invocations|success_rate|avg_response_time|total_cost)$",
-        description="Sort leaderboard by metric"
+        description="Sort leaderboard by metric",
     ),
     limit: int = Query(10, ge=1, le=50, description="Number of agents to return"),
 ) -> AgentPerformanceResponse:
@@ -265,7 +267,7 @@ async def get_cost_tracking(
     group_by: str = Query(
         "agent",
         pattern="^(agent|model|day|user)$",
-        description="Group costs by dimension"
+        description="Group costs by dimension",
     ),
 ) -> CostTrackingResponse:
     """
@@ -325,7 +327,7 @@ async def get_error_monitoring(
     severity: Optional[str] = Query(
         None,
         pattern="^(critical|high|medium|low)$",
-        description="Filter by error severity"
+        description="Filter by error severity",
     ),
 ) -> ErrorMonitoringResponse:
     """
@@ -489,14 +491,10 @@ async def export_dashboard_data(
     current_user_service: FromDishka[CurrentUserService],
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
-    format: str = Query(
-        "json",
-        pattern="^(json|csv)$",
-        description="Export format"
-    ),
+    format: str = Query("json", pattern="^(json|csv)$", description="Export format"),
     include_sections: Optional[List[str]] = Query(
         None,
-        description="Sections to include (agents, costs, errors, users, conversations)"
+        description="Sections to include (agents, costs, errors, users, conversations)",
     ),
 ) -> ExportDataResponse:
     """

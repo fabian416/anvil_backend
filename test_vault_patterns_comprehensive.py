@@ -10,7 +10,11 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
-from app.application.chat.services.intent_detector_v2 import IntentDetectorV2, ChatIntentV2
+from app.application.chat.services.intent_detector_v2 import (
+    IntentDetectorV2,
+    ChatIntentV2,
+)
+
 
 def test_comprehensive_vault_patterns():
     """Test comprehensive vault pattern variations."""
@@ -20,65 +24,57 @@ def test_comprehensive_vault_patterns():
     test_cases = [
         # Primary P0 test case
         ("Best lending vaults", ChatIntentV2.LENDING, True),
-
         # "best/top/highest" + "vaults"
         ("best vaults", ChatIntentV2.LENDING, True),
         ("top vaults", ChatIntentV2.LENDING, True),
         ("highest vaults", ChatIntentV2.LENDING, True),
-
         # "best/top/highest" + "lending vaults"
         ("best lending vaults", ChatIntentV2.LENDING, True),
         ("top lending vaults", ChatIntentV2.LENDING, True),
         ("highest lending vaults", ChatIntentV2.LENDING, True),
-
         # "best/top/highest" + "morpho vaults"
         ("best morpho vaults", ChatIntentV2.LENDING, True),
         ("top morpho vaults", ChatIntentV2.LENDING, True),
         ("highest morpho vaults", ChatIntentV2.LENDING, True),
-
         # "show" + "vaults"
         ("show best vaults", ChatIntentV2.LENDING, True),
         ("show me best vaults", ChatIntentV2.LENDING, True),
         ("show top vaults", ChatIntentV2.LENDING, True),
         ("show me top vaults", ChatIntentV2.LENDING, True),
-
         # "compare" + "vaults"
         ("compare vaults", ChatIntentV2.LENDING, True),
         ("compare morpho vaults", ChatIntentV2.LENDING, True),
-
         # "vault" + "comparison/recommendations"
         ("vault comparison", ChatIntentV2.LENDING, True),
         ("vault recommendations", ChatIntentV2.LENDING, True),
-
         # "which vaults" + "have/offer"
         ("which vaults have best apy", ChatIntentV2.LENDING, True),
         ("which vaults offer highest yield", ChatIntentV2.LENDING, True),
         ("which vaults have highest returns", ChatIntentV2.LENDING, True),
-
         # "vaults" + "with" + "best/highest" + "apy/yield/returns"
         ("vaults with best apy", ChatIntentV2.LENDING, True),
         ("vaults with highest yield", ChatIntentV2.LENDING, True),
         ("vaults with best returns", ChatIntentV2.LENDING, True),
         ("vault with highest apy", ChatIntentV2.LENDING, True),
-
         # "list/find" + "vaults"
         ("list morpho vaults", ChatIntentV2.LENDING, True),
         ("list vaults", ChatIntentV2.LENDING, True),
         ("find best vaults", ChatIntentV2.LENDING, True),
         ("find top vaults", ChatIntentV2.LENDING, True),
-
         # Case variations
         ("BEST LENDING VAULTS", ChatIntentV2.LENDING, True),
         ("Best Lending Vaults", ChatIntentV2.LENDING, True),
         ("bEsT lEnDiNg VaUlTs", ChatIntentV2.LENDING, True),
-
         # With additional context
         ("I want to see the best lending vaults", ChatIntentV2.LENDING, True),
         ("Can you show me the best vaults?", ChatIntentV2.LENDING, True),
         ("What are the top morpho vaults?", ChatIntentV2.LENDING, True),
-
         # Should NOT match (negative tests)
-        ("vault of satoshi", ChatIntentV2.GENERAL_CONVERSATION, False),  # Context mismatch
+        (
+            "vault of satoshi",
+            ChatIntentV2.GENERAL_CONVERSATION,
+            False,
+        ),  # Context mismatch
         ("What is Bitcoin", ChatIntentV2.PROTOCOL_SEARCH, False),  # Different intent
         ("Bitcoin price", ChatIntentV2.HUNTER_PRICE_PREDICTION, False),  # Price query
     ]
@@ -134,6 +130,7 @@ def test_comprehensive_vault_patterns():
     print("=" * 100)
 
     return failed == 0
+
 
 if __name__ == "__main__":
     success = test_comprehensive_vault_patterns()

@@ -23,7 +23,9 @@ from tests.helpers.test_data_loader import (
 class TestHunterIntentClassification:
     """Component tests for Hunter AI intent classification logic."""
 
-    @pytest.mark.parametrize("test_case", get_hunter_test_cases(), ids=lambda tc: tc["id"])
+    @pytest.mark.parametrize(
+        "test_case", get_hunter_test_cases(), ids=lambda tc: tc["id"]
+    )
     async def test_classify_hunter_intent(
         self,
         mock_intent_classifier,
@@ -37,7 +39,9 @@ class TestHunterIntentClassification:
         """
         # Arrange: Configure mock classifier to return expected intent
         expected_intent = test_case["expected_routing"]["intent"]
-        expected_confidence_min = test_case["expected_routing"].get("confidence_min", 0.5)
+        expected_confidence_min = test_case["expected_routing"].get(
+            "confidence_min", 0.5
+        )
 
         # Get IntentResult class from fixture
         IntentResult = mock_intent_classifier.IntentResult
@@ -252,7 +256,11 @@ class TestHunterHandlerExecution:
                 "token_symbol": "BTC",
                 "hunter_tool": "pattern_detector",
                 "patterns": [
-                    {"name": "Head and Shoulders", "confidence": 0.82, "timeframe": "4h"},
+                    {
+                        "name": "Head and Shoulders",
+                        "confidence": 0.82,
+                        "timeframe": "4h",
+                    },
                     {"name": "Bull Flag", "confidence": 0.75, "timeframe": "1h"},
                 ],
             },
@@ -362,7 +370,9 @@ class TestHunterHandlerExecution:
 class TestHunterEnrichmentValidation:
     """Component tests for Hunter AI enrichment data structure."""
 
-    @pytest.mark.parametrize("test_case", get_hunter_test_cases(), ids=lambda tc: tc["id"])
+    @pytest.mark.parametrize(
+        "test_case", get_hunter_test_cases(), ids=lambda tc: tc["id"]
+    )
     async def test_hunter_enrichment_structure(
         self,
         mock_hunter_handler,
@@ -446,7 +456,9 @@ class TestHunterEnrichmentValidation:
             assert "token_symbol" in result_enrichment, (
                 f"Sentiment enrichment missing token_symbol for {test_case['id']}"
             )
-            assert "sentiment_score" in result_enrichment or "sources" in result_enrichment, (
+            assert (
+                "sentiment_score" in result_enrichment or "sources" in result_enrichment
+            ), (
                 f"Sentiment enrichment missing sentiment_score or sources for {test_case['id']}"
             )
 
@@ -454,7 +466,10 @@ class TestHunterEnrichmentValidation:
             assert "token_symbol" in result_enrichment, (
                 f"Price prediction enrichment missing token_symbol for {test_case['id']}"
             )
-            assert "time_horizon" in result_enrichment or "predictions" in result_enrichment, (
+            assert (
+                "time_horizon" in result_enrichment
+                or "predictions" in result_enrichment
+            ), (
                 f"Price prediction enrichment missing time_horizon or predictions for {test_case['id']}"
             )
 
@@ -462,7 +477,9 @@ class TestHunterEnrichmentValidation:
             assert "token_symbol" in result_enrichment, (
                 f"Trading signals enrichment missing token_symbol for {test_case['id']}"
             )
-            assert "signals" in result_enrichment or "recommendation" in result_enrichment, (
+            assert (
+                "signals" in result_enrichment or "recommendation" in result_enrichment
+            ), (
                 f"Trading signals enrichment missing signals or recommendation for {test_case['id']}"
             )
 
@@ -478,7 +495,10 @@ class TestHunterEnrichmentValidation:
             assert "tokens" in result_enrichment, (
                 f"Portfolio enrichment missing tokens for {test_case['id']}"
             )
-            assert "allocation" in result_enrichment or "risk_tolerance" in result_enrichment, (
+            assert (
+                "allocation" in result_enrichment
+                or "risk_tolerance" in result_enrichment
+            ), (
                 f"Portfolio enrichment missing allocation or risk_tolerance for {test_case['id']}"
             )
 

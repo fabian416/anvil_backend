@@ -16,14 +16,21 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Requires proper mocking"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.rate_limiting]
+pytestmark = [
+    pytest.mark.skip(reason="Requires proper mocking"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.rate_limiting,
+]
 
 
 class TestRateLimitErrorHandling:
     """Test rate limit error responses and retry behavior."""
 
     @pytest.mark.llm_validation
-    async def test_rate_limit_429_error_format(self, client: AsyncClient, llm_validator):
+    async def test_rate_limit_429_error_format(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Verify 429 response structure when rate limit is exceeded.
 
@@ -40,13 +47,15 @@ class TestRateLimitErrorHandling:
         for i in range(12):
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={"content": f"rate limit test {i}", "language": "en"}
+                json={"content": f"rate limit test {i}", "language": "en"},
             )
             responses.append(response)
 
         # At least one should hit rate limit (429) or all should succeed (200)
         # Check if any response is 429
-        rate_limit_responses = [r for r in responses if r.status_code == status.HTTP_429_TOO_MANY_REQUESTS]
+        rate_limit_responses = [
+            r for r in responses if r.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+        ]
 
         if rate_limit_responses:
             # If we got 429, verify its format
@@ -60,16 +69,16 @@ class TestRateLimitErrorHandling:
             assert data is not None
 
             # Verify error message present (common fields: detail, message, error)
-            assert ("detail" in data or "message" in data or "error" in data), \
+            assert "detail" in data or "message" in data or "error" in data, (
                 "Error response should contain error message"
+            )
 
             # Verify Retry-After header present (optional but recommended)
             # This header tells clients when to retry
             headers = error_response.headers
             # Some implementations use 'retry-after', some use 'x-retry-after'
             has_retry_header = (
-                "retry-after" in headers or
-                "x-retry-after" in headers.keys()
+                "retry-after" in headers or "x-retry-after" in headers.keys()
             )
             # Note: This assertion is informational - some implementations may not include it
             # If this fails, it's a recommendation, not a critical error
@@ -94,7 +103,7 @@ class TestRateLimitErrorHandling:
         # Send a normal request
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "check rate limit headers", "language": "en"}
+            json={"content": "check rate limit headers", "language": "en"},
         )
 
         # Request should succeed
@@ -107,17 +116,17 @@ class TestRateLimitErrorHandling:
         possible_limit_headers = [
             "x-ratelimit-limit",
             "x-rate-limit-limit",
-            "ratelimit-limit"
+            "ratelimit-limit",
         ]
         possible_remaining_headers = [
             "x-ratelimit-remaining",
             "x-rate-limit-remaining",
-            "ratelimit-remaining"
+            "ratelimit-remaining",
         ]
         possible_reset_headers = [
             "x-ratelimit-reset",
             "x-rate-limit-reset",
-            "ratelimit-reset"
+            "ratelimit-reset",
         ]
 
         # Check if any rate limit header variant exists
@@ -136,21 +145,29 @@ class TestRateLimitErrorHandling:
                 limit_header = next(h for h in possible_limit_headers if h in headers)
                 limit_value = headers[limit_header]
                 # Should be numeric
-                assert limit_value.isdigit(), f"Limit header should be numeric, got: {limit_value}"
+                assert limit_value.isdigit(), (
+                    f"Limit header should be numeric, got: {limit_value}"
+                )
                 assert int(limit_value) > 0, "Limit should be positive"
 
             if has_remaining:
-                remaining_header = next(h for h in possible_remaining_headers if h in headers)
+                remaining_header = next(
+                    h for h in possible_remaining_headers if h in headers
+                )
                 remaining_value = headers[remaining_header]
                 # Should be numeric
-                assert remaining_value.isdigit(), f"Remaining header should be numeric, got: {remaining_value}"
+                assert remaining_value.isdigit(), (
+                    f"Remaining header should be numeric, got: {remaining_value}"
+                )
                 assert int(remaining_value) >= 0, "Remaining should be non-negative"
 
             if has_reset:
                 reset_header = next(h in headers for h in possible_reset_headers)
                 reset_value = headers[reset_header]
                 # Could be Unix timestamp or seconds-until-reset
-                assert reset_value.isdigit(), f"Reset header should be numeric, got: {reset_value}"
+                assert reset_value.isdigit(), (
+                    f"Reset header should be numeric, got: {reset_value}"
+                )
 
         # Verify response data is correct
         data = response.json()

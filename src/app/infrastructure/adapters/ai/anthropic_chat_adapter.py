@@ -43,11 +43,23 @@ class AnthropicChatAdapter:
     # Model pricing per 1M tokens (as of 2025)
     PRICING = {
         "claude-opus-4-5": {"input": Decimal("15.00"), "output": Decimal("75.00")},
-        "claude-3-opus-20240229": {"input": Decimal("15.00"), "output": Decimal("75.00")},
+        "claude-3-opus-20240229": {
+            "input": Decimal("15.00"),
+            "output": Decimal("75.00"),
+        },
         "claude-sonnet-4-5": {"input": Decimal("3.00"), "output": Decimal("15.00")},
-        "claude-3-5-sonnet-20241022": {"input": Decimal("3.00"), "output": Decimal("15.00")},
-        "claude-3-sonnet-20240229": {"input": Decimal("3.00"), "output": Decimal("15.00")},
-        "claude-3-haiku-20240307": {"input": Decimal("0.25"), "output": Decimal("1.25")},
+        "claude-3-5-sonnet-20241022": {
+            "input": Decimal("3.00"),
+            "output": Decimal("15.00"),
+        },
+        "claude-3-sonnet-20240229": {
+            "input": Decimal("3.00"),
+            "output": Decimal("15.00"),
+        },
+        "claude-3-haiku-20240307": {
+            "input": Decimal("0.25"),
+            "output": Decimal("1.25"),
+        },
         "claude-2.1": {"input": Decimal("8.00"), "output": Decimal("24.00")},
         "claude-2.0": {"input": Decimal("8.00"), "output": Decimal("24.00")},
     }
@@ -462,6 +474,7 @@ class AnthropicChatAdapter:
                 try:
                     # Try to parse retry time from message
                     import re
+
                     match = re.search(r"(\d+)\s*second", error_message)
                     if match:
                         retry_after = int(match.group(1))

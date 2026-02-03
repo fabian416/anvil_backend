@@ -62,7 +62,9 @@ class TestCreatePrivyPolicy:
 @pytest.mark.unit
 class TestGetPrivyPolicy:
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="Requires complex repository mocking - needs integration test")
+    @pytest.mark.skip(
+        reason="Requires complex repository mocking - needs integration test"
+    )
     async def test_execute_calls_privy_client_when_admin(self, mock_session):
         from app.application.commands.policy.get_privy_policy import (
             GetPrivyPolicy,
@@ -127,8 +129,9 @@ class TestUpdatePrivyPolicy:
             privy_client=privy_client,
             session=mock_session,
         )
-        result = await service.execute(UpdatePrivyPolicyRequest(policy_id="pol_123", name="New Name", rules=[]))
+        result = await service.execute(
+            UpdatePrivyPolicyRequest(policy_id="pol_123", name="New Name", rules=[])
+        )
 
         assert result.policy.name == "New Name"
         privy_client.update_policy.assert_called_once()
-

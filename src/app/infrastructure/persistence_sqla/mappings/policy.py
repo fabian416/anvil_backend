@@ -35,19 +35,27 @@ def map_policy_tables() -> None:
         owner_id = mapped_column(String(255), nullable=True, index=True)
 
         # Privy payload snapshots
-        rules = mapped_column(JSONB, nullable=False, server_default=sa.text("'[]'::jsonb"))
+        rules = mapped_column(
+            JSONB, nullable=False, server_default=sa.text("'[]'::jsonb")
+        )
         privy_raw = mapped_column(JSONB, nullable=True)
 
         # Custom, app-defined metadata (searchable)
         # NOTE: `metadata` is a reserved attribute name in SQLAlchemy Declarative.
         # We keep the DB column name as "metadata" but map it to a safe attribute name.
-        metadata_ = mapped_column("metadata", JSONB, nullable=False, server_default=sa.text("'{}'::jsonb"))
+        metadata_ = mapped_column(
+            "metadata", JSONB, nullable=False, server_default=sa.text("'{}'::jsonb")
+        )
 
         # Cache / sync tracking
-        last_privy_sync_at = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+        last_privy_sync_at = mapped_column(
+            DateTime(timezone=True), nullable=True, index=True
+        )
 
         # Soft delete (if a policy is removed upstream, we can keep history)
-        is_deleted = mapped_column(sa.Boolean, nullable=False, server_default=sa.text("false"), index=True)
+        is_deleted = mapped_column(
+            sa.Boolean, nullable=False, server_default=sa.text("false"), index=True
+        )
 
         # Audit (actor user id is our local user id)
         created_by_user_id = mapped_column(
@@ -107,4 +115,3 @@ def map_policy_tables() -> None:
             nullable=False,
             index=True,
         )
-

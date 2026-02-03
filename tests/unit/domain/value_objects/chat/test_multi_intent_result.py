@@ -31,9 +31,7 @@ class TestIntentDependency:
     def test_create_dependency(self):
         """Test creating a valid dependency."""
         dep = IntentDependency(
-            dependent_index=1,
-            dependency_index=0,
-            dependency_type="data_flow"
+            dependent_index=1, dependency_index=0, dependency_type="data_flow"
         )
 
         assert dep.dependent_index == 1
@@ -69,7 +67,7 @@ class TestMultiIntentResult:
             intent=ChatIntentV2.HUNTER_PRICE_PREDICTION,
             confidence=0.95,
             entities=["BTC"],
-            metadata={}
+            metadata={},
         )
 
     @pytest.fixture
@@ -80,13 +78,10 @@ class TestMultiIntentResult:
                 intent=ChatIntentV2.SWAP,
                 confidence=0.95,
                 entities=["USDC", "ETH"],
-                metadata={}
+                metadata={},
             ),
             IntentResult(
-                intent=ChatIntentV2.BALANCE,
-                confidence=0.90,
-                entities=[],
-                metadata={}
+                intent=ChatIntentV2.BALANCE, confidence=0.90, entities=[], metadata={}
             ),
         ]
 
@@ -185,10 +180,7 @@ class TestMultiIntentResult:
 
         intents = multiple_intent_results + [
             IntentResult(
-                intent=ChatIntentV2.PORTFOLIO,
-                confidence=0.85,
-                entities=[],
-                metadata={}
+                intent=ChatIntentV2.PORTFOLIO, confidence=0.85, entities=[], metadata={}
             )
         ]
 
@@ -269,10 +261,27 @@ class TestMultiIntentResult:
     def test_get_execution_order_complex(self):
         """Test execution order with complex dependency graph."""
         intents = [
-            IntentResult(ChatIntentV2.SWAP, confidence=0.95, entities=["USDC", "ETH"], metadata={}),
-            IntentResult(ChatIntentV2.HUNTER_PRICE_PREDICTION, confidence=0.90, entities=["BTC"], metadata={}),
-            IntentResult(ChatIntentV2.HUNTER_SENTIMENT, confidence=0.85, entities=["ETH"], metadata={}),
-            IntentResult(ChatIntentV2.BALANCE, confidence=0.90, entities=[], metadata={}),
+            IntentResult(
+                ChatIntentV2.SWAP,
+                confidence=0.95,
+                entities=["USDC", "ETH"],
+                metadata={},
+            ),
+            IntentResult(
+                ChatIntentV2.HUNTER_PRICE_PREDICTION,
+                confidence=0.90,
+                entities=["BTC"],
+                metadata={},
+            ),
+            IntentResult(
+                ChatIntentV2.HUNTER_SENTIMENT,
+                confidence=0.85,
+                entities=["ETH"],
+                metadata={},
+            ),
+            IntentResult(
+                ChatIntentV2.BALANCE, confidence=0.90, entities=[], metadata={}
+            ),
         ]
 
         # Dependencies:
@@ -291,7 +300,11 @@ class TestMultiIntentResult:
         # Expected: [0, 1, 2] in first batch (0 independent, 1 & 2 independent)
         # Then [3] in second batch (depends on 0)
         assert len(execution_order) == 2
-        assert set(execution_order[0]) == {0, 1, 2}  # All independent can run in parallel
+        assert set(execution_order[0]) == {
+            0,
+            1,
+            2,
+        }  # All independent can run in parallel
         assert execution_order[1] == [3]
 
     def test_dependency_index_validation(self, single_intent_result):

@@ -167,4 +167,3 @@ def create_policy_rules_router() -> APIRouter:
         return PolicyRuleResponse(result=result)
 
     return router
-

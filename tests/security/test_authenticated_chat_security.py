@@ -127,9 +127,9 @@ class TestAuthenticationSecurity:
                 # Assert
                 assert response.status_code == 200
                 data = response.json()
-                assert (
-                    data["user_type"] == "guest"
-                ), f"Failed for header: {malformed_header}"
+                assert data["user_type"] == "guest", (
+                    f"Failed for header: {malformed_header}"
+                )
 
 
 @pytest.mark.asyncio

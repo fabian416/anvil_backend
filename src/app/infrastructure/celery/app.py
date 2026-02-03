@@ -9,13 +9,12 @@ from app.setup.config.settings import load_settings
 def create_celery() -> Celery:
     settings = load_settings()
     celery_cfg = getattr(settings, "celery", {}) if hasattr(settings, "celery") else {}
-    app_name = (
-        os.getenv("CELERY_APP_NAME")
-        or celery_cfg.get("app_name", "baseapi_hexagonal")
+    app_name = os.getenv("CELERY_APP_NAME") or celery_cfg.get(
+        "app_name", "baseapi_hexagonal"
     )
     broker = os.getenv("CELERY_BROKER_URL") or celery_cfg.get("broker_url", None)
-    backend = (
-        os.getenv("CELERY_RESULT_BACKEND") or celery_cfg.get("result_backend", None)
+    backend = os.getenv("CELERY_RESULT_BACKEND") or celery_cfg.get(
+        "result_backend", None
     )
 
     app = Celery(
@@ -47,35 +46,30 @@ def create_celery() -> Celery:
     # Task Routing Configuration
     # Workers especializados para evitar latencia y mejorar performance
     # =========================================================================
-    
+
     # Definir colas especializadas
     app.conf.task_routes = {
         # Maintenance tasks - baja prioridad, puede esperar
         "cleanup_expired_sessions": {"queue": "maintenance"},
         "cleanup_expired_password_resets": {"queue": "maintenance"},
         "invalidate_all_sessions": {"queue": "maintenance"},
-        
         # Agent tasks - alta prioridad, tiempo real
         "process_agent_response": {"queue": "agents"},
         "update_agent_stats": {"queue": "agents"},
-        
         # Graph tasks - procesamiento pesado, puede ser lento
         "populate_graph_protocols": {"queue": "graph"},
         "update_graph_metadata": {"queue": "graph"},
         "validate_graph_integrity": {"queue": "graph"},
         "generate_protocol_embeddings": {"queue": "graph"},
-        
         # Distillation tasks - procesamiento de LLM
         "aggregate_distillation_telemetry": {"queue": "distillation"},
         "cleanup_expired_cache": {"queue": "distillation"},
         "cache_llm_response": {"queue": "distillation"},
-        
         # Projects tasks - procesamiento de knowledge base
         "reindex_knowledge_base": {"queue": "projects"},
         "evaluate_auto_assignment_rules": {"queue": "projects"},
         "aggregate_project_analytics": {"queue": "projects"},
         "check_knowledge_base_health": {"queue": "projects"},
-        
         # LLM tasks - ranking y orchestration
         "recalculate_all_rankings": {"queue": "llm"},
         "recalculate_agent_rankings": {"queue": "llm"},
@@ -84,46 +78,39 @@ def create_celery() -> Celery:
         "llm_provider_health_checks": {"queue": "llm"},
         "reset_daily_budgets": {"queue": "llm"},
         "cleanup_old_llm_data": {"queue": "llm"},
-        
         # Transaction confirmation - crítico, alta prioridad
         "confirm_pending_transactions": {"queue": "transactions"},
         "confirm_pending_transactions_mainnet": {"queue": "transactions"},
         "confirm_pending_transactions_testnet": {"queue": "transactions"},
-        
         # Risk monitoring
         "check_user_risk_alerts": {"queue": "risk"},
-        
         # Email tasks
         "send_email": {"queue": "email"},
         "tasks.email_tasks.*": {"queue": "email"},
-
         # Money market tasks - cache warming (alta prioridad, latencia crítica)
         "money_market.warm_cache": {"queue": "money_market"},
         "money_market.check_alerts": {"queue": "money_market"},
         "money_market.aggregate_analytics": {"queue": "money_market"},
         "money_market.cleanup_cache": {"queue": "maintenance"},
-        
         # Lending tasks - health monitoring and position refresh
         "monitor_lending_health_factors": {"queue": "risk"},
         "refresh_lending_positions": {"queue": "maintenance"},
         "check_user_lending_health": {"queue": "risk"},
-        
         # Privy wallet balance sync
         "privy.sync_wallet_balances": {"queue": "maintenance"},
         "privy.sync_single_wallet_balance": {"queue": "maintenance"},
-
         # Etherscan balance sync (on-chain verification)
         "etherscan.sync_balances": {"queue": "maintenance"},
         "etherscan.sync_single_wallet": {"queue": "maintenance"},
         "etherscan.verify_test_wallet": {"queue": "maintenance"},
     }
-    
+
     # Configuración de colas con prioridades
     app.conf.task_default_queue = "default"
     app.conf.task_default_exchange = "tasks"
     app.conf.task_default_exchange_type = "direct"
     app.conf.task_default_routing_key = "default"
-    
+
     # Configuración de workers (concurrency por tipo de worker)
     app.conf.worker_prefetch_multiplier = 4  # Prefetch 4 tasks at a time
     app.conf.worker_max_tasks_per_child = 1000  # Restart worker after 1000 tasks
@@ -149,7 +136,6 @@ def create_celery() -> Celery:
             },
             "options": {"queue": "transactions"},
         },
-        
         # =========================
         # Money Market Tasks
         # =========================
@@ -173,7 +159,6 @@ def create_celery() -> Celery:
             "schedule": crontab(hour=3, minute=0),  # Daily at 3:00 AM
             "options": {"queue": "maintenance"},
         },
-        
         # =========================
         # Lending Tasks
         # =========================
@@ -187,7 +172,6 @@ def create_celery() -> Celery:
             "schedule": crontab(minute=30),  # Every hour at :30
             "options": {"queue": "maintenance"},
         },
-        
         # =========================
         # Wallet Balance Sync
         # =========================
@@ -206,7 +190,6 @@ def create_celery() -> Celery:
             "schedule": 30.0,  # Every 30 seconds (3-min freshness filter)
             "options": {"queue": "maintenance"},
         },
-        
         # =========================
         # User Context & Portfolio
         # =========================
@@ -220,7 +203,6 @@ def create_celery() -> Celery:
             "schedule": crontab(hour=6, minute=0),  # Daily at 6 AM
             "options": {"queue": "maintenance"},
         },
-        
         # =========================
         # Maintenance Tasks
         # =========================
@@ -239,7 +221,6 @@ def create_celery() -> Celery:
             "schedule": crontab(minute=0),  # Every hour at :00
             "options": {"queue": "maintenance"},
         },
-        
         # =========================
         # Agent Tasks
         # =========================
@@ -248,7 +229,6 @@ def create_celery() -> Celery:
             "schedule": crontab(minute="*/5"),  # Every 5 minutes
             "options": {"queue": "agents"},
         },
-        
         # =========================
         # Distillation Tasks
         # =========================
@@ -262,7 +242,6 @@ def create_celery() -> Celery:
             "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
             "options": {"queue": "distillation"},
         },
-        
         # =========================
         # Projects Tasks
         # =========================
@@ -276,7 +255,6 @@ def create_celery() -> Celery:
             "schedule": crontab(hour=5, minute=0, day_of_week=0),  # Sunday 5 AM
             "options": {"queue": "projects"},
         },
-        
         # =========================
         # Graph Maintenance Tasks
         # =========================
@@ -300,7 +278,6 @@ def create_celery() -> Celery:
             "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
             "options": {"queue": "graph"},
         },
-        
         # =========================
         # Risk Monitoring Tasks
         # =========================
@@ -309,7 +286,6 @@ def create_celery() -> Celery:
             "schedule": crontab(minute="*/15"),  # Every 15 minutes
             "options": {"queue": "risk"},
         },
-        
         # =========================
         # LLM Orchestration Tasks
         # =========================

@@ -21,28 +21,30 @@ class TestListSubscriptionsController:
     def mock_subscriptions_handler(self):
         """Create mock GetSubscriptionsHandler."""
         handler = AsyncMock()
-        handler.execute = AsyncMock(return_value={
-            "plans": [
-                {
-                    "id": "free",
-                    "name": "Free",
-                    "price_monthly": 0,
-                    "features": ["5 agents", "Basic chat"],
-                },
-                {
-                    "id": "pro",
-                    "name": "Pro",
-                    "price_monthly": 29.99,
-                    "features": ["10 agents", "Advanced analytics"],
-                },
-                {
-                    "id": "enterprise",
-                    "name": "Enterprise",
-                    "price_monthly": 99.99,
-                    "features": ["18 agents", "Custom integrations"],
-                },
-            ],
-        })
+        handler.execute = AsyncMock(
+            return_value={
+                "plans": [
+                    {
+                        "id": "free",
+                        "name": "Free",
+                        "price_monthly": 0,
+                        "features": ["5 agents", "Basic chat"],
+                    },
+                    {
+                        "id": "pro",
+                        "name": "Pro",
+                        "price_monthly": 29.99,
+                        "features": ["10 agents", "Advanced analytics"],
+                    },
+                    {
+                        "id": "enterprise",
+                        "name": "Enterprise",
+                        "price_monthly": 99.99,
+                        "features": ["18 agents", "Custom integrations"],
+                    },
+                ],
+            }
+        )
         return handler
 
     def test_list_subscriptions_response_structure(self, mock_subscriptions_handler):
@@ -96,11 +98,13 @@ class TestCreateSubscriptionController:
     def mock_create_subscription_handler(self):
         """Create mock CreateSubscriptionHandler."""
         handler = AsyncMock()
-        handler.execute = AsyncMock(return_value={
-            "subscription_id": str(uuid4()),
-            "checkout_url": "https://checkout.stripe.com/session/xxx",
-            "status": "pending",
-        })
+        handler.execute = AsyncMock(
+            return_value={
+                "subscription_id": str(uuid4()),
+                "checkout_url": "https://checkout.stripe.com/session/xxx",
+                "status": "pending",
+            }
+        )
         return handler
 
     def test_create_subscription_request_structure(self):
@@ -111,7 +115,9 @@ class TestCreateSubscriptionController:
 
         assert "plan_id" in request_data
 
-    def test_create_subscription_response_structure(self, mock_create_subscription_handler):
+    def test_create_subscription_response_structure(
+        self, mock_create_subscription_handler
+    ):
         """Test create subscription returns checkout URL."""
         response = {
             "subscription_id": str(uuid4()),
@@ -148,14 +154,18 @@ class TestCancelSubscriptionController:
     def mock_cancel_subscription_handler(self):
         """Create mock CancelSubscriptionHandler."""
         handler = AsyncMock()
-        handler.execute = AsyncMock(return_value={
-            "subscription_id": str(uuid4()),
-            "status": "cancelled",
-            "cancellation_date": datetime.utcnow().isoformat(),
-        })
+        handler.execute = AsyncMock(
+            return_value={
+                "subscription_id": str(uuid4()),
+                "status": "cancelled",
+                "cancellation_date": datetime.utcnow().isoformat(),
+            }
+        )
         return handler
 
-    def test_cancel_subscription_returns_confirmation(self, mock_cancel_subscription_handler):
+    def test_cancel_subscription_returns_confirmation(
+        self, mock_cancel_subscription_handler
+    ):
         """Test cancel subscription returns confirmation."""
         response = {
             "subscription_id": str(uuid4()),
@@ -201,12 +211,14 @@ class TestSubscriptionSuccessController:
     def mock_success_handler(self):
         """Create mock SubscriptionSuccessHandler."""
         handler = AsyncMock()
-        handler.execute = AsyncMock(return_value={
-            "subscription_id": str(uuid4()),
-            "status": "active",
-            "plan_id": "pro",
-            "started_at": datetime.utcnow().isoformat(),
-        })
+        handler.execute = AsyncMock(
+            return_value={
+                "subscription_id": str(uuid4()),
+                "status": "active",
+                "plan_id": "pro",
+                "started_at": datetime.utcnow().isoformat(),
+            }
+        )
         return handler
 
     def test_success_callback_request(self):
@@ -267,12 +279,7 @@ class TestSubscriptionBuilderIntegration:
 
     def test_subscription_builder_creates_subscription(self):
         """Test SubscriptionBuilder creates valid subscription."""
-        subscription = (
-            a_subscription()
-            .as_premium()
-            .as_active()
-            .build()
-        )
+        subscription = a_subscription().as_premium().as_active().build()
 
         assert subscription.plan_tier == "premium"
         assert subscription.status == "active"
@@ -280,30 +287,18 @@ class TestSubscriptionBuilderIntegration:
     def test_subscription_builder_with_user(self):
         """Test SubscriptionBuilder with specific user."""
         user_id = uuid4()
-        subscription = (
-            a_subscription()
-            .for_user(user_id)
-            .build()
-        )
+        subscription = a_subscription().for_user(user_id).build()
 
         assert subscription.user_id == user_id
 
     def test_subscription_builder_cancelled(self):
         """Test SubscriptionBuilder creates cancelled subscription."""
-        subscription = (
-            a_subscription()
-            .as_cancelled()
-            .build()
-        )
+        subscription = a_subscription().as_cancelled().build()
 
         assert subscription.status == "cancelled"
 
     def test_subscription_builder_with_failed_payment(self):
         """Test SubscriptionBuilder with failed payment."""
-        subscription = (
-            a_subscription()
-            .with_failed_payment()
-            .build()
-        )
+        subscription = a_subscription().with_failed_payment().build()
 
         assert subscription.payment_status == "failed"

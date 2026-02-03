@@ -3,7 +3,9 @@ from datetime import datetime, UTC
 from sqlalchemy import Select, and_, select
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.application.common.ports.email_verification_repository import EmailVerificationRepository
+from app.application.common.ports.email_verification_repository import (
+    EmailVerificationRepository,
+)
 from app.infrastructure.adapters.constants import DB_QUERY_FAILED
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.exceptions.gateway import DataMapperError
@@ -54,7 +56,9 @@ class SqlaEmailVerificationRepository(EmailVerificationRepository):
         try:
             table = mapping_registry.metadata.tables["email_verifications"]  # type: ignore
             await self._session.execute(
-                table.update().where(table.c.id == id_).values(is_used=True, updated_at=datetime.now(UTC))
+                table.update()
+                .where(table.c.id == id_)
+                .values(is_used=True, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
@@ -62,10 +66,6 @@ class SqlaEmailVerificationRepository(EmailVerificationRepository):
     async def delete_by_id(self, *, id_: int) -> None:
         try:
             table = mapping_registry.metadata.tables["email_verifications"]  # type: ignore
-            await self._session.execute(
-                table.delete().where(table.c.id == id_)
-            )
+            await self._session.execute(table.delete().where(table.c.id == id_))
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
-
-

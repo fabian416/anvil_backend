@@ -218,9 +218,7 @@ class RedditSentimentAnalyzer:
             },
         )
 
-    async def _fetch_posts(
-        self, token_symbol: str, hours: int
-    ) -> List[Dict]:
+    async def _fetch_posts(self, token_symbol: str, hours: int) -> List[Dict]:
         """Fetch Reddit posts mentioning token.
 
         Uses real Reddit API (public JSON endpoints, no auth required).
@@ -241,24 +239,27 @@ class RedditSentimentAnalyzer:
                 # Fetch posts about the token from crypto subreddits
                 posts = await client.get_crypto_sentiment_posts(
                     token_symbol=token_symbol,
-                    limit_per_subreddit=self.config.max_posts_per_query // max(
-                        1, len(self.config.target_subreddits or ["cryptocurrency"])
-                    ),
+                    limit_per_subreddit=self.config.max_posts_per_query
+                    // max(1, len(self.config.target_subreddits or ["cryptocurrency"])),
                 )
 
                 # Filter by time window
                 cutoff_time = utc_now() - timedelta(hours=hours)
                 recent_posts = [
-                    p for p in posts
-                    if p.created_utc.replace(tzinfo=None) > cutoff_time.replace(tzinfo=None)
+                    p
+                    for p in posts
+                    if p.created_utc.replace(tzinfo=None)
+                    > cutoff_time.replace(tzinfo=None)
                 ]
 
                 # Convert to dict format for analysis
                 result = []
                 for post in recent_posts:
                     # Filter by minimum karma and upvote ratio
-                    if (post.score >= self.config.min_karma and
-                            post.upvote_ratio >= self.config.min_upvote_ratio):
+                    if (
+                        post.score >= self.config.min_karma
+                        and post.upvote_ratio >= self.config.min_upvote_ratio
+                    ):
                         result.append({
                             "title": post.title,
                             "text": post.selftext,
@@ -352,7 +353,8 @@ class RedditSentimentAnalyzer:
 
         # Filter by karma and upvote ratio
         return [
-            p for p in simulated_posts
+            p
+            for p in simulated_posts
             if p["karma"] >= self.config.min_karma
             and p["upvote_ratio"] >= self.config.min_upvote_ratio
         ]
@@ -446,9 +448,7 @@ class RedditSentimentAnalyzer:
 
         return weighted_sum / total_weight if total_weight > 0 else 50.0
 
-    def _calculate_confidence(
-        self, posts: List[Dict], scores: List[float]
-    ) -> float:
+    def _calculate_confidence(self, posts: List[Dict], scores: List[float]) -> float:
         """Calculate confidence in sentiment analysis.
 
         Args:
@@ -483,10 +483,7 @@ class RedditSentimentAnalyzer:
 
         # Combine factors
         confidence = (
-            (sample_confidence * 0.5)
-            + (consistency * 0.3)
-            + karma_boost
-            + upvote_boost
+            (sample_confidence * 0.5) + (consistency * 0.3) + karma_boost + upvote_boost
         )
 
         return max(0.0, min(1.0, confidence))
@@ -505,9 +502,7 @@ class RedditSentimentAnalyzer:
             },
         )
 
-    async def get_trending_discussions(
-        self, limit: int = 10
-    ) -> List[Dict]:
+    async def get_trending_discussions(self, limit: int = 10) -> List[Dict]:
         """Get trending cryptocurrency discussions on Reddit.
 
         Args:

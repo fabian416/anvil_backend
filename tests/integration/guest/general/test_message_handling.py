@@ -27,7 +27,7 @@ class TestSendMessage:
         conversation_id = str(uuid4())
         response = await client.post(
             f"/api/v1/chat/conversations/{conversation_id}/messages",
-            json={"content": "Hello, what is DeFi?"}
+            json={"content": "Hello, what is DeFi?"},
         )
 
         # Without auth, expect 401
@@ -45,7 +45,7 @@ class TestSendMessage:
         conversation_id = str(uuid4())
         response = await client.post(
             f"/api/v1/chat/conversations/{conversation_id}/messages",
-            json={"content": "Hello"}
+            json={"content": "Hello"},
         )
 
         assert response.status_code == 401
@@ -58,7 +58,7 @@ class TestSendMessage:
         conversation_id = str(uuid4())
         response = await client.post(
             f"/api/v1/chat/conversations/{conversation_id}/messages",
-            json={"content": "Hello"}
+            json={"content": "Hello"},
         )
 
         assert response.status_code in (401, 404)
@@ -71,7 +71,7 @@ class TestSendMessage:
         conversation_id = str(uuid4())
         response = await client.post(
             f"/api/v1/chat/conversations/{conversation_id}/messages",
-            json={"content": ""}
+            json={"content": ""},
         )
 
         # Should return 400/422 for empty message or 401 if not authenticated
@@ -84,8 +84,7 @@ class TestSendMessage:
         """
         conversation_id = str(uuid4())
         response = await client.post(
-            f"/api/v1/chat/conversations/{conversation_id}/messages",
-            json={}
+            f"/api/v1/chat/conversations/{conversation_id}/messages", json={}
         )
 
         assert response.status_code in (401, 422)
@@ -134,7 +133,7 @@ class TestGetMessages:
         conversation_id = str(uuid4())
         response = await client.get(
             f"/api/v1/chat/conversations/{conversation_id}/messages",
-            params={"limit": 10}
+            params={"limit": 10},
         )
 
         assert response.status_code in (200, 401, 404)
@@ -154,7 +153,7 @@ class TestMessageValidation:
         conversation_id = str(uuid4())
         response = await client.post(
             f"/api/v1/chat/conversations/{conversation_id}/messages",
-            json={"content": "What about 🚀 DeFi? Special chars: <>&\"'"}
+            json={"content": "What about 🚀 DeFi? Special chars: <>&\"'"},
         )
 
         assert response.status_code in (201, 401, 404)
@@ -167,7 +166,7 @@ class TestMessageValidation:
         conversation_id = str(uuid4())
         response = await client.post(
             f"/api/v1/chat/conversations/{conversation_id}/messages",
-            json={"content": "什么是去中心化金融？"}
+            json={"content": "什么是去中心化金融？"},
         )
 
         assert response.status_code in (201, 401, 404)
@@ -181,7 +180,7 @@ class TestMessageValidation:
         long_message = "A" * 10000
         response = await client.post(
             f"/api/v1/chat/conversations/{conversation_id}/messages",
-            json={"content": long_message}
+            json={"content": long_message},
         )
 
         # Should create, truncate, or return validation error

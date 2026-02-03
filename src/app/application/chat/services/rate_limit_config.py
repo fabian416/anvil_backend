@@ -9,7 +9,7 @@ from typing import TypedDict
 
 class RateLimitConfig(TypedDict):
     """Rate limit configuration for a user type."""
-    
+
     messages_per_hour: int | None
     messages_per_day: int | None
     max_conversations: int | None
@@ -24,7 +24,7 @@ RATE_LIMITS: dict[str, RateLimitConfig] = {
         "max_conversations": 10,
         "features": [
             "sentiment",
-            "prediction", 
+            "prediction",
             "signals",
             "protocol_search",
             "swap_quote",
@@ -69,4 +69,3 @@ def can_access_feature(user_type: str, feature: str) -> bool:
     """Check if user type can access a specific feature."""
     features = get_feature_list(user_type)
     return "*" in features or feature in features
-

@@ -97,15 +97,21 @@ class RedisSessionStoreAdapter(SessionStore):
             "id": str(session.id),
             "session_id": session.session_id,
             "user_id": str(session.user_id),
-            "conversation_id": str(session.conversation_id) if session.conversation_id else "",
+            "conversation_id": str(session.conversation_id)
+            if session.conversation_id
+            else "",
             "connection_state": session.connection_state.value,
             "connected_at": session.connected_at.isoformat(),
             "last_activity": session.last_activity.isoformat(),
-            "disconnected_at": session.disconnected_at.isoformat() if session.disconnected_at else "",
+            "disconnected_at": session.disconnected_at.isoformat()
+            if session.disconnected_at
+            else "",
             "metadata": json.dumps(session.metadata),
         }
 
-    def _deserialize_session(self, data: Dict[bytes, bytes]) -> Optional[WebSocketSession]:
+    def _deserialize_session(
+        self, data: Dict[bytes, bytes]
+    ) -> Optional[WebSocketSession]:
         """
         Deserialize session from Redis hash data.
 
@@ -126,11 +132,15 @@ class RedisSessionStoreAdapter(SessionStore):
                 id=UUID(data[b"id"].decode()),
                 session_id=data[b"session_id"].decode(),
                 user_id=UUID(data[b"user_id"].decode()),
-                conversation_id=UUID(conversation_id_str) if conversation_id_str else None,
+                conversation_id=UUID(conversation_id_str)
+                if conversation_id_str
+                else None,
                 connection_state=ConnectionState(data[b"connection_state"].decode()),
                 connected_at=datetime.fromisoformat(data[b"connected_at"].decode()),
                 last_activity=datetime.fromisoformat(data[b"last_activity"].decode()),
-                disconnected_at=datetime.fromisoformat(disconnected_at_str) if disconnected_at_str else None,
+                disconnected_at=datetime.fromisoformat(disconnected_at_str)
+                if disconnected_at_str
+                else None,
                 metadata=json.loads(data[b"metadata"].decode()),
             )
         except (KeyError, ValueError, json.JSONDecodeError):
@@ -360,7 +370,9 @@ class RedisSessionStoreAdapter(SessionStore):
                 # If session was IDLE, transition to CONNECTED
                 session_data = await self._redis.hget(session_key, "connection_state")
                 if session_data and session_data.decode() == ConnectionState.IDLE.value:
-                    pipe.hset(session_key, "connection_state", ConnectionState.CONNECTED.value)
+                    pipe.hset(
+                        session_key, "connection_state", ConnectionState.CONNECTED.value
+                    )
 
                     # Update state indices
                     idle_key = self._state_sessions_key(ConnectionState.IDLE)
@@ -398,7 +410,9 @@ class RedisSessionStoreAdapter(SessionStore):
 
             async with self._redis.pipeline(transaction=True) as pipe:
                 # Update session hash
-                pipe.hset(session_key, "connection_state", ConnectionState.DISCONNECTED.value)
+                pipe.hset(
+                    session_key, "connection_state", ConnectionState.DISCONNECTED.value
+                )
                 pipe.hset(session_key, "disconnected_at", now.isoformat())
 
                 # Update state indices
@@ -512,7 +526,9 @@ class RedisSessionStoreAdapter(SessionStore):
 
                     async with self._redis.pipeline(transaction=True) as pipe:
                         # Update state to IDLE
-                        pipe.hset(session_key, "connection_state", ConnectionState.IDLE.value)
+                        pipe.hset(
+                            session_key, "connection_state", ConnectionState.IDLE.value
+                        )
 
                         # Update state indices
                         pipe.srem(connected_key, session_id)

@@ -1,4 +1,5 @@
 """Document processing service for knowledge base."""
+
 from typing import List
 from uuid import UUID
 
@@ -11,13 +12,13 @@ from app.domain.services.knowledge.text_chunker import TextChunker
 class DocumentProcessor:
     """
     Service for processing documents into chunks with embeddings.
-    
+
     Orchestrates:
     1. Text chunking
     2. Embedding generation
     3. Chunk storage
     """
-    
+
     def __init__(
         self,
         chunker: TextChunker,
@@ -26,7 +27,7 @@ class DocumentProcessor:
     ):
         """
         Initialize document processor.
-        
+
         Args:
             chunker: Text chunking service
             embedding_service: Embedding generation service
@@ -35,32 +36,32 @@ class DocumentProcessor:
         self.chunker = chunker
         self.embedding_service = embedding_service
         self.chunk_repository = chunk_repository
-    
+
     async def process_document(
         self,
         document: KnowledgeDocument,
     ) -> int:
         """
         Process a document into chunks with embeddings.
-        
+
         Args:
             document: Document to process
-        
+
         Returns:
             Number of chunks created
         """
         # Delete existing chunks if reprocessing
         await self.chunk_repository.delete_chunks_by_document(document.id)
-        
+
         # Chunk the text
         chunk_texts = self.chunker.chunk_text(document.content)
-        
+
         if not chunk_texts:
             return 0
-        
+
         # Generate embeddings for all chunks
         embeddings = await self.embedding_service.generate_embeddings(chunk_texts)
-        
+
         # Create chunk entities
         chunks = []
         for i, (text, embedding) in enumerate(zip(chunk_texts, embeddings)):
@@ -77,22 +78,22 @@ class DocumentProcessor:
             )
             chunk.set_embedding(embedding)
             chunks.append(chunk)
-        
+
         # Store chunks in batch
         await self.chunk_repository.add_chunks(chunks)
-        
+
         return len(chunks)
-    
+
     async def reprocess_document(
         self,
         document: KnowledgeDocument,
     ) -> int:
         """
         Reprocess a document (update chunks and embeddings).
-        
+
         Args:
             document: Document to reprocess
-        
+
         Returns:
             Number of chunks created
         """

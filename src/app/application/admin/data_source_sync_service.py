@@ -39,24 +39,24 @@ class DataSource:
     source_type: DataSourceType
     endpoint_url: str
     status: DataSourceStatus
-    
+
     # Health metrics
     uptime_percentage: float  # 0-100
     avg_response_time_ms: float
     last_success: Optional[datetime]
     last_failure: Optional[datetime]
-    
+
     # Configuration
     api_key_configured: bool
     rate_limit_per_minute: int
     timeout_seconds: int
     retry_count: int
-    
+
     # Metadata
     chains_supported: List[str]
     data_types: List[str]  # prices, tvl, yields, etc.
     priority: int  # 1-10, higher = preferred
-    
+
     created_at: datetime
     updated_at: datetime
 
@@ -69,17 +69,17 @@ class SyncJob:
     source_id: UUID
     job_type: str  # full_sync, incremental, price_update
     status: str  # pending, running, completed, failed
-    
+
     # Progress
     total_records: int
     processed_records: int
     failed_records: int
-    
+
     # Timing
     started_at: Optional[datetime]
     completed_at: Optional[datetime]
     duration_seconds: Optional[float]
-    
+
     # Results
     error_message: Optional[str]
     records_synced: Dict[str, int]  # {table_name: count}
@@ -88,7 +88,7 @@ class SyncJob:
 class DataSourceSyncService:
     """
     Service for managing external data source synchronization.
-    
+
     Handles:
     - Data source configuration and health monitoring
     - Automatic failover between sources
@@ -112,11 +112,11 @@ class DataSourceSyncService:
     ) -> DataSource:
         """
         Register new external data source.
-        
+
         Args:
             config: Data source configuration
             admin_user_id: Admin user registering source
-            
+
         Returns:
             Registered data source
         """
@@ -125,7 +125,7 @@ class DataSourceSyncService:
         # - Test connectivity
         # - Store credentials securely
         # - Initialize health checks
-        
+
         source = DataSource(
             source_id=uuid4(),
             name=config["name"],
@@ -146,7 +146,7 @@ class DataSourceSyncService:
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
         )
-        
+
         return source
 
     async def update_data_source(
@@ -157,18 +157,16 @@ class DataSourceSyncService:
         # - Apply configuration changes
         # - Re-test connectivity if endpoint changed
         # - Update health check schedule
-        
+
         raise NotImplementedError()
 
-    async def delete_data_source(
-        self, source_id: UUID, admin_user_id: UUID
-    ) -> bool:
+    async def delete_data_source(self, source_id: UUID, admin_user_id: UUID) -> bool:
         """Delete data source."""
         # TODO: Implement source deletion
         # - Cancel scheduled jobs
         # - Remove configuration
         # - Log audit trail
-        
+
         return True
 
     async def list_data_sources(
@@ -176,10 +174,10 @@ class DataSourceSyncService:
     ) -> List[DataSource]:
         """
         List all configured data sources.
-        
+
         Args:
             source_type: Filter by source type
-            
+
         Returns:
             List of data sources
         """
@@ -213,10 +211,10 @@ class DataSourceSyncService:
     async def check_source_health(self, source_id: UUID) -> Dict:
         """
         Check health of specific data source.
-        
+
         Args:
             source_id: Data source to check
-            
+
         Returns:
             Health check results
         """
@@ -225,7 +223,7 @@ class DataSourceSyncService:
         # - Measure response time
         # - Validate data format
         # - Update status
-        
+
         return {
             "source_id": source_id,
             "status": "healthy",
@@ -237,12 +235,12 @@ class DataSourceSyncService:
     async def get_health_summary(self) -> Dict:
         """Get overall health summary of all data sources."""
         sources = await self.list_data_sources()
-        
+
         total = len(sources)
         healthy = len([s for s in sources if s.status == DataSourceStatus.HEALTHY])
         degraded = len([s for s in sources if s.status == DataSourceStatus.DEGRADED])
         down = len([s for s in sources if s.status == DataSourceStatus.DOWN])
-        
+
         return {
             "total_sources": total,
             "healthy": healthy,
@@ -261,11 +259,11 @@ class DataSourceSyncService:
     ) -> SyncJob:
         """
         Trigger data synchronization job.
-        
+
         Args:
             source_id: Data source to sync
             sync_type: Type of sync (full_sync, incremental, price_update)
-            
+
         Returns:
             Created sync job
         """
@@ -273,7 +271,7 @@ class DataSourceSyncService:
         # - Create sync job
         # - Queue Celery task
         # - Return job status
-        
+
         job = SyncJob(
             job_id=uuid4(),
             source_id=source_id,
@@ -288,7 +286,7 @@ class DataSourceSyncService:
             error_message=None,
             records_synced={},
         )
-        
+
         return job
 
     async def get_sync_status(self, job_id: UUID) -> Optional[SyncJob]:
@@ -301,11 +299,11 @@ class DataSourceSyncService:
     ) -> List[SyncJob]:
         """
         List recent sync jobs.
-        
+
         Args:
             source_id: Filter by data source
             limit: Maximum results
-            
+
         Returns:
             List of sync jobs
         """
@@ -319,22 +317,22 @@ class DataSourceSyncService:
     ) -> Optional[DataSource]:
         """
         Get preferred data source for specific data type.
-        
+
         Implements automatic failover logic:
         1. Prefer highest priority healthy source
         2. Fall back to next priority if primary is down
         3. Return None if no sources available
-        
+
         Args:
             data_type: Type of data needed (prices, tvl, etc.)
             chain: Optional chain filter
-            
+
         Returns:
             Preferred data source or None
         """
         # TODO: Implement failover logic
         sources = await self.list_data_sources()
-        
+
         # Filter by data type and chain
         filtered = [
             s
@@ -343,10 +341,10 @@ class DataSourceSyncService:
             and (not chain or chain in s.chains_supported)
             and s.status in [DataSourceStatus.HEALTHY, DataSourceStatus.DEGRADED]
         ]
-        
+
         if not filtered:
             return None
-        
+
         # Sort by priority (descending) and status
         filtered.sort(
             key=lambda s: (
@@ -354,7 +352,7 @@ class DataSourceSyncService:
                 0 if s.status == DataSourceStatus.HEALTHY else 1,
             )
         )
-        
+
         return filtered[0]
 
     # ==================== Statistics ====================
@@ -362,7 +360,7 @@ class DataSourceSyncService:
     async def get_sync_statistics(self) -> Dict:
         """Get synchronization statistics."""
         # TODO: Implement statistics collection
-        
+
         return {
             "total_syncs_24h": 144,
             "successful_syncs": 142,

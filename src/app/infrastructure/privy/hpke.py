@@ -36,7 +36,7 @@ class HPKEKeyPair:
 class HPKEDecryptor:
     """
     HPKE decryption for Privy wallet exports.
-    
+
     Privy uses HPKE (Hybrid Public Key Encryption) with:
     - KEM: DHKEM_P256_HKDF_SHA256
     - KDF: HKDF_SHA256
@@ -48,7 +48,7 @@ class HPKEDecryptor:
     def __init__(self, key_pair: HPKEKeyPair | None = None) -> None:
         """
         Initialize decryptor.
-        
+
         Args:
             key_pair: Optional existing key pair. If not provided,
                      a new one will be generated when needed.
@@ -59,7 +59,7 @@ class HPKEDecryptor:
     def generate_key_pair() -> HPKEKeyPair:
         """
         Generate a new P-256 key pair for HPKE.
-        
+
         Returns:
             HPKEKeyPair with private and public keys.
         """
@@ -91,14 +91,14 @@ class HPKEDecryptor:
     ) -> str:
         """
         Decrypt a message encrypted with HPKE.
-        
+
         Args:
             ciphertext_b64: Base64-encoded ciphertext from Privy.
             encapsulated_key_b64: Base64-encoded encapsulated key from Privy.
-            
+
         Returns:
             Decrypted private key as a string.
-            
+
         Raises:
             ValueError: If decryption fails.
         """

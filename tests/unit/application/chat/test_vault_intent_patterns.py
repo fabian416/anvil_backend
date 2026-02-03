@@ -27,63 +27,55 @@ class TestVaultIntentPatterns:
         """Create intent detector instance."""
         return IntentDetectorV2()
 
-    @pytest.mark.parametrize("query", [
-        # Primary P0 test case
-        "Best lending vaults",
-
-        # "best/top/highest" + "vaults"
-        "best vaults",
-        "top vaults",
-        "highest vaults",
-
-        # "best/top/highest" + "lending vaults"
-        "best lending vaults",
-        "top lending vaults",
-        "highest lending vaults",
-
-        # "best/top/highest" + "morpho vaults"
-        "best morpho vaults",
-        "top morpho vaults",
-        "highest morpho vaults",
-
-        # "show" + "vaults"
-        "show best vaults",
-        "show me best vaults",
-        "show top vaults",
-
-        # "compare" + "vaults"
-        "compare vaults",
-        "compare morpho vaults",
-
-        # "vault" + "comparison/recommendations"
-        "vault comparison",
-        "vault recommendations",
-
-        # "which vaults" + "have/offer"
-        "which vaults have best apy",
-        "which vaults offer highest yield",
-
-        # "vaults" + "with" + "best/highest" + "apy/yield/returns"
-        "vaults with best apy",
-        "vaults with highest yield",
-        "vault with highest apy",
-
-        # "list/find" + "vaults"
-        "list morpho vaults",
-        "list vaults",
-        "find best vaults",
-        "find top vaults",
-
-        # Case variations
-        "BEST LENDING VAULTS",
-        "Best Lending Vaults",
-        "bEsT lEnDiNg VaUlTs",
-
-        # With additional context
-        "I want to see the best lending vaults",
-        "Can you show me the best vaults?",
-        "What are the top morpho vaults?",
-    ])
+    @pytest.mark.parametrize(
+        "query",
+        [
+            # Primary P0 test case
+            "Best lending vaults",
+            # "best/top/highest" + "vaults"
+            "best vaults",
+            "top vaults",
+            "highest vaults",
+            # "best/top/highest" + "lending vaults"
+            "best lending vaults",
+            "top lending vaults",
+            "highest lending vaults",
+            # "best/top/highest" + "morpho vaults"
+            "best morpho vaults",
+            "top morpho vaults",
+            "highest morpho vaults",
+            # "show" + "vaults"
+            "show best vaults",
+            "show me best vaults",
+            "show top vaults",
+            # "compare" + "vaults"
+            "compare vaults",
+            "compare morpho vaults",
+            # "vault" + "comparison/recommendations"
+            "vault comparison",
+            "vault recommendations",
+            # "which vaults" + "have/offer"
+            "which vaults have best apy",
+            "which vaults offer highest yield",
+            # "vaults" + "with" + "best/highest" + "apy/yield/returns"
+            "vaults with best apy",
+            "vaults with highest yield",
+            "vault with highest apy",
+            # "list/find" + "vaults"
+            "list morpho vaults",
+            "list vaults",
+            "find best vaults",
+            "find top vaults",
+            # Case variations
+            "BEST LENDING VAULTS",
+            "Best Lending Vaults",
+            "bEsT lEnDiNg VaUlTs",
+            # With additional context
+            "I want to see the best lending vaults",
+            "Can you show me the best vaults?",
+            "What are the top morpho vaults?",
+        ],
+    )
     def test_vault_queries_route_to_lending(self, detector, query):
         """
         Test that vault-related queries route to LENDING intent.
@@ -96,27 +88,27 @@ class TestVaultIntentPatterns:
         result = detector.detect(query, language="en")
 
         assert result.intent == ChatIntentV2.LENDING, (
-            f"Query '{query}' should route to LENDING intent, "
-            f"got {result.intent.value}"
+            f"Query '{query}' should route to LENDING intent, got {result.intent.value}"
         )
         assert result.handler == "lending_handler", (
-            f"Query '{query}' should use lending_handler, "
-            f"got {result.handler}"
+            f"Query '{query}' should use lending_handler, got {result.handler}"
         )
         assert result.confidence >= 0.85, (
             f"Confidence should be >= 0.85, got {result.confidence}"
         )
 
-    @pytest.mark.parametrize("query,expected_intent", [
-        # Should NOT match vault patterns
-        ("vault of satoshi", ChatIntentV2.GENERAL_CONVERSATION),
-        ("What is Bitcoin", ChatIntentV2.PROTOCOL_SEARCH),
-        ("Bitcoin price", ChatIntentV2.HUNTER_PRICE_PREDICTION),
-
-        # Rate comparison queries should go to MONEY_MARKET
-        ("Best lending rates", ChatIntentV2.MONEY_MARKET),
-        ("Compare lending rates", ChatIntentV2.MONEY_MARKET),
-    ])
+    @pytest.mark.parametrize(
+        "query,expected_intent",
+        [
+            # Should NOT match vault patterns
+            ("vault of satoshi", ChatIntentV2.GENERAL_CONVERSATION),
+            ("What is Bitcoin", ChatIntentV2.PROTOCOL_SEARCH),
+            ("Bitcoin price", ChatIntentV2.HUNTER_PRICE_PREDICTION),
+            # Rate comparison queries should go to MONEY_MARKET
+            ("Best lending rates", ChatIntentV2.MONEY_MARKET),
+            ("Compare lending rates", ChatIntentV2.MONEY_MARKET),
+        ],
+    )
     def test_non_vault_queries_route_correctly(self, detector, query, expected_intent):
         """
         Test that non-vault queries don't get misrouted to LENDING.

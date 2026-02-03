@@ -19,8 +19,12 @@ class TradingSignalResponse(BaseModel):
     """Response model for trading signal."""
 
     token_symbol: str = Field(..., description="Token symbol")
-    signal_type: str = Field(..., description="Signal type: BUY, SELL, HOLD, STRONG_BUY, STRONG_SELL")
-    signal_strength: float = Field(..., description="Signal strength (0-100)", ge=0, le=100)
+    signal_type: str = Field(
+        ..., description="Signal type: BUY, SELL, HOLD, STRONG_BUY, STRONG_SELL"
+    )
+    signal_strength: float = Field(
+        ..., description="Signal strength (0-100)", ge=0, le=100
+    )
     confidence: float = Field(..., description="Signal confidence (0-1)", ge=0, le=1)
 
     entry_price: Optional[float] = Field(None, description="Recommended entry price")
@@ -28,14 +32,17 @@ class TradingSignalResponse(BaseModel):
     take_profit_price: Optional[float] = Field(None, description="Take-profit target")
 
     sentiment_score: float = Field(..., description="Sentiment contribution (0-100)")
-    prediction_score: float = Field(..., description="Price prediction contribution (0-100)")
+    prediction_score: float = Field(
+        ..., description="Price prediction contribution (0-100)"
+    )
     risk_score: float = Field(..., description="Risk-adjusted score (0-100)")
 
     timeframe: str = Field(..., description="Timeframe (1h, 4h, 1d, 1w, 1M)")
     generated_at: str = Field(..., description="Signal generation timestamp")
     recommendation: str = Field(..., description="Human-readable recommendation")
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "token_symbol": "ETH",
                 "signal_type": "BUY",
@@ -51,20 +58,28 @@ class TradingSignalResponse(BaseModel):
                 "generated_at": "2025-12-03T18:00:00Z",
                 "recommendation": "BUY signal (strength: 72.5/100)...",
             }
-        })
+        }
+    )
 
 
 class MultiTimeframeAnalysisResponse(BaseModel):
     """Response model for multi-timeframe analysis."""
 
     token_symbol: str = Field(..., description="Token symbol")
-    signals: Dict[str, TradingSignalResponse] = Field(..., description="Signals by timeframe")
+    signals: Dict[str, TradingSignalResponse] = Field(
+        ..., description="Signals by timeframe"
+    )
     consensus_signal: str = Field(..., description="Consensus signal across timeframes")
-    alignment_score: float = Field(..., description="Timeframe alignment (0-1)", ge=0, le=1)
-    trend_direction: str = Field(..., description="Overall trend: bullish, bearish, neutral")
+    alignment_score: float = Field(
+        ..., description="Timeframe alignment (0-1)", ge=0, le=1
+    )
+    trend_direction: str = Field(
+        ..., description="Overall trend: bullish, bearish, neutral"
+    )
     generated_at: str = Field(..., description="Analysis timestamp")
 
-    model_config = ConfigDict(json_schema_extra={
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "token_symbol": "ETH",
                 "signals": {
@@ -77,7 +92,8 @@ class MultiTimeframeAnalysisResponse(BaseModel):
                 "trend_direction": "bullish",
                 "generated_at": "2025-12-03T18:00:00Z",
             }
-        })
+        }
+    )
 
 
 def create_trading_signals_router() -> APIRouter:
@@ -229,7 +245,9 @@ def create_trading_signals_router() -> APIRouter:
         description="Generate signals for multiple tokens simultaneously",
     )
     async def batch_generate_signals(
-        tokens: str = Query(..., description="Comma-separated token symbols (e.g., ETH,BTC,SOL)"),
+        tokens: str = Query(
+            ..., description="Comma-separated token symbols (e.g., ETH,BTC,SOL)"
+        ),
         timeframe: str = Query("1d", description="Timeframe: 1h, 4h, 1d, 1w, 1M"),
     ) -> Dict[str, TradingSignalResponse]:
         """Generate signals for multiple tokens.
@@ -280,9 +298,7 @@ def create_trading_signals_router() -> APIRouter:
                     results[token] = TradingSignalResponse(**signal.to_dict())
                 except Exception as e:
                     # Continue with other tokens if one fails
-                    results[token] = {
-                        "error": f"Failed to generate signal: {str(e)}"
-                    }
+                    results[token] = {"error": f"Failed to generate signal: {str(e)}"}
 
             return results
 

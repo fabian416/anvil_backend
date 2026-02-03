@@ -34,9 +34,7 @@ class PoolNotFoundError(CurveError):
     def __init__(self, pool_address: str, chain: str = "ethereum"):
         self.pool_address = pool_address
         self.chain = chain
-        super().__init__(
-            f"Curve pool not found: {pool_address} on {chain}"
-        )
+        super().__init__(f"Curve pool not found: {pool_address} on {chain}")
 
 
 class InvalidTokenError(CurveError):
@@ -53,9 +51,7 @@ class InvalidTokenError(CurveError):
 
     def __init__(self, token_address: str, message: str | None = None):
         self.token_address = token_address
-        super().__init__(
-            message or f"Token not supported on Curve: {token_address}"
-        )
+        super().__init__(message or f"Token not supported on Curve: {token_address}")
 
 
 class CurveAPIError(CurveError):
@@ -92,9 +88,7 @@ class NoRouteFoundError(CurveError):
     def __init__(self, from_token: str, to_token: str):
         self.from_token = from_token
         self.to_token = to_token
-        super().__init__(
-            f"No Curve route found from {from_token} to {to_token}"
-        )
+        super().__init__(f"No Curve route found from {from_token} to {to_token}")
 
 
 class InsufficientLiquidityError(CurveError):

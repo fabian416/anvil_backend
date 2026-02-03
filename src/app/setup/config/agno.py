@@ -35,7 +35,7 @@ class AgnoAgentSettings(BaseModel):
 
 class AgnoSettings(BaseModel):
     """Agno agent system configuration settings."""
-    
+
     enabled: bool = Field(
         default=True,
         description="Master switch for all Agno agents",
@@ -56,42 +56,42 @@ class AgnoSettings(BaseModel):
 
 class AgnoRetryConfig(BaseModel):
     """Retry configuration for Agno agent MCP tool calls."""
-    
+
     enabled: bool = Field(
         default=True,
         description="Enable retry for MCP tool calls",
     )
-    
+
     max_attempts: int = Field(
         default=2,
         description="Maximum retry attempts (agents prioritize fast feedback)",
         ge=1,
         le=5,
     )
-    
+
     initial_backoff_seconds: float = Field(
         default=1.0,
         description="Initial backoff delay in seconds",
         gt=0,
     )
-    
+
     max_backoff_seconds: float = Field(
         default=5.0,
         description="Maximum backoff delay in seconds",
         gt=0,
     )
-    
+
     exponential_base: float = Field(
         default=2.0,
         description="Exponential backoff base",
         gt=1.0,
     )
-    
+
     circuit_breaker_enabled: bool = Field(
         default=True,
         description="Enable circuit breaker for agent tool calls",
     )
-    
+
     telemetry_enabled: bool = Field(
         default=True,
         description="Enable telemetry for agent retry attempts",
@@ -100,7 +100,7 @@ class AgnoRetryConfig(BaseModel):
 
 class AgnoConfig(BaseModel):
     """Agno configuration (existing model extended with settings)."""
-    
+
     default_model: str = "meta-llama/Meta-Llama-3.1-70B-Instruct"
     fallback_model: str = "meta-llama/Meta-Llama-3.1-70B-Instruct"
     intent_threshold: float = 0.75
@@ -112,12 +112,12 @@ class AgnoConfig(BaseModel):
     debug_mode: bool = False
     log_intent_classification: bool = True
     log_agent_selection: bool = True
-    
+
     retry: AgnoRetryConfig = Field(
         default_factory=AgnoRetryConfig,
         description="Retry configuration for MCP tool calls",
     )
-    
+
     # Legacy compatibility properties
     @property
     def retry_max_attempts(self) -> int:
@@ -147,4 +147,5 @@ class AgnoConfig(BaseModel):
 
 class AgentDisabledError(Exception):
     """Raised when attempting to use a disabled agent."""
+
     pass

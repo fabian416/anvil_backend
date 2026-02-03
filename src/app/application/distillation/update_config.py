@@ -1,6 +1,7 @@
 """
 Update distillation config interactor.
 """
+
 from typing import Optional
 from dataclasses import dataclass
 
@@ -10,6 +11,7 @@ from app.setup.config.distillation import DistillationSettings
 @dataclass
 class DistillationConfig:
     """Distillation configuration data."""
+
     enabled: bool
     provider: str
     fallback_provider: str
@@ -22,18 +24,18 @@ class DistillationConfig:
 class UpdateDistillationConfig:
     """
     Update distillation configuration interactor.
-    
+
     Updates runtime configuration for distillation system.
-    
+
     Note: This is a simplified implementation. In production,
     you would persist changes to a database or config file
     and hot-reload the configuration.
     """
-    
+
     def __init__(self, settings: DistillationSettings):
         """Initialize interactor."""
         self._settings = settings
-    
+
     async def execute(
         self,
         enabled: Optional[bool] = None,
@@ -46,7 +48,7 @@ class UpdateDistillationConfig:
     ) -> DistillationConfig:
         """
         Update distillation configuration.
-        
+
         Args:
             enabled: Enable/disable distillation
             provider: Primary provider name
@@ -55,7 +57,7 @@ class UpdateDistillationConfig:
             max_tokens: Maximum tokens
             timeout_seconds: Request timeout
             fail_open: Fail-open mode
-        
+
         Returns:
             Updated configuration
         """
@@ -74,7 +76,7 @@ class UpdateDistillationConfig:
             self._settings.timeout_seconds = timeout_seconds
         if fail_open is not None:
             self._settings.fail_open = fail_open
-        
+
         # Return updated config
         return DistillationConfig(
             enabled=self._settings.enabled,

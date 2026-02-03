@@ -27,14 +27,14 @@ class TestAuthenticatedUserKnowledgeInjection:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test 'what can you do?' for authenticated user includes knowledge"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what can you do?", "language": "en"}
+            json={"content": "what can you do?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -49,16 +49,31 @@ class TestAuthenticatedUserKnowledgeInjection:
         agent_content = data["agent_message"]["content"].lower()
 
         # Should mention core capabilities from overview.json
-        assert any(keyword in agent_content for keyword in [
-            "trading", "swap", "hunter ai", "market intelligence",
-            "ultra", "automation", "portfolio"
-        ])
+        assert any(
+            keyword in agent_content
+            for keyword in [
+                "trading",
+                "swap",
+                "hunter ai",
+                "market intelligence",
+                "ultra",
+                "automation",
+                "portfolio",
+            ]
+        )
 
         # Should have specific features, not vague response
-        assert any(keyword in agent_content for keyword in [
-            "1inch", "hyperliquid", "sentiment", "arbitrage",
-            "flash loan", "mev protection"
-        ])
+        assert any(
+            keyword in agent_content
+            for keyword in [
+                "1inch",
+                "hyperliquid",
+                "sentiment",
+                "arbitrage",
+                "flash loan",
+                "mev protection",
+            ]
+        )
 
     @pytest.mark.llm_validation
     async def test_hunter_ai_query_authenticated(
@@ -66,14 +81,17 @@ class TestAuthenticatedUserKnowledgeInjection:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test Hunter AI query includes accuracy metrics"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what is hunter ai and how accurate is it?", "language": "en"}
+            json={
+                "content": "what is hunter ai and how accurate is it?",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -90,14 +108,14 @@ class TestAuthenticatedUserKnowledgeInjection:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test ULTRA query includes knowledge about automation"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what is ultra?", "language": "en"}
+            json={"content": "what is ultra?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -114,14 +132,14 @@ class TestAuthenticatedUserKnowledgeInjection:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test swap query includes knowledge about supported protocols"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "how do I swap tokens?", "language": "en"}
+            json={"content": "how do I swap tokens?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -138,14 +156,14 @@ class TestAuthenticatedUserKnowledgeInjection:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test investor-focused query includes competitive advantages"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "why should I invest in Anvil?", "language": "en"}
+            json={"content": "why should I invest in Anvil?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -162,14 +180,14 @@ class TestAuthenticatedUserKnowledgeInjection:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test command help query includes examples"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "show me example commands", "language": "en"}
+            json={"content": "show me example commands", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -189,8 +207,7 @@ class TestGuestUserKnowledgeInjection:
         """Test 'what can you do?' for guest user includes knowledge"""
 
         response = await async_client.post(
-            "/api/v1/guest/chat",
-            json={"content": "what can you do?", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "what can you do?", "language": "en"}
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -205,10 +222,17 @@ class TestGuestUserKnowledgeInjection:
         agent_content = data["agent_message"]["content"].lower()
 
         # Should mention core capabilities from overview.json
-        assert any(keyword in agent_content for keyword in [
-            "trading", "swap", "hunter ai", "market intelligence",
-            "ultra", "portfolio"
-        ])
+        assert any(
+            keyword in agent_content
+            for keyword in [
+                "trading",
+                "swap",
+                "hunter ai",
+                "market intelligence",
+                "ultra",
+                "portfolio",
+            ]
+        )
 
     @pytest.mark.llm_validation
     async def test_hunter_ai_query_guest(self, async_client: AsyncClient):
@@ -216,7 +240,7 @@ class TestGuestUserKnowledgeInjection:
 
         response = await async_client.post(
             "/api/v1/guest/chat",
-            json={"content": "what is hunter ai?", "language": "en"}
+            json={"content": "what is hunter ai?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -232,8 +256,7 @@ class TestGuestUserKnowledgeInjection:
         """Test ULTRA query for guest includes knowledge"""
 
         response = await async_client.post(
-            "/api/v1/guest/chat",
-            json={"content": "what is ultra?", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "what is ultra?", "language": "en"}
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -250,7 +273,7 @@ class TestGuestUserKnowledgeInjection:
 
         response = await async_client.post(
             "/api/v1/guest/chat",
-            json={"content": "what is the price of ETH?", "language": "en"}
+            json={"content": "what is the price of ETH?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -269,14 +292,14 @@ class TestMultiLanguageKnowledge:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test Spanish query includes knowledge"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "¿qué puedes hacer?", "language": "es"}
+            json={"content": "¿qué puedes hacer?", "language": "es"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -292,7 +315,7 @@ class TestMultiLanguageKnowledge:
 
         response = await async_client.post(
             "/api/v1/guest/chat",
-            json={"content": "¿qué es hunter ai?", "language": "es"}
+            json={"content": "¿qué es hunter ai?", "language": "es"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -311,7 +334,7 @@ class TestKnowledgeInjectionPerformance:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test response time is acceptable for authenticated user"""
         import time
@@ -320,7 +343,7 @@ class TestKnowledgeInjectionPerformance:
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what is hunter ai?", "language": "en"}
+            json={"content": "what is hunter ai?", "language": "en"},
         )
         elapsed = time.time() - start
 
@@ -336,7 +359,7 @@ class TestKnowledgeInjectionPerformance:
         start = time.time()
         response = await async_client.post(
             "/api/v1/guest/chat",
-            json={"content": "what is hunter ai?", "language": "en"}
+            json={"content": "what is hunter ai?", "language": "en"},
         )
         elapsed = time.time() - start
 
@@ -354,7 +377,7 @@ class TestKnowledgeConsistency:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test same query produces consistent knowledge-enhanced responses"""
 
@@ -362,14 +385,14 @@ class TestKnowledgeConsistency:
         response1 = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what is hunter ai?", "language": "en"}
+            json={"content": "what is hunter ai?", "language": "en"},
         )
 
         # Second request
         response2 = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what is hunter ai?", "language": "en"}
+            json={"content": "what is hunter ai?", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -392,14 +415,14 @@ class TestEdgeCases:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test empty query handling"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "", "language": "en"}
+            json={"content": "", "language": "en"},
         )
 
         # Should handle gracefully
@@ -411,7 +434,7 @@ class TestEdgeCases:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test very long query handling"""
 
@@ -420,11 +443,15 @@ class TestEdgeCases:
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": long_query, "language": "en"}
+            json={"content": long_query, "language": "en"},
         )
 
         # Should handle gracefully
-        assert response.status_code in [status.HTTP_200_OK, status.HTTP_400_BAD_REQUEST, status.HTTP_413_REQUEST_ENTITY_TOO_LARGE]
+        assert response.status_code in [
+            status.HTTP_200_OK,
+            status.HTTP_400_BAD_REQUEST,
+            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+        ]
 
     @pytest.mark.llm_validation
     async def test_special_characters_query_authenticated(
@@ -432,14 +459,14 @@ class TestEdgeCases:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test special characters handling"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what can you do? 💱📊⚡", "language": "en"}
+            json={"content": "what can you do? 💱📊⚡", "language": "en"},
         )
 
         # Should handle special characters
@@ -449,16 +476,19 @@ class TestEdgeCases:
 class TestKnowledgeForAllIntents:
     """Test knowledge injection works for all major intents"""
 
-    @pytest.mark.parametrize("query,expected_keywords", [
-        ("swap 100 USDC to ETH", ["swap", "usdc", "eth"]),
-        ("check sentiment for BTC", ["sentiment", "btc"]),
-        ("predict ETH price", ["predict", "eth", "price"]),
-        ("find arbitrage", ["arbitrage"]),
-        ("tell me about flash loans", ["flash loan"]),
-        ("protect from MEV", ["mev", "protect"]),
-        ("what's the price of SOL", ["price", "sol"]),
-        ("show my portfolio", ["portfolio"]),
-    ])
+    @pytest.mark.parametrize(
+        "query,expected_keywords",
+        [
+            ("swap 100 USDC to ETH", ["swap", "usdc", "eth"]),
+            ("check sentiment for BTC", ["sentiment", "btc"]),
+            ("predict ETH price", ["predict", "eth", "price"]),
+            ("find arbitrage", ["arbitrage"]),
+            ("tell me about flash loans", ["flash loan"]),
+            ("protect from MEV", ["mev", "protect"]),
+            ("what's the price of SOL", ["price", "sol"]),
+            ("show my portfolio", ["portfolio"]),
+        ],
+    )
     @pytest.mark.llm_validation
     async def test_intent_gets_knowledge(
         self,
@@ -467,14 +497,14 @@ class TestKnowledgeForAllIntents:
         test_session: str,
         test_conversation: ChatConversation,
         query: str,
-        expected_keywords: list
+        expected_keywords: list,
     ):
         """Test various intents all get knowledge-enhanced responses"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": query, "language": "en"}
+            json={"content": query, "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -497,14 +527,14 @@ class TestCompressionLevelsAuthenticated:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test no compression provides full knowledge"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what is hunter ai?", "language": "en"}
+            json={"content": "what is hunter ai?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -521,14 +551,14 @@ class TestCompressionLevelsAuthenticated:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test medium compression (60% reduction) for authenticated users"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what is hunter ai?", "language": "en"}
+            json={"content": "what is hunter ai?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -543,14 +573,14 @@ class TestCompressionLevelsAuthenticated:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test aggressive compression for authenticated users"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what is hunter ai?", "language": "en"}
+            json={"content": "what is hunter ai?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -565,14 +595,14 @@ class TestCompressionLevelsAuthenticated:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test compression preserves essential quality"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what is hunter ai?", "language": "en"}
+            json={"content": "what is hunter ai?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -593,7 +623,7 @@ class TestCompressionLevelsGuest:
 
         response = await async_client.post(
             "/api/v1/guest/chat",
-            json={"content": "what is hunter ai?", "language": "en"}
+            json={"content": "what is hunter ai?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -607,8 +637,7 @@ class TestCompressionLevelsGuest:
         """Test compression consistency for guest users"""
 
         response = await async_client.post(
-            "/api/v1/guest/chat",
-            json={"content": "what is ultra?", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "what is ultra?", "language": "en"}
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -623,12 +652,15 @@ class TestCompressionLevelsGuest:
 class TestCompressionWithDifferentIntents:
     """Test compression behavior with different intents"""
 
-    @pytest.mark.parametrize("query,intent_keyword", [
-        ("what is hunter ai?", "hunter"),
-        ("what is ultra?", "ultra"),
-        ("how do I swap tokens?", "swap"),
-        ("tell me about sentiment analysis", "sentiment"),
-    ])
+    @pytest.mark.parametrize(
+        "query,intent_keyword",
+        [
+            ("what is hunter ai?", "hunter"),
+            ("what is ultra?", "ultra"),
+            ("how do I swap tokens?", "swap"),
+            ("tell me about sentiment analysis", "sentiment"),
+        ],
+    )
     @pytest.mark.llm_validation
     async def test_compressed_knowledge_by_intent(
         self,
@@ -637,14 +669,14 @@ class TestCompressionWithDifferentIntents:
         test_session: str,
         test_conversation: ChatConversation,
         query: str,
-        intent_keyword: str
+        intent_keyword: str,
     ):
         """Test compressed knowledge includes intent-specific content"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": query, "language": "en"}
+            json={"content": query, "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -665,7 +697,7 @@ class TestCompressionPerformance:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test compressed response time is acceptable"""
         import time
@@ -674,7 +706,7 @@ class TestCompressionPerformance:
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what is hunter ai?", "language": "en"}
+            json={"content": "what is hunter ai?", "language": "en"},
         )
         elapsed = time.time() - start
 
@@ -688,7 +720,7 @@ class TestCompressionPerformance:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test compression overhead is minimal"""
         import time
@@ -697,7 +729,7 @@ class TestCompressionPerformance:
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what is ultra?", "language": "en"}
+            json={"content": "what is ultra?", "language": "en"},
         )
         elapsed = time.time() - start
 
@@ -715,14 +747,14 @@ class TestCompressionEssentialPreservation:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test accuracy metrics are preserved in responses"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "how accurate is hunter ai?", "language": "en"}
+            json={"content": "how accurate is hunter ai?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -737,14 +769,14 @@ class TestCompressionEssentialPreservation:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test protocol names are preserved in responses"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what protocols do you support?", "language": "en"}
+            json={"content": "what protocols do you support?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -759,14 +791,14 @@ class TestCompressionEssentialPreservation:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test aggregator names are preserved in responses"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "what DEX aggregators do you use?", "language": "en"}
+            json={"content": "what DEX aggregators do you use?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -781,14 +813,14 @@ class TestCompressionEssentialPreservation:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test competitive advantages are preserved for investor queries"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "why should I invest in Anvil?", "language": "en"}
+            json={"content": "why should I invest in Anvil?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -807,14 +839,14 @@ class TestCompressionMultiLanguage:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test Spanish query with compression"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "¿qué es hunter ai?", "language": "es"}
+            json={"content": "¿qué es hunter ai?", "language": "es"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -829,14 +861,14 @@ class TestCompressionMultiLanguage:
         async_client: AsyncClient,
         test_user: User,
         test_session: str,
-        test_conversation: ChatConversation
+        test_conversation: ChatConversation,
     ):
         """Test compression preserves quality across languages"""
 
         response = await async_client.post(
             f"/api/v1/conversations/{test_conversation.id}/messages",
             headers={"Authorization": f"Bearer {test_session}"},
-            json={"content": "¿qué es ultra?", "language": "es"}
+            json={"content": "¿qué es ultra?", "language": "es"},
         )
 
         assert response.status_code == status.HTTP_200_OK

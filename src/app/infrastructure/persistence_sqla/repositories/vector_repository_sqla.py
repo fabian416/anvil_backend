@@ -21,20 +21,20 @@ from app.domain.ports.vector import (
 class VectorRepositorySqla(VectorRepository):
     """
     PostgreSQL implementation of vector repository.
-    
+
     Uses array operations and custom cosine_similarity function.
     For production, consider upgrading to pgvector extension.
     """
-    
+
     def __init__(self, session: AsyncSession):
         """
         Initialize repository.
-        
+
         Args:
             session: SQLAlchemy async session
         """
         self._session = session
-    
+
     async def store_embedding(
         self,
         entity_id: UUID,
@@ -45,9 +45,9 @@ class VectorRepositorySqla(VectorRepository):
         model: str,
     ) -> UUID:
         """Store an embedding"""
-        
+
         embedding_id = uuid4()
-        
+
         # Determine table based on entity type
         if entity_type == "Protocol":
             table = "protocol_embeddings"
@@ -55,19 +55,16 @@ class VectorRepositorySqla(VectorRepository):
         else:
             table = "entity_embeddings"
             id_column = "entity_id"
-        
+
         # Check if embedding already exists
         existing_query = text(f"""
             SELECT id FROM {table}
             WHERE {id_column} = :entity_id
         """)
-        
-        result = await self._session.execute(
-            existing_query,
-            {"entity_id": entity_id}
-        )
+
+        result = await self._session.execute(existing_query, {"entity_id": entity_id})
         existing = result.scalar_one_or_none()
-        
+
         if existing:
             # Update existing embedding
             if entity_type == "Protocol":
@@ -92,7 +89,7 @@ class VectorRepositorySqla(VectorRepository):
                     WHERE entity_id = :entity_id
                     RETURNING id
                 """)
-            
+
             result = await self._session.execute(
                 update_query,
                 {
@@ -101,11 +98,11 @@ class VectorRepositorySqla(VectorRepository):
                     "embedding": embedding,
                     "model": model,
                     "dimensions": len(embedding),
-                }
+                },
             )
             await self._session.commit()
             return result.scalar_one()
-        
+
         else:
             # Insert new embedding
             if entity_type == "Protocol":
@@ -132,7 +129,7 @@ class VectorRepositorySqla(VectorRepository):
                     )
                     RETURNING id
                 """)
-            
+
             params = {
                 "id": embedding_id,
                 "entity_id": entity_id,
@@ -142,20 +139,20 @@ class VectorRepositorySqla(VectorRepository):
                 "model": model,
                 "dimensions": len(embedding),
             }
-            
+
             if entity_type != "Protocol":
                 params["entity_type"] = entity_type
-            
+
             result = await self._session.execute(insert_query, params)
             await self._session.commit()
             return result.scalar_one()
-    
+
     async def get_embedding(
         self,
         entity_id: UUID,
     ) -> Optional[VectorDocument]:
         """Get embedding by entity ID"""
-        
+
         # Try protocol_embeddings first
         query = text("""
             SELECT id, protocol_id as entity_id, 'Protocol' as entity_type,
@@ -173,7 +170,7 @@ class VectorRepositorySqla(VectorRepository):
             
             LIMIT 1
         """)
-        
+
         try:
             result = await self._session.execute(query, {"entity_id": entity_id})
             row = result.fetchone()
@@ -183,10 +180,10 @@ class VectorRepositorySqla(VectorRepository):
             if "UndefinedTable" in msg or "does not exist" in msg:
                 return None
             raise
-        
+
         if not row:
             return None
-        
+
         return VectorDocument(
             id=row[0],
             entity_id=row[1],
@@ -199,7 +196,7 @@ class VectorRepositorySqla(VectorRepository):
             created_at=row[8],
             updated_at=row[9],
         )
-    
+
     async def find_similar(
         self,
         query_embedding: List[float],
@@ -208,7 +205,7 @@ class VectorRepositorySqla(VectorRepository):
         similarity_threshold: float = 0.7,
     ) -> List[SimilarityResult]:
         """Find similar entities by embedding"""
-        
+
         if entity_type == "Protocol":
             # Use optimized function for protocols
             query = text("""
@@ -258,13 +255,13 @@ class VectorRepositorySqla(VectorRepository):
                 ORDER BY combined.similarity DESC
                 LIMIT :limit
             """)
-        
+
         params = {
             "embedding": query_embedding,
             "threshold": similarity_threshold,
             "limit": limit,
         }
-        
+
         if entity_type and entity_type != "Protocol":
             params["entity_type"] = entity_type
 
@@ -278,7 +275,7 @@ class VectorRepositorySqla(VectorRepository):
             if "UndefinedTable" in msg or "does not exist" in msg:
                 return []
             raise
-        
+
         results = []
         for row in rows:
             doc = VectorDocument(
@@ -293,39 +290,41 @@ class VectorRepositorySqla(VectorRepository):
                 created_at=row[8],
                 updated_at=row[9],
             )
-            
-            results.append(SimilarityResult(
-                document=doc,
-                similarity=float(row[10]),
-            ))
-        
+
+            results.append(
+                SimilarityResult(
+                    document=doc,
+                    similarity=float(row[10]),
+                )
+            )
+
         return results
-    
+
     async def delete_embedding(
         self,
         entity_id: UUID,
     ) -> None:
         """Delete embedding by entity ID"""
-        
+
         # Delete from both tables
         await self._session.execute(
             text("DELETE FROM protocol_embeddings WHERE protocol_id = :entity_id"),
-            {"entity_id": entity_id}
+            {"entity_id": entity_id},
         )
-        
+
         await self._session.execute(
             text("DELETE FROM entity_embeddings WHERE entity_id = :entity_id"),
-            {"entity_id": entity_id}
+            {"entity_id": entity_id},
         )
-        
+
         await self._session.commit()
-    
+
     async def count_embeddings(
         self,
         entity_type: Optional[str] = None,
     ) -> int:
         """Count embeddings"""
-        
+
         if entity_type == "Protocol":
             query = text("SELECT COUNT(*) FROM protocol_embeddings")
         elif entity_type:
@@ -342,7 +341,9 @@ class VectorRepositorySqla(VectorRepository):
 
         try:
             if entity_type and entity_type != "Protocol":
-                result = await self._session.execute(query, {"entity_type": entity_type})
+                result = await self._session.execute(
+                    query, {"entity_type": entity_type}
+                )
             else:
                 result = await self._session.execute(query)
             return result.scalar_one()

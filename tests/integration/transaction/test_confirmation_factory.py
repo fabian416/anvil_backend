@@ -270,7 +270,10 @@ class TestIntegrationWithConfirmationService:
     @pytest.fixture
     def mock_transaction_repository(self):
         """Create a mock TransactionRepository."""
-        from app.domain.transactions.entities.transaction import Transaction, TransactionId
+        from app.domain.transactions.entities.transaction import (
+            Transaction,
+            TransactionId,
+        )
         from app.domain.entities.wallet import WalletId
         from app.domain.enums.chain_type import ChainType
         from app.domain.enums.transaction_type import TransactionType

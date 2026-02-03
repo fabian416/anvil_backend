@@ -105,7 +105,14 @@ Always prioritize findings by severity and potential impact."""
 AGENT_METADATA = {
     "category": "technical_expert",
     "domain": "security",
-    "tags": ["security", "audit", "solidity", "vulnerabilities", "smart-contracts", "code-review"],
+    "tags": [
+        "security",
+        "audit",
+        "solidity",
+        "vulnerabilities",
+        "smart-contracts",
+        "code-review",
+    ],
     "use_cases": [
         "Smart contract security review",
         "Vulnerability assessment",

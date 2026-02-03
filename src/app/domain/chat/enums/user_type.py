@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class UserType(Enum):
     """
     User type classification based on behavior patterns.
-    
+
     Types:
         NEW_USER: Less than 5 total interactions
         CASUAL: Uses chat for questions, rarely executes transactions
@@ -22,13 +22,13 @@ class UserType(Enum):
         YIELD_FARMER: Focuses on lending/money market operations
         POWER_USER: High activity across all categories
     """
-    
+
     NEW_USER = "new_user"
     CASUAL = "casual"
     TRADER = "trader"
     YIELD_FARMER = "yield_farmer"
     POWER_USER = "power_user"
-    
+
     @classmethod
     def calculate(
         cls,
@@ -43,7 +43,7 @@ class UserType(Enum):
     ) -> "UserType":
         """
         Calculate user type from interaction and execution metrics.
-        
+
         Args:
             total_messages: Total chat messages sent
             total_executions: Total successful executions
@@ -53,14 +53,14 @@ class UserType(Enum):
             money_market_count: Number of money market operations
             cashout_count: Number of cashout operations
             transfer_count: Number of transfer operations
-            
+
         Returns:
             UserType classification
         """
         # New users: < 5 total interactions
         if total_messages < 5:
             return cls.NEW_USER
-        
+
         # Count execution categories used
         execution_types = sum([
             1 if swap_count > 0 else 0,
@@ -70,33 +70,33 @@ class UserType(Enum):
             1 if cashout_count > 0 else 0,
             1 if transfer_count > 0 else 0,
         ])
-        
+
         # Power users: 3+ execution types AND 10+ total executions
         if execution_types >= 3 and total_executions >= 10:
             return cls.POWER_USER
-        
+
         # Yield farmers: primarily lending/money market
         defi_executions = lending_count + money_market_count
         trading_executions = swap_count + buy_count
-        
+
         if defi_executions > trading_executions and defi_executions >= 3:
             return cls.YIELD_FARMER
-        
+
         # Traders: primarily swaps/buys
         if trading_executions >= 3:
             return cls.TRADER
-        
+
         # Default: casual user (mostly chat, few executions)
         return cls.CASUAL
-    
+
     @classmethod
     def from_context(cls, context: "UserContextAware") -> "UserType":
         """
         Calculate user type from UserContextAware entity.
-        
+
         Args:
             context: User context entity with all metrics
-            
+
         Returns:
             UserType classification
         """
@@ -110,22 +110,22 @@ class UserType(Enum):
             cashout_count=context.cashout_count,
             transfer_count=context.transfer_count,
         )
-    
+
     @property
     def is_execution_focused(self) -> bool:
         """Check if user type is focused on executing transactions."""
         return self in (UserType.TRADER, UserType.YIELD_FARMER, UserType.POWER_USER)
-    
+
     @property
     def prefers_defi(self) -> bool:
         """Check if user prefers DeFi operations."""
         return self in (UserType.YIELD_FARMER, UserType.POWER_USER)
-    
+
     @property
     def prefers_trading(self) -> bool:
         """Check if user prefers trading operations."""
         return self in (UserType.TRADER, UserType.POWER_USER)
-    
+
     def get_prompt_enhancement(self) -> str:
         """Get LLM prompt enhancement for this user type."""
         enhancements = {

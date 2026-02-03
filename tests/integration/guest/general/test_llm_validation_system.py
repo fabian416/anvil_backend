@@ -198,7 +198,10 @@ class TestLLMValidationSystem:
             print(f"   Step {i}: {step_val.verdict.value} ({step_val.confidence:.2f})")
 
         # Verify flow validation
-        assert flow_result.verdict in [ValidationVerdict.PASS, ValidationVerdict.WARNING]
+        assert flow_result.verdict in [
+            ValidationVerdict.PASS,
+            ValidationVerdict.WARNING,
+        ]
         assert flow_result.confidence > 0.5
         assert flow_result.context_consistency_score >= 0.0
 
@@ -233,6 +236,7 @@ class TestLLMValidationSystem:
 
         # Read and verify
         import csv
+
         with open(csv_writer.output_file, "r") as f:
             reader = csv.DictReader(f)
             headers = reader.fieldnames
@@ -265,5 +269,7 @@ class TestLLMValidationEnabled:
     async def test_validation_actually_enabled(self, enable_ai_validation):
         """Verify validation is actually enabled."""
         validator = LLMTestValidator()
-        assert validator.enabled, "LLM validation should be enabled when ENABLE_LLM_VALIDATION=true"
+        assert validator.enabled, (
+            "LLM validation should be enabled when ENABLE_LLM_VALIDATION=true"
+        )
         print("\n✅ LLM validation is enabled and ready to use!")

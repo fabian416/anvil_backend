@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class TransactionRisk(str, Enum):
     """Risk levels for LLM-initiated transactions"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -26,6 +27,7 @@ class TransactionRisk(str, Enum):
 
 class ApprovalStatus(str, Enum):
     """Status of transaction approval"""
+
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -35,6 +37,7 @@ class ApprovalStatus(str, Enum):
 @dataclass
 class TransactionApprovalRequest:
     """Represents a transaction requiring approval"""
+
     transaction_id: str
     user_id: str
     transaction_type: str
@@ -66,7 +69,7 @@ class TransactionApprovalService:
         "governance_vote",
         "data_export",
         "system_config_change",
-        "user_data_deletion"
+        "user_data_deletion",
     ]
 
     # Transaction patterns that indicate high risk
@@ -81,7 +84,7 @@ class TransactionApprovalService:
     def __init__(
         self,
         approval_timeout_minutes: int = 5,
-        require_approval_for_high_risk: bool = True
+        require_approval_for_high_risk: bool = True,
     ):
         """
         Initialize Transaction Approval Service.
@@ -95,9 +98,7 @@ class TransactionApprovalService:
         self.pending_approvals: Dict[str, TransactionApprovalRequest] = {}
 
     def assess_risk(
-        self,
-        transaction_type: str,
-        details: Dict[str, Any]
+        self, transaction_type: str, details: Dict[str, Any]
     ) -> TransactionRisk:
         """
         Assess the risk level of a transaction.
@@ -131,11 +132,7 @@ class TransactionApprovalService:
 
         return risk
 
-    def requires_approval(
-        self,
-        transaction_type: str,
-        details: Dict[str, Any]
-    ) -> bool:
+    def requires_approval(self, transaction_type: str, details: Dict[str, Any]) -> bool:
         """
         Determine if a transaction requires approval.
 
@@ -159,7 +156,7 @@ class TransactionApprovalService:
         transaction_id: str,
         user_id: str,
         transaction_type: str,
-        details: Dict[str, Any]
+        details: Dict[str, Any],
     ) -> TransactionApprovalRequest:
         """
         Create an approval request for a transaction.
@@ -184,7 +181,7 @@ class TransactionApprovalService:
             details=details,
             requested_at=now,
             expires_at=now + self.approval_timeout,
-            status=ApprovalStatus.PENDING
+            status=ApprovalStatus.PENDING,
         )
 
         self.pending_approvals[transaction_id] = approval_request
@@ -196,17 +193,13 @@ class TransactionApprovalService:
                 "user_id": user_id,
                 "transaction_type": transaction_type,
                 "risk_level": risk_level.value,
-                "expires_at": approval_request.expires_at.isoformat()
-            }
+                "expires_at": approval_request.expires_at.isoformat(),
+            },
         )
 
         return approval_request
 
-    def approve_transaction(
-        self,
-        transaction_id: str,
-        approver_id: str
-    ) -> bool:
+    def approve_transaction(self, transaction_id: str, approver_id: str) -> bool:
         """
         Approve a pending transaction.
 
@@ -245,17 +238,13 @@ class TransactionApprovalService:
             extra={
                 "transaction_id": transaction_id,
                 "approver_id": approver_id,
-                "approved_at": request.approved_at.isoformat()
-            }
+                "approved_at": request.approved_at.isoformat(),
+            },
         )
 
         return True
 
-    def reject_transaction(
-        self,
-        transaction_id: str,
-        rejector_id: str
-    ) -> bool:
+    def reject_transaction(self, transaction_id: str, rejector_id: str) -> bool:
         """
         Reject a pending transaction.
 
@@ -280,18 +269,12 @@ class TransactionApprovalService:
 
         logger.info(
             f"Transaction rejected: {transaction_id}",
-            extra={
-                "transaction_id": transaction_id,
-                "rejector_id": rejector_id
-            }
+            extra={"transaction_id": transaction_id, "rejector_id": rejector_id},
         )
 
         return True
 
-    def check_approval_status(
-        self,
-        transaction_id: str
-    ) -> Optional[ApprovalStatus]:
+    def check_approval_status(self, transaction_id: str) -> Optional[ApprovalStatus]:
         """
         Check the approval status of a transaction.
 
@@ -307,14 +290,16 @@ class TransactionApprovalService:
             return None
 
         # Check if expired
-        if request.status == ApprovalStatus.PENDING and datetime.now(UTC) > request.expires_at:
+        if (
+            request.status == ApprovalStatus.PENDING
+            and datetime.now(UTC) > request.expires_at
+        ):
             request.status = ApprovalStatus.EXPIRED
 
         return request.status
 
     def get_pending_approvals(
-        self,
-        user_id: Optional[str] = None
+        self, user_id: Optional[str] = None
     ) -> List[TransactionApprovalRequest]:
         """
         Get pending approval requests.
@@ -326,7 +311,8 @@ class TransactionApprovalService:
             List of pending approval requests
         """
         pending = [
-            req for req in self.pending_approvals.values()
+            req
+            for req in self.pending_approvals.values()
             if req.status == ApprovalStatus.PENDING
             and datetime.now(UTC) <= req.expires_at
         ]
@@ -340,7 +326,8 @@ class TransactionApprovalService:
         """Remove expired approval requests."""
         now = datetime.now(UTC)
         expired = [
-            tid for tid, req in self.pending_approvals.items()
+            tid
+            for tid, req in self.pending_approvals.items()
             if req.status == ApprovalStatus.PENDING and now > req.expires_at
         ]
 
@@ -353,7 +340,7 @@ class TransactionApprovalService:
 def requires_approval(
     transaction_type: str,
     approval_service: TransactionApprovalService,
-    extract_details: Callable[[Any], Dict[str, Any]]
+    extract_details: Callable[[Any], Dict[str, Any]],
 ):
     """
     Decorator to require approval for a function.
@@ -367,6 +354,7 @@ def requires_approval(
         async def transfer_funds(amount: float, recipient: str):
             ...
     """
+
     def decorator(func: Callable):
         async def wrapper(*args, **kwargs):
             # Extract transaction details
@@ -379,6 +367,7 @@ def requires_approval(
 
             # Generate transaction ID
             import uuid
+
             transaction_id = str(uuid.uuid4())
 
             # Request approval
@@ -386,7 +375,7 @@ def requires_approval(
                 transaction_id=transaction_id,
                 user_id=kwargs.get("user_id", "unknown"),
                 transaction_type=transaction_type,
-                details=details
+                details=details,
             )
 
             # Return approval request to user
@@ -394,8 +383,9 @@ def requires_approval(
                 "status": "approval_required",
                 "transaction_id": transaction_id,
                 "approval_request": approval_request,
-                "message": f"This {transaction_type} requires approval. Please approve the transaction to proceed."
+                "message": f"This {transaction_type} requires approval. Please approve the transaction to proceed.",
             }
 
         return wrapper
+
     return decorator

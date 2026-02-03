@@ -94,6 +94,7 @@ class TestSignalGeneration:
         assert 0 <= signal.prediction_score <= 100
         assert 0 <= signal.risk_score <= 100
 
+
 class TestEntryExitPrices:
     """Test entry/exit price calculations."""
 
@@ -135,6 +136,7 @@ class TestEntryExitPrices:
                 assert signal.stop_loss_price is None
                 assert signal.take_profit_price is None
                 break
+
 
 class TestMultiTimeframeAnalysis:
     """Test multi-timeframe analysis."""
@@ -201,6 +203,7 @@ class TestMultiTimeframeAnalysis:
 
         assert analysis.trend_direction in ["bullish", "bearish", "neutral"]
 
+
 class TestSignalRecommendations:
     """Test signal recommendations."""
 
@@ -228,6 +231,7 @@ class TestSignalRecommendations:
         signal_type_lower = signal.signal_type.value.lower()
 
         assert signal_type_lower in recommendation_lower
+
 
 class TestSignalSerialization:
     """Test signal serialization."""
@@ -272,6 +276,7 @@ class TestSignalSerialization:
         for tf_value, signal_data in data["signals"].items():
             assert "signal_type" in signal_data
             assert "signal_strength" in signal_data
+
 
 class TestSignalIntegration:
     """Integration tests for complete signal flow."""

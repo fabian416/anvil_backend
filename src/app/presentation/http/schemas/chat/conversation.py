@@ -4,8 +4,10 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+
 class ConversationCreate(BaseModel):
     title: Optional[str] = None
+
 
 class ConversationRead(BaseModel):
     id: UUID

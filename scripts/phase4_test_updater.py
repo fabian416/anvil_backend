@@ -40,13 +40,15 @@ class Phase4TestUpdater:
             "# Enhanced 12 fields (PHASE 3)",
             "test_func=self.",
             "import json",
-            "import warnings"
+            "import warnings",
         ]
 
         found_markers = sum(1 for marker in markers if marker in self.content)
 
         if found_markers >= 3:
-            print(f"✓ {self.test_file_path.name} already updated (found {found_markers}/5 markers)")
+            print(
+                f"✓ {self.test_file_path.name} already updated (found {found_markers}/5 markers)"
+            )
             return True
 
         return False
@@ -81,7 +83,9 @@ class Phase4TestUpdater:
 
             if new_imports:
                 imports_text = "\n".join(new_imports) + "\n\n"
-                self.content = self.content[:insert_pos] + imports_text + self.content[insert_pos:]
+                self.content = (
+                    self.content[:insert_pos] + imports_text + self.content[insert_pos:]
+                )
                 changed = True
                 print(f"  + Added imports: {', '.join(new_imports)}")
 
@@ -129,7 +133,9 @@ class Phase4TestUpdater:
         self.content = re.sub(pattern, replace_validation, self.content)
 
         if count > 0:
-            print(f"  + Updated {count} LLM validation call(s) with test_func parameter")
+            print(
+                f"  + Updated {count} LLM validation call(s) with test_func parameter"
+            )
 
         return count
 
@@ -138,13 +144,13 @@ class Phase4TestUpdater:
         count = 0
 
         # Pattern: pytest.warn(UserWarning(...))
-        pattern = r'pytest\.warn\(UserWarning\((.*?)\)\)'
+        pattern = r"pytest\.warn\(UserWarning\((.*?)\)\)"
 
         def replace_warn(match):
             nonlocal count
             content = match.group(1)
             count += 1
-            return f'warnings.warn({content})'
+            return f"warnings.warn({content})"
 
         self.content = re.sub(pattern, replace_warn, self.content, flags=re.DOTALL)
 
@@ -176,7 +182,9 @@ class Phase4TestUpdater:
                 return match.group(0)
 
             # Build replacement with enhanced fields
-            replacement = before + '''"quality": validation.scoring.overall_score if validation and validation.scoring else None,
+            replacement = (
+                before
+                + """"quality": validation.scoring.overall_score if validation and validation.scoring else None,
             "qa_status": validation.verdict.value if validation else "SKIPPED",
             "qa_output": validation.reasoning if validation else None,
             # Enhanced 12 fields (PHASE 3)
@@ -192,7 +200,8 @@ class Phase4TestUpdater:
             "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
             "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
             "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })'''
+        })"""
+            )
 
             count += 1
             return replacement
@@ -235,7 +244,9 @@ class Phase4TestUpdater:
 
         if changes > 0:
             if self.write_file():
-                print(f"✅ Updated {self.test_file_path.name} ({changes} change groups)")
+                print(
+                    f"✅ Updated {self.test_file_path.name} ({changes} change groups)"
+                )
                 self.updated = True
                 return True
             else:
@@ -252,7 +263,9 @@ def main():
         print("Usage: python phase4_test_updater.py <test_file_or_directory>")
         print("\nExample:")
         print("  python phase4_test_updater.py tests/integration/guest/hunter/")
-        print("  python phase4_test_updater.py tests/integration/guest/hunter/test_*.py")
+        print(
+            "  python phase4_test_updater.py tests/integration/guest/hunter/test_*.py"
+        )
         sys.exit(1)
 
     target = Path(sys.argv[1])

@@ -28,9 +28,9 @@ def mock_mcp_manager_http(mocker):
                     "properties": {
                         "protocol": {"type": "string", "description": "Protocol name"}
                     },
-                    "required": ["protocol"]
+                    "required": ["protocol"],
                 },
-                "server_url": "http://localhost:8000"
+                "server_url": "http://localhost:8000",
             },
             {
                 "server": "coingecko",
@@ -42,9 +42,9 @@ def mock_mcp_manager_http(mocker):
                     "properties": {
                         "token_id": {"type": "string", "description": "Token ID"}
                     },
-                    "required": ["token_id"]
+                    "required": ["token_id"],
                 },
-                "server_url": "http://localhost:8000"
+                "server_url": "http://localhost:8000",
             },
             {
                 "server": "oneinch",
@@ -56,11 +56,11 @@ def mock_mcp_manager_http(mocker):
                     "properties": {
                         "from_token": {"type": "string"},
                         "to_token": {"type": "string"},
-                        "amount": {"type": "string"}
+                        "amount": {"type": "string"},
                     },
-                    "required": ["from_token", "to_token", "amount"]
+                    "required": ["from_token", "to_token", "amount"],
                 },
-                "server_url": "http://localhost:8000"
+                "server_url": "http://localhost:8000",
             },
             {
                 "server": "thegraph",
@@ -72,9 +72,9 @@ def mock_mcp_manager_http(mocker):
                     "properties": {
                         "query": {"type": "string", "description": "GraphQL query"}
                     },
-                    "required": ["query"]
+                    "required": ["query"],
                 },
-                "server_url": "http://localhost:8000"
+                "server_url": "http://localhost:8000",
             },
         ]
     }

@@ -92,9 +92,7 @@ class AavePosition:
         """Calculate weighted average supply APY."""
         if self.total_collateral_usd == 0:
             return Decimal("0")
-        weighted_sum = sum(
-            s.apy * s.balance_usd for s in self.supplies
-        )
+        weighted_sum = sum(s.apy * s.balance_usd for s in self.supplies)
         return weighted_sum / self.total_collateral_usd
 
     @property
@@ -102,9 +100,7 @@ class AavePosition:
         """Calculate weighted average borrow APY."""
         if self.total_debt_usd == 0:
             return Decimal("0")
-        weighted_sum = sum(
-            b.apy * b.balance_usd for b in self.borrows
-        )
+        weighted_sum = sum(b.apy * b.balance_usd for b in self.borrows)
         return weighted_sum / self.total_debt_usd
 
     @property
@@ -125,7 +121,9 @@ class AavePosition:
             "total_debt_usd": str(self.total_debt_usd),
             "available_borrow_usd": str(self.available_borrow_usd),
             "net_worth_usd": str(self.net_worth_usd),
-            "health_factor": str(self.health_factor) if self.health_factor != Decimal("inf") else "∞",
+            "health_factor": str(self.health_factor)
+            if self.health_factor != Decimal("inf")
+            else "∞",
             "current_ltv": str(self.current_ltv),
             "max_ltv": str(self.max_ltv),
             "e_mode_category": self.e_mode_category,

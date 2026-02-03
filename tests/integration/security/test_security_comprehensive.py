@@ -64,7 +64,9 @@ class TestXSSPrevention:
 
         # Response should not contain unescaped script tag
         agent_response = data["agent_message"]["content"]
-        assert "<script>" not in agent_response.lower(), "XSS vulnerability: unescaped script tag"
+        assert "<script>" not in agent_response.lower(), (
+            "XSS vulnerability: unescaped script tag"
+        )
 
         # User message should be stored but sanitized
         user_message = data["user_message"]["content"]
@@ -111,7 +113,9 @@ class TestXSSPrevention:
         WHEN sending message
         THEN protocol should be neutralized
         """
-        malicious_content = 'Check this link: <a href="javascript:alert(1)">Click here</a>'
+        malicious_content = (
+            'Check this link: <a href="javascript:alert(1)">Click here</a>'
+        )
 
         response = await authenticated_client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
@@ -127,8 +131,9 @@ class TestXSSPrevention:
 
         agent_response = data["agent_message"]["content"]
         # javascript: protocol should be removed or escaped
-        assert "javascript:" not in agent_response.lower(), \
+        assert "javascript:" not in agent_response.lower(), (
             "XSS vulnerability: javascript: protocol not sanitized"
+        )
 
 
 @pytest.mark.asyncio
@@ -158,8 +163,9 @@ class TestInjectionProtection:
         )
 
         # Should not cause 500 error (SQL injection successful)
-        assert response.status_code in [200, 400, 422], \
+        assert response.status_code in [200, 400, 422], (
             "SQL injection may have caused server error"
+        )
 
         # Database should still be functional
         response2 = await authenticated_client.get(
@@ -189,8 +195,9 @@ class TestInjectionProtection:
         )
 
         # Should reject with validation error, not process
-        assert response.status_code == 422, \
+        assert response.status_code == 422, (
             "NoSQL injection not prevented by validation"
+        )
 
     async def test_injection_003_command_injection_in_content(
         self,
@@ -241,8 +248,9 @@ class TestAuthenticationBoundaries:
             # No Authorization header
         )
 
-        assert response.status_code == 401, \
+        assert response.status_code == 401, (
             "Protected endpoint accessible without authentication"
+        )
 
     async def test_auth_002_expired_token(
         self,
@@ -261,8 +269,7 @@ class TestAuthenticationBoundaries:
         )
 
         # Should reject expired token
-        assert response.status_code in [401, 403], \
-            "Expired token accepted"
+        assert response.status_code in [401, 403], "Expired token accepted"
 
     async def test_auth_003_malformed_token(
         self,
@@ -287,8 +294,9 @@ class TestAuthenticationBoundaries:
                 headers={"Authorization": token},
             )
 
-            assert response.status_code in [401, 422], \
+            assert response.status_code in [401, 422], (
                 f"Malformed token '{token[:20]}...' accepted"
+            )
 
 
 @pytest.mark.asyncio
@@ -337,8 +345,9 @@ class TestAuthorizationControls:
         )
 
         # Should be denied
-        assert response_a.status_code in [403, 404], \
+        assert response_a.status_code in [403, 404], (
             "Unauthorized access to other user's conversation allowed"
+        )
 
     async def test_authz_002_modify_other_user_conversation(
         self,
@@ -383,8 +392,9 @@ class TestAuthorizationControls:
         )
 
         # Should be denied
-        assert response_a.status_code in [403, 404], \
+        assert response_a.status_code in [403, 404], (
             "Unauthorized modification of other user's conversation allowed"
+        )
 
 
 @pytest.mark.asyncio
@@ -456,5 +466,6 @@ class TestSessionSecurity:
         status_codes = await asyncio.gather(*tasks)
 
         # All should succeed
-        assert all(code == 200 for code in status_codes), \
+        assert all(code == 200 for code in status_codes), (
             "Concurrent session handling failed"
+        )

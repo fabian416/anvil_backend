@@ -59,18 +59,25 @@ class SqlaSubscriptionUserRepository(SubscriptionUserRepository):
         try:
             table = mapping_registry.metadata.tables["subscription_users"]  # type: ignore
             await self._session.execute(
-                table.update().where(table.c.id == id_).values(status=status, updated_at=datetime.now(UTC))
+                table.update()
+                .where(table.c.id == id_)
+                .values(status=status, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
 
-    async def update_stripe_subscription_id(self, *, id_: int, stripe_subscription_id: str) -> None:
+    async def update_stripe_subscription_id(
+        self, *, id_: int, stripe_subscription_id: str
+    ) -> None:
         try:
             table = mapping_registry.metadata.tables["subscription_users"]  # type: ignore
             await self._session.execute(
                 table.update()
                 .where(table.c.id == id_)
-                .values(stripe_subscription_id=stripe_subscription_id, updated_at=datetime.now(UTC))
+                .values(
+                    stripe_subscription_id=stripe_subscription_id,
+                    updated_at=datetime.now(UTC),
+                )
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
@@ -91,7 +98,9 @@ class SqlaSubscriptionUserRepository(SubscriptionUserRepository):
         try:
             table = mapping_registry.metadata.tables["subscription_users"]  # type: ignore
             await self._session.execute(
-                table.update().where(table.c.id == id_).values(data_json=data_json, updated_at=datetime.now(UTC))
+                table.update()
+                .where(table.c.id == id_)
+                .values(data_json=data_json, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
@@ -112,5 +121,3 @@ class SqlaSubscriptionUserRepository(SubscriptionUserRepository):
             return dict(row) if row else None
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
-
-

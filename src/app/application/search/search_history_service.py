@@ -135,9 +135,7 @@ class SearchHistoryService:
 
         # Filter by date range
         cutoff_date = datetime.now(UTC) - timedelta(days=days)
-        recent_searches = [
-            s for s in user_searches if s.created_at >= cutoff_date
-        ]
+        recent_searches = [s for s in user_searches if s.created_at >= cutoff_date]
 
         # Count query frequencies
         query_counts: dict[str, int] = {}
@@ -272,9 +270,7 @@ class SearchHistoryService:
 
         # Filter by date range
         cutoff_date = datetime.now(UTC) - timedelta(days=days)
-        recent_searches = [
-            s for s in user_searches if s.created_at >= cutoff_date
-        ]
+        recent_searches = [s for s in user_searches if s.created_at >= cutoff_date]
 
         if not recent_searches:
             return {

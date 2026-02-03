@@ -11,17 +11,18 @@ Usage:
     python python_sdk_examples.py
 """
 
-import requests
-from typing import Dict, Optional, List
 from dataclasses import dataclass
+
+import requests
 
 
 @dataclass
 class ChatConfig:
     """Configuration for Chat API client."""
+
     base_url: str = "http://localhost:8080/api/v1"
     email: str = "user@example.com"
-    password: str = "password"
+    password: str = "password"  # noqa: S105
 
 
 class AnvilChatClient:
@@ -29,18 +30,15 @@ class AnvilChatClient:
 
     def __init__(self, config: ChatConfig):
         self.config = config
-        self.token: Optional[str] = None
-        self.conversation_id: Optional[str] = None
+        self.token: str | None = None
+        self.conversation_id: str | None = None
         self.session = requests.Session()
 
-    def login(self) -> Dict:
+    def login(self) -> dict:
         """Authenticate and get access token."""
         response = self.session.post(
             f"{self.config.base_url}/account/login",
-            json={
-                "email": self.config.email,
-                "password": self.config.password
-            }
+            json={"email": self.config.email, "password": self.config.password},
         )
         response.raise_for_status()
         data = response.json()
@@ -48,36 +46,39 @@ class AnvilChatClient:
         self.session.headers.update({"Authorization": f"Bearer {self.token}"})
         return data
 
-    def create_conversation(self, title: str = "Python SDK Conversation") -> Dict:
+    def create_conversation(self, title: str = "Python SDK Conversation") -> dict:
         """Create a new conversation."""
         response = self.session.post(
-            f"{self.config.base_url}/user/chat/conversations",
-            json={"title": title}
+            f"{self.config.base_url}/user/chat/conversations", json={"title": title}
         )
         response.raise_for_status()
         data = response.json()
         self.conversation_id = data["id"]
         return data
 
-    def send_message(self, content: str, conversation_id: Optional[str] = None) -> Dict:
+    def send_message(self, content: str, conversation_id: str | None = None) -> dict:
         """Send a message to the unified chat endpoint."""
         conv_id = conversation_id or self.conversation_id
         if not conv_id:
-            raise ValueError("No conversation_id set. Call create_conversation() first.")
+            raise ValueError(
+                "No conversation_id set. Call create_conversation() first."
+            )
 
         response = self.session.post(
             f"{self.config.base_url}/user/chat/conversations/{conv_id}/messages",
-            json={"content": content}
+            json={"content": content},
         )
         response.raise_for_status()
         return response.json()
 
-    def get_messages(self, conversation_id: Optional[str] = None, limit: int = 50) -> List[Dict]:
+    def get_messages(
+        self, conversation_id: str | None = None, limit: int = 50
+    ) -> list[dict]:
         """Get conversation message history."""
         conv_id = conversation_id or self.conversation_id
         response = self.session.get(
             f"{self.config.base_url}/user/chat/conversations/{conv_id}/messages",
-            params={"limit": limit}
+            params={"limit": limit},
         )
         response.raise_for_status()
         return response.json()
@@ -87,12 +88,13 @@ class AnvilChatClient:
 # Example Usage for All 16 Intent Types
 # ============================================================================
 
+
 def example_graphrag_intents(client: AnvilChatClient):
     """Examples for GraphRAG intent types (3)."""
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("GRAPHRAG INTENTS")
-    print("="*80)
+    print("=" * 80)
 
     # 1. Protocol Search
     print("\n1. Protocol Search")
@@ -110,22 +112,26 @@ def example_graphrag_intents(client: AnvilChatClient):
     print("-" * 40)
     response = client.send_message("Is Aave safe to use? What are the risks?")
     print(f"Intent: {response['routing']['intent']}")
-    print(f"Risk Score: {response['enrichment'].get('risk_analysis', {}).get('overall_risk_score', 'N/A')}")
+    print(
+        f"Risk Score: {response['enrichment'].get('risk_analysis', {}).get('overall_risk_score', 'N/A')}"
+    )
 
     # 3. Similar Protocols
     print("\n3. Similar Protocols")
     print("-" * 40)
     response = client.send_message("What protocols are similar to Uniswap?")
     print(f"Intent: {response['routing']['intent']}")
-    print(f"Similar Protocols Found: {len(response['enrichment'].get('similar_protocols', []))}")
+    print(
+        f"Similar Protocols Found: {len(response['enrichment'].get('similar_protocols', []))}"
+    )
 
 
 def example_hunter_ai_intents(client: AnvilChatClient):
     """Examples for Hunter AI intent types (6)."""
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("HUNTER AI INTENTS")
-    print("="*80)
+    print("=" * 80)
 
     # 1. Sentiment Analysis
     print("\n1. Sentiment Analysis")
@@ -179,9 +185,9 @@ def example_hunter_ai_intents(client: AnvilChatClient):
 def example_ultra_intents(client: AnvilChatClient):
     """Examples for ULTRA intent types (4)."""
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("ULTRA INTENTS")
-    print("="*80)
+    print("=" * 80)
 
     # 1. Arbitrage Discovery
     print("\n1. Arbitrage Discovery")
@@ -230,16 +236,14 @@ def example_ultra_intents(client: AnvilChatClient):
 def example_agent_squad_intents(client: AnvilChatClient):
     """Examples for Agent Squad and Chat intent types (3)."""
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("AGENT SQUAD & CHAT INTENTS")
-    print("="*80)
+    print("=" * 80)
 
     # 1. Specialist Task
     print("\n1. Specialist Task")
     print("-" * 40)
-    response = client.send_message(
-        "Analyze ETH/USDC liquidity depth on Uniswap V3"
-    )
+    response = client.send_message("Analyze ETH/USDC liquidity depth on Uniswap V3")
     print(f"Intent: {response['routing']['intent']}")
     print(f"Handler: {response['routing']['handler']}")
     print(f"Tools Used: {response['enrichment'].get('tools_used', [])}")
@@ -266,9 +270,9 @@ def example_agent_squad_intents(client: AnvilChatClient):
 def example_advanced_usage(client: AnvilChatClient):
     """Advanced usage patterns."""
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("ADVANCED USAGE PATTERNS")
-    print("="*80)
+    print("=" * 80)
 
     # Multi-turn conversation
     print("\n1. Multi-turn Conversation")
@@ -313,9 +317,9 @@ def example_advanced_usage(client: AnvilChatClient):
 def example_error_handling(client: AnvilChatClient):
     """Error handling examples."""
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("ERROR HANDLING")
-    print("="*80)
+    print("=" * 80)
 
     # Invalid conversation ID
     print("\n1. Invalid Conversation ID")
@@ -342,13 +346,16 @@ def example_error_handling(client: AnvilChatClient):
             print(f"Message {i}: Success")
         except requests.HTTPError as e:
             if e.response.status_code == 429:
-                print(f"Rate limited. Retry-After: {e.response.headers.get('Retry-After')}")
+                print(
+                    f"Rate limited. Retry-After: {e.response.headers.get('Retry-After')}"
+                )
                 break
 
 
 # ============================================================================
 # Utility Functions
 # ============================================================================
+
 
 def print_response_summary(response: Dict):
     """Print a formatted summary of the response."""
@@ -359,25 +366,27 @@ def print_response_summary(response: Dict):
     print(f"Handler:    {response['routing']['handler']}")
     print(f"Latency:    {response['routing']['total_latency_ms']}ms")
 
-    if response.get('enrichment'):
+    if response.get("enrichment"):
         print(f"\nEnrichment Data:")
-        for key, value in response['enrichment'].items():
+        for key, value in response["enrichment"].items():
             print(f"  {key}: {value}")
 
     print(f"\nAgent Response:")
     print("-" * 80)
-    print(response['agent_message']['content'][:500])
-    if len(response['agent_message']['content']) > 500:
+    print(response["agent_message"]["content"][:500])
+    if len(response["agent_message"]["content"]) > 500:
         print("...")
     print("-" * 80)
 
 
-def save_conversation_history(client: AnvilChatClient, filename: str = "conversation_history.json"):
+def save_conversation_history(
+    client: AnvilChatClient, filename: str = "conversation_history.json"
+):
     """Save conversation history to JSON file."""
     import json
 
     messages = client.get_messages()
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         json.dump(messages, f, indent=2)
     print(f"Saved {len(messages)} messages to {filename}")
 
@@ -386,6 +395,7 @@ def save_conversation_history(client: AnvilChatClient, filename: str = "conversa
 # Main Execution
 # ============================================================================
 
+
 def main():
     """Run all examples."""
 
@@ -393,7 +403,7 @@ def main():
     config = ChatConfig(
         base_url="http://localhost:8080/api/v1",
         email="user@example.com",
-        password="password"
+        password="password",
     )
 
     client = AnvilChatClient(config)
@@ -423,11 +433,12 @@ def main():
     except Exception as e:
         print(f"\nError occurred: {e}")
         import traceback
+
         traceback.print_exc()
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("ALL EXAMPLES COMPLETED")
-    print("="*80)
+    print("=" * 80)
 
 
 if __name__ == "__main__":
@@ -437,6 +448,7 @@ if __name__ == "__main__":
 # ============================================================================
 # Quick Start Examples
 # ============================================================================
+
 
 def quick_start_protocol_search():
     """Quick start: Find protocols."""

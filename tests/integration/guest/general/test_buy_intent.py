@@ -1,4 +1,5 @@
 """Integration test for buy crypto intent."""
+
 import pytest
 from httpx import AsyncClient
 
@@ -59,10 +60,10 @@ class TestBuyIntent:
         """
         # Step 1: Create a conversation
         create_response = await async_client.post(
-        "/api/v1/conversations",
-        json={"title": "Buy Crypto Test", "language": "en"},
-        headers=ops_auth_headers,
-    )
+            "/api/v1/conversations",
+            json={"title": "Buy Crypto Test", "language": "en"},
+            headers=ops_auth_headers,
+        )
         assert create_response.status_code == 201
         conversation_data = create_response.json()
         conversation_id = conversation_data["id"]
@@ -79,7 +80,9 @@ class TestBuyIntent:
             headers=auth_headers_ops,
         )
 
-        assert message_response.status_code == 201, f"Failed with: {message_response.text}"
+        assert message_response.status_code == 201, (
+            f"Failed with: {message_response.text}"
+        )
 
         message_data = message_response.json()
 
@@ -90,7 +93,9 @@ class TestBuyIntent:
 
         # Check intent was detected correctly
         routing = message_data["routing"]
-        assert routing["intent"] in ["buy", "BUY"], f"Expected buy intent, got: {routing['intent']}"
+        assert routing["intent"] in ["buy", "BUY"], (
+            f"Expected buy intent, got: {routing['intent']}"
+        )
 
         # Check wallet info in enrichment
         if "enrichment" in message_data:
@@ -112,8 +117,8 @@ class TestBuyIntent:
 
         # Check if wallet appears in content (might be shortened like 0xc42c...e0e97)
         assert (
-            expected_wallet in agent_content or
-            expected_wallet[:6] in agent_content  # Check for shortened version
+            expected_wallet in agent_content
+            or expected_wallet[:6] in agent_content  # Check for shortened version
         ), f"Wallet {expected_wallet} not found in agent response"
 
         print(f"✅ Wallet {expected_wallet[:10]}... found in response!")
@@ -123,7 +128,6 @@ class TestBuyIntent:
 
         # Verify supported networks are mentioned
         assert "Base" in agent_content or "Ethereum" in agent_content
-
 
     @pytest.mark.asyncio
     @pytest.mark.integration
@@ -167,8 +171,9 @@ class TestBuyIntent:
             print(f"   Detected intent: {intent}")
 
             # Should detect as buy intent (or at least not fail)
-            assert intent in ["buy", "BUY", "general_conversation"], \
+            assert intent in ["buy", "BUY", "general_conversation"], (
                 f"Unexpected intent '{intent}' for phrase '{phrase}'"
+            )
 
             # If it's buy intent, wallet should be shown
             if intent in ["buy", "BUY"]:

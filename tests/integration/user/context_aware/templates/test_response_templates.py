@@ -25,7 +25,12 @@ TEMPLATE_TESTS = [
         "test_id": "template_empty_portfolio_001",
         "input": "my portfolio",
         "portfolio_context": "empty",
-        "expected_patterns": ["buy", "start", "empty", "first"],  # At least one should match
+        "expected_patterns": [
+            "buy",
+            "start",
+            "empty",
+            "first",
+        ],  # At least one should match
         "category": "templates",
         "subcategory": "portfolio",
     },
@@ -49,7 +54,12 @@ TEMPLATE_TESTS = [
         "test_id": "template_swap_blocked_001",
         "input": "swap 1 ETH to USDC",
         "portfolio_context": "empty",
-        "expected_patterns": ["buy", "need", "first", "empty"],  # Should redirect to buy
+        "expected_patterns": [
+            "buy",
+            "need",
+            "first",
+            "empty",
+        ],  # Should redirect to buy
         "category": "templates",
         "subcategory": "workflow_block",
     },
@@ -60,13 +70,13 @@ TEMPLATE_TESTS = [
 @pytest.mark.integration
 class TestResponseTemplates:
     """Test response templates via HTTP API."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, templates_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.reporter = templates_reporter
-    
+
     @pytest.mark.parametrize("test_case", TEMPLATE_TESTS, ids=lambda t: t["test_id"])
     async def test_template_response_patterns(self, test_case: dict):
         """Test that responses match expected template patterns."""
@@ -75,21 +85,23 @@ class TestResponseTemplates:
             self.client,
             title=f"Template Test: {test_case['test_id']}",
         )
-        
+
         # Send message
         response_data, response_time_ms = await send_message(
             self.client,
             conv_id,
             test_case["input"],
         )
-        
+
         # Parse response
         parsed = parse_response(response_data)
         content = parsed.get("content", "").lower()
-        
+
         # Check for expected patterns
-        found_patterns = [p for p in test_case["expected_patterns"] if p.lower() in content]
-        
+        found_patterns = [
+            p for p in test_case["expected_patterns"] if p.lower() in content
+        ]
+
         # Record result
         result = create_context_test_result(
             test_id=test_case["test_id"],
@@ -99,13 +111,13 @@ class TestResponseTemplates:
             conversation_id=conv_id,
         )
         result.portfolio_state = test_case.get("portfolio_context", "")
-        
+
         self.reporter.add_result(result)
-        
+
         # Assertions
         assert not response_data.get("error"), f"Request failed: {response_data}"
         assert len(content) > 10, "Response should have meaningful content"
-        
+
         # At least one expected pattern should be found
         # (context varies based on actual user data)
         if not found_patterns:
@@ -116,30 +128,30 @@ class TestResponseTemplates:
 @pytest.mark.integration
 class TestWorkflowBlockingViaTemplate:
     """Test workflow blocking responses."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, templates_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.reporter = templates_reporter
-    
+
     async def test_swap_suggests_buy_for_empty(self):
         """Test that swap request gets buy suggestion when portfolio is empty."""
         conv_id = await create_conversation(
             self.client,
             title="Swap Block Test",
         )
-        
+
         response_data, response_time_ms = await send_message(
             self.client,
             conv_id,
             "I want to swap some tokens",
         )
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "").lower()
         agents_used = parsed.get("agents_used", [])
-        
+
         # Record result
         result = create_context_test_result(
             test_id="template_swap_block_001",
@@ -149,10 +161,10 @@ class TestWorkflowBlockingViaTemplate:
             conversation_id=conv_id,
         )
         self.reporter.add_result(result)
-        
+
         # Should not error
         assert not response_data.get("error")
-        
+
         # If user has empty portfolio, should route to buy
         # If user has balance, swap workflow is valid
         # So we just verify the response is meaningful
@@ -163,19 +175,22 @@ class TestWorkflowBlockingViaTemplate:
 @pytest.mark.integration
 class TestMultiLanguageTemplates:
     """Test multi-language template responses."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, templates_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.reporter = templates_reporter
-    
-    @pytest.mark.parametrize("language,greeting", [
-        ("en", "hello"),
-        ("es", "hola"),
-        ("pt", "olá"),
-        ("zh", "你好"),
-    ])
+
+    @pytest.mark.parametrize(
+        "language,greeting",
+        [
+            ("en", "hello"),
+            ("es", "hola"),
+            ("pt", "olá"),
+            ("zh", "你好"),
+        ],
+    )
     async def test_language_greeting(self, language: str, greeting: str):
         """Test greeting in different languages."""
         conv_id = await create_conversation(
@@ -183,28 +198,32 @@ class TestMultiLanguageTemplates:
             title=f"Language Test: {language}",
             language=language,
         )
-        
+
         response_data, response_time_ms = await send_message(
             self.client,
             conv_id,
             greeting,
             language=language,
         )
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "")
-        
+
         # Record result
         result = create_context_test_result(
             test_id=f"template_lang_{language}_001",
-            test_case={"input": greeting, "language": language, "category": "templates"},
+            test_case={
+                "input": greeting,
+                "language": language,
+                "category": "templates",
+            },
             response_data=response_data,
             response_time_ms=response_time_ms,
             conversation_id=conv_id,
         )
         result.response_style = language
         self.reporter.add_result(result)
-        
+
         # Should get a response
         assert not response_data.get("error")
         assert len(content) > 10

@@ -39,8 +39,9 @@ class TestRoleBoundaries:
             elif method == "PATCH":
                 response = client.patch(endpoint, headers=headers)
 
-            assert response.status_code in (401, 403, 500, 503), \
+            assert response.status_code in (401, 403, 500, 503), (
                 f"User should not access {method} {endpoint}"
+            )
 
     def test_admin_cannot_access_super_admin_actions(self, client):
         """
@@ -58,8 +59,9 @@ class TestRoleBoundaries:
             response = client.patch(endpoint, headers=headers)
 
             # Should be denied (403) or not found (404)
-            assert response.status_code in (401, 403, 404, 500, 503), \
+            assert response.status_code in (401, 403, 404, 500, 503), (
                 f"Admin should not access {method} {endpoint}"
+            )
 
 
 @pytest.mark.security

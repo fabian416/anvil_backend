@@ -44,8 +44,10 @@ logger = logging.getLogger(__name__)
 # ETHERSCAN API CLIENT
 # ============================================================================
 
+
 class EtherscanRateLimitError(Exception):
     """Raised when Etherscan returns 429 or rate limit message."""
+
     pass
 
 
@@ -76,21 +78,21 @@ class EtherscanClient:
     # Chains supported on Etherscan V2 Free Tier
     # Base (8453), OP Mainnet (10), BNB (56), Avalanche (43114) are PAID ONLY
     FREE_TIER_CHAINS = {
-        1,       # Ethereum Mainnet
-        11155111, # Sepolia Testnet
-        17000,   # Holesky Testnet
-        42161,   # Arbitrum One
-        42170,   # Arbitrum Nova
+        1,  # Ethereum Mainnet
+        11155111,  # Sepolia Testnet
+        17000,  # Holesky Testnet
+        42161,  # Arbitrum One
+        42170,  # Arbitrum Nova
         421614,  # Arbitrum Sepolia
-        137,     # Polygon Mainnet
-        80002,   # Polygon Amoy
-        59144,   # Linea Mainnet
-        81457,   # Blast Mainnet
-        100,     # Gnosis
-        5000,    # Mantle
+        137,  # Polygon Mainnet
+        80002,  # Polygon Amoy
+        59144,  # Linea Mainnet
+        81457,  # Blast Mainnet
+        100,  # Gnosis
+        5000,  # Mantle
         534352,  # Scroll
     }
-    
+
     def __init__(
         self,
         api_key: str,
@@ -140,9 +142,7 @@ class EtherscanClient:
         """Token bucket rate limiter: max N calls per second."""
         now = time.monotonic()
         # Remove timestamps older than 1 second
-        self._call_timestamps = [
-            ts for ts in self._call_timestamps if now - ts < 1.0
-        ]
+        self._call_timestamps = [ts for ts in self._call_timestamps if now - ts < 1.0]
         if len(self._call_timestamps) >= self.max_calls_per_second:
             # Wait until the oldest call in the window expires
             sleep_time = 1.0 - (now - self._call_timestamps[0])
@@ -151,9 +151,7 @@ class EtherscanClient:
                 await asyncio.sleep(sleep_time)
         self._call_timestamps.append(time.monotonic())
 
-    async def _request_with_retry(
-        self, params: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def _request_with_retry(self, params: dict[str, Any]) -> dict[str, Any]:
         """
         Execute Etherscan API request with exponential backoff retry.
 
@@ -224,8 +222,7 @@ class EtherscanClient:
                         return None
                     # Other errors (e.g., invalid address) - return None, don't retry
                     logger.warning(
-                        f"Etherscan API error: {data.get('message')} "
-                        f"- {message}"
+                        f"Etherscan API error: {data.get('message')} - {message}"
                     )
                     self.metrics["api_failures"] += 1
                     return None
@@ -406,10 +403,11 @@ class EtherscanClient:
 # HELPER FUNCTIONS
 # ============================================================================
 
+
 def _convert_balance(raw_balance: str, decimals: int) -> Decimal:
     """Convert raw token balance to human-readable decimal."""
     try:
-        return Decimal(raw_balance) / Decimal(10 ** decimals)
+        return Decimal(raw_balance) / Decimal(10**decimals)
     except Exception:
         return Decimal("0")
 
@@ -484,6 +482,7 @@ def _detect_anomaly(
 # TASK 1: PERIODIC ETHERSCAN BALANCE SYNC
 # ============================================================================
 
+
 @celery_app.task(
     name="etherscan.sync_balances",
     bind=True,
@@ -517,11 +516,14 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
     Returns:
         Dict with processing summary, metrics, and anomalies
     """
+
     async def runner(container):
         from sqlalchemy import select, update, and_, or_, case, text
         from sqlalchemy.ext.asyncio import AsyncSession
         from app.infrastructure.persistence_sqla.registry import mapping_registry
-        from app.infrastructure.persistence_sqla.mappings.wallet import map_wallet_tables
+        from app.infrastructure.persistence_sqla.mappings.wallet import (
+            map_wallet_tables,
+        )
         from app.infrastructure.adapters.types import MainAsyncSession
         from app.setup.config.settings import load_settings
 
@@ -544,21 +546,17 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
             etherscan_cfg = raw_config.get("etherscan", {})
             if isinstance(etherscan_cfg, dict):
                 etherscan_api_key = etherscan_cfg.get("api_key", "")
-                etherscan_base_url = etherscan_cfg.get(
-                    "base_url", etherscan_base_url
-                )
-                max_wallets = etherscan_cfg.get(
-                    "max_wallets_per_batch", max_wallets
-                )
+                etherscan_base_url = etherscan_cfg.get("base_url", etherscan_base_url)
+                max_wallets = etherscan_cfg.get("max_wallets_per_batch", max_wallets)
                 balance_interval = etherscan_cfg.get(
                     "balance_check_interval_seconds", balance_interval
                 )
                 hv_interval = etherscan_cfg.get(
                     "high_value_check_interval_seconds", hv_interval
                 )
-                hv_threshold = Decimal(str(etherscan_cfg.get(
-                    "high_value_threshold_usd", hv_threshold
-                )))
+                hv_threshold = Decimal(
+                    str(etherscan_cfg.get("high_value_threshold_usd", hv_threshold))
+                )
         except Exception:
             pass
 
@@ -566,13 +564,13 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
         if not etherscan_api_key:
             try:
                 from app.setup.config.loader import load_full_config, get_current_env
+
                 raw = load_full_config(env=get_current_env())
                 etherscan_cfg = raw.get("etherscan", {})
                 # Check both uppercase and lowercase keys (TOML preserves case)
-                etherscan_api_key = (
-                    etherscan_cfg.get("api_key", "") 
-                    or etherscan_cfg.get("API_KEY", "")
-                )
+                etherscan_api_key = etherscan_cfg.get(
+                    "api_key", ""
+                ) or etherscan_cfg.get("API_KEY", "")
             except Exception:
                 pass
 
@@ -596,7 +594,9 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
             map_wallet_tables()
 
             wallets_table = mapping_registry.metadata.tables.get("wallets")
-            chain_addresses_table = mapping_registry.metadata.tables.get("chain_addresses")
+            chain_addresses_table = mapping_registry.metadata.tables.get(
+                "chain_addresses"
+            )
 
             if wallets_table is None:
                 logger.warning("wallets table not found, skipping")
@@ -671,7 +671,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                 "ethereum": ("0xdAC17F958D2ee523a2206206994597C13D831ec7", 6),
                 "arbitrum": ("0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", 6),
             }
-            
+
             # WETH contracts (Wrapped Ether) - FREE TIER ONLY
             weth_contracts = {
                 "ethereum": ("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", 18),
@@ -679,7 +679,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                 "polygon": ("0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", 18),
                 # Base and Optimism removed - PAID TIER ONLY
             }
-            
+
             # All tokens to sync per chain
             # Format: {chain: [(symbol, name, contract, decimals, is_native, can_pay_gas, is_stablecoin), ...]}
             tokens_to_sync = {
@@ -687,9 +687,25 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                     # Native ETH (can pay gas)
                     ("ETH", "Ether", None, 18, True, True, False),
                     # USDC (stablecoin)
-                    ("USDC", "USD Coin", usdc_contracts.get(chain, (None, 6))[0], 6, False, False, True),
+                    (
+                        "USDC",
+                        "USD Coin",
+                        usdc_contracts.get(chain, (None, 6))[0],
+                        6,
+                        False,
+                        False,
+                        True,
+                    ),
                     # WETH (wrapped, cannot pay gas)
-                    ("WETH", "Wrapped Ether", weth_contracts.get(chain, (None, 18))[0], 18, False, False, False),
+                    (
+                        "WETH",
+                        "Wrapped Ether",
+                        weth_contracts.get(chain, (None, 18))[0],
+                        18,
+                        False,
+                        False,
+                        False,
+                    ),
                 ]
                 for chain in chain_id_map.keys()
             }
@@ -740,8 +756,10 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
 
                         if deposit_balance_data is not None:
                             raw_balance = deposit_balance_data.get("balance_raw", "0")
-                            balance_usd = _convert_balance(raw_balance, deposit_decimals)
-                            
+                            balance_usd = _convert_balance(
+                                raw_balance, deposit_decimals
+                            )
+
                             # Also fetch native ETH balance for gas fee checks
                             eth_balance_data = await client.get_eth_balance(
                                 address=wallet_address,
@@ -756,13 +774,12 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                             # Get previous balance for anomaly detection
                             previous_balance = Decimal("0")
                             if chain_addresses_table is not None:
-                                prev_stmt = (
-                                    select(chain_addresses_table.c.balance_usd)
-                                    .where(
-                                        and_(
-                                            chain_addresses_table.c.wallet_id == wallet_id,
-                                            chain_addresses_table.c.chain == deposit_chain,
-                                        )
+                                prev_stmt = select(
+                                    chain_addresses_table.c.balance_usd
+                                ).where(
+                                    and_(
+                                        chain_addresses_table.c.wallet_id == wallet_id,
+                                        chain_addresses_table.c.chain == deposit_chain,
                                     )
                                 )
                                 prev_result = await session.execute(prev_stmt)
@@ -794,13 +811,10 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
 
                             # Update chain_addresses table for Ethereum
                             if chain_addresses_table is not None:
-                                check_stmt = (
-                                    select(chain_addresses_table.c.id)
-                                    .where(
-                                        and_(
-                                            chain_addresses_table.c.wallet_id == wallet_id,
-                                            chain_addresses_table.c.chain == deposit_chain,
-                                        )
+                                check_stmt = select(chain_addresses_table.c.id).where(
+                                    and_(
+                                        chain_addresses_table.c.wallet_id == wallet_id,
+                                        chain_addresses_table.c.chain == deposit_chain,
                                     )
                                 )
                                 check_result = await session.execute(check_stmt)
@@ -856,8 +870,10 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                     # We need balances on all chains that LiFi can bridge from
                     # so the swap workflow can select the best chain for gas
                     # NOTE: Base (8453) removed - NOT supported on Etherscan Free tier
-                    lifi_source_chains = ["arbitrum"]  # ethereum already synced above; base=paid only
-                    
+                    lifi_source_chains = [
+                        "arbitrum"
+                    ]  # ethereum already synced above; base=paid only
+
                     for lifi_chain in lifi_source_chains:
                         try:
                             lifi_chain_id = chain_id_map.get(lifi_chain)
@@ -887,7 +903,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
 
                             raw_balance = balance_data.get("balance_raw", "0")
                             balance_usd = _convert_balance(raw_balance, decimals)
-                            
+
                             # Also fetch native ETH balance for gas fee checks
                             op_eth_balance_data = await client.get_eth_balance(
                                 address=wallet_address,
@@ -902,13 +918,12 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                             # Get previous balance for anomaly detection
                             previous_balance = Decimal("0")
                             if chain_addresses_table is not None:
-                                prev_stmt = (
-                                    select(chain_addresses_table.c.balance_usd)
-                                    .where(
-                                        and_(
-                                            chain_addresses_table.c.wallet_id == wallet_id,
-                                            chain_addresses_table.c.chain == lifi_chain,
-                                        )
+                                prev_stmt = select(
+                                    chain_addresses_table.c.balance_usd
+                                ).where(
+                                    and_(
+                                        chain_addresses_table.c.wallet_id == wallet_id,
+                                        chain_addresses_table.c.chain == lifi_chain,
                                     )
                                 )
                                 prev_result = await session.execute(prev_stmt)
@@ -940,13 +955,10 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
 
                             # Update chain_addresses table for this chain
                             if chain_addresses_table is not None:
-                                check_stmt = (
-                                    select(chain_addresses_table.c.id)
-                                    .where(
-                                        and_(
-                                            chain_addresses_table.c.wallet_id == wallet_id,
-                                            chain_addresses_table.c.chain == lifi_chain,
-                                        )
+                                check_stmt = select(chain_addresses_table.c.id).where(
+                                    and_(
+                                        chain_addresses_table.c.wallet_id == wallet_id,
+                                        chain_addresses_table.c.chain == lifi_chain,
                                     )
                                 )
                                 check_result = await session.execute(check_stmt)
@@ -1043,6 +1055,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
 # TASK 1b: SYNC ALL TOKENS TO token_balances TABLE
 # ============================================================================
 
+
 @celery_app.task(
     name="etherscan.sync_all_tokens",
     bind=True,
@@ -1055,19 +1068,20 @@ def sync_all_tokens_etherscan(
 ) -> dict[str, Any]:
     """
     Sync all tokens (ETH, WETH, USDC) to the token_balances table.
-    
+
     This task syncs:
     - Native ETH (can_pay_gas=True)
     - WETH (can_pay_gas=False)
     - USDC (is_stablecoin=True)
-    
+
     Args:
         wallet_address: Optional. If provided, sync only this wallet.
                        Otherwise, sync all active wallets.
-    
+
     Returns:
         Summary of sync operation
     """
+
     async def runner(container):
         import os
         from sqlalchemy import select, update, and_
@@ -1075,18 +1089,20 @@ def sync_all_tokens_etherscan(
         from app.infrastructure.adapters.types import MainAsyncSession
         from app.setup.config.settings import AppSettings
         from app.infrastructure.persistence_sqla.registry import mapping_registry
-        from app.infrastructure.persistence_sqla.mappings.wallet import map_wallet_tables
-        
+        from app.infrastructure.persistence_sqla.mappings.wallet import (
+            map_wallet_tables,
+        )
+
         # Ensure wallet tables are mapped
         map_wallet_tables()
-        
+
         session = await container.get(MainAsyncSession)
         settings = await container.get(AppSettings)
-        
+
         # Get Etherscan API key - try multiple sources
         etherscan_api_key = ""
         etherscan_base_url = "https://api.etherscan.io/v2/api"
-        
+
         # Method 1: Try from AppSettings
         etherscan_cfg = getattr(settings, "etherscan", None)
         if etherscan_cfg is not None:
@@ -1095,25 +1111,30 @@ def sync_all_tokens_etherscan(
             elif hasattr(etherscan_cfg, "API_KEY"):
                 etherscan_api_key = etherscan_cfg.API_KEY or ""
             elif isinstance(etherscan_cfg, dict):
-                etherscan_api_key = etherscan_cfg.get("api_key") or etherscan_cfg.get("API_KEY") or ""
-        
+                etherscan_api_key = (
+                    etherscan_cfg.get("api_key") or etherscan_cfg.get("API_KEY") or ""
+                )
+
         # Method 2: Try direct config load
         if not etherscan_api_key:
             try:
                 from app.setup.config.loader import load_full_config, get_current_env
+
                 raw = load_full_config(env=get_current_env())
                 etherscan_dict = raw.get("etherscan", {})
-                etherscan_api_key = etherscan_dict.get("api_key") or etherscan_dict.get("API_KEY") or ""
+                etherscan_api_key = (
+                    etherscan_dict.get("api_key") or etherscan_dict.get("API_KEY") or ""
+                )
             except Exception:
                 pass
-        
+
         # Method 3: Try environment variable
         if not etherscan_api_key:
             etherscan_api_key = os.environ.get("ETHERSCAN_API_KEY", "")
-        
+
         if not etherscan_api_key:
             return {"status": "error", "reason": "no_api_key"}
-        
+
         # Chain and token configuration
         # NOTE: Base (8453) and OP (10) are NOT supported on Free tier
         # Only sync chains available on Free tier to avoid API errors
@@ -1122,30 +1143,62 @@ def sync_all_tokens_etherscan(
             "arbitrum": 42161,
             # "base": 8453,  # PAID TIER ONLY - not supported on free tier
         }
-        
+
         # Tokens to sync: (symbol, name, contract, decimals, is_native, can_pay_gas, is_stablecoin)
         # NOTE: Base chain removed - NOT supported on Etherscan Free tier
         tokens_config = {
             "ethereum": [
                 ("ETH", "Ether", None, 18, True, True, False),
-                ("USDC", "USD Coin", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", 6, False, False, True),
-                ("WETH", "Wrapped Ether", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", 18, False, False, False),
+                (
+                    "USDC",
+                    "USD Coin",
+                    "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+                    6,
+                    False,
+                    False,
+                    True,
+                ),
+                (
+                    "WETH",
+                    "Wrapped Ether",
+                    "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                    18,
+                    False,
+                    False,
+                    False,
+                ),
             ],
             # "base" removed - PAID TIER ONLY on Etherscan V2
             "arbitrum": [
                 ("ETH", "Ether", None, 18, True, True, False),
-                ("USDC", "USD Coin", "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", 6, False, False, True),
-                ("WETH", "Wrapped Ether", "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1", 18, False, False, False),
+                (
+                    "USDC",
+                    "USD Coin",
+                    "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+                    6,
+                    False,
+                    False,
+                    True,
+                ),
+                (
+                    "WETH",
+                    "Wrapped Ether",
+                    "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+                    18,
+                    False,
+                    False,
+                    False,
+                ),
             ],
         }
-        
+
         # Get table references
         wallets_table = mapping_registry.metadata.tables.get("wallets")
         token_balances_table = mapping_registry.metadata.tables.get("token_balances")
-        
+
         if wallets_table is None or token_balances_table is None:
             return {"status": "error", "reason": "tables_not_found"}
-        
+
         # Get wallets to sync
         if wallet_address:
             wallet_stmt = (
@@ -1159,13 +1212,13 @@ def sync_all_tokens_etherscan(
                 .where(wallets_table.c.status == 1)
                 .limit(50)  # Process in batches
             )
-        
+
         result = await session.execute(wallet_stmt)
         wallets = result.fetchall()
-        
+
         if not wallets:
             return {"status": "no_wallets", "processed": 0}
-        
+
         async with EtherscanClient(
             api_key=etherscan_api_key,
             base_url=etherscan_base_url,
@@ -1174,23 +1227,32 @@ def sync_all_tokens_etherscan(
             processed = 0
             tokens_synced = 0
             errors = 0
-            
+
             for wallet_row in wallets:
                 wallet_id = wallet_row[0]
                 wallet_addr = wallet_row[1]
                 processed += 1
-                
+
                 for chain_name, chain_id in chain_id_map.items():
                     tokens = tokens_config.get(chain_name, [])
-                    
+
                     for token_info in tokens:
-                        symbol, name, contract, decimals, is_native, can_pay_gas, is_stablecoin = token_info
-                        
+                        (
+                            symbol,
+                            name,
+                            contract,
+                            decimals,
+                            is_native,
+                            can_pay_gas,
+                            is_stablecoin,
+                        ) = token_info
+
                         try:
                             # Check if token was updated in last 3 minutes - skip if so
                             from datetime import datetime, timedelta, UTC
+
                             three_min_ago = datetime.now(UTC) - timedelta(minutes=3)
-                            
+
                             check_stmt = (
                                 select(token_balances_table.c.last_balance_update)
                                 .where(token_balances_table.c.wallet_id == wallet_id)
@@ -1199,11 +1261,11 @@ def sync_all_tokens_etherscan(
                             )
                             check_result = await session.execute(check_stmt)
                             existing = check_result.fetchone()
-                            
+
                             if existing and existing[0] and existing[0] > three_min_ago:
                                 # Skip - recently updated
                                 continue
-                            
+
                             # Fetch balance
                             if is_native:
                                 balance_data = await client.get_eth_balance(
@@ -1216,13 +1278,13 @@ def sync_all_tokens_etherscan(
                                     contract_address=contract,
                                     chain_id=chain_id,
                                 )
-                            
+
                             if balance_data is None:
                                 continue
-                            
+
                             raw_balance = balance_data.get("balance_raw", "0")
                             balance_human = _convert_balance(raw_balance, decimals)
-                            
+
                             # Estimate USD value (rough estimate for display)
                             # ETH ~$2200, USDC ~$1
                             if symbol == "ETH" or symbol == "WETH":
@@ -1231,47 +1293,51 @@ def sync_all_tokens_etherscan(
                                 price_usd = Decimal("1")
                             else:
                                 price_usd = Decimal("0")
-                            
+
                             balance_usd = balance_human * price_usd
-                            
+
                             # Upsert to token_balances
-                            upsert_stmt = insert(token_balances_table).values(
-                                wallet_id=wallet_id,
-                                chain=chain_name,
-                                chain_id=chain_id,
-                                token_symbol=symbol,
-                                token_name=name,
-                                token_address=contract,
-                                token_decimals=decimals,
-                                balance_raw=raw_balance,
-                                balance_human=balance_human,
-                                balance_usd=balance_usd,
-                                price_usd=price_usd,
-                                is_native=is_native,
-                                can_pay_gas=can_pay_gas,
-                                is_stablecoin=is_stablecoin,
-                                last_balance_update=datetime.now(UTC),
-                            ).on_conflict_do_update(
-                                constraint="unique_wallet_chain_token",
-                                set_={
-                                    "balance_raw": raw_balance,
-                                    "balance_human": balance_human,
-                                    "balance_usd": balance_usd,
-                                    "price_usd": price_usd,
-                                    "last_balance_update": datetime.now(UTC),
-                                }
+                            upsert_stmt = (
+                                insert(token_balances_table)
+                                .values(
+                                    wallet_id=wallet_id,
+                                    chain=chain_name,
+                                    chain_id=chain_id,
+                                    token_symbol=symbol,
+                                    token_name=name,
+                                    token_address=contract,
+                                    token_decimals=decimals,
+                                    balance_raw=raw_balance,
+                                    balance_human=balance_human,
+                                    balance_usd=balance_usd,
+                                    price_usd=price_usd,
+                                    is_native=is_native,
+                                    can_pay_gas=can_pay_gas,
+                                    is_stablecoin=is_stablecoin,
+                                    last_balance_update=datetime.now(UTC),
+                                )
+                                .on_conflict_do_update(
+                                    constraint="unique_wallet_chain_token",
+                                    set_={
+                                        "balance_raw": raw_balance,
+                                        "balance_human": balance_human,
+                                        "balance_usd": balance_usd,
+                                        "price_usd": price_usd,
+                                        "last_balance_update": datetime.now(UTC),
+                                    },
+                                )
                             )
                             await session.execute(upsert_stmt)
                             tokens_synced += 1
-                            
+
                         except Exception as e:
                             errors += 1
                             logger.warning(
                                 f"Failed to sync {symbol} on {chain_name} for wallet {wallet_id}: {e}"
                             )
-            
+
             await session.commit()
-            
+
             return {
                 "status": "complete",
                 "wallets_processed": processed,
@@ -1279,13 +1345,14 @@ def sync_all_tokens_etherscan(
                 "errors": errors,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
-    
+
     return asyncio.run(_run_task(runner))
 
 
 # ============================================================================
 # TASK 2: ON-DEMAND SINGLE WALLET BALANCE CHECK
 # ============================================================================
+
 
 @celery_app.task(
     name="etherscan.sync_single_wallet",
@@ -1319,11 +1386,14 @@ def sync_single_wallet_etherscan(
     Returns:
         Dict with balance data and verification status
     """
+
     async def runner(container):
         from sqlalchemy import select, update, and_
         from sqlalchemy.ext.asyncio import AsyncSession
         from app.infrastructure.persistence_sqla.registry import mapping_registry
-        from app.infrastructure.persistence_sqla.mappings.wallet import map_wallet_tables
+        from app.infrastructure.persistence_sqla.mappings.wallet import (
+            map_wallet_tables,
+        )
         from app.infrastructure.adapters.types import MainAsyncSession
 
         # Capture parameters from outer scope
@@ -1332,21 +1402,18 @@ def sync_single_wallet_etherscan(
         _contract_address = contract_address
         _decimals = decimals
 
-        logger.info(
-            f"On-demand Etherscan check: {_wallet_address[:10]}... "
-            f"on {_chain}"
-        )
+        logger.info(f"On-demand Etherscan check: {_wallet_address[:10]}... on {_chain}")
 
         # Load API key
         etherscan_api_key = ""
         try:
             from app.setup.config.loader import load_full_config, get_current_env
+
             raw = load_full_config(env=get_current_env())
             etherscan_cfg = raw.get("etherscan", {})
             # Check both uppercase and lowercase keys (TOML preserves case)
-            etherscan_api_key = (
-                etherscan_cfg.get("api_key", "") 
-                or etherscan_cfg.get("API_KEY", "")
+            etherscan_api_key = etherscan_cfg.get("api_key", "") or etherscan_cfg.get(
+                "API_KEY", ""
             )
         except Exception:
             pass
@@ -1357,7 +1424,9 @@ def sync_single_wallet_etherscan(
         # NOTE: Only FREE TIER chains supported
         # Base (8453) and Optimism (10) require PAID tier
         chain_id_map = {
-            "ethereum": 1, "arbitrum": 42161, "polygon": 137,
+            "ethereum": 1,
+            "arbitrum": 42161,
+            "polygon": 137,
             # "base": 8453,  # PAID TIER ONLY
             # "optimism": 10,  # PAID TIER ONLY
         }
@@ -1409,22 +1478,18 @@ def sync_single_wallet_etherscan(
                 )
 
                 if wallets_table is not None:
-                    wallet_stmt = (
-                        select(wallets_table.c.id)
-                        .where(wallets_table.c.address == _wallet_address)
+                    wallet_stmt = select(wallets_table.c.id).where(
+                        wallets_table.c.address == _wallet_address
                     )
                     wallet_result = await session.execute(wallet_stmt)
                     wallet_row = wallet_result.fetchone()
 
                     if wallet_row and chain_addresses_table is not None:
                         db_wallet_id = wallet_row[0]
-                        check_stmt = (
-                            select(chain_addresses_table.c.id)
-                            .where(
-                                and_(
-                                    chain_addresses_table.c.wallet_id == db_wallet_id,
-                                    chain_addresses_table.c.chain == _chain,
-                                )
+                        check_stmt = select(chain_addresses_table.c.id).where(
+                            and_(
+                                chain_addresses_table.c.wallet_id == db_wallet_id,
+                                chain_addresses_table.c.chain == _chain,
                             )
                         )
                         check_result = await session.execute(check_stmt)
@@ -1441,6 +1506,7 @@ def sync_single_wallet_etherscan(
                             )
                         else:
                             from sqlalchemy import insert
+
                             await session.execute(
                                 insert(chain_addresses_table).values(
                                     wallet_id=db_wallet_id,
@@ -1489,6 +1555,7 @@ def sync_single_wallet_etherscan(
 # TASK 3: TEST WALLET VERIFICATION
 # ============================================================================
 
+
 @celery_app.task(name="etherscan.verify_test_wallet")
 def verify_test_wallet() -> dict[str, Any]:
     """
@@ -1518,12 +1585,12 @@ def verify_test_wallet() -> dict[str, Any]:
         etherscan_api_key = ""
         try:
             from app.setup.config.loader import load_full_config, get_current_env
+
             raw = load_full_config(env=get_current_env())
             etherscan_cfg = raw.get("etherscan", {})
             # Check both uppercase and lowercase keys (TOML preserves case)
-            etherscan_api_key = (
-                etherscan_cfg.get("api_key", "") 
-                or etherscan_cfg.get("API_KEY", "")
+            etherscan_api_key = etherscan_cfg.get("api_key", "") or etherscan_cfg.get(
+                "API_KEY", ""
             )
         except Exception:
             pass
@@ -1560,9 +1627,7 @@ def verify_test_wallet() -> dict[str, Any]:
             )
             eth_balance = Decimal("0")
             if eth_data:
-                eth_balance = _convert_balance(
-                    eth_data.get("balance_raw", "0"), 18
-                )
+                eth_balance = _convert_balance(eth_data.get("balance_raw", "0"), 18)
 
             # Step 3: Verification
             in_expected_range = (

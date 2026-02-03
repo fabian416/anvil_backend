@@ -8,6 +8,7 @@ Tests:
 3. Simple generation test
 4. Distillation integration test
 """
+
 import asyncio
 import os
 import sys
@@ -23,9 +24,9 @@ os.environ["APP_ENV"] = "local"
 
 async def test_google_generative_ai():
     """Test direct Google Generative AI SDK (new google.genai package)."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 1: Google Genai SDK (Gemini API)")
-    print("="*60)
+    print("=" * 60)
 
     try:
         import google.genai as genai
@@ -33,6 +34,7 @@ async def test_google_generative_ai():
 
         # Load API key from secrets
         import tomli
+
         secrets_path = project_root / "config" / "local" / ".secrets.toml"
         with open(secrets_path, "rb") as f:
             secrets = tomli.load(f)
@@ -56,7 +58,7 @@ async def test_google_generative_ai():
 
             # Re-list to use (iterator consumed)
             models = client.models.list()
-            gemini_models = [m.name for m in models if 'gemini' in m.name.lower()]
+            gemini_models = [m.name for m in models if "gemini" in m.name.lower()]
             if gemini_models:
                 print(f"   Gemini models: {', '.join(gemini_models[:5])}")
         except Exception as e:
@@ -66,8 +68,8 @@ async def test_google_generative_ai():
         print("\n🧪 Testing generation with gemini-2.0-flash-exp...")
         try:
             response = client.models.generate_content(
-                model='gemini-2.0-flash-exp',
-                contents='Say "Hello from Gemini!" in exactly 5 words.'
+                model="gemini-2.0-flash-exp",
+                contents='Say "Hello from Gemini!" in exactly 5 words.',
             )
             print(f"✅ Generation successful")
             print(f"Response: {response.text}")
@@ -78,8 +80,8 @@ async def test_google_generative_ai():
             print("\n🧪 Trying fallback model: gemini-1.5-flash-latest...")
 
             response = client.models.generate_content(
-                model='gemini-1.5-flash-latest',
-                contents='Say "Hello from Gemini!" in exactly 5 words.'
+                model="gemini-1.5-flash-latest",
+                contents='Say "Hello from Gemini!" in exactly 5 words.',
             )
             print(f"✅ Generation successful")
             print(f"Response: {response.text}")
@@ -92,15 +94,16 @@ async def test_google_generative_ai():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
 
 async def test_vertex_ai_direct():
     """Test Vertex AI SDK directly."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 2: Vertex AI SDK (with credentials)")
-    print("="*60)
+    print("=" * 60)
 
     try:
         from google.cloud import aiplatform
@@ -108,6 +111,7 @@ async def test_vertex_ai_direct():
 
         # Load settings
         from app.setup.config.settings import load_settings
+
         settings = load_settings()
 
         vertex_settings = settings.distillation.vertex_ai
@@ -132,7 +136,9 @@ async def test_vertex_ai_direct():
 
         # Test generation
         model = GenerativeModel(vertex_settings.model)
-        response = model.generate_content("Say 'Hello from Vertex AI!' in one sentence.")
+        response = model.generate_content(
+            "Say 'Hello from Vertex AI!' in one sentence."
+        )
         print(f"✅ Generation successful")
         print(f"Response: {response.text}")
 
@@ -145,19 +151,22 @@ async def test_vertex_ai_direct():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
 
 async def test_distillation_integration():
     """Test distillation system with Vertex AI."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 3: Distillation System Integration")
-    print("="*60)
+    print("=" * 60)
 
     try:
         from app.setup.config.settings import load_settings
-        from app.infrastructure.distillation.providers.vertex_ai_distillator import VertexAIDistillator
+        from app.infrastructure.distillation.providers.vertex_ai_distillator import (
+            VertexAIDistillator,
+        )
         from app.domain.entities.distillation import DistillationRequest
 
         # Load settings
@@ -167,6 +176,7 @@ async def test_distillation_integration():
         if not settings.distillation.vertex_ai.api_key:
             try:
                 import tomli
+
                 secrets_path = project_root / "config" / "local" / ".secrets.toml"
                 with open(secrets_path, "rb") as f:
                     secrets = tomli.load(f)
@@ -224,15 +234,16 @@ async def test_distillation_integration():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
 
 async def main():
     """Run all tests."""
-    print("\n" + "🧪 "*30)
+    print("\n" + "🧪 " * 30)
     print("VERTEX AI / GEMINI API TEST SUITE")
-    print("🧪 "*30)
+    print("🧪 " * 30)
 
     results = []
 
@@ -261,9 +272,9 @@ async def main():
         results.append(("Distillation Integration", False))
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST SUMMARY")
-    print("="*60)
+    print("=" * 60)
 
     for name, passed in results:
         status = "✅ PASSED" if passed else "❌ FAILED"

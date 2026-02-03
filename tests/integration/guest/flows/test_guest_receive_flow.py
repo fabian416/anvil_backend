@@ -15,8 +15,7 @@ class TestGuestReceiveFlow:
         """Test receive response has correct structure."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "receive", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "receive", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -36,8 +35,7 @@ class TestGuestReceiveFlow:
         """Test that receive shows demo addresses for guests."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "receive", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "receive", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -45,7 +43,11 @@ class TestGuestReceiveFlow:
         content = data["agent_message"]["content"]
 
         # Should show demo mode indicator
-        assert "Demo" in content or "demo" in content.lower() or "example" in content.lower()
+        assert (
+            "Demo" in content
+            or "demo" in content.lower()
+            or "example" in content.lower()
+        )
 
         # Should show multiple network addresses
         networks = ["Ethereum", "Bitcoin", "Solana"]
@@ -61,8 +63,7 @@ class TestGuestReceiveFlow:
         """Test that receive includes how-to instructions."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "receive", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "receive", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -70,8 +71,17 @@ class TestGuestReceiveFlow:
         content = data["agent_message"]["content"]
 
         # Should have instructions
-        instruction_keywords = ["how to", "share", "address", "sender", "wait", "confirm"]
-        instructions_found = sum(1 for keyword in instruction_keywords if keyword in content.lower())
+        instruction_keywords = [
+            "how to",
+            "share",
+            "address",
+            "sender",
+            "wait",
+            "confirm",
+        ]
+        instructions_found = sum(
+            1 for keyword in instruction_keywords if keyword in content.lower()
+        )
         assert instructions_found >= 3, "Should include clear instructions"
 
     @pytest.mark.asyncio
@@ -79,8 +89,7 @@ class TestGuestReceiveFlow:
         """Test that receive includes security warnings."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "receive", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "receive", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -96,8 +105,7 @@ class TestGuestReceiveFlow:
         """Test that receive includes signup CTA for guests."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "receive", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "receive", "language": "en"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -105,7 +113,10 @@ class TestGuestReceiveFlow:
         content = data["agent_message"]["content"]
 
         # Should have signup CTA
-        assert any(phrase in content.lower() for phrase in ["sign up", "signup", "get", "register"])
+        assert any(
+            phrase in content.lower()
+            for phrase in ["sign up", "signup", "get", "register"]
+        )
         assert "/signup" in content
 
     @pytest.mark.asyncio
@@ -113,51 +124,53 @@ class TestGuestReceiveFlow:
         """Test receive in Spanish."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "receive", "language": "es"}
+            "/api/v1/guest/chat", json={"content": "receive", "language": "es"}
         )
         assert response.status_code == 200
         data = response.json()
 
         content = data["agent_message"]["content"]
         # Should contain Spanish text or fallback
-        assert any(word in content for word in ["Recibir", "Receive", "dirección", "address"])
+        assert any(
+            word in content for word in ["Recibir", "Receive", "dirección", "address"]
+        )
 
     @pytest.mark.asyncio
     async def test_receive_multilingual_portuguese(self, client):
         """Test receive in Portuguese."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "receber", "language": "pt"}
+            "/api/v1/guest/chat", json={"content": "receber", "language": "pt"}
         )
         assert response.status_code == 200
         data = response.json()
 
         content = data["agent_message"]["content"]
-        assert any(word in content for word in ["Receber", "Receive", "endereço", "address"])
+        assert any(
+            word in content for word in ["Receber", "Receive", "endereço", "address"]
+        )
 
     @pytest.mark.asyncio
     async def test_receive_multilingual_french(self, client):
         """Test receive in French."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "recevoir", "language": "fr"}
+            "/api/v1/guest/chat", json={"content": "recevoir", "language": "fr"}
         )
         assert response.status_code == 200
         data = response.json()
 
         content = data["agent_message"]["content"]
-        assert any(word in content for word in ["Recevoir", "Receive", "adresse", "address"])
+        assert any(
+            word in content for word in ["Recevoir", "Receive", "adresse", "address"]
+        )
 
     @pytest.mark.asyncio
     async def test_receive_multilingual_chinese(self, client):
         """Test receive in Chinese."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "接收", "language": "zh"}
+            "/api/v1/guest/chat", json={"content": "接收", "language": "zh"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -175,8 +188,7 @@ class TestGuestReceiveStorytellingQuality:
         """Test that response uses emojis for visual appeal."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "receive", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "receive", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -190,8 +202,7 @@ class TestGuestReceiveStorytellingQuality:
         """Test that response has clear visual structure."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "receive", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "receive", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -206,8 +217,7 @@ class TestGuestReceiveStorytellingQuality:
         """Test that response has helpful tone."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "receive", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "receive", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
@@ -221,10 +231,11 @@ class TestGuestReceiveStorytellingQuality:
         """Test that addresses are clearly formatted."""
 
         response = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "receive", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "receive", "language": "en"}
         )
         content = response.json()["agent_message"]["content"]
 
         # Addresses should be in code blocks or clearly marked
-        assert "`" in content or "**" in content, "Addresses should be visually distinct"
+        assert "`" in content or "**" in content, (
+            "Addresses should be visually distinct"
+        )

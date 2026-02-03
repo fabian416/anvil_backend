@@ -26,7 +26,7 @@ def map_money_market_rate_alerts_table() -> None:
     """Map money_market_rate_alerts table (idempotent)."""
     if "money_market_rate_alerts" in mapping_registry.metadata.tables:
         return  # Already mapped
-    
+
     # Create enum types for SQLAlchemy
     alert_condition_enum = SQLEnum(
         "rate_above",
@@ -36,7 +36,7 @@ def map_money_market_rate_alerts_table() -> None:
         name="money_market_alert_condition_enum",
         create_type=False,  # Type already exists in DB
     )
-    
+
     notification_channel_enum = SQLEnum(
         "email",
         "push",
@@ -44,7 +44,7 @@ def map_money_market_rate_alerts_table() -> None:
         name="money_market_notification_channel_enum",
         create_type=False,  # Type already exists in DB
     )
-    
+
     table = sa.Table(
         "money_market_rate_alerts",
         mapping_registry.metadata,
@@ -103,7 +103,9 @@ def map_money_market_rate_alerts_table() -> None:
             "notification_channels",
             ARRAY(notification_channel_enum),
             nullable=False,
-            server_default=sa.text("ARRAY['in_app']::money_market_notification_channel_enum[]"),
+            server_default=sa.text(
+                "ARRAY['in_app']::money_market_notification_channel_enum[]"
+            ),
             comment="Array of enabled notification channels",
         ),
         sa.Column(
@@ -145,7 +147,7 @@ def map_money_market_rate_alerts_table() -> None:
             server_default=sa.text("NOW()"),
         ),
     )
-    
+
     # Create indexes
     sa.Index(
         "idx_money_market_rate_alerts_user_active",
@@ -168,7 +170,7 @@ def map_money_market_rate_alerts_table() -> None:
         table.c.is_active,
         table.c.last_triggered_at,
     )
-    
+
     # Check constraints
     sa.CheckConstraint(
         "alert_type IN ('supply', 'borrow')",

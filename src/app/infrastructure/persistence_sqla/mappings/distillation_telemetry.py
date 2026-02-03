@@ -3,6 +3,7 @@ SQLAlchemy mappings for distillation telemetry.
 
 Defines the database table structure for telemetry data.
 """
+
 from sqlalchemy import (
     Table,
     Column,
@@ -24,8 +25,15 @@ from app.infrastructure.persistence_sqla.registry import mapping_registry
 distillation_telemetry_table = Table(
     "distillation_telemetry",
     mapping_registry.metadata,
-    Column("id", UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()),
-    Column("timestamp", TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
+    Column(
+        "id",
+        UUID(as_uuid=True),
+        primary_key=True,
+        server_default=func.gen_random_uuid(),
+    ),
+    Column(
+        "timestamp", TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+    ),
     Column("user_id", UUID(as_uuid=True), nullable=False),
     Column("conversation_id", UUID(as_uuid=True), nullable=False),
     Column("request_hash", String(64), nullable=False),
@@ -40,8 +48,12 @@ distillation_telemetry_table = Table(
     Column("cost_usd", Numeric(10, 8), nullable=False),
     Column("fallback_used", Boolean, nullable=False, server_default="false"),
     Column("error", Text, nullable=True),
-    Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
-    
+    Column(
+        "created_at",
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    ),
     # Indexes
     Index("idx_distillation_telemetry_timestamp", "timestamp"),
     Index("idx_distillation_telemetry_user_id", "user_id"),

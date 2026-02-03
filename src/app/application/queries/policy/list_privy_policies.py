@@ -78,7 +78,9 @@ class ListPrivyPolicies:
         map_wallet_tables()
         wallets_table = mapping_registry.metadata.tables["wallets"]
 
-        stmt = select(wallets_table.c.policy_ids).where(wallets_table.c.policy_ids.is_not(None))  # type: ignore[attr-defined]
+        stmt = select(wallets_table.c.policy_ids).where(
+            wallets_table.c.policy_ids.is_not(None)
+        )  # type: ignore[attr-defined]
         result = await self._session.execute(stmt)
         rows = result.scalars().all()
 
@@ -97,14 +99,22 @@ class ListPrivyPolicies:
 
         return ordered
 
-    async def execute(self, request: ListPrivyPoliciesRequest) -> ListPrivyPoliciesResult:
+    async def execute(
+        self, request: ListPrivyPoliciesRequest
+    ) -> ListPrivyPoliciesResult:
         current_user = await self._current_user_service.get_current_user()
         authorize(
             CanManageRole(),
-            context=RoleManagementContext(subject=current_user, target_role=UserRole.USER),
+            context=RoleManagementContext(
+                subject=current_user, target_role=UserRole.USER
+            ),
         )
 
-        actor_user_id = getattr(current_user, "id_", None).value if getattr(current_user, "id_", None) else None
+        actor_user_id = (
+            getattr(current_user, "id_", None).value
+            if getattr(current_user, "id_", None)
+            else None
+        )
         repo = PolicyRepositorySqla(self._session)
 
         # Our API already uses a string cursor; for DB we interpret it as an offset.
@@ -137,7 +147,9 @@ class ListPrivyPolicies:
                     )
                     for r in cached_rows
                 ]
-                next_cursor = str(start + page_size) if len(cached_rows) == page_size else None
+                next_cursor = (
+                    str(start + page_size) if len(cached_rows) == page_size else None
+                )
                 return ListPrivyPoliciesResult(
                     policies=policies,
                     next_cursor=next_cursor,
@@ -159,7 +171,9 @@ class ListPrivyPolicies:
             total_count: int | None = None
 
             if isinstance(data, list):
-                policies = [PrivyPolicyDTO.from_api(p) for p in data if isinstance(p, dict)]
+                policies = [
+                    PrivyPolicyDTO.from_api(p) for p in data if isinstance(p, dict)
+                ]
                 raw_list = [p for p in data if isinstance(p, dict)]
             elif isinstance(data, dict):
                 policies_raw = data.get("data")
@@ -190,7 +204,9 @@ class ListPrivyPolicies:
                     )
                 except Exception:
                     # Don't fail the list call if persistence fails.
-                    logger.exception("ListPrivyPolicies: failed to upsert policy_id=%s", dto.id)
+                    logger.exception(
+                        "ListPrivyPolicies: failed to upsert policy_id=%s", dto.id
+                    )
 
             result = ListPrivyPoliciesResult(
                 policies=policies,
@@ -207,11 +223,16 @@ class ListPrivyPolicies:
 
             page_policy_ids = policy_ids[start : start + page_size]
             next_cursor = (
-                str(start + page_size) if (start + page_size) < len(policy_ids) else None
+                str(start + page_size)
+                if (start + page_size) < len(policy_ids)
+                else None
             )
 
             policies: list[PrivyPolicyDTO] = []
-            raw: dict[str, Any] = {"source": "db_wallet_policy_ids", "policy_ids": page_policy_ids}
+            raw: dict[str, Any] = {
+                "source": "db_wallet_policy_ids",
+                "policy_ids": page_policy_ids,
+            }
             for policy_id in page_policy_ids:
                 try:
                     policy_raw = await self._privy_client.get_policy(policy_id)
@@ -220,10 +241,15 @@ class ListPrivyPolicies:
                     try:
                         await repo.upsert_from_privy(
                             policy=dto,
-                            privy_raw=policy_raw if isinstance(policy_raw, dict) else {"raw": policy_raw},
+                            privy_raw=policy_raw
+                            if isinstance(policy_raw, dict)
+                            else {"raw": policy_raw},
                             actor_user_id=actor_user_id,
                             action="sync_get",
-                            extra_audit_payload={"source": "privy", "fallback": "db_wallet_policy_ids"},
+                            extra_audit_payload={
+                                "source": "privy",
+                                "fallback": "db_wallet_policy_ids",
+                            },
                         )
                     except Exception:
                         logger.exception(
@@ -232,7 +258,11 @@ class ListPrivyPolicies:
                         )
                 except PrivyClientError as e:
                     # Best effort: skip policies we can't fetch (deleted, auth mismatch, etc.).
-                    logger.warning("ListPrivyPolicies fallback: failed to fetch %s: %s", policy_id, e)
+                    logger.warning(
+                        "ListPrivyPolicies fallback: failed to fetch %s: %s",
+                        policy_id,
+                        e,
+                    )
 
             return ListPrivyPoliciesResult(
                 policies=policies,
@@ -246,4 +276,3 @@ class ListPrivyPolicies:
             if isinstance(e, (AuthorizationError, PolicyListError)):
                 raise
             raise PolicyListError(str(e)) from e
-

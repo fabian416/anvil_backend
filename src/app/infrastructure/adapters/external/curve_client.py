@@ -14,6 +14,7 @@ import httpx
 @dataclass
 class CurvePool:
     """Curve pool data from API."""
+
     address: str
     name: str
     symbol: str
@@ -27,6 +28,7 @@ class CurvePool:
 @dataclass
 class PoolAPY:
     """Pool APY data from API."""
+
     base_apy: Decimal
     reward_apy: Decimal
     total_apy: Decimal
@@ -35,6 +37,7 @@ class PoolAPY:
 @dataclass
 class SwapQuote:
     """Swap quote from API."""
+
     from_amount: Decimal
     to_amount: Decimal
     exchange_rate: Decimal
@@ -45,6 +48,7 @@ class SwapQuote:
 @dataclass
 class GaugeData:
     """Gauge data from API."""
+
     address: str
     pool_address: str
     name: str
@@ -55,10 +59,10 @@ class GaugeData:
 class CurveClient:
     """
     Curve Finance API client.
-    
+
     Provides access to Curve pools, APYs, swaps, and gauges.
     """
-    
+
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -70,12 +74,12 @@ class CurveClient:
         self.base_url = base_url
         self.chain = chain
         self.client = httpx.AsyncClient(timeout=timeout)
-    
+
     async def get_pools(self, chain: str = "ethereum") -> List[CurvePool]:
         """Get all Curve pools."""
         # Stub - return empty list
         return []
-    
+
     async def get_pool_apy(self, pool_address: str) -> PoolAPY:
         """Get APY for a specific pool."""
         return PoolAPY(
@@ -83,7 +87,7 @@ class CurveClient:
             reward_apy=Decimal("0"),
             total_apy=Decimal("0"),
         )
-    
+
     async def get_swap_quote(
         self,
         from_token: str,
@@ -98,15 +102,15 @@ class CurveClient:
             price_impact=Decimal("0"),
             route=[from_token, to_token],
         )
-    
+
     async def get_gauges(self, chain: str = "ethereum") -> List[GaugeData]:
         """Get all gauges."""
         return []
-    
+
     async def get_tvl(self, chain: str = "ethereum") -> Decimal:
         """Get total TVL."""
         return Decimal("0")
-    
+
     async def close(self):
         """Close the HTTP client."""
         await self.client.aclose()

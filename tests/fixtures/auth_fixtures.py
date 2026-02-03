@@ -38,7 +38,7 @@ def mock_expired_token():
 def mock_jwt_payload(mock_user_id):
     """
     Generate mock JWT payload.
-    
+
     Returns dict with standard JWT claims.
     """
     now = datetime.utcnow()

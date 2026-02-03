@@ -2,7 +2,9 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta, UTC
 
-from app.application.common.ports.password_reset_repository import PasswordResetRepository
+from app.application.common.ports.password_reset_repository import (
+    PasswordResetRepository,
+)
 from app.application.common.ports.transaction_manager import TransactionManager
 from app.application.common.ports.user_command_gateway import UserCommandGateway
 from app.domain.value_objects.raw_password.raw_password import RawPassword
@@ -100,7 +102,9 @@ class ResetPasswordHandler:
             return
 
         # Update password
-        new_hash = UserPasswordHash(self._password_hasher.hash(RawPassword(request.new_password)))
+        new_hash = UserPasswordHash(
+            self._password_hasher.hash(RawPassword(request.new_password))
+        )
         user.password = new_hash
         user.updated_at = UpdatedAt(datetime.now(UTC))
         await self._user_gateway.update(user)
@@ -110,5 +114,3 @@ class ResetPasswordHandler:
         await self._repo.delete_by_id(id_=row["id"])  # type: ignore[index]
 
         await self._tx.commit()
-
-

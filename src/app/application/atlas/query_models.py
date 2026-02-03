@@ -35,5 +35,3 @@ class StateQueryModel:
     country_id: int
     country_code: Optional[str]
     country_name: Optional[str]
-
-

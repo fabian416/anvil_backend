@@ -59,5 +59,3 @@ class UpdateConversationTitle:
         await self._tx.commit()
 
         return conversation
-
-

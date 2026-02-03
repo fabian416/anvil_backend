@@ -41,10 +41,10 @@ class TestLeverageLoopE2E:
     ):
         """
         Test successful 3x leverage loop calculation.
-        
+
         Scenario: User wants 3x leverage on 10 ETH
         Expected: 9 steps calculated (supply → borrow → swap) × 3 iterations
-        
+
         Flow:
         1. User: "loop 10 ETH for 3x"
         2. Calculate optimal iterations
@@ -55,7 +55,7 @@ class TestLeverageLoopE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = LeverageLoopCommand(
             user_id=user_id,
             asset="ETH",
@@ -66,11 +66,11 @@ class TestLeverageLoopE2E:
             slippage_tolerance=Decimal("0.005"),  # 0.5%
             max_iterations=5,
         )
-        
+
         # Mock balance check - user has 10 ETH
         mock_balance_checker.check_balance.return_value = True
         mock_balance_checker.get_balance.return_value = Decimal("10.0")
-        
+
         # Mock Aave position data
         mock_position = MagicMock(
             health_factor=Decimal("inf"),  # No existing debt
@@ -81,7 +81,7 @@ class TestLeverageLoopE2E:
             borrows=[],
         )
         mock_aave_gateway.get_user_position.return_value = mock_position
-        
+
         # Mock Aave market data
         mock_market_data = [
             MagicMock(
@@ -99,7 +99,7 @@ class TestLeverageLoopE2E:
             ),
         ]
         mock_aave_gateway.get_market_data.return_value = mock_market_data
-        
+
         # Mock swap quotes
         async def mock_swap_quote(token_in, token_out, amount_in, chain, slippage):
             # USDC → ETH conversion
@@ -109,20 +109,20 @@ class TestLeverageLoopE2E:
                 "amount_out": Decimal(str(amount_out)),
                 "gas_estimate_usd": Decimal("10.0"),
             }
-        
+
         mock_swap_executor.get_swap_quote = AsyncMock(side_effect=mock_swap_quote)
         mock_swap_executor.build_swap_execute_data = AsyncMock(
             return_value={"action": "swap", "dex": "1inch"}
         )
-        
+
         # Mock domain HF calculations
         def mock_calc_hf(collateral_usd, debt_usd, liquidation_threshold):
             if debt_usd == 0:
                 return Decimal("inf")
             return (collateral_usd * liquidation_threshold) / debt_usd
-        
+
         mock_hf_validator_domain._calculate_health_factor = mock_calc_hf
-        
+
         # Create interactor
         interactor = LeverageLoopInteractor(
             hf_validator_service=mock_hf_validator_service,
@@ -132,54 +132,54 @@ class TestLeverageLoopE2E:
             aave_gateway=mock_aave_gateway,
             repository=mock_lending_repository,
         )
-        
+
         # ACT
         result = await interactor.calculate_loop_steps(
             command=command,
             wallet_address=wallet_address,
         )
-        
+
         # ASSERT
-        
+
         # 1. Balance was checked
         mock_balance_checker.check_balance.assert_called_once()
-        
+
         # 2. Loop has multiple steps (supply + borrow + swap per iteration)
         assert result.total_steps > 3  # At least 1 iteration (3 steps minimum)
         assert result.total_steps % 3 == 1  # Initial supply + (supply+borrow+swap) × N
-        
+
         # 3. Steps are in correct order
         steps = result.steps
         assert steps[0].action == "supply"  # Initial supply
-        
+
         # Validate step pattern for iterations
         for i in range(1, len(steps), 3):
             if i + 2 < len(steps):
                 assert steps[i].action == "borrow"
                 assert steps[i + 1].action == "swap"
                 assert steps[i + 2].action == "supply"
-        
+
         # 4. Leverage achieved is close to target
         assert Decimal("2.8") <= result.actual_leverage <= Decimal("3.2")
-        
+
         # 5. Final health factor is safe
         assert result.final_health_factor >= command.min_health_factor
-        
+
         # 6. Each step has execute_data for Privy
         for step in steps:
             assert step.execute_data is not None
             assert "action_type" in step.execute_data or "action" in step.execute_data
             assert step.requires_approval is True
-        
+
         # 7. Initial collateral matches command
         assert result.initial_collateral == Decimal("10.0")
-        
+
         # 8. Final exposure > initial (leveraged)
         assert result.final_exposure > result.initial_collateral
-        
+
         # 9. Cost estimation included
         assert result.total_cost_usd > 0
-        
+
         # 10. Loop not yet started
         assert result.current_step == 0
 
@@ -196,7 +196,7 @@ class TestLeverageLoopE2E:
     ):
         """
         Test leverage loop calculation stops when HF drops below threshold.
-        
+
         Scenario:
         - Start 3x leverage loop
         - During iteration 2, market conditions change
@@ -206,7 +206,7 @@ class TestLeverageLoopE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = LeverageLoopCommand(
             user_id=user_id,
             asset="ETH",
@@ -217,10 +217,10 @@ class TestLeverageLoopE2E:
             slippage_tolerance=Decimal("0.005"),
             max_iterations=5,
         )
-        
+
         # Mock balance check
         mock_balance_checker.check_balance.return_value = True
-        
+
         # Mock position
         mock_position = MagicMock(
             health_factor=Decimal("inf"),
@@ -231,7 +231,7 @@ class TestLeverageLoopE2E:
             borrows=[],
         )
         mock_aave_gateway.get_user_position.return_value = mock_position
-        
+
         # Mock market data
         mock_market_data = [
             MagicMock(
@@ -249,7 +249,7 @@ class TestLeverageLoopE2E:
             ),
         ]
         mock_aave_gateway.get_market_data.return_value = mock_market_data
-        
+
         # Mock swap quotes
         mock_swap_executor.get_swap_quote = AsyncMock(
             return_value={
@@ -260,25 +260,25 @@ class TestLeverageLoopE2E:
         mock_swap_executor.build_swap_execute_data = AsyncMock(
             return_value={"action": "swap"}
         )
-        
+
         # Mock domain HF calculations that drop below threshold on iteration 2
         iteration_count = {"count": 0}
-        
+
         def mock_calc_hf(collateral_usd, debt_usd, liquidation_threshold):
             if debt_usd == 0:
                 return Decimal("inf")
-            
+
             hf = (collateral_usd * liquidation_threshold) / debt_usd
-            
+
             # Simulate HF drop on 2nd iteration
             iteration_count["count"] += 1
             if iteration_count["count"] > 5:  # After some calculations
                 return Decimal("1.6")  # Below 1.8 threshold
-            
+
             return hf
-        
+
         mock_hf_validator_domain._calculate_health_factor = mock_calc_hf
-        
+
         interactor = LeverageLoopInteractor(
             hf_validator_service=mock_hf_validator_service,
             hf_validator_domain=mock_hf_validator_domain,
@@ -287,22 +287,22 @@ class TestLeverageLoopE2E:
             aave_gateway=mock_aave_gateway,
             repository=mock_lending_repository,
         )
-        
+
         # ACT
         result = await interactor.calculate_loop_steps(
             command=command,
             wallet_address=wallet_address,
         )
-        
+
         # ASSERT
-        
+
         # 1. Loop stopped early
         assert result.total_steps < 10  # Didn't complete all iterations
-        
+
         # 2. Warning about early stop
         assert len(result.warnings) > 0
         assert any("health factor" in w.lower() for w in result.warnings)
-        
+
         # 3. Achieved leverage below target
         assert result.actual_leverage < command.target_leverage
 
@@ -321,7 +321,7 @@ class TestLeverageLoopE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = LeverageLoopCommand(
             user_id=user_id,
             asset="ETH",
@@ -332,11 +332,11 @@ class TestLeverageLoopE2E:
             slippage_tolerance=Decimal("0.005"),
             max_iterations=5,
         )
-        
+
         # Mock insufficient balance
         mock_balance_checker.check_balance.return_value = False
         mock_balance_checker.get_balance.return_value = Decimal("5.0")  # Only has 5 ETH
-        
+
         interactor = LeverageLoopInteractor(
             hf_validator_service=mock_hf_validator_service,
             hf_validator_domain=mock_hf_validator_domain,
@@ -345,14 +345,14 @@ class TestLeverageLoopE2E:
             aave_gateway=mock_aave_gateway,
             repository=mock_lending_repository,
         )
-        
+
         # ACT & ASSERT
         with pytest.raises(InsufficientBalanceError) as exc_info:
             await interactor.calculate_loop_steps(
                 command=command,
                 wallet_address=wallet_address,
             )
-        
+
         assert exc_info.value.asset == "ETH"
         assert exc_info.value.required == Decimal("10.0")
         assert exc_info.value.available == Decimal("5.0")
@@ -372,7 +372,7 @@ class TestLeverageLoopE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         command = LeverageLoopCommand(
             user_id=user_id,
             asset="USDC",  # Stablecoins not supported for leverage loops
@@ -383,10 +383,10 @@ class TestLeverageLoopE2E:
             slippage_tolerance=Decimal("0.005"),
             max_iterations=5,
         )
-        
+
         # Mock balance check passes
         mock_balance_checker.check_balance.return_value = True
-        
+
         interactor = LeverageLoopInteractor(
             hf_validator_service=mock_hf_validator_service,
             hf_validator_domain=mock_hf_validator_domain,
@@ -395,14 +395,14 @@ class TestLeverageLoopE2E:
             aave_gateway=mock_aave_gateway,
             repository=mock_lending_repository,
         )
-        
+
         # ACT & ASSERT
         with pytest.raises(UnsupportedAssetError) as exc_info:
             await interactor.calculate_loop_steps(
                 command=command,
                 wallet_address=wallet_address,
             )
-        
+
         assert exc_info.value.asset == "USDC"
         assert "ETH" in str(exc_info.value) or "WETH" in str(exc_info.value)
 
@@ -421,7 +421,7 @@ class TestLeverageLoopE2E:
         # ARRANGE
         user_id = test_user_context["user_id"]
         wallet_address = test_user_context["wallet_address"]
-        
+
         # Test leverage too low
         command_too_low = LeverageLoopCommand(
             user_id=user_id,
@@ -433,9 +433,9 @@ class TestLeverageLoopE2E:
             slippage_tolerance=Decimal("0.005"),
             max_iterations=5,
         )
-        
+
         mock_balance_checker.check_balance.return_value = True
-        
+
         interactor = LeverageLoopInteractor(
             hf_validator_service=mock_hf_validator_service,
             hf_validator_domain=mock_hf_validator_domain,
@@ -444,16 +444,16 @@ class TestLeverageLoopE2E:
             aave_gateway=mock_aave_gateway,
             repository=mock_lending_repository,
         )
-        
+
         # ACT & ASSERT: Too low
         with pytest.raises(ValueError) as exc_info:
             await interactor.calculate_loop_steps(
                 command=command_too_low,
                 wallet_address=wallet_address,
             )
-        
+
         assert "between 2.0 and 4.0" in str(exc_info.value)
-        
+
         # Test leverage too high
         command_too_high = LeverageLoopCommand(
             user_id=user_id,
@@ -465,19 +465,20 @@ class TestLeverageLoopE2E:
             slippage_tolerance=Decimal("0.005"),
             max_iterations=5,
         )
-        
+
         with pytest.raises(ValueError) as exc_info:
             await interactor.calculate_loop_steps(
                 command=command_too_high,
                 wallet_address=wallet_address,
             )
-        
+
         assert "between 2.0 and 4.0" in str(exc_info.value)
 
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def test_user_context():

@@ -1,7 +1,7 @@
 """
 Unit tests: LLMGatewayImpl correctly handles tuple returns from RetryHandler/LLMStrategy.
 
-The bug was that DeepInfraStrategy returns (text, metadata) tuple, but 
+The bug was that DeepInfraStrategy returns (text, metadata) tuple, but
 LLMGatewayImpl was checking `isinstance(response_data, dict)` which is False for tuples,
 causing the whole tuple to be stringified as "('text', {...})".
 """
@@ -21,6 +21,7 @@ def mock_factory():
 def gateway(mock_factory):
     """Create LLMGatewayImpl with mocked factory."""
     from app.infrastructure.adapters.ai.llm_gateway_impl import LLMGatewayImpl
+
     return LLMGatewayImpl(factory=mock_factory)
 
 
@@ -33,8 +34,8 @@ def gateway(mock_factory):
 async def test_generate_with_metadata_handles_tuple_correctly(gateway, mock_factory):
     """
     When RetryHandler returns a tuple (text, metadata), extract text properly.
-    
-    This was the bug: tuple was being stringified as "('text', {...})" 
+
+    This was the bug: tuple was being stringified as "('text', {...})"
     instead of extracting the first element.
     """
     # Simulate DeepInfra response format
@@ -48,21 +49,21 @@ async def test_generate_with_metadata_handles_tuple_correctly(gateway, mock_fact
             "output_tokens": 100,
             "latency_ms": 1500,
             "cost_usd": 0.0001,
-        }
+        },
     )
-    
+
     mock_factory.get_strategy.return_value = mock_strategy
-    
+
     text, metadata = await gateway.generate_with_metadata(
         model="meta-llama/Meta-Llama-3.1-70B-Instruct",
         messages=[{"role": "user", "content": "Hello"}],
     )
-    
+
     # The text should be the first element of the tuple, NOT the tuple stringified
     assert text == "Hello, this is the LLM response!"
     assert "(" not in text  # Should not contain tuple representation
     assert "provider" not in text  # Should not contain metadata in text
-    
+
     # Metadata should be properly extracted
     assert metadata["provider"] == "deepinfra"
     assert metadata["tokens_used"] == 150  # 50 + 100
@@ -75,7 +76,7 @@ async def test_generate_with_metadata_handles_spanish_response(gateway, mock_fac
     Test with Spanish response (as seen in the user's bug report).
     """
     spanish_response = "¡Hola! Bienvenido al mundo de DeFi (Finanzas Descentralizadas). Estoy aquí para ayudarte."
-    
+
     mock_strategy = AsyncMock()
     mock_strategy.generate.return_value = (
         spanish_response,
@@ -86,16 +87,16 @@ async def test_generate_with_metadata_handles_spanish_response(gateway, mock_fac
             "output_tokens": 292,
             "latency_ms": 11237,
             "cost_usd": 0.00027139,
-        }
+        },
     )
-    
+
     mock_factory.get_strategy.return_value = mock_strategy
-    
+
     text, metadata = await gateway.generate_with_metadata(
         model="meta-llama/Meta-Llama-3.1-70B-Instruct",
         messages=[{"role": "user", "content": "Hola"}],
     )
-    
+
     # Critical: text should be the clean Spanish response
     assert text == spanish_response
     assert text.startswith("¡Hola!")
@@ -115,14 +116,14 @@ async def test_generate_still_handles_dict_format(gateway, mock_factory):
         "latency_ms": 500,
         "finish_reason": "stop",
     }
-    
+
     mock_factory.get_strategy.return_value = mock_strategy
-    
+
     text, metadata = await gateway.generate_with_metadata(
         model="some-model",
         messages=[{"role": "user", "content": "Hello"}],
     )
-    
+
     assert text == "Response from dict format"
     assert metadata["tokens_used"] == 100
 
@@ -135,16 +136,20 @@ async def test_generate_returns_only_text(gateway, mock_factory):
     mock_strategy = AsyncMock()
     mock_strategy.generate.return_value = (
         "Just the text please",
-        {"provider": "test", "input_tokens": 10, "output_tokens": 20, "latency_ms": 100}
+        {
+            "provider": "test",
+            "input_tokens": 10,
+            "output_tokens": 20,
+            "latency_ms": 100,
+        },
     )
-    
+
     mock_factory.get_strategy.return_value = mock_strategy
-    
+
     text = await gateway.generate(
         model="test-model",
         messages=[{"role": "user", "content": "Test"}],
     )
-    
+
     assert text == "Just the text please"
     assert isinstance(text, str)
-

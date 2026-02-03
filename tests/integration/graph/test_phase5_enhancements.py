@@ -83,9 +83,9 @@ class TestEntityExtraction:
         assert len(entities) >= 1
         # Check if any entity was extracted
         entity_names = [e.name.lower() for e in entities]
-        assert any(
-            name in entity_names for name in ["uniswap", "eth"]
-        ), "Expected at least one entity (Uniswap or ETH) to be extracted via fallback"
+        assert any(name in entity_names for name in ["uniswap", "eth"]), (
+            "Expected at least one entity (Uniswap or ETH) to be extracted via fallback"
+        )
 
     @pytest.mark.asyncio
     async def test_extract_and_validate_confidence_threshold(self):
@@ -145,10 +145,18 @@ class TestEntityExtraction:
                 metadata={},
             ),
             ExtractedEntity(
-                name="ETH", type=EntityType.TOKEN, confidence=0.99, context="", metadata={}
+                name="ETH",
+                type=EntityType.TOKEN,
+                confidence=0.99,
+                context="",
+                metadata={},
             ),
             ExtractedEntity(
-                name="USDC", type=EntityType.TOKEN, confidence=0.99, context="", metadata={}
+                name="USDC",
+                type=EntityType.TOKEN,
+                confidence=0.99,
+                context="",
+                metadata={},
             ),
         ]
 
@@ -250,17 +258,11 @@ class TestPageRankAlgorithm:
     def test_identify_hub_protocols(self):
         """Test hub protocol identification."""
         results = [
-            PageRankResult(
-                node_id="uniswap", pagerank=0.0312, rank=1, connections=150
-            ),
+            PageRankResult(node_id="uniswap", pagerank=0.0312, rank=1, connections=150),
             PageRankResult(node_id="aave", pagerank=0.0289, rank=2, connections=120),
             PageRankResult(node_id="curve", pagerank=0.0245, rank=3, connections=100),
-            PageRankResult(
-                node_id="compound", pagerank=0.0201, rank=4, connections=90
-            ),
-            PageRankResult(
-                node_id="maker", pagerank=0.0198, rank=5, connections=85
-            ),
+            PageRankResult(node_id="compound", pagerank=0.0201, rank=4, connections=90),
+            PageRankResult(node_id="maker", pagerank=0.0198, rank=5, connections=85),
         ]
 
         service = PageRankService()
@@ -299,7 +301,7 @@ class TestPageRankAlgorithm:
     def test_pagerank_convergence(self):
         """Test that PageRank converges within iteration limit."""
         nodes = {f"node_{i}" for i in range(10)}
-        edges = [(f"node_{i}", f"node_{(i+1) % 10}") for i in range(10)]
+        edges = [(f"node_{i}", f"node_{(i + 1) % 10}") for i in range(10)]
 
         config = PageRankConfig(max_iterations=50, convergence_threshold=0.00001)
         service = PageRankService(config)
@@ -377,7 +379,9 @@ class TestGraphVisualization:
         )
 
         nodes = [
-            GraphNode(id="A", label="A", type="protocol", importance=0.9, connections=10)
+            GraphNode(
+                id="A", label="A", type="protocol", importance=0.9, connections=10
+            )
         ]
         edges = [GraphEdge(source="A", target="B", type="LINKS_TO", weight=0.8)]
 
@@ -400,10 +404,16 @@ class TestGraphVisualization:
         )
 
         center = GraphNode(
-            id="uniswap", label="Uniswap", type="protocol", importance=0.95, connections=150
+            id="uniswap",
+            label="Uniswap",
+            type="protocol",
+            importance=0.95,
+            connections=150,
         )
         nodes = [
-            GraphNode(id="eth", label="ETH", type="token", importance=1.0, connections=300)
+            GraphNode(
+                id="eth", label="ETH", type="token", importance=1.0, connections=300
+            )
         ]
         edges = [
             GraphEdge(
@@ -411,7 +421,9 @@ class TestGraphVisualization:
             )
         ]
 
-        response = SubgraphResponse(center_node=center, nodes=nodes, edges=edges, depth=2)
+        response = SubgraphResponse(
+            center_node=center, nodes=nodes, edges=edges, depth=2
+        )
 
         assert response.center_node.id == "uniswap"
         assert len(response.nodes) == 1

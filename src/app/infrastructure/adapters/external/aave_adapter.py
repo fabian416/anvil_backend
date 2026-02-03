@@ -114,7 +114,8 @@ class AaveAdapter(AaveGateway):
         if asset:
             asset_upper = asset.upper()
             markets = [
-                m for m in markets
+                m
+                for m in markets
                 if m.symbol.upper() == asset_upper
                 or m.asset_address.lower() == asset.lower()
             ]
@@ -130,7 +131,7 @@ class AaveAdapter(AaveGateway):
         self._validate_chain(chain)
 
         markets = await self.get_markets(asset=asset, chain=chain)
-        
+
         if not markets:
             raise MarketNotFoundError(asset, chain)
 
@@ -192,7 +193,7 @@ class AaveAdapter(AaveGateway):
 
         try:
             position = await self.get_user_position(address, chain)
-            
+
             return HealthFactor.calculate(
                 collateral_usd=position.total_collateral_usd,
                 debt_usd=position.total_debt_usd,
@@ -310,7 +311,7 @@ class AaveAdapter(AaveGateway):
     ) -> Decimal:
         """Get current borrow APY for an asset."""
         market = await self.get_market_details(asset, chain)
-        
+
         if rate_type == "stable":
             return market.borrow_apy_stable
         return market.borrow_apy_variable

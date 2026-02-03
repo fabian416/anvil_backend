@@ -143,7 +143,7 @@ class SendAgentSquadMessage:
         if agent_response.sources:
             # Store sources in metadata
             metadata["sources"] = [s.to_dict() for s in agent_response.sources]
-        
+
         agent_message = Message.create(
             conversation_id=conversation_id,
             role=MessageRole.AGENT,
@@ -204,11 +204,11 @@ class SendAgentSquadMessage:
             "latency_ms": latency_ms,
             "tokens_used": tokens_used,
         }
-        
+
         # Add sources if available
         if agent_response.sources:
             result["sources"] = [s.to_dict() for s in agent_response.sources]
-        
+
         return result
 
     async def _track_telemetry(

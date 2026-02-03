@@ -9,8 +9,14 @@ from app.application.queries.perpetual.get_liquidations import (
     GetLiquidationsRequest,
 )
 from app.application.queries.perpetual.get_markets import GetMarkets, GetMarketsRequest
-from app.application.queries.perpetual.get_order_book import GetOrderBook, GetOrderBookRequest
-from app.application.queries.perpetual.get_positions import GetPositions, GetPositionsRequest
+from app.application.queries.perpetual.get_order_book import (
+    GetOrderBook,
+    GetOrderBookRequest,
+)
+from app.application.queries.perpetual.get_positions import (
+    GetPositions,
+    GetPositionsRequest,
+)
 
 __all__ = [
     "GetMarkets",

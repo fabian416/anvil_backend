@@ -11,7 +11,9 @@ from sqlalchemy import select, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.chat.entities.conversation_context import ConversationContext
-from app.domain.chat.ports.conversation_context_repository import ConversationContextRepository
+from app.domain.chat.ports.conversation_context_repository import (
+    ConversationContextRepository,
+)
 from app.infrastructure.persistence_sqla.mappings.conversation_context import (
     conversation_context_table,
 )
@@ -23,16 +25,16 @@ class ConversationContextRepositorySqla(ConversationContextRepository):
     """
     SQLAlchemy-based conversation context repository.
     """
-    
+
     def __init__(self, session: AsyncSession):
         """
         Initialize repository.
-        
+
         Args:
             session: Database session
         """
         self._session = session
-    
+
     async def get_by_conversation_id(
         self,
         conversation_id: UUID,
@@ -41,15 +43,15 @@ class ConversationContextRepositorySqla(ConversationContextRepository):
         stmt = select(conversation_context_table).where(
             conversation_context_table.c.conversation_id == conversation_id
         )
-        
+
         result = await self._session.execute(stmt)
         row = result.first()
-        
+
         if not row:
             return None
-        
+
         return self._row_to_entity(row)
-    
+
     async def get_by_user_id(
         self,
         user_id: UUID,
@@ -61,22 +63,22 @@ class ConversationContextRepositorySqla(ConversationContextRepository):
             .order_by(conversation_context_table.c.updated_at.desc())
             .limit(1)
         )
-        
+
         result = await self._session.execute(stmt)
         row = result.first()
-        
+
         if not row:
             return None
-        
+
         return self._row_to_entity(row)
-    
+
     async def save(self, context: ConversationContext) -> None:
         """Save or update conversation context."""
         # Check if exists
         existing = await self.get_by_conversation_id(context.conversation_id)
-        
+
         context.updated_at = datetime.now(UTC)
-        
+
         if existing:
             # Update
             stmt = (
@@ -89,22 +91,22 @@ class ConversationContextRepositorySqla(ConversationContextRepository):
             # Insert
             stmt = conversation_context_table.insert().values(**context.to_dict())
             await self._session.execute(stmt)
-        
+
         await self._session.commit()
-        
+
         logger.info(f"Saved conversation context: {context.id}")
-    
+
     async def delete(self, context_id: UUID) -> None:
         """Delete conversation context."""
         stmt = delete(conversation_context_table).where(
             conversation_context_table.c.id == context_id
         )
-        
+
         await self._session.execute(stmt)
         await self._session.commit()
-        
+
         logger.info(f"Deleted conversation context: {context_id}")
-    
+
     def _row_to_entity(self, row) -> ConversationContext:
         """Convert database row to ConversationContext entity."""
         return ConversationContext(

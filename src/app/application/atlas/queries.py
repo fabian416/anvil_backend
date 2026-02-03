@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 
 from app.application.atlas.ports import CityReader, CountryReader
-from app.application.atlas.query_models import CityQueryModel, CountryQueryModel, StateQueryModel
+from app.application.atlas.query_models import (
+    CityQueryModel,
+    CountryQueryModel,
+    StateQueryModel,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,7 +91,7 @@ class ListStatesByCountryQueryService:
     def __init__(self, city_reader: CityReader):
         self._city_reader = city_reader
 
-    async def execute(self, request: ListStatesByCountryRequest) -> list[StateQueryModel]:
+    async def execute(
+        self, request: ListStatesByCountryRequest
+    ) -> list[StateQueryModel]:
         return await self._city_reader.list_states_by_country(request.country_id)
-
-

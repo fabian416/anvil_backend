@@ -23,7 +23,9 @@ from tests.helpers.test_data_loader import (
 class TestSquadIntentClassification:
     """Component tests for Agent Squad intent classification logic."""
 
-    @pytest.mark.parametrize("test_case", get_squad_test_cases(), ids=lambda tc: tc["id"])
+    @pytest.mark.parametrize(
+        "test_case", get_squad_test_cases(), ids=lambda tc: tc["id"]
+    )
     async def test_classify_squad_intent(
         self,
         mock_intent_classifier,
@@ -37,7 +39,9 @@ class TestSquadIntentClassification:
         """
         # Arrange: Configure mock classifier to return expected intent
         expected_intent = test_case["expected_routing"]["intent"]
-        expected_confidence_min = test_case["expected_routing"].get("confidence_min", 0.5)
+        expected_confidence_min = test_case["expected_routing"].get(
+            "confidence_min", 0.5
+        )
 
         # Get IntentResult class from fixture
         IntentResult = mock_intent_classifier.IntentResult
@@ -195,7 +199,9 @@ class TestSquadHandlerExecution:
 class TestSquadEnrichmentValidation:
     """Component tests for Agent Squad enrichment data structure."""
 
-    @pytest.mark.parametrize("test_case", get_squad_test_cases(), ids=lambda tc: tc["id"])
+    @pytest.mark.parametrize(
+        "test_case", get_squad_test_cases(), ids=lambda tc: tc["id"]
+    )
     async def test_squad_enrichment_structure(
         self,
         mock_squad_handler,
@@ -225,9 +231,7 @@ class TestSquadEnrichmentValidation:
                 "workflow_id": "wf_001",
                 "agents_count": 5,
                 "capital": 50000,
-                "phases": [
-                    {"phase": "planning", "status": "completed"}
-                ],
+                "phases": [{"phase": "planning", "status": "completed"}],
             }
         else:
             enrichment = {}
@@ -248,14 +252,21 @@ class TestSquadEnrichmentValidation:
 
         # Verify subcategory-specific enrichment
         if subcategory == "specialist_task":
-            assert "task_type" in result_enrichment or "tools_used" in result_enrichment, (
+            assert (
+                "task_type" in result_enrichment or "tools_used" in result_enrichment
+            ), (
                 f"Specialist task enrichment missing task_type or tools_used for {test_case['id']}"
             )
 
         elif subcategory == "complex_workflow":
-            assert "workflow_type" in result_enrichment or "workflow_id" in result_enrichment, (
+            assert (
+                "workflow_type" in result_enrichment
+                or "workflow_id" in result_enrichment
+            ), (
                 f"Complex workflow enrichment missing workflow_type or workflow_id for {test_case['id']}"
             )
-            assert "agents_count" in result_enrichment or "phases" in result_enrichment, (
+            assert (
+                "agents_count" in result_enrichment or "phases" in result_enrichment
+            ), (
                 f"Complex workflow enrichment missing agents_count or phases for {test_case['id']}"
             )

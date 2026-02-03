@@ -75,7 +75,10 @@ class RiskAlertService:
                 )
 
                 # Check for risk increase
-                if exposure.risk_score and current_risk.risk_score > exposure.risk_score:
+                if (
+                    exposure.risk_score
+                    and current_risk.risk_score > exposure.risk_score
+                ):
                     risk_change = current_risk.risk_score - exposure.risk_score
 
                     # Alert if >20% increase or >1 point

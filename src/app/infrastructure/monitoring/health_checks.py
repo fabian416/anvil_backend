@@ -91,9 +91,7 @@ class HealthCheck(ABC):
             Component health status
         """
         try:
-            health = await asyncio.wait_for(
-                self.check(), timeout=self.timeout_seconds
-            )
+            health = await asyncio.wait_for(self.check(), timeout=self.timeout_seconds)
             self._last_check = health
             return health
 

@@ -197,7 +197,9 @@ class TemplateRepositoryAdapter(TemplateRepository):
             await self._session.rollback()
             return False
 
-    async def get_popular_templates(self, limit: int = 10) -> List[ConversationTemplate]:
+    async def get_popular_templates(
+        self, limit: int = 10
+    ) -> List[ConversationTemplate]:
         """
         Get most popular templates by usage count.
 
@@ -212,7 +214,8 @@ class TemplateRepositoryAdapter(TemplateRepository):
             .where(
                 and_(
                     ConversationTemplateModel.is_active == True,
-                    ConversationTemplateModel.is_system == True,  # Only public templates
+                    ConversationTemplateModel.is_system
+                    == True,  # Only public templates
                 )
             )
             .order_by(ConversationTemplateModel.usage_count.desc())
@@ -266,7 +269,9 @@ class TemplateRepositoryAdapter(TemplateRepository):
 
         # Convert estimated duration from minutes to seconds
         estimated_duration_seconds = (
-            model.estimated_duration_minutes * 60 if model.estimated_duration_minutes else 0
+            model.estimated_duration_minutes * 60
+            if model.estimated_duration_minutes
+            else 0
         )
 
         return ConversationTemplate(
@@ -373,9 +378,7 @@ class ConversationTemplateModel:
 
     __tablename__ = "conversation_templates"
 
-    template_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True), primary_key=True
-    )
+    template_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     category: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -397,7 +400,9 @@ class ConversationTemplateModel:
 
     # Usage stats
     usage_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    avg_completion_rate: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    avg_completion_rate: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.0
+    )
     avg_user_rating: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # Timestamps

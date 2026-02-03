@@ -33,12 +33,19 @@ from app.domain.services.agent_squad.supervisor_coordinator import (
 )
 
 if TYPE_CHECKING:
-    from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+    from app.domain.value_objects.agent_squad.conversation_context import (
+        ConversationContext,
+    )
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
     from app.domain.ports.agent_squad.agent_executor_gateway import AgentExecutorPort
-    from app.application.chat.services.user_data_service import UserDataService, UserDataContext
+    from app.application.chat.services.user_data_service import (
+        UserDataService,
+        UserDataContext,
+    )
     from app.domain.chat.entities.user_context_aware import UserContextAware
-    from app.application.chat.services.response_template_service import ResponseTemplateService
+    from app.application.chat.services.response_template_service import (
+        ResponseTemplateService,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +53,7 @@ logger = logging.getLogger(__name__)
 class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
     """
     Supervisor Coordinator optimized for authenticated users.
-    
+
     Key Differences from Guest Supervisor:
     1. Access to real wallet data and portfolio via UserDataService
     2. Can prepare actual transactions (not just demos)
@@ -54,14 +61,14 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
     4. No demo mode disclaimers
     5. Higher complexity workflows allowed
     6. Integration with AGNO agents for complex operations
-    
+
     Architecture:
     - Inherits from SupervisorCoordinator for core workflow logic
     - Overrides prompt building to include auth-specific context
     - Adds wallet/portfolio context injection via UserDataService
     - Can delegate to AGNO agents for specialized operations
     """
-    
+
     def __init__(
         self,
         llm_client: "LLMClientGateway",
@@ -73,7 +80,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
     ):
         """
         Initialize authenticated supervisor.
-        
+
         Args:
             llm_client: LLM client for workflow planning
             agent_executor: Agent executor for running agents
@@ -94,7 +101,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         self._user_data_context: "UserDataContext | None" = None
         # Context-aware agent responses
         self._context_aware: "UserContextAware | None" = None
-    
+
     def set_user_context(
         self,
         user_id: str | None = None,
@@ -104,10 +111,10 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
     ) -> None:
         """
         Set user-specific context for workflow planning.
-        
+
         This context is injected into the planning prompt to give
         the LLM awareness of the user's situation.
-        
+
         Args:
             user_id: User identifier
             wallet_address: Connected wallet address
@@ -121,22 +128,22 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             "preferences": preferences or {},
             "is_authenticated": True,
         }
-    
+
     def set_context_aware(self, context: "UserContextAware | None") -> None:
         """
         Set pre-computed user context for context-aware agent responses.
-        
+
         This context comes from the user_context_aware table and includes:
         - Portfolio state (empty, starter, active, whale)
         - Activity level (new, active, inactive, etc.)
         - User type (new_user, casual, trader, yield_farmer, power_user)
         - Execution history (swap_count, buy_count, lending_count, etc.)
-        
+
         The context is used to:
         1. Enhance the system prompt with user-specific instructions
         2. Pre-validate workflows (e.g., prevent swap for empty portfolios)
         3. Personalize response tone and recommendations
-        
+
         Args:
             context: The UserContextAware entity or None
         """
@@ -146,21 +153,21 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 f"Set context-aware: portfolio={context.portfolio_state}, "
                 f"activity={context.activity_level}, type={context.user_type}"
             )
-    
+
     async def load_user_data(self, user_id: str) -> None:
         """
         Load complete user data from repositories via UserDataService.
-        
+
         This fetches wallet, portfolio, and transaction data for the user
         and stores it for context injection into workflows.
-        
+
         Args:
             user_id: The user's ID to fetch data for
         """
         if not self._user_data_service:
             logger.debug("UserDataService not available, skipping user data load")
             return
-        
+
         try:
             self._user_data_context = await self._user_data_service.get_user_context(
                 user_id=user_id,
@@ -168,36 +175,49 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 include_transactions=True,
                 transaction_limit=5,  # Only need recent for context
             )
-            
+
             # Update user_context with loaded data
             if self._user_data_context:
                 if self._user_data_context.primary_wallet:
-                    self._user_context["wallet_address"] = self._user_data_context.primary_wallet.address
-                    self._user_context["wallet_chain"] = self._user_data_context.primary_wallet.chain_type
-                
+                    self._user_context["wallet_address"] = (
+                        self._user_data_context.primary_wallet.address
+                    )
+                    self._user_context["wallet_chain"] = (
+                        self._user_data_context.primary_wallet.chain_type
+                    )
+
                 if self._user_data_context.portfolio:
                     self._user_context["portfolio_summary"] = {
                         "total_value_usd": self._user_data_context.portfolio.total_value_usd,
                         "token_count": self._user_data_context.portfolio.token_count,
-                        "top_holdings": [h["symbol"] for h in self._user_data_context.portfolio.top_holdings[:3]],
+                        "top_holdings": [
+                            h["symbol"]
+                            for h in self._user_data_context.portfolio.top_holdings[:3]
+                        ],
                     }
-                
+
                 if self._user_data_context.transactions:
-                    self._user_context["transaction_count"] = self._user_data_context.transactions.total_count
-                    self._user_context["volume_30d"] = self._user_data_context.transactions.volume_last_30_days
-            
+                    self._user_context["transaction_count"] = (
+                        self._user_data_context.transactions.total_count
+                    )
+                    self._user_context["volume_30d"] = (
+                        self._user_data_context.transactions.volume_last_30_days
+                    )
+
             logger.info(
                 f"✅ Loaded user data for authenticated supervisor",
                 extra={
                     "user_id": user_id,
                     "has_wallet": bool(self._user_context.get("wallet_address")),
-                    "portfolio_value": self._user_context.get("portfolio_summary", {}).get("total_value_usd", 0),
-                }
+                    "portfolio_value": self._user_context.get(
+                        "portfolio_summary", {}
+                    ).get("total_value_usd", 0),
+                },
             )
-            
+
         except Exception as e:
             logger.warning(f"Failed to load user data: {e}")
-    
+
     async def get_transaction_history(
         self,
         user_id: str,
@@ -205,120 +225,120 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
     ) -> list[dict[str, Any]]:
         """
         Get user's transaction history.
-        
+
         Args:
             user_id: User identifier
             limit: Maximum transactions to return
-        
+
         Returns:
             List of transaction dictionaries
         """
         if not self._user_data_service:
             return []
-        
+
         return await self._user_data_service.get_transaction_history(
             user_id=user_id,
             limit=limit,
         )
-    
+
     async def get_wallet_balances(
         self,
         wallet_address: str,
     ) -> dict[str, Any]:
         """
         Get token balances for a wallet.
-        
+
         Args:
             wallet_address: The wallet address
-        
+
         Returns:
             Dictionary with balance information
         """
         if not self._user_data_service:
             return {"error": "User data service not available"}
-        
+
         return await self._user_data_service.get_wallet_balances(
             wallet_address=wallet_address,
         )
-    
+
     def can_execute_workflow(self, workflow_type: str) -> tuple[bool, str | None]:
         """
         Check if the user can execute a specific workflow type based on context.
-        
+
         This provides pre-validation to prevent users from attempting workflows
         that will fail due to insufficient balance or missing prerequisites.
-        
+
         Args:
             workflow_type: The workflow type (swap, buy, lending, etc.)
-            
+
         Returns:
             Tuple of (can_execute, reason_if_blocked)
         """
         if not self._context_aware:
             # No context available, allow all
             return True, None
-        
+
         portfolio_state = self._context_aware.portfolio_state_enum
-        
+
         # Check portfolio state requirements
         if workflow_type in ("swap", "swap_workflow", "transfer", "transfer_workflow"):
             if not portfolio_state.can_swap:
                 return False, (
                     "Your portfolio is empty. You need to buy some crypto first "
-                    "before you can swap or transfer. Try: \"buy $50 of ETH\""
+                    'before you can swap or transfer. Try: "buy $50 of ETH"'
                 )
-        
+
         # Warn about gas costs for small portfolios
         if workflow_type in ("swap", "swap_workflow", "lending", "lending_workflow"):
             if portfolio_state.warn_gas_costs:
                 # Don't block, but the prompt enhancement will warn
                 pass
-        
+
         return True, None
-    
+
     def get_onboarding_suggestion(self) -> str | None:
         """
         Get an onboarding suggestion based on user context.
-        
+
         Returns:
             Suggestion string or None if user doesn't need onboarding
         """
         if not self._context_aware:
             return None
-        
+
         portfolio_state = self._context_aware.portfolio_state_enum
         activity_level = self._context_aware.activity_level_enum
-        
+
         if portfolio_state.needs_onboarding:
             return (
                 "Welcome to Anvil! 🎉 Start your DeFi journey:\n"
-                "• **Buy crypto** - Type \"buy $50 of ETH\" to get started\n"
-                "• **Explore rates** - Ask \"best yield for USDC\" to see earning opportunities\n"
-                "• **Get market data** - Try \"what's the price of ETH?\""
+                '• **Buy crypto** - Type "buy $50 of ETH" to get started\n'
+                '• **Explore rates** - Ask "best yield for USDC" to see earning opportunities\n'
+                '• **Get market data** - Try "what\'s the price of ETH?"'
             )
-        
+
         if activity_level.needs_reengagement:
             return (
                 "Welcome back! 👋 Here's what you can do:\n"
-                "• **Check portfolio** - \"my portfolio\" to see your holdings\n"
-                "• **Swap tokens** - \"swap ETH to USDC\" to trade\n"
-                "• **Earn yield** - \"deposit USDC\" to start earning"
+                '• **Check portfolio** - "my portfolio" to see your holdings\n'
+                '• **Swap tokens** - "swap ETH to USDC" to trade\n'
+                '• **Earn yield** - "deposit USDC" to start earning'
             )
-        
+
         return None
-    
+
     def set_response_template_service(
         self,
         service: "ResponseTemplateService | None",
     ) -> None:
         """
         Set the response template service for template-based responses.
-        
+
         Args:
             service: ResponseTemplateService instance or None
         """
         self._response_template_service = service
-    
+
     def get_template_response(
         self,
         message_key: str,
@@ -327,21 +347,21 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
     ) -> str | None:
         """
         Get a template-based response if available.
-        
+
         This checks if a pre-defined template exists for the user's
         current context and returns it instead of calling LLM.
-        
+
         Args:
             message_key: Template message key (e.g., "portfolio_query")
             language: Target language code
             **variables: Variables for template rendering
-            
+
         Returns:
             Rendered template message or None if no template found
         """
         if not self._response_template_service or not self._context_aware:
             return None
-        
+
         # Try portfolio state template first
         result = self._response_template_service.get_portfolio_response(
             portfolio_state=self._context_aware.portfolio_state,
@@ -350,10 +370,10 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             total_usd=f"{float(self._context_aware.total_balance_usd):,.2f}",
             **variables,
         )
-        
+
         if result.message:
             return result.message
-        
+
         # Try activity level template
         result = self._response_template_service.get_activity_response(
             activity_level=self._context_aware.activity_level,
@@ -361,12 +381,12 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             language=language,
             **variables,
         )
-        
+
         if result.message:
             return result.message
-        
+
         return None
-    
+
     def check_workflow_blocked_with_template(
         self,
         workflow_type: str,
@@ -374,190 +394,263 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
     ) -> tuple[bool, str | None]:
         """
         Check if workflow is blocked and return template response.
-        
+
         Combines can_execute_workflow check with template messaging
         for consistent, localized blocked workflow responses.
-        
+
         Args:
             workflow_type: Workflow type (swap, lending, transfer, etc.)
             language: Target language code
-            
+
         Returns:
             Tuple of (is_blocked, blocked_message or None)
         """
         # First check basic workflow blocking
         can_execute, reason = self.can_execute_workflow(workflow_type)
-        
+
         if can_execute:
             return False, None
-        
+
         # If blocked, try to get template response
         if self._response_template_service and self._context_aware:
-            is_blocked, template_msg = self._response_template_service.check_workflow_blocked(
-                portfolio_state=self._context_aware.portfolio_state,
-                workflow=workflow_type,
-                language=language,
+            is_blocked, template_msg = (
+                self._response_template_service.check_workflow_blocked(
+                    portfolio_state=self._context_aware.portfolio_state,
+                    workflow=workflow_type,
+                    language=language,
+                )
             )
             if is_blocked and template_msg:
                 return True, template_msg
-        
+
         # Fallback to basic reason
         return True, reason
-    
+
     def get_response_style(self) -> str:
         """
         Get the recommended response style for this user.
-        
+
         Returns:
             Response style: "educational", "concise", "expert", etc.
         """
         if not self._response_template_service or not self._context_aware:
             return "default"
-        
+
         return self._response_template_service.get_response_style(
             self._context_aware.user_type
         )
-    
+
     def should_include_explanations(self) -> bool:
         """
         Check if explanations should be included in responses.
-        
+
         Returns:
             True if explanations should be included
         """
         if not self._response_template_service or not self._context_aware:
             return True
-        
+
         return self._response_template_service.should_include_explanations(
             self._context_aware.user_type
         )
-    
+
     def _detect_fresh_workflow_start(
         self,
         message: str,
     ) -> tuple[bool, str | None]:
         """
         Detect if user is starting a fresh/new workflow.
-        
+
         This is used to cancel any pending workflow when user starts a new one.
         For example, if user has a pending buy confirmation and says "swap ETH to USDC",
         this detects it's a fresh swap workflow request.
-        
+
         Returns:
             Tuple of (is_fresh_workflow, workflow_type or None)
             workflow_type: "buy", "swap", "lending", "transfer", "money_market", "cashout"
         """
         message_lower = message.lower().strip()
-        
+
         # Fresh workflow start keywords (multilingual)
         # These indicate user wants to START a new workflow, not continue an existing one
         workflow_keywords = {
             "buy": [
                 # English
-                "buy crypto", "buy usdc", "buy token", "purchase crypto", "purchase usdc",
-                "i want to buy", "let me buy", "can i buy",
+                "buy crypto",
+                "buy usdc",
+                "buy token",
+                "purchase crypto",
+                "purchase usdc",
+                "i want to buy",
+                "let me buy",
+                "can i buy",
                 # Spanish
-                "comprar cripto", "comprar usdc", "quiero comprar",
+                "comprar cripto",
+                "comprar usdc",
+                "quiero comprar",
                 # Portuguese
-                "comprar cripto", "comprar usdc", "quero comprar",
+                "comprar cripto",
+                "comprar usdc",
+                "quero comprar",
             ],
             "swap": [
                 # English
-                "swap", "exchange", "trade", "convert",
-                "i want to swap", "let me swap", "can i swap",
-                "swap eth", "swap usdc", "swap btc",
+                "swap",
+                "exchange",
+                "trade",
+                "convert",
+                "i want to swap",
+                "let me swap",
+                "can i swap",
+                "swap eth",
+                "swap usdc",
+                "swap btc",
                 # Spanish
-                "cambiar", "intercambiar", "quiero cambiar",
+                "cambiar",
+                "intercambiar",
+                "quiero cambiar",
                 # Portuguese
-                "trocar", "quero trocar",
+                "trocar",
+                "quero trocar",
             ],
             "lending": [
                 # English
-                "lend", "deposit", "supply", "earn yield", "earn interest",
-                "i want to lend", "i want to deposit", "i want to supply",
-                "deposit usdc", "supply usdc", "lend usdc",
+                "lend",
+                "deposit",
+                "supply",
+                "earn yield",
+                "earn interest",
+                "i want to lend",
+                "i want to deposit",
+                "i want to supply",
+                "deposit usdc",
+                "supply usdc",
+                "lend usdc",
                 # Spanish
-                "depositar", "prestar", "quiero depositar",
+                "depositar",
+                "prestar",
+                "quiero depositar",
                 # Portuguese
-                "depositar", "emprestar", "quero depositar",
+                "depositar",
+                "emprestar",
+                "quero depositar",
             ],
             "transfer": [
                 # English
-                "send", "transfer", "send crypto", "transfer crypto",
-                "i want to send", "i want to transfer",
-                "send eth", "send usdc", "transfer to",
+                "send",
+                "transfer",
+                "send crypto",
+                "transfer crypto",
+                "i want to send",
+                "i want to transfer",
+                "send eth",
+                "send usdc",
+                "transfer to",
                 # Spanish
-                "enviar", "transferir", "quiero enviar",
+                "enviar",
+                "transferir",
+                "quiero enviar",
                 # Portuguese
-                "enviar", "transferir", "quero enviar",
+                "enviar",
+                "transferir",
+                "quero enviar",
             ],
             "money_market": [
                 # English
-                "compare rates", "money market", "best rates", "yield comparison",
-                "check rates", "show rates",
+                "compare rates",
+                "money market",
+                "best rates",
+                "yield comparison",
+                "check rates",
+                "show rates",
                 # Spanish
-                "comparar tasas", "mercado de dinero", "mejores tasas",
+                "comparar tasas",
+                "mercado de dinero",
+                "mejores tasas",
                 # Portuguese
-                "comparar taxas", "melhores taxas",
+                "comparar taxas",
+                "melhores taxas",
             ],
             "cashout": [
                 # English
-                "cashout", "cash out", "withdraw", "sell crypto", "offramp", "off-ramp",
-                "i want to cashout", "i want to sell", "convert to fiat",
+                "cashout",
+                "cash out",
+                "withdraw",
+                "sell crypto",
+                "offramp",
+                "off-ramp",
+                "i want to cashout",
+                "i want to sell",
+                "convert to fiat",
                 # Spanish
-                "retirar", "vender cripto", "quiero vender",
+                "retirar",
+                "vender cripto",
+                "quiero vender",
                 # Portuguese
-                "sacar", "vender cripto", "quero vender",
+                "sacar",
+                "vender cripto",
+                "quero vender",
             ],
         }
-        
+
         for workflow_type, keywords in workflow_keywords.items():
             for keyword in keywords:
                 # Check if message starts with keyword or contains it as a clear command
                 if message_lower.startswith(keyword) or message_lower == keyword:
-                    logger.info(f"🆕 Fresh workflow detected: {workflow_type} (keyword: {keyword})")
+                    logger.info(
+                        f"🆕 Fresh workflow detected: {workflow_type} (keyword: {keyword})"
+                    )
                     return True, workflow_type
                 # Also check "i want to X" patterns
-                if f"want to {keyword}" in message_lower or f"quiero {keyword}" in message_lower:
-                    logger.info(f"🆕 Fresh workflow detected: {workflow_type} (pattern: want to {keyword})")
+                if (
+                    f"want to {keyword}" in message_lower
+                    or f"quiero {keyword}" in message_lower
+                ):
+                    logger.info(
+                        f"🆕 Fresh workflow detected: {workflow_type} (pattern: want to {keyword})"
+                    )
                     return True, workflow_type
-        
+
         return False, None
-    
+
     def _has_pending_workflow(
         self,
         conversation_context: "ConversationContext",
     ) -> tuple[bool, str | None, dict | None]:
         """
         Check if there's a pending workflow in conversation history.
-        
+
         Returns:
             Tuple of (has_pending, workflow_name, workflow_state)
         """
         if not conversation_context.conversation_history:
             return False, None, None
-        
+
         # Check recent messages for pending workflow state
         for msg in reversed(conversation_context.conversation_history[-5:]):
             if isinstance(msg, dict) and msg.get("role") == "assistant":
                 metadata = msg.get("metadata", {})
                 workflow_state = metadata.get("workflow_state")
                 workflow_name = metadata.get("workflow_name")
-                
+
                 if workflow_state:
                     step = workflow_state.get("step", "")
                     # Workflow is pending if it's in confirm, fetch_data, or execute step
                     if step in ("confirm", "fetch_data", "execute"):
-                        logger.info(f"📋 Found pending workflow: {workflow_name}, step: {step}")
+                        logger.info(
+                            f"📋 Found pending workflow: {workflow_name}, step: {step}"
+                        )
                         return True, workflow_name, workflow_state
-                    
+
                 # Also check for execute_data (transaction ready for execution)
                 if metadata.get("execute_data"):
-                    logger.info(f"📋 Found pending execute_data in workflow: {workflow_name}")
+                    logger.info(
+                        f"📋 Found pending execute_data in workflow: {workflow_name}"
+                    )
                     return True, workflow_name, workflow_state
-        
+
         return False, None, None
-    
+
     def _is_workflow_continuation(
         self,
         message: str,
@@ -565,61 +658,102 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
     ) -> tuple[bool, str | None]:
         """
         Check if this message is a continuation of an existing workflow.
-        
+
         IMPORTANT: If user is starting a FRESH workflow (e.g., says "swap" while
         having a pending buy), this returns (False, None) so the old workflow
         is cancelled and the new one starts fresh.
-        
+
         Returns:
             Tuple of (is_continuation, workflow_name or None)
         """
         message_lower = message.lower().strip()
         logger.info(f"🔍 Checking workflow continuation for: '{message_lower}'")
-        
+
         # FIRST: Check if user is starting a fresh/new workflow
         # This takes priority - if user says "swap" while in buy flow, cancel buy and start swap
         is_fresh, fresh_workflow_type = self._detect_fresh_workflow_start(message)
-        has_pending, pending_workflow_name, _ = self._has_pending_workflow(conversation_context)
-        
+        has_pending, pending_workflow_name, _ = self._has_pending_workflow(
+            conversation_context
+        )
+
         # If user is starting a fresh workflow, route directly to it
         # This bypasses LLM planning for reliable routing
         if is_fresh:
             workflow_name = f"{fresh_workflow_type}_workflow"
             if has_pending:
                 # Normalize pending workflow name for comparison
-                pending_type = (pending_workflow_name or "").lower().replace("workflow", "").replace("_", "").strip()
-                
+                pending_type = (
+                    (pending_workflow_name or "")
+                    .lower()
+                    .replace("workflow", "")
+                    .replace("_", "")
+                    .strip()
+                )
+
                 if fresh_workflow_type != pending_type:
-                    logger.info(f"🔄 Fresh workflow '{fresh_workflow_type}' cancels pending '{pending_workflow_name}' - routing directly")
+                    logger.info(
+                        f"🔄 Fresh workflow '{fresh_workflow_type}' cancels pending '{pending_workflow_name}' - routing directly"
+                    )
                 else:
-                    logger.info(f"🔄 Restarting same workflow type '{fresh_workflow_type}' - routing directly")
+                    logger.info(
+                        f"🔄 Restarting same workflow type '{fresh_workflow_type}' - routing directly"
+                    )
             else:
                 logger.info(f"🆕 Fresh workflow detected - routing to {workflow_name}")
-            
+
             # Route directly to the detected workflow (bypasses LLM)
             return True, workflow_name
-        
+
         # Confirmation phrases in multiple languages
         confirmation_phrases = {
             # English
-            "yes", "y", "confirm", "confirmed", "proceed", "ok", "okay", "sure", "go ahead",
-            "do it", "execute", "approve",
+            "yes",
+            "y",
+            "confirm",
+            "confirmed",
+            "proceed",
+            "ok",
+            "okay",
+            "sure",
+            "go ahead",
+            "do it",
+            "execute",
+            "approve",
             # Spanish
-            "sí", "si", "confirmar", "confirmado", "proceder", "vale", "adelante",
-            "hazlo", "ejecutar", "aprobar",
-            # Portuguese  
-            "sim", "confirmar", "confirmado", "prosseguir", "ok", "fazer",
-            "executar", "aprovar",
+            "sí",
+            "si",
+            "confirmar",
+            "confirmado",
+            "proceder",
+            "vale",
+            "adelante",
+            "hazlo",
+            "ejecutar",
+            "aprobar",
+            # Portuguese
+            "sim",
+            "confirmar",
+            "confirmado",
+            "prosseguir",
+            "ok",
+            "fazer",
+            "executar",
+            "aprovar",
             # Chinese
-            "是", "确认", "好", "可以", "执行",
+            "是",
+            "确认",
+            "好",
+            "可以",
+            "执行",
         }
-        
+
         # Check if message is a simple confirmation
         is_confirmation = message_lower in confirmation_phrases or any(
-            message_lower.startswith(phrase + " ") or message_lower.endswith(" " + phrase)
+            message_lower.startswith(phrase + " ")
+            or message_lower.endswith(" " + phrase)
             for phrase in confirmation_phrases
         )
-        
+
         if conversation_context.conversation_history:
             # FIRST: Check the most recent assistant message's metadata for workflow_name
             # This is the most reliable indicator of which workflow is active
@@ -629,35 +763,46 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                     workflow_name = metadata.get("workflow_name")
                     workflow_state = metadata.get("workflow_state", {})
                     content = msg.get("content", "").lower()
-                    
+
                     if workflow_name:
                         # Normalize PascalCase to snake_case
                         import re
-                        normalized_name = re.sub(r'(?<!^)(?=[A-Z])', '_', workflow_name).lower()
-                        
+
+                        normalized_name = re.sub(
+                            r"(?<!^)(?=[A-Z])", "_", workflow_name
+                        ).lower()
+
                         # Check if this workflow is awaiting input (step is parse_request with data)
                         step = workflow_state.get("step", "")
                         data = workflow_state.get("data", {})
-                        
+
                         # Workflow is awaiting parameters if:
                         # 1. In parse_request step with some data (awaiting more input)
                         # 2. In fetch_data step (just fetched data, might need confirmation)
                         # 3. Content asks for input (amount, selection, etc.)
                         is_awaiting = (
-                            (step == "parse_request" and data) or
-                            step == "fetch_data" or
-                            any(phrase in content for phrase in [
-                                "enter the amount", "how much", "which", 
-                                "select", "enter", "💬", "examples:",
-                            ])
+                            (step == "parse_request" and data)
+                            or step == "fetch_data"
+                            or any(
+                                phrase in content
+                                for phrase in [
+                                    "enter the amount",
+                                    "how much",
+                                    "which",
+                                    "select",
+                                    "enter",
+                                    "💬",
+                                    "examples:",
+                                ]
+                            )
                         )
-                        
+
                         if is_awaiting:
                             # CRITICAL: Only continue workflow if user's message looks like a parameter
                             # Don't continue if user is asking something completely different
                             user_msg_lower = message.lower().strip()
                             user_msg_original = message.strip()
-                            
+
                             # Check if user message is a valid workflow continuation:
                             # - Numeric value (amount)
                             # - Confirmation words
@@ -666,27 +811,58 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                             # - Very short responses (1-2 words, likely selection)
                             is_parameter_like = (
                                 # Numeric (with or without decimals, optional $ prefix)
-                                re.match(r'^[\$]?\d+\.?\d*$', user_msg_lower) or
+                                re.match(r"^[\$]?\d+\.?\d*$", user_msg_lower)
+                                or
                                 # Confirmation words
-                                user_msg_lower in ("yes", "no", "confirm", "cancel", "sí", "sim", "não", "cancelar") or
+                                user_msg_lower
+                                in (
+                                    "yes",
+                                    "no",
+                                    "confirm",
+                                    "cancel",
+                                    "sí",
+                                    "sim",
+                                    "não",
+                                    "cancelar",
+                                )
+                                or
                                 # Token symbols (short uppercase words)
-                                re.match(r'^[a-z]{2,6}$', user_msg_lower) or
+                                re.match(r"^[a-z]{2,6}$", user_msg_lower)
+                                or
                                 # Menu selection (1, 2, 3, etc. or "option 1")
-                                re.match(r'^(option\s*)?\d$', user_msg_lower) or
+                                re.match(r"^(option\s*)?\d$", user_msg_lower)
+                                or
                                 # "all" for depositing entire balance
-                                user_msg_lower == "all" or
+                                user_msg_lower == "all"
+                                or
                                 # EVM wallet addresses (0x followed by 40 hex chars)
-                                re.match(r'^0x[a-fA-F0-9]{40}$', user_msg_original) or
+                                re.match(r"^0x[a-fA-F0-9]{40}$", user_msg_original)
+                                or
                                 # Solana wallet addresses (32-44 alphanumeric base58)
-                                re.match(r'^[1-9A-HJ-NP-Za-km-z]{32,44}$', user_msg_original)
+                                re.match(
+                                    r"^[1-9A-HJ-NP-Za-km-z]{32,44}$", user_msg_original
+                                )
                             )
-                            
+
                             # Check if user is asking a different question (not a parameter)
-                            is_different_intent = any(phrase in user_msg_lower for phrase in [
-                                "list", "show", "what", "how", "tell", "my", "portfolio",
-                                "holdings", "balance", "price", "help", "?",
-                            ])
-                            
+                            is_different_intent = any(
+                                phrase in user_msg_lower
+                                for phrase in [
+                                    "list",
+                                    "show",
+                                    "what",
+                                    "how",
+                                    "tell",
+                                    "my",
+                                    "portfolio",
+                                    "holdings",
+                                    "balance",
+                                    "price",
+                                    "help",
+                                    "?",
+                                ]
+                            )
+
                             if is_parameter_like and not is_different_intent:
                                 logger.info(
                                     f"🔄 Parameter-awaiting workflow from metadata: {normalized_name} "
@@ -698,17 +874,19 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                                     f"🔍 Workflow {normalized_name} awaiting input, but user message "
                                     f"'{user_msg_lower[:30]}' looks like a different intent - not continuing"
                                 )
-                    
+
                     # Only check the most recent assistant message
                     break
 
         if not is_confirmation:
             logger.info(f"🔍 Not a confirmation phrase, skipping workflow continuation")
             return False, None
-        
+
         logger.info(f"🔍 Detected confirmation phrase, checking history...")
-        logger.info(f"🔍 History length: {len(conversation_context.conversation_history) if conversation_context.conversation_history else 0}")
-        
+        logger.info(
+            f"🔍 History length: {len(conversation_context.conversation_history) if conversation_context.conversation_history else 0}"
+        )
+
         # Check conversation history for pending workflow
         # Note: conversation_history is in chronological order (oldest first)
         # We iterate in reverse to check newest messages first
@@ -716,7 +894,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             for msg in reversed(conversation_context.conversation_history[-10:]):
                 if isinstance(msg, dict):
                     metadata = msg.get("metadata", {})
-                    
+
                     # Check for workflow state
                     workflow_state = metadata.get("workflow_state")
                     if workflow_state and workflow_state.get("step") == "confirm":
@@ -725,30 +903,46 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                         # e.g., "LendingWorkflow" -> "lending_workflow"
                         if workflow_name:
                             import re
+
                             # Convert PascalCase to snake_case
-                            workflow_name = re.sub(r'(?<!^)(?=[A-Z])', '_', workflow_name).lower()
-                        logger.info(f"🔄 Found pending workflow continuation: {workflow_name}")
+                            workflow_name = re.sub(
+                                r"(?<!^)(?=[A-Z])", "_", workflow_name
+                            ).lower()
+                        logger.info(
+                            f"🔄 Found pending workflow continuation: {workflow_name}"
+                        )
                         return True, workflow_name
-                    
+
                     # Check for pending action (execute data in previous message)
                     content = msg.get("content", "")
-                    if content and any(phrase in content.lower() for phrase in [
-                        "ready to swap", "ready to deposit", "ready to buy",
-                        "listo para", "pronto para", "准备好了",
-                        "reply \"yes\"", "reply 'yes'", "responde \"sí\"",
-                    ]):
+                    if content and any(
+                        phrase in content.lower()
+                        for phrase in [
+                            "ready to swap",
+                            "ready to deposit",
+                            "ready to buy",
+                            "listo para",
+                            "pronto para",
+                            "准备好了",
+                            'reply "yes"',
+                            "reply 'yes'",
+                            'responde "sí"',
+                        ]
+                    ):
                         # Infer workflow from content
                         if "swap" in content.lower():
                             return True, "swap_workflow"
-                        elif "deposit" in content.lower() or "lending" in content.lower():
+                        elif (
+                            "deposit" in content.lower() or "lending" in content.lower()
+                        ):
                             return True, "lending_workflow"
                         elif "buy" in content.lower() or "purchase" in content.lower():
                             return True, "buy_workflow"
                         elif "transfer" in content.lower() or "send" in content.lower():
                             return True, "transfer_workflow"
-        
+
         return False, None
-    
+
     async def create_workflow_plan(
         self,
         conversation_id: "ConversationId",
@@ -758,20 +952,19 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
     ) -> "WorkflowPlan":
         """
         Create workflow plan with continuation support.
-        
+
         Overrides parent to check for workflow continuations first.
         If user is confirming a pending workflow, routes to same agent.
         """
         # Check for workflow continuation
         is_continuation, workflow_name = self._is_workflow_continuation(
-            message.value, 
-            conversation_context
+            message.value, conversation_context
         )
-        
+
         if is_continuation and workflow_name:
             # Route to the workflow agent that's awaiting confirmation
             from app.domain.enums.agent_type import AgentType
-            
+
             workflow_to_agent = {
                 "swap_workflow": AgentType.SWAP_WORKFLOW,
                 "lending_workflow": AgentType.LENDING_WORKFLOW,
@@ -781,33 +974,37 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 # Cashout maps to buy workflow for now (same fiat on/off ramp logic)
                 "cashout_workflow": AgentType.BUY_WORKFLOW,
             }
-            
+
             agent_type = workflow_to_agent.get(workflow_name)
             if not agent_type:
                 # Unknown workflow - let LLM decide
-                logger.warning(f"⚠️ Unknown workflow '{workflow_name}', falling back to LLM planning")
+                logger.warning(
+                    f"⚠️ Unknown workflow '{workflow_name}', falling back to LLM planning"
+                )
                 return await super().create_workflow_plan(
                     conversation_id=conversation_id,
                     message=message,
                     conversation_context=conversation_context,
                     available_agents=available_agents,
                 )
-            
-            logger.info(f"🔄 Continuing workflow {workflow_name} with agent {agent_type.value}")
-            
+
+            logger.info(
+                f"🔄 Continuing workflow {workflow_name} with agent {agent_type.value}"
+            )
+
             # Create a simple workflow plan that continues the existing workflow
             task = AgentTask(
                 agent_type=agent_type,
                 task_description=f"Continue {workflow_name} - user confirmed",
                 depends_on=[],
             )
-            
+
             return WorkflowPlan(
                 tasks=[task],
                 execution_order=[0],
                 estimated_time_seconds=5,
             )
-        
+
         # Otherwise, use normal workflow planning
         return await super().create_workflow_plan(
             conversation_id=conversation_id,
@@ -815,7 +1012,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             conversation_context=conversation_context,
             available_agents=available_agents,
         )
-    
+
     def _build_planning_prompt(
         self,
         message: MessageContent,
@@ -824,7 +1021,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
     ) -> str:
         """
         Build workflow planning prompt for authenticated users.
-        
+
         Extends base prompt with:
         - User wallet context
         - Real data access instructions
@@ -832,7 +1029,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         - Transaction preparation capabilities
         """
         agents_str = ", ".join([agent.value for agent in available_agents])
-        
+
         # Build conversation history context (keep minimal)
         context_section = ""
         if conversation_context.conversation_history:
@@ -845,25 +1042,31 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                     if content:
                         context_section += f"{role}: {content}\n"
                 context_section += "</context>\n"
-        
+
         # Build user context section for authenticated users
         user_context_section = ""
         if self._user_context or self._user_data_context or self._context_aware:
             user_context_section = "\n<user_profile>\n"
-            user_context_section += "User Status: AUTHENTICATED (can execute REAL transactions)\n"
-            
+            user_context_section += (
+                "User Status: AUTHENTICATED (can execute REAL transactions)\n"
+            )
+
             # Add context-aware classification if available
             if self._context_aware:
-                user_context_section += f"Portfolio State: {self._context_aware.portfolio_state}\n"
-                user_context_section += f"Activity Level: {self._context_aware.activity_level}\n"
+                user_context_section += (
+                    f"Portfolio State: {self._context_aware.portfolio_state}\n"
+                )
+                user_context_section += (
+                    f"Activity Level: {self._context_aware.activity_level}\n"
+                )
                 user_context_section += f"User Type: {self._context_aware.user_type}\n"
-                
+
                 # Add execution history summary
                 total_executions = (
-                    self._context_aware.swap_count +
-                    self._context_aware.buy_count +
-                    self._context_aware.lending_count +
-                    self._context_aware.money_market_count
+                    self._context_aware.swap_count
+                    + self._context_aware.buy_count
+                    + self._context_aware.lending_count
+                    + self._context_aware.money_market_count
                 )
                 if total_executions > 0:
                     user_context_section += f"Total Executions: {total_executions} ("
@@ -873,17 +1076,25 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                     if self._context_aware.buy_count:
                         exec_parts.append(f"{self._context_aware.buy_count} buys")
                     if self._context_aware.lending_count:
-                        exec_parts.append(f"{self._context_aware.lending_count} deposits")
+                        exec_parts.append(
+                            f"{self._context_aware.lending_count} deposits"
+                        )
                     user_context_section += ", ".join(exec_parts) + ")\n"
-                
+
                 # Add context-aware prompt enhancements
-                prompt_enhancements = self._context_aware.get_combined_prompt_enhancement()
+                prompt_enhancements = (
+                    self._context_aware.get_combined_prompt_enhancement()
+                )
                 if prompt_enhancements:
-                    user_context_section += f"\n⚠️ CONTEXT-AWARE INSTRUCTIONS:\n{prompt_enhancements}\n"
-            
+                    user_context_section += (
+                        f"\n⚠️ CONTEXT-AWARE INSTRUCTIONS:\n{prompt_enhancements}\n"
+                    )
+
             # Use loaded user data context if available
             if self._user_data_context:
-                user_context_section += self._user_data_context.to_context_string() + "\n"
+                user_context_section += (
+                    self._user_data_context.to_context_string() + "\n"
+                )
             elif self._user_context:
                 # Fallback to basic user context
                 if self._user_context.get("wallet_address"):
@@ -892,7 +1103,9 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 if self._user_context.get("portfolio_summary"):
                     portfolio = self._user_context["portfolio_summary"]
                     if portfolio.get("total_value_usd"):
-                        user_context_section += f"Portfolio Value: ${portfolio['total_value_usd']:,.2f}\n"
+                        user_context_section += (
+                            f"Portfolio Value: ${portfolio['total_value_usd']:,.2f}\n"
+                        )
                     if portfolio.get("top_holdings"):
                         holdings = portfolio["top_holdings"][:3]
                         if isinstance(holdings[0], dict):
@@ -901,10 +1114,12 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 if self._user_context.get("transaction_count"):
                     user_context_section += f"Transaction History: {self._user_context['transaction_count']} total\n"
                 if self._user_context.get("volume_30d"):
-                    user_context_section += f"30-Day Volume: ${self._user_context['volume_30d']:,.2f}\n"
-            
+                    user_context_section += (
+                        f"30-Day Volume: ${self._user_context['volume_30d']:,.2f}\n"
+                    )
+
             user_context_section += "</user_profile>\n"
-        
+
         return f"""You are a DeFi workflow router for AUTHENTICATED users. Route the CURRENT request only. JSON only.
 
 <request>{message.value}</request>
@@ -1165,7 +1380,7 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 </examples>
 
 Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"...","depends_on":[]}}]}}"""
-    
+
     async def execute_workflow(
         self,
         conversation_id: ConversationId,
@@ -1175,11 +1390,11 @@ Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"..."
     ) -> tuple[str, list[Any], list[dict[str, Any]]]:
         """
         Execute workflow with authenticated user context.
-        
+
         Injects user context into the conversation context before execution.
         User context (including balance state) is passed to agents so they can
         handle insufficient funds with helpful recommendations (not blocking).
-        
+
         Args:
             conversation_id: Conversation identifier
             workflow_plan: Workflow plan to execute
@@ -1189,26 +1404,30 @@ Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"..."
         # NOTE: Balance checking is done IN the workflow agents (swap, lending, money_market)
         # They show helpful recommendations when user has insufficient funds
         # We do NOT block here - agents handle it with context-aware messaging
-        
+
         # Inject user context into conversation context metadata
         if self._user_context and conversation_context.user_metadata:
             conversation_context.user_metadata.update(self._user_context)
         elif self._user_context:
             conversation_context.user_metadata = self._user_context.copy()
-        
+
         # Inject context_aware data for workflow agents to use
         # This enables agents to show personalized recommendations based on portfolio state
         if self._context_aware:
             if conversation_context.user_metadata is None:
                 conversation_context.user_metadata = {}
-            
+
             total_balance = float(self._context_aware.total_balance_usd or 0)
-            
+
             # For workflow agents (use direct properties)
-            conversation_context.user_metadata["portfolio_state"] = self._context_aware.portfolio_state
+            conversation_context.user_metadata["portfolio_state"] = (
+                self._context_aware.portfolio_state
+            )
             conversation_context.user_metadata["total_balance_usd"] = total_balance
-            conversation_context.user_metadata["has_connected_wallet"] = self._context_aware.has_connected_wallet
-            
+            conversation_context.user_metadata["has_connected_wallet"] = (
+                self._context_aware.has_connected_wallet
+            )
+
             # For non-workflow agents (wallet, portfolio, transaction_history)
             # These agents expect portfolio_summary dict with total_value_usd key
             conversation_context.user_metadata["portfolio_summary"] = {
@@ -1216,12 +1435,12 @@ Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"..."
                 "token_count": self._context_aware.token_count or 0,
                 "chain": self._context_aware.primary_chain,
             }
-            
+
             logger.debug(
                 f"Injected context_aware into workflow: portfolio={self._context_aware.portfolio_state}, "
                 f"balance=${total_balance:.2f}"
             )
-        
+
         # Execute using parent implementation with original_message
         return await super().execute_workflow(
             conversation_id=conversation_id,
@@ -1229,7 +1448,7 @@ Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"..."
             conversation_context=conversation_context,
             original_message=original_message,
         )
-    
+
     def _build_aggregation_message(
         self,
         workflow_plan: "WorkflowPlan",
@@ -1237,22 +1456,23 @@ Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"..."
     ) -> str:
         """
         Build aggregation message for authenticated users.
-        
+
         Override parent method to be more explicit about using ONLY agent data,
         preventing conversation history from polluting the response.
         """
         from app.domain.services.agent_squad.supervisor_coordinator import TaskStatus
         from app.domain.ports.agent_squad.agent_gateway import AgentResponse
-        
+
         # Get all completed tasks except the CHAT aggregator task
         other_tasks = [
-            task for task in workflow_plan.tasks
+            task
+            for task in workflow_plan.tasks
             if task.status == TaskStatus.COMPLETED and task != chat_task
         ]
-        
+
         if not other_tasks:
             return chat_task.task_description
-        
+
         # Build aggregation message - more explicit for authenticated users
         parts = [
             "CRITICAL: Your ONLY job is to aggregate the specialist agent responses below.",
@@ -1269,7 +1489,7 @@ Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"..."
             "Agent Responses (USE ONLY THIS DATA):",
             "",
         ]
-        
+
         for i, task in enumerate(other_tasks, 1):
             if isinstance(task.result, AgentResponse):
                 content = task.result.content or "(No response)"
@@ -1277,13 +1497,21 @@ Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"..."
                 content = task.result
             else:
                 content = str(task.result) if task.result else "(No response)"
-            
+
             # Skip authentication messages for authenticated users
-            if content and any(kw in content.lower() for kw in ["account required", "wallet required", "sign up", "create an account"]):
+            if content and any(
+                kw in content.lower()
+                for kw in [
+                    "account required",
+                    "wallet required",
+                    "sign up",
+                    "create an account",
+                ]
+            ):
                 continue
-            
+
             parts.append(f"--- Response from {task.agent_type.value.upper()} Agent ---")
             parts.append(content)
             parts.append("")
-        
+
         return "\n".join(parts)

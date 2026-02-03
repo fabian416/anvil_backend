@@ -32,18 +32,24 @@ class SentimentResponse(BaseModel):
     """Response model for sentiment analysis."""
 
     token_symbol: str = Field(..., description="Token symbol (e.g., ETH)")
-    overall_score: float = Field(..., ge=0, le=100, description="Overall sentiment score (0-100)")
+    overall_score: float = Field(
+        ..., ge=0, le=100, description="Overall sentiment score (0-100)"
+    )
     classification: str = Field(..., description="Sentiment classification")
     confidence: float = Field(..., ge=0, le=1, description="Confidence score (0-1)")
-    signal_strength: str = Field(..., description="Signal strength (strong/moderate/weak)")
+    signal_strength: str = Field(
+        ..., description="Signal strength (strong/moderate/weak)"
+    )
     timestamp: datetime = Field(..., description="Analysis timestamp")
-    
+
     # Source breakdown
     sources: dict = Field(..., description="Per-source sentiment breakdown")
     source_count: int = Field(..., description="Number of sources analyzed")
-    
+
     # Divergence analysis
-    has_divergence: bool = Field(..., description="Whether sources have divergent signals")
+    has_divergence: bool = Field(
+        ..., description="Whether sources have divergent signals"
+    )
     consensus: float = Field(..., ge=0, le=1, description="Consensus level (0-1)")
 
 
@@ -277,7 +283,9 @@ def create_sentiment_router() -> APIRouter:
         description="Compare sentiment analysis for multiple tokens",
     )
     async def compare_token_sentiment(
-        tokens: str = Query(..., description="Comma-separated token symbols (e.g., ETH,BTC,SOL)"),
+        tokens: str = Query(
+            ..., description="Comma-separated token symbols (e.g., ETH,BTC,SOL)"
+        ),
         hours: int = Query(24, ge=1, le=168, description="Hours of historical data"),
     ) -> dict:
         """Compare sentiment across multiple tokens.

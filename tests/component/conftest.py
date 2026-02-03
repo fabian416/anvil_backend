@@ -47,6 +47,7 @@ from tests.component.factories.chat_factories import (
 # Repository Fixtures (In-Memory)
 # ============================================================================
 
+
 @pytest.fixture
 def conversation_repository():
     """
@@ -86,6 +87,7 @@ def message_repository():
 # ============================================================================
 # Gateway Fixtures (Mocks)
 # ============================================================================
+
 
 @pytest.fixture
 def mock_llm_gateway():
@@ -145,6 +147,7 @@ def mock_intent_gateway():
 # Factory Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def conversation_factory():
     """
@@ -203,6 +206,7 @@ def user_factory():
 # ============================================================================
 # Pre-Populated Test Data Fixtures
 # ============================================================================
+
 
 @pytest_asyncio.fixture
 async def test_user(user_factory):
@@ -292,6 +296,7 @@ async def conversation_with_messages(
 # Component Test Utilities
 # ============================================================================
 
+
 class ComponentTestContext:
     """
     Helper for component tests.
@@ -363,7 +368,7 @@ class ComponentTestContext:
             msg = msg_factory.create(
                 conversation_id=conversation.id,
                 role=role,
-                content=f"Message {i+1}",
+                content=f"Message {i + 1}",
             )
             await self.message_repo.save(msg)
             messages.append(msg)
@@ -390,8 +395,9 @@ class ComponentTestContext:
         """
         messages = await self.message_repo.get_by_conversation(conversation_id)
         actual_count = len(messages)
-        assert actual_count == expected_count, \
+        assert actual_count == expected_count, (
             f"Expected {expected_count} messages, found {actual_count}"
+        )
 
     async def assert_last_message_content(
         self,
@@ -417,8 +423,9 @@ class ComponentTestContext:
         messages = await self.message_repo.get_by_conversation(conversation_id)
         assert len(messages) > 0, "No messages found"
         last_message = messages[-1]
-        assert last_message.content == expected_content, \
+        assert last_message.content == expected_content, (
             f"Expected '{expected_content}', got '{last_message.content}'"
+        )
 
 
 @pytest.fixture

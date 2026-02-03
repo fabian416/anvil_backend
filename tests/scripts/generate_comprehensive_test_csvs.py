@@ -3,6 +3,7 @@
 Generate comprehensive CSV test results by running real API calls through the test app.
 Covers: shortcuts, Hunter AI, ULTRA, Agent Squad, general questions, multi-step flows.
 """
+
 import asyncio
 import sys
 import os
@@ -11,8 +12,8 @@ from typing import List, Dict, Any
 from time import time
 
 # Setup path
-sys.path.insert(0, '/home/ubuntu/anvil_backend')
-os.chdir('/home/ubuntu/anvil_backend')
+sys.path.insert(0, "/home/ubuntu/anvil_backend")
+os.chdir("/home/ubuntu/anvil_backend")
 
 from httpx import AsyncClient, ASGITransport
 from app.setup.config.settings import load_settings, AppSettings
@@ -45,7 +46,7 @@ async def create_test_app():
     engine = create_engine(
         "postgresql+psycopg://postgres:anvil@localhost:5432/anvil_test",
         pool_pre_ping=True,
-        echo=False
+        echo=False,
     )
 
     # Create all tables from SQLAlchemy mappings
@@ -108,72 +109,59 @@ GUEST_TEST_QUERIES = [
     ("What is Ethereum?", "en", "NO"),
     ("What is DeFi?", "en", "NO"),
     ("What is USDC?", "en", "NO"),
-
     # === HUNTER AI - PRICE PREDICTIONS ===
     ("What is the price of Bitcoin?", "en", "NO"),
     ("How much is Ethereum?", "en", "NO"),
     ("ETH price", "en", "NO"),
     ("BTC price prediction", "en", "NO"),
     ("What are the prices of BTC and ETH?", "en", "NO"),
-
     # === HUNTER AI - SENTIMENT ANALYSIS ===
     ("What do people think about Bitcoin?", "en", "NO"),
     ("Bitcoin sentiment", "en", "NO"),
     ("ETH sentiment analysis", "en", "NO"),
-
     # === SHORTCUTS - LENDING ===
     ("Deposit USDC on Morpho", "en", "YES"),
     ("Show best lending vaults", "en", "NO"),
     ("Earn yield on my ETH", "en", "YES"),
     ("Best lending vaults", "en", "NO"),
-
     # === SHORTCUTS - SWAP ===
     ("Swap 100 USDC for ETH", "en", "YES"),
     ("Swap USDC from Ethereum to Base", "en", "YES"),
     ("Best swap rate for ETH to USDC", "en", "NO"),
     ("Swap BTC to ETH", "en", "YES"),
-
     # === SHORTCUTS - PORTFOLIO ===
     ("Show my portfolio", "en", "NO"),
     ("What tokens do I have?", "en", "NO"),
     ("List my holdings", "en", "NO"),
-
     # === SHORTCUTS - BALANCE ===
     ("What's my balance?", "en", "NO"),
     ("Check my balance", "en", "NO"),
     ("Show my USDC balance", "en", "NO"),
-
     # === SHORTCUTS - ACTIVITY ===
     ("Show my transactions", "en", "NO"),
     ("Recent activity", "en", "NO"),
     ("Transaction history", "en", "NO"),
-
     # === SHORTCUTS - RECEIVE ===
     ("I want to receive crypto", "en", "NO"),
     ("My wallet address", "en", "NO"),
     ("Give me my QR code", "en", "NO"),
-
     # === SHORTCUTS - BUY ===
     ("I want to buy crypto", "en", "YES"),
     ("Buy Bitcoin with card", "en", "YES"),
     ("How to buy ETH", "en", "YES"),
-
     # === SHORTCUTS - SEND ===
     ("Send crypto to a friend", "en", "YES"),
     ("Transfer ETH to another wallet", "en", "YES"),
     ("I want to send USDC", "en", "YES"),
-
     # === MULTI-LANGUAGE SUPPORT ===
     ("¿Cuál es el precio de Bitcoin?", "es", "NO"),
     ("O que é Ethereum?", "pt", "NO"),
     ("什么是比特币?", "zh", "NO"),
     ("Échanger 100 USDC contre ETH", "fr", "YES"),
-
     # === EDGE CASES ===
     ("What is UNKNOWNTOKEN123?", "en", "NO"),
     ("what is BITCOIN?", "en", "NO"),
     ("Waht is Etherem?", "en", "NO"),
-
     # === OUT OF SCOPE ===
     ("What's the weather today?", "en", "NO"),
     ("Tell me a joke", "en", "NO"),
@@ -185,70 +173,57 @@ AUTH_TEST_QUERIES = [
     ("What is Ethereum?", "en", "NO"),
     ("What is DeFi?", "en", "NO"),
     ("What is USDC?", "en", "NO"),
-
     # === HUNTER AI - PRICE PREDICTIONS ===
     ("What is the price of Bitcoin?", "en", "NO"),
     ("How much is Ethereum?", "en", "NO"),
     ("ETH price", "en", "NO"),
     ("BTC price prediction", "en", "NO"),
     ("What are the prices of BTC and ETH?", "en", "NO"),
-
     # === HUNTER AI - SENTIMENT ANALYSIS ===
     ("What do people think about Bitcoin?", "en", "NO"),
     ("Bitcoin sentiment", "en", "NO"),
     ("ETH sentiment analysis", "en", "NO"),
-
     # === SHORTCUTS - LENDING (MULTI-STEP) ===
     ("Deposit USDC on Morpho", "en", "YES"),
     ("Show best lending vaults", "en", "NO"),
     ("Earn yield on my ETH", "en", "YES"),
-
     # === SHORTCUTS - SWAP (MULTI-STEP) ===
     ("Swap 100 USDC for ETH", "en", "YES"),
     ("Swap USDC from Ethereum to Base", "en", "YES"),
     ("Best swap rate for ETH to USDC", "en", "NO"),
-
     # === SHORTCUTS - PORTFOLIO ===
     ("Show my portfolio", "en", "NO"),
     ("What tokens do I have?", "en", "NO"),
     ("List my holdings", "en", "NO"),
-
     # === SHORTCUTS - BALANCE ===
     ("What's my balance?", "en", "NO"),
     ("Check my balance", "en", "NO"),
     ("Show my USDC balance", "en", "NO"),
-
     # === SHORTCUTS - ACTIVITY ===
     ("Show my transactions", "en", "NO"),
     ("Recent activity", "en", "NO"),
     ("Transaction history", "en", "NO"),
-
     # === SHORTCUTS - RECEIVE ===
     ("I want to receive crypto", "en", "NO"),
     ("My wallet address", "en", "NO"),
     ("Give me my QR code", "en", "NO"),
-
     # === SHORTCUTS - BUY (MULTI-STEP) ===
     ("I want to buy crypto", "en", "YES"),
     ("Buy Bitcoin with card", "en", "YES"),
     ("How to buy ETH", "en", "YES"),
-
     # === SHORTCUTS - SEND (MULTI-STEP) ===
     ("Send crypto to a friend", "en", "YES"),
     ("Transfer ETH to another wallet", "en", "YES"),
     ("I want to send USDC", "en", "YES"),
-
     # === SHORTCUTS - MONEY MARKET ===
     ("Compare Aave vs Compound", "en", "NO"),
     ("Best money market rates for USDC", "en", "NO"),
     ("Compare lending rates for ETH", "en", "NO"),
-
     # === MULTI-LANGUAGE SUPPORT ===
     ("¿Cuál es el precio de Bitcoin?", "es", "NO"),
     ("O que é Ethereum?", "pt", "NO"),
     ("什么是比特币?", "zh", "NO"),
     ("Échanger 100 USDC contre ETH", "fr", "YES"),
-
     # === EDGE CASES ===
     ("What is UNKNOWNTOKEN123?", "en", "NO"),
     ("what is BITCOIN?", "en", "NO"),
@@ -260,9 +235,13 @@ async def run_guest_queries(app, container) -> List[Dict[str, Any]]:
     """Run guest queries and capture results."""
     results = []
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         for i, (query, language, is_multi_step) in enumerate(GUEST_TEST_QUERIES, 1):
-            print(f"[{i}/{len(GUEST_TEST_QUERIES)}] Guest: {query[:50]}... ({language})")
+            print(
+                f"[{i}/{len(GUEST_TEST_QUERIES)}] Guest: {query[:50]}... ({language})"
+            )
             try:
                 # Add delay between requests to avoid rate limiting
                 # Guest users: 20 msg/hour = 0.33/min = 180sec per msg
@@ -271,61 +250,60 @@ async def run_guest_queries(app, container) -> List[Dict[str, Any]]:
                     await asyncio.sleep(1.0)
 
                 response = await client.post(
-                    "/api/v1/guest/chat",
-                    json={"content": query, "language": language}
+                    "/api/v1/guest/chat", json={"content": query, "language": language}
                 )
 
                 if response.status_code in [200, 201]:
                     data = response.json()
-                    content = data.get('agent_message', {}).get('content', '')
+                    content = data.get("agent_message", {}).get("content", "")
                     # Truncate for CSV
                     if len(content) > 300:
                         content = content[:297] + "..."
 
                     results.append({
-                        'Type': 'query',
-                        'device': 'pytest',
-                        'is_multi_step': is_multi_step,
-                        'input_1': query,
-                        'output_1': content,
-                        'input_2': '',
-                        'output_2': '',
-                        'input_3': '',
-                        'output_3': '',
-                        'input_4': '',
-                        'output_4': '',
-                        'test_pass': 'PASS'
+                        "Type": "query",
+                        "device": "pytest",
+                        "is_multi_step": is_multi_step,
+                        "input_1": query,
+                        "output_1": content,
+                        "input_2": "",
+                        "output_2": "",
+                        "input_3": "",
+                        "output_3": "",
+                        "input_4": "",
+                        "output_4": "",
+                        "test_pass": "PASS",
                     })
                 else:
                     results.append({
-                        'Type': 'query',
-                        'device': 'pytest',
-                        'is_multi_step': is_multi_step,
-                        'input_1': query,
-                        'output_1': f'Error: HTTP {response.status_code}',
-                        'input_2': '',
-                        'output_2': '',
-                        'input_3': '',
-                        'output_3': '',
-                        'input_4': '',
-                        'output_4': '',
-                        'test_pass': 'FAIL'
+                        "Type": "query",
+                        "device": "pytest",
+                        "is_multi_step": is_multi_step,
+                        "input_1": query,
+                        "output_1": f"Error: HTTP {response.status_code}",
+                        "input_2": "",
+                        "output_2": "",
+                        "input_3": "",
+                        "output_3": "",
+                        "input_4": "",
+                        "output_4": "",
+                        "test_pass": "FAIL",
                     })
             except Exception as e:
                 print(f"Error: {e}")
                 results.append({
-                    'Type': 'query',
-                    'device': 'pytest',
-                    'is_multi_step': is_multi_step,
-                    'input_1': query,
-                    'output_1': f'Error: {str(e)}',
-                    'input_2': '',
-                    'output_2': '',
-                    'input_3': '',
-                    'output_3': '',
-                    'input_4': '',
-                    'output_4': '',
-                    'test_pass': 'FAIL'
+                    "Type": "query",
+                    "device": "pytest",
+                    "is_multi_step": is_multi_step,
+                    "input_1": query,
+                    "output_1": f"Error: {str(e)}",
+                    "input_2": "",
+                    "output_2": "",
+                    "input_3": "",
+                    "output_3": "",
+                    "input_4": "",
+                    "output_4": "",
+                    "test_pass": "FAIL",
                 })
 
     return results
@@ -344,7 +322,7 @@ async def run_auth_queries(app, container) -> List[Dict[str, Any]]:
     async_engine = create_async_engine(
         "postgresql+asyncpg://postgres:changethis@localhost:5432/anvil_test",
         pool_pre_ping=True,
-        echo=False
+        echo=False,
     )
     async_session_maker = sessionmaker(
         async_engine, class_=AsyncSession, expire_on_commit=False
@@ -365,21 +343,25 @@ async def run_auth_queries(app, container) -> List[Dict[str, Any]]:
                     "user_type": "premium",  # Use premium to avoid rate limits
                     "identifier": "1",  # Test user ID
                     "email": "test@example.com",
-                    "language": "en"
-                }
+                    "language": "en",
+                },
             )
             auth_user_id = result.scalar_one()
             await session.commit()
-            print(f"✓ Created premium user in database: {auth_user_id} (unlimited rate limits)")
+            print(
+                f"✓ Created premium user in database: {auth_user_id} (unlimited rate limits)"
+            )
         except Exception as e:
             print(f"  ⚠ Failed to create authenticated user: {e}")
             await session.rollback()
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         # Auth headers
         auth_headers = {
             "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ0ZXN0LXNlc3Npb24iLCJleHAiOjk5OTk5OTk5OTl9.test",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         # Create initial conversation
@@ -388,7 +370,7 @@ async def run_auth_queries(app, container) -> List[Dict[str, Any]]:
             resp = await client.post(
                 "/api/v1/conversations",
                 headers=auth_headers,
-                json={"title": "Comprehensive Test Conversation"}
+                json={"title": "Comprehensive Test Conversation"},
             )
             conversation_id = resp.json()["id"]
             print(f"✓ Created conversation: {conversation_id}")
@@ -405,7 +387,7 @@ async def run_auth_queries(app, container) -> List[Dict[str, Any]]:
                     resp = await client.post(
                         "/api/v1/conversations",
                         headers=auth_headers,
-                        json={"title": f"Test Conversation {i}"}
+                        json={"title": f"Test Conversation {i}"},
                     )
                     conversation_id = resp.json()["id"]
                     print(f"  ✓ Created new conversation: {conversation_id}")
@@ -424,60 +406,60 @@ async def run_auth_queries(app, container) -> List[Dict[str, Any]]:
                 response = await client.post(
                     f"/api/v1/conversations/{conversation_id}/messages",
                     headers=auth_headers,
-                    json={"content": query, "language": language}
+                    json={"content": query, "language": language},
                 )
 
                 if response.status_code in [200, 201]:
                     data = response.json()
-                    content = data.get('agent_message', {}).get('content', '')
+                    content = data.get("agent_message", {}).get("content", "")
                     # Truncate for CSV
                     if len(content) > 300:
                         content = content[:297] + "..."
 
                     results.append({
-                        'Type': 'query',
-                        'device': 'pytest',
-                        'is_multi_step': is_multi_step,
-                        'input_1': query,
-                        'output_1': content,
-                        'input_2': '',
-                        'output_2': '',
-                        'input_3': '',
-                        'output_3': '',
-                        'input_4': '',
-                        'output_4': '',
-                        'test_pass': 'PASS'
+                        "Type": "query",
+                        "device": "pytest",
+                        "is_multi_step": is_multi_step,
+                        "input_1": query,
+                        "output_1": content,
+                        "input_2": "",
+                        "output_2": "",
+                        "input_3": "",
+                        "output_3": "",
+                        "input_4": "",
+                        "output_4": "",
+                        "test_pass": "PASS",
                     })
                 else:
                     results.append({
-                        'Type': 'query',
-                        'device': 'pytest',
-                        'is_multi_step': is_multi_step,
-                        'input_1': query,
-                        'output_1': f'Error: HTTP {response.status_code}',
-                        'input_2': '',
-                        'output_2': '',
-                        'input_3': '',
-                        'output_3': '',
-                        'input_4': '',
-                        'output_4': '',
-                        'test_pass': 'FAIL'
+                        "Type": "query",
+                        "device": "pytest",
+                        "is_multi_step": is_multi_step,
+                        "input_1": query,
+                        "output_1": f"Error: HTTP {response.status_code}",
+                        "input_2": "",
+                        "output_2": "",
+                        "input_3": "",
+                        "output_3": "",
+                        "input_4": "",
+                        "output_4": "",
+                        "test_pass": "FAIL",
                     })
             except Exception as e:
                 print(f"Error: {e}")
                 results.append({
-                    'Type': 'query',
-                    'device': 'pytest',
-                    'is_multi_step': is_multi_step,
-                    'input_1': query,
-                    'output_1': f'Error: {str(e)}',
-                    'input_2': '',
-                    'output_2': '',
-                    'input_3': '',
-                    'output_3': '',
-                    'input_4': '',
-                    'output_4': '',
-                    'test_pass': 'FAIL'
+                    "Type": "query",
+                    "device": "pytest",
+                    "is_multi_step": is_multi_step,
+                    "input_1": query,
+                    "output_1": f"Error: {str(e)}",
+                    "input_2": "",
+                    "output_2": "",
+                    "input_3": "",
+                    "output_3": "",
+                    "input_4": "",
+                    "output_4": "",
+                    "test_pass": "FAIL",
                 })
 
     return results
@@ -485,37 +467,43 @@ async def run_auth_queries(app, container) -> List[Dict[str, Any]]:
 
 def write_csv(filename: str, results: List[Dict[str, Any]]):
     """Write results to CSV file."""
-    with open(filename, 'w', newline='', encoding='utf-8') as f:
+    with open(filename, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         # Header
         writer.writerow([
-            'Type', 'device', 'is multi step',
-            'input 1', 'output 1',
-            'input 2', 'output 2',
-            'input 3', 'output 3',
-            'input 4', 'output 4',
-            'test pass'
+            "Type",
+            "device",
+            "is multi step",
+            "input 1",
+            "output 1",
+            "input 2",
+            "output 2",
+            "input 3",
+            "output 3",
+            "input 4",
+            "output 4",
+            "test pass",
         ])
         # Data rows
         for result in results:
             writer.writerow([
-                result['Type'],
-                result['device'],
-                result['is_multi_step'],
-                result['input_1'],
-                result['output_1'],
-                result['input_2'],
-                result['output_2'],
-                result['input_3'],
-                result['output_3'],
-                result['input_4'],
-                result['output_4'],
-                result['test_pass']
+                result["Type"],
+                result["device"],
+                result["is_multi_step"],
+                result["input_1"],
+                result["output_1"],
+                result["input_2"],
+                result["output_2"],
+                result["input_3"],
+                result["output_3"],
+                result["input_4"],
+                result["output_4"],
+                result["test_pass"],
             ])
 
     # Count pass/fail
-    pass_count = sum(1 for r in results if r['test_pass'] == 'PASS')
-    fail_count = sum(1 for r in results if r['test_pass'] == 'FAIL')
+    pass_count = sum(1 for r in results if r["test_pass"] == "PASS")
+    fail_count = sum(1 for r in results if r["test_pass"] == "FAIL")
 
     print(f"✓ Written {len(results)} results to {filename}")
     print(f"  PASS: {pass_count}, FAIL: {fail_count}")
@@ -533,11 +521,13 @@ async def main():
 
     print(f"\n[1/2] Running Guest Queries ({len(GUEST_TEST_QUERIES)} tests)...")
     guest_results = await run_guest_queries(app, container)
-    write_csv('docs/output/guest.csv', guest_results)
+    write_csv("docs/output/guest.csv", guest_results)
 
-    print(f"\n[2/2] Running Authenticated User Queries ({len(AUTH_TEST_QUERIES)} tests)...")
+    print(
+        f"\n[2/2] Running Authenticated User Queries ({len(AUTH_TEST_QUERIES)} tests)..."
+    )
     auth_results = await run_auth_queries(app, container)
-    write_csv('docs/output/log-user.csv', auth_results)
+    write_csv("docs/output/log-user.csv", auth_results)
 
     # Close container
     await container.close()
@@ -559,7 +549,7 @@ async def main():
     engine = create_engine(
         "postgresql+psycopg://postgres:anvil@localhost:5432/anvil_test",
         pool_pre_ping=True,
-        echo=False
+        echo=False,
     )
     mapping_registry.metadata.drop_all(engine)
     engine.dispose()

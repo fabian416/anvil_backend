@@ -34,6 +34,7 @@ from app.presentation.http.schemas.user import UserResponse
 
 class ChangeRoleRequestBody(BaseModel):
     """Request body for changing a user's role."""
+
     email: str
     new_role: str
 

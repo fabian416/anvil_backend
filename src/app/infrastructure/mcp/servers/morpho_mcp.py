@@ -19,6 +19,7 @@ Integration Points:
 
 Feature Flag: mcp.servers.morpho_enabled
 """
+
 from typing import Dict, Any, List, Optional
 from decimal import Decimal
 
@@ -71,7 +72,9 @@ class MorphoMCPServer(MCPServer):
         self.settings = settings or MCPSettings()
 
         # Check if server is enabled
-        if not self.settings.enabled or not getattr(self.settings.servers, 'morpho_enabled', False):
+        if not self.settings.enabled or not getattr(
+            self.settings.servers, "morpho_enabled", False
+        ):
             raise MCPServerDisabledError(
                 "Morpho MCP server is disabled. "
                 "Enable with mcp.servers.morpho_enabled=true in config."
@@ -84,7 +87,7 @@ class MorphoMCPServer(MCPServer):
         )
 
         self.morpho_gateway = morpho_gateway
-        
+
         # Register tools
         self.setup_tools()
 
@@ -450,11 +453,17 @@ class MorphoMCPServer(MCPServer):
 
             # Filter by collateral
             if collateral_asset:
-                markets = [m for m in markets if m.collateral_asset.upper() == collateral_asset.upper()]
+                markets = [
+                    m
+                    for m in markets
+                    if m.collateral_asset.upper() == collateral_asset.upper()
+                ]
 
             # Filter by loan asset
             if loan_asset:
-                markets = [m for m in markets if m.loan_asset.upper() == loan_asset.upper()]
+                markets = [
+                    m for m in markets if m.loan_asset.upper() == loan_asset.upper()
+                ]
 
             # Limit results
             markets = markets[:limit]

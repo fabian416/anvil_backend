@@ -100,7 +100,9 @@ class TemplateRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_popular_templates(self, limit: int = 10) -> List[ConversationTemplate]:
+    async def get_popular_templates(
+        self, limit: int = 10
+    ) -> List[ConversationTemplate]:
         """
         Get most popular templates by usage count.
 

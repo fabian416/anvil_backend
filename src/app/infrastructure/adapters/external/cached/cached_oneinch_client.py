@@ -25,23 +25,23 @@ from app.infrastructure.cache.external_api_cache import ExternalAPICache
 class CachedOneInchClient(OneInchClient):
     """
     1inch client with Redis caching.
-    
+
     Important: This client is rate-limited (1 req/sec free tier).
     Caching significantly reduces the number of API calls.
-    
+
     Example:
         >>> cache = ExternalAPICache(redis_client)
         >>> client = CachedOneInchClient(api_key="...", cache=cache)
-        >>> 
+        >>>
         >>> # First call hits API
         >>> quote = await client.get_swap_quote(eth, usdc, amount)
-        >>> 
+        >>>
         >>> # Same quote within 30s hits cache
         >>> quote = await client.get_swap_quote(eth, usdc, amount)  # From cache!
     """
-    
+
     API_NAME = "oneinch"
-    
+
     def __init__(
         self,
         api_key: str,
@@ -50,7 +50,7 @@ class CachedOneInchClient(OneInchClient):
     ):
         """
         Initialize cached 1inch client.
-        
+
         Args:
             api_key: 1inch API key
             chain: Blockchain name (default: "ethereum")
@@ -58,7 +58,7 @@ class CachedOneInchClient(OneInchClient):
         """
         super().__init__(api_key, chain)
         self._cache = cache
-    
+
     async def get_swap_quote(
         self,
         from_token: str,
@@ -79,7 +79,7 @@ class CachedOneInchClient(OneInchClient):
             )
             if cached:
                 return SwapQuote(**cached)
-        
+
         # Fetch from API
         result = await super().get_swap_quote(
             from_token,
@@ -87,7 +87,7 @@ class CachedOneInchClient(OneInchClient):
             amount,
             slippage,
         )
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -99,9 +99,9 @@ class CachedOneInchClient(OneInchClient):
                 to_token=to_token.lower(),
                 amount=amount,
             )
-        
+
         return result
-    
+
     async def get_swap_data(
         self,
         from_token: str,
@@ -113,7 +113,7 @@ class CachedOneInchClient(OneInchClient):
     ) -> SwapTransaction:
         """
         Get swap transaction data (NOT cached).
-        
+
         Transaction data is unique per user address and
         time-sensitive, so it should not be cached.
         """
@@ -126,7 +126,7 @@ class CachedOneInchClient(OneInchClient):
             slippage,
             disable_estimate,
         )
-    
+
     async def get_tokens(self) -> list[Token]:
         """Get supported tokens with caching (15min TTL)."""
         if self._cache:
@@ -137,10 +137,10 @@ class CachedOneInchClient(OneInchClient):
             )
             if cached:
                 return [Token(**t) for t in cached]
-        
+
         # Fetch from API
         result = await super().get_tokens()
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -149,9 +149,9 @@ class CachedOneInchClient(OneInchClient):
                 [asdict(t) for t in result],
                 chain=self._chain,
             )
-        
+
         return result
-    
+
     async def get_token_price(
         self,
         token_address: str,
@@ -167,10 +167,10 @@ class CachedOneInchClient(OneInchClient):
             )
             if cached is not None:
                 return cached
-        
+
         # Fetch from API
         result = await super().get_token_price(token_address, vs_currency)
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -180,9 +180,9 @@ class CachedOneInchClient(OneInchClient):
                 chain=self._chain,
                 token=token_address.lower(),
             )
-        
+
         return result
-    
+
     async def get_protocols(self) -> list[dict]:
         """Get DEX protocols with caching (15min TTL)."""
         if self._cache:
@@ -193,10 +193,10 @@ class CachedOneInchClient(OneInchClient):
             )
             if cached:
                 return cached
-        
+
         # Fetch from API
         result = await super().get_protocols()
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -205,5 +205,5 @@ class CachedOneInchClient(OneInchClient):
                 result,
                 chain=self._chain,
             )
-        
+
         return result

@@ -1,4 +1,5 @@
 """Auto-assignment rule entity."""
+
 from datetime import datetime, UTC
 from typing import Dict, Optional, Any
 from uuid import UUID, uuid4
@@ -7,10 +8,10 @@ from uuid import UUID, uuid4
 class AssignmentRule:
     """
     Auto-assignment rule entity.
-    
+
     Defines conditions for automatically assigning users to projects.
     """
-    
+
     def __init__(
         self,
         id: UUID,
@@ -26,7 +27,7 @@ class AssignmentRule:
     ):
         """
         Initialize assignment rule.
-        
+
         Args:
             id: Rule identifier
             project_id: Project to assign to
@@ -49,7 +50,7 @@ class AssignmentRule:
         self.is_active = is_active
         self.created_at = created_at or datetime.now(UTC)
         self.updated_at = updated_at or datetime.now(UTC)
-    
+
     @classmethod
     def create(
         cls,
@@ -62,7 +63,7 @@ class AssignmentRule:
     ) -> "AssignmentRule":
         """
         Create a new assignment rule.
-        
+
         Args:
             project_id: Project to assign to
             rule_name: Human-readable rule name
@@ -70,7 +71,7 @@ class AssignmentRule:
             condition_params: Condition parameters
             priority: Rule priority
             auto_switch: Automatically switch active project
-        
+
         Returns:
             New assignment rule
         """
@@ -84,22 +85,22 @@ class AssignmentRule:
             auto_switch=auto_switch,
             is_active=True,
         )
-    
+
     def activate(self) -> None:
         """Activate the rule."""
         self.is_active = True
         self.updated_at = datetime.now(UTC)
-    
+
     def deactivate(self) -> None:
         """Deactivate the rule."""
         self.is_active = False
         self.updated_at = datetime.now(UTC)
-    
+
     def update_priority(self, priority: int) -> None:
         """Update rule priority."""
         self.priority = priority
         self.updated_at = datetime.now(UTC)
-    
+
     def update_params(self, condition_params: Dict[str, Any]) -> None:
         """Update condition parameters."""
         self.condition_params = condition_params
@@ -109,10 +110,10 @@ class AssignmentRule:
 class UserProjectAssignment:
     """
     User-project assignment entity.
-    
+
     Represents a user's assignment to a project.
     """
-    
+
     def __init__(
         self,
         id: UUID,
@@ -137,7 +138,7 @@ class UserProjectAssignment:
         self.assigned_at = assigned_at or datetime.now(UTC)
         self.last_active_at = last_active_at
         self.removed_at = removed_at
-    
+
     @classmethod
     def create_auto(
         cls,
@@ -155,7 +156,7 @@ class UserProjectAssignment:
             assignment_reason=reason,
             is_active=True,
         )
-    
+
     @classmethod
     def create_manual(
         cls,
@@ -174,7 +175,7 @@ class UserProjectAssignment:
             assignment_reason=reason,
             is_active=True,
         )
-    
+
     @classmethod
     def create_self(
         cls,
@@ -191,11 +192,11 @@ class UserProjectAssignment:
             assignment_reason="User selected",
             is_active=True,
         )
-    
+
     def touch(self) -> None:
         """Update last active timestamp."""
         self.last_active_at = datetime.now(UTC)
-    
+
     def remove(self) -> None:
         """Remove assignment."""
         self.is_active = False

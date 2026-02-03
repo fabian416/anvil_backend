@@ -255,9 +255,7 @@ class RedisOfflineQueueAdapter(OfflineQueueAdapter):
         except Exception:
             return 0
 
-    async def update_retry_count(
-        self, entry_id: UUID
-    ) -> Optional[OfflineQueueEntry]:
+    async def update_retry_count(self, entry_id: UUID) -> Optional[OfflineQueueEntry]:
         """
         Increment retry count for entry.
 

@@ -50,7 +50,10 @@ CANCELLATION_FLOWS = [
         "test_id": "cancel_transfer_001",
         "name": "Transfer Cancellation",
         "steps": [
-            {"input": "send 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e", "expect_agent": "transfer_workflow"},
+            {
+                "input": "send 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+                "expect_agent": "transfer_workflow",
+            },
             {"input": "cancel that", "expect_cancel_ack": True},
         ],
         "category": "multi_step",
@@ -87,7 +90,10 @@ CONTEXT_PRESERVATION_FLOWS = [
         "steps": [
             {"input": "Tell me about Ethereum staking", "expect_agent": ""},
             {"input": "What are the risks?", "expect_context": True},
-            {"input": "Compare staking rewards across validators", "expect_context": True},
+            {
+                "input": "Compare staking rewards across validators",
+                "expect_context": True,
+            },
         ],
         "category": "multi_step",
         "subcategory": "state_consistency",
@@ -124,32 +130,31 @@ RESOURCE_CLEANUP_TESTS = [
 @pytest.mark.integration
 class TestCancellationFlows:
     """Tests for workflow cancellation handling."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.reporter = csv_reporter
-    
+
     @pytest.mark.parametrize("flow", CANCELLATION_FLOWS, ids=lambda f: f["test_id"])
     async def test_cancellation_flow(self, flow: dict):
         """Test workflow cancellation is handled gracefully."""
         # Create fresh conversation for each flow
         conv_id = await create_conversation(
-            self.client,
-            title=f"Cancellation Test: {flow['name']}"
+            self.client, title=f"Cancellation Test: {flow['name']}"
         )
-        
+
         steps = flow["steps"]
         total_steps = len(steps)
-        
+
         for step_num, step in enumerate(steps, 1):
             response_data, response_time_ms = await send_message(
                 self.client,
                 conv_id,
                 step["input"],
             )
-            
+
             step_test_case = {
                 "input": step["input"],
                 "expected_agent": step.get("expect_agent", ""),
@@ -159,7 +164,7 @@ class TestCancellationFlows:
                 "step_number": step_num,
                 "total_steps": total_steps,
             }
-            
+
             result = create_test_result(
                 test_id=f"{flow['test_id']}_step{step_num}",
                 test_case=step_test_case,
@@ -167,22 +172,32 @@ class TestCancellationFlows:
                 response_time_ms=response_time_ms,
                 conversation_id=conv_id,
             )
-            
+
             self.reporter.add_result(result)
-            
-            assert not response_data.get("error"), f"Step {step_num} failed: {response_data}"
-            
+
+            assert not response_data.get("error"), (
+                f"Step {step_num} failed: {response_data}"
+            )
+
             # Verify cancellation acknowledgment
             if step.get("expect_cancel_ack"):
                 parsed = parse_response(response_data)
                 content = parsed.get("content", "").lower()
-                
+
                 # Should acknowledge cancellation gracefully
                 assert any(
                     word in content
-                    for word in ["cancel", "stopped", "aborted", "okay", "understood", "no problem", "alright"]
+                    for word in [
+                        "cancel",
+                        "stopped",
+                        "aborted",
+                        "okay",
+                        "understood",
+                        "no problem",
+                        "alright",
+                    ]
                 ), f"Step {step_num} should acknowledge cancellation: {content[:200]}"
-            
+
             await asyncio.sleep(0.3)
 
 
@@ -190,31 +205,32 @@ class TestCancellationFlows:
 @pytest.mark.integration
 class TestContextPreservation:
     """Tests for context preservation after cancellation."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.reporter = csv_reporter
-    
-    @pytest.mark.parametrize("flow", CONTEXT_PRESERVATION_FLOWS, ids=lambda f: f["test_id"])
+
+    @pytest.mark.parametrize(
+        "flow", CONTEXT_PRESERVATION_FLOWS, ids=lambda f: f["test_id"]
+    )
     async def test_context_preservation(self, flow: dict):
         """Test conversation context is preserved after cancellation."""
         conv_id = await create_conversation(
-            self.client,
-            title=f"Context Test: {flow['name']}"
+            self.client, title=f"Context Test: {flow['name']}"
         )
-        
+
         steps = flow["steps"]
         total_steps = len(steps)
-        
+
         for step_num, step in enumerate(steps, 1):
             response_data, response_time_ms = await send_message(
                 self.client,
                 conv_id,
                 step["input"],
             )
-            
+
             step_test_case = {
                 "input": step["input"],
                 "expected_agent": step.get("expect_agent", ""),
@@ -224,7 +240,7 @@ class TestContextPreservation:
                 "step_number": step_num,
                 "total_steps": total_steps,
             }
-            
+
             result = create_test_result(
                 test_id=f"{flow['test_id']}_step{step_num}",
                 test_case=step_test_case,
@@ -232,11 +248,13 @@ class TestContextPreservation:
                 response_time_ms=response_time_ms,
                 conversation_id=conv_id,
             )
-            
+
             self.reporter.add_result(result)
-            
-            assert not response_data.get("error"), f"Step {step_num} failed: {response_data}"
-            
+
+            assert not response_data.get("error"), (
+                f"Step {step_num} failed: {response_data}"
+            )
+
             await asyncio.sleep(0.3)
 
 
@@ -244,15 +262,17 @@ class TestContextPreservation:
 @pytest.mark.integration
 class TestResourceCleanup:
     """Tests for resource cleanup during workflow execution."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, conversation_id, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
-    
-    @pytest.mark.parametrize("test_case", RESOURCE_CLEANUP_TESTS, ids=lambda t: t["test_id"])
+
+    @pytest.mark.parametrize(
+        "test_case", RESOURCE_CLEANUP_TESTS, ids=lambda t: t["test_id"]
+    )
     async def test_resource_cleanup(self, test_case: dict):
         """Test that resources are properly cleaned up after workflow execution."""
         response_data, response_time_ms = await send_message(
@@ -260,7 +280,7 @@ class TestResourceCleanup:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -268,13 +288,15 @@ class TestResourceCleanup:
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "")
-        
+
         # Response should be substantial
-        assert len(content) > 50, f"Response too short for complex analysis: {content[:200]}"
+        assert len(content) > 50, (
+            f"Response too short for complex analysis: {content[:200]}"
+        )

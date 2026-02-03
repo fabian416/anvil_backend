@@ -96,24 +96,24 @@ Respond with JSON only, no additional text or markdown formatting.
 def format_conversation_history(messages: list, max_messages: int = 5) -> str:
     """
     Format conversation history for prompt.
-    
+
     Args:
         messages: List of Message entities
         max_messages: Maximum number of recent messages to include
-    
+
     Returns:
         Formatted conversation history string
     """
     if not messages:
         return "(No previous messages)"
-    
+
     recent_messages = messages[-max_messages:]
-    
+
     formatted = []
     for msg in recent_messages:
-        role = msg.role.value if hasattr(msg.role, 'value') else str(msg.role)
+        role = msg.role.value if hasattr(msg.role, "value") else str(msg.role)
         formatted.append(f"  {role.upper()}: {msg.content[:200]}")
-    
+
     return "\n".join(formatted)
 
 
@@ -125,19 +125,19 @@ def build_distillation_prompt(
 ) -> str:
     """
     Build the complete distillation prompt.
-    
+
     Args:
         user_message: The user's current message
         conversation_history: List of previous messages
         detected_language: Detected language code (e.g., "en", "es", "fr")
         project_context: Optional custom project context
-    
+
     Returns:
         Complete formatted prompt
     """
     context = project_context or PROJECT_CONTEXT_TEMPLATE
     history = format_conversation_history(conversation_history)
-    
+
     return DISTILLATION_PROMPT_TEMPLATE.format(
         project_context=context.strip(),
         conversation_history=history,

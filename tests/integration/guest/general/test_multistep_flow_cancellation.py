@@ -16,7 +16,9 @@ Ensures proper user experience and state management.
 import pytest
 
 # Skip - tests require specific multi-step flow states
-pytestmark = pytest.mark.skip(reason="Tests require proper LLM mock for multi-step flows")
+pytestmark = pytest.mark.skip(
+    reason="Tests require proper LLM mock for multi-step flows"
+)
 from httpx import AsyncClient
 from fastapi import status
 import json
@@ -37,12 +39,14 @@ class TestSwapFlowCancellation:
     """Test cancelling swap flows at various steps."""
 
     @pytest.mark.llm_validation
-    async def test_cancel_swap_via_explicit_keyword(self, client: AsyncClient, llm_validator):
+    async def test_cancel_swap_via_explicit_keyword(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test explicit cancellation using 'cancel' keyword."""
         # Start a swap-related conversation
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "I want to swap tokens", "language": "en"}
+            json={"content": "I want to swap tokens", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -56,8 +60,7 @@ class TestSwapFlowCancellation:
 
         # Try to cancel
         response2 = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "cancel", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "cancel", "language": "en"}
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -72,16 +75,14 @@ class TestSwapFlowCancellation:
         """Test cancellation using 'never mind' phrase."""
         # Start swap intent
         response1 = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "help me swap ETH", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "help me swap ETH", "language": "en"}
         )
 
         assert response1.status_code == status.HTTP_200_OK
 
         # Cancel with "never mind"
         response2 = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "never mind", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "never mind", "language": "en"}
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -94,12 +95,14 @@ class TestSwapFlowCancellation:
         agent_response = data2["agent_message"]["content"]
 
     @pytest.mark.llm_validation
-    async def test_swap_flow_topic_change_to_query(self, client: AsyncClient, llm_validator):
+    async def test_swap_flow_topic_change_to_query(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test implicit cancellation when topic changes from swap to query."""
         # Start swap discussion
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "I want to swap some tokens", "language": "en"}
+            json={"content": "I want to swap some tokens", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -107,7 +110,7 @@ class TestSwapFlowCancellation:
         # Change topic completely to a query
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "what's the current BTC price?", "language": "en"}
+            json={"content": "what's the current BTC price?", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -121,16 +124,19 @@ class TestSwapFlowCancellation:
         # Extract agent response for validation
         agent_response = data2["agent_message"]["content"]
 
+
 class TestLendingFlowCancellation:
     """Test cancelling lending flows at various steps."""
 
     @pytest.mark.llm_validation
-    async def test_cancel_lending_via_stop_keyword(self, client: AsyncClient, llm_validator):
+    async def test_cancel_lending_via_stop_keyword(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test cancelling lending flow with 'stop' command."""
         # Start lending conversation
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "I want to lend my USDC", "language": "en"}
+            json={"content": "I want to lend my USDC", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -146,19 +152,20 @@ class TestLendingFlowCancellation:
         else:
             # If discussing lending, try to cancel
             response2 = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": "stop", "language": "en"}
+                "/api/v1/guest/chat", json={"content": "stop", "language": "en"}
             )
 
             assert response2.status_code == status.HTTP_200_OK
 
     @pytest.mark.llm_validation
-    async def test_cancel_lending_before_protocol_selection(self, client: AsyncClient, llm_validator):
+    async def test_cancel_lending_before_protocol_selection(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test cancelling lending flow before protocol selection."""
         # Ask about lending
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "how do I lend tokens?", "language": "en"}
+            json={"content": "how do I lend tokens?", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -166,7 +173,7 @@ class TestLendingFlowCancellation:
         # Cancel before proceeding
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "actually, cancel that", "language": "en"}
+            json={"content": "actually, cancel that", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -179,12 +186,14 @@ class TestLendingFlowCancellation:
         agent_response = data2["agent_message"]["content"]
 
     @pytest.mark.llm_validation
-    async def test_lending_flow_implicit_cancel_via_topic_shift(self, client: AsyncClient, llm_validator):
+    async def test_lending_flow_implicit_cancel_via_topic_shift(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test implicit cancellation when topic shifts from lending."""
         # Start lending inquiry
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "tell me about lending on Aave", "language": "en"}
+            json={"content": "tell me about lending on Aave", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -192,7 +201,7 @@ class TestLendingFlowCancellation:
         # Shift to completely different topic
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "what agents do you have?", "language": "en"}
+            json={"content": "what agents do you have?", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -204,16 +213,22 @@ class TestLendingFlowCancellation:
         # Extract agent response for validation
         agent_response = data2["agent_message"]["content"]
 
+
 class TestCompoundIntentCancellation:
     """Test cancelling compound intents (multiple sub-intents)."""
 
     @pytest.mark.llm_validation
-    async def test_compound_intent_full_cancellation(self, client: AsyncClient, llm_validator):
+    async def test_compound_intent_full_cancellation(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test cancelling entire compound intent before execution."""
         # Complex multi-step request
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "I want to swap ETH for USDC then lend it", "language": "en"}
+            json={
+                "content": "I want to swap ETH for USDC then lend it",
+                "language": "en",
+            },
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -224,7 +239,7 @@ class TestCompoundIntentCancellation:
 
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "cancel everything", "language": "en"}
+            json={"content": "cancel everything", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -234,12 +249,17 @@ class TestCompoundIntentCancellation:
         agent_response = data2["agent_message"]["content"]
 
     @pytest.mark.llm_validation
-    async def test_multi_action_intent_cancellation(self, client: AsyncClient, llm_validator):
+    async def test_multi_action_intent_cancellation(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test cancelling multi-action intents."""
         # Request with multiple actions
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "check my portfolio and show trading signals", "language": "en"}
+            json={
+                "content": "check my portfolio and show trading signals",
+                "language": "en",
+            },
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -252,16 +272,19 @@ class TestCompoundIntentCancellation:
         # Extract agent response for validation
         agent_response = data1["agent_message"]["content"]
 
+
 class TestFlowStateCleanup:
     """Test that cancellation properly cleans up conversation state."""
 
     @pytest.mark.llm_validation
-    async def test_cancelled_flow_allows_new_conversation(self, client: AsyncClient, llm_validator):
+    async def test_cancelled_flow_allows_new_conversation(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test user can start fresh conversation after cancellation."""
         # Start a flow
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "I want to do a swap", "language": "en"}
+            json={"content": "I want to do a swap", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -269,8 +292,7 @@ class TestFlowStateCleanup:
 
         # Cancel
         response2 = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "cancel", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "cancel", "language": "en"}
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -278,7 +300,7 @@ class TestFlowStateCleanup:
         # Start completely new conversation topic
         response3 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "what can you help me with?", "language": "en"}
+            json={"content": "what can you help me with?", "language": "en"},
         )
 
         assert response3.status_code == status.HTTP_200_OK
@@ -292,12 +314,13 @@ class TestFlowStateCleanup:
         agent_response = data3["agent_message"]["content"]
 
     @pytest.mark.llm_validation
-    async def test_multiple_cancellations_handled_gracefully(self, client: AsyncClient, llm_validator):
+    async def test_multiple_cancellations_handled_gracefully(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test multiple consecutive cancellations don't cause issues."""
         # Send cancel without any active flow
         response1 = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "cancel", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "cancel", "language": "en"}
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -308,8 +331,7 @@ class TestFlowStateCleanup:
 
         # Send another cancel
         response2 = await client.post(
-            "/api/v1/guest/chat",
-            json={"content": "stop", "language": "en"}
+            "/api/v1/guest/chat", json={"content": "stop", "language": "en"}
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -318,16 +340,19 @@ class TestFlowStateCleanup:
         # Extract agent response for validation
         agent_response = data2["agent_message"]["content"]
 
+
 class TestTopicChangeDetection:
     """Test detection of topic changes and implicit flow cancellation."""
 
     @pytest.mark.llm_validation
-    async def test_topic_change_from_execution_to_query(self, client: AsyncClient, llm_validator):
+    async def test_topic_change_from_execution_to_query(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test topic change from execution intent to informational query."""
         # Start execution intent (swap)
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "help me swap tokens", "language": "en"}
+            json={"content": "help me swap tokens", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -335,7 +360,7 @@ class TestTopicChangeDetection:
         # Shift to informational query
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "what is gas optimization?", "language": "en"}
+            json={"content": "what is gas optimization?", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -346,12 +371,14 @@ class TestTopicChangeDetection:
         # Response should be about gas, not continuing swap flow
 
     @pytest.mark.llm_validation
-    async def test_topic_change_preserves_conversation_context(self, client: AsyncClient, llm_validator):
+    async def test_topic_change_preserves_conversation_context(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test topic change preserves some conversation context."""
         # Discuss ETH
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "tell me about Ethereum", "language": "en"}
+            json={"content": "tell me about Ethereum", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -359,7 +386,7 @@ class TestTopicChangeDetection:
         # Ask related question with pronoun
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "what's its current price?", "language": "en"}
+            json={"content": "what's its current price?", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -372,12 +399,14 @@ class TestTopicChangeDetection:
         agent_response = data2["agent_message"]["content"]
 
     @pytest.mark.llm_validation
-    async def test_topic_change_detection_threshold(self, client: AsyncClient, llm_validator):
+    async def test_topic_change_detection_threshold(
+        self, client: AsyncClient, llm_validator
+    ):
         """Test that minor topic shifts don't trigger cancellation."""
         # Talk about trading
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "I'm interested in trading", "language": "en"}
+            json={"content": "I'm interested in trading", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -385,7 +414,7 @@ class TestTopicChangeDetection:
         # Related but slightly different topic (still trading domain)
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "what are trading signals?", "language": "en"}
+            json={"content": "what are trading signals?", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -397,33 +426,27 @@ class TestTopicChangeDetection:
         # Extract agent response for validation
         agent_response = data2["agent_message"]["content"]
 
+
 class TestCancellationKeywords:
     """Test various cancellation keywords and phrases."""
 
     @pytest.mark.llm_validation
     async def test_cancel_keyword_variations(self, client: AsyncClient, llm_validator):
         """Test different cancellation keywords work."""
-        cancellation_phrases = [
-            "cancel",
-            "stop",
-            "never mind",
-            "forget it",
-            "abort"
-        ]
+        cancellation_phrases = ["cancel", "stop", "never mind", "forget it", "abort"]
 
         for phrase in cancellation_phrases:
             # Start a conversation
             response1 = await client.post(
                 "/api/v1/guest/chat",
-                json={"content": "I want to do a swap", "language": "en"}
+                json={"content": "I want to do a swap", "language": "en"},
             )
 
             assert response1.status_code == status.HTTP_200_OK
 
             # Try cancellation phrase
             response2 = await client.post(
-                "/api/v1/guest/chat",
-                json={"content": phrase, "language": "en"}
+                "/api/v1/guest/chat", json={"content": phrase, "language": "en"}
             )
 
             # Should handle gracefully (not error)

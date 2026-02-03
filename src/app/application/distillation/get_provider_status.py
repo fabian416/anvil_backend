@@ -1,6 +1,7 @@
 """
 Get provider status interactor.
 """
+
 from datetime import datetime, UTC
 from typing import List, Optional
 from dataclasses import dataclass
@@ -11,6 +12,7 @@ from app.application.distillation.request_distillator import RequestDistillator
 @dataclass
 class ProviderStatus:
     """Provider status data."""
+
     provider: str
     healthy: bool
     latency_ms: Optional[float]
@@ -21,27 +23,27 @@ class ProviderStatus:
 class GetProviderStatus:
     """
     Get provider status interactor.
-    
+
     Checks health of distillation providers.
     """
-    
+
     def __init__(self, distillator: RequestDistillator):
         """Initialize interactor."""
         self._distillator = distillator
-    
+
     async def execute(self) -> List[ProviderStatus]:
         """
         Get provider status.
-        
+
         Returns:
             List of provider statuses
         """
         # Check health of both providers
         health = await self._distillator.check_health()
-        
+
         # Extract provider statuses
         statuses = []
-        
+
         if "primary_healthy" in health:
             statuses.append(
                 ProviderStatus(
@@ -52,7 +54,7 @@ class GetProviderStatus:
                     last_check=datetime.now(UTC),
                 )
             )
-        
+
         if "fallback_healthy" in health:
             statuses.append(
                 ProviderStatus(
@@ -63,5 +65,5 @@ class GetProviderStatus:
                     last_check=datetime.now(UTC),
                 )
             )
-        
+
         return statuses

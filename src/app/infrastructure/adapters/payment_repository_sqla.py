@@ -50,7 +50,9 @@ class SqlaPaymentRepository(PaymentRepository):
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
 
-    async def find_pending_for_subscription_user(self, *, subscription_user_id: int) -> dict | None:
+    async def find_pending_for_subscription_user(
+        self, *, subscription_user_id: int
+    ) -> dict | None:
         try:
             table = mapping_registry.metadata.tables["payments"]  # type: ignore
             stmt: Select = select(table).where(
@@ -68,15 +70,21 @@ class SqlaPaymentRepository(PaymentRepository):
         try:
             table = mapping_registry.metadata.tables["payments"]  # type: ignore
             await self._session.execute(
-                table.update().where(table.c.id == id_).values(status=status, updated_at=datetime.now(UTC))
+                table.update()
+                .where(table.c.id == id_)
+                .values(status=status, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
 
-    async def list_by_subscription_user(self, *, subscription_user_id: int) -> list[dict]:
+    async def list_by_subscription_user(
+        self, *, subscription_user_id: int
+    ) -> list[dict]:
         try:
             table = mapping_registry.metadata.tables["payments"]  # type: ignore
-            stmt: Select = select(table).where(table.c.subscription_user_id == subscription_user_id)
+            stmt: Select = select(table).where(
+                table.c.subscription_user_id == subscription_user_id
+            )
             rows = (await self._session.execute(stmt)).mappings().all()
             return [dict(r) for r in rows]
         except SQLAlchemyError as error:
@@ -86,12 +94,16 @@ class SqlaPaymentRepository(PaymentRepository):
         try:
             table = mapping_registry.metadata.tables["payments"]  # type: ignore
             await self._session.execute(
-                table.update().where(table.c.id == id_).values(data_json=data_json, updated_at=datetime.now(UTC))
+                table.update()
+                .where(table.c.id == id_)
+                .values(data_json=data_json, updated_at=datetime.now(UTC))
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
 
-    async def read_by_user_paginated(self, *, user_id: int, offset: int, limit: int) -> list[dict]:
+    async def read_by_user_paginated(
+        self, *, user_id: int, offset: int, limit: int
+    ) -> list[dict]:
         try:
             table = mapping_registry.metadata.tables["payments"]  # type: ignore
             stmt: Select = (
@@ -131,9 +143,11 @@ class SqlaPaymentRepository(PaymentRepository):
                 .returning(table.c.id)
             )
             new_id = int(result.scalar_one())
-            row = (await self._session.execute(select(table).where(table.c.id == new_id))).mappings().first()
+            row = (
+                (await self._session.execute(select(table).where(table.c.id == new_id)))
+                .mappings()
+                .first()
+            )
             return dict(row) if row else {"id": new_id}
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
-
-

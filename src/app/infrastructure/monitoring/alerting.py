@@ -683,14 +683,10 @@ class AlertManager:
             try:
                 success = await channel.send_alert(alert)
                 if not success:
-                    logger.error(
-                        f"Failed to send alert via {type(channel).__name__}"
-                    )
+                    logger.error(f"Failed to send alert via {type(channel).__name__}")
 
             except Exception as e:
-                logger.error(
-                    f"Error sending alert via {type(channel).__name__}: {e}"
-                )
+                logger.error(f"Error sending alert via {type(channel).__name__}: {e}")
 
     def resolve_alert(self, rule_name: str) -> bool:
         """

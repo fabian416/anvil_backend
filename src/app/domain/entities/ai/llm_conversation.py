@@ -1,6 +1,7 @@
 """
 LLM Conversation entity.
 """
+
 from dataclasses import dataclass
 from typing import Optional
 from decimal import Decimal
@@ -13,13 +14,16 @@ from app.domain.enums.ai.llm_provider import LLMProvider
 from app.domain.enums.ai.llm_status import LLMStatus
 from app.domain.value_objects.created_at import CreatedAt
 
+
 @dataclass(frozen=True, repr=False)
 class LLMConversationId(ValueObject):
     value: int
 
+
 @dataclass(frozen=True, repr=False)
 class ModelId(ValueObject):
     value: int
+
 
 @dataclass(eq=False, kw_only=True)
 class LLMConversation(Entity[LLMConversationId]):

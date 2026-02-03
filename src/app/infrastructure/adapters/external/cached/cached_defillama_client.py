@@ -26,33 +26,33 @@ from app.infrastructure.cache.external_api_cache import ExternalAPICache
 class CachedDefiLlamaClient(DefiLlamaClient):
     """
     DeFiLlama client with Redis caching.
-    
+
     DeFiLlama is a free API with no strict rate limits,
     but caching improves response times significantly.
-    
+
     Example:
         >>> cache = ExternalAPICache(redis_client)
         >>> client = CachedDefiLlamaClient(cache=cache)
-        >>> 
+        >>>
         >>> # First call hits API
         >>> protocols = await client.get_all_protocols()
-        >>> 
+        >>>
         >>> # Subsequent calls hit cache
         >>> protocols = await client.get_all_protocols()  # From cache!
     """
-    
+
     API_NAME = "defillama"
-    
+
     def __init__(self, cache: Optional[ExternalAPICache] = None):
         """
         Initialize cached DeFiLlama client.
-        
+
         Args:
             cache: External API cache instance
         """
         super().__init__()
         self._cache = cache
-    
+
     async def get_all_protocols(self) -> list[Protocol]:
         """Get all DeFi protocols with caching (5min TTL)."""
         if self._cache:
@@ -62,10 +62,10 @@ class CachedDefiLlamaClient(DefiLlamaClient):
             )
             if cached:
                 return [Protocol(**p) for p in cached]
-        
+
         # Fetch from API
         result = await super().get_all_protocols()
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -73,9 +73,9 @@ class CachedDefiLlamaClient(DefiLlamaClient):
                 "protocols",
                 [asdict(p) for p in result],
             )
-        
+
         return result
-    
+
     async def get_protocol_tvl(self, protocol: str) -> ProtocolTVL:
         """Get protocol TVL with caching (5min TTL)."""
         if self._cache:
@@ -86,10 +86,10 @@ class CachedDefiLlamaClient(DefiLlamaClient):
             )
             if cached:
                 return ProtocolTVL(**cached)
-        
+
         # Fetch from API
         result = await super().get_protocol_tvl(protocol)
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -98,9 +98,9 @@ class CachedDefiLlamaClient(DefiLlamaClient):
                 asdict(result),
                 protocol=protocol,
             )
-        
+
         return result
-    
+
     async def get_protocol_yields(
         self,
         protocol: str | None = None,
@@ -116,10 +116,10 @@ class CachedDefiLlamaClient(DefiLlamaClient):
             )
             if cached:
                 return [YieldData(**y) for y in cached]
-        
+
         # Fetch from API
         result = await super().get_protocol_yields(protocol, chain)
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -129,9 +129,9 @@ class CachedDefiLlamaClient(DefiLlamaClient):
                 protocol=protocol or "all",
                 chain=chain or "all",
             )
-        
+
         return result
-    
+
     async def get_chain_tvl(self, chain: str | None = None) -> list[ChainTVL]:
         """Get chain TVL with caching (5min TTL)."""
         if self._cache:
@@ -142,10 +142,10 @@ class CachedDefiLlamaClient(DefiLlamaClient):
             )
             if cached:
                 return [ChainTVL(**c) for c in cached]
-        
+
         # Fetch from API
         result = await super().get_chain_tvl(chain)
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -154,9 +154,9 @@ class CachedDefiLlamaClient(DefiLlamaClient):
                 [asdict(c) for c in result],
                 chain=chain or "all",
             )
-        
+
         return result
-    
+
     async def get_stablecoin_dominance(self) -> dict[str, float]:
         """Get stablecoin market share with caching (2min TTL)."""
         if self._cache:
@@ -166,10 +166,10 @@ class CachedDefiLlamaClient(DefiLlamaClient):
             )
             if cached:
                 return cached
-        
+
         # Fetch from API
         result = await super().get_stablecoin_dominance()
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -177,9 +177,9 @@ class CachedDefiLlamaClient(DefiLlamaClient):
                 "stablecoins",
                 result,
             )
-        
+
         return result
-    
+
     async def get_fees_revenue(self, protocol: str) -> dict[str, float]:
         """Get protocol fees/revenue with caching (1h TTL)."""
         if self._cache:
@@ -190,10 +190,10 @@ class CachedDefiLlamaClient(DefiLlamaClient):
             )
             if cached:
                 return cached
-        
+
         # Fetch from API
         result = await super().get_fees_revenue(protocol)
-        
+
         # Cache result
         if self._cache:
             await self._cache.set(
@@ -202,5 +202,5 @@ class CachedDefiLlamaClient(DefiLlamaClient):
                 result,
                 protocol=protocol,
             )
-        
+
         return result

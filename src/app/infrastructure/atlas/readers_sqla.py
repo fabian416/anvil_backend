@@ -2,7 +2,11 @@ from sqlalchemy import Select, and_, func, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.application.atlas.ports import CityReader, CountryReader
-from app.application.atlas.query_models import CityQueryModel, CountryQueryModel, StateQueryModel
+from app.application.atlas.query_models import (
+    CityQueryModel,
+    CountryQueryModel,
+    StateQueryModel,
+)
 from app.infrastructure.adapters.constants import DB_QUERY_FAILED
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.exceptions.gateway import ReaderError
@@ -41,9 +45,13 @@ class SqlaCountryReader(CountryReader):
             if region:
                 where.append(func.lower(Countries.c.region).like(f"%{region.lower()}%"))
             if subregion:
-                where.append(func.lower(Countries.c.subregion).like(f"%{subregion.lower()}%"))
+                where.append(
+                    func.lower(Countries.c.subregion).like(f"%{subregion.lower()}%")
+                )
             if currency:
-                where.append(func.lower(Countries.c.currency).like(f"%{currency.lower()}%"))
+                where.append(
+                    func.lower(Countries.c.currency).like(f"%{currency.lower()}%")
+                )
             if where:
                 stmt = stmt.where(and_(*where))
 
@@ -104,7 +112,9 @@ class SqlaCityReader(CityReader):
             if state_code:
                 where.append(Cities.c.state_code == state_code.upper())
             if state_name:
-                where.append(func.lower(Cities.c.state_name).like(f"%{state_name.lower()}%"))
+                where.append(
+                    func.lower(Cities.c.state_name).like(f"%{state_name.lower()}%")
+                )
             if country_code:
                 where.append(Cities.c.country_code == country_code.upper())
             if wiki_data_id:
@@ -168,5 +178,3 @@ class SqlaCityReader(CityReader):
             ]
         except SQLAlchemyError as error:
             raise ReaderError(DB_QUERY_FAILED) from error
-
-

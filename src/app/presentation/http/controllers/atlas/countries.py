@@ -54,5 +54,3 @@ def create_countries_router() -> APIRouter:
         return await interactor.execute(request)
 
     return router
-
-

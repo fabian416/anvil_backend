@@ -83,15 +83,17 @@ class SqlaSubscriptionRepository(SubscriptionRepository):
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
 
-    async def update_stripe_ids(self, *, id_: int, stripe_price_id: str, stripe_product_id: str) -> None:
+    async def update_stripe_ids(
+        self, *, id_: int, stripe_price_id: str, stripe_product_id: str
+    ) -> None:
         try:
             table = mapping_registry.metadata.tables["subscriptions"]  # type: ignore
             await self._session.execute(
                 table.update()
                 .where(table.c.id == id_)
-                .values(stripe_price_id=stripe_price_id, stripe_product_id=stripe_product_id)
+                .values(
+                    stripe_price_id=stripe_price_id, stripe_product_id=stripe_product_id
+                )
             )
         except SQLAlchemyError as error:
             raise DataMapperError(DB_QUERY_FAILED) from error
-
-

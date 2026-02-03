@@ -253,7 +253,9 @@ class HealthFactorValidator:
 
         # Calculate liquidation price
         # HF = 1.0 when: Price * Collateral * LT = Debt
-        liquidation_price = projected_debt_usd / (collateral_amount * liquidation_threshold)
+        liquidation_price = projected_debt_usd / (
+            collateral_amount * liquidation_threshold
+        )
 
         return liquidation_price
 
@@ -286,22 +288,30 @@ class HealthFactorValidator:
         elif level == HealthFactorLevel.CAUTION:
             msg = f"⚠️ CAUTION - Health Factor {hf_display}. Monitor your position closely."
             if liquidation_price and current_price:
-                price_drop_pct = ((current_price - liquidation_price) / current_price) * 100
+                price_drop_pct = (
+                    (current_price - liquidation_price) / current_price
+                ) * 100
                 msg += f"\n\nLiquidation if {collateral_asset} drops {price_drop_pct:.1f}% to ${liquidation_price:.2f}"
             return msg
 
         elif level == HealthFactorLevel.DANGER:
             msg = f"🔶 DANGER - Health Factor {hf_display}. Consider reducing borrow or adding collateral."
             if liquidation_price and current_price:
-                price_drop_pct = ((current_price - liquidation_price) / current_price) * 100
+                price_drop_pct = (
+                    (current_price - liquidation_price) / current_price
+                ) * 100
                 msg += f"\n\nLiquidation if {collateral_asset} drops {price_drop_pct:.1f}% to ${liquidation_price:.2f}"
             msg += f"\n\nRecommendation: Reduce borrow to maintain HF >= {self.RECOMMENDED_HF}"
             return msg
 
         elif level == HealthFactorLevel.CRITICAL:
-            msg = f"🔴 CRITICAL - Health Factor {hf_display}. Very high liquidation risk!"
+            msg = (
+                f"🔴 CRITICAL - Health Factor {hf_display}. Very high liquidation risk!"
+            )
             if liquidation_price and current_price:
-                price_drop_pct = ((current_price - liquidation_price) / current_price) * 100
+                price_drop_pct = (
+                    (current_price - liquidation_price) / current_price
+                ) * 100
                 msg += f"\n\nLiquidation if {collateral_asset} drops just {price_drop_pct:.1f}% to ${liquidation_price:.2f}"
             msg += f"\n\n⚠️ OPERATION BLOCKED - Minimum recommended HF is {self.MINIMUM_SAFE_HF}"
             return msg

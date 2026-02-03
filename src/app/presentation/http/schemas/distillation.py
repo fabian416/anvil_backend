@@ -1,6 +1,7 @@
 """
 Response schemas for distillation endpoints.
 """
+
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -10,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class DistillationValidationRequest(BaseModel):
     """Request to validate a user message."""
-    
+
     message: str = Field(
         ...,
         description="User message to validate",
@@ -25,7 +26,7 @@ class DistillationValidationRequest(BaseModel):
 
 class DistillationValidationResponse(BaseModel):
     """Response from distillation validation."""
-    
+
     success: bool = Field(
         ...,
         description="Whether the message passed validation",
@@ -48,21 +49,23 @@ class DistillationValidationResponse(BaseModel):
         ...,
         description="Detected language code (ISO 639-1)",
     )
-    
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "success": True,
-            "message": "Request validated successfully",
-            "reason": "validation_passed",
-            "confidence": 0.95,
-            "detected_language": "en",
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Request validated successfully",
+                "reason": "validation_passed",
+                "confidence": 0.95,
+                "detected_language": "en",
+            }
         }
-    })
+    )
 
 
 class DistillationMetricsResponse(BaseModel):
     """Aggregated distillation metrics."""
-    
+
     date: datetime = Field(
         ...,
         description="Date for the metrics",
@@ -123,28 +126,30 @@ class DistillationMetricsResponse(BaseModel):
         description="Number of times fallback was used",
         ge=0,
     )
-    
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "date": "2025-12-01T00:00:00Z",
-            "provider": "vertex_ai",
-            "total_requests": 1000,
-            "successful_requests": 850,
-            "failed_requests": 150,
-            "success_rate": 0.85,
-            "avg_latency_ms": 287.5,
-            "p95_latency_ms": 450.0,
-            "avg_confidence": 0.92,
-            "total_tokens": 50000,
-            "total_cost_usd": 0.005,
-            "fallback_used_count": 12,
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "date": "2025-12-01T00:00:00Z",
+                "provider": "vertex_ai",
+                "total_requests": 1000,
+                "successful_requests": 850,
+                "failed_requests": 150,
+                "success_rate": 0.85,
+                "avg_latency_ms": 287.5,
+                "p95_latency_ms": 450.0,
+                "avg_confidence": 0.92,
+                "total_tokens": 50000,
+                "total_cost_usd": 0.005,
+                "fallback_used_count": 12,
+            }
         }
-    })
+    )
 
 
 class ProviderStatusResponse(BaseModel):
     """Provider health status."""
-    
+
     provider: str = Field(
         ...,
         description="Provider name",
@@ -168,21 +173,23 @@ class ProviderStatusResponse(BaseModel):
         None,
         description="Last health check timestamp",
     )
-    
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "provider": "vertex_ai",
-            "healthy": True,
-            "latency_ms": 287.5,
-            "error_rate": 0.02,
-            "last_check": "2025-12-01T12:34:56Z",
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "provider": "vertex_ai",
+                "healthy": True,
+                "latency_ms": 287.5,
+                "error_rate": 0.02,
+                "last_check": "2025-12-01T12:34:56Z",
+            }
         }
-    })
+    )
 
 
 class DistillationConfigResponse(BaseModel):
     """Current distillation configuration."""
-    
+
     enabled: bool = Field(
         ...,
         description="Whether distillation is enabled",
@@ -215,23 +222,25 @@ class DistillationConfigResponse(BaseModel):
         ...,
         description="Whether to allow requests on provider failure",
     )
-    
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "enabled": True,
-            "provider": "vertex_ai",
-            "fallback_provider": "deepinfra",
-            "temperature": 0.3,
-            "max_tokens": 200,
-            "timeout_seconds": 5.0,
-            "fail_open": True,
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "enabled": True,
+                "provider": "vertex_ai",
+                "fallback_provider": "deepinfra",
+                "temperature": 0.3,
+                "max_tokens": 200,
+                "timeout_seconds": 5.0,
+                "fail_open": True,
+            }
         }
-    })
+    )
 
 
 class DistillationConfigUpdateRequest(BaseModel):
     """Request to update distillation configuration."""
-    
+
     enabled: Optional[bool] = Field(
         None,
         description="Enable or disable distillation",
@@ -270,7 +279,7 @@ class DistillationConfigUpdateRequest(BaseModel):
 
 class DistillationHealthResponse(BaseModel):
     """Overall distillation system health."""
-    
+
     healthy: bool = Field(
         ...,
         description="Whether the system is healthy",
@@ -287,36 +296,39 @@ class DistillationHealthResponse(BaseModel):
         ...,
         description="Whether telemetry is enabled",
     )
-    
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "healthy": True,
-            "primary_provider": {
-                "provider": "vertex_ai",
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
                 "healthy": True,
-                "latency_ms": 287.5,
-                "error_rate": 0.02,
-                "last_check": "2025-12-01T12:34:56Z",
-            },
-            "fallback_provider": {
-                "provider": "deepinfra",
-                "healthy": True,
-                "latency_ms": 412.3,
-                "error_rate": 0.03,
-                "last_check": "2025-12-01T12:34:56Z",
-            },
-            "telemetry_enabled": True,
+                "primary_provider": {
+                    "provider": "vertex_ai",
+                    "healthy": True,
+                    "latency_ms": 287.5,
+                    "error_rate": 0.02,
+                    "last_check": "2025-12-01T12:34:56Z",
+                },
+                "fallback_provider": {
+                    "provider": "deepinfra",
+                    "healthy": True,
+                    "latency_ms": 412.3,
+                    "error_rate": 0.03,
+                    "last_check": "2025-12-01T12:34:56Z",
+                },
+                "telemetry_enabled": True,
+            }
         }
-    })
+    )
 
 
 # ============================================
 # Static Response Schemas (Admin)
 # ============================================
 
+
 class StaticResponseCreate(BaseModel):
     """Request to create a static response."""
-    
+
     pattern: str = Field(
         ...,
         description="Pattern to match (regex or exact)",
@@ -346,7 +358,7 @@ class StaticResponseCreate(BaseModel):
 
 class StaticResponseUpdate(BaseModel):
     """Request to update a static response."""
-    
+
     pattern: Optional[str] = Field(
         None,
         description="Pattern to match",
@@ -376,7 +388,7 @@ class StaticResponseUpdate(BaseModel):
 
 class StaticResponseResponse(BaseModel):
     """Static response entity."""
-    
+
     id: UUID = Field(..., description="Static response ID")
     pattern: str = Field(..., description="Match pattern")
     response: str = Field(..., description="Static response")
@@ -393,7 +405,7 @@ DistillationConfigUpdate = DistillationConfigUpdateRequest
 
 class CacheInvalidateRequest(BaseModel):
     """Request to invalidate cache entries."""
-    
+
     pattern: Optional[str] = Field(
         None,
         description="Pattern to match keys (optional, invalidates all if not provided)",
@@ -407,7 +419,7 @@ class CacheInvalidateRequest(BaseModel):
 
 class CacheStatsResponse(BaseModel):
     """Cache statistics response."""
-    
+
     total_entries: int = Field(..., description="Total cache entries")
     hit_rate: float = Field(..., description="Cache hit rate (0-1)")
     miss_rate: float = Field(..., description="Cache miss rate (0-1)")
@@ -418,7 +430,7 @@ class CacheStatsResponse(BaseModel):
 
 class DistillationTelemetryResponse(BaseModel):
     """Telemetry entry response."""
-    
+
     id: UUID = Field(..., description="Telemetry ID")
     request_id: UUID = Field(..., description="Original request ID")
     provider: str = Field(..., description="Provider used")
@@ -432,7 +444,7 @@ class DistillationTelemetryResponse(BaseModel):
 
 class DistillationSummaryResponse(BaseModel):
     """Summary of distillation system."""
-    
+
     total_requests_today: int = Field(..., description="Requests today")
     total_requests_week: int = Field(..., description="Requests this week")
     success_rate_today: float = Field(..., description="Today's success rate")

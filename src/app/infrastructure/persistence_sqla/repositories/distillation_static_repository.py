@@ -1,4 +1,5 @@
 """SQLAlchemy repository for distillation static responses."""
+
 from typing import List, Optional
 from uuid import UUID
 
@@ -14,10 +15,10 @@ from app.infrastructure.persistence_sqla.mappings.distillation import (
 
 class DistillationStaticRepositorySqla(StaticResponseRepository):
     """SQLAlchemy implementation of static response repository."""
-    
+
     def __init__(self, session: AsyncSession):
         self.session = session
-    
+
     async def get_response(
         self,
         intent: Intent,
@@ -29,16 +30,16 @@ class DistillationStaticRepositorySqla(StaticResponseRepository):
             distillation_static_responses.c.variant == variant,
             distillation_static_responses.c.is_active == True,
         )
-        
+
         result = await self.session.execute(query)
         row = result.first()
-        
+
         if not row:
             # Try default variant if specific variant not found
             if variant != "default":
                 return await self.get_response(intent, "default")
             return None
-        
+
         return StaticResponse(
             id=row.id,
             intent=Intent(row.intent),
@@ -50,7 +51,7 @@ class DistillationStaticRepositorySqla(StaticResponseRepository):
             is_active=row.is_active,
             priority=row.priority,
         )
-    
+
     async def list_responses(
         self,
         intent: Optional[Intent] = None,
@@ -58,21 +59,21 @@ class DistillationStaticRepositorySqla(StaticResponseRepository):
     ) -> List[StaticResponse]:
         """List static responses with optional filters."""
         query = select(distillation_static_responses)
-        
+
         if intent:
             query = query.where(distillation_static_responses.c.intent == intent.value)
-        
+
         if is_active is not None:
             query = query.where(distillation_static_responses.c.is_active == is_active)
-        
+
         query = query.order_by(
             distillation_static_responses.c.intent,
             distillation_static_responses.c.priority.desc(),
         )
-        
+
         result = await self.session.execute(query)
         rows = result.all()
-        
+
         return [
             StaticResponse(
                 id=row.id,
@@ -87,7 +88,7 @@ class DistillationStaticRepositorySqla(StaticResponseRepository):
             )
             for row in rows
         ]
-    
+
     async def update_response(
         self,
         response_id: UUID,
@@ -96,23 +97,23 @@ class DistillationStaticRepositorySqla(StaticResponseRepository):
     ) -> None:
         """Update static response."""
         from datetime import datetime, UTC
-        
+
         values = {}
         if response_template is not None:
             values["response_template"] = response_template
         if is_active is not None:
             values["is_active"] = is_active
-        
+
         if not values:
             return
-        
+
         values["updated_at"] = datetime.now(UTC)
-        
+
         query = (
             update(distillation_static_responses)
             .where(distillation_static_responses.c.id == response_id)
             .values(**values)
         )
-        
+
         await self.session.execute(query)
         await self.session.commit()

@@ -1,6 +1,7 @@
 """
 Admin API endpoints for request distillation validation system.
 """
+
 from datetime import datetime, timedelta
 from typing import List, Optional
 from fastapi import APIRouter, Query, Security, status
@@ -40,18 +41,18 @@ async def get_distillation_metrics(
 ) -> List[DistillationMetricsResponse]:
     """
     Get distillation metrics.
-    
+
     Returns aggregated daily metrics for distillation validation including:
     - Request counts (total, successful, failed)
     - Success rates
     - Latency statistics (avg, P95)
     - Cost analysis
     - Provider performance
-    
+
     Requires admin authentication.
     """
     metrics = await interactor.execute(days=days, provider=provider)
-    
+
     return [
         DistillationMetricsResponse(
             date=m.date,
@@ -83,17 +84,17 @@ async def get_provider_status(
 ) -> List[ProviderStatusResponse]:
     """
     Get provider health status.
-    
+
     Returns current health status for all distillation providers:
     - Vertex AI (primary)
     - DeepInfra (fallback)
-    
+
     Includes recent latency and error rates.
-    
+
     Requires admin authentication.
     """
     providers = await interactor.execute()
-    
+
     return [
         ProviderStatusResponse(
             provider=p.provider,
@@ -118,24 +119,24 @@ async def get_distillation_config(
 ) -> DistillationConfigResponse:
     """
     Get current distillation configuration.
-    
+
     Returns system-wide configuration including:
     - Enabled/disabled status
     - Provider selection (primary/fallback)
     - LLM parameters (temperature, max_tokens)
     - Timeout settings
     - Fail-open mode
-    
+
     Requires admin authentication.
     """
     # Get config from settings
     from app.setup.config.distillation import DistillationSettings
     from dishka import FromDishka
-    
+
     # This would come from DI container
     # For now, return hardcoded response
     # In production, inject settings via Dishka
-    
+
     return DistillationConfigResponse(
         enabled=True,  # From settings
         provider="vertex_ai",
@@ -160,16 +161,16 @@ async def update_distillation_config(
 ) -> DistillationConfigResponse:
     """
     Update distillation configuration.
-    
+
     Allows updating system-wide distillation settings:
     - Enable/disable distillation
     - Change provider selection
     - Adjust LLM parameters
     - Modify timeout settings
     - Toggle fail-open mode
-    
+
     Changes take effect immediately.
-    
+
     Requires admin authentication.
     """
     config = await interactor.execute(
@@ -181,7 +182,7 @@ async def update_distillation_config(
         timeout_seconds=request.timeout_seconds,
         fail_open=request.fail_open,
     )
-    
+
     return DistillationConfigResponse(
         enabled=config.enabled,
         provider=config.provider,
@@ -205,19 +206,19 @@ async def get_distillation_health(
 ) -> DistillationHealthResponse:
     """
     Get overall distillation system health.
-    
+
     Returns comprehensive health status:
     - Overall system health
     - Primary provider status (Vertex AI)
     - Fallback provider status (DeepInfra)
     - Telemetry system status
-    
+
     Used for monitoring and alerting.
-    
+
     Requires admin authentication.
     """
     health = await interactor.execute()
-    
+
     return DistillationHealthResponse(
         healthy=health.healthy,
         primary_provider=ProviderStatusResponse(

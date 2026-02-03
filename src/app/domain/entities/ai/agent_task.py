@@ -1,6 +1,7 @@
 """
 Agent Task entity.
 """
+
 from dataclasses import dataclass
 from typing import Optional, Any
 from datetime import datetime
@@ -11,9 +12,11 @@ from app.domain.entities.ai.agent_execution import AgentExecutionId
 from app.domain.enums.ai.agent_task_status import AgentTaskStatus
 from app.domain.value_objects.created_at import CreatedAt
 
+
 @dataclass(frozen=True, repr=False)
 class AgentTaskId(ValueObject):
     value: int
+
 
 @dataclass(eq=False, kw_only=True)
 class AgentTask(Entity[AgentTaskId]):

@@ -91,9 +91,9 @@ def create_aave_router() -> APIRouter:
     async def get_markets(
         gateway: FromDishka[AaveGateway],
         asset: str | None = Query(default=None, description="Filter by asset symbol"),
-        chain: Literal["ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"] = Query(
-            default="ethereum", description="Blockchain"
-        ),
+        chain: Literal[
+            "ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"
+        ] = Query(default="ethereum", description="Blockchain"),
         sort_by: Literal["supply_apy", "borrow_apy", "tvl", "utilization"] = Query(
             default="supply_apy", description="Sort field"
         ),
@@ -140,9 +140,9 @@ def create_aave_router() -> APIRouter:
     async def get_market_details(
         asset: str,
         gateway: FromDishka[AaveGateway],
-        chain: Literal["ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"] = Query(
-            default="ethereum", description="Blockchain"
-        ),
+        chain: Literal[
+            "ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"
+        ] = Query(default="ethereum", description="Blockchain"),
     ) -> AaveMarketResponse:
         """Get market details for an asset."""
         market = await gateway.get_market_details(asset=asset, chain=chain)
@@ -161,9 +161,9 @@ def create_aave_router() -> APIRouter:
     async def get_user_position(
         user_address: str,
         gateway: FromDishka[AaveGateway],
-        chain: Literal["ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"] = Query(
-            default="ethereum", description="Blockchain"
-        ),
+        chain: Literal[
+            "ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"
+        ] = Query(default="ethereum", description="Blockchain"),
     ) -> AavePositionResponse:
         """Get user's Aave position."""
         position = await gateway.get_user_position(address=user_address, chain=chain)
@@ -182,12 +182,14 @@ def create_aave_router() -> APIRouter:
     async def get_health_factor(
         user_address: str,
         gateway: FromDishka[AaveGateway],
-        chain: Literal["ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"] = Query(
-            default="ethereum", description="Blockchain"
-        ),
+        chain: Literal[
+            "ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"
+        ] = Query(default="ethereum", description="Blockchain"),
     ) -> HealthFactorResponse:
         """Get user's health factor."""
-        health_factor = await gateway.get_health_factor(address=user_address, chain=chain)
+        health_factor = await gateway.get_health_factor(
+            address=user_address, chain=chain
+        )
         return HealthFactorResponse.from_domain(health_factor)
 
     @router.get(
@@ -204,9 +206,9 @@ def create_aave_router() -> APIRouter:
         user_address: str,
         asset: str,
         gateway: FromDishka[AaveGateway],
-        chain: Literal["ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"] = Query(
-            default="ethereum", description="Blockchain"
-        ),
+        chain: Literal[
+            "ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"
+        ] = Query(default="ethereum", description="Blockchain"),
     ) -> AvailableToBorrowResponse:
         """Get maximum borrowable amount for an asset."""
         max_borrow = await gateway.get_available_to_borrow(
@@ -252,9 +254,9 @@ def create_aave_router() -> APIRouter:
     @inject
     async def get_protocol_stats(
         gateway: FromDishka[AaveGateway],
-        chain: Literal["ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"] = Query(
-            default="ethereum", description="Blockchain"
-        ),
+        chain: Literal[
+            "ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"
+        ] = Query(default="ethereum", description="Blockchain"),
     ) -> ProtocolStatsResponse:
         """Get protocol statistics."""
         stats = await gateway.get_protocol_stats(chain=chain)
@@ -301,9 +303,9 @@ def create_aave_router() -> APIRouter:
     async def get_asset_rates(
         asset: str,
         gateway: FromDishka[AaveGateway],
-        chain: Literal["ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"] = Query(
-            default="ethereum", description="Blockchain"
-        ),
+        chain: Literal[
+            "ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"
+        ] = Query(default="ethereum", description="Blockchain"),
     ) -> dict:
         """Get supply and borrow rates for an asset."""
         supply_apy = await gateway.get_supply_apy(asset=asset, chain=chain)

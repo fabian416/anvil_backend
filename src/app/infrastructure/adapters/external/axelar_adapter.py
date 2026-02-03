@@ -236,9 +236,7 @@ class AxelarAdapter(AxelarGateway):
     # Express Service
     # =========================================================================
 
-    def _apply_express_premium(
-        self, estimate: TransferEstimate
-    ) -> TransferEstimate:
+    def _apply_express_premium(self, estimate: TransferEstimate) -> TransferEstimate:
         """Apply express service premium."""
         return TransferEstimate(
             source_chain=estimate.source_chain,
@@ -251,7 +249,8 @@ class AxelarAdapter(AxelarGateway):
                 estimate.fee_usd * self._express_fee_multiplier
                 + estimate.gas_estimate_usd
             ),
-            estimated_time_seconds=estimate.estimated_time_seconds // self._express_time_divisor,
+            estimated_time_seconds=estimate.estimated_time_seconds
+            // self._express_time_divisor,
             is_express=True,
         )
 
@@ -261,7 +260,8 @@ class AxelarAdapter(AxelarGateway):
             source_chain=standard_route.source_chain,
             destination_chain=standard_route.destination_chain,
             token=standard_route.token,
-            estimated_time_seconds=standard_route.estimated_time_seconds // self._express_time_divisor,
+            estimated_time_seconds=standard_route.estimated_time_seconds
+            // self._express_time_divisor,
             fee_usd=standard_route.fee_usd * self._express_fee_multiplier,
             fee_native=standard_route.fee_native * self._express_fee_multiplier,
             security_score=standard_route.security_score,

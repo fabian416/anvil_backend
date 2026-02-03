@@ -28,13 +28,15 @@ class TestLLMResponseStructure:
         conversation_id = str(uuid4())
         response = await client.post(
             f"/api/v1/chat/conversations/{conversation_id}/messages",
-            json={"content": "What is yield farming?"}
+            json={"content": "What is yield farming?"},
         )
 
         if response.status_code == 201:
             data = response.json()
             # Check response has expected fields
-            assert "user_message" in data or "agent_message" in data or "message" in data
+            assert (
+                "user_message" in data or "agent_message" in data or "message" in data
+            )
         else:
             # Not authenticated or conversation not found
             assert response.status_code in (401, 404)
@@ -47,7 +49,7 @@ class TestLLMResponseStructure:
         conversation_id = str(uuid4())
         response = await client.post(
             f"/api/v1/chat/conversations/{conversation_id}/messages",
-            json={"content": "Tell me about Aave"}
+            json={"content": "Tell me about Aave"},
         )
 
         if response.status_code == 201:
@@ -71,8 +73,7 @@ class TestDeFiDataFormatting:
         THEN data SHALL be properly formatted
         """
         response = await client.post(
-            "/api/v1/chat/search-protocols",
-            json={"query": "top lending protocols"}
+            "/api/v1/chat/search-protocols", json={"query": "top lending protocols"}
         )
 
         if response.status_code == 200:
@@ -141,7 +142,7 @@ class TestMessageBuilderLLMResponses:
         message = an_agent_message().build()
 
         assert message is not None
-        assert hasattr(message, 'content')
+        assert hasattr(message, "content")
         assert message.content is not None
 
     def test_message_builder_defi_data_response(self):
@@ -153,8 +154,8 @@ class TestMessageBuilderLLMResponses:
         message = an_agent_message().build()
 
         assert message is not None
-        assert hasattr(message, 'content')
-        assert hasattr(message, 'role')
+        assert hasattr(message, "content")
+        assert hasattr(message, "role")
 
 
 @pytest.mark.integration
@@ -171,14 +172,18 @@ class TestContentVerification:
         conversation_id = str(uuid4())
         response = await client.post(
             f"/api/v1/chat/conversations/{conversation_id}/messages",
-            json={"content": "What is Uniswap?"}
+            json={"content": "What is Uniswap?"},
         )
 
         if response.status_code == 201:
             data = response.json()
             # Verify we got some content back
             agent_message = data.get("agent_message", {})
-            content = agent_message.get("content", "") if isinstance(agent_message, dict) else ""
+            content = (
+                agent_message.get("content", "")
+                if isinstance(agent_message, dict)
+                else ""
+            )
             # Response should have some content (even if minimal)
             assert isinstance(data, dict)
         else:
@@ -192,7 +197,7 @@ class TestContentVerification:
         conversation_id = str(uuid4())
         response = await client.post(
             f"/api/v1/chat/conversations/{conversation_id}/messages",
-            json={"content": "Should I invest in this DeFi protocol?"}
+            json={"content": "Should I invest in this DeFi protocol?"},
         )
 
         # Just verify we get a response

@@ -208,7 +208,10 @@ class RiskAnalyzer:
                 factor="volatility",
                 score=20.0,  # Low-medium risk default
                 level="low",
-                details={"error": "Insufficient data", "data_points": len(prices) if prices else 0},
+                details={
+                    "error": "Insufficient data",
+                    "data_points": len(prices) if prices else 0,
+                },
                 timestamp=utc_now(),
             )
 
@@ -287,7 +290,10 @@ class RiskAnalyzer:
                 factor="liquidity",
                 score=25.0,  # Medium risk default
                 level="medium",
-                details={"error": "Insufficient data", "data_points": len(prices) if prices else 0},
+                details={
+                    "error": "Insufficient data",
+                    "data_points": len(prices) if prices else 0,
+                },
                 timestamp=utc_now(),
             )
 
@@ -421,17 +427,30 @@ class RiskAnalyzer:
                 factor="correlation",
                 score=50.0,  # Moderate correlation default
                 level="medium",
-                details={"error": "Data unavailable", "fallback": True, "correlation_with_btc": 0.5},
+                details={
+                    "error": "Data unavailable",
+                    "fallback": True,
+                    "correlation_with_btc": 0.5,
+                },
                 timestamp=utc_now(),
             )
 
-        if not token_prices or not btc_prices or len(token_prices) < 2 or len(btc_prices) < 2:
+        if (
+            not token_prices
+            or not btc_prices
+            or len(token_prices) < 2
+            or len(btc_prices) < 2
+        ):
             # Not enough data
             return RiskScore(
                 factor="correlation",
                 score=50.0,  # Moderate correlation default
                 level="medium",
-                details={"error": "Insufficient data", "fallback": True, "correlation_with_btc": 0.5},
+                details={
+                    "error": "Insufficient data",
+                    "fallback": True,
+                    "correlation_with_btc": 0.5,
+                },
                 timestamp=utc_now(),
             )
 
@@ -471,8 +490,14 @@ class RiskAnalyzer:
             level=level,
             details={
                 "correlation_with_btc": round(correlation, 3),
-                "beta": round(correlation * (np.std(token_returns) / np.std(btc_returns)), 3),
-                "systemic_risk_exposure": "high" if abs(correlation) > 0.7 else "moderate" if abs(correlation) > 0.4 else "low",
+                "beta": round(
+                    correlation * (np.std(token_returns) / np.std(btc_returns)), 3
+                ),
+                "systemic_risk_exposure": "high"
+                if abs(correlation) > 0.7
+                else "moderate"
+                if abs(correlation) > 0.4
+                else "low",
                 "analysis_period_days": self.config.correlation_window,
             },
             timestamp=utc_now(),

@@ -39,9 +39,7 @@ def map_user_lending_preferences_table() -> None:
             server_default=sa.text("gen_random_uuid()"),
             default=uuid.uuid4,
         )
-        user_id = mapped_column(
-            UUID(as_uuid=True), nullable=False, unique=True
-        )
+        user_id = mapped_column(UUID(as_uuid=True), nullable=False, unique=True)
         risk_tolerance = mapped_column(
             Enum(
                 "conservative",
@@ -60,9 +58,7 @@ def map_user_lending_preferences_table() -> None:
             Numeric(3, 1), nullable=False, server_default="3.0"
         )
         preferred_protocol = mapped_column(String(20), nullable=True)
-        auto_rebalance = mapped_column(
-            Boolean, nullable=False, server_default="false"
-        )
+        auto_rebalance = mapped_column(Boolean, nullable=False, server_default="false")
         notification_health_threshold = mapped_column(
             Numeric(10, 2), nullable=True, server_default="1.3"
         )

@@ -18,7 +18,11 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.knowledge_injection]
+pytestmark = [
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.knowledge_injection,
+]
 
 
 class TestKnowledgeQuality:
@@ -33,10 +37,7 @@ class TestKnowledgeQuality:
         """
         response = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What's the current price of Bitcoin?",
-                "language": "en"
-            }
+            json={"content": "What's the current price of Bitcoin?", "language": "en"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -51,7 +52,9 @@ class TestKnowledgeQuality:
         assert len(agent_response) > 50, "Should provide substantive current data"
 
     @pytest.mark.llm_validation
-    async def test_data_completeness_validation(self, client: AsyncClient, llm_validator):
+    async def test_data_completeness_validation(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Verify all required fields are present.
 
@@ -61,8 +64,8 @@ class TestKnowledgeQuality:
             "/api/v1/guest/chat",
             json={
                 "content": "Give me complete information about Ethereum",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -74,10 +77,14 @@ class TestKnowledgeQuality:
 
         # Should provide comprehensive response
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 100, "Should provide complete information (100+ chars)"
+        assert len(agent_response) > 100, (
+            "Should provide complete information (100+ chars)"
+        )
 
     @pytest.mark.llm_validation
-    async def test_data_accuracy_cross_validation(self, client: AsyncClient, llm_validator):
+    async def test_data_accuracy_cross_validation(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Cross-validate data across sources.
 
@@ -87,8 +94,8 @@ class TestKnowledgeQuality:
             "/api/v1/guest/chat",
             json={
                 "content": "What is the market cap of Bitcoin according to available sources?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -102,7 +109,9 @@ class TestKnowledgeQuality:
         assert len(agent_response) > 50, "Should provide validated data"
 
     @pytest.mark.llm_validation
-    async def test_contradictory_data_resolution(self, client: AsyncClient, llm_validator):
+    async def test_contradictory_data_resolution(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Resolve conflicting data from sources.
 
@@ -112,8 +121,8 @@ class TestKnowledgeQuality:
             "/api/v1/guest/chat",
             json={
                 "content": "What are the key metrics for Solana network?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK

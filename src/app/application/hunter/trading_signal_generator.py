@@ -103,8 +103,12 @@ class TradingSignal:
             "signal_strength": round(self.signal_strength, 2),
             "confidence": round(self.confidence, 2),
             "entry_price": round(self.entry_price, 2) if self.entry_price else None,
-            "stop_loss_price": round(self.stop_loss_price, 2) if self.stop_loss_price else None,
-            "take_profit_price": round(self.take_profit_price, 2) if self.take_profit_price else None,
+            "stop_loss_price": round(self.stop_loss_price, 2)
+            if self.stop_loss_price
+            else None,
+            "take_profit_price": round(self.take_profit_price, 2)
+            if self.take_profit_price
+            else None,
             "sentiment_score": round(self.sentiment_score, 2),
             "prediction_score": round(self.prediction_score, 2),
             "risk_score": round(self.risk_score, 2),
@@ -203,7 +207,9 @@ class TradingSignalGenerator:
 
         # 2. Calculate composite signal strength
         sentiment_score = self._normalize_sentiment(sentiment_reading)
-        risk_score_normalized = 100 - risk_assessment.overall_risk_score  # Invert (lower risk = higher score)
+        risk_score_normalized = (
+            100 - risk_assessment.overall_risk_score
+        )  # Invert (lower risk = higher score)
 
         # Weighted combination
         signal_strength = (
@@ -487,7 +493,9 @@ class TradingSignalGenerator:
                 f"Risk level: {risk_assessment.overall_risk_level}."
             )
 
-    def _calculate_consensus(self, signals: Dict[Timeframe, TradingSignal]) -> SignalType:
+    def _calculate_consensus(
+        self, signals: Dict[Timeframe, TradingSignal]
+    ) -> SignalType:
         """Calculate consensus signal across timeframes."""
         # Count signal types
         signal_counts = {}

@@ -66,7 +66,9 @@ class LayerZeroProvider(Provider):
         return TrackMessage(gateway=gateway)
 
     @provide(scope=Scope.REQUEST)
-    def provide_get_message_history(self, gateway: LayerZeroGateway) -> GetMessageHistory:
+    def provide_get_message_history(
+        self, gateway: LayerZeroGateway
+    ) -> GetMessageHistory:
         """Provide GetMessageHistory query."""
         return GetMessageHistory(gateway=gateway)
 

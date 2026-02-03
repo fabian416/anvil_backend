@@ -13,14 +13,14 @@ def map_countries_table() -> None:
     # Idempotency guard: don't remap if already present
     if "countries" in mapping_registry.metadata.tables:
         return
-    
+
     @mapping_registry.mapped
     class CountriesTable:
         __tablename__ = "countries"
-        
+
         # Primary key
         id = mapped_column(Integer, primary_key=True, index=True)
-        
+
         # Country information
         country_id = mapped_column(Integer, index=True)
         name = mapped_column(String(100), nullable=False, index=True)
@@ -42,11 +42,15 @@ def map_countries_table() -> None:
         emojiU = mapped_column(String(20), nullable=True)
         region = mapped_column(String(50), nullable=True, index=True)
         subregion = mapped_column(String(50), nullable=True, index=True)
-        
+
         # Add constraints for coordinates
         __table_args__ = (
-            CheckConstraint('latitude >= -90 AND latitude <= 90', name='check_latitude_range'),
-            CheckConstraint('longitude >= -180 AND longitude <= 180', name='check_longitude_range'),
+            CheckConstraint(
+                "latitude >= -90 AND latitude <= 90", name="check_latitude_range"
+            ),
+            CheckConstraint(
+                "longitude >= -180 AND longitude <= 180", name="check_longitude_range"
+            ),
         )
-    
+
     # Keep only table metadata for create_all

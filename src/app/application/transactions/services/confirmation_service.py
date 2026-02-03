@@ -17,7 +17,9 @@ from typing import Any, Callable, Awaitable
 from app.domain.enums.chain_type import ChainType
 from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.entities.wallet import WalletId
-from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.ports.transaction.transaction_repository import (
+    TransactionRepository,
+)
 
 logger = logging.getLogger(__name__)
 

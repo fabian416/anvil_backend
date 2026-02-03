@@ -20,13 +20,18 @@ NOTE: Skipped due to AuthenticatedClient and AuthHelper fixture issues.
 import pytest
 
 # Skip entire module - requires complex auth fixtures
-pytestmark = pytest.mark.skip(reason="AuthenticatedClient/AuthHelper fixture setup issues")
+pytestmark = pytest.mark.skip(
+    reason="AuthenticatedClient/AuthHelper fixture setup issues"
+)
 import pytest_asyncio
 from uuid import UUID
 
 from tests.helpers.api_client import AuthenticatedClient
 from tests.helpers.auth_helper import AuthHelper
-from tests.helpers.test_data_loader import get_critical_integration_test_ids, get_test_case_by_id
+from tests.helpers.test_data_loader import (
+    get_critical_integration_test_ids,
+    get_test_case_by_id,
+)
 
 
 def get_critical_test_cases():
@@ -69,7 +74,9 @@ async def test_conversation(authenticated_client):
         "/api/v1/user/chat/conversations",
         json={"title": "Critical Path Test Conversation"},
     )
-    assert response.status_code == 201, f"Failed to create conversation: {response.status_code} {response.text}"
+    assert response.status_code == 201, (
+        f"Failed to create conversation: {response.status_code} {response.text}"
+    )
     conversation_data = response.json()
     return conversation_data["id"]
 
@@ -78,7 +85,9 @@ async def test_conversation(authenticated_client):
 class TestUnifiedChatCriticalPaths:
     """Critical path integration tests for unified chat with test data."""
 
-    @pytest.mark.parametrize("test_case", get_critical_test_cases(), ids=lambda tc: tc["id"])
+    @pytest.mark.parametrize(
+        "test_case", get_critical_test_cases(), ids=lambda tc: tc["id"]
+    )
     @pytest.mark.llm_validation
     async def test_send_message_with_critical_test_case(
         self,
@@ -115,25 +124,41 @@ class TestUnifiedChatCriticalPaths:
 
         # Assert: Response structure
         data = response.json()
-        assert "user_message" in data, f"Missing user_message in response for {test_case['id']}"
-        assert "agent_message" in data, f"Missing agent_message in response for {test_case['id']}"
+        assert "user_message" in data, (
+            f"Missing user_message in response for {test_case['id']}"
+        )
+        assert "agent_message" in data, (
+            f"Missing agent_message in response for {test_case['id']}"
+        )
 
         # Validate user message
         user_msg = data["user_message"]
         assert user_msg["content"] == message_content, (
             f"User message content mismatch for {test_case['id']}"
         )
-        assert user_msg["role"] == "user", f"User message role incorrect for {test_case['id']}"
+        assert user_msg["role"] == "user", (
+            f"User message role incorrect for {test_case['id']}"
+        )
         assert "id" in user_msg, f"User message missing id for {test_case['id']}"
-        assert "created_at" in user_msg, f"User message missing created_at for {test_case['id']}"
+        assert "created_at" in user_msg, (
+            f"User message missing created_at for {test_case['id']}"
+        )
 
         # Validate agent message
         agent_msg = data["agent_message"]
-        assert agent_msg["role"] == "assistant", f"Agent message role incorrect for {test_case['id']}"
+        assert agent_msg["role"] == "assistant", (
+            f"Agent message role incorrect for {test_case['id']}"
+        )
         assert "id" in agent_msg, f"Agent message missing id for {test_case['id']}"
-        assert "content" in agent_msg, f"Agent message missing content for {test_case['id']}"
-        assert "created_at" in agent_msg, f"Agent message missing created_at for {test_case['id']}"
-        assert len(agent_msg["content"]) > 0, f"Agent message content empty for {test_case['id']}"
+        assert "content" in agent_msg, (
+            f"Agent message missing content for {test_case['id']}"
+        )
+        assert "created_at" in agent_msg, (
+            f"Agent message missing created_at for {test_case['id']}"
+        )
+        assert len(agent_msg["content"]) > 0, (
+            f"Agent message content empty for {test_case['id']}"
+        )
 
         # Validate enrichment (if expected)
         expected_enrichment = test_case.get("expected_enrichment", {})
@@ -150,8 +175,15 @@ class TestUnifiedChatCriticalPaths:
                 # GraphRAG should have protocols, search_context, risk_analysis, or similar_protocols
                 assert any(
                     key in enrichment
-                    for key in ["protocols", "search_context", "risk_analysis", "similar_protocols"]
-                ), f"GraphRAG enrichment missing expected keys for {test_case['id']}: {enrichment.keys()}"
+                    for key in [
+                        "protocols",
+                        "search_context",
+                        "risk_analysis",
+                        "similar_protocols",
+                    ]
+                ), (
+                    f"GraphRAG enrichment missing expected keys for {test_case['id']}: {enrichment.keys()}"
+                )
 
             elif category == "hunter_ai":
                 # Hunter AI should have hunter_tool and token-related data
@@ -174,7 +206,9 @@ class TestUnifiedChatCriticalPaths:
             elif category == "chat":
                 # Chat enrichment is optional, but if present should have conversation_type
                 if enrichment:
-                    assert "conversation_type" in enrichment or "topics" in enrichment, (
+                    assert (
+                        "conversation_type" in enrichment or "topics" in enrichment
+                    ), (
                         f"Chat enrichment (when present) missing conversation_type or topics for {test_case['id']}"
                     )
 
@@ -223,7 +257,9 @@ class TestUnifiedChatErrorHandling:
             f"/api/v1/user/chat/conversations/{test_conversation}/messages",
             json={"content": ""},
         )
-        assert response.status_code == 422, f"Expected 422 for empty content, got {response.status_code}"
+        assert response.status_code == 422, (
+            f"Expected 422 for empty content, got {response.status_code}"
+        )
 
     @pytest.mark.llm_validation
     async def test_send_message_invalid_conversation(

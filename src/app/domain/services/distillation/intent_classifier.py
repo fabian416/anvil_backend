@@ -1,4 +1,5 @@
 """Intent classification service."""
+
 import re
 import logging
 from typing import Tuple, Optional, List, Dict, Any
@@ -13,22 +14,24 @@ class IntentClassifier:
     Classify user intent using hybrid approach:
     1. Rule-based patterns (fast, ~90% accuracy) - for common patterns
     2. LLM-based classification (Vertex AI with DeepInfra fallback) - for complex/ambiguous queries
-    
+
     LLM classification provides:
     - Better accuracy for ambiguous queries
     - Context-aware classification (uses conversation history)
     - Helps Supervisor Coordinator route correctly
     """
-    
+
     def __init__(
         self,
-        llm_client: Optional[Any] = None,  # LLMClientGateway - optional for LLM-based classification
+        llm_client: Optional[
+            Any
+        ] = None,  # LLMClientGateway - optional for LLM-based classification
         use_llm_for_ambiguous: bool = True,  # Use LLM for ambiguous queries
         llm_confidence_threshold: float = 0.85,  # Minimum confidence to use LLM result
     ):
         """
         Initialize intent classifier.
-        
+
         Args:
             llm_client: Optional LLM client gateway (Vertex AI/DeepInfra) for LLM-based classification
             use_llm_for_ambiguous: Whether to use LLM for ambiguous queries (default: True)
@@ -37,7 +40,7 @@ class IntentClassifier:
         self._llm_client = llm_client
         self._use_llm_for_ambiguous = use_llm_for_ambiguous
         self._llm_confidence_threshold = llm_confidence_threshold
-    
+
     # Intent patterns (regex) - for fast rule-based classification
     INTENT_PATTERNS = {
         # Informational
@@ -67,7 +70,6 @@ class IntentClassifier:
             r"(\w+) status",
             r"can i use (\w+)",
         ],
-        
         # Educational
         Intent.EXPLAIN_CONCEPT: [
             r"what is (a |an )?(\w+)",
@@ -94,7 +96,6 @@ class IntentClassifier:
             r"(\w+) vs (\w+)",
             r"which is better (\w+) or (\w+)",
         ],
-        
         # Transactional
         Intent.SWAP_REQUEST: [
             r"\b(swap|exchange|trade|convert) \d+",
@@ -121,7 +122,6 @@ class IntentClassifier:
             r"move (\w+) to (\w+) chain",
             r"transfer to (\w+) (network|chain)",
         ],
-        
         # Analytical
         Intent.PORTFOLIO_ANALYSIS: [
             r"(analyze|review) my portfolio",
@@ -143,7 +143,6 @@ class IntentClassifier:
             r"should i (\w+)",
             r"(advice|recommend|suggest) (for|on)",
         ],
-        
         # Administrative
         Intent.SETTINGS_CHANGE: [
             r"(change|update|set) (my )?(settings|preferences|slippage)",
@@ -153,7 +152,6 @@ class IntentClassifier:
             r"(alert|notify|tell) me (when|if)",
             r"set (up )?(an )?alert",
         ],
-        
         # Off-topic / Other
         Intent.GREETING: [
             r"^(hello|hi|hey|greetings|good (morning|afternoon|evening)|hola|holi|hey there)",
@@ -164,7 +162,7 @@ class IntentClassifier:
             r"how('s| is) it going",
         ],
     }
-    
+
     async def classify(
         self,
         text: str,
@@ -172,28 +170,30 @@ class IntentClassifier:
     ) -> Tuple[Intent, float]:
         """
         Classify intent with confidence score.
-        
+
         Uses hybrid approach:
         1. Rule-based patterns (fast, high confidence)
         2. LLM-based classification (for ambiguous queries, with conversation context)
-        
+
         Args:
             text: User query text
             conversation_history: Optional conversation history for context-aware classification
-            
+
         Returns:
             Tuple of (Intent, confidence)
         """
         # Normalize text
         text_lower = text.lower().strip()
-        
+
         # Step 1: Try rule-based patterns first (fastest, high confidence)
         for intent, patterns in self.INTENT_PATTERNS.items():
             for pattern in patterns:
                 if re.search(pattern, text_lower):
-                    logger.debug(f"✅ Rule-based classification: {intent.value} (confidence: 0.95)")
+                    logger.debug(
+                        f"✅ Rule-based classification: {intent.value} (confidence: 0.95)"
+                    )
                     return intent, 0.95
-        
+
         # Step 2: If no rule match and LLM available, use LLM for ambiguous queries
         if self._use_llm_for_ambiguous and self._llm_client:
             try:
@@ -201,20 +201,26 @@ class IntentClassifier:
                     text=text,
                     conversation_history=conversation_history,
                 )
-                
+
                 # Use LLM result if confidence is above threshold
                 if llm_confidence >= self._llm_confidence_threshold:
-                    logger.debug(f"✅ LLM-based classification: {llm_intent.value} (confidence: {llm_confidence})")
+                    logger.debug(
+                        f"✅ LLM-based classification: {llm_intent.value} (confidence: {llm_confidence})"
+                    )
                     return llm_intent, llm_confidence
                 else:
-                    logger.debug(f"⚠️ LLM classification confidence too low ({llm_confidence} < {self._llm_confidence_threshold}), falling back to UNCLEAR")
+                    logger.debug(
+                        f"⚠️ LLM classification confidence too low ({llm_confidence} < {self._llm_confidence_threshold}), falling back to UNCLEAR"
+                    )
             except Exception as e:
-                logger.warning(f"⚠️ LLM classification failed: {e}, falling back to UNCLEAR")
-        
+                logger.warning(
+                    f"⚠️ LLM classification failed: {e}, falling back to UNCLEAR"
+                )
+
         # Step 3: Fallback to UNCLEAR if no match
         logger.debug(f"⚠️ No classification match, returning UNCLEAR (confidence: 0.5)")
         return Intent.UNCLEAR, 0.5
-    
+
     async def _classify_with_llm(
         self,
         text: str,
@@ -222,47 +228,51 @@ class IntentClassifier:
     ) -> Tuple[Intent, float]:
         """
         Classify intent using LLM (Vertex AI with DeepInfra fallback).
-        
+
         Args:
             text: User query text
             conversation_history: Optional conversation history for context
-            
+
         Returns:
             Tuple of (Intent, confidence)
         """
         # Build classification prompt
         prompt = self._build_classification_prompt(text, conversation_history)
-        
+
         # Call LLM for classification (Vertex AI with DeepInfra fallback)
         try:
             response = await self._llm_client.classify_intent(
                 prompt=prompt,
                 model="gemini-2.0-flash",  # Fast Vertex AI model (LLMClientWithFallback will handle fallback to DeepInfra if needed)
             )
-            
+
             # Parse LLM response
             if isinstance(response, dict):
                 intent_str = response.get("intent", "unclear")
                 confidence = float(response.get("confidence", 0.5))
                 reasoning = response.get("reasoning", "")
-                
-                logger.debug(f"🔍 LLM classification result: intent={intent_str}, confidence={confidence}, reasoning={reasoning[:100]}")
-                
+
+                logger.debug(
+                    f"🔍 LLM classification result: intent={intent_str}, confidence={confidence}, reasoning={reasoning[:100]}"
+                )
+
                 # Map string intent to Intent enum
                 try:
                     intent = Intent(intent_str.lower())
                     return intent, confidence
                 except ValueError:
-                    logger.warning(f"⚠️ Unknown intent from LLM: {intent_str}, falling back to UNCLEAR")
+                    logger.warning(
+                        f"⚠️ Unknown intent from LLM: {intent_str}, falling back to UNCLEAR"
+                    )
                     return Intent.UNCLEAR, 0.5
             else:
                 logger.warning(f"⚠️ Invalid LLM response format: {type(response)}")
                 return Intent.UNCLEAR, 0.5
-                
+
         except Exception as e:
             logger.error(f"❌ LLM classification error: {e}", exc_info=True)
             raise
-    
+
     def _build_classification_prompt(
         self,
         text: str,
@@ -270,11 +280,11 @@ class IntentClassifier:
     ) -> str:
         """
         Build classification prompt for LLM.
-        
+
         Args:
             text: User query text
             conversation_history: Optional conversation history
-            
+
         Returns:
             Classification prompt string
         """
@@ -288,8 +298,10 @@ class IntentClassifier:
                 role = msg.get("role", "user")
                 content = msg.get("content", "")
                 if content:
-                    context_section += f"- {role}: {content[:200]}\n"  # Truncate long messages
-        
+                    context_section += (
+                        f"- {role}: {content[:200]}\n"  # Truncate long messages
+                    )
+
         # Build classification prompt
         prompt = f"""Classify the user's intent from this DeFi/crypto query.
 

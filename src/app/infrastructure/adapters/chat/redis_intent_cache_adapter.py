@@ -189,7 +189,9 @@ class RedisIntentCacheAdapter(IntentCacheAdapter):
 
             # Generate embedding if not provided
             if query_embedding is None:
-                query_embedding = await self._embedding_service.generate_embedding(query)
+                query_embedding = await self._embedding_service.generate_embedding(
+                    query
+                )
 
             # Prepare cache entry
             cache_entry = {
@@ -472,8 +474,12 @@ class RedisIntentCacheAdapter(IntentCacheAdapter):
         total_requests = hits + semantic_hits + misses
         total_entries = int(stats.get(b"total_entries", 0))
 
-        hit_rate = (hits + semantic_hits) / total_requests if total_requests > 0 else 0.0
-        semantic_hit_rate = semantic_hits / total_requests if total_requests > 0 else 0.0
+        hit_rate = (
+            (hits + semantic_hits) / total_requests if total_requests > 0 else 0.0
+        )
+        semantic_hit_rate = (
+            semantic_hits / total_requests if total_requests > 0 else 0.0
+        )
 
         # Get memory usage for intent cache
         info = await self._redis.info("memory")

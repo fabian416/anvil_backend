@@ -26,7 +26,9 @@ class TestLoginFlow:
             "password": "TestPassword123!",
         }
 
-    async def test_login_with_valid_credentials_returns_tokens(self, client, valid_credentials):
+    async def test_login_with_valid_credentials_returns_tokens(
+        self, client, valid_credentials
+    ):
         """
         WHEN user logs in with valid credentials
         THEN system SHALL return access and refresh tokens (if user exists)
@@ -72,7 +74,9 @@ class TestLoginFlow:
             "password": "TestPassword123!",
         }
 
-        response = await client.post("/api/v1/account/login", json=nonexistent_credentials)
+        response = await client.post(
+            "/api/v1/account/login", json=nonexistent_credentials
+        )
 
         # Should return 404 for user not found
         assert response.status_code == 404
@@ -169,7 +173,9 @@ class TestLoginAccountStatus:
             "password": "TestPassword123!",
         }
 
-        response = await client.post("/api/v1/account/login", json=unverified_credentials)
+        response = await client.post(
+            "/api/v1/account/login", json=unverified_credentials
+        )
 
         # Could be 200 (if verification not required), 403, or 404 (not found)
         assert response.status_code in (200, 401, 403, 404)
@@ -194,7 +200,9 @@ class TestLoginRateLimiting:
         # Make multiple failed attempts
         responses = []
         for _ in range(5):  # Reduced from 10 for faster tests
-            response = await client.post("/api/v1/account/login", json=invalid_credentials)
+            response = await client.post(
+                "/api/v1/account/login", json=invalid_credentials
+            )
             responses.append(response.status_code)
 
         # After enough attempts, should get rate limited (429) or stay at 401/404

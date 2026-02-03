@@ -499,9 +499,7 @@ class ChatMetricsCollector:
         # Process info
         lines.append(f"# HELP {self.namespace}_build_info Build information")
         lines.append(f"# TYPE {self.namespace}_build_info gauge")
-        lines.append(
-            f'{self.namespace}_build_info{{version="1.0.0"}} 1 {timestamp}'
-        )
+        lines.append(f'{self.namespace}_build_info{{version="1.0.0"}} 1 {timestamp}')
 
         # Uptime
         uptime = time.time() - self._start_time
@@ -510,9 +508,7 @@ class ChatMetricsCollector:
         lines.append(f"{self.namespace}_uptime_seconds {uptime} {timestamp}")
 
         # Request counter
-        lines.append(
-            f"# HELP {self.namespace}_requests_total Total number of requests"
-        )
+        lines.append(f"# HELP {self.namespace}_requests_total Total number of requests")
         lines.append(f"# TYPE {self.namespace}_requests_total counter")
         for key, count in self._request_count.items():
             labels = MetricLabels(**dict(key))

@@ -121,7 +121,9 @@ class PortfolioRiskAnalysis:
         protocol_risks = await self._analyze_protocol_risks(portfolio.protocols)
 
         # Calculate overall risk score (weighted by exposure)
-        overall_risk = self._calculate_weighted_risk(portfolio.protocols, protocol_risks)
+        overall_risk = self._calculate_weighted_risk(
+            portfolio.protocols, protocol_risks
+        )
 
         # Get risk distribution
         risk_distribution = self._calculate_risk_distribution(protocol_risks)
@@ -350,9 +352,7 @@ class PortfolioRiskAnalysis:
 
                 # Calculate total exposure (sum of dependent protocols)
                 total_exposure = sum(
-                    e.value_usd
-                    for e in exposures
-                    if e.protocol_name in dependent_names
+                    e.value_usd for e in exposures if e.protocol_name in dependent_names
                 )
 
                 # Determine impact level
@@ -434,9 +434,7 @@ class PortfolioRiskAnalysis:
         except Exception:
             return 5.0  # Default moderate risk
 
-    def _calculate_concentration_risk(
-        self, exposures: List[ProtocolExposure]
-    ) -> float:
+    def _calculate_concentration_risk(self, exposures: List[ProtocolExposure]) -> float:
         """Calculate concentration risk (Herfindahl index)."""
         if not exposures:
             return 0.0
@@ -463,9 +461,7 @@ class PortfolioRiskAnalysis:
             if exposure.chain not in chain_risks:
                 chain_risks[exposure.chain] = []
 
-            chain_risks[exposure.chain].append(
-                (float(exposure.value_usd), risk_score)
-            )
+            chain_risks[exposure.chain].append((float(exposure.value_usd), risk_score))
 
         # Calculate weighted average for each chain
         result = {}
@@ -530,7 +526,9 @@ class PortfolioRiskAnalysis:
             )
 
         # Dependencies
-        critical_deps = [d for d in dependency_risks if d.impact_if_failure == "CRITICAL"]
+        critical_deps = [
+            d for d in dependency_risks if d.impact_if_failure == "CRITICAL"
+        ]
         if critical_deps:
             recommendations.append(
                 f"Critical dependency risk: {critical_deps[0].dependency_protocol_name} "
@@ -556,17 +554,17 @@ class PortfolioRiskAnalysis:
         directly_affected = []
         for wave in contagion.cascade_waves:
             if wave.wave_number == 1:  # Direct connections
-                directly_affected.extend(
-                    [p for p in wave.affected_protocols if p in portfolio_ids]
-                )
+                directly_affected.extend([
+                    p for p in wave.affected_protocols if p in portfolio_ids
+                ])
 
         # Indirect impacts
         indirectly_affected = []
         for wave in contagion.cascade_waves:
             if wave.wave_number > 1:
-                indirectly_affected.extend(
-                    [p for p in wave.affected_protocols if p in portfolio_ids]
-                )
+                indirectly_affected.extend([
+                    p for p in wave.affected_protocols if p in portfolio_ids
+                ])
 
         # Calculate exposure at risk
         exposure_at_risk = sum(

@@ -73,8 +73,7 @@ class LendingHealthCheck:
 
         if self.total_debt_usd < Decimal("0"):
             raise ValueError(
-                f"Invalid total_debt_usd: {self.total_debt_usd}. "
-                "Must be >= 0."
+                f"Invalid total_debt_usd: {self.total_debt_usd}. Must be >= 0."
             )
 
     @property

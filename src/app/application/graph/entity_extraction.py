@@ -311,9 +311,7 @@ Extract entities now:"""
 
         return relationships
 
-    def _build_relationship_prompt(
-        self, text: str, entity_names: List[str]
-    ) -> str:
+    def _build_relationship_prompt(self, text: str, entity_names: List[str]) -> str:
         """Build prompt for relationship extraction.
 
         Args:

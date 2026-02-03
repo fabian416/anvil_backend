@@ -24,7 +24,7 @@ from security.monitoring.prometheus_metrics import (
     pii_redacted,
     agent_permission_denied,
     agent_isolation_violations,
-    security_posture
+    security_posture,
 )
 
 
@@ -66,7 +66,7 @@ class SecurityDashboardService:
             "agent_isolation": self._get_agent_isolation_stats(),
             "scan_results": self._get_latest_scan_results(),
             "vulnerability_summary": self._get_vulnerability_summary(),
-            "active_security_tools": self._get_active_security_tools()
+            "active_security_tools": self._get_active_security_tools(),
         }
 
     def _get_security_posture(self) -> Dict[str, Any]:
@@ -91,9 +91,9 @@ class SecurityDashboardService:
             high_vulns = latest_scan.get("high_count", 0)
             medium_vulns = latest_scan.get("medium_count", 0)
 
-            score -= (critical_vulns * 10)
-            score -= (high_vulns * 5)
-            score -= (medium_vulns * 2)
+            score -= critical_vulns * 10
+            score -= high_vulns * 5
+            score -= medium_vulns * 2
 
         # Factor in attack block rate
         attack_stats = self._get_attack_statistics()
@@ -123,9 +123,15 @@ class SecurityDashboardService:
             "level": level,
             "last_updated": datetime.now(UTC).isoformat(),
             "factors": {
-                "vulnerabilities_impact": critical_vulns * -10 + high_vulns * -5 + medium_vulns * -2 if latest_scan else 0,
-                "block_rate_bonus": 5 if block_rate > 95 else (-10 if block_rate < 80 else 0)
-            }
+                "vulnerabilities_impact": critical_vulns * -10
+                + high_vulns * -5
+                + medium_vulns * -2
+                if latest_scan
+                else 0,
+                "block_rate_bonus": 5
+                if block_rate > 95
+                else (-10 if block_rate < 80 else 0),
+            },
         }
 
     def _get_attack_statistics(self) -> Dict[str, Any]:
@@ -151,22 +157,18 @@ class SecurityDashboardService:
                     {"pattern": "script_injection", "count": 45},
                     {"pattern": "event_handler", "count": 38},
                     {"pattern": "javascript_protocol", "count": 24},
-                    {"pattern": "data_uri", "count": 20}
-                ]
+                    {"pattern": "data_uri", "count": 20},
+                ],
             },
             "prompt_injections": {
                 "total": 43,
                 "blocked": 43,
                 "passed_through": 0,
                 "block_rate": 100.0,
-                "risk_distribution": {
-                    "critical": 15,
-                    "high": 18,
-                    "medium": 10
-                }
+                "risk_distribution": {"critical": 15, "high": 18, "medium": 10},
             },
             "overall_block_rate": 100.0,
-            "total_attacks_blocked": 170
+            "total_attacks_blocked": 170,
         }
 
     def _get_transaction_approval_stats(self) -> Dict[str, Any]:
@@ -183,8 +185,8 @@ class SecurityDashboardService:
             "by_type": {
                 "wallet_transaction": {"requested": 20, "approved": 18, "denied": 2},
                 "fund_transfer": {"requested": 15, "approved": 12, "denied": 3},
-                "contract_deployment": {"requested": 10, "approved": 8, "denied": 0}
-            }
+                "contract_deployment": {"requested": 10, "approved": 8, "denied": 0},
+            },
         }
 
     def _get_pii_protection_stats(self) -> Dict[str, Any]:
@@ -200,10 +202,10 @@ class SecurityDashboardService:
                 "ssn": 12,
                 "credit_card": 8,
                 "wallet_address": 45,
-                "api_key": 13
+                "api_key": 13,
             },
             "average_risk_score": 4.2,
-            "high_risk_incidents": 8
+            "high_risk_incidents": 8,
         }
 
     def _get_agent_isolation_stats(self) -> Dict[str, Any]:
@@ -216,13 +218,13 @@ class SecurityDashboardService:
             "active_agents": 18,
             "violations_by_type": {
                 "unauthorized_resource_access": 1,
-                "privilege_escalation_attempt": 1
+                "privilege_escalation_attempt": 1,
             },
             "most_active_agents": [
                 {"agent_id": "market_analyzer", "role": "standard", "requests": 456},
                 {"agent_id": "portfolio_manager", "role": "standard", "requests": 389},
-                {"agent_id": "risk_assessor", "role": "admin", "requests": 278}
-            ]
+                {"agent_id": "risk_assessor", "role": "admin", "requests": 278},
+            ],
         }
 
     def _get_latest_scan_results(self) -> Optional[Dict[str, Any]]:
@@ -248,7 +250,7 @@ class SecurityDashboardService:
         latest_scan_file = max(scan_files, key=lambda p: p.stat().st_mtime)
 
         try:
-            with open(latest_scan_file, 'r') as f:
+            with open(latest_scan_file, "r") as f:
                 scan_data = json.load(f)
 
             return {
@@ -262,7 +264,7 @@ class SecurityDashboardService:
                 "high_count": scan_data.get("high_count", 0),
                 "medium_count": scan_data.get("medium_count", 0),
                 "low_count": scan_data.get("low_count", 0),
-                "duration_seconds": scan_data.get("duration_seconds", 0)
+                "duration_seconds": scan_data.get("duration_seconds", 0),
             }
         except (json.JSONDecodeError, IOError):
             return None
@@ -274,17 +276,12 @@ class SecurityDashboardService:
             "resolved_this_week": 3,
             "new_this_week": 0,
             "trend": "IMPROVING",
-            "by_severity": {
-                "critical": 0,
-                "high": 0,
-                "medium": 0,
-                "low": 0
-            },
+            "by_severity": {"critical": 0, "high": 0, "medium": 0, "low": 0},
             "top_categories": [
                 {"category": "XSS", "count": 0, "trend": "stable"},
                 {"category": "Prompt Injection", "count": 0, "trend": "improving"},
-                {"category": "Network", "count": 0, "trend": "stable"}
-            ]
+                {"category": "Network", "count": 0, "trend": "stable"},
+            ],
         }
 
     def _get_active_security_tools(self) -> List[Dict[str, Any]]:
@@ -296,7 +293,7 @@ class SecurityDashboardService:
                 "status": "active",
                 "last_run": (datetime.now(UTC) - timedelta(hours=2)).isoformat(),
                 "patterns_count": 150,
-                "version": "1.0.0"
+                "version": "1.0.0",
             },
             {
                 "name": "LLMExploiter",
@@ -304,29 +301,29 @@ class SecurityDashboardService:
                 "status": "active",
                 "last_run": (datetime.now(UTC) - timedelta(hours=2)).isoformat(),
                 "patterns_count": 219,
-                "version": "1.0.0"
+                "version": "1.0.0",
             },
             {
                 "name": "Nettacker",
                 "type": "Network Scanning",
                 "status": "active",
                 "last_run": (datetime.now(UTC) - timedelta(days=1)).isoformat(),
-                "version": "0.3.3"
+                "version": "0.3.3",
             },
             {
                 "name": "llm-security-auditor",
                 "type": "Multi-Agent Security",
                 "status": "active",
                 "last_run": (datetime.now(UTC) - timedelta(hours=6)).isoformat(),
-                "version": "1.0.0"
+                "version": "1.0.0",
             },
             {
                 "name": "OWASP AI Testing Guide",
                 "type": "Best Practices",
                 "status": "active",
                 "last_run": (datetime.now(UTC) - timedelta(days=7)).isoformat(),
-                "version": "2024.1"
-            }
+                "version": "2024.1",
+            },
         ]
 
     def get_scan_details(self, scan_id: str) -> Optional[Dict[str, Any]]:
@@ -345,7 +342,7 @@ class SecurityDashboardService:
             return None
 
         try:
-            with open(scan_file, 'r') as f:
+            with open(scan_file, "r") as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError):
             return None
@@ -365,14 +362,14 @@ class SecurityDashboardService:
 
         daily_data = []
         for i in range(days):
-            date = datetime.now(UTC) - timedelta(days=days-i-1)
+            date = datetime.now(UTC) - timedelta(days=days - i - 1)
             daily_data.append({
                 "date": date.strftime("%Y-%m-%d"),
                 "critical": 0,
                 "high": max(0, 3 - i // 10),  # Decreasing trend
                 "medium": max(0, 5 - i // 6),
                 "low": max(0, 8 - i // 4),
-                "total": max(0, 16 - i // 3)
+                "total": max(0, 16 - i // 3),
             })
 
         return {
@@ -381,6 +378,8 @@ class SecurityDashboardService:
             "trend_analysis": {
                 "direction": "IMPROVING",
                 "rate_of_change": -0.5,  # Vulnerabilities decreasing
-                "projected_zero_date": (datetime.now(UTC) + timedelta(days=15)).strftime("%Y-%m-%d")
-            }
+                "projected_zero_date": (
+                    datetime.now(UTC) + timedelta(days=15)
+                ).strftime("%Y-%m-%d"),
+            },
         }

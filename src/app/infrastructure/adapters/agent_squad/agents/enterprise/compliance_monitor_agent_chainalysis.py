@@ -10,7 +10,9 @@ from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
 from app.domain.value_objects.wallet_address import WalletAddress
-from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.domain.value_objects.agent_squad.conversation_context import (
+    ConversationContext,
+)
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentResponse
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
@@ -18,11 +20,11 @@ from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 class ComplianceMonitorAgentChainalysis:
     """
     Compliance Monitor Agent Chainalysis implementation.
-    
+
     Implements: AgentGateway
-    
+
     Purpose: AML/KYC compliance & regulatory screening
-    
+
     Capabilities:
     - Real-time wallet screening (Chainalysis API)
     - OFAC sanction checks (automatic)
@@ -31,18 +33,18 @@ class ComplianceMonitorAgentChainalysis:
     - Regulatory reporting (FinCEN, SEC, EU MiCA)
     - Immutable audit trails
     - Risk scoring (0-100 scale)
-    
+
     Compliance Features:
     - Automatic blocking (risk score > 80)
     - Manual review queue (60-80)
     - Whitelisting support
     - False positive handling
     - Multi-jurisdiction support
-    
+
     Model: gpt-4o (compliance reasoning)
     Temperature: 0.1 (precision critical)
     """
-    
+
     def __init__(
         self,
         llm_client: LLMClientGateway,  # Can be Vertex AI or DeepInfra (OpenAI removed),
@@ -55,7 +57,7 @@ class ComplianceMonitorAgentChainalysis:
     ):
         """
         Initialize compliance monitor agent.
-        
+
         Args:
             llm_client: OpenAI LLM client
             chainalysis_client: Chainalysis API client
@@ -72,12 +74,12 @@ class ComplianceMonitorAgentChainalysis:
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
-    
+
     @property
     def agent_type(self) -> AgentType:
         """Get agent type."""
         return AgentType.COMPLIANCE_MONITOR
-    
+
     async def execute(
         self,
         conversation_id: ConversationId,
@@ -86,7 +88,7 @@ class ComplianceMonitorAgentChainalysis:
     ) -> AgentResponse:
         """
         Execute compliance monitor agent.
-        
+
         Process:
         1. Extract wallet address from message
         2. Screen wallet via Chainalysis API
@@ -98,65 +100,71 @@ class ComplianceMonitorAgentChainalysis:
         8. Return detailed screening results
         """
         start_time = time.time()
-        
+
         # Parse wallet address from message
         wallet_address = await self._extract_wallet_address(message)
-        
+
         if not wallet_address:
             return self._build_error_response(
                 "No wallet address found in message. Please provide a valid wallet address to screen.",
-                start_time
+                start_time,
             )
-        
+
         # Screen wallet via Chainalysis
         screening_result = await self._screen_wallet(wallet_address)
-        
+
         # Generate compliance report
         report = await self._generate_compliance_report(
             wallet_address,
             screening_result,
             conversation_context,
         )
-        
+
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         # Collect sources
         from datetime import datetime, UTC
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_llm_source,
             create_api_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add Chainalysis source
         if self._chainalysis_client:
-            sources.append(create_api_source(
-                source_name="Chainalysis",
-                url="https://www.chainalysis.com/",
-                citation_text=f"Compliance screening for wallet {str(wallet_address)[:10]}...",
-                fetched_at=fetched_at,
-                provider="Chainalysis API",
-                metadata={"wallet_address": str(wallet_address)},
-            ))
-        
+            sources.append(
+                create_api_source(
+                    source_name="Chainalysis",
+                    url="https://www.chainalysis.com/",
+                    citation_text=f"Compliance screening for wallet {str(wallet_address)[:10]}...",
+                    fetched_at=fetched_at,
+                    provider="Chainalysis API",
+                    metadata={"wallet_address": str(wallet_address)},
+                )
+            )
+
         # Add OFAC source
-        sources.append(create_api_source(
-            source_name="OFAC",
-            url="https://ofac.treasury.gov/",
-            citation_text="OFAC sanctions list check",
-            fetched_at=fetched_at,
-            provider="US Treasury OFAC",
-        ))
-        
+        sources.append(
+            create_api_source(
+                source_name="OFAC",
+                url="https://ofac.treasury.gov/",
+                citation_text="OFAC sanctions list check",
+                fetched_at=fetched_at,
+                provider="US Treasury OFAC",
+            )
+        )
+
         # Add LLM source
         model_name = self._model
-        sources.append(create_llm_source(
-            model=model_name,
-            fetched_at=fetched_at,
-        ))
-        
+        sources.append(
+            create_llm_source(
+                model=model_name,
+                fetched_at=fetched_at,
+            )
+        )
+
         return AgentResponse(
             content=report,
             agent_type=self.agent_type,
@@ -170,13 +178,15 @@ class ComplianceMonitorAgentChainalysis:
                 "screening_id": screening_result["screening_id"],
             },
         )
-    
+
     async def is_available(self) -> bool:
         """Check if agent is available."""
         # TODO: Check Chainalysis API status
         return True
-    
-    async def _extract_wallet_address(self, message: MessageContent) -> WalletAddress | None:
+
+    async def _extract_wallet_address(
+        self, message: MessageContent
+    ) -> WalletAddress | None:
         """Extract wallet address from message using LLM."""
         prompt = f"""Extract the Ethereum wallet address from this message:
 
@@ -194,36 +204,36 @@ If no wallet address is found, respond with:
     "found": false
 }}
 """
-        
+
         try:
             response = await self._llm_client.classify_intent(
                 prompt=prompt,
                 model=self._model,
             )
-            
+
             if response.get("found") and response.get("wallet_address"):
                 return WalletAddress(response["wallet_address"])
-            
+
             return None
         except Exception:
             return None
-    
+
     async def _screen_wallet(self, wallet_address: WalletAddress) -> dict[str, Any]:
         """
         Screen wallet via Chainalysis API.
-        
+
         Returns screening result with risk score and decision.
         """
         # TODO: Implement real Chainalysis API integration
         # For now, return mock data
-        
+
         # Mock screening result
         risk_score = 25  # Low risk example
         ofac_status = "clear"
         pep_status = "clear"
         mixer_exposure = 0.0
         high_risk_sources = 0.0
-        
+
         # Determine decision based on risk score
         if risk_score >= self._risk_threshold_block:
             decision = "BLOCKED"
@@ -231,7 +241,7 @@ If no wallet address is found, respond with:
             decision = "MANUAL_REVIEW"
         else:
             decision = "APPROVED"
-        
+
         return {
             "screening_id": f"SCR-{wallet_address.value[:8]}",
             "wallet_address": str(wallet_address),
@@ -248,7 +258,7 @@ If no wallet address is found, respond with:
                 "high_risk_counterparties": [],
             },
         }
-    
+
     async def _generate_compliance_report(
         self,
         wallet_address: WalletAddress,
@@ -260,14 +270,14 @@ If no wallet address is found, respond with:
         decision = screening_result["decision"]
         ofac_status = screening_result["ofac_status"]
         pep_status = screening_result["pep_status"]
-        
+
         # Decision emoji
         decision_emoji = {
             "APPROVED": "✅",
             "MANUAL_REVIEW": "⚠️",
             "BLOCKED": "⛔",
         }.get(decision, "❓")
-        
+
         # Risk level
         if risk_score < 30:
             risk_level = "🟢 LOW"
@@ -277,7 +287,7 @@ If no wallet address is found, respond with:
             risk_level = "🟠 HIGH"
         else:
             risk_level = "🔴 CRITICAL"
-        
+
         report = f"""🔍 **WALLET SCREENING COMPLETE**
 
 **Wallet**: `{wallet_address.value}`
@@ -293,8 +303,8 @@ If no wallet address is found, respond with:
 ├────────────────────────────────────────────┤
 │ OFAC Sanctions    ✅ {ofac_status.upper():<10} {0:>3}/100      │
 │ PEP Check         ✅ {pep_status.upper():<10} {0:>3}/100      │
-│ Mixer Exposure    ✅ None      {screening_result['mixer_exposure_pct']:>3.0f}/100      │
-│ High Risk Source  ✅ None      {screening_result['high_risk_sources_pct']:>3.0f}/100      │
+│ Mixer Exposure    ✅ None      {screening_result["mixer_exposure_pct"]:>3.0f}/100      │
+│ High Risk Source  ✅ None      {screening_result["high_risk_sources_pct"]:>3.0f}/100      │
 └────────────────────────────────────────────┘
 
 **OVERALL RISK**: {risk_level} ({risk_score}/100)
@@ -302,7 +312,7 @@ If no wallet address is found, respond with:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
-        
+
         # Add decision-specific guidance
         if decision == "BLOCKED":
             report += """
@@ -344,7 +354,7 @@ detected.
 **Transaction Limits**: Standard limits apply
 **Next Screening**: Automatic (on next transaction after 24h)
 """
-        
+
         report += """
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -356,13 +366,15 @@ detected.
 legal or financial advice. Consult compliance professionals for
 regulatory guidance.*
 """
-        
+
         return report.strip()
-    
-    def _build_error_response(self, error_message: str, start_time: float) -> AgentResponse:
+
+    def _build_error_response(
+        self, error_message: str, start_time: float
+    ) -> AgentResponse:
         """Build error response."""
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         return AgentResponse(
             content=error_message,
             agent_type=self.agent_type,

@@ -18,7 +18,9 @@ from app.domain.enums.chain_type import ChainType
 from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.enums.transaction_type import TransactionType
 from app.domain.enums.user_role import UserRole
-from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.ports.transaction.transaction_repository import (
+    TransactionRepository,
+)
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.user_id import UserId
@@ -656,7 +658,9 @@ class GetAdminTransactionHistoryHandler:
         if tx_type:
             type_filter = TX_TYPE_MAP.get(tx_type.lower())
 
-        normalized_wallet: str | None = wallet_address.lower() if wallet_address else None
+        normalized_wallet: str | None = (
+            wallet_address.lower() if wallet_address else None
+        )
 
         # ============================================================
         # Global scope (admin dashboard): no wallet/user filter
@@ -677,7 +681,9 @@ class GetAdminTransactionHistoryHandler:
 
             items: list[TransactionHistoryItem] = []
             for tx in transactions:
-                is_incoming = bool(tx.tx_metadata and tx.tx_metadata.get("receiver_view"))
+                is_incoming = bool(
+                    tx.tx_metadata and tx.tx_metadata.get("receiver_view")
+                )
                 from_address = (
                     tx.tx_metadata.get("from_address")
                     if tx.tx_metadata and is_incoming
@@ -748,7 +754,9 @@ class GetAdminTransactionHistoryHandler:
 
             items: list[TransactionHistoryItem] = []
             for tx in transactions:
-                is_incoming = bool(tx.tx_metadata and tx.tx_metadata.get("receiver_view"))
+                is_incoming = bool(
+                    tx.tx_metadata and tx.tx_metadata.get("receiver_view")
+                )
                 from_address = (
                     tx.tx_metadata.get("from_address")
                     if tx.tx_metadata and is_incoming
@@ -828,7 +836,9 @@ class GetAdminTransactionHistoryHandler:
                     amount_out=str(tx.amount_out) if tx.amount_out else None,
                     fee_usd=str(tx.fee_usd) if tx.fee_usd else None,
                     block_number=tx.block_number,
-                    confirmed_at=(tx.confirmed_at.isoformat() if tx.confirmed_at else None),
+                    confirmed_at=(
+                        tx.confirmed_at.isoformat() if tx.confirmed_at else None
+                    ),
                     created_at=tx.created_at.value.isoformat(),
                     explorer_url=get_explorer_url(tx.chain, tx.tx_hash),
                     gas_used=tx.gas_used,

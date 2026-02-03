@@ -15,12 +15,17 @@ class TestGuestHunterPortfolioOptimization:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_portfolio_optimization_basic(self, client, llm_validator, csv_tracker):
+    async def test_portfolio_optimization_basic(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test basic portfolio optimization request."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "How can I optimize my crypto portfolio?", "language": "en"}
+            json={
+                "content": "How can I optimize my crypto portfolio?",
+                "language": "en",
+            },
         )
         assert response.status_code == 200
         data = response.json()
@@ -48,12 +53,17 @@ class TestGuestHunterPortfolioOptimization:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_portfolio_allocation_recommendations(self, client, llm_validator, csv_tracker):
+    async def test_portfolio_allocation_recommendations(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that optimization shows allocation recommendations."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "portfolio optimization recommendations", "language": "en"}
+            json={
+                "content": "portfolio optimization recommendations",
+                "language": "en",
+            },
         )
         assert response.status_code == 200
         data = response.json()
@@ -66,7 +76,14 @@ class TestGuestHunterPortfolioOptimization:
             assert "allocation" in enrichment
 
             # Should mention percentages or weights (when service is working)
-            allocation_keywords = ["%", "percent", "weight", "allocation", "split", "ratio"]
+            allocation_keywords = [
+                "%",
+                "percent",
+                "weight",
+                "allocation",
+                "split",
+                "ratio",
+            ]
             assert any(keyword in content.lower() for keyword in allocation_keywords)
         else:
             # Fallback response is acceptable (service unavailable)
@@ -74,7 +91,9 @@ class TestGuestHunterPortfolioOptimization:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_portfolio_risk_tolerance_levels(self, client, llm_validator, csv_tracker):
+    async def test_portfolio_risk_tolerance_levels(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test optimization for different risk tolerance levels."""
 
         risk_levels = ["conservative", "moderate", "aggressive"]
@@ -83,7 +102,7 @@ class TestGuestHunterPortfolioOptimization:
         for risk in risk_levels:
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={"content": f"{risk} portfolio optimization", "language": "en"}
+                json={"content": f"{risk} portfolio optimization", "language": "en"},
             )
             assert response.status_code == 200
             data = response.json()
@@ -98,12 +117,14 @@ class TestGuestHunterPortfolioOptimization:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_portfolio_diversification_suggestions(self, client, llm_validator, csv_tracker):
+    async def test_portfolio_diversification_suggestions(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that optimization includes diversification advice."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "portfolio diversification strategy", "language": "en"}
+            json={"content": "portfolio diversification strategy", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -116,21 +137,32 @@ class TestGuestHunterPortfolioOptimization:
             assert "allocation" in enrichment
 
             # Should mention diversification (when service is working)
-            diversification_keywords = ["diversif", "spread", "distribute", "variety", "multiple"]
-            assert any(keyword in content.lower() for keyword in diversification_keywords)
+            diversification_keywords = [
+                "diversif",
+                "spread",
+                "distribute",
+                "variety",
+                "multiple",
+            ]
+            assert any(
+                keyword in content.lower() for keyword in diversification_keywords
+            )
         else:
             # Fallback response is acceptable
             assert "disclaimer" in enrichment
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_portfolio_asset_recommendations(self, client, llm_validator, csv_tracker):
+    async def test_portfolio_asset_recommendations(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that optimization recommends specific assets."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "crypto portfolio recommendations", "language": "en"}
+            json={"content": "crypto portfolio recommendations", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -145,14 +177,17 @@ class TestGuestHunterPortfolioOptimization:
         assert len(content) > 0  # At minimum, has some content
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_portfolio_rebalancing_advice(self, client, llm_validator, csv_tracker):
+    async def test_portfolio_rebalancing_advice(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that optimization includes rebalancing recommendations."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "portfolio rebalancing strategy", "language": "en"}
+            json={"content": "portfolio rebalancing strategy", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -167,6 +202,7 @@ class TestGuestHunterPortfolioOptimization:
         assert len(content) > 0  # At minimum, has some content
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_portfolio_risk_metrics(self, client, llm_validator, csv_tracker):
@@ -174,7 +210,7 @@ class TestGuestHunterPortfolioOptimization:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "optimize portfolio risk", "language": "en"}
+            json={"content": "optimize portfolio risk", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -189,6 +225,7 @@ class TestGuestHunterPortfolioOptimization:
         assert len(content) > 0  # At minimum, has some content
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_portfolio_expected_returns(self, client, llm_validator, csv_tracker):
@@ -196,7 +233,7 @@ class TestGuestHunterPortfolioOptimization:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "portfolio optimization returns", "language": "en"}
+            json={"content": "portfolio optimization returns", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -211,6 +248,7 @@ class TestGuestHunterPortfolioOptimization:
         assert len(content) > 0  # At minimum, has some content
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_portfolio_hunter_tool_tag(self, client, llm_validator, csv_tracker):
@@ -218,7 +256,7 @@ class TestGuestHunterPortfolioOptimization:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "portfolio optimization", "language": "en"}
+            json={"content": "portfolio optimization", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -234,14 +272,17 @@ class TestGuestHunterPortfolioOptimization:
         assert len(enrichment) > 0
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_portfolio_uses_real_market_data(self, client, llm_validator, csv_tracker):
+    async def test_portfolio_uses_real_market_data(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that optimization uses real market data."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "crypto portfolio recommendations", "language": "en"}
+            json={"content": "crypto portfolio recommendations", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -256,14 +297,17 @@ class TestGuestHunterPortfolioOptimization:
             assert isinstance(allocation, dict)
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_portfolio_multilingual_spanish(self, client, llm_validator, csv_tracker):
+    async def test_portfolio_multilingual_spanish(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test portfolio optimization in Spanish."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "optimización de cartera cripto", "language": "es"}
+            json={"content": "optimización de cartera cripto", "language": "es"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -275,6 +319,8 @@ class TestGuestHunterPortfolioOptimization:
         assert len(content) > 0  # At minimum, has some content
 
         validation = None
+
+
 class TestGuestHunterPortfolioOptimizationStorytellingQuality:
     """Test storytelling and UX quality of portfolio optimization responses."""
 
@@ -285,7 +331,7 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "portfolio optimization", "language": "en"}
+            json={"content": "portfolio optimization", "language": "en"},
         )
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
@@ -295,6 +341,7 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
         assert len(content) > 0  # At minimum, has some content
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_portfolio_clear_formatting(self, client, llm_validator, csv_tracker):
@@ -302,7 +349,7 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "crypto portfolio recommendations", "language": "en"}
+            json={"content": "crypto portfolio recommendations", "language": "en"},
         )
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
@@ -312,14 +359,17 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
         assert len(content) > 0  # At minimum, has some content
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_portfolio_clear_percentages(self, client, llm_validator, csv_tracker):
+    async def test_portfolio_clear_percentages(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that allocation percentages are clearly shown."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "portfolio allocation strategy", "language": "en"}
+            json={"content": "portfolio allocation strategy", "language": "en"},
         )
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
@@ -329,6 +379,7 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
         assert len(content) > 0  # At minimum, has some content
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_portfolio_actionable_steps(self, client, llm_validator, csv_tracker):
@@ -336,7 +387,7 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "how to optimize portfolio", "language": "en"}
+            json={"content": "how to optimize portfolio", "language": "en"},
         )
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
@@ -346,6 +397,7 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
         assert len(content) > 0  # At minimum, has some content
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_portfolio_risk_education(self, client, llm_validator, csv_tracker):
@@ -353,7 +405,7 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "portfolio optimization strategy", "language": "en"}
+            json={"content": "portfolio optimization strategy", "language": "en"},
         )
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
@@ -363,6 +415,7 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
         assert len(content) > 0  # At minimum, has some content
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_portfolio_signup_cta(self, client, llm_validator, csv_tracker):
@@ -370,7 +423,7 @@ class TestGuestHunterPortfolioOptimizationStorytellingQuality:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "portfolio optimization", "language": "en"}
+            json={"content": "portfolio optimization", "language": "en"},
         )
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]

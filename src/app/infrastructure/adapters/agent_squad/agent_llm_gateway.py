@@ -19,7 +19,7 @@ from app.domain.ports.ai.llm_gateway import LLMGateway
 class AgentLLMGateway:
     """
     Wrapper that adapts LLMGateway for use by Agent Squad agents.
-    
+
     Provides the same interface as LLMClientGateway but uses the
     unified LLMGateway implementation under the hood.
     """
@@ -27,7 +27,7 @@ class AgentLLMGateway:
     def __init__(self, llm_gateway: LLMGateway):
         """
         Initialize with unified LLM gateway.
-        
+
         Args:
             llm_gateway: The unified LLM gateway to delegate to
         """
@@ -42,21 +42,21 @@ class AgentLLMGateway:
     ) -> dict:
         """
         Chat completion with dict response format.
-        
+
         Wraps LLMGateway.generate_with_metadata() to provide the response
         format expected by agents: {"content": str, "tokens_used": int, ...}
-        
+
         Args:
             messages: Conversation messages
             model: Model to use
             temperature: Sampling temperature
             max_tokens: Maximum response tokens
-            
+
         Returns:
             dict with content, tokens_used, model, finish_reason
         """
         start_time = time.time()
-        
+
         try:
             # Use generate_with_metadata for full response info
             content, metadata = await self._llm.generate_with_metadata(
@@ -65,9 +65,9 @@ class AgentLLMGateway:
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
-            
+
             latency_ms = int((time.time() - start_time) * 1000)
-            
+
             return {
                 "content": content,
                 "role": "assistant",
@@ -75,9 +75,11 @@ class AgentLLMGateway:
                 "model": metadata.get("model", model),
                 "finish_reason": metadata.get("finish_reason", "stop"),
                 "latency_ms": latency_ms,
-                "provider": metadata.get("provider", "unknown"),  # Include provider info for debugging
+                "provider": metadata.get(
+                    "provider", "unknown"
+                ),  # Include provider info for debugging
             }
-            
+
         except Exception:
             # Fallback to simple generate if metadata not available
             content = await self._llm.generate(
@@ -86,9 +88,9 @@ class AgentLLMGateway:
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
-            
+
             latency_ms = int((time.time() - start_time) * 1000)
-            
+
             return {
                 "content": content,
                 "role": "assistant",
@@ -107,13 +109,13 @@ class AgentLLMGateway:
     ) -> str:
         """
         Generate text completion (direct passthrough).
-        
+
         Args:
             model: Model to use
             messages: Conversation messages
             temperature: Sampling temperature
             max_tokens: Maximum response tokens
-            
+
         Returns:
             Generated text response
         """
@@ -131,12 +133,12 @@ class AgentLLMGateway:
     ) -> dict:
         """
         Classify intent using LLM.
-        
+
         Translates to generate() call with classification prompt.
         """
         import json
         import re
-        
+
         messages = [
             {
                 "role": "system",
@@ -153,11 +155,14 @@ Return JSON: {"intent": "...", "confidence": 0.0-1.0, "reasoning": "..."}""",
             max_tokens=300,
         )
 
-        return self._parse_json_response(response, {
-            "intent": "unknown",
-            "confidence": 0.5,
-            "reasoning": response,
-        })
+        return self._parse_json_response(
+            response,
+            {
+                "intent": "unknown",
+                "confidence": 0.5,
+                "reasoning": response,
+            },
+        )
 
     async def recommend_agents(
         self,
@@ -169,7 +174,7 @@ Return JSON: {"intent": "...", "confidence": 0.0-1.0, "reasoning": "..."}""",
         """
         import json
         import re
-        
+
         messages = [
             {
                 "role": "system",
@@ -186,10 +191,13 @@ Return JSON: {"agents": ["agent1", "agent2"], "reasoning": "..."}""",
             max_tokens=500,
         )
 
-        return self._parse_json_response(response, {
-            "agents": [],
-            "reasoning": response,
-        })
+        return self._parse_json_response(
+            response,
+            {
+                "agents": [],
+                "reasoning": response,
+            },
+        )
 
     async def plan_workflow(
         self,
@@ -201,7 +209,7 @@ Return JSON: {"agents": ["agent1", "agent2"], "reasoning": "..."}""",
         """
         import json
         import re
-        
+
         messages = [
             {
                 "role": "system",
@@ -224,7 +232,7 @@ Return JSON: {{"tasks": [{{"agent_type": "agent_name", "task_description": "..."
         """Parse JSON from LLM response with fallback."""
         import json
         import re
-        
+
         try:
             return json.loads(response)
         except json.JSONDecodeError:

@@ -17,10 +17,11 @@ from app.domain.value_objects.coordinates import Coordinates
 class Country(Entity[CountryId]):
     """
     Country entity representing a country in the system.
-    
+
     This is an anemic model following DDD principles where behavior
     is handled by domain services rather than the entity itself.
     """
+
     name: CountryName
     iso3: IsoCode
     iso2: Optional[IsoCode]

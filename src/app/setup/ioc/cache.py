@@ -14,18 +14,18 @@ from app.infrastructure.cache.graph_cache import GraphQueryCache
 
 class CacheProvider(Provider):
     """Provider for cache infrastructure."""
-    
+
     scope = Scope.APP
-    
+
     @provide
     async def provide_redis_client(self) -> Redis:
         """
         Provide Redis async client for caching.
-        
+
         Uses dedicated Redis database (db 3) for external API cache.
         """
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/3")
-        
+
         pool = ConnectionPool.from_url(
             redis_url,
             max_connections=30,
@@ -33,9 +33,9 @@ class CacheProvider(Provider):
             socket_timeout=3,
             socket_connect_timeout=3,
         )
-        
+
         return Redis(connection_pool=pool)
-    
+
     @provide
     def provide_cache_config(self) -> CacheConfig:
         """Provide cache configuration."""
@@ -57,7 +57,7 @@ class CacheProvider(Provider):
             nft_ttl=300,
             chain_data_ttl=300,
         )
-    
+
     @provide
     def provide_external_api_cache(
         self,
@@ -69,7 +69,7 @@ class CacheProvider(Provider):
             redis_client=redis_client,
             config=config,
         )
-    
+
     @provide
     def provide_graph_cache(
         self,

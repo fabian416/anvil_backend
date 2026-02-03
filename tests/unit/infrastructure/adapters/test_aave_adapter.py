@@ -412,7 +412,14 @@ class TestAaveValidation:
         adapter = AaveAdapter(cache=mock_cache)
 
         # Should not raise for supported chains
-        supported_chains = ["ethereum", "polygon", "arbitrum", "optimism", "avalanche", "base"]
+        supported_chains = [
+            "ethereum",
+            "polygon",
+            "arbitrum",
+            "optimism",
+            "avalanche",
+            "base",
+        ]
         for chain in supported_chains:
             adapter._validate_chain(chain)
 

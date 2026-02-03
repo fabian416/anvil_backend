@@ -42,7 +42,11 @@ class TestListSubscriptionPlans:
 
         if response.status_code == 200:
             data = response.json()
-            plans = data if isinstance(data, list) else data.get("plans", data.get("data", []))
+            plans = (
+                data
+                if isinstance(data, list)
+                else data.get("plans", data.get("data", []))
+            )
             # If plans exist, they should have pricing
             if plans and isinstance(plans, list) and len(plans) > 0:
                 # Just verify structure exists
@@ -73,15 +77,19 @@ class TestCreateSubscription:
         THEN system SHALL return checkout URL or session info
         """
         response = await client.post(
-            "/api/v1/subscription",
-            json={"plan_id": "premium"}
+            "/api/v1/subscription", json={"plan_id": "premium"}
         )
 
         # Without auth, expect 401
         if response.status_code in (200, 201):
             data = response.json()
             # Should have checkout URL or session
-            assert "url" in data or "checkout_url" in data or "session_id" in data or "data" in data
+            assert (
+                "url" in data
+                or "checkout_url" in data
+                or "session_id" in data
+                or "data" in data
+            )
         else:
             assert response.status_code in (400, 401, 404)
 
@@ -91,8 +99,7 @@ class TestCreateSubscription:
         THEN system SHALL return error
         """
         response = await client.post(
-            "/api/v1/subscription",
-            json={"plan_id": "invalid_plan_id_12345"}
+            "/api/v1/subscription", json={"plan_id": "invalid_plan_id_12345"}
         )
 
         # Should return 400/404 for invalid plan or 401 if not authenticated
@@ -104,8 +111,7 @@ class TestCreateSubscription:
         THEN system SHALL return 401 unauthorized
         """
         response = await client.post(
-            "/api/v1/subscription",
-            json={"plan_id": "premium"}
+            "/api/v1/subscription", json={"plan_id": "premium"}
         )
 
         assert response.status_code == 401
@@ -123,8 +129,7 @@ class TestSubscriptionSuccess:
         THEN system SHALL activate subscription (or return 401)
         """
         response = await client.post(
-            "/api/v1/subscription/success",
-            json={"session_id": "cs_test_12345"}
+            "/api/v1/subscription/success", json={"session_id": "cs_test_12345"}
         )
 
         # Without auth, expect 401
@@ -136,8 +141,7 @@ class TestSubscriptionSuccess:
         THEN system SHALL return error
         """
         response = await client.post(
-            "/api/v1/subscription/success",
-            json={"session_id": "invalid_session"}
+            "/api/v1/subscription/success", json={"session_id": "invalid_session"}
         )
 
         # Should return 400/404 or 401 if not authenticated

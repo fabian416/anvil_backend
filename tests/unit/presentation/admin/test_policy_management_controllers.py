@@ -32,4 +32,3 @@ class TestAdminPoliciesControllerStructure:
         assert "/api/v1/admin/policies/{policy_id}" in paths
         assert "/api/v1/admin/policies/{policy_id}/rules" in paths
         assert "/api/v1/admin/policies/{policy_id}/rules/{rule_id}" in paths
-

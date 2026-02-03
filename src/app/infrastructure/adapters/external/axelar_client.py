@@ -15,6 +15,7 @@ import httpx
 @dataclass
 class BridgeRoute:
     """Bridge route from API."""
+
     source_chain: str
     dest_chain: str
     asset: str
@@ -26,6 +27,7 @@ class BridgeRoute:
 @dataclass
 class TransferEstimate:
     """Transfer estimate from API."""
+
     source_chain: str
     dest_chain: str
     asset: str
@@ -39,6 +41,7 @@ class TransferEstimate:
 @dataclass
 class TransferStatus:
     """Transfer status from API."""
+
     tx_hash: str
     status: str  # "pending", "processing", "completed", "failed"
     source_chain: str
@@ -52,6 +55,7 @@ class TransferStatus:
 @dataclass
 class CrossChainTransfer:
     """Cross-chain transfer data."""
+
     tx_hash: str
     source_chain: str
     dest_chain: str
@@ -65,10 +69,10 @@ class CrossChainTransfer:
 class AxelarClient:
     """
     Axelar Network API client.
-    
+
     Provides access to cross-chain bridge routes, transfers, and status tracking.
     """
-    
+
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -78,7 +82,7 @@ class AxelarClient:
         self.api_key = api_key
         self.base_url = base_url
         self.client = httpx.AsyncClient(timeout=timeout)
-    
+
     async def get_routes(
         self,
         source_chain: Optional[str] = None,
@@ -86,7 +90,7 @@ class AxelarClient:
     ) -> List[BridgeRoute]:
         """Get available bridge routes."""
         return []
-    
+
     async def estimate_transfer(
         self,
         source_chain: str,
@@ -105,7 +109,7 @@ class AxelarClient:
             estimated_time_seconds=300,
             gas_cost=Decimal("0"),
         )
-    
+
     async def track_transfer(self, tx_hash: str) -> TransferStatus:
         """Track transfer status."""
         return TransferStatus(
@@ -118,11 +122,11 @@ class AxelarClient:
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
         )
-    
+
     async def get_supported_chains(self) -> List[str]:
         """Get list of supported chains."""
         return ["ethereum", "polygon", "avalanche", "arbitrum", "optimism"]
-    
+
     async def close(self):
         """Close the HTTP client."""
         await self.client.aclose()

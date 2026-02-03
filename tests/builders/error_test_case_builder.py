@@ -318,7 +318,10 @@ class ErrorTestCaseBuilder:
         return (
             self.for_endpoint("/api/v1/account/signup")
             .with_method("POST")
-            .with_request_data({"email": "existing@example.com", "password": "Test123!"})
+            .with_request_data({
+                "email": "existing@example.com",
+                "password": "Test123!",
+            })
             .expecting_error("USER_002")
             .requires_auth(False)
             .with_name("Email already exists")
@@ -327,7 +330,9 @@ class ErrorTestCaseBuilder:
     def for_conversation_not_found(self) -> "ErrorTestCaseBuilder":
         """Configure for conversation not found error."""
         return (
-            self.for_endpoint("/api/v1/chat/conversations/00000000-0000-0000-0000-000000000000")
+            self.for_endpoint(
+                "/api/v1/chat/conversations/00000000-0000-0000-0000-000000000000"
+            )
             .with_method("GET")
             .expecting_error("CHAT_001")
             .with_name("Conversation not found")
@@ -348,7 +353,10 @@ class ErrorTestCaseBuilder:
         return (
             self.for_endpoint("/api/v1/account/password")
             .with_method("PUT")
-            .with_request_data({"current_password": "Test123!", "new_password": "Test123!"})
+            .with_request_data({
+                "current_password": "Test123!",
+                "new_password": "Test123!",
+            })
             .expecting_error("USER_014")
             .with_name("New password same as current")
         )

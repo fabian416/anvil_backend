@@ -11,4 +11,5 @@ from app.domain.value_objects.base import ValueObject
 @dataclass(frozen=True, repr=False)
 class LastLogin(ValueObject[datetime]):
     """Last login value object."""
+
     value: datetime

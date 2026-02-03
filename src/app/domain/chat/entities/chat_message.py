@@ -13,7 +13,7 @@ from uuid import UUID, uuid4
 
 class MessageRole(str, Enum):
     """Message role."""
-    
+
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
@@ -23,11 +23,11 @@ class MessageRole(str, Enum):
 class ChatMessage:
     """
     Unified message entity.
-    
+
     Supports rich metadata for intent tracking, handler info,
     and conversational context.
     """
-    
+
     id: UUID = field(default_factory=uuid4)
     conversation_id: UUID = field(default_factory=uuid4)
     role: MessageRole = MessageRole.USER
@@ -39,7 +39,7 @@ class ChatMessage:
     language: str = "en"
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = field(default_factory=dict)
-    
+
     @classmethod
     def create_user_message(
         cls,
@@ -58,7 +58,7 @@ class ChatMessage:
             metadata=metadata or {},
             created_at=created_at or datetime.now(UTC),
         )
-    
+
     @classmethod
     def create_assistant_message(
         cls,
@@ -85,7 +85,7 @@ class ChatMessage:
             metadata=metadata or {},
             created_at=created_at or datetime.now(UTC),
         )
-    
+
     @classmethod
     def create_system_message(
         cls,
@@ -100,46 +100,45 @@ class ChatMessage:
             content=content,
             metadata=metadata or {},
         )
-    
+
     def set_pending_action(self, action: str) -> None:
         """Set a pending action in metadata."""
         self.metadata["pending_action"] = action
-    
+
     def get_pending_action(self) -> str | None:
         """Get pending action from metadata."""
         return self.metadata.get("pending_action")
-    
+
     def set_swap_info(self, swap_info: dict[str, Any]) -> None:
         """Store swap info for multi-turn swap flow."""
         self.metadata["swap_info"] = swap_info
-    
+
     def get_swap_info(self) -> dict[str, Any] | None:
         """Get swap info from metadata."""
         return self.metadata.get("swap_info")
-    
+
     def set_buy_info(self, buy_info: dict[str, Any]) -> None:
         """Store buy info for multi-turn buy flow."""
         self.metadata["buy_info"] = buy_info
-    
+
     def get_buy_info(self) -> dict[str, Any] | None:
         """Get buy info from metadata."""
         return self.metadata.get("buy_info")
-    
+
     def set_extracted_entities(self, entities: dict[str, Any]) -> None:
         """Store extracted entities (tokens, amounts, etc.)."""
         self.metadata["entities"] = entities
-    
+
     def get_extracted_entities(self) -> dict[str, Any]:
         """Get extracted entities."""
         return self.metadata.get("entities", {})
-    
+
     @property
     def is_user_message(self) -> bool:
         """Check if message is from user."""
         return self.role == MessageRole.USER
-    
+
     @property
     def is_assistant_message(self) -> bool:
         """Check if message is from assistant."""
         return self.role == MessageRole.ASSISTANT
-

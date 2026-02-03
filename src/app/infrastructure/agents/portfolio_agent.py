@@ -10,7 +10,7 @@ from app.infrastructure.agents.base_defi_agent import BaseDeFiAgent
 class PortfolioAgent(BaseDeFiAgent):
     """
     Specialized agent for portfolio management and viewing.
-    
+
     Capabilities:
     - View wallet balances
     - Show position summaries
@@ -18,13 +18,13 @@ class PortfolioAgent(BaseDeFiAgent):
     - Analyze asset allocation
     - Provide portfolio insights
     """
-    
+
     def __init__(self, model: str = "gpt-4-turbo"):
         """Initialize PortfolioAgent."""
-        
+
         name = "PortfolioAgent"
         description = "Specialized agent for portfolio viewing and analysis"
-        
+
         instructions = [
             "You are a DeFi portfolio analyst that helps users track and understand their holdings.",
             "Your role is to provide clear, actionable insights about their crypto portfolio.",
@@ -74,23 +74,23 @@ class PortfolioAgent(BaseDeFiAgent):
             "- Include gas costs in performance calculations",
             "- Respect user privacy - never share specific holdings publicly",
         ]
-        
+
         super().__init__(
             name=name,
             description=description,
             instructions=instructions,
             model=model,
-            tools=self.get_tools()
+            tools=self.get_tools(),
         )
-    
+
     def get_intent_types(self) -> List[str]:
         """Get intent types handled by PortfolioAgent."""
         return ["portfolio_view"]
-    
+
     def get_tools(self) -> List[Any]:
         """
         Get tools for PortfolioAgent.
-        
+
         Phase 2 implementation with wallet, DeFiLlama, and CoinGecko integration.
         """
         # Import tools here to avoid circular imports
@@ -102,7 +102,7 @@ class PortfolioAgent(BaseDeFiAgent):
             get_market_overview_tool,
             get_yield_opportunities_tool,
         )
-        
+
         # Tool metadata for Phase 2
         tools = [
             {
@@ -154,41 +154,37 @@ class PortfolioAgent(BaseDeFiAgent):
                 "function": get_yield_opportunities_tool,
             },
         ]
-        
+
         return tools
-    
-    async def run(
-        self,
-        message: str,
-        context: Optional[Dict[str, Any]] = None
-    ) -> str:
+
+    async def run(self, message: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
         Process portfolio-related messages.
-        
+
         Args:
             message: User message about portfolio
             context: Optional conversation context
-        
+
         Returns:
             Agent response with portfolio information
         """
         # Add portfolio-specific context
         enhanced_context = context or {}
         enhanced_context["agent_type"] = "portfolio"
-        
+
         # Call parent run method
         response = await super().run(message, enhanced_context)
-        
+
         return response
 
 
 def create_portfolio_agent(model: str = "gpt-4-turbo") -> PortfolioAgent:
     """
     Factory function to create a PortfolioAgent.
-    
+
     Args:
         model: LLM model to use
-    
+
     Returns:
         PortfolioAgent instance
     """

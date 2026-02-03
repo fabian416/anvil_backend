@@ -35,7 +35,9 @@ from app.presentation.http.schemas.user_chat_analytics import (
     TopicDistribution,
     DailyActivityPoint,
 )
-from app.application.chat.services.user_analytics_service import UserChatAnalyticsService
+from app.application.chat.services.user_analytics_service import (
+    UserChatAnalyticsService,
+)
 from app.infrastructure.auth.context import get_current_user_id
 
 
@@ -49,17 +51,15 @@ router = APIRouter(
     "/my-analytics",
     response_model=UserAnalyticsDashboardResponse,
     summary="Get my chat analytics dashboard",
-    description="Get personalized analytics overview for your chat usage"
+    description="Get personalized analytics overview for your chat usage",
 )
 @inject
 async def get_my_analytics(
     date_from: Optional[datetime] = Query(
-        None,
-        description="Start date for analytics (defaults to 30 days ago)"
+        None, description="Start date for analytics (defaults to 30 days ago)"
     ),
     date_to: Optional[datetime] = Query(
-        None,
-        description="End date for analytics (defaults to now)"
+        None, description="End date for analytics (defaults to now)"
     ),
     user_id: int = Depends(get_current_user_id),
     analytics_service: FromDishka[UserChatAnalyticsService] = None,
@@ -91,15 +91,12 @@ async def get_my_analytics(
 
     try:
         dashboard_data = await analytics_service.get_user_dashboard(
-            user_id=user_id,
-            date_from=date_from,
-            date_to=date_to
+            user_id=user_id, date_from=date_from, date_to=date_to
         )
         return dashboard_data
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving analytics dashboard: {str(e)}"
+            status_code=500, detail=f"Error retrieving analytics dashboard: {str(e)}"
         )
 
 
@@ -107,7 +104,7 @@ async def get_my_analytics(
     "/my-analytics/usage",
     response_model=PersonalUsageStatsResponse,
     summary="Get my usage statistics",
-    description="Get detailed personal usage metrics"
+    description="Get detailed personal usage metrics",
 )
 @inject
 async def get_my_usage_stats(
@@ -144,15 +141,12 @@ async def get_my_usage_stats(
 
     try:
         usage_data = await analytics_service.get_usage_stats(
-            user_id=user_id,
-            date_from=date_from,
-            date_to=date_to
+            user_id=user_id, date_from=date_from, date_to=date_to
         )
         return usage_data
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving usage stats: {str(e)}"
+            status_code=500, detail=f"Error retrieving usage stats: {str(e)}"
         )
 
 
@@ -160,7 +154,7 @@ async def get_my_usage_stats(
     "/my-analytics/insights",
     response_model=ConversationInsightsResponse,
     summary="Get conversation insights",
-    description="Get insights into your conversation patterns and topics"
+    description="Get insights into your conversation patterns and topics",
 )
 @inject
 async def get_conversation_insights(
@@ -197,15 +191,12 @@ async def get_conversation_insights(
 
     try:
         insights_data = await analytics_service.get_conversation_insights(
-            user_id=user_id,
-            date_from=date_from,
-            date_to=date_to
+            user_id=user_id, date_from=date_from, date_to=date_to
         )
         return insights_data
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving conversation insights: {str(e)}"
+            status_code=500, detail=f"Error retrieving conversation insights: {str(e)}"
         )
 
 
@@ -213,7 +204,7 @@ async def get_conversation_insights(
     "/my-analytics/costs",
     response_model=PersonalCostBreakdownResponse,
     summary="Get my cost breakdown",
-    description="Get detailed breakdown of your personal LLM API spending"
+    description="Get detailed breakdown of your personal LLM API spending",
 )
 @inject
 async def get_my_cost_breakdown(
@@ -222,7 +213,7 @@ async def get_my_cost_breakdown(
     group_by: str = Query(
         "agent",
         pattern="^(agent|model|day|conversation)$",
-        description="Group costs by dimension"
+        description="Group costs by dimension",
     ),
     user_id: int = Depends(get_current_user_id),
     analytics_service: FromDishka[UserChatAnalyticsService] = None,
@@ -256,16 +247,12 @@ async def get_my_cost_breakdown(
 
     try:
         cost_data = await analytics_service.get_cost_breakdown(
-            user_id=user_id,
-            date_from=date_from,
-            date_to=date_to,
-            group_by=group_by
+            user_id=user_id, date_from=date_from, date_to=date_to, group_by=group_by
         )
         return cost_data
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving cost breakdown: {str(e)}"
+            status_code=500, detail=f"Error retrieving cost breakdown: {str(e)}"
         )
 
 
@@ -273,7 +260,7 @@ async def get_my_cost_breakdown(
     "/my-analytics/agents/favorites",
     response_model=FavoriteAgentsResponse,
     summary="Get my favorite agents",
-    description="Get statistics on your most-used agents and their performance"
+    description="Get statistics on your most-used agents and their performance",
 )
 @inject
 async def get_favorite_agents(
@@ -312,16 +299,12 @@ async def get_favorite_agents(
 
     try:
         agents_data = await analytics_service.get_favorite_agents(
-            user_id=user_id,
-            date_from=date_from,
-            date_to=date_to,
-            limit=limit
+            user_id=user_id, date_from=date_from, date_to=date_to, limit=limit
         )
         return agents_data
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving favorite agents: {str(e)}"
+            status_code=500, detail=f"Error retrieving favorite agents: {str(e)}"
         )
 
 
@@ -329,7 +312,7 @@ async def get_favorite_agents(
     "/my-analytics/trends",
     response_model=HistoricalTrendsResponse,
     summary="Get my historical trends",
-    description="Get historical activity trends with daily/weekly breakdown"
+    description="Get historical activity trends with daily/weekly breakdown",
 )
 @inject
 async def get_historical_trends(
@@ -338,7 +321,7 @@ async def get_historical_trends(
     granularity: str = Query(
         "daily",
         pattern="^(hourly|daily|weekly)$",
-        description="Time granularity for trends"
+        description="Time granularity for trends",
     ),
     user_id: int = Depends(get_current_user_id),
     analytics_service: FromDishka[UserChatAnalyticsService] = None,
@@ -375,13 +358,12 @@ async def get_historical_trends(
             user_id=user_id,
             date_from=date_from,
             date_to=date_to,
-            granularity=granularity
+            granularity=granularity,
         )
         return trends_data
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving historical trends: {str(e)}"
+            status_code=500, detail=f"Error retrieving historical trends: {str(e)}"
         )
 
 
@@ -389,13 +371,15 @@ async def get_historical_trends(
     "/my-analytics/conversations/history",
     response_model=ConversationHistoryResponse,
     summary="Get conversation history analysis",
-    description="Get detailed analysis of your conversation history"
+    description="Get detailed analysis of your conversation history",
 )
 @inject
 async def get_conversation_history_analysis(
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
-    limit: int = Query(20, ge=1, le=100, description="Number of conversations to analyze"),
+    limit: int = Query(
+        20, ge=1, le=100, description="Number of conversations to analyze"
+    ),
     user_id: int = Depends(get_current_user_id),
     analytics_service: FromDishka[UserChatAnalyticsService] = None,
 ) -> ConversationHistoryResponse:
@@ -427,16 +411,12 @@ async def get_conversation_history_analysis(
 
     try:
         history_data = await analytics_service.get_conversation_history(
-            user_id=user_id,
-            date_from=date_from,
-            date_to=date_to,
-            limit=limit
+            user_id=user_id, date_from=date_from, date_to=date_to, limit=limit
         )
         return history_data
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving conversation history: {str(e)}"
+            status_code=500, detail=f"Error retrieving conversation history: {str(e)}"
         )
 
 
@@ -444,20 +424,15 @@ async def get_conversation_history_analysis(
     "/my-analytics/export",
     response_model=UserExportDataResponse,
     summary="Export my analytics data",
-    description="Export your personal analytics data in JSON or CSV format"
+    description="Export your personal analytics data in JSON or CSV format",
 )
 @inject
 async def export_my_analytics(
     date_from: Optional[datetime] = Query(None, description="Start date"),
     date_to: Optional[datetime] = Query(None, description="End date"),
-    format: str = Query(
-        "json",
-        pattern="^(json|csv)$",
-        description="Export format"
-    ),
+    format: str = Query("json", pattern="^(json|csv)$", description="Export format"),
     include_conversations: bool = Query(
-        False,
-        description="Include full conversation data"
+        False, description="Include full conversation data"
     ),
     user_id: int = Depends(get_current_user_id),
     analytics_service: FromDishka[UserChatAnalyticsService] = None,
@@ -495,11 +470,10 @@ async def export_my_analytics(
             date_from=date_from,
             date_to=date_to,
             export_format=format,
-            include_conversations=include_conversations
+            include_conversations=include_conversations,
         )
         return export_data
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error exporting analytics data: {str(e)}"
+            status_code=500, detail=f"Error exporting analytics data: {str(e)}"
         )

@@ -22,20 +22,20 @@ logger = logging.getLogger(__name__)
 class TheGraphClient:
     """
     The Graph Protocol client for on-chain data.
-    
+
     Queries subgraphs for:
     - Protocol metrics (TVL, volume, fees)
     - User transactions
     - Protocol events
     - Token prices
-    
+
     Popular Subgraphs:
     - Uniswap V3
     - Aave V3
     - Compound V3
     - Curve Finance
     """
-    
+
     # Subgraph URLs (mainnet)
     SUBGRAPHS = {
         "uniswap-v3": "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3",
@@ -43,7 +43,7 @@ class TheGraphClient:
         "compound-v3": "https://api.thegraph.com/subgraphs/name/graphprotocol/compound-v3",
         "curve": "https://api.thegraph.com/subgraphs/name/messari/curve-finance-ethereum",
     }
-    
+
     def __init__(
         self,
         api_key: Optional[str] = None,
@@ -51,7 +51,7 @@ class TheGraphClient:
     ):
         """
         Initialize The Graph client.
-        
+
         Args:
             api_key: The Graph API key (for hosted service)
             timeout: Request timeout in seconds
@@ -59,7 +59,7 @@ class TheGraphClient:
         self._api_key = api_key
         self._timeout = timeout
         self._client = httpx.AsyncClient(timeout=timeout)
-    
+
     async def query_subgraph(
         self,
         subgraph: str,
@@ -68,57 +68,57 @@ class TheGraphClient:
     ) -> Dict[str, Any]:
         """
         Execute GraphQL query on subgraph.
-        
+
         Args:
             subgraph: Subgraph name (e.g., 'uniswap-v3')
             query: GraphQL query string
             variables: Query variables
-        
+
         Returns:
             Query result
         """
         url = self.SUBGRAPHS.get(subgraph)
         if not url:
             raise ValueError(f"Unknown subgraph: {subgraph}")
-        
+
         # Add API key to URL if provided
         if self._api_key:
             url = url.replace(
                 "api.thegraph.com",
                 f"gateway.thegraph.com/api/{self._api_key}",
             )
-        
+
         payload = {
             "query": query,
             "variables": variables or {},
         }
-        
+
         try:
             response = await self._client.post(url, json=payload)
             response.raise_for_status()
-            
+
             data = response.json()
-            
+
             if "errors" in data:
                 logger.error(f"GraphQL errors: {data['errors']}")
                 raise ValueError(f"GraphQL query failed: {data['errors']}")
-            
+
             return data.get("data", {})
-        
+
         except httpx.HTTPError as e:
             logger.error(f"The Graph request failed: {e}")
             raise
-    
+
     async def get_protocol_tvl(
         self,
         protocol_slug: str,
     ) -> TVLData:
         """
         Get protocol TVL from subgraph.
-        
+
         Args:
             protocol_slug: Protocol identifier
-        
+
         Returns:
             TVL data
         """
@@ -129,11 +129,11 @@ class TheGraphClient:
             "compound": "compound-v3",
             "curve": "curve",
         }
-        
+
         subgraph = subgraph_map.get(protocol_slug)
         if not subgraph:
             raise ValueError(f"No subgraph for protocol: {protocol_slug}")
-        
+
         # Query factory stats for TVL
         if subgraph == "uniswap-v3":
             query = """
@@ -164,9 +164,9 @@ class TheGraphClient:
                 }
             }
             """
-        
+
         result = await self.query_subgraph(subgraph, query)
-        
+
         # Parse result
         if subgraph == "uniswap-v3":
             factory = result.get("factory", {})
@@ -176,8 +176,10 @@ class TheGraphClient:
             tvl = float(protocol.get("totalValueLockedUSD", 0))
         else:
             protocols = result.get("protocols", [])
-            tvl = float(protocols[0].get("totalValueLockedUSD", 0)) if protocols else 0.0
-        
+            tvl = (
+                float(protocols[0].get("totalValueLockedUSD", 0)) if protocols else 0.0
+            )
+
         return TVLData(
             tvl=tvl,
             tvl_change_24h=0.0,  # Would need historical data
@@ -185,7 +187,7 @@ class TheGraphClient:
             tvl_change_30d=0.0,
             timestamp=datetime.now(UTC),
         )
-    
+
     async def get_protocol_transactions(
         self,
         protocol_slug: str,
@@ -193,11 +195,11 @@ class TheGraphClient:
     ) -> List[Dict[str, Any]]:
         """
         Get recent protocol transactions.
-        
+
         Args:
             protocol_slug: Protocol identifier
             limit: Maximum transactions to return
-        
+
         Returns:
             List of transactions
         """
@@ -205,11 +207,11 @@ class TheGraphClient:
             "uniswap": "uniswap-v3",
             "aave": "aave-v3",
         }
-        
+
         subgraph = subgraph_map.get(protocol_slug)
         if not subgraph:
             raise ValueError(f"No subgraph for protocol: {protocol_slug}")
-        
+
         if subgraph == "uniswap-v3":
             query = """
             query GetSwaps($limit: Int!) {
@@ -230,7 +232,7 @@ class TheGraphClient:
             variables = {"limit": limit}
             result = await self.query_subgraph(subgraph, query, variables)
             return result.get("swaps", [])
-        
+
         elif subgraph == "aave-v3":
             query = """
             query GetDeposits($limit: Int!) {
@@ -251,9 +253,9 @@ class TheGraphClient:
             variables = {"limit": limit}
             result = await self.query_subgraph(subgraph, query, variables)
             return result.get("deposits", [])
-        
+
         return []
-    
+
     async def get_token_data(
         self,
         token_address: str,
@@ -261,11 +263,11 @@ class TheGraphClient:
     ) -> TokenData:
         """
         Get token data from subgraph.
-        
+
         Args:
             token_address: Token contract address
             subgraph: Subgraph to query
-        
+
         Returns:
             Token data
         """
@@ -283,12 +285,12 @@ class TheGraphClient:
             }
         }
         """
-        
+
         variables = {"address": token_address.lower()}
         result = await self.query_subgraph(subgraph, query, variables)
-        
+
         token = result.get("token", {})
-        
+
         return TokenData(
             address=token.get("id", token_address),
             symbol=token.get("symbol", ""),
@@ -299,7 +301,7 @@ class TheGraphClient:
             volume_24h=float(token.get("volumeUSD", 0)),
             chain="ethereum",
         )
-    
+
     async def close(self):
         """Close HTTP client"""
         await self._client.aclose()

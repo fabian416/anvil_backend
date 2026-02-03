@@ -15,7 +15,7 @@ from sqlalchemy.pool import StaticPool
 def test_db_engine():
     """
     Create test database engine.
-    
+
     Uses in-memory SQLite for fast tests.
     For integration tests, override with PostgreSQL test database.
     """
@@ -25,14 +25,14 @@ def test_db_engine():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    
+
     # Enable foreign keys for SQLite
     @event.listens_for(engine, "connect")
     def set_sqlite_pragma(dbapi_conn, connection_record):
         cursor = dbapi_conn.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
-    
+
     yield engine
     engine.dispose()
 
@@ -41,7 +41,7 @@ def test_db_engine():
 def test_db_session(test_db_engine):
     """
     Create test database session with automatic rollback.
-    
+
     Each test gets a fresh session that rolls back at the end,
     ensuring test isolation.
     """
@@ -49,7 +49,7 @@ def test_db_session(test_db_engine):
     # Note: In real implementation, import Base and create_all
     # from app.infrastructure.persistence_sqla.registry import mapping_registry
     # Base.metadata.create_all(bind=test_db_engine)
-    
+
     # Create session
     SessionLocal = sessionmaker(
         bind=test_db_engine,
@@ -57,10 +57,10 @@ def test_db_session(test_db_engine):
         autoflush=False,
     )
     session = SessionLocal()
-    
+
     # Start transaction
     session.begin()
-    
+
     try:
         yield session
     finally:

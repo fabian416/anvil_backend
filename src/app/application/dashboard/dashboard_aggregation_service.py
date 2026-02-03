@@ -76,9 +76,7 @@ class DashboardAggregationService:
             insights.extend(risk_insights)
 
         # Generate opportunity insights
-        opportunity_insights = await self._generate_opportunity_insights(
-            user_id, prefs
-        )
+        opportunity_insights = await self._generate_opportunity_insights(user_id, prefs)
         insights.extend(opportunity_insights)
 
         # Generate diversification insights

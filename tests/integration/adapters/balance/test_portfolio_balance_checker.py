@@ -21,9 +21,7 @@ def mock_portfolio_service():
     service = MagicMock(spec=PortfolioService)
 
     # Mock RPC URL getter
-    service._get_rpc_url = MagicMock(
-        return_value="https://eth.llamarpc.com"
-    )
+    service._get_rpc_url = MagicMock(return_value="https://eth.llamarpc.com")
 
     # Mock native balance fetcher
     async def mock_fetch_native_balance(rpc_url: str, address: str) -> Decimal:
@@ -32,9 +30,7 @@ def mock_portfolio_service():
             return Decimal("0.005")  # Insufficient gas
         return Decimal("1.5")  # Sufficient balance
 
-    service._fetch_native_balance = AsyncMock(
-        side_effect=mock_fetch_native_balance
-    )
+    service._fetch_native_balance = AsyncMock(side_effect=mock_fetch_native_balance)
 
     # Mock token balance fetcher
     async def mock_fetch_token_balance(
@@ -50,9 +46,7 @@ def mock_portfolio_service():
             return Decimal("0")  # No balance
         return Decimal("5000.0")  # Sufficient balance
 
-    service._fetch_token_balance = AsyncMock(
-        side_effect=mock_fetch_token_balance
-    )
+    service._fetch_token_balance = AsyncMock(side_effect=mock_fetch_token_balance)
 
     return service
 

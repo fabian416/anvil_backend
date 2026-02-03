@@ -17,27 +17,29 @@ from app.domain.value_objects.updated_at import UpdatedAt
 @dataclass(eq=False, kw_only=True)
 class MultiSigProposalId:
     """Multi-Sig Proposal identifier."""
+
     value: uuid.UUID
-    
+
     def __init__(self, value: uuid.UUID | str):
         if isinstance(value, str):
             value = uuid.UUID(value)
-        object.__setattr__(self, 'value', value)
-    
+        object.__setattr__(self, "value", value)
+
     def __hash__(self) -> int:
         return hash(self.value)
-    
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, MultiSigProposalId):
             return False
         return self.value == other.value
-    
+
     def __str__(self) -> str:
         return str(self.value)
 
 
 class ProposalStatus:
     """Proposal status enum."""
+
     PENDING = "pending"
     APPROVED = "approved"
     EXECUTED = "executed"
@@ -46,6 +48,7 @@ class ProposalStatus:
 
 class PolicyCheckResult:
     """Policy check result enum."""
+
     PASSED = "passed"
     FAILED = "failed"
 
@@ -53,11 +56,12 @@ class PolicyCheckResult:
 @dataclass
 class Approval:
     """Single approval from a signer."""
+
     signer: str  # Signer address
     timestamp: datetime
     ip_address: str
     comment: str | None = None
-    
+
     def to_dict(self) -> dict:
         return {
             "signer": self.signer,
@@ -65,7 +69,7 @@ class Approval:
             "ip_address": self.ip_address,
             "comment": self.comment,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "Approval":
         return cls(
@@ -80,7 +84,7 @@ class Approval:
 class MultiSigProposal(Entity[MultiSigProposalId]):
     """
     Multi-sig proposal: treasury management workflow.
-    
+
     Enterprise feature for multi-signature wallet coordination:
     - Gnosis Safe integration
     - Approval workflows (2-of-3, 3-of-5, etc.)
@@ -88,6 +92,7 @@ class MultiSigProposal(Entity[MultiSigProposalId]):
     - Auto-execution when threshold met
     - Immutable audit trail
     """
+
     safe_address: WalletAddress  # Gnosis Safe address
     transaction_hash: str | None  # Null until executed
     nonce: int  # Gnosis Safe nonce
@@ -102,7 +107,7 @@ class MultiSigProposal(Entity[MultiSigProposalId]):
     executed_at: datetime | None
     created_at: CreatedAt
     updated_at: UpdatedAt
-    
+
     @classmethod
     def create(
         cls,
@@ -134,7 +139,7 @@ class MultiSigProposal(Entity[MultiSigProposalId]):
             created_at=now,
             updated_at=UpdatedAt(now.value),
         )
-    
+
     def add_approval(
         self,
         signer: str,
@@ -150,28 +155,28 @@ class MultiSigProposal(Entity[MultiSigProposalId]):
         )
         self.approvals.append(approval)
         self.updated_at = UpdatedAt.now()
-        
+
         # Check if threshold met
         if self.is_threshold_met():
             self.status = ProposalStatus.APPROVED
-    
+
     def mark_executed(self, transaction_hash: str) -> None:
         """Mark proposal as executed."""
         self.transaction_hash = transaction_hash
         self.status = ProposalStatus.EXECUTED
         self.executed_at = datetime.now(UTC)
         self.updated_at = UpdatedAt.now()
-    
+
     def cancel(self) -> None:
         """Cancel proposal."""
         self.status = ProposalStatus.CANCELLED
         self.updated_at = UpdatedAt.now()
-    
+
     @property
     def approval_count(self) -> int:
         """Get number of approvals."""
         return len(self.approvals)
-    
+
     @property
     def required_approvals(self) -> int:
         """Get required number of approvals from policy (e.g., 3 from "3-of-5")."""
@@ -180,7 +185,7 @@ class MultiSigProposal(Entity[MultiSigProposalId]):
         if len(parts) == 2:
             return int(parts[0])
         return 1
-    
+
     @property
     def total_signers(self) -> int:
         """Get total number of signers from policy (e.g., 5 from "3-of-5")."""
@@ -189,40 +194,40 @@ class MultiSigProposal(Entity[MultiSigProposalId]):
         if len(parts) == 2:
             return int(parts[1])
         return 1
-    
+
     def is_threshold_met(self) -> bool:
         """Check if approval threshold is met."""
         return self.approval_count >= self.required_approvals
-    
+
     @property
     def is_pending(self) -> bool:
         """Check if proposal is pending."""
         return self.status == ProposalStatus.PENDING
-    
+
     @property
     def is_approved(self) -> bool:
         """Check if proposal is approved (threshold met)."""
         return self.status == ProposalStatus.APPROVED
-    
+
     @property
     def is_executed(self) -> bool:
         """Check if proposal is executed."""
         return self.status == ProposalStatus.EXECUTED
-    
+
     @property
     def is_cancelled(self) -> bool:
         """Check if proposal is cancelled."""
         return self.status == ProposalStatus.CANCELLED
-    
+
     @property
     def policy_passed(self) -> bool:
         """Check if policy check passed."""
         return self.policy_check_result == PolicyCheckResult.PASSED
-    
+
     def has_signer_approved(self, signer: str) -> bool:
         """Check if specific signer has approved."""
         return any(approval.signer == signer for approval in self.approvals)
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary for storage."""
         return {

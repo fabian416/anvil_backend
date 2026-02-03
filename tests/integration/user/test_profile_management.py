@@ -54,8 +54,7 @@ class TestUpdateProfile:
         THEN system SHALL update profile
         """
         response = await client.put(
-            "/api/v1/account/me",
-            json={"first_name": "NewName"}
+            "/api/v1/account/me", json={"first_name": "NewName"}
         )
 
         # Without auth, expect 401
@@ -67,8 +66,7 @@ class TestUpdateProfile:
         THEN system SHALL update profile
         """
         response = await client.put(
-            "/api/v1/account/me",
-            json={"last_name": "NewLastName"}
+            "/api/v1/account/me", json={"last_name": "NewLastName"}
         )
 
         assert response.status_code in (200, 401)
@@ -78,10 +76,7 @@ class TestUpdateProfile:
         WHEN unauthenticated user updates profile
         THEN system SHALL return 401 unauthorized
         """
-        response = await client.put(
-            "/api/v1/account/me",
-            json={"first_name": "Test"}
-        )
+        response = await client.put("/api/v1/account/me", json={"first_name": "Test"})
 
         assert response.status_code == 401
 
@@ -97,10 +92,7 @@ class TestProfileValidation:
         WHEN user updates name with unicode characters
         THEN system SHALL accept valid unicode
         """
-        response = await client.put(
-            "/api/v1/account/me",
-            json={"first_name": "José"}
-        )
+        response = await client.put("/api/v1/account/me", json={"first_name": "José"})
 
         assert response.status_code in (200, 401)
 
@@ -109,10 +101,7 @@ class TestProfileValidation:
         WHEN user updates name with empty string
         THEN system MAY reject or accept
         """
-        response = await client.put(
-            "/api/v1/account/me",
-            json={"first_name": ""}
-        )
+        response = await client.put("/api/v1/account/me", json={"first_name": ""})
 
         # Could be 200 (accepted), 400/422 (validation error), or 401 (not auth)
         assert response.status_code in (200, 400, 401, 422)

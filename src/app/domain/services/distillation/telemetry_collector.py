@@ -3,6 +3,7 @@ Distillation telemetry collector.
 
 Collects and records metrics for all distillation operations.
 """
+
 import asyncio
 import hashlib
 import logging
@@ -19,10 +20,10 @@ logger = logging.getLogger(__name__)
 class DistillationTelemetryRecord:
     """
     Single telemetry record.
-    
+
     Represents one distillation validation operation.
     """
-    
+
     def __init__(
         self,
         user_id: UUID,
@@ -62,10 +63,10 @@ class DistillationTelemetryRecord:
 class DistillationTelemetryCollector:
     """
     Collects and batches telemetry for distillation operations.
-    
+
     Provides async recording with configurable batching.
     """
-    
+
     def __init__(
         self,
         settings: DistillationTelemetrySettings,
@@ -73,7 +74,7 @@ class DistillationTelemetryCollector:
     ):
         """
         Initialize telemetry collector.
-        
+
         Args:
             settings: Telemetry settings
             repository: Repository for persisting telemetry
@@ -81,23 +82,23 @@ class DistillationTelemetryCollector:
         self.settings = settings
         self.repository = repository
         self.enabled = settings.enabled
-        
+
         # Batching state
         self._batch: List[DistillationTelemetryRecord] = []
         self._batch_lock = asyncio.Lock()
         self._flush_task: Optional[asyncio.Task] = None
-        
+
         # Start background flush if async recording enabled
         if self.enabled and settings.async_recording:
             self._start_flush_loop()
-        
+
         logger.info(
             f"Telemetry collector initialized: "
             f"enabled={self.enabled}, "
             f"async={settings.async_recording}, "
             f"batch_size={settings.batch_size}"
         )
-    
+
     async def record(
         self,
         request: DistillationRequest,
@@ -105,23 +106,23 @@ class DistillationTelemetryCollector:
     ) -> None:
         """
         Record a distillation operation.
-        
+
         Args:
             request: The original request
             result: The validation result
         """
         if not self.enabled:
             return
-        
+
         # Create telemetry record
         record = self._create_record(request, result)
-        
+
         # Record synchronously or batch
         if self.settings.async_recording:
             await self._add_to_batch(record)
         else:
             await self._record_immediately(record)
-    
+
     def _create_record(
         self,
         request: DistillationRequest,
@@ -129,19 +130,17 @@ class DistillationTelemetryCollector:
     ) -> DistillationTelemetryRecord:
         """
         Create telemetry record from request and result.
-        
+
         Args:
             request: The distillation request
             result: The distillation result
-        
+
         Returns:
             Telemetry record
         """
         # Hash user message for privacy
-        request_hash = hashlib.sha256(
-            request.user_message.encode('utf-8')
-        ).hexdigest()
-        
+        request_hash = hashlib.sha256(request.user_message.encode("utf-8")).hexdigest()
+
         return DistillationTelemetryRecord(
             user_id=request.user_id,
             conversation_id=request.conversation_id,
@@ -159,25 +158,25 @@ class DistillationTelemetryCollector:
             error=result.error,
             timestamp=result.timestamp,
         )
-    
+
     async def _add_to_batch(self, record: DistillationTelemetryRecord) -> None:
         """
         Add record to batch.
-        
+
         Args:
             record: Telemetry record to add
         """
         async with self._batch_lock:
             self._batch.append(record)
-            
+
             # Flush if batch is full
             if len(self._batch) >= self.settings.batch_size:
                 await self._flush_batch()
-    
+
     async def _record_immediately(self, record: DistillationTelemetryRecord) -> None:
         """
         Record telemetry immediately (synchronous mode).
-        
+
         Args:
             record: Telemetry record
         """
@@ -186,23 +185,24 @@ class DistillationTelemetryCollector:
             logger.debug("Telemetry recorded immediately")
         except Exception as e:
             logger.error(f"Failed to record telemetry: {e}")
-    
+
     async def _flush_batch(self) -> None:
         """Flush current batch to repository."""
         if not self._batch:
             return
-        
+
         batch = self._batch.copy()
         self._batch.clear()
-        
+
         try:
             await self.repository.save_batch(batch)
             logger.debug(f"Flushed {len(batch)} telemetry records")
         except Exception as e:
             logger.error(f"Failed to flush telemetry batch: {e}")
-    
+
     def _start_flush_loop(self) -> None:
         """Start background flush loop."""
+
         async def flush_loop():
             while True:
                 try:
@@ -213,18 +213,18 @@ class DistillationTelemetryCollector:
                     break
                 except Exception as e:
                     logger.error(f"Error in flush loop: {e}")
-        
+
         self._flush_task = asyncio.create_task(flush_loop())
         logger.info(
             f"Started telemetry flush loop: "
             f"interval={self.settings.flush_interval_seconds}s"
         )
-    
+
     async def flush(self) -> None:
         """Force flush of pending records."""
         async with self._batch_lock:
             await self._flush_batch()
-    
+
     async def close(self) -> None:
         """Close collector and flush pending records."""
         # Cancel flush task
@@ -234,8 +234,8 @@ class DistillationTelemetryCollector:
                 await self._flush_task
             except asyncio.CancelledError:
                 pass
-        
+
         # Final flush
         await self.flush()
-        
+
         logger.info("Telemetry collector closed")

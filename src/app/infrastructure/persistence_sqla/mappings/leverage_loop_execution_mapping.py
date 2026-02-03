@@ -42,9 +42,7 @@ def map_leverage_loop_executions_table() -> None:
             server_default=sa.text("gen_random_uuid()"),
             default=uuid.uuid4,
         )
-        user_id = mapped_column(
-            UUID(as_uuid=True), nullable=False, index=True
-        )
+        user_id = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
         protocol = mapped_column(String(20), nullable=False)
         chain = mapped_column(String(50), nullable=False)
         asset_address = mapped_column(String(42), nullable=False)
@@ -53,9 +51,7 @@ def map_leverage_loop_executions_table() -> None:
         target_leverage = mapped_column(Numeric(3, 1), nullable=False)
         actual_leverage = mapped_column(Numeric(3, 1), nullable=True)
         total_steps = mapped_column(Integer, nullable=False)
-        current_step = mapped_column(
-            Integer, nullable=False, server_default="0"
-        )
+        current_step = mapped_column(Integer, nullable=False, server_default="0")
         steps_completed = mapped_column(
             ARRAY(Text), nullable=False, server_default=sa.text("'{}'")
         )

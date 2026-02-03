@@ -167,7 +167,9 @@ class TestIntentCaching:
             if len(args) >= 2 and args[1] == expected_ttl:
                 found_ttl = True
                 break
-        assert found_ttl or mock_redis.setex.called, "setex should be called with custom TTL"
+        assert found_ttl or mock_redis.setex.called, (
+            "setex should be called with custom TTL"
+        )
 
 
 class TestSemanticMatching:
@@ -209,18 +211,16 @@ class TestSemanticMatching:
 
         mock_doc = MagicMock()
         mock_doc.__embedding_score = 0.20  # Distance (similarity = 0.80)
-        mock_doc.json = json.dumps(
-            {
-                "query": "Different query",
-                "intent_type": "portfolio_review",
-                "confidence": 0.90,
-                "confidence_level": "high",
-                "suggested_agent": "portfolio_agent",
-                "extracted_entities": {},
-                "reasoning": "",
-                "alternative_intents": [],
-            }
-        )
+        mock_doc.json = json.dumps({
+            "query": "Different query",
+            "intent_type": "portfolio_review",
+            "confidence": 0.90,
+            "confidence_level": "high",
+            "suggested_agent": "portfolio_agent",
+            "extracted_entities": {},
+            "reasoning": "",
+            "alternative_intents": [],
+        })
 
         mock_results = MagicMock()
         mock_results.docs = [mock_doc]
@@ -548,6 +548,7 @@ class TestEdgeCases:
 
         # Invalid JSON should raise JSONDecodeError
         import json
+
         with pytest.raises(json.JSONDecodeError):
             await cache_adapter.get_intent("test query")
 

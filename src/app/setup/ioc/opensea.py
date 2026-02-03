@@ -62,7 +62,9 @@ class OpenSeaProvider(Provider):
     # Application Layer Queries
 
     @provide(scope=Scope.REQUEST)
-    def provide_get_nft_portfolio(self, gateway: NFTMarketplaceGateway) -> GetNFTPortfolio:
+    def provide_get_nft_portfolio(
+        self, gateway: NFTMarketplaceGateway
+    ) -> GetNFTPortfolio:
         """Provide GetNFTPortfolio query."""
         return GetNFTPortfolio(gateway=gateway)
 
@@ -72,7 +74,9 @@ class OpenSeaProvider(Provider):
         return GetCollection(gateway=gateway)
 
     @provide(scope=Scope.REQUEST)
-    def provide_get_collection_stats(self, gateway: NFTMarketplaceGateway) -> GetCollectionStats:
+    def provide_get_collection_stats(
+        self, gateway: NFTMarketplaceGateway
+    ) -> GetCollectionStats:
         """Provide GetCollectionStats query."""
         return GetCollectionStats(gateway=gateway)
 

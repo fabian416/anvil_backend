@@ -22,14 +22,20 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.asyncio, pytest.mark.integration, pytest.mark.knowledge_injection]
+pytestmark = [
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.knowledge_injection,
+]
 
 
 class TestContextEnrichment:
     """Test context enrichment with additional data from multiple sources."""
 
     @pytest.mark.llm_validation
-    async def test_price_context_with_historical_data(self, client: AsyncClient, llm_validator):
+    async def test_price_context_with_historical_data(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test price enriched with historical trend context.
 
@@ -39,8 +45,8 @@ class TestContextEnrichment:
             "/api/v1/guest/chat",
             json={
                 "content": "What's the price trend of Bitcoin lately?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -52,15 +58,26 @@ class TestContextEnrichment:
         agent_response = data["agent_message"]["content"].lower()
 
         # Should mention price and/or trend information
-        price_or_trend = any(keyword in agent_response for keyword in [
-            "price", "bitcoin", "btc", "trend", "trading", "market", "$"
-        ])
+        price_or_trend = any(
+            keyword in agent_response
+            for keyword in [
+                "price",
+                "bitcoin",
+                "btc",
+                "trend",
+                "trading",
+                "market",
+                "$",
+            ]
+        )
 
         assert price_or_trend, "Response should include price/trend information"
         assert len(agent_response) > 50, "Response should be substantive"
 
     @pytest.mark.llm_validation
-    async def test_protocol_context_with_tvl_data(self, client: AsyncClient, llm_validator):
+    async def test_protocol_context_with_tvl_data(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test protocol info enriched with TVL data.
 
@@ -70,8 +87,8 @@ class TestContextEnrichment:
             "/api/v1/guest/chat",
             json={
                 "content": "Tell me about Aave protocol and its metrics",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -83,15 +100,26 @@ class TestContextEnrichment:
         agent_response = data["agent_message"]["content"].lower()
 
         # Should mention protocol information
-        protocol_info = any(keyword in agent_response for keyword in [
-            "aave", "protocol", "defi", "lending", "borrow", "tvl", "liquidity"
-        ])
+        protocol_info = any(
+            keyword in agent_response
+            for keyword in [
+                "aave",
+                "protocol",
+                "defi",
+                "lending",
+                "borrow",
+                "tvl",
+                "liquidity",
+            ]
+        )
 
         assert protocol_info, "Response should include protocol information"
         assert len(agent_response) > 50, "Response should be substantive"
 
     @pytest.mark.llm_validation
-    async def test_token_context_with_market_data(self, client: AsyncClient, llm_validator):
+    async def test_token_context_with_market_data(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test token info with comprehensive market metrics.
 
@@ -101,8 +129,8 @@ class TestContextEnrichment:
             "/api/v1/guest/chat",
             json={
                 "content": "What are the key market metrics for Ethereum?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -114,15 +142,26 @@ class TestContextEnrichment:
         agent_response = data["agent_message"]["content"].lower()
 
         # Should mention market metrics
-        market_metrics = any(keyword in agent_response for keyword in [
-            "ethereum", "eth", "market", "volume", "cap", "price", "trading"
-        ])
+        market_metrics = any(
+            keyword in agent_response
+            for keyword in [
+                "ethereum",
+                "eth",
+                "market",
+                "volume",
+                "cap",
+                "price",
+                "trading",
+            ]
+        )
 
         assert market_metrics, "Response should include market metrics"
         assert len(agent_response) > 50, "Response should be substantive"
 
     @pytest.mark.llm_validation
-    async def test_multi_source_context_aggregation(self, client: AsyncClient, llm_validator):
+    async def test_multi_source_context_aggregation(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test aggregating context from multiple sources.
 
@@ -132,8 +171,8 @@ class TestContextEnrichment:
             "/api/v1/guest/chat",
             json={
                 "content": "Give me a complete analysis of Ethereum: price, news, and DeFi activity",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -145,13 +184,18 @@ class TestContextEnrichment:
         agent_response = data["agent_message"]["content"]
 
         # Should provide comprehensive analysis (check substantiveness, not keywords)
-        assert len(agent_response) > 100, "Response should be comprehensive (100+ chars)"
+        assert len(agent_response) > 100, (
+            "Response should be comprehensive (100+ chars)"
+        )
+
 
 class TestContextCaching:
     """Test knowledge cache hit/miss behavior and performance."""
 
     @pytest.mark.llm_validation
-    async def test_knowledge_cache_hit_performance(self, client: AsyncClient, llm_validator):
+    async def test_knowledge_cache_hit_performance(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test cache hit improves response time.
 
@@ -162,11 +206,7 @@ class TestContextCaching:
 
         start_time1 = time.time()
         response1 = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": query_content,
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": query_content, "language": "en"}
         )
         elapsed1 = time.time() - start_time1
 
@@ -178,11 +218,7 @@ class TestContextCaching:
         # Second identical query - should hit cache or be fast
         start_time2 = time.time()
         response2 = await client.post(
-            "/api/v1/guest/chat",
-            json={
-                "content": query_content,
-                "language": "en"
-            }
+            "/api/v1/guest/chat", json={"content": query_content, "language": "en"}
         )
         elapsed2 = time.time() - start_time2
 
@@ -201,7 +237,9 @@ class TestContextCaching:
         agent_response = data2["agent_message"]["content"]
 
     @pytest.mark.llm_validation
-    async def test_knowledge_cache_miss_fallback(self, client: AsyncClient, llm_validator):
+    async def test_knowledge_cache_miss_fallback(
+        self, client: AsyncClient, llm_validator
+    ):
         """
         Test cache miss falls back to API.
 
@@ -212,8 +250,8 @@ class TestContextCaching:
             "/api/v1/guest/chat",
             json={
                 "content": "What is the trading volume of Cardano in the last 24 hours?",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -238,10 +276,7 @@ class TestContextCaching:
         # First query - creates/updates cache entry
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What's the price of Solana?",
-                "language": "en"
-            }
+            json={"content": "What's the price of Solana?", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -252,10 +287,7 @@ class TestContextCaching:
         # Second query - should use cache or refresh if expired
         response2 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "What's the price of Solana?",
-                "language": "en"
-            }
+            json={"content": "What's the price of Solana?", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK

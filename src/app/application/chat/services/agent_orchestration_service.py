@@ -132,12 +132,16 @@ class AgentOrchestrationService:
         # Calculate consensus confidence
         if winning_response:
             winning_votes = [v for v in votes if v.response_option == winning_response]
-            consensus_confidence = sum(v.confidence for v in winning_votes) / len(winning_votes)
+            consensus_confidence = sum(v.confidence for v in winning_votes) / len(
+                winning_votes
+            )
 
             # Update voting round with results
             object.__setattr__(voting_round, "winning_response", winning_response)
             object.__setattr__(voting_round, "winning_vote_count", len(winning_votes))
-            object.__setattr__(voting_round, "consensus_confidence", consensus_confidence)
+            object.__setattr__(
+                voting_round, "consensus_confidence", consensus_confidence
+            )
             object.__setattr__(voting_round, "completed_at", datetime.now(UTC))
 
         # Save voting round
@@ -169,7 +173,10 @@ class AgentOrchestrationService:
             response = await self._llm.generate(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": f"You are {agent_name}, a specialized DeFi agent."},
+                    {
+                        "role": "system",
+                        "content": f"You are {agent_name}, a specialized DeFi agent.",
+                    },
                     {"role": "user", "content": query},
                 ],
                 temperature=0.7,
@@ -180,7 +187,9 @@ class AgentOrchestrationService:
             confidence = self._estimate_confidence(response)
 
             # Update performance metrics
-            response_time_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
+            response_time_ms = int(
+                (datetime.now(UTC) - start_time).total_seconds() * 1000
+            )
             await self._update_agent_metrics(
                 agent_name=agent_name,
                 success=True,
@@ -193,7 +202,9 @@ class AgentOrchestrationService:
 
         except Exception as e:
             # Update metrics with failure
-            response_time_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
+            response_time_ms = int(
+                (datetime.now(UTC) - start_time).total_seconds() * 1000
+            )
             await self._update_agent_metrics(
                 agent_name=agent_name,
                 success=False,
@@ -247,7 +258,9 @@ class AgentOrchestrationService:
         ]
 
         lower_response = response.lower()
-        uncertainty_count = sum(1 for marker in uncertainty_markers if marker in lower_response)
+        uncertainty_count = sum(
+            1 for marker in uncertainty_markers if marker in lower_response
+        )
 
         # Start at 0.8, reduce by 0.1 per uncertainty marker
         confidence = max(0.3, 0.8 - (uncertainty_count * 0.1))
@@ -354,7 +367,9 @@ As {agent_name}, provide your opening statement on:
 
 Give your initial position and reasoning (2-3 sentences).
 """
-            response, _ = await self._get_agent_response(agent_name, prompt, conversation)
+            response, _ = await self._get_agent_response(
+                agent_name, prompt, conversation
+            )
 
             statement = DebateStatement(
                 agent_name=agent_name,
@@ -372,11 +387,15 @@ Give your initial position and reasoning (2-3 sentences).
         query: str,
     ) -> None:
         """Each agent presents detailed arguments."""
-        opening_statements = debate.get_statements_by_phase(DebatePhase.OPENING_STATEMENTS)
+        opening_statements = debate.get_statements_by_phase(
+            DebatePhase.OPENING_STATEMENTS
+        )
 
         for agent_name in agent_names:
             # Build context from other agents' opening statements
-            other_statements = [s for s in opening_statements if s.agent_name != agent_name]
+            other_statements = [
+                s for s in opening_statements if s.agent_name != agent_name
+            ]
             context = "\n\n".join(
                 f"{s.agent_name}: {s.content}" for s in other_statements
             )
@@ -457,8 +476,7 @@ Provide counter-arguments (2-3 points).
         """
         # Collect all statements
         all_statements = "\n\n".join(
-            f"[{s.phase.value}] {s.agent_name}: {s.content}"
-            for s in debate.statements
+            f"[{s.phase.value}] {s.agent_name}: {s.content}" for s in debate.statements
         )
 
         # Ask neutral synthesizer to find consensus
@@ -475,7 +493,9 @@ from all perspectives. If agents fundamentally disagree, state that
 clearly and explain the tradeoffs.
 """
 
-        consensus, _ = await self._get_agent_response("synthesizer", synthesis_prompt, None)
+        consensus, _ = await self._get_agent_response(
+            "synthesizer", synthesis_prompt, None
+        )
 
         # Record synthesis statement
         statement = DebateStatement(
@@ -537,7 +557,9 @@ clearly and explain the tradeoffs.
 
                 # Check if should fallback based on confidence
                 if agent.should_fallback(confidence, False):
-                    fallback_chain.record_attempt(agent.agent_name, FallbackReason.LOW_CONFIDENCE)
+                    fallback_chain.record_attempt(
+                        agent.agent_name, FallbackReason.LOW_CONFIDENCE
+                    )
                     continue
 
                 # Success!
@@ -623,7 +645,9 @@ clearly and explain the tradeoffs.
             metrics = AgentPerformanceMetrics(agent_name=agent_name)
 
         # Update with new result
-        metrics.update_with_result(success, response_time_ms, confidence, cost_usd, error)
+        metrics.update_with_result(
+            success, response_time_ms, confidence, cost_usd, error
+        )
 
         # Save updated metrics
         await self._repository.save_performance_metrics(metrics)
@@ -673,7 +697,12 @@ clearly and explain the tradeoffs.
         if not all_metrics:
             return "No performance data available"
 
-        report_lines = ["┌─ 📊 Agent Performance Report ─┐", "", "🥇 Top Performing Agents:", ""]
+        report_lines = [
+            "┌─ 📊 Agent Performance Report ─┐",
+            "",
+            "🥇 Top Performing Agents:",
+            "",
+        ]
 
         for rank, metrics in enumerate(all_metrics, 1):
             efficiency = metrics.get_efficiency_score()

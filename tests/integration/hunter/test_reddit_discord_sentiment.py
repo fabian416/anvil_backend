@@ -247,9 +247,9 @@ class TestDiscordSentimentAnalyzer:
         score_positive = analyzer._analyze_message(message_positive)
         score_negative = analyzer._analyze_message(message_negative)
 
-        assert (
-            score_positive > score_negative
-        ), "Positive reactions should increase score"
+        assert score_positive > score_negative, (
+            "Positive reactions should increase score"
+        )
 
     @pytest.mark.skip(reason="Caps impact test hits score ceiling - edge case")
     def test_discord_caps_impact(self):
@@ -280,7 +280,9 @@ class TestDiscordSentimentAnalyzer:
         score_normal = analyzer._analyze_message(message_normal)
 
         # Caps should amplify sentiment (bullish message, so caps should increase score)
-        assert score_caps > score_normal, f"Caps score {score_caps} should be > normal score {score_normal}"
+        assert score_caps > score_normal, (
+            f"Caps score {score_caps} should be > normal score {score_normal}"
+        )
 
 
 class TestMultiSourceSentiment:
@@ -295,9 +297,13 @@ class TestMultiSourceSentiment:
         reddit_analyzer = RedditSentimentAnalyzer()
         discord_analyzer = DiscordSentimentAnalyzer()
 
-        twitter_reading = await twitter_analyzer.analyze_token_sentiment("ETH", hours=24)
+        twitter_reading = await twitter_analyzer.analyze_token_sentiment(
+            "ETH", hours=24
+        )
         reddit_reading = await reddit_analyzer.analyze_token_sentiment("ETH", hours=24)
-        discord_reading = await discord_analyzer.analyze_token_sentiment("ETH", hours=24)
+        discord_reading = await discord_analyzer.analyze_token_sentiment(
+            "ETH", hours=24
+        )
 
         # Aggregate
         aggregator = SentimentAggregator()
@@ -402,6 +408,7 @@ class TestMultiSourceSentiment:
         assert len(divergence["bullish_sources"]) >= 1
         assert len(divergence["bearish_sources"]) >= 1
 
+
 class TestDay2Integration:
     """Integration tests for complete Day 2 functionality."""
 
@@ -416,9 +423,13 @@ class TestDay2Integration:
         reddit_analyzer = RedditSentimentAnalyzer()
         discord_analyzer = DiscordSentimentAnalyzer()
 
-        twitter_reading = await twitter_analyzer.analyze_token_sentiment(token, hours=24)
+        twitter_reading = await twitter_analyzer.analyze_token_sentiment(
+            token, hours=24
+        )
         reddit_reading = await reddit_analyzer.analyze_token_sentiment(token, hours=24)
-        discord_reading = await discord_analyzer.analyze_token_sentiment(token, hours=24)
+        discord_reading = await discord_analyzer.analyze_token_sentiment(
+            token, hours=24
+        )
 
         # Aggregate
         aggregator = SentimentAggregator()
@@ -443,7 +454,9 @@ class TestDay2Integration:
         discord_analyzer = DiscordSentimentAnalyzer()
 
         reddit_reading = await reddit_analyzer.analyze_token_sentiment("BTC", hours=24)
-        discord_reading = await discord_analyzer.analyze_token_sentiment("BTC", hours=24)
+        discord_reading = await discord_analyzer.analyze_token_sentiment(
+            "BTC", hours=24
+        )
 
         aggregator = SentimentAggregator()
         aggregated = aggregator.aggregate([reddit_reading, discord_reading], "BTC")

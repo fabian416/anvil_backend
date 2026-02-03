@@ -21,5 +21,3 @@ def create_atlas_router() -> APIRouter:
         router.include_router(sub_router)
 
     return router
-
-

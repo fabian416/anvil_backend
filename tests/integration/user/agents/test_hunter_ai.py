@@ -56,7 +56,6 @@ HUNTER_AI_TESTS = [
         "category": "agent",
         "subcategory": "hunter_price",
     },
-    
     # Price Predictions
     {
         "test_id": "hunter_prediction_001",
@@ -79,7 +78,6 @@ HUNTER_AI_TESTS = [
         "category": "agent",
         "subcategory": "hunter_prediction",
     },
-    
     # Sentiment Analysis
     {
         "test_id": "hunter_sentiment_001",
@@ -102,7 +100,6 @@ HUNTER_AI_TESTS = [
         "category": "agent",
         "subcategory": "hunter_sentiment",
     },
-    
     # Trading Signals
     {
         "test_id": "hunter_signals_001",
@@ -118,7 +115,6 @@ HUNTER_AI_TESTS = [
         "category": "agent",
         "subcategory": "hunter_signals",
     },
-    
     # News
     {
         "test_id": "hunter_news_001",
@@ -142,15 +138,17 @@ HUNTER_AI_TESTS = [
 @pytest.mark.llm_validation
 class TestHunterAI:
     """Tests for Hunter AI agent with LLM validation."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
+    async def setup(
+        self, authenticated_client, conversation_id, csv_reporter, llm_validator
+    ):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
         self.llm_validator = llm_validator
-    
+
     @pytest.mark.parametrize("test_case", HUNTER_AI_TESTS, ids=lambda t: t["test_id"])
     async def test_hunter_ai(self, test_case: dict):
         """Test Hunter AI routing and response quality with LLM validation."""
@@ -159,13 +157,13 @@ class TestHunterAI:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         # LLM Validation
         llm_validation = None
         if not response_data.get("error"):
             parsed = parse_response(response_data)
             expected_behavior = self._get_expected_behavior(test_case)
-            
+
             llm_validation = await validate_with_llm(
                 llm_validator=self.llm_validator,
                 test_name=test_case["test_id"],
@@ -176,9 +174,9 @@ class TestHunterAI:
                     "test_category": "hunter_ai",
                     "subcategory": test_case.get("subcategory", ""),
                     "user_type": "authenticated",
-                }
+                },
             )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -187,38 +185,43 @@ class TestHunterAI:
             conversation_id=self.conversation_id,
             llm_validation=llm_validation,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         # Assertions
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "").lower()
-        
+
         # Verify response contains relevant data
         if "price" in test_case["subcategory"]:
             assert any(
-                indicator in content
-                for indicator in ["$", "price", "usd", "current"]
+                indicator in content for indicator in ["$", "price", "usd", "current"]
             ), f"Price query should contain price data: {content[:200]}"
-        
+
         elif "sentiment" in test_case["subcategory"]:
             assert any(
                 indicator in content
-                for indicator in ["sentiment", "bullish", "bearish", "neutral", "social"]
+                for indicator in [
+                    "sentiment",
+                    "bullish",
+                    "bearish",
+                    "neutral",
+                    "social",
+                ]
             ), f"Sentiment query should contain sentiment data: {content[:200]}"
-        
+
         elif "signal" in test_case["subcategory"]:
             assert any(
                 indicator in content
                 for indicator in ["signal", "buy", "sell", "hold", "trading"]
             ), f"Signal query should contain trading signals: {content[:200]}"
-    
+
     def _get_expected_behavior(self, test_case: dict) -> str:
         """Get expected behavior description for LLM validation."""
         subcategory = test_case.get("subcategory", "")
-        
+
         behaviors = {
             "hunter_price": "Response should provide current price data with USD value, formatted clearly. Should mention the token name and current market price.",
             "hunter_prediction": "Response should provide price prediction or forecast with reasoning. Should include timeframe and confidence level if available.",
@@ -226,5 +229,8 @@ class TestHunterAI:
             "hunter_signals": "Response should provide trading signals with entry/exit points, stop loss, and confidence levels.",
             "hunter_news": "Response should provide relevant crypto news with sources and recency indicators.",
         }
-        
-        return behaviors.get(subcategory, "Response should be relevant and informative about crypto markets.")
+
+        return behaviors.get(
+            subcategory,
+            "Response should be relevant and informative about crypto markets.",
+        )

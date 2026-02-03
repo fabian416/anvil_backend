@@ -176,8 +176,12 @@ class CircuitBreaker:
             "failure_count": self.failure_count,
             "success_count": self.success_count,
             "consecutive_failures": self.consecutive_failures,
-            "last_failure_at": self.last_failure_at.isoformat() if self.last_failure_at else None,
-            "last_success_at": self.last_success_at.isoformat() if self.last_success_at else None,
+            "last_failure_at": self.last_failure_at.isoformat()
+            if self.last_failure_at
+            else None,
+            "last_success_at": self.last_success_at.isoformat()
+            if self.last_success_at
+            else None,
             "opened_at": self.opened_at.isoformat() if self.opened_at else None,
             "config": {
                 "failure_threshold": self.config.failure_threshold,
@@ -277,7 +281,11 @@ class CircuitBreakerManager:
 
     def count_open(self) -> int:
         """Count open circuit breakers."""
-        return sum(1 for breaker in self._breakers.values() if breaker.state == CircuitBreakerState.OPEN)
+        return sum(
+            1
+            for breaker in self._breakers.values()
+            if breaker.state == CircuitBreakerState.OPEN
+        )
 
     def count_total(self) -> int:
         """Count total circuit breakers."""
@@ -290,4 +298,7 @@ class CircuitBreakerManager:
         Returns:
             Dictionary of entity_id -> state dict
         """
-        return {entity_id: breaker.to_dict() for entity_id, breaker in self._breakers.items()}
+        return {
+            entity_id: breaker.to_dict()
+            for entity_id, breaker in self._breakers.items()
+        }

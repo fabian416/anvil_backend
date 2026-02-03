@@ -70,7 +70,7 @@ class UserService:
         user_id = UserId(self._user_id_generator())
         password_hash = UserPasswordHash(self._password_hasher.hash(password))
         now = datetime.now(UTC)
-        
+
         return User(
             id_=user_id,
             email=email,

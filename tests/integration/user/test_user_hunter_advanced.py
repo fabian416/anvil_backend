@@ -24,7 +24,9 @@ ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ
 async def client():
     """Create test client."""
     app = make_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
@@ -52,7 +54,10 @@ async def test_user_hunter_cross_chain_analysis(
     """Test Hunter AI cross-chain analysis for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "Find arbitrage opportunities between Ethereum and Polygon for USDC", "language": "en"},
+        json={
+            "content": "Find arbitrage opportunities between Ethereum and Polygon for USDC",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -75,11 +80,11 @@ async def test_user_hunter_cross_chain_analysis(
             ),
             test_func=self.test_user_hunter_cross_chain_analysis,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'cross_chain_analysis',
-                'user_type': 'authenticated',
-                'chains': ['ethereum', 'polygon'],
-                'token': 'USDC'
-            }
+                "test_category": "cross_chain_analysis",
+                "user_type": "authenticated",
+                "chains": ["ethereum", "polygon"],
+                "token": "USDC",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -88,32 +93,62 @@ async def test_user_hunter_cross_chain_analysis(
             )
 
     # CSV tracking
-    await csv_tracker("user", "hunter", {
-        "test_id": "user_hunter_cross_chain_001",
-        "s_multistep": False,
-        "input": "Find arbitrage opportunities between Ethereum and Polygon for USDC",
-        "output": content,
-        "test_label_sequence": "hunter_cross_chain",
-        "output_expected": "Cross-chain arbitrage opportunities with personalized recommendations",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "hunter",
+        {
+            "test_id": "user_hunter_cross_chain_001",
+            "s_multistep": False,
+            "input": "Find arbitrage opportunities between Ethereum and Polygon for USDC",
+            "output": content,
+            "test_label_sequence": "hunter_cross_chain",
+            "output_expected": "Cross-chain arbitrage opportunities with personalized recommendations",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -128,7 +163,10 @@ async def test_user_hunter_sentiment_aggregation_sources(
     """Test Hunter AI multi-source sentiment aggregation for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "What's the overall sentiment about Solana across news, Reddit, and Twitter?", "language": "en"},
+        json={
+            "content": "What's the overall sentiment about Solana across news, Reddit, and Twitter?",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -151,11 +189,11 @@ async def test_user_hunter_sentiment_aggregation_sources(
             ),
             test_func=self.test_user_hunter_sentiment_aggregation_sources,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'sentiment_analysis',
-                'user_type': 'authenticated',
-                'sources': ['news', 'reddit', 'twitter'],
-                'asset': 'SOL'
-            }
+                "test_category": "sentiment_analysis",
+                "user_type": "authenticated",
+                "sources": ["news", "reddit", "twitter"],
+                "asset": "SOL",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -164,32 +202,62 @@ async def test_user_hunter_sentiment_aggregation_sources(
             )
 
     # CSV tracking
-    await csv_tracker("user", "hunter", {
-        "test_id": "user_hunter_sentiment_002",
-        "s_multistep": False,
-        "input": "What's the overall sentiment about Solana across news, Reddit, and Twitter?",
-        "output": content,
-        "test_label_sequence": "hunter_sentiment_analysis",
-        "output_expected": "Multi-source sentiment analysis with synthesized perspectives",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "hunter",
+        {
+            "test_id": "user_hunter_sentiment_002",
+            "s_multistep": False,
+            "input": "What's the overall sentiment about Solana across news, Reddit, and Twitter?",
+            "output": content,
+            "test_label_sequence": "hunter_sentiment_analysis",
+            "output_expected": "Multi-source sentiment analysis with synthesized perspectives",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -204,7 +272,10 @@ async def test_user_hunter_historical_pattern_recognition(
     """Test Hunter AI historical pattern analysis for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "Show me Bitcoin's price patterns during the last 3 bull markets", "language": "en"},
+        json={
+            "content": "Show me Bitcoin's price patterns during the last 3 bull markets",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -227,11 +298,11 @@ async def test_user_hunter_historical_pattern_recognition(
             ),
             test_func=self.test_user_hunter_historical_pattern_recognition,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'historical_analysis',
-                'user_type': 'authenticated',
-                'asset': 'BTC',
-                'timeframe': 'multi_cycle'
-            }
+                "test_category": "historical_analysis",
+                "user_type": "authenticated",
+                "asset": "BTC",
+                "timeframe": "multi_cycle",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -240,32 +311,62 @@ async def test_user_hunter_historical_pattern_recognition(
             )
 
     # CSV tracking
-    await csv_tracker("user", "hunter", {
-        "test_id": "user_hunter_historical_003",
-        "s_multistep": False,
-        "input": "Show me Bitcoin's price patterns during the last 3 bull markets",
-        "output": content,
-        "test_label_sequence": "hunter_historical_analysis",
-        "output_expected": "Historical BTC patterns with recurring trends and actionable insights",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "hunter",
+        {
+            "test_id": "user_hunter_historical_003",
+            "s_multistep": False,
+            "input": "Show me Bitcoin's price patterns during the last 3 bull markets",
+            "output": content,
+            "test_label_sequence": "hunter_historical_analysis",
+            "output_expected": "Historical BTC patterns with recurring trends and actionable insights",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -280,7 +381,10 @@ async def test_user_hunter_risk_adjusted_recommendations(
     """Test Hunter AI risk-adjusted yield recommendations for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "Suggest low-risk DeFi yield opportunities with 5%+ APY", "language": "en"},
+        json={
+            "content": "Suggest low-risk DeFi yield opportunities with 5%+ APY",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -303,11 +407,11 @@ async def test_user_hunter_risk_adjusted_recommendations(
             ),
             test_func=self.test_user_hunter_risk_adjusted_recommendations,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'yield_recommendations',
-                'user_type': 'authenticated',
-                'risk_level': 'low',
-                'min_apy': '5%'
-            }
+                "test_category": "yield_recommendations",
+                "user_type": "authenticated",
+                "risk_level": "low",
+                "min_apy": "5%",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -316,32 +420,62 @@ async def test_user_hunter_risk_adjusted_recommendations(
             )
 
     # CSV tracking
-    await csv_tracker("user", "hunter", {
-        "test_id": "user_hunter_risk_adjusted_004",
-        "s_multistep": False,
-        "input": "Suggest low-risk DeFi yield opportunities with 5%+ APY",
-        "output": content,
-        "test_label_sequence": "hunter_yield_recommendations",
-        "output_expected": "Risk-adjusted DeFi yield opportunities with protocols and APY rates",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "hunter",
+        {
+            "test_id": "user_hunter_risk_adjusted_004",
+            "s_multistep": False,
+            "input": "Suggest low-risk DeFi yield opportunities with 5%+ APY",
+            "output": content,
+            "test_label_sequence": "hunter_yield_recommendations",
+            "output_expected": "Risk-adjusted DeFi yield opportunities with protocols and APY rates",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -356,7 +490,10 @@ async def test_user_hunter_portfolio_rebalancing_suggestions(
     """Test Hunter AI portfolio rebalancing suggestions for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "I have 70% ETH and 30% BTC. Should I rebalance?", "language": "en"},
+        json={
+            "content": "I have 70% ETH and 30% BTC. Should I rebalance?",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -379,10 +516,10 @@ async def test_user_hunter_portfolio_rebalancing_suggestions(
             ),
             test_func=self.test_user_hunter_portfolio_rebalancing_suggestions,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'portfolio_rebalancing',
-                'user_type': 'authenticated',
-                'current_allocation': {'ETH': 70, 'BTC': 30}
-            }
+                "test_category": "portfolio_rebalancing",
+                "user_type": "authenticated",
+                "current_allocation": {"ETH": 70, "BTC": 30},
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -391,32 +528,62 @@ async def test_user_hunter_portfolio_rebalancing_suggestions(
             )
 
     # CSV tracking
-    await csv_tracker("user", "hunter", {
-        "test_id": "user_hunter_portfolio_005",
-        "s_multistep": False,
-        "input": "I have 70% ETH and 30% BTC. Should I rebalance?",
-        "output": content,
-        "test_label_sequence": "hunter_portfolio_rebalancing",
-        "output_expected": "Portfolio allocation analysis with rebalancing advice based on market conditions",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "hunter",
+        {
+            "test_id": "user_hunter_portfolio_005",
+            "s_multistep": False,
+            "input": "I have 70% ETH and 30% BTC. Should I rebalance?",
+            "output": content,
+            "test_label_sequence": "hunter_portfolio_rebalancing",
+            "output_expected": "Portfolio allocation analysis with rebalancing advice based on market conditions",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -431,7 +598,10 @@ async def test_user_hunter_gas_optimization_strategies(
     """Test Hunter AI gas optimization recommendations for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "When is the best time to execute Ethereum transactions to save on gas?", "language": "en"},
+        json={
+            "content": "When is the best time to execute Ethereum transactions to save on gas?",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -454,10 +624,10 @@ async def test_user_hunter_gas_optimization_strategies(
             ),
             test_func=self.test_user_hunter_gas_optimization_strategies,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'gas_optimization',
-                'user_type': 'authenticated',
-                'chain': 'ethereum'
-            }
+                "test_category": "gas_optimization",
+                "user_type": "authenticated",
+                "chain": "ethereum",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -466,32 +636,62 @@ async def test_user_hunter_gas_optimization_strategies(
             )
 
     # CSV tracking
-    await csv_tracker("user", "hunter", {
-        "test_id": "user_hunter_gas_optimization_006",
-        "s_multistep": False,
-        "input": "When is the best time to execute Ethereum transactions to save on gas?",
-        "output": content,
-        "test_label_sequence": "hunter_gas_optimization",
-        "output_expected": "Gas optimization strategies with timing recommendations and cost-saving tips",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "hunter",
+        {
+            "test_id": "user_hunter_gas_optimization_006",
+            "s_multistep": False,
+            "input": "When is the best time to execute Ethereum transactions to save on gas?",
+            "output": content,
+            "test_label_sequence": "hunter_gas_optimization",
+            "output_expected": "Gas optimization strategies with timing recommendations and cost-saving tips",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -506,7 +706,10 @@ async def test_user_hunter_market_regime_detection(
     """Test Hunter AI market regime detection for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "Are we in a bull market or bear market right now?", "language": "en"},
+        json={
+            "content": "Are we in a bull market or bear market right now?",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -529,10 +732,10 @@ async def test_user_hunter_market_regime_detection(
             ),
             test_func=self.test_user_hunter_market_regime_detection,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'market_regime',
-                'user_type': 'authenticated',
-                'analysis_type': 'current_market_phase'
-            }
+                "test_category": "market_regime",
+                "user_type": "authenticated",
+                "analysis_type": "current_market_phase",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -541,32 +744,62 @@ async def test_user_hunter_market_regime_detection(
             )
 
     # CSV tracking
-    await csv_tracker("user", "hunter", {
-        "test_id": "user_hunter_market_regime_007",
-        "s_multistep": False,
-        "input": "Are we in a bull market or bear market right now?",
-        "output": content,
-        "test_label_sequence": "hunter_market_regime",
-        "output_expected": "Market regime identification with supporting evidence and context",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "hunter",
+        {
+            "test_id": "user_hunter_market_regime_007",
+            "s_multistep": False,
+            "input": "Are we in a bull market or bear market right now?",
+            "output": content,
+            "test_label_sequence": "hunter_market_regime",
+            "output_expected": "Market regime identification with supporting evidence and context",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -581,7 +814,10 @@ async def test_user_hunter_correlation_analysis_assets(
     """Test Hunter AI asset correlation analysis for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "How correlated are BTC, ETH, and SOL price movements?", "language": "en"},
+        json={
+            "content": "How correlated are BTC, ETH, and SOL price movements?",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -604,10 +840,10 @@ async def test_user_hunter_correlation_analysis_assets(
             ),
             test_func=self.test_user_hunter_correlation_analysis_assets,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'correlation_analysis',
-                'user_type': 'authenticated',
-                'assets': ['BTC', 'ETH', 'SOL']
-            }
+                "test_category": "correlation_analysis",
+                "user_type": "authenticated",
+                "assets": ["BTC", "ETH", "SOL"],
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -616,32 +852,62 @@ async def test_user_hunter_correlation_analysis_assets(
             )
 
     # CSV tracking
-    await csv_tracker("user", "hunter", {
-        "test_id": "user_hunter_correlation_008",
-        "s_multistep": False,
-        "input": "How correlated are BTC, ETH, and SOL price movements?",
-        "output": content,
-        "test_label_sequence": "hunter_correlation_analysis",
-        "output_expected": "Asset correlation analysis with diversification insights and timeframes",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "hunter",
+        {
+            "test_id": "user_hunter_correlation_008",
+            "s_multistep": False,
+            "input": "How correlated are BTC, ETH, and SOL price movements?",
+            "output": content,
+            "test_label_sequence": "hunter_correlation_analysis",
+            "output_expected": "Asset correlation analysis with diversification insights and timeframes",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -656,7 +922,10 @@ async def test_user_hunter_liquidity_depth_assessment(
     """Test Hunter AI liquidity depth analysis for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "What's the liquidity depth for AAVE/ETH on Uniswap?", "language": "en"},
+        json={
+            "content": "What's the liquidity depth for AAVE/ETH on Uniswap?",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -679,11 +948,11 @@ async def test_user_hunter_liquidity_depth_assessment(
             ),
             test_func=self.test_user_hunter_liquidity_depth_assessment,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'liquidity_analysis',
-                'user_type': 'authenticated',
-                'pair': 'AAVE/ETH',
-                'dex': 'Uniswap'
-            }
+                "test_category": "liquidity_analysis",
+                "user_type": "authenticated",
+                "pair": "AAVE/ETH",
+                "dex": "Uniswap",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -692,29 +961,59 @@ async def test_user_hunter_liquidity_depth_assessment(
             )
 
     # CSV tracking
-    await csv_tracker("user", "hunter", {
-        "test_id": "user_hunter_liquidity_009",
-        "s_multistep": False,
-        "input": "What's the liquidity depth for AAVE/ETH on Uniswap?",
-        "output": content,
-        "test_label_sequence": "hunter_liquidity_analysis",
-        "output_expected": "Liquidity depth assessment with TVL, volume, and slippage implications",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "hunter",
+        {
+            "test_id": "user_hunter_liquidity_009",
+            "s_multistep": False,
+            "input": "What's the liquidity depth for AAVE/ETH on Uniswap?",
+            "output": content,
+            "test_label_sequence": "hunter_liquidity_analysis",
+            "output_expected": "Liquidity depth assessment with TVL, volume, and slippage implications",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )

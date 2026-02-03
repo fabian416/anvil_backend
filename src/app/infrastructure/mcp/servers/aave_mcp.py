@@ -22,10 +22,16 @@ Integration Points:
 
 Feature Flag: mcp.servers.aave_enabled
 """
+
 from typing import Dict, Any, List, Optional
 from decimal import Decimal
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 from app.infrastructure.mcp.base import MCPServer
 from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
@@ -40,28 +46,28 @@ from app.infrastructure.adapters.external.aave_contract_helper import (
 class AaveMCPServer(MCPServer):
     """
     MCP server for Aave lending protocol operations.
-    
+
     Provides AI agents with tools to:
     - Check lending/borrowing rates
     - Manage supply positions
     - Execute borrow operations
     - Monitor health factors
     - Analyze liquidation risks
-    
+
     Example usage by agent:
         # Get market data
         markets = await call_tool("get_market_data", {
             "chain_id": 1,
             "assets": ["USDC", "ETH", "WBTC"]
         })
-        
+
         # Check user positions
         positions = await call_tool("get_user_positions", {
             "chain_id": 1,
             "user_address": "0x..."
         })
     """
-    
+
     def __init__(
         self,
         aave_gateway: Optional[Any] = None,
@@ -98,16 +104,22 @@ class AaveMCPServer(MCPServer):
 
         self.aave_gateway = aave_gateway
         self.wallet_service = wallet_service
-        self.subgraph_url = subgraph_url or "https://api.thegraph.com/subgraphs/name/aave/protocol-v3"
-        
+        self.subgraph_url = (
+            subgraph_url or "https://api.thegraph.com/subgraphs/name/aave/protocol-v3"
+        )
+
         # Create retry decorator for this server
         self._retry = retry(
             stop=stop_after_attempt(3),
             wait=wait_exponential(multiplier=1, min=2, max=10),
-            retry=retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException, Exception)),
+            retry=retry_if_exception_type((
+                httpx.HTTPError,
+                httpx.TimeoutException,
+                Exception,
+            )),
             reraise=True,
         )
-        
+
         # Supported chains for Aave V3
         self.chains = {
             1: "ethereum",
@@ -116,16 +128,16 @@ class AaveMCPServer(MCPServer):
             10: "optimism",
             43114: "avalanche",
         }
-        
+
         # Aave V3 Pool addresses per chain
         self.pool_addresses = {
-            1: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",     # Ethereum
-            137: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",   # Polygon
-            42161: "0x794a61358D6845594F94dc1DB02A252b5b4814aD", # Arbitrum
-            10: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",    # Optimism
-            43114: "0x794a61358D6845594F94dc1DB02A252b5b4814aD", # Avalanche
+            1: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",  # Ethereum
+            137: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",  # Polygon
+            42161: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",  # Arbitrum
+            10: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",  # Optimism
+            43114: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",  # Avalanche
         }
-        
+
         self.setup_tools()
 
     def _chain_id_to_name(self, chain_id: int) -> str:
@@ -140,7 +152,7 @@ class AaveMCPServer(MCPServer):
 
     def setup_tools(self):
         """Register all Aave tools."""
-        
+
         # Tool 1: Get market data
         self.register_tool(
             name="get_market_data",
@@ -166,7 +178,7 @@ class AaveMCPServer(MCPServer):
             },
             handler=self._get_market_data,
         )
-        
+
         # Tool 2: Get user positions
         self.register_tool(
             name="get_user_positions",
@@ -191,7 +203,7 @@ class AaveMCPServer(MCPServer):
             },
             handler=self._get_user_positions,
         )
-        
+
         # Tool 3: Calculate health factor
         self.register_tool(
             name="calculate_health_factor",
@@ -215,7 +227,7 @@ class AaveMCPServer(MCPServer):
             },
             handler=self._calculate_health_factor,
         )
-        
+
         # Tool 4: Get available to borrow
         self.register_tool(
             name="get_available_to_borrow",
@@ -248,7 +260,7 @@ class AaveMCPServer(MCPServer):
             },
             handler=self._get_available_to_borrow,
         )
-        
+
         # Tool 5: Supply asset
         self.register_tool(
             name="supply_asset",
@@ -290,7 +302,7 @@ class AaveMCPServer(MCPServer):
             },
             handler=self._supply_asset,
         )
-        
+
         # Tool 6: Borrow asset
         self.register_tool(
             name="borrow_asset",
@@ -333,7 +345,7 @@ class AaveMCPServer(MCPServer):
             },
             handler=self._borrow_asset,
         )
-        
+
         # Tool 7: Repay loan
         self.register_tool(
             name="repay_loan",
@@ -374,7 +386,7 @@ class AaveMCPServer(MCPServer):
             },
             handler=self._repay_loan,
         )
-        
+
         # Tool 8: Withdraw supply
         self.register_tool(
             name="withdraw_supply",
@@ -410,7 +422,7 @@ class AaveMCPServer(MCPServer):
             },
             handler=self._withdraw_supply,
         )
-        
+
         # Tool 9: Get liquidation risk
         self.register_tool(
             name="get_liquidation_risk",
@@ -434,9 +446,9 @@ class AaveMCPServer(MCPServer):
             },
             handler=self._get_liquidation_risk,
         )
-    
+
     # ==================== Tool Handlers ====================
-    
+
     async def _get_market_data(
         self,
         chain_id: int,
@@ -478,7 +490,9 @@ class AaveMCPServer(MCPServer):
                     "asset": market.symbol,
                     "asset_address": market.asset_address,
                     "name": market.name,
-                    "supply_apy": float(market.supply_apy * 100),  # Convert to percentage
+                    "supply_apy": float(
+                        market.supply_apy * 100
+                    ),  # Convert to percentage
                     "borrow_apy_variable": float(market.borrow_apy_variable * 100),
                     "borrow_apy_stable": float(market.borrow_apy_stable * 100),
                     "total_supplied": self._safe_decimal(market.total_supplied),
@@ -486,7 +500,9 @@ class AaveMCPServer(MCPServer):
                     "total_borrowed": self._safe_decimal(market.total_borrowed),
                     "total_borrowed_usd": self._safe_decimal(market.total_borrowed_usd),
                     "utilization_rate": float(market.utilization_rate),
-                    "available_liquidity": self._safe_decimal(market.liquidity_available),
+                    "available_liquidity": self._safe_decimal(
+                        market.liquidity_available
+                    ),
                     "ltv": float(market.ltv),
                     "liquidation_threshold": float(market.liquidation_threshold),
                     "liquidation_bonus": float(market.liquidation_bonus),
@@ -505,7 +521,9 @@ class AaveMCPServer(MCPServer):
                 "pool_address": self.pool_addresses.get(chain_id),
                 "markets_count": len(markets),
                 "markets": markets,
-                "timestamp": markets_data[0].updated_at.isoformat() if markets_data else None,
+                "timestamp": markets_data[0].updated_at.isoformat()
+                if markets_data
+                else None,
             }
 
         except Exception as e:
@@ -515,7 +533,7 @@ class AaveMCPServer(MCPServer):
                 "chain_id": chain_id,
                 "chain_name": self._chain_id_to_name(chain_id),
             }
-    
+
     async def _get_user_positions(
         self,
         chain_id: int,
@@ -591,10 +609,16 @@ class AaveMCPServer(MCPServer):
                 "borrowed": borrowed,
                 "total_supplied_usd": self._safe_decimal(position.total_collateral_usd),
                 "total_borrowed_usd": self._safe_decimal(position.total_debt_usd),
-                "total_collateral_usd": self._safe_decimal(position.total_collateral_usd),
-                "available_borrow_usd": self._safe_decimal(position.available_borrow_usd),
+                "total_collateral_usd": self._safe_decimal(
+                    position.total_collateral_usd
+                ),
+                "available_borrow_usd": self._safe_decimal(
+                    position.available_borrow_usd
+                ),
                 "health_factor": self._safe_decimal(position.health_factor, "inf"),
-                "current_ltv": float(position.current_ltv * 100),  # Convert to percentage
+                "current_ltv": float(
+                    position.current_ltv * 100
+                ),  # Convert to percentage
                 "max_ltv": float(position.max_ltv * 100),
                 "net_worth_usd": self._safe_decimal(position.net_worth_usd),
                 "timestamp": position.updated_at.isoformat(),
@@ -608,7 +632,7 @@ class AaveMCPServer(MCPServer):
                 "user_address": user_address,
                 "chain_name": self._chain_id_to_name(chain_id),
             }
-    
+
     async def _calculate_health_factor(
         self,
         chain_id: int,
@@ -633,7 +657,9 @@ class AaveMCPServer(MCPServer):
             )
 
             # Extract risk classification from HealthFactor value object
-            risk_level = health_factor_obj.risk_level.value  # "low", "moderate", "high", "critical"
+            risk_level = (
+                health_factor_obj.risk_level.value
+            )  # "low", "moderate", "high", "critical"
 
             # Map risk level to color
             risk_color_map = {
@@ -646,9 +672,9 @@ class AaveMCPServer(MCPServer):
 
             # Calculate price drop buffer
             hf_value = float(health_factor_obj.value)
-            if hf_value > 1.0 and hf_value != float('inf'):
+            if hf_value > 1.0 and hf_value != float("inf"):
                 price_drop_before_liquidation = ((hf_value - 1.0) / hf_value) * 100
-            elif hf_value == float('inf'):
+            elif hf_value == float("inf"):
                 price_drop_before_liquidation = 100.0  # No debt, can't be liquidated
             else:
                 price_drop_before_liquidation = 0.0  # Already liquidatable
@@ -659,7 +685,9 @@ class AaveMCPServer(MCPServer):
             elif hf_value >= 1.5:
                 recommendation = "Good position. Monitor market conditions."
             elif hf_value >= 1.2:
-                recommendation = "Monitor closely. Consider repaying debt or adding collateral."
+                recommendation = (
+                    "Monitor closely. Consider repaying debt or adding collateral."
+                )
             elif hf_value >= 1.0:
                 recommendation = "⚠️ URGENT: Add collateral or repay debt immediately!"
             else:
@@ -673,10 +701,14 @@ class AaveMCPServer(MCPServer):
                 "health_factor": self._safe_decimal(health_factor_obj.value, "inf"),
                 "risk_level": risk_level,
                 "risk_color": risk_color,
-                "total_collateral_usd": self._safe_decimal(health_factor_obj.collateral_usd),
+                "total_collateral_usd": self._safe_decimal(
+                    health_factor_obj.collateral_usd
+                ),
                 "total_debt_usd": self._safe_decimal(health_factor_obj.debt_usd),
                 "liquidation_threshold": float(health_factor_obj.liquidation_threshold),
-                "distance_to_liquidation": self._safe_decimal(health_factor_obj.distance_to_liquidation),
+                "distance_to_liquidation": self._safe_decimal(
+                    health_factor_obj.distance_to_liquidation
+                ),
                 "price_drop_before_liquidation": f"{price_drop_before_liquidation:.2f}%",
                 "is_liquidatable": hf_value < 1.0,
                 "recommendation": recommendation,
@@ -690,7 +722,7 @@ class AaveMCPServer(MCPServer):
                 "user_address": user_address,
                 "chain_name": self._chain_id_to_name(chain_id),
             }
-    
+
     async def _get_available_to_borrow(
         self,
         chain_id: int,
@@ -718,7 +750,9 @@ class AaveMCPServer(MCPServer):
             )
 
             # Get market details for asset price
-            market = await self.aave_gateway.get_market_details(asset=asset, chain=chain_name)
+            market = await self.aave_gateway.get_market_details(
+                asset=asset, chain=chain_name
+            )
 
             # Get current position for context
             try:
@@ -742,7 +776,9 @@ class AaveMCPServer(MCPServer):
             new_debt_usd = current_debt_usd + max_borrow_usd
             if new_debt_usd > 0:
                 # HF = (collateral * liq_threshold) / debt
-                estimated_hf = (total_collateral_usd * market.liquidation_threshold) / new_debt_usd
+                estimated_hf = (
+                    total_collateral_usd * market.liquidation_threshold
+                ) / new_debt_usd
             else:
                 estimated_hf = Decimal("inf")
 
@@ -759,7 +795,9 @@ class AaveMCPServer(MCPServer):
                 "current_debt_usd": self._safe_decimal(current_debt_usd),
                 "total_collateral_usd": self._safe_decimal(total_collateral_usd),
                 "current_health_factor": self._safe_decimal(current_hf, "inf"),
-                "estimated_health_factor_after": self._safe_decimal(estimated_hf, "inf"),
+                "estimated_health_factor_after": self._safe_decimal(
+                    estimated_hf, "inf"
+                ),
                 "target_health_factor": target_health_factor,
                 "available_liquidity": self._safe_decimal(market.liquidity_available),
                 "warning": (
@@ -777,7 +815,7 @@ class AaveMCPServer(MCPServer):
                 "asset": asset,
                 "chain_name": self._chain_id_to_name(chain_id),
             }
-    
+
     async def _supply_asset(
         self,
         user_id: str,
@@ -807,7 +845,9 @@ class AaveMCPServer(MCPServer):
                 }
 
             # Get market details for asset
-            market = await self.aave_gateway.get_market_details(asset=asset, chain=chain_name)
+            market = await self.aave_gateway.get_market_details(
+                asset=asset, chain=chain_name
+            )
 
             if not market.is_active or market.is_frozen:
                 return {
@@ -855,7 +895,7 @@ class AaveMCPServer(MCPServer):
                 "chain_id": chain_id,
                 "asset": asset,
             }
-    
+
     async def _borrow_asset(
         self,
         user_id: str,
@@ -885,7 +925,9 @@ class AaveMCPServer(MCPServer):
                 }
 
             # Get market details
-            market = await self.aave_gateway.get_market_details(asset=asset, chain=chain_name)
+            market = await self.aave_gateway.get_market_details(
+                asset=asset, chain=chain_name
+            )
 
             if not market.can_borrow:
                 return {
@@ -914,7 +956,9 @@ class AaveMCPServer(MCPServer):
                 # Calculate new health factor
                 if new_debt_usd > 0:
                     # HF = (collateral * liq_threshold) / debt
-                    estimated_hf = (position.total_collateral_usd * market.liquidation_threshold) / new_debt_usd
+                    estimated_hf = (
+                        position.total_collateral_usd * market.liquidation_threshold
+                    ) / new_debt_usd
                 else:
                     estimated_hf = Decimal("inf")
 
@@ -924,8 +968,12 @@ class AaveMCPServer(MCPServer):
                         "success": False,
                         "error": "UNSAFE BORROW BLOCKED",
                         "reason": f"This borrow would reduce your health factor to {estimated_hf:.2f}",
-                        "current_health_factor": self._safe_decimal(current_hf_obj.value, "inf"),
-                        "estimated_health_factor_after": self._safe_decimal(estimated_hf),
+                        "current_health_factor": self._safe_decimal(
+                            current_hf_obj.value, "inf"
+                        ),
+                        "estimated_health_factor_after": self._safe_decimal(
+                            estimated_hf
+                        ),
                         "minimum_required": "1.20",
                         "recommendation": (
                             "To borrow this amount safely:\n"
@@ -966,9 +1014,13 @@ class AaveMCPServer(MCPServer):
                 "rate_mode": rate_mode,
                 "from_address": from_address.lower(),
                 "transaction": tx_data,
-                "current_health_factor": self._safe_decimal(current_hf_obj.value, "inf"),
+                "current_health_factor": self._safe_decimal(
+                    current_hf_obj.value, "inf"
+                ),
                 "estimated_health_factor_after": self._safe_decimal(estimated_hf),
-                "expected_borrow_apy": float(market.borrow_apy_variable * 100) if rate_mode == "variable" else float(market.borrow_apy_stable * 100),
+                "expected_borrow_apy": float(market.borrow_apy_variable * 100)
+                if rate_mode == "variable"
+                else float(market.borrow_apy_stable * 100),
                 "warning": (
                     "⚠️ BORROWING CREATES LIQUIDATION RISK\n"
                     f"• Your health factor will be: {estimated_hf:.2f}\n"
@@ -985,7 +1037,7 @@ class AaveMCPServer(MCPServer):
                 "chain_id": chain_id,
                 "asset": asset,
             }
-    
+
     async def _repay_loan(
         self,
         user_id: str,
@@ -1015,7 +1067,9 @@ class AaveMCPServer(MCPServer):
                 }
 
             # Get market details
-            market = await self.aave_gateway.get_market_details(asset=asset, chain=chain_name)
+            market = await self.aave_gateway.get_market_details(
+                asset=asset, chain=chain_name
+            )
 
             # Get current position to calculate health factor improvement
             try:
@@ -1031,10 +1085,14 @@ class AaveMCPServer(MCPServer):
                     estimated_hf = Decimal("inf")
                 else:
                     repay_amount_usd = Decimal(amount) * market.price_usd
-                    new_debt_usd = max(Decimal("0"), position.total_debt_usd - repay_amount_usd)
+                    new_debt_usd = max(
+                        Decimal("0"), position.total_debt_usd - repay_amount_usd
+                    )
 
                     if new_debt_usd > 0:
-                        estimated_hf = (position.total_collateral_usd * market.liquidation_threshold) / new_debt_usd
+                        estimated_hf = (
+                            position.total_collateral_usd * market.liquidation_threshold
+                        ) / new_debt_usd
                     else:
                         estimated_hf = Decimal("inf")
 
@@ -1070,8 +1128,12 @@ class AaveMCPServer(MCPServer):
                 "requires_approval": True,  # Need to approve Pool to spend tokens
                 "approval_spender": pool_address,
                 "current_health_factor": self._safe_decimal(current_hf, "inf"),
-                "estimated_health_factor_after": self._safe_decimal(estimated_hf, "inf"),
-                "health_factor_improvement": "Improved" if estimated_hf > current_hf else "N/A",
+                "estimated_health_factor_after": self._safe_decimal(
+                    estimated_hf, "inf"
+                ),
+                "health_factor_improvement": "Improved"
+                if estimated_hf > current_hf
+                else "N/A",
             }
 
         except Exception as e:
@@ -1081,7 +1143,7 @@ class AaveMCPServer(MCPServer):
                 "chain_id": chain_id,
                 "asset": asset,
             }
-    
+
     async def _withdraw_supply(
         self,
         user_id: str,
@@ -1110,7 +1172,9 @@ class AaveMCPServer(MCPServer):
                 }
 
             # Get market details
-            market = await self.aave_gateway.get_market_details(asset=asset, chain=chain_name)
+            market = await self.aave_gateway.get_market_details(
+                asset=asset, chain=chain_name
+            )
 
             # Get current position to check if withdrawal is safe
             try:
@@ -1127,18 +1191,25 @@ class AaveMCPServer(MCPServer):
                         return {
                             "success": False,
                             "error": "Cannot withdraw all collateral while debt exists",
-                            "current_debt_usd": self._safe_decimal(position.total_debt_usd),
+                            "current_debt_usd": self._safe_decimal(
+                                position.total_debt_usd
+                            ),
                             "chain_id": chain_id,
                         }
                     estimated_hf = Decimal("inf")
                 else:
                     # Partial withdrawal
                     withdraw_amount_usd = Decimal(amount) * market.price_usd
-                    new_collateral_usd = max(Decimal("0"), position.total_collateral_usd - withdraw_amount_usd)
+                    new_collateral_usd = max(
+                        Decimal("0"),
+                        position.total_collateral_usd - withdraw_amount_usd,
+                    )
 
                     if position.total_debt_usd > 0:
                         # Calculate new health factor
-                        estimated_hf = (new_collateral_usd * market.liquidation_threshold) / position.total_debt_usd
+                        estimated_hf = (
+                            new_collateral_usd * market.liquidation_threshold
+                        ) / position.total_debt_usd
 
                         # Safety check: block withdrawals that would result in HF < 1.5
                         if estimated_hf < Decimal("1.5"):
@@ -1146,8 +1217,12 @@ class AaveMCPServer(MCPServer):
                                 "success": False,
                                 "error": "UNSAFE WITHDRAWAL BLOCKED",
                                 "reason": f"This withdrawal would reduce your health factor to {estimated_hf:.2f}",
-                                "current_health_factor": self._safe_decimal(current_hf, "inf"),
-                                "estimated_health_factor_after": self._safe_decimal(estimated_hf),
+                                "current_health_factor": self._safe_decimal(
+                                    current_hf, "inf"
+                                ),
+                                "estimated_health_factor_after": self._safe_decimal(
+                                    estimated_hf
+                                ),
                                 "minimum_required": "1.50",
                                 "recommendation": "Repay some debt before withdrawing, or withdraw a smaller amount",
                                 "chain_id": chain_id,
@@ -1184,7 +1259,9 @@ class AaveMCPServer(MCPServer):
                 "from_address": from_address.lower(),
                 "transaction": tx_data,
                 "current_health_factor": self._safe_decimal(current_hf, "inf"),
-                "estimated_health_factor_after": self._safe_decimal(estimated_hf, "inf"),
+                "estimated_health_factor_after": self._safe_decimal(
+                    estimated_hf, "inf"
+                ),
             }
 
         except Exception as e:
@@ -1194,7 +1271,7 @@ class AaveMCPServer(MCPServer):
                 "chain_id": chain_id,
                 "asset": asset,
             }
-    
+
     async def _get_liquidation_risk(
         self,
         chain_id: int,
@@ -1239,15 +1316,17 @@ class AaveMCPServer(MCPServer):
             hf_value = float(health_factor_obj.value)
 
             # Calculate price drop buffer
-            if hf_value > 1.0 and hf_value != float('inf'):
+            if hf_value > 1.0 and hf_value != float("inf"):
                 price_drop_to_liquidation = ((hf_value - 1.0) / hf_value) * 100
-            elif hf_value == float('inf'):
+            elif hf_value == float("inf"):
                 price_drop_to_liquidation = 100.0  # No debt
             else:
                 price_drop_to_liquidation = 0.0  # Already liquidatable
 
             # Determine risk level
-            risk_level = health_factor_obj.risk_level.value  # "low", "moderate", "high", "critical"
+            risk_level = (
+                health_factor_obj.risk_level.value
+            )  # "low", "moderate", "high", "critical"
 
             if risk_level == "low":
                 risk_description = "Very safe. Large price buffer before liquidation."
@@ -1264,7 +1343,9 @@ class AaveMCPServer(MCPServer):
                 if supply.is_collateral and supply.balance_usd > 0:
                     # Get market details for liquidation threshold
                     try:
-                        market = await self.aave_gateway.get_market_details(asset=supply.symbol, chain=chain_name)
+                        market = await self.aave_gateway.get_market_details(
+                            asset=supply.symbol, chain=chain_name
+                        )
 
                         # Calculate liquidation price for this asset
                         # At liquidation: (asset_amount * liquidation_price * liq_threshold) / total_debt = 1.0 HF
@@ -1272,19 +1353,36 @@ class AaveMCPServer(MCPServer):
 
                         if supply.balance > 0 and position.total_debt_usd > 0:
                             # Simplified: assume this is the only collateral
-                            liquidation_price_usd = float(position.total_debt_usd / (supply.balance * market.liquidation_threshold))
+                            liquidation_price_usd = float(
+                                position.total_debt_usd
+                                / (supply.balance * market.liquidation_threshold)
+                            )
                             current_price_usd = float(market.price_usd)
 
-                            price_drop_pct = ((current_price_usd - liquidation_price_usd) / current_price_usd) * 100 if current_price_usd > 0 else 0
+                            price_drop_pct = (
+                                (
+                                    (current_price_usd - liquidation_price_usd)
+                                    / current_price_usd
+                                )
+                                * 100
+                                if current_price_usd > 0
+                                else 0
+                            )
 
                             liquidation_scenarios.append({
                                 "collateral_asset": supply.symbol,
                                 "collateral_amount": self._safe_decimal(supply.balance),
-                                "collateral_usd": self._safe_decimal(supply.balance_usd),
-                                "current_price_usd": self._safe_decimal(market.price_usd),
+                                "collateral_usd": self._safe_decimal(
+                                    supply.balance_usd
+                                ),
+                                "current_price_usd": self._safe_decimal(
+                                    market.price_usd
+                                ),
                                 "liquidation_price_usd": f"{liquidation_price_usd:.2f}",
                                 "price_drop_percentage": f"{price_drop_pct:.2f}%",
-                                "liquidation_threshold": float(market.liquidation_threshold),
+                                "liquidation_threshold": float(
+                                    market.liquidation_threshold
+                                ),
                             })
                     except Exception as e:
                         # Skip if market not found
@@ -1304,7 +1402,9 @@ class AaveMCPServer(MCPServer):
                     "⚙️ Consider switching to stable rate if variable rates are rising",
                 ])
             if risk_level == "low":
-                recommendations.append("✅ Position is healthy. Continue monitoring periodically.")
+                recommendations.append(
+                    "✅ Position is healthy. Continue monitoring periodically."
+                )
 
             return {
                 "success": True,
@@ -1315,9 +1415,13 @@ class AaveMCPServer(MCPServer):
                 "risk_level": risk_level,
                 "risk_description": risk_description,
                 "health_factor": self._safe_decimal(health_factor_obj.value, "inf"),
-                "distance_to_liquidation": self._safe_decimal(health_factor_obj.distance_to_liquidation),
+                "distance_to_liquidation": self._safe_decimal(
+                    health_factor_obj.distance_to_liquidation
+                ),
                 "price_drop_before_liquidation": f"{price_drop_to_liquidation:.2f}%",
-                "total_collateral_usd": self._safe_decimal(position.total_collateral_usd),
+                "total_collateral_usd": self._safe_decimal(
+                    position.total_collateral_usd
+                ),
                 "total_debt_usd": self._safe_decimal(position.total_debt_usd),
                 "liquidation_scenarios": liquidation_scenarios,
                 "recommendations": recommendations,
@@ -1336,9 +1440,9 @@ class AaveMCPServer(MCPServer):
 # Standalone FastAPI app
 if __name__ == "__main__":
     import uvicorn
-    
+
     server = AaveMCPServer()
-    
+
     print(f"""
 ╔══════════════════════════════════════════════════════════╗
 ║            Aave MCP Server Starting...                   ║
@@ -1352,7 +1456,7 @@ Tools Available:
 """)
     for tool_name, tool in server.tools.items():
         print(f"  • {tool_name}: {tool.description[:60]}...")
-    
+
     print("""
 Supported Chains:
   • Ethereum (1)
@@ -1369,7 +1473,7 @@ Endpoints:
 
 Starting server...
     """)
-    
+
     uvicorn.run(
         server.app,
         host="0.0.0.0",

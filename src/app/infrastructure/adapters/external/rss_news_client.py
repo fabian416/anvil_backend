@@ -246,9 +246,7 @@ class RSSNewsClient:
                 published = datetime.now()
 
             # Get categories
-            categories = [
-                cat.text for cat in item.findall("category") if cat.text
-            ]
+            categories = [cat.text for cat in item.findall("category") if cat.text]
 
             # Clean description (remove HTML tags)
             description = self._clean_html(description)
@@ -287,9 +285,7 @@ class RSSNewsClient:
                 pub_date_str = self._get_text(entry, "atom:updated", ns) or ""
 
             try:
-                published = datetime.fromisoformat(
-                    pub_date_str.replace("Z", "+00:00")
-                )
+                published = datetime.fromisoformat(pub_date_str.replace("Z", "+00:00"))
             except Exception:
                 published = datetime.now()
 

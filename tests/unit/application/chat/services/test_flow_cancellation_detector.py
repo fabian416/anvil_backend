@@ -7,7 +7,9 @@ multi-step flow cancellation when users change topics.
 
 import pytest
 
-from app.application.chat.services.flow_cancellation_detector import FlowCancellationDetector
+from app.application.chat.services.flow_cancellation_detector import (
+    FlowCancellationDetector,
+)
 
 
 class TestFlowCancellationDetector:
@@ -22,14 +24,17 @@ class TestFlowCancellationDetector:
     # EXPLICIT CANCELLATION KEYWORDS - English
     # ===================================================================
 
-    @pytest.mark.parametrize("content,keyword", [
-        ("cancel", "cancel"),
-        ("Cancel this", "cancel"),
-        ("never mind", "never mind"),
-        ("forget it", "forget it"),
-        ("actually, what's the price of Bitcoin?", "actually"),
-        ("instead show my portfolio", "instead"),
-    ])
+    @pytest.mark.parametrize(
+        "content,keyword",
+        [
+            ("cancel", "cancel"),
+            ("Cancel this", "cancel"),
+            ("never mind", "never mind"),
+            ("forget it", "forget it"),
+            ("actually, what's the price of Bitcoin?", "actually"),
+            ("instead show my portfolio", "instead"),
+        ],
+    )
     def test_explicit_cancellation_keywords_english(self, detector, content, keyword):
         """Test explicit cancellation keywords are detected."""
         should_cancel, reason = detector.detect_topic_change(
@@ -46,11 +51,14 @@ class TestFlowCancellationDetector:
     # EXPLICIT CANCELLATION KEYWORDS - Spanish
     # ===================================================================
 
-    @pytest.mark.parametrize("content,keyword", [
-        ("cancelar", "cancelar"),
-        ("mejor muéstrame mi portfolio", "mejor"),
-        ("en lugar de eso, ¿cuál es el precio de BTC?", "en lugar"),
-    ])
+    @pytest.mark.parametrize(
+        "content,keyword",
+        [
+            ("cancelar", "cancelar"),
+            ("mejor muéstrame mi portfolio", "mejor"),
+            ("en lugar de eso, ¿cuál es el precio de BTC?", "en lugar"),
+        ],
+    )
     def test_explicit_cancellation_keywords_spanish(self, detector, content, keyword):
         """Test Spanish cancellation keywords."""
         should_cancel, reason = detector.detect_topic_change(
@@ -67,12 +75,15 @@ class TestFlowCancellationDetector:
     # INTENT MISMATCH + QUESTION PATTERN
     # ===================================================================
 
-    @pytest.mark.parametrize("content,expected_intent", [
-        ("What's the price of Bitcoin?", "prediction"),
-        ("Show my portfolio", "portfolio"),
-        ("What do people think about ETH?", "sentiment"),
-        ("How much is BTC?", "prediction"),
-    ])
+    @pytest.mark.parametrize(
+        "content,expected_intent",
+        [
+            ("What's the price of Bitcoin?", "prediction"),
+            ("Show my portfolio", "portfolio"),
+            ("What do people think about ETH?", "sentiment"),
+            ("How much is BTC?", "prediction"),
+        ],
+    )
     def test_intent_mismatch_with_question(self, detector, content, expected_intent):
         """Test intent mismatch with question patterns triggers cancellation."""
         should_cancel, reason = detector.detect_topic_change(
@@ -90,22 +101,25 @@ class TestFlowCancellationDetector:
     # FLOW CONTINUATION (NO CANCELLATION)
     # ===================================================================
 
-    @pytest.mark.parametrize("content", [
-        # Valid asset selections for lending flow
-        ("USDC"),
-        ("ETH"),
-        ("1"),  # Number selection
-        ("2"),
-        # Valid amounts
-        ("1000"),
-        ("500 USDC"),
-        ("0.5 ETH"),
-        # Valid confirmations
-        ("yes"),
-        ("confirm"),
-        ("proceed"),
-        ("ok"),
-    ])
+    @pytest.mark.parametrize(
+        "content",
+        [
+            # Valid asset selections for lending flow
+            ("USDC"),
+            ("ETH"),
+            ("1"),  # Number selection
+            ("2"),
+            # Valid amounts
+            ("1000"),
+            ("500 USDC"),
+            ("0.5 ETH"),
+            # Valid confirmations
+            ("yes"),
+            ("confirm"),
+            ("proceed"),
+            ("ok"),
+        ],
+    )
     def test_flow_continuation_not_cancelled(self, detector, content):
         """Test normal flow continuation doesn't trigger cancellation."""
         # Test at different stages of lending flow
@@ -145,21 +159,22 @@ class TestFlowCancellationDetector:
     # MULTI-LANGUAGE SUPPORT
     # ===================================================================
 
-    @pytest.mark.parametrize("content,language,keyword", [
-        # Portuguese
-        ("cancelar", "pt", "cancelar"),
-        ("melhor mostre meu portfólio", "pt", "melhor"),
-        ("o que é Bitcoin?", "pt", "o que é"),
-
-        # Chinese
-        ("取消", "zh", "取消"),
-        ("什么是比特币?", "zh", "什么是"),
-
-        # French
-        ("annuler", "fr", "annuler"),
-        ("plutôt montre-moi mon portfolio", "fr", "plutôt"),
-        ("qu'est-ce que Bitcoin?", "fr", "qu'est-ce que"),
-    ])
+    @pytest.mark.parametrize(
+        "content,language,keyword",
+        [
+            # Portuguese
+            ("cancelar", "pt", "cancelar"),
+            ("melhor mostre meu portfólio", "pt", "melhor"),
+            ("o que é Bitcoin?", "pt", "o que é"),
+            # Chinese
+            ("取消", "zh", "取消"),
+            ("什么是比特币?", "zh", "什么是"),
+            # French
+            ("annuler", "fr", "annuler"),
+            ("plutôt montre-moi mon portfolio", "fr", "plutôt"),
+            ("qu'est-ce que Bitcoin?", "fr", "qu'est-ce que"),
+        ],
+    )
     def test_multi_language_keywords(self, detector, content, language, keyword):
         """Test keyword detection works across all supported languages."""
         should_cancel, reason = detector.detect_topic_change(
@@ -224,17 +239,20 @@ class TestFlowCancellationDetector:
     # ALL FLOW TYPES
     # ===================================================================
 
-    @pytest.mark.parametrize("pending_action,expected_flow", [
-        ("lending_awaiting_asset", "lending"),
-        ("swap_awaiting_token", "swap"),
-        ("buy_awaiting_amount", "buy"),
-        ("send_awaiting_address", "send"),
-        ("portfolio_awaiting_chain", "portfolio"),
-        ("balance_awaiting_token", "balance"),
-        ("activity_awaiting_type", "activity"),
-        ("receive_awaiting_chain", "receive"),
-        ("money_market_awaiting_asset", "money_market"),
-    ])
+    @pytest.mark.parametrize(
+        "pending_action,expected_flow",
+        [
+            ("lending_awaiting_asset", "lending"),
+            ("swap_awaiting_token", "swap"),
+            ("buy_awaiting_amount", "buy"),
+            ("send_awaiting_address", "send"),
+            ("portfolio_awaiting_chain", "portfolio"),
+            ("balance_awaiting_token", "balance"),
+            ("activity_awaiting_type", "activity"),
+            ("receive_awaiting_chain", "receive"),
+            ("money_market_awaiting_asset", "money_market"),
+        ],
+    )
     def test_all_flow_types_detected(self, detector, pending_action, expected_flow):
         """Test detection works for all 9 flow types."""
         # User asks about price while in any flow

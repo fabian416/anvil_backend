@@ -64,7 +64,8 @@ class LLMResponse:
             "latency_ms": self.latency_ms,
             "finish_reason": self.finish_reason,
             "tool_calls": [
-                {"id": tc.id, "type": tc.type, "function": tc.function} for tc in (self.tool_calls or [])
+                {"id": tc.id, "type": tc.type, "function": tc.function}
+                for tc in (self.tool_calls or [])
             ],
             "cost_usd": float(self.cost_usd) if self.cost_usd else None,
             "metadata": self.metadata,

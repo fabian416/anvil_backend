@@ -24,10 +24,10 @@ class AgentSession(Entity[AgentSessionId]):
 
     @classmethod
     def create(
-        cls, 
-        conversation_id: ConversationId, 
+        cls,
+        conversation_id: ConversationId,
         agent_type: AgentType,
-        state: dict[str, Any]
+        state: dict[str, Any],
     ) -> "AgentSession":
         now = CreatedAt.now()
         return cls(

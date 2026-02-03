@@ -22,13 +22,20 @@ from app.domain.chat.ports.message_repository import MessageRepository
 from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
 from app.domain.services.agent_squad.context_manager import ContextManager
 from app.domain.services.agent_squad.supervisor_coordinator import SupervisorCoordinator
-from app.domain.services.agent_squad.authenticated_supervisor import AuthenticatedSupervisorCoordinator
-from app.application.chat.commands.send_message_with_supervisor import SendMessageWithSupervisor
+from app.domain.services.agent_squad.authenticated_supervisor import (
+    AuthenticatedSupervisorCoordinator,
+)
+from app.application.chat.commands.send_message_with_supervisor import (
+    SendMessageWithSupervisor,
+)
 from app.application.chat.services.user_data_service import UserDataService
 from app.domain.ports.wallet.wallet_repository import WalletRepository
+
 # NOTE: TransactionRepository import removed - causes session corruption
 # from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
-from app.domain.portfolio.ports.portfolio.portfolio_repository import PortfolioRepository
+from app.domain.portfolio.ports.portfolio.portfolio_repository import (
+    PortfolioRepository,
+)
 
 
 class AgentSquadApplicationProvider(Provider):
@@ -97,7 +104,7 @@ class AgentSquadApplicationProvider(Provider):
             context_manager=context_manager,
             context_storage=context_storage,
         )
-    
+
     @provide
     def provide_user_data_service(
         self,
@@ -109,15 +116,15 @@ class AgentSquadApplicationProvider(Provider):
     ) -> UserDataService:
         """
         Provide UserDataService for accessing user wallet/portfolio data.
-        
+
         This service aggregates data from multiple repositories for use
         in authenticated chat workflows.
-        
+
         IMPORTANT: TransactionRepository is intentionally NOT injected here.
         When transaction queries fail, they leave the PostgreSQL transaction
         in an "aborted" state, which corrupts the shared session and causes
         all subsequent database operations to fail.
-        
+
         The authenticated supervisor works fine without transaction history -
         it just won't have that context in the LLM prompt.
         """
@@ -126,7 +133,7 @@ class AgentSquadApplicationProvider(Provider):
             portfolio_repository=portfolio_repository,
             transaction_repository=None,  # Disabled to prevent session corruption
         )
-    
+
     @provide
     def provide_send_message_with_supervisor(
         self,
@@ -136,10 +143,10 @@ class AgentSquadApplicationProvider(Provider):
     ) -> SendMessageWithSupervisor:
         """
         Provide SendMessageWithSupervisor command for authenticated users.
-        
+
         This command uses the AuthenticatedSupervisorCoordinator for LLM-based
         multi-agent orchestration with real data access via UserDataService.
-        
+
         Features:
         - Access to user wallet data
         - Access to portfolio snapshots
@@ -148,7 +155,7 @@ class AgentSquadApplicationProvider(Provider):
         """
         # Inject user data service into supervisor
         authenticated_supervisor._user_data_service = user_data_service
-        
+
         return SendMessageWithSupervisor(
             supervisor_coordinator=authenticated_supervisor,
             agent_orchestrator=orchestrator,

@@ -33,19 +33,19 @@ logger = logging.getLogger(__name__)
 
 class AnalyticsRepositorySqla(AnalyticsRepository):
     """SQLAlchemy implementation of AnalyticsRepository."""
-    
+
     def __init__(self, session: AsyncSession):
         self._session = session
         self._table = AnalyticsSnapshotTable
-    
+
     # ═══════════════════════════════════════════════════════════════
     # SNAPSHOT CRUD
     # ═══════════════════════════════════════════════════════════════
-    
+
     async def save(self, snapshot: AnalyticsSnapshot) -> None:
         """Save or update an analytics snapshot using upsert."""
         data = self._entity_to_dict(snapshot)
-        
+
         # Use PostgreSQL upsert (INSERT ... ON CONFLICT UPDATE)
         stmt = pg_insert(self._table).values(**data)
         stmt = stmt.on_conflict_do_update(
@@ -78,21 +78,23 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
                 "additional_metrics": stmt.excluded.additional_metrics,
             },
         )
-        
+
         await self._session.execute(stmt)
         await self._session.commit()
-        logger.info(f"Saved analytics snapshot for {snapshot.snapshot_date} ({snapshot.snapshot_type})")
-    
+        logger.info(
+            f"Saved analytics snapshot for {snapshot.snapshot_date} ({snapshot.snapshot_type})"
+        )
+
     async def get_by_id(self, snapshot_id: UUID) -> AnalyticsSnapshot | None:
         """Get a snapshot by ID."""
         stmt = select(self._table).where(self._table.c.id == snapshot_id)
         result = await self._session.execute(stmt)
         row = result.fetchone()
-        
+
         if row:
             return self._row_to_entity(row)
         return None
-    
+
     async def get_by_date(
         self,
         snapshot_date: date,
@@ -107,11 +109,11 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
         )
         result = await self._session.execute(stmt)
         row = result.fetchone()
-        
+
         if row:
             return self._row_to_entity(row)
         return None
-    
+
     async def get_latest(
         self,
         snapshot_type: str = "daily",
@@ -125,15 +127,15 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
         )
         result = await self._session.execute(stmt)
         row = result.fetchone()
-        
+
         if row:
             return self._row_to_entity(row)
         return None
-    
+
     # ═══════════════════════════════════════════════════════════════
     # HISTORICAL DATA
     # ═══════════════════════════════════════════════════════════════
-    
+
     async def get_range(
         self,
         start_date: date,
@@ -154,9 +156,9 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
         )
         result = await self._session.execute(stmt)
         rows = result.fetchall()
-        
+
         return [self._row_to_entity(row) for row in rows]
-    
+
     async def get_last_n_days(
         self,
         days: int = 30,
@@ -165,13 +167,13 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
         """Get the last N days of snapshots."""
         end_date = date.today()
         start_date = end_date - timedelta(days=days)
-        
+
         return await self.get_range(start_date, end_date, snapshot_type)
-    
+
     # ═══════════════════════════════════════════════════════════════
     # TREND ANALYSIS
     # ═══════════════════════════════════════════════════════════════
-    
+
     async def get_trends(
         self,
         current_date: date,
@@ -181,69 +183,87 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
         """Calculate trends between two dates."""
         current = await self.get_by_date(current_date, snapshot_type)
         previous = await self.get_by_date(comparison_date, snapshot_type)
-        
+
         if not current or not previous:
             return []
-        
+
         trends = []
-        
+
         # Total users trend
-        trends.append(AnalyticsTrend.calculate(
-            "total_users",
-            current.total_users,
-            previous.total_users,
-        ))
-        
+        trends.append(
+            AnalyticsTrend.calculate(
+                "total_users",
+                current.total_users,
+                previous.total_users,
+            )
+        )
+
         # Total balance trend
-        trends.append(AnalyticsTrend.calculate(
-            "total_balance_usd",
-            float(current.total_balance_usd),
-            float(previous.total_balance_usd),
-        ))
-        
+        trends.append(
+            AnalyticsTrend.calculate(
+                "total_balance_usd",
+                float(current.total_balance_usd),
+                float(previous.total_balance_usd),
+            )
+        )
+
         # Portfolio distribution trends
-        trends.append(AnalyticsTrend.calculate(
-            "portfolio_empty",
-            current.portfolio.empty,
-            previous.portfolio.empty,
-        ))
-        trends.append(AnalyticsTrend.calculate(
-            "portfolio_whale",
-            current.portfolio.whale,
-            previous.portfolio.whale,
-        ))
-        
+        trends.append(
+            AnalyticsTrend.calculate(
+                "portfolio_empty",
+                current.portfolio.empty,
+                previous.portfolio.empty,
+            )
+        )
+        trends.append(
+            AnalyticsTrend.calculate(
+                "portfolio_whale",
+                current.portfolio.whale,
+                previous.portfolio.whale,
+            )
+        )
+
         # Activity trends
-        trends.append(AnalyticsTrend.calculate(
-            "activity_engaged",
-            current.activity.engaged,
-            previous.activity.engaged,
-        ))
-        trends.append(AnalyticsTrend.calculate(
-            "activity_inactive",
-            current.activity.inactive,
-            previous.activity.inactive,
-        ))
-        
+        trends.append(
+            AnalyticsTrend.calculate(
+                "activity_engaged",
+                current.activity.engaged,
+                previous.activity.engaged,
+            )
+        )
+        trends.append(
+            AnalyticsTrend.calculate(
+                "activity_inactive",
+                current.activity.inactive,
+                previous.activity.inactive,
+            )
+        )
+
         # Execution trends
-        trends.append(AnalyticsTrend.calculate(
-            "total_executions",
-            current.executions.total,
-            previous.executions.total,
-        ))
-        trends.append(AnalyticsTrend.calculate(
-            "exec_swap",
-            current.executions.swap,
-            previous.executions.swap,
-        ))
-        trends.append(AnalyticsTrend.calculate(
-            "exec_buy",
-            current.executions.buy,
-            previous.executions.buy,
-        ))
-        
+        trends.append(
+            AnalyticsTrend.calculate(
+                "total_executions",
+                current.executions.total,
+                previous.executions.total,
+            )
+        )
+        trends.append(
+            AnalyticsTrend.calculate(
+                "exec_swap",
+                current.executions.swap,
+                previous.executions.swap,
+            )
+        )
+        trends.append(
+            AnalyticsTrend.calculate(
+                "exec_buy",
+                current.executions.buy,
+                previous.executions.buy,
+            )
+        )
+
         return trends
-    
+
     async def get_week_over_week(
         self,
         reference_date: date | None = None,
@@ -251,9 +271,9 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
         """Get week-over-week trends."""
         current = reference_date or date.today()
         previous = current - timedelta(days=7)
-        
+
         return await self.get_trends(current, previous, "daily")
-    
+
     async def get_month_over_month(
         self,
         reference_date: date | None = None,
@@ -261,27 +281,27 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
         """Get month-over-month trends."""
         current = reference_date or date.today()
         previous = current - timedelta(days=30)
-        
+
         return await self.get_trends(current, previous, "daily")
-    
+
     # ═══════════════════════════════════════════════════════════════
     # AGGREGATIONS
     # ═══════════════════════════════════════════════════════════════
-    
+
     async def get_total_users(self) -> int:
         """Get total user count from latest snapshot."""
         latest = await self.get_latest("daily")
         return latest.total_users if latest else 0
-    
+
     async def get_total_balance(self) -> float:
         """Get total balance from latest snapshot."""
         latest = await self.get_latest("daily")
         return float(latest.total_balance_usd) if latest else 0.0
-    
+
     async def get_user_distribution_summary(self) -> dict:
         """Get current user distribution by all classifications."""
         latest = await self.get_latest("daily")
-        
+
         if not latest:
             return {
                 "portfolio": {},
@@ -290,7 +310,7 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
                 "executions": {},
                 "totals": {"users": 0, "balance_usd": 0},
             }
-        
+
         return {
             "portfolio": latest.portfolio.to_dict(),
             "activity": latest.activity.to_dict(),
@@ -301,11 +321,11 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
                 "balance_usd": float(latest.total_balance_usd),
             },
         }
-    
+
     # ═══════════════════════════════════════════════════════════════
     # COHORT ANALYSIS
     # ═══════════════════════════════════════════════════════════════
-    
+
     async def get_cohort_analysis(
         self,
         cohort_type: str = "monthly",
@@ -313,7 +333,7 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
     ) -> list[CohortAnalysis]:
         """
         Get cohort analysis for user groups.
-        
+
         Note: This is a simplified implementation. Full cohort analysis
         requires joining with user_context_aware table.
         """
@@ -321,11 +341,11 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
         # to query user_context_aware with registration dates
         # and calculate retention metrics
         return []
-    
+
     # ═══════════════════════════════════════════════════════════════
     # HELPER METHODS
     # ═══════════════════════════════════════════════════════════════
-    
+
     def _row_to_entity(self, row: Any) -> AnalyticsSnapshot:
         """Convert database row to AnalyticsSnapshot entity."""
         return AnalyticsSnapshot(
@@ -367,7 +387,7 @@ class AnalyticsRepositorySqla(AnalyticsRepository):
             created_at=row.created_at,
             additional_metrics=row.additional_metrics or {},
         )
-    
+
     def _entity_to_dict(self, entity: AnalyticsSnapshot) -> dict[str, Any]:
         """Convert AnalyticsSnapshot entity to dictionary for insert/update."""
         return {

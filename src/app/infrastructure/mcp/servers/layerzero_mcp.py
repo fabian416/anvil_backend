@@ -19,6 +19,7 @@ Integration Points:
 
 Feature Flag: mcp.servers.layerzero_enabled
 """
+
 from typing import Dict, Any, List, Optional
 
 from app.infrastructure.mcp.base import MCPServer
@@ -75,7 +76,9 @@ class LayerZeroMCPServer(MCPServer):
         self.settings = settings or MCPSettings()
 
         # Check if server is enabled
-        if not self.settings.enabled or not getattr(self.settings.servers, 'layerzero_enabled', False):
+        if not self.settings.enabled or not getattr(
+            self.settings.servers, "layerzero_enabled", False
+        ):
             raise MCPServerDisabledError(
                 "LayerZero MCP server is disabled. "
                 "Enable with mcp.servers.layerzero_enabled=true in config."
@@ -88,7 +91,7 @@ class LayerZeroMCPServer(MCPServer):
         )
 
         self.layerzero_gateway = layerzero_gateway
-        
+
         # Register tools
         self.setup_tools()
 
@@ -280,10 +283,14 @@ class LayerZeroMCPServer(MCPServer):
                 "destination_chain": message.destination_chain,
                 "sender": message.sender,
                 "receiver": message.receiver,
-                "payload": message.payload[:100] + "..." if len(message.payload) > 100 else message.payload,
+                "payload": message.payload[:100] + "..."
+                if len(message.payload) > 100
+                else message.payload,
                 "nonce": message.nonce,
                 "source_tx": message.source_tx_hash,
-                "destination_tx": message.destination_tx_hash if message.destination_tx_hash else "Pending",
+                "destination_tx": message.destination_tx_hash
+                if message.destination_tx_hash
+                else "Pending",
                 "timestamp": str(message.timestamp),
                 "gas_used": str(message.gas_used) if message.gas_used else "N/A",
             }
@@ -311,7 +318,9 @@ class LayerZeroMCPServer(MCPServer):
             if direction == "sent":
                 messages = [m for m in messages if m.sender.lower() == address.lower()]
             elif direction == "received":
-                messages = [m for m in messages if m.receiver.lower() == address.lower()]
+                messages = [
+                    m for m in messages if m.receiver.lower() == address.lower()
+                ]
 
             message_data = []
             for m in messages:
@@ -421,7 +430,9 @@ class LayerZeroMCPServer(MCPServer):
 
             # Filter by token if specified
             if token:
-                transfers = [t for t in transfers if token.upper() in t.token_symbol.upper()]
+                transfers = [
+                    t for t in transfers if token.upper() in t.token_symbol.upper()
+                ]
 
             transfer_data = []
             for t in transfers:
@@ -480,7 +491,9 @@ class LayerZeroMCPServer(MCPServer):
                 "source_chain": message.source_chain,
                 "destination_chain": message.destination_chain,
                 "source_tx": message.source_tx_hash,
-                "destination_tx": message.destination_tx_hash if message.destination_tx_hash else None,
+                "destination_tx": message.destination_tx_hash
+                if message.destination_tx_hash
+                else None,
                 "timestamp": str(message.timestamp),
             }
 

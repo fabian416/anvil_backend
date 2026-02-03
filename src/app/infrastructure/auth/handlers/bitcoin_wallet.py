@@ -85,8 +85,7 @@ class CreateBitcoinWalletHandler:
         if not user.privy_user_id:
             logger.error(f"User {user.id_.value} has no Privy ID")
             raise ValueError(
-                "User does not have a Privy account. "
-                "Please link your account first."
+                "User does not have a Privy account. Please link your account first."
             )
 
         privy_user_id = user.privy_user_id.value

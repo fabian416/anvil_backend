@@ -21,6 +21,7 @@ import httpx
 @dataclass
 class Protocol:
     """Protocol information."""
+
     id: str
     name: str
     symbol: str
@@ -35,6 +36,7 @@ class Protocol:
 @dataclass
 class ProtocolTVL:
     """Protocol TVL data."""
+
     protocol: str
     tvl: float
     chain_tvls: dict[str, float]  # TVL per chain
@@ -44,6 +46,7 @@ class ProtocolTVL:
 @dataclass
 class YieldData:
     """Yield farming opportunity data."""
+
     pool: str
     chain: str
     project: str
@@ -58,6 +61,7 @@ class YieldData:
 @dataclass
 class ChainTVL:
     """Chain TVL data."""
+
     chain: str
     tvl: float
     token_symbol: str | None = None
@@ -66,17 +70,17 @@ class ChainTVL:
 class DefiLlamaClient:
     """
     DeFiLlama API client for DeFi protocol data.
-    
+
     Features:
     - Protocol TVL tracking
     - Yield farming data
     - Historical analytics
     - Multi-chain support
     """
-    
+
     BASE_URL = "https://api.llama.fi"
     YIELDS_URL = "https://yields.llama.fi"
-    
+
     def __init__(self):
         """Initialize DeFiLlama client (no API key required)."""
         self._client = httpx.AsyncClient(
@@ -87,19 +91,19 @@ class DefiLlamaClient:
             base_url=self.YIELDS_URL,
             timeout=30.0,
         )
-    
+
     async def close(self):
         """Close HTTP clients."""
         await self._client.aclose()
         await self._yields_client.aclose()
-    
+
     async def get_all_protocols(self) -> list[Protocol]:
         """
         Get all DeFi protocols with TVL data.
-        
+
         Returns:
             List of protocols with current TVL
-            
+
         Example:
             >>> protocols = await client.get_all_protocols()
             >>> top_5 = sorted(protocols, key=lambda p: p.tvl, reverse=True)[:5]
@@ -109,7 +113,7 @@ class DefiLlamaClient:
         response = await self._client.get("/protocols")
         response.raise_for_status()
         data = response.json()
-        
+
         protocols = []
         for item in data:
             # Handle TVL - can be None, int, float, or missing
@@ -124,7 +128,7 @@ class DefiLlamaClient:
                     tvl_value = float(tvl_value)
                 except (ValueError, TypeError):
                     tvl_value = 0.0
-            
+
             protocols.append(
                 Protocol(
                     id=item.get("slug", ""),
@@ -138,19 +142,19 @@ class DefiLlamaClient:
                     chains=item.get("chains", []),
                 )
             )
-        
+
         return protocols
-    
+
     async def get_protocol_tvl(self, protocol: str) -> ProtocolTVL:
         """
         Get detailed TVL data for a specific protocol.
-        
+
         Args:
             protocol: Protocol slug (e.g., "aave", "uniswap")
-            
+
         Returns:
             ProtocolTVL with current and historical data
-            
+
         Example:
             >>> tvl = await client.get_protocol_tvl("aave")
             >>> print(f"Aave TVL: ${tvl.tvl / 1e9:.2f}B")
@@ -159,20 +163,22 @@ class DefiLlamaClient:
         response = await self._client.get(f"/protocol/{protocol}")
         response.raise_for_status()
         data = response.json()
-        
+
         # Calculate chain TVLs - handle various response formats
         chain_tvls = {}
         chain_tvls_data = data.get("chainTvls", {})
         if not isinstance(chain_tvls_data, dict):
             # If chainTvls is not a dict, skip it
             chain_tvls_data = {}
-        
+
         for chain, value in chain_tvls_data.items():
             try:
                 if isinstance(value, dict):
                     # Some chains return dict with tvl key
                     tvl_value = value.get("tvl", 0)
-                    chain_tvls[chain] = float(tvl_value) if tvl_value is not None else 0.0
+                    chain_tvls[chain] = (
+                        float(tvl_value) if tvl_value is not None else 0.0
+                    )
                 elif isinstance(value, (int, float)):
                     chain_tvls[chain] = float(value)
                 elif isinstance(value, list):
@@ -183,7 +189,9 @@ class DefiLlamaClient:
                             chain_tvls[chain] = float(latest)
                         elif isinstance(latest, dict):
                             tvl_val = latest.get("tvl", 0)
-                            chain_tvls[chain] = float(tvl_val) if tvl_val is not None else 0.0
+                            chain_tvls[chain] = (
+                                float(tvl_val) if tvl_val is not None else 0.0
+                            )
                         else:
                             chain_tvls[chain] = 0.0
                     else:
@@ -194,7 +202,7 @@ class DefiLlamaClient:
             except (ValueError, TypeError) as e:
                 # Skip chains with invalid data
                 continue
-        
+
         # Extract total TVL - handle different response formats
         total_tvl = 0.0
         tvl_data = data.get("tvl", None)
@@ -205,19 +213,24 @@ class DefiLlamaClient:
                 # TVL is a list of historical data points
                 latest_tvl = tvl_data[-1]
                 if isinstance(latest_tvl, dict):
-                    total_tvl = float(latest_tvl.get("totalLiquidityUSD", latest_tvl.get("tvl", 0)) or 0)
+                    total_tvl = float(
+                        latest_tvl.get("totalLiquidityUSD", latest_tvl.get("tvl", 0))
+                        or 0
+                    )
                 elif isinstance(latest_tvl, (int, float)):
                     total_tvl = float(latest_tvl)
             elif isinstance(tvl_data, dict):
-                total_tvl = float(tvl_data.get("totalLiquidityUSD", tvl_data.get("tvl", 0)) or 0)
-        
+                total_tvl = float(
+                    tvl_data.get("totalLiquidityUSD", tvl_data.get("tvl", 0)) or 0
+                )
+
         return ProtocolTVL(
             protocol=data.get("name", protocol),
             tvl=total_tvl,
             chain_tvls=chain_tvls,
             tokens_in_usd=data.get("tokensInUsd"),
         )
-    
+
     async def get_protocol_yields(
         self,
         protocol: str | None = None,
@@ -225,14 +238,14 @@ class DefiLlamaClient:
     ) -> list[YieldData]:
         """
         Get yield farming opportunities.
-        
+
         Args:
             protocol: Filter by protocol (optional)
             chain: Filter by chain (optional)
-            
+
         Returns:
             List of yield pools with APY data
-            
+
         Example:
             >>> yields = await client.get_protocol_yields(protocol="aave")
             >>> best_yield = max(yields, key=lambda y: y.apy)
@@ -241,7 +254,7 @@ class DefiLlamaClient:
         response = await self._yields_client.get("/pools")
         response.raise_for_status()
         data = response.json()
-        
+
         yields = []
         for pool in data.get("data", []):
             # Apply filters
@@ -249,7 +262,7 @@ class DefiLlamaClient:
                 continue
             if chain and pool.get("chain", "").lower() != chain.lower():
                 continue
-            
+
             yields.append(
                 YieldData(
                     pool=pool.get("pool", ""),
@@ -263,19 +276,19 @@ class DefiLlamaClient:
                     il_risk=pool.get("ilRisk"),
                 )
             )
-        
+
         return yields
-    
+
     async def get_chain_tvl(self, chain: str | None = None) -> list[ChainTVL]:
         """
         Get TVL by blockchain.
-        
+
         Args:
             chain: Specific chain name (optional, None = all chains)
-            
+
         Returns:
             List of chains with TVL
-            
+
         Example:
             >>> chains = await client.get_chain_tvl()
             >>> eth_tvl = next(c for c in chains if c.chain == "Ethereum")
@@ -284,15 +297,15 @@ class DefiLlamaClient:
         response = await self._client.get("/v2/chains")
         response.raise_for_status()
         data = response.json()
-        
+
         chain_tvls = []
         for chain_data in data:
             chain_name = chain_data.get("name", "")
-            
+
             # Filter by chain if specified
             if chain and chain.lower() != chain_name.lower():
                 continue
-            
+
             chain_tvls.append(
                 ChainTVL(
                     chain=chain_name,
@@ -300,16 +313,16 @@ class DefiLlamaClient:
                     token_symbol=chain_data.get("tokenSymbol"),
                 )
             )
-        
+
         return chain_tvls
-    
+
     async def get_stablecoin_dominance(self) -> dict[str, float]:
         """
         Get stablecoin market share.
-        
+
         Returns:
             Dict mapping stablecoin name to circulating supply (USD)
-            
+
         Example:
             >>> dominance = await client.get_stablecoin_dominance()
             >>> total = sum(dominance.values())
@@ -320,26 +333,26 @@ class DefiLlamaClient:
         response = await self._client.get("/stablecoins?includePrices=true")
         response.raise_for_status()
         data = response.json()
-        
+
         dominance = {}
         for stablecoin in data.get("peggedAssets", []):
             name = stablecoin.get("name", "")
             circulating = float(stablecoin.get("circulating", {}).get("peggedUSD", 0))
             if circulating > 0:
                 dominance[name] = circulating
-        
+
         return dominance
-    
+
     async def get_fees_revenue(self, protocol: str) -> dict[str, float]:
         """
         Get protocol fees and revenue data.
-        
+
         Args:
             protocol: Protocol slug
-            
+
         Returns:
             Dict with fees and revenue metrics
-            
+
         Example:
             >>> data = await client.get_fees_revenue("uniswap")
             >>> print(f"24h fees: ${data.get('total24h', 0) / 1e6:.2f}M")
@@ -347,7 +360,7 @@ class DefiLlamaClient:
         response = await self._client.get(f"/summary/fees/{protocol}")
         response.raise_for_status()
         data = response.json()
-        
+
         return {
             "total24h": float(data.get("total24h", 0)),
             "total7d": float(data.get("total7d", 0)),

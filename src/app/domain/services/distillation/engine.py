@@ -1,4 +1,5 @@
 """Main distillation engine orchestrator."""
+
 import time
 from datetime import datetime, UTC
 from typing import Optional, List, Dict, Any
@@ -25,7 +26,7 @@ from app.infrastructure.distillation.static_responder import StaticResponder
 class DistillationEngine:
     """
     Main orchestrator for distillation pass.
-    
+
     Flow:
     1. Check if distillation is enabled
     2. Classify intent
@@ -36,7 +37,7 @@ class DistillationEngine:
     7. Route decision
     8. Log telemetry
     """
-    
+
     def __init__(
         self,
         intent_classifier: IntentClassifier,
@@ -56,7 +57,7 @@ class DistillationEngine:
         self.static_responder = static_responder
         self.config_repo = config_repo
         self.telemetry_repo = telemetry_repo
-    
+
     async def distill(
         self,
         query: str,
@@ -66,23 +67,29 @@ class DistillationEngine:
     ) -> DistillationResult:
         """
         Run distillation pass on query.
-        
+
         Args:
             query: User query text
             user_id: Optional user ID
             user_context: Optional user context (time_of_day, etc.)
-            
+
         Returns:
             DistillationResult with routing decision
         """
         start_time = time.time()
         request_id = str(uuid4())
-        
+
         # Check if distillation is enabled
         config = await self.config_repo.get_config()
         if not config.enabled:
             # Distillation disabled, pass through
-            from app.domain.value_objects.distillation import RouteType, ComplexityLevel, Intent, ExtractedEntities
+            from app.domain.value_objects.distillation import (
+                RouteType,
+                ComplexityLevel,
+                Intent,
+                ExtractedEntities,
+            )
+
             return DistillationResult(
                 should_process=True,
                 route_type=RouteType.FULL_LLM,
@@ -90,17 +97,17 @@ class DistillationEngine:
                 complexity=ComplexityLevel.MODERATE,
                 entities=ExtractedEntities(),
             )
-        
+
         # ✨ NO INTENT CLASSIFICATION - Direct routing to LLM ✨
         # We don't use intents - everything goes to LLM for natural responses
-        
+
         from app.domain.value_objects.distillation import (
             RouteType,
             ComplexityLevel,
             Intent,
             ExtractedEntities,
         )
-        
+
         # Step 1: Assess complexity (without intent - just based on query text)
         # Simple heuristic: short queries are simple, long queries are complex
         query_length = len(query.split())
@@ -110,19 +117,20 @@ class DistillationEngine:
             complexity = ComplexityLevel.MODERATE
         else:
             complexity = ComplexityLevel.COMPLEX
-        
+
         # Step 2: Extract entities (for cache key generation only)
         entities = self.entity_extractor.extract(query)
-        
+
         # Step 3: Check cache (if enabled)
         cache_hit_content = None
         cache_level = CacheLevel.NONE
         cache_key = None
-        
+
         if config.cache_enabled:
             # Generate cache key (without intent)
             normalized = query.lower().strip()
             import hashlib
+
             # Build key without intent
             key_components = [
                 ",".join(sorted(entities.tokens)),
@@ -132,7 +140,7 @@ class DistillationEngine:
             key_string = "|".join(key_components)
             hash_digest = hashlib.sha256(key_string.encode()).hexdigest()
             cache_key = f"distill:v2:{hash_digest[:16]}"
-            
+
             # Try cache lookup
             cache_hit_content, cache_level = await self.cache_manager.get(
                 cache_key=cache_key,
@@ -145,6 +153,7 @@ class DistillationEngine:
             # Still generate cache key for result
             normalized = query.lower().strip()
             import hashlib
+
             key_components = [
                 ",".join(sorted(entities.tokens)),
                 ",".join(sorted(entities.protocols)),
@@ -153,10 +162,10 @@ class DistillationEngine:
             key_string = "|".join(key_components)
             hash_digest = hashlib.sha256(key_string.encode()).hexdigest()
             cache_key = f"distill:v2:{hash_digest[:16]}"
-        
+
         # Step 4: Route decision - NO static responses, NO intent-based routing
         # Everything goes to LLM for natural, conversational responses
-        
+
         # If cache hit, return cached response
         if cache_hit_content:
             result = DistillationResult(
@@ -177,24 +186,26 @@ class DistillationEngine:
                 route_type = RouteType.LIGHT_LLM
             else:
                 route_type = RouteType.FULL_LLM
-            
+
             result = DistillationResult(
                 should_process=True,
                 route_type=route_type,
                 intent=Intent.UNCLEAR,  # Dummy intent for compatibility (not used)
                 complexity=complexity,
                 entities=entities,
-                suggested_model_tier="economy" if complexity in [ComplexityLevel.TRIVIAL, ComplexityLevel.SIMPLE] else "standard",
+                suggested_model_tier="economy"
+                if complexity in [ComplexityLevel.TRIVIAL, ComplexityLevel.SIMPLE]
+                else "standard",
                 suggested_agent="chat",  # Default to chat agent
                 cache_key=cache_key,
                 classification_confidence=1.0,  # No classification, so confidence is 1.0
             )
-        
+
         # Calculate latency
         end_time = time.time()
         classification_latency_ms = int((end_time - start_time) * 1000)
         result.classification_latency_ms = classification_latency_ms
-        
+
         # Step 8: Log telemetry
         await self._log_telemetry(
             request_id=request_id,
@@ -202,9 +213,9 @@ class DistillationEngine:
             query=query,
             result=result,
         )
-        
+
         return result
-    
+
     async def cache_response(
         self,
         query: str,
@@ -216,7 +227,7 @@ class DistillationEngine:
     ) -> None:
         """
         Cache a response for future requests.
-        
+
         Args:
             query: Original query
             intent: Classified intent
@@ -226,20 +237,22 @@ class DistillationEngine:
             source_request_id: Original request ID
         """
         config = await self.config_repo.get_config()
-        
+
         if not config.cache_enabled:
             return
-        
+
         # Get TTL for intent
         from app.domain.value_objects.distillation import Intent
+
         intent_enum = Intent(intent)
         ttl_seconds = config.cache_ttl_by_intent.get(intent_enum, 3600)
-        
+
         # Generate cache key
         normalized = query.lower().strip()
         import hashlib
+
         cache_key = f"distill:v1:{hashlib.sha256(normalized.encode()).hexdigest()[:16]}"
-        
+
         # Store in cache
         await self.cache_manager.set(
             cache_key=cache_key,
@@ -251,7 +264,7 @@ class DistillationEngine:
             source_model=source_model,
             source_request_id=str(source_request_id) if source_request_id else None,
         )
-    
+
     async def _log_telemetry(
         self,
         request_id: str,
@@ -282,5 +295,5 @@ class DistillationEngine:
             llm_request_id=None,  # Will be set later if processed
             created_at=datetime.now(UTC),
         )
-        
+
         await self.telemetry_repo.log_request(telemetry)

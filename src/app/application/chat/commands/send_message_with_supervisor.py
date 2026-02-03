@@ -26,7 +26,9 @@ from uuid import UUID
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
-from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.domain.value_objects.agent_squad.conversation_context import (
+    ConversationContext,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -34,31 +36,31 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SupervisorMessageResult:
     """Result from supervisor-based message processing."""
-    
+
     content: str
     """The aggregated response content."""
-    
+
     agents_used: list[str] = field(default_factory=list)
     """List of agent types that contributed to the response."""
-    
+
     sources: list[dict[str, Any]] = field(default_factory=list)
     """Source attribution for the response."""
-    
+
     agent_timings: list[dict[str, Any]] = field(default_factory=list)
     """Timing information for each agent execution."""
-    
+
     workflow_type: str = "authenticated_supervisor"
     """Type of workflow executed."""
-    
+
     task_count: int = 0
     """Number of tasks in the workflow."""
-    
+
     total_time_ms: int = 0
     """Total execution time in milliseconds."""
-    
+
     metadata: dict[str, Any] = field(default_factory=dict)
     """Additional metadata about the execution."""
-    
+
     execute_data: dict[str, Any] | None = None
     """Execute action data for frontend execution modal (from workflow agents like swap_workflow)."""
 
@@ -66,17 +68,17 @@ class SupervisorMessageResult:
 class SendMessageWithSupervisor:
     """
     Command to send a message using the AuthenticatedSupervisorCoordinator.
-    
+
     This command provides LLM-based multi-agent orchestration for authenticated
     users, enabling complex workflows with real data access.
-    
+
     Flow:
     1. Build conversation context from history
     2. Set user context (wallet, portfolio) on supervisor
     3. Create workflow plan via LLM
     4. Execute workflow (potentially parallel agents)
     5. Aggregate and return results
-    
+
     Example:
         >>> cmd = SendMessageWithSupervisor(supervisor, orchestrator)
         >>> result = await cmd.execute(
@@ -87,7 +89,7 @@ class SendMessageWithSupervisor:
         ...     user_context={"wallet_address": "0x..."}
         ... )
     """
-    
+
     def __init__(
         self,
         supervisor_coordinator: Any,  # AuthenticatedSupervisorCoordinator
@@ -95,14 +97,14 @@ class SendMessageWithSupervisor:
     ):
         """
         Initialize command with required dependencies.
-        
+
         Args:
             supervisor_coordinator: AuthenticatedSupervisorCoordinator instance
             agent_orchestrator: AgentOrchestrator for executing individual agents
         """
         self._supervisor = supervisor_coordinator
         self._orchestrator = agent_orchestrator
-    
+
     async def execute(
         self,
         conversation_id: UUID,
@@ -113,19 +115,19 @@ class SendMessageWithSupervisor:
     ) -> SupervisorMessageResult:
         """
         Execute message processing with supervisor orchestration.
-        
+
         Args:
             conversation_id: The conversation UUID
             message: User's message content
             language: Language code (en, es, pt, zh)
             conversation_history: Recent messages for context
             user_context: User-specific context (wallet, portfolio, etc.)
-        
+
         Returns:
             SupervisorMessageResult with aggregated response and metadata
         """
         start_time = time.time()
-        
+
         # Build conversation context
         agent_context = ConversationContext(
             conversation_history=conversation_history or [],
@@ -136,7 +138,7 @@ class SendMessageWithSupervisor:
             },
             session_metadata={},
         )
-        
+
         # Set user context on supervisor
         if user_context:
             self._supervisor.set_user_context(
@@ -145,19 +147,21 @@ class SendMessageWithSupervisor:
                 portfolio_summary=user_context.get("portfolio_summary"),
                 preferences=user_context.get("preferences"),
             )
-            
+
             # Set context-aware data if provided
             # This enables personalized responses based on user classification
             if user_context.get("context_aware"):
                 self._supervisor.set_context_aware(user_context["context_aware"])
-            
+
             # Load full user data from repositories if available
-            if user_context.get("user_id") and hasattr(self._supervisor, 'load_user_data'):
+            if user_context.get("user_id") and hasattr(
+                self._supervisor, "load_user_data"
+            ):
                 try:
                     await self._supervisor.load_user_data(user_context["user_id"])
                 except Exception as e:
                     logger.warning(f"Failed to load user data: {e}")
-        
+
         # Get available agents
         # Includes workflow agents for multi-step operations
         available_agents = [
@@ -181,49 +185,55 @@ class SendMessageWithSupervisor:
             AgentType.BUY_WORKFLOW,  # Multi-step fiat on-ramp
             AgentType.MONEY_MARKET_WORKFLOW,  # Multi-step rate comparison
         ]
-        
+
         try:
             # Track supervisor planning time
             planning_start = time.time()
-            
+
             # Create workflow plan
             logger.info(
                 f"🔄 Creating workflow plan for authenticated user",
                 extra={
                     "conversation_id": str(conversation_id),
                     "message_preview": message[:100],
-                    "has_wallet": bool(user_context and user_context.get("wallet_address")),
-                }
+                    "has_wallet": bool(
+                        user_context and user_context.get("wallet_address")
+                    ),
+                },
             )
-            
+
             workflow_plan = await self._supervisor.create_workflow_plan(
                 conversation_id=ConversationId(conversation_id),
                 message=MessageContent(message),
                 conversation_context=agent_context,
                 available_agents=available_agents,
             )
-            
+
             planning_time_ms = int((time.time() - planning_start) * 1000)
-            
+
             logger.info(
                 f"📋 Workflow planned: {len(workflow_plan.tasks)} tasks in {planning_time_ms}ms",
                 extra={
                     "tasks": [t.agent_type.value for t in workflow_plan.tasks],
                     "planning_time_ms": planning_time_ms,
-                }
+                },
             )
-            
+
             # Execute workflow - CRITICAL: pass message explicitly to prevent context pollution
             # Do NOT rely on conversation_history[-1] as it may contain previous messages
             execution_start = time.time()
-            response_content, sources_raw, agent_timings = await self._supervisor.execute_workflow(
+            (
+                response_content,
+                sources_raw,
+                agent_timings,
+            ) = await self._supervisor.execute_workflow(
                 conversation_id=ConversationId(conversation_id),
                 workflow_plan=workflow_plan,
                 conversation_context=agent_context,
                 original_message=message,  # Explicitly pass current user message
             )
             execution_time_ms = int((time.time() - execution_start) * 1000)
-            
+
             # Process sources
             sources = []
             for source in sources_raw:
@@ -233,14 +243,16 @@ class SendMessageWithSupervisor:
                     sources.append(source)
                 else:
                     sources.append({"raw": str(source)})
-            
+
             # Add supervisor planning as a source (LLM used for routing)
             from datetime import datetime, UTC
-            
+
             # Determine if LLM was used for planning or if it was direct routing
             # Direct routing (0ms) happens for workflow continuations and fresh workflow starts
-            used_llm_planning = planning_time_ms > 100  # LLM calls typically take >100ms
-            
+            used_llm_planning = (
+                planning_time_ms > 100
+            )  # LLM calls typically take >100ms
+
             if used_llm_planning:
                 # Full LLM planning was used
                 supervisor_source = {
@@ -289,61 +301,64 @@ class SendMessageWithSupervisor:
                     "provider": "Anvil",
                     "tools_used": ["intent_routing"],
                 }
-            
+
             sources.insert(0, supervisor_source)
             agent_timings.insert(0, supervisor_timing)
-            
+
             # Debug: Log sources count
             logger.info(
                 f"📊 Sources collected: {len(sources)} sources (including supervisor)",
-                extra={"source_names": [s.get('source_name', 'unknown') for s in sources]}
+                extra={
+                    "source_names": [s.get("source_name", "unknown") for s in sources]
+                },
             )
-            
+
             # Extract execute_data and workflow_state from workflow agent responses
             # Workflow agents (like swap_workflow) store these in their response metadata
             execute_data = None
             workflow_state = None
             workflow_name = None
             from app.domain.ports.agent_squad.agent_gateway import AgentResponse
+
             for task in workflow_plan.tasks:
-                if hasattr(task, 'result') and task.result:
+                if hasattr(task, "result") and task.result:
                     result = task.result
                     if isinstance(result, AgentResponse) and result.metadata:
                         # Check for execute_data in metadata (from workflow agents)
-                        task_execute_data = result.metadata.get('execute_data')
+                        task_execute_data = result.metadata.get("execute_data")
                         if task_execute_data:
                             execute_data = task_execute_data
                             logger.info(
                                 f"📋 Found execute_data from {task.agent_type.value}",
-                                extra={"execute_data": execute_data}
+                                extra={"execute_data": execute_data},
                             )
-                        
+
                         # Check for workflow_state in metadata (for multi-step continuations)
-                        task_workflow_state = result.metadata.get('workflow_state')
+                        task_workflow_state = result.metadata.get("workflow_state")
                         if task_workflow_state:
                             workflow_state = task_workflow_state
-                            workflow_name = result.metadata.get('workflow_name')
+                            workflow_name = result.metadata.get("workflow_name")
                             logger.info(
                                 f"📋 Found workflow_state from {task.agent_type.value}",
-                                extra={"workflow_state": workflow_state}
+                                extra={"workflow_state": workflow_state},
                             )
-            
+
             # Calculate total time
             total_time_ms = int((time.time() - start_time) * 1000)
-            
+
             # Build result metadata including workflow state for multi-step continuation
             result_metadata = {
                 "conversation_id": str(conversation_id),
                 "language": language,
                 "has_user_context": bool(user_context),
             }
-            
+
             # Include workflow state if present (for multi-step workflows)
             if workflow_state:
                 result_metadata["workflow_state"] = workflow_state
             if workflow_name:
                 result_metadata["workflow_name"] = workflow_name
-            
+
             # Build result
             return SupervisorMessageResult(
                 content=response_content,
@@ -356,12 +371,13 @@ class SendMessageWithSupervisor:
                 metadata=result_metadata,
                 execute_data=execute_data,
             )
-            
+
         except Exception as e:
             import traceback
+
             print(f"[SUPERVISOR WORKFLOW ERROR] {e}")
             traceback.print_exc()
-            
+
             logger.error(
                 f"Supervisor workflow failed: {e}",
                 extra={
@@ -370,7 +386,7 @@ class SendMessageWithSupervisor:
                 },
                 exc_info=True,
             )
-            
+
             # Return error result
             total_time_ms = int((time.time() - start_time) * 1000)
             return SupervisorMessageResult(
@@ -386,20 +402,23 @@ class SendMessageWithSupervisor:
                     "conversation_id": str(conversation_id),
                 },
             )
-    
+
     def is_simple_greeting(self, message: str) -> bool:
         """
         Check if message is a simple greeting (fast-path).
-        
+
         Simple greetings can skip LLM planning and go directly to chat agent.
         """
         import re
+
         message_lower = message.lower().strip()
-        return bool(re.search(
-            r"^(hi|hello|hey|hola|holi|oi|olá|buenos dias|buenas tardes|buenas noches|good (morning|afternoon|evening))(\s|$|!|\?|\.)*$",
-            message_lower
-        ))
-    
+        return bool(
+            re.search(
+                r"^(hi|hello|hey|hola|holi|oi|olá|buenos dias|buenas tardes|buenas noches|good (morning|afternoon|evening))(\s|$|!|\?|\.)*$",
+                message_lower,
+            )
+        )
+
     async def execute_fast_path_greeting(
         self,
         conversation_id: UUID,
@@ -408,13 +427,13 @@ class SendMessageWithSupervisor:
     ) -> SupervisorMessageResult:
         """
         Fast-path execution for simple greetings.
-        
+
         Bypasses LLM planning and directly invokes ChatAgent.
         """
         from app.domain.ports.agent_squad.agent_gateway import AgentResponse
-        
+
         start_time = time.time()
-        
+
         try:
             # Build minimal context
             agent_context = ConversationContext(
@@ -422,16 +441,16 @@ class SendMessageWithSupervisor:
                 user_metadata={"language": language, "is_authenticated": True},
                 session_metadata={},
             )
-            
+
             # Execute chat agent directly
             response = await self._orchestrator.execute_agent(
                 agent_type=AgentType.CHAT,
                 message=message,
                 conversation_context=agent_context,
             )
-            
+
             total_time_ms = int((time.time() - start_time) * 1000)
-            
+
             # Extract sources from AgentResponse (same as guest endpoint)
             sources = []
             provider_info = None
@@ -439,20 +458,26 @@ class SendMessageWithSupervisor:
                 if response.sources:
                     sources = [s.to_dict() for s in response.sources]
                 # Extract provider info from metadata
-                if hasattr(response, 'metadata') and isinstance(response.metadata, dict):
-                    provider_info = response.metadata.get('provider')
-            
+                if hasattr(response, "metadata") and isinstance(
+                    response.metadata, dict
+                ):
+                    provider_info = response.metadata.get("provider")
+
             return SupervisorMessageResult(
-                content=response.content if hasattr(response, "content") else str(response),
+                content=response.content
+                if hasattr(response, "content")
+                else str(response),
                 agents_used=["chat"],
                 sources=sources,
-                agent_timings=[{
-                    "agent_type": "chat",
-                    "task_description": "Greet user warmly",
-                    "execution_time_ms": total_time_ms,
-                    "status": "completed",
-                    "provider": provider_info,
-                }],
+                agent_timings=[
+                    {
+                        "agent_type": "chat",
+                        "task_description": "Greet user warmly",
+                        "execution_time_ms": total_time_ms,
+                        "status": "completed",
+                        "provider": provider_info,
+                    }
+                ],
                 workflow_type="fast_path_greeting",
                 task_count=1,
                 total_time_ms=total_time_ms,
@@ -461,7 +486,7 @@ class SendMessageWithSupervisor:
                     "conversation_id": str(conversation_id),
                 },
             )
-            
+
         except Exception as e:
             logger.error(f"Fast-path greeting failed: {e}", exc_info=True)
             # Fall back to regular execution

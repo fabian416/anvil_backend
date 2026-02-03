@@ -46,31 +46,53 @@ class TestGuestChatHunterReal:
                 json={"content": "What is the sentiment for ETH?", "language": "en"},
                 headers={"X-Forwarded-For": "127.0.0.301"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify routing
-        assert data["routing"]["intent"] in ["hunter_sentiment", "HUNTER_SENTIMENT", "general_conversation"]
-        
+        assert data["routing"]["intent"] in [
+            "hunter_sentiment",
+            "HUNTER_SENTIMENT",
+            "general_conversation",
+        ]
+
         # Verify response content is real
         agent_content = data["agent_message"]["content"]
         assert len(agent_content) > 50
-        
+
         # Should mention sentiment-related terms (flexible - may be in general response)
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["sentiment", "eth", "score", "twitter", "reddit", "news", "bullish", "bearish", "hunter", "analysis", "market"]
+            for keyword in [
+                "sentiment",
+                "eth",
+                "score",
+                "twitter",
+                "reddit",
+                "news",
+                "bullish",
+                "bearish",
+                "hunter",
+                "analysis",
+                "market",
+            ]
         )
-        
+
         # Verify enrichment if available
         if "enrichment" in data and data["enrichment"]:
             enrichment = data["enrichment"]
             assert any(
                 key in enrichment
-                for key in ["token", "overall_score", "classification", "sources", "hunter_tool"]
+                for key in [
+                    "token",
+                    "overall_score",
+                    "classification",
+                    "sources",
+                    "hunter_tool",
+                ]
             )
-        
+
         # Verify sources if available
         if "sources" in data.get("agent_message", {}):
             sources = data["agent_message"]["sources"]
@@ -90,18 +112,26 @@ class TestGuestChatHunterReal:
                 json={"content": "¿Cuál es el sentimiento para ETH?", "language": "es"},
                 headers={"X-Forwarded-For": "127.0.0.302"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify language
         assert data["routing"]["language"] == "es"
-        
+
         # Verify Spanish content
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["sentimiento", "eth", "puntuación", "twitter", "reddit", "alcista", "bajista"]
+            for keyword in [
+                "sentimiento",
+                "eth",
+                "puntuación",
+                "twitter",
+                "reddit",
+                "alcista",
+                "bajista",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -116,18 +146,30 @@ class TestGuestChatHunterReal:
                 json={"content": "Qual é o sentimento para ETH?", "language": "pt"},
                 headers={"X-Forwarded-For": "127.0.0.303"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify language
         assert data["routing"]["language"] == "pt"
-        
+
         # Verify Portuguese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["sentimento", "eth", "pontuação", "twitter", "reddit", "altista", "baixista", "defi", "ai", "assistente", "análise"]
+            for keyword in [
+                "sentimento",
+                "eth",
+                "pontuação",
+                "twitter",
+                "reddit",
+                "altista",
+                "baixista",
+                "defi",
+                "ai",
+                "assistente",
+                "análise",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -142,18 +184,30 @@ class TestGuestChatHunterReal:
                 json={"content": "ETH的情绪如何？", "language": "zh"},
                 headers={"X-Forwarded-For": "127.0.0.304"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify language
         assert data["routing"]["language"] == "zh"
-        
+
         # Verify Chinese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content
-            for keyword in ["情绪", "ETH", "评分", "Twitter", "Reddit", "看涨", "看跌", "DeFi", "AI", "助手", "分析"]
+            for keyword in [
+                "情绪",
+                "ETH",
+                "评分",
+                "Twitter",
+                "Reddit",
+                "看涨",
+                "看跌",
+                "DeFi",
+                "AI",
+                "助手",
+                "分析",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -162,21 +216,24 @@ class TestGuestChatHunterReal:
         """Test sentiment analysis for different tokens."""
         tokens = ["BTC", "ETH", "USDC", "SOL"]
         ip_base = 305
-        
+
         for token in tokens:
             async with AsyncClient(
                 transport=ASGITransport(app=test_app), base_url="http://test"
             ) as ac:
                 response = await ac.post(
                     "/api/v1/guest/chat",
-                    json={"content": f"What is the sentiment for {token}?", "language": "en"},
+                    json={
+                        "content": f"What is the sentiment for {token}?",
+                        "language": "en",
+                    },
                     headers={"X-Forwarded-For": f"127.0.0.{ip_base}"},
                 )
                 ip_base += 1
-            
+
             assert response.status_code == 200
             data = response.json()
-            
+
             # Should mention the token
             agent_content = data["agent_message"]["content"]
             assert token in agent_content or token.lower() in agent_content.lower()
@@ -190,32 +247,58 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "What is the price prediction for BTC?", "language": "en"},
+                json={
+                    "content": "What is the price prediction for BTC?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.310"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify routing
-        assert data["routing"]["intent"] in ["hunter_price_prediction", "HUNTER_PRICE_PREDICTION", "general_conversation"]
-        
+        assert data["routing"]["intent"] in [
+            "hunter_price_prediction",
+            "HUNTER_PRICE_PREDICTION",
+            "general_conversation",
+        ]
+
         # Verify response content is real
         agent_content = data["agent_message"]["content"]
         assert len(agent_content) > 50
-        
+
         # Should mention price prediction terms (flexible - may be in general response)
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["price", "prediction", "forecast", "btc", "model", "lstm", "confidence", "direction", "hunter", "analysis"]
+            for keyword in [
+                "price",
+                "prediction",
+                "forecast",
+                "btc",
+                "model",
+                "lstm",
+                "confidence",
+                "direction",
+                "hunter",
+                "analysis",
+            ]
         )
-        
+
         # Verify enrichment if available
         if "enrichment" in data and data["enrichment"]:
             enrichment = data["enrichment"]
             assert any(
                 key in enrichment
-                for key in ["token", "current_price", "predicted_price", "change_percent", "direction", "confidence", "hunter_tool"]
+                for key in [
+                    "token",
+                    "current_price",
+                    "predicted_price",
+                    "change_percent",
+                    "direction",
+                    "confidence",
+                    "hunter_tool",
+                ]
             )
 
     @pytest.mark.asyncio
@@ -227,18 +310,29 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "¿Cuál es la predicción de precio para BTC?", "language": "es"},
+                json={
+                    "content": "¿Cuál es la predicción de precio para BTC?",
+                    "language": "es",
+                },
                 headers={"X-Forwarded-For": "127.0.0.311"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Spanish content
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["precio", "predicción", "pronóstico", "btc", "modelo", "confianza", "dirección"]
+            for keyword in [
+                "precio",
+                "predicción",
+                "pronóstico",
+                "btc",
+                "modelo",
+                "confianza",
+                "dirección",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -250,18 +344,33 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "Qual é a previsão de preço para BTC?", "language": "pt"},
+                json={
+                    "content": "Qual é a previsão de preço para BTC?",
+                    "language": "pt",
+                },
                 headers={"X-Forwarded-For": "127.0.0.312"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Portuguese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["preço", "previsão", "pronóstico", "btc", "modelo", "confiança", "direção", "defi", "ai", "assistente", "análise"]
+            for keyword in [
+                "preço",
+                "previsão",
+                "pronóstico",
+                "btc",
+                "modelo",
+                "confiança",
+                "direção",
+                "defi",
+                "ai",
+                "assistente",
+                "análise",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -276,15 +385,26 @@ class TestGuestChatHunterReal:
                 json={"content": "BTC的价格预测是什么？", "language": "zh"},
                 headers={"X-Forwarded-For": "127.0.0.313"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Chinese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content
-            for keyword in ["价格", "预测", "BTC", "模型", "置信度", "方向", "DeFi", "AI", "助手", "分析"]
+            for keyword in [
+                "价格",
+                "预测",
+                "BTC",
+                "模型",
+                "置信度",
+                "方向",
+                "DeFi",
+                "AI",
+                "助手",
+                "分析",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -296,32 +416,56 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "What are the risk signals for ETH?", "language": "en"},
+                json={
+                    "content": "What are the risk signals for ETH?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.320"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify routing
-        assert data["routing"]["intent"] in ["hunter_risk_signals", "HUNTER_RISK_SIGNALS", "general_conversation"]
-        
+        assert data["routing"]["intent"] in [
+            "hunter_risk_signals",
+            "HUNTER_RISK_SIGNALS",
+            "general_conversation",
+        ]
+
         # Verify response content
         agent_content = data["agent_message"]["content"]
         assert len(agent_content) > 50
-        
+
         # Should mention risk-related terms (flexible - may be in general response)
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["risk", "signal", "eth", "whale", "liquidation", "danger", "warning", "hunter", "analysis", "market"]
+            for keyword in [
+                "risk",
+                "signal",
+                "eth",
+                "whale",
+                "liquidation",
+                "danger",
+                "warning",
+                "hunter",
+                "analysis",
+                "market",
+            ]
         )
-        
+
         # Verify enrichment if available
         if "enrichment" in data and data["enrichment"]:
             enrichment = data["enrichment"]
             assert any(
                 key in enrichment
-                for key in ["token", "risk_level", "risk_score", "factors", "hunter_tool"]
+                for key in [
+                    "token",
+                    "risk_level",
+                    "risk_score",
+                    "factors",
+                    "hunter_tool",
+                ]
             )
 
     @pytest.mark.asyncio
@@ -333,18 +477,29 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "¿Cuáles son las señales de riesgo para ETH?", "language": "es"},
+                json={
+                    "content": "¿Cuáles son las señales de riesgo para ETH?",
+                    "language": "es",
+                },
                 headers={"X-Forwarded-For": "127.0.0.321"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Spanish content
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["riesgo", "señal", "eth", "ballena", "liquidación", "peligro", "advertencia"]
+            for keyword in [
+                "riesgo",
+                "señal",
+                "eth",
+                "ballena",
+                "liquidación",
+                "peligro",
+                "advertencia",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -356,18 +511,33 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "Quais são os sinais de risco para ETH?", "language": "pt"},
+                json={
+                    "content": "Quais são os sinais de risco para ETH?",
+                    "language": "pt",
+                },
                 headers={"X-Forwarded-For": "127.0.0.322"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Portuguese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["risco", "sinal", "eth", "baleia", "liquidação", "perigo", "alerta", "defi", "ai", "assistente", "análise"]
+            for keyword in [
+                "risco",
+                "sinal",
+                "eth",
+                "baleia",
+                "liquidação",
+                "perigo",
+                "alerta",
+                "defi",
+                "ai",
+                "assistente",
+                "análise",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -382,15 +552,27 @@ class TestGuestChatHunterReal:
                 json={"content": "ETH的风险信号是什么？", "language": "zh"},
                 headers={"X-Forwarded-For": "127.0.0.323"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Chinese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content
-            for keyword in ["风险", "信号", "ETH", "鲸鱼", "清算", "危险", "警告", "DeFi", "AI", "助手", "分析"]
+            for keyword in [
+                "风险",
+                "信号",
+                "ETH",
+                "鲸鱼",
+                "清算",
+                "危险",
+                "警告",
+                "DeFi",
+                "AI",
+                "助手",
+                "分析",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -405,29 +587,52 @@ class TestGuestChatHunterReal:
                 json={"content": "Generate trading signal for BTC", "language": "en"},
                 headers={"X-Forwarded-For": "127.0.0.330"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify routing
-        assert data["routing"]["intent"] in ["hunter_trading_signals", "HUNTER_TRADING_SIGNALS", "general_conversation"]
-        
+        assert data["routing"]["intent"] in [
+            "hunter_trading_signals",
+            "HUNTER_TRADING_SIGNALS",
+            "general_conversation",
+        ]
+
         # Verify response content
         agent_content = data["agent_message"]["content"]
         assert len(agent_content) > 50
-        
+
         # Should mention trading signal terms (flexible - may be in general response)
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["trading", "signal", "btc", "buy", "sell", "entry", "stop loss", "take profit", "confidence", "hunter", "analysis"]
+            for keyword in [
+                "trading",
+                "signal",
+                "btc",
+                "buy",
+                "sell",
+                "entry",
+                "stop loss",
+                "take profit",
+                "confidence",
+                "hunter",
+                "analysis",
+            ]
         )
-        
+
         # Verify enrichment if available
         if "enrichment" in data and data["enrichment"]:
             enrichment = data["enrichment"]
             assert any(
                 key in enrichment
-                for key in ["token", "signal_type", "signal_strength", "confidence", "entry_price", "hunter_tool"]
+                for key in [
+                    "token",
+                    "signal_type",
+                    "signal_strength",
+                    "confidence",
+                    "entry_price",
+                    "hunter_tool",
+                ]
             )
 
     @pytest.mark.asyncio
@@ -442,15 +647,24 @@ class TestGuestChatHunterReal:
                 json={"content": "Genera señal de trading para BTC", "language": "es"},
                 headers={"X-Forwarded-For": "127.0.0.331"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Spanish content
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["trading", "señal", "btc", "compra", "venta", "entrada", "stop loss", "confianza"]
+            for keyword in [
+                "trading",
+                "señal",
+                "btc",
+                "compra",
+                "venta",
+                "entrada",
+                "stop loss",
+                "confianza",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -465,15 +679,27 @@ class TestGuestChatHunterReal:
                 json={"content": "Gere sinal de trading para BTC", "language": "pt"},
                 headers={"X-Forwarded-For": "127.0.0.332"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Portuguese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["trading", "sinal", "btc", "compra", "venda", "entrada", "stop loss", "confiança", "defi", "ai", "assistente"]
+            for keyword in [
+                "trading",
+                "sinal",
+                "btc",
+                "compra",
+                "venda",
+                "entrada",
+                "stop loss",
+                "confiança",
+                "defi",
+                "ai",
+                "assistente",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -488,15 +714,27 @@ class TestGuestChatHunterReal:
                 json={"content": "为BTC生成交易信号", "language": "zh"},
                 headers={"X-Forwarded-For": "127.0.0.333"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Chinese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content
-            for keyword in ["交易", "信号", "BTC", "买入", "卖出", "入场", "止损", "置信度", "DeFi", "AI", "助手"]
+            for keyword in [
+                "交易",
+                "信号",
+                "BTC",
+                "买入",
+                "卖出",
+                "入场",
+                "止损",
+                "置信度",
+                "DeFi",
+                "AI",
+                "助手",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -511,29 +749,44 @@ class TestGuestChatHunterReal:
                 json={"content": "Detect chart patterns for ETH", "language": "en"},
                 headers={"X-Forwarded-For": "127.0.0.340"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify routing
-        assert data["routing"]["intent"] in ["hunter_patterns", "HUNTER_PATTERNS", "general_conversation"]
-        
+        assert data["routing"]["intent"] in [
+            "hunter_patterns",
+            "HUNTER_PATTERNS",
+            "general_conversation",
+        ]
+
         # Verify response content
         agent_content = data["agent_message"]["content"]
         assert len(agent_content) > 50
-        
+
         # Should mention pattern-related terms (flexible - may be in general response)
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["pattern", "chart", "eth", "head", "shoulders", "double", "flag", "triangle", "breakout", "hunter", "analysis"]
+            for keyword in [
+                "pattern",
+                "chart",
+                "eth",
+                "head",
+                "shoulders",
+                "double",
+                "flag",
+                "triangle",
+                "breakout",
+                "hunter",
+                "analysis",
+            ]
         )
-        
+
         # Verify enrichment if available
         if "enrichment" in data and data["enrichment"]:
             enrichment = data["enrichment"]
             assert any(
-                key in enrichment
-                for key in ["token", "patterns", "hunter_tool"]
+                key in enrichment for key in ["token", "patterns", "hunter_tool"]
             )
 
     @pytest.mark.asyncio
@@ -545,18 +798,30 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "Detecta patrones de gráfico para ETH", "language": "es"},
+                json={
+                    "content": "Detecta patrones de gráfico para ETH",
+                    "language": "es",
+                },
                 headers={"X-Forwarded-For": "127.0.0.341"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Spanish content
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["patrón", "gráfico", "eth", "hombro", "doble", "bandera", "triángulo", "ruptura"]
+            for keyword in [
+                "patrón",
+                "gráfico",
+                "eth",
+                "hombro",
+                "doble",
+                "bandera",
+                "triángulo",
+                "ruptura",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -568,18 +833,33 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "Detecte padrões de gráfico para ETH", "language": "pt"},
+                json={
+                    "content": "Detecte padrões de gráfico para ETH",
+                    "language": "pt",
+                },
                 headers={"X-Forwarded-For": "127.0.0.342"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Portuguese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["padrão", "gráfico", "eth", "ombro", "duplo", "bandeira", "triângulo", "rompimento", "defi", "ai", "assistente"]
+            for keyword in [
+                "padrão",
+                "gráfico",
+                "eth",
+                "ombro",
+                "duplo",
+                "bandeira",
+                "triângulo",
+                "rompimento",
+                "defi",
+                "ai",
+                "assistente",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -594,15 +874,27 @@ class TestGuestChatHunterReal:
                 json={"content": "检测ETH的图表模式", "language": "zh"},
                 headers={"X-Forwarded-For": "127.0.0.343"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Chinese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content
-            for keyword in ["模式", "图表", "ETH", "头肩", "双底", "旗形", "三角形", "突破", "DeFi", "AI", "助手"]
+            for keyword in [
+                "模式",
+                "图表",
+                "ETH",
+                "头肩",
+                "双底",
+                "旗形",
+                "三角形",
+                "突破",
+                "DeFi",
+                "AI",
+                "助手",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -617,31 +909,50 @@ class TestGuestChatHunterReal:
                 json={"content": "Optimize my portfolio", "language": "en"},
                 headers={"X-Forwarded-For": "127.0.0.350"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify routing
-        assert data["routing"]["intent"] in ["hunter_portfolio", "HUNTER_PORTFOLIO", "general_conversation"]
-        
+        assert data["routing"]["intent"] in [
+            "hunter_portfolio",
+            "HUNTER_PORTFOLIO",
+            "general_conversation",
+        ]
+
         # Verify response content
         agent_content = data["agent_message"]["content"]
         assert len(agent_content) > 50
-        
+
         # Should mention portfolio optimization terms (flexible - may be in general response)
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["portfolio", "optimize", "allocation", "strategy", "risk", "return", "sharpe", "hunter", "analysis"]
+            for keyword in [
+                "portfolio",
+                "optimize",
+                "allocation",
+                "strategy",
+                "risk",
+                "return",
+                "sharpe",
+                "hunter",
+                "analysis",
+            ]
         )
-        
+
         # Verify enrichment if available
         if "enrichment" in data and data["enrichment"]:
             enrichment = data["enrichment"]
             assert any(
                 key in enrichment
-                for key in ["allocation", "expected_return", "sharpe_ratio", "hunter_tool"]
+                for key in [
+                    "allocation",
+                    "expected_return",
+                    "sharpe_ratio",
+                    "hunter_tool",
+                ]
             )
-        
+
         # Verify registration required (portfolio needs wallet)
         if data.get("registration_required"):
             assert data["registration_required"]["required"] is True
@@ -658,15 +969,22 @@ class TestGuestChatHunterReal:
                 json={"content": "Optimiza mi portafolio", "language": "es"},
                 headers={"X-Forwarded-For": "127.0.0.351"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Spanish content
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["portafolio", "optimizar", "asignación", "estrategia", "riesgo", "retorno"]
+            for keyword in [
+                "portafolio",
+                "optimizar",
+                "asignación",
+                "estrategia",
+                "riesgo",
+                "retorno",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -681,15 +999,25 @@ class TestGuestChatHunterReal:
                 json={"content": "Otimize meu portfólio", "language": "pt"},
                 headers={"X-Forwarded-For": "127.0.0.352"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Portuguese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["portfólio", "otimizar", "alocação", "estratégia", "risco", "retorno", "defi", "ai", "assistente"]
+            for keyword in [
+                "portfólio",
+                "otimizar",
+                "alocação",
+                "estratégia",
+                "risco",
+                "retorno",
+                "defi",
+                "ai",
+                "assistente",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -704,15 +1032,25 @@ class TestGuestChatHunterReal:
                 json={"content": "优化我的投资组合", "language": "zh"},
                 headers={"X-Forwarded-For": "127.0.0.353"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Chinese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content
-            for keyword in ["投资组合", "优化", "配置", "策略", "风险", "回报", "DeFi", "AI", "助手"]
+            for keyword in [
+                "投资组合",
+                "优化",
+                "配置",
+                "策略",
+                "风险",
+                "回报",
+                "DeFi",
+                "AI",
+                "助手",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -720,16 +1058,76 @@ class TestGuestChatHunterReal:
     async def test_hunter_features_all_languages(self, test_app):
         """Test all Hunter AI features work in all supported languages."""
         features = [
-            ("sentiment", "en", "sentiment for ETH", "es", "sentimiento para ETH", "pt", "sentimento para ETH", "zh", "ETH的情绪"),
-            ("price", "en", "price prediction for BTC", "es", "predicción de precio para BTC", "pt", "previsão de preço para BTC", "zh", "BTC价格预测"),
-            ("risk", "en", "risk signals for ETH", "es", "señales de riesgo para ETH", "pt", "sinais de risco para ETH", "zh", "ETH风险信号"),
-            ("trading", "en", "trading signal for BTC", "es", "señal de trading para BTC", "pt", "sinal de trading para BTC", "zh", "BTC交易信号"),
-            ("patterns", "en", "chart patterns for ETH", "es", "patrones de gráfico para ETH", "pt", "padrões de gráfico para ETH", "zh", "ETH图表模式"),
+            (
+                "sentiment",
+                "en",
+                "sentiment for ETH",
+                "es",
+                "sentimiento para ETH",
+                "pt",
+                "sentimento para ETH",
+                "zh",
+                "ETH的情绪",
+            ),
+            (
+                "price",
+                "en",
+                "price prediction for BTC",
+                "es",
+                "predicción de precio para BTC",
+                "pt",
+                "previsão de preço para BTC",
+                "zh",
+                "BTC价格预测",
+            ),
+            (
+                "risk",
+                "en",
+                "risk signals for ETH",
+                "es",
+                "señales de riesgo para ETH",
+                "pt",
+                "sinais de risco para ETH",
+                "zh",
+                "ETH风险信号",
+            ),
+            (
+                "trading",
+                "en",
+                "trading signal for BTC",
+                "es",
+                "señal de trading para BTC",
+                "pt",
+                "sinal de trading para BTC",
+                "zh",
+                "BTC交易信号",
+            ),
+            (
+                "patterns",
+                "en",
+                "chart patterns for ETH",
+                "es",
+                "patrones de gráfico para ETH",
+                "pt",
+                "padrões de gráfico para ETH",
+                "zh",
+                "ETH图表模式",
+            ),
         ]
-        
+
         ip_base = 400
-        
-        for feature_name, en_lang, en_msg, es_lang, es_msg, pt_lang, pt_msg, zh_lang, zh_msg in features:
+
+        for (
+            feature_name,
+            en_lang,
+            en_msg,
+            es_lang,
+            es_msg,
+            pt_lang,
+            pt_msg,
+            zh_lang,
+            zh_msg,
+        ) in features:
             # Test English
             async with AsyncClient(
                 transport=ASGITransport(app=test_app), base_url="http://test"
@@ -740,12 +1138,12 @@ class TestGuestChatHunterReal:
                     headers={"X-Forwarded-For": f"127.0.0.{ip_base}"},
                 )
                 ip_base += 1
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["routing"]["language"] == en_lang
             assert len(data["agent_message"]["content"]) > 50
-            
+
             # Test Spanish
             async with AsyncClient(
                 transport=ASGITransport(app=test_app), base_url="http://test"
@@ -756,11 +1154,11 @@ class TestGuestChatHunterReal:
                     headers={"X-Forwarded-For": f"127.0.0.{ip_base}"},
                 )
                 ip_base += 1
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["routing"]["language"] == es_lang
-            
+
             # Test Portuguese
             async with AsyncClient(
                 transport=ASGITransport(app=test_app), base_url="http://test"
@@ -771,11 +1169,11 @@ class TestGuestChatHunterReal:
                     headers={"X-Forwarded-For": f"127.0.0.{ip_base}"},
                 )
                 ip_base += 1
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["routing"]["language"] == pt_lang
-            
+
             # Test Chinese
             async with AsyncClient(
                 transport=ASGITransport(app=test_app), base_url="http://test"
@@ -786,13 +1184,15 @@ class TestGuestChatHunterReal:
                     headers={"X-Forwarded-For": f"127.0.0.{ip_base}"},
                 )
                 ip_base += 1
-            
+
             assert response.status_code == 200
             data = response.json()
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_cross_chain_analysis(self, test_app, llm_validator, csv_tracker):
+    async def test_hunter_cross_chain_analysis(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test Hunter AI cross-chain arbitrage opportunity analysis.
 
@@ -805,7 +1205,10 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "Find arbitrage opportunities between Ethereum and Polygon for USDC", "language": "en"},
+                json={
+                    "content": "Find arbitrage opportunities between Ethereum and Polygon for USDC",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.500"},
             )
 
@@ -817,7 +1220,9 @@ class TestGuestChatHunterReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_sentiment_aggregation_sources(self, test_app, llm_validator, csv_tracker):
+    async def test_hunter_sentiment_aggregation_sources(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test Hunter AI sentiment analysis with data source citations.
 
@@ -830,7 +1235,10 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "What's the current market sentiment for Bitcoin across all sources?", "language": "en"},
+                json={
+                    "content": "What's the current market sentiment for Bitcoin across all sources?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.501"},
             )
 
@@ -842,7 +1250,9 @@ class TestGuestChatHunterReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_historical_pattern_recognition(self, test_app, llm_validator, csv_tracker):
+    async def test_hunter_historical_pattern_recognition(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test Hunter AI historical pattern recognition and time-series analysis.
 
@@ -855,7 +1265,10 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "Analyze historical price patterns for Ethereum over the past 30 days", "language": "en"},
+                json={
+                    "content": "Analyze historical price patterns for Ethereum over the past 30 days",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.502"},
             )
 
@@ -867,7 +1280,9 @@ class TestGuestChatHunterReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_risk_adjusted_recommendations(self, test_app, llm_validator, csv_tracker):
+    async def test_hunter_risk_adjusted_recommendations(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test Hunter AI risk-adjusted investment recommendations.
 
@@ -880,7 +1295,10 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "What are low-risk DeFi yield opportunities right now?", "language": "en"},
+                json={
+                    "content": "What are low-risk DeFi yield opportunities right now?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.503"},
             )
 
@@ -892,7 +1310,9 @@ class TestGuestChatHunterReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_portfolio_rebalancing_suggestions(self, test_app, llm_validator, csv_tracker):
+    async def test_hunter_portfolio_rebalancing_suggestions(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test Hunter AI portfolio rebalancing strategy suggestions.
 
@@ -905,7 +1325,10 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "How should I rebalance my portfolio if I'm 70% ETH and 30% BTC?", "language": "en"},
+                json={
+                    "content": "How should I rebalance my portfolio if I'm 70% ETH and 30% BTC?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.504"},
             )
 
@@ -917,7 +1340,9 @@ class TestGuestChatHunterReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_gas_optimization_strategies(self, test_app, llm_validator, csv_tracker):
+    async def test_hunter_gas_optimization_strategies(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test Hunter AI gas optimization and cost-benefit analysis.
 
@@ -930,7 +1355,10 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "What's the best time to execute trades to minimize gas costs on Ethereum?", "language": "en"},
+                json={
+                    "content": "What's the best time to execute trades to minimize gas costs on Ethereum?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.505"},
             )
 
@@ -942,7 +1370,9 @@ class TestGuestChatHunterReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_market_regime_detection(self, test_app, llm_validator, csv_tracker):
+    async def test_hunter_market_regime_detection(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test Hunter AI market regime detection (bull/bear market adaptation).
 
@@ -955,7 +1385,10 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "Is the crypto market currently in a bull or bear phase?", "language": "en"},
+                json={
+                    "content": "Is the crypto market currently in a bull or bear phase?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.506"},
             )
 
@@ -967,7 +1400,9 @@ class TestGuestChatHunterReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_correlation_analysis_assets(self, test_app, llm_validator, csv_tracker):
+    async def test_hunter_correlation_analysis_assets(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test Hunter AI multi-asset correlation analysis.
 
@@ -980,7 +1415,10 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "How correlated are BTC, ETH, and SOL price movements?", "language": "en"},
+                json={
+                    "content": "How correlated are BTC, ETH, and SOL price movements?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.507"},
             )
 
@@ -992,7 +1430,9 @@ class TestGuestChatHunterReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_hunter_liquidity_depth_assessment(self, test_app, llm_validator, csv_tracker):
+    async def test_hunter_liquidity_depth_assessment(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test Hunter AI liquidity depth analysis and slippage warnings.
 
@@ -1005,7 +1445,10 @@ class TestGuestChatHunterReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "What's the liquidity depth like for AAVE/ETH on Uniswap?", "language": "en"},
+                json={
+                    "content": "What's the liquidity depth like for AAVE/ETH on Uniswap?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.508"},
             )
 

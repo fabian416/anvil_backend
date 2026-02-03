@@ -21,11 +21,46 @@ class PortfolioMultiStepHandler:
 
     # Demo portfolio holdings
     DEMO_HOLDINGS = [
-        {"token": "USDC", "symbol": "USDC", "amount": 5000.00, "value_usd": 5000.00, "emoji": "💵", "change_24h": 0.1},
-        {"token": "Ethereum", "symbol": "ETH", "amount": 2.5, "value_usd": 4875.00, "emoji": "Ξ", "change_24h": 3.2},
-        {"token": "Bitcoin", "symbol": "BTC", "amount": 0.1, "value_usd": 4500.00, "emoji": "₿", "change_24h": 1.8},
-        {"token": "Solana", "symbol": "SOL", "amount": 150.0, "value_usd": 4875.00, "emoji": "◎", "change_24h": -2.1},
-        {"token": "Polygon", "symbol": "MATIC", "amount": 3500.0, "value_usd": 2275.00, "emoji": "🔷", "change_24h": 5.4},
+        {
+            "token": "USDC",
+            "symbol": "USDC",
+            "amount": 5000.00,
+            "value_usd": 5000.00,
+            "emoji": "💵",
+            "change_24h": 0.1,
+        },
+        {
+            "token": "Ethereum",
+            "symbol": "ETH",
+            "amount": 2.5,
+            "value_usd": 4875.00,
+            "emoji": "Ξ",
+            "change_24h": 3.2,
+        },
+        {
+            "token": "Bitcoin",
+            "symbol": "BTC",
+            "amount": 0.1,
+            "value_usd": 4500.00,
+            "emoji": "₿",
+            "change_24h": 1.8,
+        },
+        {
+            "token": "Solana",
+            "symbol": "SOL",
+            "amount": 150.0,
+            "value_usd": 4875.00,
+            "emoji": "◎",
+            "change_24h": -2.1,
+        },
+        {
+            "token": "Polygon",
+            "symbol": "MATIC",
+            "amount": 3500.0,
+            "value_usd": 2275.00,
+            "emoji": "🔷",
+            "change_24h": 5.4,
+        },
     ]
 
     async def handle_flow(
@@ -51,7 +86,9 @@ class PortfolioMultiStepHandler:
         total_value = sum(h["value_usd"] for h in self.DEMO_HOLDINGS)
 
         # Calculate 24h change
-        total_change_24h = sum(h["value_usd"] * (h["change_24h"] / 100) for h in self.DEMO_HOLDINGS)
+        total_change_24h = sum(
+            h["value_usd"] * (h["change_24h"] / 100) for h in self.DEMO_HOLDINGS
+        )
         change_pct_24h = (total_change_24h / total_value) * 100
 
         messages = {
@@ -122,7 +159,13 @@ class PortfolioMultiStepHandler:
         holdings_text = ""
         for holding in self.DEMO_HOLDINGS:
             allocation_pct = (holding["value_usd"] / total_value) * 100
-            change_emoji = "📈" if holding["change_24h"] > 0 else "📉" if holding["change_24h"] < 0 else "➡️"
+            change_emoji = (
+                "📈"
+                if holding["change_24h"] > 0
+                else "📉"
+                if holding["change_24h"] < 0
+                else "➡️"
+            )
             change_sign = "+" if holding["change_24h"] > 0 else ""
 
             holdings_text += f"""
@@ -133,38 +176,40 @@ class PortfolioMultiStepHandler:
    • 24h: {change_emoji} {change_sign}{holding["change_24h"]:.1f}%
 """
 
-        change_emoji = "📈" if change_pct_24h > 0 else "📉" if change_pct_24h < 0 else "➡️"
+        change_emoji = (
+            "📈" if change_pct_24h > 0 else "📉" if change_pct_24h < 0 else "➡️"
+        )
         change_sign = "+" if change_pct_24h > 0 else ""
 
         content = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{msg['title']}
+{msg["title"]}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🔔 **{msg['demo_notice']}**
+🔔 **{msg["demo_notice"]}**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**📊 {msg['total_value']}**
+**📊 {msg["total_value"]}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 💰 **${total_value:,.2f}**
-{change_emoji} **{msg['change_24h']}**: {change_sign}${abs(total_change_24h):,.2f} ({change_sign}{change_pct_24h:.2f}%)
+{change_emoji} **{msg["change_24h"]}**: {change_sign}${abs(total_change_24h):,.2f} ({change_sign}{change_pct_24h:.2f}%)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**💎 {msg['holdings_title']}** ({len(self.DEMO_HOLDINGS)} {msg['assets']})
+**💎 {msg["holdings_title"]}** ({len(self.DEMO_HOLDINGS)} {msg["assets"]})
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {holdings_text}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**🎯 {msg['performance_title']}**
+**🎯 {msg["performance_title"]}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🏆 **{msg['top_performer']}**: {top_performer["emoji"]} {top_performer["symbol"]} (+{top_performer["change_24h"]:.1f}%)
-🎲 **{msg['diversification']}**: {len(self.DEMO_HOLDINGS)} {msg['assets']} across stablecoins, L1s, and L2s
+🏆 **{msg["top_performer"]}**: {top_performer["emoji"]} {top_performer["symbol"]} (+{top_performer["change_24h"]:.1f}%)
+🎲 **{msg["diversification"]}**: {len(self.DEMO_HOLDINGS)} {msg["assets"]} across stablecoins, L1s, and L2s
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**🔗 {msg['signup_title']}**
+**🔗 {msg["signup_title"]}**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{msg['signup_text']}
+{msg["signup_text"]}
 
 👉 **Sign up now**
 """

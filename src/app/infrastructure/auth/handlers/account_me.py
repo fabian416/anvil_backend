@@ -52,7 +52,9 @@ class MeResponse(TypedDict, total=False):
 
 
 class GetMeHandler:
-    def __init__(self, current_user_service: CurrentUserService, session: MainAsyncSession):
+    def __init__(
+        self, current_user_service: CurrentUserService, session: MainAsyncSession
+    ):
         self._current_user_service = current_user_service
         self._session = session
 
@@ -96,7 +98,9 @@ class GetMeHandler:
             is_blocked=user.is_blocked.value,
             is_verified=user.is_verified.value,
             retry_count=user.retry_count.value,
-            profile_picture=user.profile_picture.value if user.profile_picture else None,
+            profile_picture=user.profile_picture.value
+            if user.profile_picture
+            else None,
             phone_number=user.phone_number.value if user.phone_number else None,
             last_login=user.last_login.value.isoformat() if user.last_login else None,
             country_id=user.country_id.value if user.country_id else None,
@@ -170,10 +174,14 @@ class UpdateMeHandler:
             # Reset city if mismatch
             if user.city_id is not None:
                 # verify belongs
-                if not await self._city_q.exists_in_country(user.city_id.value, user.country_id.value):
+                if not await self._city_q.exists_in_country(
+                    user.city_id.value, user.country_id.value
+                ):
                     user.city_id = None
         if request.city_id is not None and (user.country_id is not None):
-            exists_city = await self._city_q.exists_in_country(request.city_id, user.country_id.value)
+            exists_city = await self._city_q.exists_in_country(
+                request.city_id, user.country_id.value
+            )
             if not exists_city:
                 raise ValueError("City does not belong to selected country")
             user.city_id = CityId(request.city_id)
@@ -186,5 +194,3 @@ class UpdateMeHandler:
 
         # Return enriched response
         return await GetMeHandler(self._current_user_service, self._session).execute()
-
-

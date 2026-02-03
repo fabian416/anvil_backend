@@ -134,7 +134,9 @@ class OxProtocolClient:
             settings: Application settings with 0x API configuration
         """
         self._settings = settings
-        self._api_key = settings.ox_protocol.api_key if settings.ox_protocol.is_configured else ""
+        self._api_key = (
+            settings.ox_protocol.api_key if settings.ox_protocol.is_configured else ""
+        )
 
         # Create HTTP client (will be configured per chain)
         self._client: httpx.AsyncClient | None = None
@@ -255,7 +257,9 @@ class OxProtocolClient:
                 "buyToken": buy_token_address,
                 "sellAmount": sell_amount_wei,
                 "taker": from_address,
-                "slippageBps": int(slippage * 100),  # Convert to basis points (1% = 100)
+                "slippageBps": int(
+                    slippage * 100
+                ),  # Convert to basis points (1% = 100)
             }
 
             logger.info(
@@ -292,7 +296,9 @@ class OxProtocolClient:
             return quote
 
         except httpx.HTTPStatusError as e:
-            logger.error(f"[0X_CLIENT] ❌ HTTP error: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                f"[0X_CLIENT] ❌ HTTP error: {e.response.status_code} - {e.response.text}"
+            )
             raise
         except Exception as e:
             logger.error(f"[0X_CLIENT] ❌ Error getting quote: {e}", exc_info=True)

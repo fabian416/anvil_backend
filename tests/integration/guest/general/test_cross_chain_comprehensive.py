@@ -206,7 +206,9 @@ class TestCrossChainComprehensive:
         assert any(word in agent_content for word in ["bridge", "transfer", "move"])
 
         # Should mention speed or time
-        assert any(word in agent_content for word in ["fast", "quick", "time", "minutes"])
+        assert any(
+            word in agent_content for word in ["fast", "quick", "time", "minutes"]
+        )
 
     # =========================================================================
     # Test 4: Cross-Chain Gas Estimation
@@ -253,7 +255,9 @@ class TestCrossChainComprehensive:
         assert any(word in agent_content for word in ["gas", "cost", "fee", "price"])
 
         # Should provide numerical estimate or USD amount
-        assert any(char.isdigit() for char in agent_content), "Should contain numerical cost estimate"
+        assert any(char.isdigit() for char in agent_content), (
+            "Should contain numerical cost estimate"
+        )
 
     # =========================================================================
     # Test 5: Bridge Security Validation
@@ -290,16 +294,27 @@ class TestCrossChainComprehensive:
 
         # Verify routing
         routing = data["routing"]
-        assert routing["intent"] in ["security_check", "info_request", "specialist_task", "risk_analysis"]
+        assert routing["intent"] in [
+            "security_check",
+            "info_request",
+            "specialist_task",
+            "risk_analysis",
+        ]
         assert routing["confidence"] >= 0.6
 
         # Verify agent response addresses security concerns
         agent_content = data["agent_message"]["content"].lower()
-        assert any(word in agent_content for word in ["security", "safe", "risk", "audit"])
+        assert any(
+            word in agent_content for word in ["security", "safe", "risk", "audit"]
+        )
         assert "bridge" in agent_content or "bridging" in agent_content
 
         # Should mention BSC or Ethereum
-        assert "bsc" in agent_content or "binance" in agent_content or "ethereum" in agent_content
+        assert (
+            "bsc" in agent_content
+            or "binance" in agent_content
+            or "ethereum" in agent_content
+        )
 
     # =========================================================================
     # Test 6: Cross-Chain Error Handling (Insufficient Gas)
@@ -345,7 +360,9 @@ class TestCrossChainComprehensive:
         assert any(word in agent_content for word in ["bridge", "transfer", "move"])
 
         # Should mention gas considerations
-        assert any(word in agent_content for word in ["gas", "fee", "cost", "matic", "eth"])
+        assert any(
+            word in agent_content for word in ["gas", "fee", "cost", "matic", "eth"]
+        )
 
     # =========================================================================
     # Test 7: Bridge Time Estimation with Urgency
@@ -381,17 +398,27 @@ class TestCrossChainComprehensive:
 
         # Verify routing
         routing = data["routing"]
-        assert routing["intent"] in ["specialist_task", "swap", "bridging", "info_request"]
+        assert routing["intent"] in [
+            "specialist_task",
+            "swap",
+            "bridging",
+            "info_request",
+        ]
         assert routing["confidence"] >= 0.6
 
         # Verify agent response discusses speed
         agent_content = data["agent_message"]["content"].lower()
         assert "ethereum" in agent_content
         assert "arbitrum" in agent_content
-        assert any(word in agent_content for word in ["fast", "quick", "asap", "urgent", "time"])
+        assert any(
+            word in agent_content
+            for word in ["fast", "quick", "asap", "urgent", "time"]
+        )
 
         # Should mention bridge options or timing
-        assert any(word in agent_content for word in ["bridge", "minutes", "option", "route"])
+        assert any(
+            word in agent_content for word in ["bridge", "minutes", "option", "route"]
+        )
 
 
 @pytest.mark.integration

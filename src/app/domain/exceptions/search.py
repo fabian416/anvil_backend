@@ -68,7 +68,9 @@ class InvalidSearchFiltersError(ApplicationError):
             details["valid_filters"] = valid_filters
         if reason:
             details["reason"] = reason
-        super().__init__(ErrorCode.SRCH_INVALID_FILTERS, details=details, field="filters")
+        super().__init__(
+            ErrorCode.SRCH_INVALID_FILTERS, details=details, field="filters"
+        )
 
 
 class SearchServiceUnavailableError(ApplicationError):
@@ -107,6 +109,7 @@ class SearchNoResultsError(ApplicationError):
 
 
 # Additional search-specific exceptions
+
 
 class InvalidSortFieldError(ApplicationError):
     """Raised when an invalid sort field is specified."""

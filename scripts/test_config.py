@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from app.setup.config.settings import load_settings
 
+
 def main():
     try:
         print("🔍 Testing configuration loading...")
@@ -26,8 +27,10 @@ def main():
     except Exception as e:
         print(f"❌ Configuration loading failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

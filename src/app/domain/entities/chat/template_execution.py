@@ -175,6 +175,8 @@ class TemplateExecution:
             "execution_time_seconds": self.execution_time_seconds,
             "completion_rate": self.completion_rate,
             "started_at": self.started_at.isoformat(),
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "paused_at": self.paused_at.isoformat() if self.paused_at else None,
         }

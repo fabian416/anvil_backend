@@ -37,21 +37,22 @@ class TestMorphoAdapterStructure:
     def test_morpho_adapter_imports(self):
         """Test MorphoAdapter can be imported."""
         from app.infrastructure.adapters.external.morpho_adapter import MorphoAdapter
+
         assert MorphoAdapter is not None
 
     def test_morpho_adapter_implements_gateway(self):
         """Test MorphoAdapter implements MorphoGateway protocol."""
         from app.infrastructure.adapters.external.morpho_adapter import MorphoAdapter
-        
+
         # Verify it has required methods
-        assert hasattr(MorphoAdapter, 'get_vaults')
-        assert hasattr(MorphoAdapter, 'get_vault_apy')
-        assert hasattr(MorphoAdapter, 'get_user_positions')
+        assert hasattr(MorphoAdapter, "get_vaults")
+        assert hasattr(MorphoAdapter, "get_vault_apy")
+        assert hasattr(MorphoAdapter, "get_user_positions")
 
     def test_morpho_adapter_init(self, mock_morpho_client, mock_cache):
         """Test MorphoAdapter can be initialized."""
         from app.infrastructure.adapters.external.morpho_adapter import MorphoAdapter
-        
+
         adapter = MorphoAdapter(client=mock_morpho_client, cache=mock_cache)
         assert adapter is not None
 
@@ -64,27 +65,27 @@ class TestMorphoAdapterMethods:
     async def test_get_vaults_exists(self, mock_morpho_client, mock_cache):
         """Test get_vaults method exists."""
         from app.infrastructure.adapters.external.morpho_adapter import MorphoAdapter
-        
+
         adapter = MorphoAdapter(client=mock_morpho_client, cache=mock_cache)
-        assert hasattr(adapter, 'get_vaults')
+        assert hasattr(adapter, "get_vaults")
         assert callable(adapter.get_vaults)
 
     @pytest.mark.asyncio
     async def test_get_vault_apy_exists(self, mock_morpho_client, mock_cache):
         """Test get_vault_apy method exists."""
         from app.infrastructure.adapters.external.morpho_adapter import MorphoAdapter
-        
+
         adapter = MorphoAdapter(client=mock_morpho_client, cache=mock_cache)
-        assert hasattr(adapter, 'get_vault_apy')
+        assert hasattr(adapter, "get_vault_apy")
         assert callable(adapter.get_vault_apy)
 
     @pytest.mark.asyncio
     async def test_get_user_positions_exists(self, mock_morpho_client, mock_cache):
         """Test get_user_positions method exists."""
         from app.infrastructure.adapters.external.morpho_adapter import MorphoAdapter
-        
+
         adapter = MorphoAdapter(client=mock_morpho_client, cache=mock_cache)
-        assert hasattr(adapter, 'get_user_positions')
+        assert hasattr(adapter, "get_user_positions")
         assert callable(adapter.get_user_positions)
 
 
@@ -95,12 +96,13 @@ class TestMorphoClientStructure:
     def test_morpho_client_imports(self):
         """Test MorphoClient can be imported."""
         from app.infrastructure.adapters.external.morpho_client import MorphoClient
+
         assert MorphoClient is not None
 
     def test_vault_data_dataclass(self):
         """Test MorphoVaultData dataclass."""
         from app.infrastructure.adapters.external.morpho_client import MorphoVaultData
-        
+
         vault = MorphoVaultData(
             id="0x1234",
             name="USDC Vault",
@@ -119,15 +121,18 @@ class TestMorphoClientStructure:
             net_apy="0.05",
             daily_apy="0.05",
         )
-        
+
         assert vault.id == "0x1234"
         assert vault.name == "USDC Vault"
         assert vault.chain_id == 1
-        
+
     def test_vault_data_base_chain(self):
         """Test MorphoVaultData for Base chain."""
-        from app.infrastructure.adapters.external.morpho_client import MorphoVaultData, BASE_USDC_ADDRESS
-        
+        from app.infrastructure.adapters.external.morpho_client import (
+            MorphoVaultData,
+            BASE_USDC_ADDRESS,
+        )
+
         vault = MorphoVaultData(
             id="0xabcd",
             name="Base USDC Vault",
@@ -144,7 +149,7 @@ class TestMorphoClientStructure:
             whitelisted=True,
             net_apy="0.12",
         )
-        
+
         assert vault.chain_id == 8453
         assert vault.whitelisted is True
         assert vault.asset_address == BASE_USDC_ADDRESS
@@ -157,14 +162,14 @@ class TestMorphoExceptions:
     def test_morpho_api_error(self):
         """Test MorphoAPIError exists."""
         from app.domain.exceptions.morpho import MorphoAPIError
-        
+
         error = MorphoAPIError("Test error")
         assert "Test error" in str(error)
 
     def test_vault_not_found_error(self):
         """Test VaultNotFoundError exists."""
         from app.domain.exceptions.morpho import VaultNotFoundError
-        
+
         error = VaultNotFoundError("0x1234")
         assert "0x1234" in str(error)
 
@@ -176,15 +181,17 @@ class TestAddressValidation:
     def test_valid_address_format(self):
         """Test valid Ethereum address format."""
         import re
+
         address_pattern = re.compile(r"^0x[a-fA-F0-9]{40}$")
-        
+
         valid_address = "0x1234567890123456789012345678901234567890"
         assert address_pattern.match(valid_address)
 
     def test_invalid_address_format(self):
         """Test invalid address is rejected."""
         import re
+
         address_pattern = re.compile(r"^0x[a-fA-F0-9]{40}$")
-        
+
         invalid_address = "not-an-address"
         assert not address_pattern.match(invalid_address)

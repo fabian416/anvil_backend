@@ -189,6 +189,8 @@ def create_preferences_router() -> APIRouter:
     ) -> None:
         """Remove protocol from favorites."""
         user = await current_user.get_current_user()
-        await preferences_service.remove_favorite_protocol(UUID(str(user.id)), protocol_id)
+        await preferences_service.remove_favorite_protocol(
+            UUID(str(user.id)), protocol_id
+        )
 
     return router

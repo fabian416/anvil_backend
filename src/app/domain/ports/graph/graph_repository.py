@@ -16,14 +16,16 @@ from enum import Enum
 
 class TraversalDirection(Enum):
     """Direction for graph traversal"""
+
     OUTGOING = "outgoing"  # Follow edges from source to target
     INCOMING = "incoming"  # Follow edges from target to source
-    BOTH = "both"          # Follow edges in both directions
+    BOTH = "both"  # Follow edges in both directions
 
 
 @dataclass
 class GraphNode:
     """Represents a node in the graph"""
+
     id: UUID
     label: str  # Entity type (e.g., "Protocol", "Token")
     properties: Dict[str, Any]
@@ -32,6 +34,7 @@ class GraphNode:
 @dataclass
 class GraphEdge:
     """Represents an edge (relationship) in the graph"""
+
     id: UUID
     from_id: UUID
     to_id: UUID
@@ -42,10 +45,11 @@ class GraphEdge:
 @dataclass
 class GraphPath:
     """Represents a path through the graph"""
+
     nodes: List[GraphNode]
     edges: List[GraphEdge]
     length: int  # Number of hops
-    
+
     def __post_init__(self):
         if self.length == 0:
             self.length = len(self.edges)
@@ -54,15 +58,15 @@ class GraphPath:
 class GraphRepository(Protocol):
     """
     Port for graph database operations.
-    
+
     This interface defines all graph operations needed by the domain layer.
     Infrastructure layer provides concrete implementations (e.g., for Apache AGE).
     """
-    
+
     # =========================================================================
     # Node Operations
     # =========================================================================
-    
+
     async def create_node(
         self,
         label: str,
@@ -70,18 +74,18 @@ class GraphRepository(Protocol):
     ) -> UUID:
         """
         Create a new node in the graph.
-        
+
         Args:
             label: Node label (entity type), e.g., "Protocol", "Token"
             properties: Dictionary of properties for the node
-            
+
         Returns:
             UUID of the created node
-            
+
         Raises:
             ValueError: If label or properties are invalid
             DatabaseError: If creation fails
-            
+
         Example:
             >>> node_id = await graph_repo.create_node(
             ...     label="Protocol",
@@ -89,27 +93,27 @@ class GraphRepository(Protocol):
             ... )
         """
         ...
-    
+
     async def get_node(
         self,
         node_id: UUID,
     ) -> Optional[GraphNode]:
         """
         Get a node by its ID.
-        
+
         Args:
             node_id: UUID of the node
-            
+
         Returns:
             GraphNode if found, None otherwise
-            
+
         Example:
             >>> node = await graph_repo.get_node(node_id)
             >>> if node:
             ...     print(f"Found {node.label}: {node.properties['name']}")
         """
         ...
-    
+
     async def find_nodes(
         self,
         label: str,
@@ -119,16 +123,16 @@ class GraphRepository(Protocol):
     ) -> List[GraphNode]:
         """
         Find nodes by label and optional property filters.
-        
+
         Args:
             label: Node label to search for
             filters: Dictionary of property filters (exact match)
             limit: Maximum number of nodes to return
             offset: Number of nodes to skip (for pagination)
-            
+
         Returns:
             List of matching GraphNode objects
-            
+
         Example:
             >>> # Find all lending protocols
             >>> protocols = await graph_repo.find_nodes(
@@ -138,7 +142,7 @@ class GraphRepository(Protocol):
             ... )
         """
         ...
-    
+
     async def update_node(
         self,
         node_id: UUID,
@@ -147,15 +151,15 @@ class GraphRepository(Protocol):
     ) -> bool:
         """
         Update a node's properties.
-        
+
         Args:
             node_id: UUID of the node to update
             properties: Properties to update
             merge: If True, merge with existing properties. If False, replace all properties.
-            
+
         Returns:
             True if update successful, False if node not found
-            
+
         Example:
             >>> await graph_repo.update_node(
             ...     node_id=protocol_id,
@@ -164,7 +168,7 @@ class GraphRepository(Protocol):
             ... )
         """
         ...
-    
+
     async def delete_node(
         self,
         node_id: UUID,
@@ -172,26 +176,26 @@ class GraphRepository(Protocol):
     ) -> bool:
         """
         Delete a node from the graph.
-        
+
         Args:
             node_id: UUID of the node to delete
             delete_edges: If True, also delete all edges connected to this node
-            
+
         Returns:
             True if deletion successful, False if node not found
-            
+
         Raises:
             DatabaseError: If node has edges and delete_edges=False
-            
+
         Example:
             >>> await graph_repo.delete_node(node_id, delete_edges=True)
         """
         ...
-    
+
     # =========================================================================
     # Edge Operations
     # =========================================================================
-    
+
     async def create_edge(
         self,
         from_id: UUID,
@@ -201,20 +205,20 @@ class GraphRepository(Protocol):
     ) -> UUID:
         """
         Create an edge (relationship) between two nodes.
-        
+
         Args:
             from_id: UUID of the source node
             to_id: UUID of the target node
             relationship_type: Type of relationship, e.g., "DEPENDS_ON"
             properties: Optional properties for the edge
-            
+
         Returns:
             UUID of the created edge
-            
+
         Raises:
             ValueError: If either node doesn't exist
             DatabaseError: If creation fails
-            
+
         Example:
             >>> edge_id = await graph_repo.create_edge(
             ...     from_id=aave_id,
@@ -224,22 +228,22 @@ class GraphRepository(Protocol):
             ... )
         """
         ...
-    
+
     async def get_edge(
         self,
         edge_id: UUID,
     ) -> Optional[GraphEdge]:
         """
         Get an edge by its ID.
-        
+
         Args:
             edge_id: UUID of the edge
-            
+
         Returns:
             GraphEdge if found, None otherwise
         """
         ...
-    
+
     async def find_edges(
         self,
         from_id: Optional[UUID] = None,
@@ -250,17 +254,17 @@ class GraphRepository(Protocol):
     ) -> List[GraphEdge]:
         """
         Find edges by various criteria.
-        
+
         Args:
             from_id: Filter by source node (optional)
             to_id: Filter by target node (optional)
             relationship_type: Filter by relationship type (optional)
             filters: Additional property filters (optional)
             limit: Maximum number of edges to return
-            
+
         Returns:
             List of matching GraphEdge objects
-            
+
         Example:
             >>> # Find all dependencies of Aave
             >>> edges = await graph_repo.find_edges(
@@ -269,26 +273,26 @@ class GraphRepository(Protocol):
             ... )
         """
         ...
-    
+
     async def delete_edge(
         self,
         edge_id: UUID,
     ) -> bool:
         """
         Delete an edge from the graph.
-        
+
         Args:
             edge_id: UUID of the edge to delete
-            
+
         Returns:
             True if deletion successful, False if edge not found
         """
         ...
-    
+
     # =========================================================================
     # Traversal Operations
     # =========================================================================
-    
+
     async def traverse(
         self,
         start_node_id: UUID,
@@ -299,17 +303,17 @@ class GraphRepository(Protocol):
     ) -> List[GraphPath]:
         """
         Traverse the graph from a starting node.
-        
+
         Args:
             start_node_id: UUID of the starting node
             relationship_types: Filter by relationship types (None = all types)
             max_depth: Maximum depth to traverse (number of hops)
             direction: Direction of traversal
             node_label_filter: Only include nodes with this label (optional)
-            
+
         Returns:
             List of GraphPath objects representing paths found
-            
+
         Example:
             >>> # Find all protocols that Aave depends on (up to 3 hops)
             >>> paths = await graph_repo.traverse(
@@ -320,7 +324,7 @@ class GraphRepository(Protocol):
             ... )
         """
         ...
-    
+
     async def shortest_path(
         self,
         from_id: UUID,
@@ -330,16 +334,16 @@ class GraphRepository(Protocol):
     ) -> Optional[GraphPath]:
         """
         Find the shortest path between two nodes.
-        
+
         Args:
             from_id: UUID of the start node
             to_id: UUID of the end node
             relationship_types: Only traverse these relationship types (None = all)
             max_depth: Maximum path length to consider
-            
+
         Returns:
             GraphPath if path found, None otherwise
-            
+
         Example:
             >>> # Find shortest dependency chain from Aave to USDC
             >>> path = await graph_repo.shortest_path(
@@ -349,7 +353,7 @@ class GraphRepository(Protocol):
             ... )
         """
         ...
-    
+
     async def get_neighbors(
         self,
         node_id: UUID,
@@ -358,15 +362,15 @@ class GraphRepository(Protocol):
     ) -> List[GraphNode]:
         """
         Get immediate neighbors of a node (1-hop traversal).
-        
+
         Args:
             node_id: UUID of the node
             relationship_type: Filter by relationship type (optional)
             direction: Direction of relationships to follow
-            
+
         Returns:
             List of neighboring GraphNode objects
-            
+
         Example:
             >>> # Get all protocols that depend on Chainlink
             >>> dependents = await graph_repo.get_neighbors(
@@ -376,11 +380,11 @@ class GraphRepository(Protocol):
             ... )
         """
         ...
-    
+
     # =========================================================================
     # Aggregation & Analytics
     # =========================================================================
-    
+
     async def count_nodes(
         self,
         label: Optional[str] = None,
@@ -388,35 +392,35 @@ class GraphRepository(Protocol):
     ) -> int:
         """
         Count nodes matching criteria.
-        
+
         Args:
             label: Filter by node label (optional)
             filters: Property filters (optional)
-            
+
         Returns:
             Number of matching nodes
-            
+
         Example:
             >>> # Count all protocols
             >>> protocol_count = await graph_repo.count_nodes(label="Protocol")
         """
         ...
-    
+
     async def count_edges(
         self,
         relationship_type: Optional[str] = None,
     ) -> int:
         """
         Count edges matching criteria.
-        
+
         Args:
             relationship_type: Filter by relationship type (optional)
-            
+
         Returns:
             Number of matching edges
         """
         ...
-    
+
     async def get_node_degree(
         self,
         node_id: UUID,
@@ -424,14 +428,14 @@ class GraphRepository(Protocol):
     ) -> int:
         """
         Get the degree (number of connections) of a node.
-        
+
         Args:
             node_id: UUID of the node
             direction: Count outgoing, incoming, or both
-            
+
         Returns:
             Number of edges connected to the node
-            
+
         Example:
             >>> # How many protocols depend on Chainlink?
             >>> degree = await graph_repo.get_node_degree(
@@ -440,24 +444,24 @@ class GraphRepository(Protocol):
             ... )
         """
         ...
-    
+
     # =========================================================================
     # Batch Operations
     # =========================================================================
-    
+
     async def create_nodes_batch(
         self,
         nodes: List[tuple[str, Dict[str, Any]]],  # [(label, properties), ...]
     ) -> List[UUID]:
         """
         Create multiple nodes in a single transaction.
-        
+
         Args:
             nodes: List of (label, properties) tuples
-            
+
         Returns:
             List of UUIDs for created nodes (in same order)
-            
+
         Example:
             >>> node_ids = await graph_repo.create_nodes_batch([
             ...     ("Protocol", {"name": "Aave", "tvl": 5000000000.0}),
@@ -465,20 +469,20 @@ class GraphRepository(Protocol):
             ... ])
         """
         ...
-    
+
     async def create_edges_batch(
         self,
         edges: List[tuple[UUID, UUID, str, Optional[Dict[str, Any]]]],
     ) -> List[UUID]:
         """
         Create multiple edges in a single transaction.
-        
+
         Args:
             edges: List of (from_id, to_id, relationship_type, properties) tuples
-            
+
         Returns:
             List of UUIDs for created edges (in same order)
-            
+
         Example:
             >>> edge_ids = await graph_repo.create_edges_batch([
             ...     (aave_id, chainlink_id, "DEPENDS_ON", {"type": "oracle"}),
@@ -486,11 +490,11 @@ class GraphRepository(Protocol):
             ... ])
         """
         ...
-    
+
     # =========================================================================
     # Cypher Query (Advanced)
     # =========================================================================
-    
+
     async def execute_cypher(
         self,
         query: str,
@@ -498,18 +502,18 @@ class GraphRepository(Protocol):
     ) -> List[Dict[str, Any]]:
         """
         Execute a raw Cypher query (for advanced use cases).
-        
+
         Args:
             query: Cypher query string
             parameters: Query parameters (for parameterized queries)
-            
+
         Returns:
             List of result records as dictionaries
-            
+
         Warning:
             Use with caution. Prefer using the type-safe methods above.
             This is provided for complex queries not covered by the standard API.
-            
+
         Example:
             >>> results = await graph_repo.execute_cypher(
             ...     query=\"""

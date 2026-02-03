@@ -91,9 +91,9 @@ class GetUserPositions:
 
         # Weighted average APY
         if total_deposited > 0:
-            weighted_apy = sum(
-                p.apy * p.deposited_assets for p in positions
-            ) / total_deposited
+            weighted_apy = (
+                sum(p.apy * p.deposited_assets for p in positions) / total_deposited
+            )
         else:
             weighted_apy = Decimal("0")
 

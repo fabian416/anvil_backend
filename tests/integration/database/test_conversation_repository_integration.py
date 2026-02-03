@@ -17,13 +17,18 @@ from app.domain.chat.value_objects.message_role import MessageRole
 @pytest.mark.asyncio
 class TestConversationRepositoryIntegration:
     """Integration tests for conversation repository."""
-    
+
     @pytest.mark.llm_validation
-    async def test_save_and_retrieve_conversation(self, async_db_session, async_test_user):
+    async def test_save_and_retrieve_conversation(
+        self, async_db_session, async_test_user
+    ):
         """Test saving and retrieving a conversation."""
         # Arrange
         from sqlalchemy import select
-        conversation = Conversation.create(user_id=async_test_user, title="Test Conversation")
+
+        conversation = Conversation.create(
+            user_id=async_test_user, title="Test Conversation"
+        )
 
         # Act - Use SQLAlchemy directly with mapped entity
         async_db_session.add(conversation)
@@ -44,6 +49,7 @@ class TestConversationRepositoryIntegration:
         """Test conversation with multiple messages."""
         # Arrange
         from sqlalchemy import select
+
         conversation = Conversation.create(user_id=async_test_user)
 
         # Act - Use SQLAlchemy directly
@@ -61,7 +67,10 @@ class TestConversationRepositoryIntegration:
         """Test updating conversation title."""
         # Arrange
         from sqlalchemy import select
-        conversation = Conversation.create(user_id=async_test_user, title="Original Title")
+
+        conversation = Conversation.create(
+            user_id=async_test_user, title="Original Title"
+        )
 
         # Act
         async_db_session.add(conversation)
@@ -78,10 +87,13 @@ class TestConversationRepositoryIntegration:
         assert retrieved.title == "Updated Title"
 
     @pytest.mark.llm_validation
-    async def test_multiple_conversations_for_user(self, async_db_session, async_test_user):
+    async def test_multiple_conversations_for_user(
+        self, async_db_session, async_test_user
+    ):
         """Test creating multiple conversations for same user."""
         # Arrange
         from sqlalchemy import select
+
         conv1 = Conversation.create(user_id=async_test_user, title="First")
         conv2 = Conversation.create(user_id=async_test_user, title="Second")
         conv3 = Conversation.create(user_id=async_test_user, title="Third")
@@ -91,7 +103,9 @@ class TestConversationRepositoryIntegration:
         await async_db_session.commit()
 
         # Assert - Verify the specific 3 conversations we created exist
-        stmt = select(Conversation).where(Conversation.id.in_([conv1.id, conv2.id, conv3.id]))
+        stmt = select(Conversation).where(
+            Conversation.id.in_([conv1.id, conv2.id, conv3.id])
+        )
         result = await async_db_session.execute(stmt)
         conversations = result.scalars().all()
 
@@ -103,12 +117,15 @@ class TestConversationRepositoryIntegration:
 @pytest.mark.asyncio
 class TestTransactionHandling:
     """Test transaction handling and rollback."""
-    
+
     @pytest.mark.llm_validation
-    async def test_transaction_rollback_on_error(self, async_db_session, async_test_user):
+    async def test_transaction_rollback_on_error(
+        self, async_db_session, async_test_user
+    ):
         """Test transaction rolls back on error."""
         # Arrange
         from sqlalchemy import select
+
         conversation = Conversation.create(user_id=async_test_user)
 
         # Act & Assert
@@ -126,10 +143,13 @@ class TestTransactionHandling:
         assert retrieved is None
 
     @pytest.mark.llm_validation
-    async def test_transaction_commit_on_success(self, async_db_session, async_test_user):
+    async def test_transaction_commit_on_success(
+        self, async_db_session, async_test_user
+    ):
         """Test transaction commits on success."""
         # Arrange
         from sqlalchemy import select
+
         conversation = Conversation.create(user_id=async_test_user)
 
         # Act
@@ -146,21 +166,21 @@ class TestTransactionHandling:
 @pytest.mark.integration
 class TestDataIntegrity:
     """Test data integrity constraints."""
-    
+
     def test_unique_conversation_ids(self):
         """Test conversation IDs are unique."""
         # Act
         conv1 = Conversation.create(user_id=333)
         conv2 = Conversation.create(user_id=333)
-        
+
         # Assert
         assert conv1.id != conv2.id
-    
+
     def test_conversation_timestamps_are_set(self):
         """Test conversation timestamps are automatically set."""
         # Arrange
         conversation = Conversation.create(user_id=444)
-        
+
         # Assert
         assert conversation.created_at is not None
         assert conversation.updated_at is not None

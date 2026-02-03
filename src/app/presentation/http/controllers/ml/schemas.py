@@ -11,8 +11,10 @@ from datetime import datetime
 
 # Risk Prediction Schemas
 
+
 class RiskPredictionResponse(BaseModel):
     """ML risk prediction result"""
+
     protocol_id: str
     protocol_name: str
     predicted_risk_score: float = Field(..., ge=0.0, le=10.0)
@@ -27,17 +29,20 @@ class RiskPredictionResponse(BaseModel):
 
 class BatchRiskPredictionRequest(BaseModel):
     """Batch risk prediction request"""
+
     protocol_ids: List[str] = Field(..., min_length=1, max_length=50)
 
 
 class BatchRiskPredictionResponse(BaseModel):
     """Batch risk prediction response"""
+
     predictions: List[RiskPredictionResponse]
     total: int
 
 
 class AnomalyDetectionResponse(BaseModel):
     """Anomaly detection result"""
+
     protocol_id: str
     anomalies_detected: int
     anomalies: List[Dict[str, Any]]
@@ -47,6 +52,7 @@ class AnomalyDetectionResponse(BaseModel):
 
 class RiskForecastResponse(BaseModel):
     """Risk forecast result"""
+
     protocol_id: str
     forecast: List[Dict[str, Any]]
     forecast_days: int
@@ -54,8 +60,10 @@ class RiskForecastResponse(BaseModel):
 
 # Network Analysis Schemas
 
+
 class PageRankResponse(BaseModel):
     """PageRank result"""
+
     protocol_id: str
     protocol_name: str
     pagerank_score: float
@@ -66,12 +74,14 @@ class PageRankResponse(BaseModel):
 
 class PageRankListResponse(BaseModel):
     """List of PageRank results"""
+
     results: List[PageRankResponse]
     total: int
 
 
 class CommunityResponse(BaseModel):
     """Community detection result"""
+
     community_id: int
     protocols: List[Dict[str, Any]]
     size: int
@@ -81,12 +91,14 @@ class CommunityResponse(BaseModel):
 
 class CommunityListResponse(BaseModel):
     """List of detected communities"""
+
     communities: List[CommunityResponse]
     total_communities: int
 
 
 class CentralityResponse(BaseModel):
     """Centrality metrics"""
+
     protocol_id: str
     protocol_name: str
     degree_centrality: float
@@ -98,12 +110,14 @@ class CentralityResponse(BaseModel):
 
 class CentralityListResponse(BaseModel):
     """List of centrality results"""
+
     results: List[CentralityResponse]
     total: int
 
 
 class ContagionSimulationResponse(BaseModel):
     """Contagion simulation result"""
+
     origin_protocol_id: str
     origin_protocol_name: str
     affected_protocols: List[Dict[str, Any]]

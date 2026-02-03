@@ -8,6 +8,7 @@ Tests:
 3. LLM client with fallback (Vertex AI -> DeepInfra)
 4. Intent classification with agents
 """
+
 import asyncio
 import os
 import sys
@@ -23,12 +24,14 @@ os.environ["APP_ENV"] = "local"
 
 async def test_vertex_ai_client():
     """Test Vertex AI LLM client directly."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 1: Vertex AI LLM Client")
-    print("="*60)
+    print("=" * 60)
 
     try:
-        from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import LLMClientVertexAI
+        from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import (
+            LLMClientVertexAI,
+        )
         from app.setup.config.loader import load_full_config, ValidEnvs
 
         # Load API key from config (includes secrets)
@@ -49,7 +52,10 @@ async def test_vertex_ai_client():
         print("\n🧪 Testing chat completion...")
         result = await client.chat(
             messages=[
-                {"role": "user", "content": "Say 'Hello from Vertex AI!' in 5 words exactly"}
+                {
+                    "role": "user",
+                    "content": "Say 'Hello from Vertex AI!' in 5 words exactly",
+                }
             ],
             model="gpt-4o-mini",  # Will be mapped to gemini-2.0-flash-exp
             temperature=0.7,
@@ -66,24 +72,29 @@ async def test_vertex_ai_client():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
 
 async def test_deepinfra_client():
     """Test DeepInfra LLM client directly."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 2: DeepInfra LLM Client")
-    print("="*60)
+    print("=" * 60)
 
     try:
-        from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import LLMClientDeepInfra
+        from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import (
+            LLMClientDeepInfra,
+        )
         from app.setup.config.loader import load_full_config, ValidEnvs
 
         # Load API key from config (includes secrets)
         config = load_full_config(env=ValidEnvs.LOCAL)
         api_key = config.get("deepinfra", {}).get("API_KEY", "")
-        base_url = config.get("deepinfra", {}).get("BASE_URL", "https://api.deepinfra.com/v1/openai")
+        base_url = config.get("deepinfra", {}).get(
+            "BASE_URL", "https://api.deepinfra.com/v1/openai"
+        )
 
         if not api_key:
             print("❌ No API key found in .secrets.toml")
@@ -100,7 +111,10 @@ async def test_deepinfra_client():
         print("\n🧪 Testing chat completion...")
         result = await client.chat(
             messages=[
-                {"role": "user", "content": "Say 'Hello from DeepInfra!' in 5 words exactly"}
+                {
+                    "role": "user",
+                    "content": "Say 'Hello from DeepInfra!' in 5 words exactly",
+                }
             ],
             model="gpt-4o-mini",  # Will be mapped to meta-llama/Llama-3.2-3B-Instruct
             temperature=0.7,
@@ -117,27 +131,36 @@ async def test_deepinfra_client():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
 
 async def test_fallback_client():
     """Test LLM client with fallback."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 3: LLM Client with Fallback")
-    print("="*60)
+    print("=" * 60)
 
     try:
-        from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import LLMClientVertexAI
-        from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import LLMClientDeepInfra
-        from app.infrastructure.adapters.agent_squad.llm_client_with_fallback import LLMClientWithFallback
+        from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import (
+            LLMClientVertexAI,
+        )
+        from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import (
+            LLMClientDeepInfra,
+        )
+        from app.infrastructure.adapters.agent_squad.llm_client_with_fallback import (
+            LLMClientWithFallback,
+        )
         from app.setup.config.loader import load_full_config, ValidEnvs
 
         # Load credentials from config (includes secrets)
         config = load_full_config(env=ValidEnvs.LOCAL)
         vertex_api_key = config.get("vertex_ai", {}).get("API_KEY", "")
         deepinfra_api_key = config.get("deepinfra", {}).get("API_KEY", "")
-        deepinfra_base_url = config.get("deepinfra", {}).get("BASE_URL", "https://api.deepinfra.com/v1/openai")
+        deepinfra_base_url = config.get("deepinfra", {}).get(
+            "BASE_URL", "https://api.deepinfra.com/v1/openai"
+        )
 
         if not vertex_api_key or not deepinfra_api_key:
             print("❌ Missing API keys in .secrets.toml")
@@ -147,7 +170,9 @@ async def test_fallback_client():
 
         # Create clients
         primary_client = LLMClientVertexAI(api_key=vertex_api_key)
-        fallback_client = LLMClientDeepInfra(api_key=deepinfra_api_key, base_url=deepinfra_base_url)
+        fallback_client = LLMClientDeepInfra(
+            api_key=deepinfra_api_key, base_url=deepinfra_base_url
+        )
 
         # Wrap with fallback
         client = LLMClientWithFallback(
@@ -188,15 +213,16 @@ async def test_fallback_client():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
 
 async def test_agent_system_integration():
     """Test full agent system integration."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 4: Agent System Integration")
-    print("="*60)
+    print("=" * 60)
 
     try:
         from app.setup.config.settings import load_settings
@@ -235,15 +261,23 @@ async def test_agent_system_integration():
 
         # Test that we can create the LLM client through DI
         print("\n🧪 Testing LLM client creation through DI...")
-        from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import LLMClientVertexAI
-        from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import LLMClientDeepInfra
-        from app.infrastructure.adapters.agent_squad.llm_client_with_fallback import LLMClientWithFallback
+        from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import (
+            LLMClientVertexAI,
+        )
+        from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import (
+            LLMClientDeepInfra,
+        )
+        from app.infrastructure.adapters.agent_squad.llm_client_with_fallback import (
+            LLMClientWithFallback,
+        )
 
         # Simulate what the DI container does
         primary_client = LLMClientVertexAI(api_key=vertex_api_key)
         fallback_client = LLMClientDeepInfra(
             api_key=deepinfra_api_key,
-            base_url=raw_config.get("deepinfra", {}).get("BASE_URL", "https://api.deepinfra.com/v1/openai")
+            base_url=raw_config.get("deepinfra", {}).get(
+                "BASE_URL", "https://api.deepinfra.com/v1/openai"
+            ),
         )
         client = LLMClientWithFallback(
             primary_client=primary_client,
@@ -258,7 +292,7 @@ async def test_agent_system_integration():
         result = await client.chat(
             messages=[
                 {"role": "system", "content": "You are a helpful DeFi assistant."},
-                {"role": "user", "content": "What is DeFi in one sentence?"}
+                {"role": "user", "content": "What is DeFi in one sentence?"},
             ],
             model="gpt-4o",
             temperature=0.7,
@@ -273,15 +307,16 @@ async def test_agent_system_integration():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
 
 async def main():
     """Run all tests."""
-    print("\n" + "🧪 "*30)
+    print("\n" + "🧪 " * 30)
     print("AGENT LLM PROVIDERS TEST SUITE")
-    print("🧪 "*30)
+    print("🧪 " * 30)
 
     results = []
 
@@ -318,9 +353,9 @@ async def main():
         results.append(("Agent System Integration", False))
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST SUMMARY")
-    print("="*60)
+    print("=" * 60)
 
     for name, passed in results:
         status = "✅ PASSED" if passed else "❌ FAILED"
@@ -331,7 +366,9 @@ async def main():
     print(f"\nTotal: {passed}/{total} tests passed")
 
     if passed == total:
-        print("\n🎉 All tests passed! Agent system is configured correctly with Vertex AI + DeepInfra fallback.")
+        print(
+            "\n🎉 All tests passed! Agent system is configured correctly with Vertex AI + DeepInfra fallback."
+        )
         return 0
     else:
         print("\n⚠️  Some tests failed. Check the output above for details.")

@@ -11,5 +11,3 @@ class NotificationRepository(Protocol):
         offset: int,
         limit: int,
     ) -> list[dict]: ...
-
-

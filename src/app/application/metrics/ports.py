@@ -11,6 +11,7 @@ from app.domain.entities.user_event import UserEvent
 
 class UserMetricsSummary(TypedDict):
     """Summary of user metrics."""
+
     user_id: int
     total_events: int
     first_event_at: datetime | None
@@ -23,6 +24,7 @@ class UserMetricsSummary(TypedDict):
 
 class UserEventFilter(TypedDict, total=False):
     """Filters for querying user events."""
+
     user_id: int | None
     event_type: str | None
     event_category: str | None
@@ -41,10 +43,10 @@ class UserMetricsRepository(ABC):
     async def record_event(self, event: UserEvent) -> int:
         """
         Record a new user event.
-        
+
         Args:
             event: The user event to record
-            
+
         Returns:
             The ID of the created event
         """
@@ -59,12 +61,12 @@ class UserMetricsRepository(ABC):
     ) -> list[dict[str, Any]]:
         """
         Get user events with optional filters.
-        
+
         Args:
             filters: Filtering criteria
             limit: Maximum number of events to return
             offset: Number of events to skip
-            
+
         Returns:
             List of events as dictionaries
         """
@@ -74,10 +76,10 @@ class UserMetricsRepository(ABC):
     async def get_user_metrics_summary(self, user_id: int) -> UserMetricsSummary | None:
         """
         Get a summary of metrics for a specific user.
-        
+
         Args:
             user_id: The user ID
-            
+
         Returns:
             Summary of user metrics or None if no events found
         """
@@ -93,13 +95,13 @@ class UserMetricsRepository(ABC):
     ) -> int:
         """
         Get the count of events matching criteria.
-        
+
         Args:
             user_id: Filter by user ID
             event_type: Filter by event type
             from_date: Filter events after this date
             to_date: Filter events before this date
-            
+
         Returns:
             Count of matching events
         """
@@ -113,13 +115,12 @@ class UserMetricsRepository(ABC):
     ) -> int:
         """
         Get the count of unique active users in a date range.
-        
+
         Args:
             from_date: Start of date range
             to_date: End of date range (defaults to now)
-            
+
         Returns:
             Count of unique active users
         """
         pass
-

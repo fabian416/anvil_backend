@@ -72,7 +72,6 @@ def create_subscription_router() -> APIRouter:
     ) -> list[dict]:
         return await handler.execute(None)
 
-
     @router.post(
         "/{subscription_id}/subscribe",
         description="Create a subscription for a customer",
@@ -124,7 +123,9 @@ def create_subscription_router() -> APIRouter:
         subscription_id: int,
         handler: FromDishka[CancelSubscriptionHandler],
     ) -> dict:
-        return await handler.execute(CancelSubscriptionRequest(subscription_id=subscription_id))
+        return await handler.execute(
+            CancelSubscriptionRequest(subscription_id=subscription_id)
+        )
 
     @router.get(
         "/success",
@@ -169,8 +170,8 @@ def create_subscription_router() -> APIRouter:
         handler: FromDishka[CancelSubscriptionHandler],
     ) -> dict:
         # reuse cancel handler to mark cancelled based on session id
-        return await handler.execute(CancelSubscriptionRequest(subscription_user_id=int(session_id)))
+        return await handler.execute(
+            CancelSubscriptionRequest(subscription_user_id=int(session_id))
+        )
 
     return router
-
-

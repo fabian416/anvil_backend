@@ -44,31 +44,49 @@ class TestGuestChatULTRAReal:
                 json={"content": "Find arbitrage opportunities", "language": "en"},
                 headers={"X-Forwarded-For": "127.0.0.101"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify routing
-        assert data["routing"]["intent"] in ["ultra_arbitrage", "ULTRA_ARBITRAGE", "general_conversation"]
-        
+        assert data["routing"]["intent"] in [
+            "ultra_arbitrage",
+            "ULTRA_ARBITRAGE",
+            "general_conversation",
+        ]
+
         # Verify response content is real
         agent_content = data["agent_message"]["content"]
         assert len(agent_content) > 50
-        
+
         # Should mention arbitrage-related terms (flexible - may be in general response)
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["arbitrage", "opportunit", "profit", "route", "roi", "ultra", "defi", "trading"]
+            for keyword in [
+                "arbitrage",
+                "opportunit",
+                "profit",
+                "route",
+                "roi",
+                "ultra",
+                "defi",
+                "trading",
+            ]
         )
-        
+
         # Verify enrichment if available
         if "enrichment" in data and data["enrichment"]:
             enrichment = data["enrichment"]
             assert any(
                 key in enrichment
-                for key in ["ultra_tool", "arbitrage_discovery", "opportunities_found", "capital"]
+                for key in [
+                    "ultra_tool",
+                    "arbitrage_discovery",
+                    "opportunities_found",
+                    "capital",
+                ]
             )
-        
+
         # Verify registration required (arbitrage needs wallet)
         if data.get("registration_required"):
             assert data["registration_required"]["required"] is True
@@ -82,16 +100,19 @@ class TestGuestChatULTRAReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "Encuentra oportunidades de arbitraje", "language": "es"},
+                json={
+                    "content": "Encuentra oportunidades de arbitraje",
+                    "language": "es",
+                },
                 headers={"X-Forwarded-For": "127.0.0.102"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify language
         assert data["routing"]["language"] == "es"
-        
+
         # Verify Spanish content
         agent_content = data["agent_message"]["content"]
         assert any(
@@ -108,21 +129,33 @@ class TestGuestChatULTRAReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "Encontre oportunidades de arbitragem", "language": "pt"},
+                json={
+                    "content": "Encontre oportunidades de arbitragem",
+                    "language": "pt",
+                },
                 headers={"X-Forwarded-For": "127.0.0.103"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify language
         assert data["routing"]["language"] == "pt"
-        
+
         # Verify Portuguese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["arbitragem", "oportunidade", "lucro", "rota", "defi", "ai", "assistente", "trading"]
+            for keyword in [
+                "arbitragem",
+                "oportunidade",
+                "lucro",
+                "rota",
+                "defi",
+                "ai",
+                "assistente",
+                "trading",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -137,18 +170,28 @@ class TestGuestChatULTRAReal:
                 json={"content": "寻找套利机会", "language": "zh"},
                 headers={"X-Forwarded-For": "127.0.0.104"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify language
         assert data["routing"]["language"] == "zh"
-        
+
         # Verify Chinese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content
-            for keyword in ["套利", "机会", "利润", "路线", "DeFi", "AI", "助手", "交易", "自动"]
+            for keyword in [
+                "套利",
+                "机会",
+                "利润",
+                "路线",
+                "DeFi",
+                "AI",
+                "助手",
+                "交易",
+                "自动",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -163,23 +206,36 @@ class TestGuestChatULTRAReal:
                 json={"content": "Show me flash loan protocols", "language": "en"},
                 headers={"X-Forwarded-For": "127.0.0.105"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify routing
-        assert data["routing"]["intent"] in ["ultra_flash_loans", "ULTRA_FLASH_LOANS", "general_conversation"]
-        
+        assert data["routing"]["intent"] in [
+            "ultra_flash_loans",
+            "ULTRA_FLASH_LOANS",
+            "general_conversation",
+        ]
+
         # Verify response content
         agent_content = data["agent_message"]["content"]
         assert len(agent_content) > 50
-        
+
         # Should mention flash loan terms (flexible - may be in general response)
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["flash loan", "flashloan", "protocol", "fee", "max loan", "ultra", "defi", "lending"]
+            for keyword in [
+                "flash loan",
+                "flashloan",
+                "protocol",
+                "fee",
+                "max loan",
+                "ultra",
+                "defi",
+                "lending",
+            ]
         )
-        
+
         # Verify enrichment if available
         if "enrichment" in data and data["enrichment"]:
             enrichment = data["enrichment"]
@@ -197,13 +253,16 @@ class TestGuestChatULTRAReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "Muéstrame protocolos de flash loan", "language": "es"},
+                json={
+                    "content": "Muéstrame protocolos de flash loan",
+                    "language": "es",
+                },
                 headers={"X-Forwarded-For": "127.0.0.106"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Spanish content
         agent_content = data["agent_message"]["content"]
         assert any(
@@ -223,15 +282,24 @@ class TestGuestChatULTRAReal:
                 json={"content": "Mostre protocolos de flash loan", "language": "pt"},
                 headers={"X-Forwarded-For": "127.0.0.107"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Portuguese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["flash loan", "protocolo", "taxa", "empréstimo", "defi", "ai", "assistente", "lending"]
+            for keyword in [
+                "flash loan",
+                "protocolo",
+                "taxa",
+                "empréstimo",
+                "defi",
+                "ai",
+                "assistente",
+                "lending",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -246,15 +314,24 @@ class TestGuestChatULTRAReal:
                 json={"content": "显示闪电贷协议", "language": "zh"},
                 headers={"X-Forwarded-For": "127.0.0.108"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Chinese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content
-            for keyword in ["闪电贷", "协议", "费用", "最大", "DeFi", "AI", "助手", "交易"]
+            for keyword in [
+                "闪电贷",
+                "协议",
+                "费用",
+                "最大",
+                "DeFi",
+                "AI",
+                "助手",
+                "交易",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -269,29 +346,48 @@ class TestGuestChatULTRAReal:
                 json={"content": "What is MEV protection?", "language": "en"},
                 headers={"X-Forwarded-For": "127.0.0.109"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify routing
-        assert data["routing"]["intent"] in ["ultra_mev_protection", "ULTRA_MEV_PROTECTION", "general_conversation"]
-        
+        assert data["routing"]["intent"] in [
+            "ultra_mev_protection",
+            "ULTRA_MEV_PROTECTION",
+            "general_conversation",
+        ]
+
         # Verify response content
         agent_content = data["agent_message"]["content"]
         assert len(agent_content) > 50
-        
+
         # Should mention MEV protection terms (flexible - may be in general response)
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["mev", "protection", "flashbots", "sandwich", "front run", "private", "ultra", "defi", "security"]
+            for keyword in [
+                "mev",
+                "protection",
+                "flashbots",
+                "sandwich",
+                "front run",
+                "private",
+                "ultra",
+                "defi",
+                "security",
+            ]
         )
-        
+
         # Verify enrichment if available
         if "enrichment" in data and data["enrichment"]:
             enrichment = data["enrichment"]
             assert any(
                 key in enrichment
-                for key in ["ultra_tool", "mev_protection", "protection_level", "use_flashbots"]
+                for key in [
+                    "ultra_tool",
+                    "mev_protection",
+                    "protection_level",
+                    "use_flashbots",
+                ]
             )
 
     @pytest.mark.asyncio
@@ -306,10 +402,10 @@ class TestGuestChatULTRAReal:
                 json={"content": "¿Qué es la protección MEV?", "language": "es"},
                 headers={"X-Forwarded-For": "127.0.0.110"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Spanish content
         agent_content = data["agent_message"]["content"]
         assert any(
@@ -329,15 +425,25 @@ class TestGuestChatULTRAReal:
                 json={"content": "O que é proteção MEV?", "language": "pt"},
                 headers={"X-Forwarded-For": "127.0.0.111"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Portuguese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["mev", "proteção", "flashbots", "sandwich", "privada", "defi", "ai", "assistente", "segurança"]
+            for keyword in [
+                "mev",
+                "proteção",
+                "flashbots",
+                "sandwich",
+                "privada",
+                "defi",
+                "ai",
+                "assistente",
+                "segurança",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -352,15 +458,25 @@ class TestGuestChatULTRAReal:
                 json={"content": "什么是MEV保护？", "language": "zh"},
                 headers={"X-Forwarded-For": "127.0.0.112"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Chinese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content
-            for keyword in ["MEV", "保护", "Flashbots", "三明治", "私有", "DeFi", "AI", "助手", "安全"]
+            for keyword in [
+                "MEV",
+                "保护",
+                "Flashbots",
+                "三明治",
+                "私有",
+                "DeFi",
+                "AI",
+                "助手",
+                "安全",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -375,23 +491,38 @@ class TestGuestChatULTRAReal:
                 json={"content": "Tell me about auto-executor", "language": "en"},
                 headers={"X-Forwarded-For": "127.0.0.113"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify routing
-        assert data["routing"]["intent"] in ["ultra_auto_executor", "ULTRA_AUTO_EXECUTOR", "general_conversation"]
-        
+        assert data["routing"]["intent"] in [
+            "ultra_auto_executor",
+            "ULTRA_AUTO_EXECUTOR",
+            "general_conversation",
+        ]
+
         # Verify response content
         agent_content = data["agent_message"]["content"]
         assert len(agent_content) > 50
-        
+
         # Should mention auto-executor features (flexible - may be in general response)
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["auto", "executor", "dca", "limit order", "stop loss", "strategy", "trading", "ultra", "defi", "automated"]
+            for keyword in [
+                "auto",
+                "executor",
+                "dca",
+                "limit order",
+                "stop loss",
+                "strategy",
+                "trading",
+                "ultra",
+                "defi",
+                "automated",
+            ]
         )
-        
+
         # Verify enrichment if available (optional - may not be present for general_conversation)
         if "enrichment" in data and data["enrichment"]:
             enrichment = data["enrichment"]
@@ -411,15 +542,22 @@ class TestGuestChatULTRAReal:
                 json={"content": "Háblame del auto-executor", "language": "es"},
                 headers={"X-Forwarded-For": "127.0.0.114"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Spanish content
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["auto", "ejecución", "dca", "orden límite", "stop loss", "estrategia"]
+            for keyword in [
+                "auto",
+                "ejecución",
+                "dca",
+                "orden límite",
+                "stop loss",
+                "estrategia",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -434,15 +572,26 @@ class TestGuestChatULTRAReal:
                 json={"content": "Fale sobre auto-executor", "language": "pt"},
                 headers={"X-Forwarded-For": "127.0.0.115"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Portuguese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content.lower()
-            for keyword in ["auto", "execução", "dca", "ordem limite", "stop loss", "estratégia", "defi", "ai", "assistente", "trading"]
+            for keyword in [
+                "auto",
+                "execução",
+                "dca",
+                "ordem limite",
+                "stop loss",
+                "estratégia",
+                "defi",
+                "ai",
+                "assistente",
+                "trading",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -457,15 +606,26 @@ class TestGuestChatULTRAReal:
                 json={"content": "告诉我自动执行器", "language": "zh"},
                 headers={"X-Forwarded-For": "127.0.0.116"},
             )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify Chinese content (flexible - may be general response)
         agent_content = data["agent_message"]["content"]
         assert any(
             keyword in agent_content
-            for keyword in ["自动", "执行", "DCA", "限价", "止损", "策略", "DeFi", "AI", "助手", "交易"]
+            for keyword in [
+                "自动",
+                "执行",
+                "DCA",
+                "限价",
+                "止损",
+                "策略",
+                "DeFi",
+                "AI",
+                "助手",
+                "交易",
+            ]
         )
 
     @pytest.mark.asyncio
@@ -473,15 +633,65 @@ class TestGuestChatULTRAReal:
     async def test_ultra_features_all_languages(self, test_app):
         """Test all ULTRA features work in all supported languages."""
         features = [
-            ("arbitrage", "en", "Find arbitrage", "es", "Encuentra arbitraje", "pt", "Encontre arbitragem", "zh", "寻找套利"),
-            ("flash loans", "en", "flash loan", "es", "préstamo flash", "pt", "flash loan", "zh", "闪电贷"),
-            ("MEV", "en", "MEV protection", "es", "protección MEV", "pt", "proteção MEV", "zh", "MEV保护"),
-            ("auto-executor", "en", "auto executor", "es", "auto ejecutor", "pt", "auto executor", "zh", "自动执行"),
+            (
+                "arbitrage",
+                "en",
+                "Find arbitrage",
+                "es",
+                "Encuentra arbitraje",
+                "pt",
+                "Encontre arbitragem",
+                "zh",
+                "寻找套利",
+            ),
+            (
+                "flash loans",
+                "en",
+                "flash loan",
+                "es",
+                "préstamo flash",
+                "pt",
+                "flash loan",
+                "zh",
+                "闪电贷",
+            ),
+            (
+                "MEV",
+                "en",
+                "MEV protection",
+                "es",
+                "protección MEV",
+                "pt",
+                "proteção MEV",
+                "zh",
+                "MEV保护",
+            ),
+            (
+                "auto-executor",
+                "en",
+                "auto executor",
+                "es",
+                "auto ejecutor",
+                "pt",
+                "auto executor",
+                "zh",
+                "自动执行",
+            ),
         ]
-        
+
         ip_base = 200
-        
-        for feature_name, en_lang, en_msg, es_lang, es_msg, pt_lang, pt_msg, zh_lang, zh_msg in features:
+
+        for (
+            feature_name,
+            en_lang,
+            en_msg,
+            es_lang,
+            es_msg,
+            pt_lang,
+            pt_msg,
+            zh_lang,
+            zh_msg,
+        ) in features:
             # Test English
             async with AsyncClient(
                 transport=ASGITransport(app=test_app), base_url="http://test"
@@ -492,12 +702,12 @@ class TestGuestChatULTRAReal:
                     headers={"X-Forwarded-For": f"127.0.0.{ip_base}"},
                 )
                 ip_base += 1
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["routing"]["language"] == en_lang
             assert len(data["agent_message"]["content"]) > 50
-            
+
             # Test Spanish
             async with AsyncClient(
                 transport=ASGITransport(app=test_app), base_url="http://test"
@@ -508,11 +718,11 @@ class TestGuestChatULTRAReal:
                     headers={"X-Forwarded-For": f"127.0.0.{ip_base}"},
                 )
                 ip_base += 1
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["routing"]["language"] == es_lang
-            
+
             # Test Portuguese
             async with AsyncClient(
                 transport=ASGITransport(app=test_app), base_url="http://test"
@@ -523,11 +733,11 @@ class TestGuestChatULTRAReal:
                     headers={"X-Forwarded-For": f"127.0.0.{ip_base}"},
                 )
                 ip_base += 1
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["routing"]["language"] == pt_lang
-            
+
             # Test Chinese
             async with AsyncClient(
                 transport=ASGITransport(app=test_app), base_url="http://test"
@@ -538,13 +748,15 @@ class TestGuestChatULTRAReal:
                     headers={"X-Forwarded-For": f"127.0.0.{ip_base}"},
                 )
                 ip_base += 1
-            
+
             assert response.status_code == 200
             data = response.json()
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_flash_loan_arbitrage_explanation(self, test_app, llm_validator, csv_tracker):
+    async def test_ultra_flash_loan_arbitrage_explanation(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test ULTRA flash loan arbitrage strategy explanation.
 
@@ -557,7 +769,10 @@ class TestGuestChatULTRAReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "Explain how flash loan arbitrage works and the risks involved", "language": "en"},
+                json={
+                    "content": "Explain how flash loan arbitrage works and the risks involved",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.600"},
             )
 
@@ -569,7 +784,9 @@ class TestGuestChatULTRAReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_mev_protection_strategies(self, test_app, llm_validator, csv_tracker):
+    async def test_ultra_mev_protection_strategies(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test ULTRA MEV (Maximal Extractable Value) protection guidance.
 
@@ -582,7 +799,10 @@ class TestGuestChatULTRAReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "How can I protect my trades from MEV attacks and front-running?", "language": "en"},
+                json={
+                    "content": "How can I protect my trades from MEV attacks and front-running?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.601"},
             )
 
@@ -594,7 +814,9 @@ class TestGuestChatULTRAReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_slippage_tolerance_recommendations(self, test_app, llm_validator, csv_tracker):
+    async def test_ultra_slippage_tolerance_recommendations(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test ULTRA dynamic slippage tolerance recommendations.
 
@@ -607,7 +829,10 @@ class TestGuestChatULTRAReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "What slippage tolerance should I set for a large USDC to ETH swap?", "language": "en"},
+                json={
+                    "content": "What slippage tolerance should I set for a large USDC to ETH swap?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.602"},
             )
 
@@ -619,7 +844,9 @@ class TestGuestChatULTRAReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_gas_price_prediction_accuracy(self, test_app, llm_validator, csv_tracker):
+    async def test_ultra_gas_price_prediction_accuracy(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test ULTRA gas price prediction and estimation quality.
 
@@ -632,7 +859,10 @@ class TestGuestChatULTRAReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "What gas price should I use for a swap transaction right now?", "language": "en"},
+                json={
+                    "content": "What gas price should I use for a swap transaction right now?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.603"},
             )
 
@@ -644,7 +874,9 @@ class TestGuestChatULTRAReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_multi_hop_swap_routing(self, test_app, llm_validator, csv_tracker):
+    async def test_ultra_multi_hop_swap_routing(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test ULTRA multi-hop swap routing explanation.
 
@@ -657,7 +889,10 @@ class TestGuestChatULTRAReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "How does multi-hop routing work for swapping obscure tokens?", "language": "en"},
+                json={
+                    "content": "How does multi-hop routing work for swapping obscure tokens?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.604"},
             )
 
@@ -669,7 +904,9 @@ class TestGuestChatULTRAReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_impermanent_loss_warnings(self, test_app, llm_validator, csv_tracker):
+    async def test_ultra_impermanent_loss_warnings(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test ULTRA impermanent loss risk disclosure quality.
 
@@ -682,7 +919,10 @@ class TestGuestChatULTRAReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "What is impermanent loss and how can it affect my liquidity provision?", "language": "en"},
+                json={
+                    "content": "What is impermanent loss and how can it affect my liquidity provision?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.605"},
             )
 
@@ -690,11 +930,15 @@ class TestGuestChatULTRAReal:
         data = response.json()
         content = data["agent_message"]["content"]
 
-        assert len(content) > 100, "Should provide detailed impermanent loss explanation"
+        assert len(content) > 100, (
+            "Should provide detailed impermanent loss explanation"
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_yield_farming_roi_calculations(self, test_app, llm_validator, csv_tracker):
+    async def test_ultra_yield_farming_roi_calculations(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test ULTRA yield farming ROI calculation transparency.
 
@@ -707,7 +951,10 @@ class TestGuestChatULTRAReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "How do I calculate actual ROI from yield farming considering all costs?", "language": "en"},
+                json={
+                    "content": "How do I calculate actual ROI from yield farming considering all costs?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.606"},
             )
 
@@ -719,7 +966,9 @@ class TestGuestChatULTRAReal:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_ultra_liquidation_risk_monitoring(self, test_app, llm_validator, csv_tracker):
+    async def test_ultra_liquidation_risk_monitoring(
+        self, test_app, llm_validator, csv_tracker
+    ):
         """
         Test ULTRA liquidation risk monitoring and warning quality.
 
@@ -732,7 +981,10 @@ class TestGuestChatULTRAReal:
         ) as ac:
             response = await ac.post(
                 "/api/v1/guest/chat",
-                json={"content": "How do I monitor and avoid liquidation risk in leveraged positions?", "language": "en"},
+                json={
+                    "content": "How do I monitor and avoid liquidation risk in leveraged positions?",
+                    "language": "en",
+                },
                 headers={"X-Forwarded-For": "127.0.0.607"},
             )
 

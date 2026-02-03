@@ -63,7 +63,9 @@ class CacheEntry:
         expiry_time = self.created_at + timedelta(seconds=self.ttl_seconds)
         return datetime.now(UTC) > expiry_time
 
-    def is_semantically_similar(self, query_embedding: List[float], threshold: Optional[float] = None) -> bool:
+    def is_semantically_similar(
+        self, query_embedding: List[float], threshold: Optional[float] = None
+    ) -> bool:
         """Check if query is semantically similar to cached query."""
         if not self.embedding or not query_embedding:
             return False

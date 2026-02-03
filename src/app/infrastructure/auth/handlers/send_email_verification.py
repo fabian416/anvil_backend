@@ -30,7 +30,9 @@ class SendEmailVerificationHandler:
         self._tx = transaction_manager
         self._repo = email_verification_repo
 
-    async def execute(self, _request_data: SendEmailVerificationRequest | None = None) -> None:
+    async def execute(
+        self, _request_data: SendEmailVerificationRequest | None = None
+    ) -> None:
         user = await self._current_user_service.get_current_user()
 
         if user.is_verified.value:
@@ -56,5 +58,3 @@ class SendEmailVerificationHandler:
             )
         except Exception as e:  # noqa: BLE001
             log.warning("Failed to enqueue verification email: %s", e)
-
-

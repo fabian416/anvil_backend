@@ -121,6 +121,7 @@ class MarketRateLimitError(ApplicationError):
 
 # Additional market-specific exceptions
 
+
 class PriceDataStaleError(ApplicationError):
     """Raised when price data is stale/outdated."""
 

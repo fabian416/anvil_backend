@@ -7,7 +7,11 @@ Provides common patterns for collecting source information across agents.
 from datetime import datetime, UTC
 from typing import Optional
 
-from app.domain.value_objects.chat.source_info import SourceInfo, SourceType, sanitize_query_params
+from app.domain.value_objects.chat.source_info import (
+    SourceInfo,
+    SourceType,
+    sanitize_query_params,
+)
 
 
 def create_llm_source(
@@ -18,13 +22,13 @@ def create_llm_source(
 ) -> SourceInfo:
     """
     Create LLM source information.
-    
+
     Args:
         model: Model name (e.g., "gpt-4o", "gemini-2.0-flash-exp")
         provider: Provider name (e.g., "Vertex AI", "DeepInfra")
         fetched_at: Timestamp when data was fetched
         relevance_score: Relevance score (default 1.0 - LLM generates the response)
-        
+
     Returns:
         SourceInfo for LLM source
     """
@@ -36,7 +40,7 @@ def create_llm_source(
             provider = "DeepInfra"
         else:
             provider = "OpenAI"
-    
+
     return SourceInfo(
         source_type=SourceType.LLM,
         source_name=model,
@@ -62,7 +66,7 @@ def create_api_source(
 ) -> SourceInfo:
     """
     Create API source information.
-    
+
     Args:
         source_name: API name (e.g., "CoinGecko", "1inch")
         url: Direct URL to source
@@ -74,7 +78,7 @@ def create_api_source(
         relevance_score: Relevance score (0.0-1.0)
         data_points_used: Number of data points
         metadata: Additional metadata
-        
+
     Returns:
         SourceInfo for API source
     """
@@ -104,7 +108,7 @@ def create_mcp_source(
 ) -> SourceInfo:
     """
     Create MCP server source information.
-    
+
     Args:
         mcp_server_name: MCP server name (e.g., "Aave", "Morpho")
         tool_name: Tool name used (e.g., "get_markets")
@@ -113,12 +117,16 @@ def create_mcp_source(
         fetched_at: Timestamp when data was fetched
         metadata: Additional metadata
         relevance_score: Relevance score (default 1.0)
-        
+
     Returns:
         SourceInfo for MCP server source
     """
-    endpoint = f"mcp://{mcp_server_name.lower()}/{tool_name}" if tool_name else f"mcp://{mcp_server_name.lower()}"
-    
+    endpoint = (
+        f"mcp://{mcp_server_name.lower()}/{tool_name}"
+        if tool_name
+        else f"mcp://{mcp_server_name.lower()}"
+    )
+
     return SourceInfo(
         source_type=SourceType.MCP_SERVER,
         source_name=mcp_server_name,
@@ -144,7 +152,7 @@ def create_blockchain_source(
 ) -> SourceInfo:
     """
     Create blockchain source information.
-    
+
     Args:
         chain: Chain name (e.g., "Ethereum", "Base")
         tx_hash: Transaction hash (if applicable)
@@ -154,7 +162,7 @@ def create_blockchain_source(
         fetched_at: Timestamp when data was fetched
         metadata: Additional metadata
         relevance_score: Relevance score (default 1.0)
-        
+
     Returns:
         SourceInfo for blockchain source
     """
@@ -173,7 +181,7 @@ def create_blockchain_source(
             explorer_url = f"https://polygonscan.com/tx/{tx_hash}"
         else:
             explorer_url = None
-    
+
     return SourceInfo(
         source_type=SourceType.BLOCKCHAIN,
         source_name=chain.title(),
@@ -197,7 +205,7 @@ def create_database_source(
 ) -> SourceInfo:
     """
     Create database source information.
-    
+
     Args:
         source_name: Database name (default: "Anvil Database")
         citation_text: Human-readable citation
@@ -205,7 +213,7 @@ def create_database_source(
         fetched_at: Timestamp when data was fetched
         metadata: Additional metadata
         relevance_score: Relevance score (default 1.0)
-        
+
     Returns:
         SourceInfo for database source
     """

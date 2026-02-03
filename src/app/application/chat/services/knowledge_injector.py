@@ -13,6 +13,7 @@ from enum import Enum
 
 class KnowledgeFile(str, Enum):
     """Available knowledge base files"""
+
     OVERVIEW = "overview"
     SWAP = "swap"
     HUNTER_AI = "hunter_ai"
@@ -66,7 +67,7 @@ class KnowledgeInjector:
         """
         if filename not in self._cache:
             file_path = self.features_path / f"{filename.value}.json"
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 self._cache[filename] = json.load(f)
 
         return self._cache[filename]
@@ -75,7 +76,7 @@ class KnowledgeInjector:
         self,
         user_query: str,
         detected_intent: str,
-        user_type: str = "user"  # "user" or "investor"
+        user_type: str = "user",  # "user" or "investor"
     ) -> Dict[str, Any]:
         """
         Get relevant knowledge sections based on intent and user type.
@@ -91,12 +92,17 @@ class KnowledgeInjector:
         query_lower = user_query.lower()
 
         # Overview queries - "what can you do?"
-        if any(kw in query_lower for kw in ["what can you do", "capabilities", "features", "what is anvil"]):
+        if any(
+            kw in query_lower
+            for kw in ["what can you do", "capabilities", "features", "what is anvil"]
+        ):
             return self._get_overview_knowledge(user_type)
 
         # Hunter AI intents
         if detected_intent.startswith("HUNTER_"):
-            return self._get_hunter_ai_knowledge(detected_intent, query_lower, user_type)
+            return self._get_hunter_ai_knowledge(
+                detected_intent, query_lower, user_type
+            )
 
         # ULTRA intents
         if detected_intent.startswith("ULTRA_"):
@@ -107,31 +113,84 @@ class KnowledgeInjector:
             return self._get_swap_knowledge(query_lower, user_type)
 
         # Command help / shortcuts
-        if any(kw in query_lower for kw in ["command", "how do i", "how to", "syntax", "example"]):
+        if any(
+            kw in query_lower
+            for kw in ["command", "how do i", "how to", "syntax", "example"]
+        ):
             return self._get_shortcuts_knowledge(detected_intent)
 
         # Portfolio queries
-        if any(kw in query_lower for kw in ["portfolio", "balance", "holdings", "my assets", "my tokens"]):
+        if any(
+            kw in query_lower
+            for kw in ["portfolio", "balance", "holdings", "my assets", "my tokens"]
+        ):
             return self._get_portfolio_knowledge(user_type)
 
         # Wallet queries
-        if any(kw in query_lower for kw in ["wallet", "wallets", "my wallet", "export wallet", "sync wallet"]):
+        if any(
+            kw in query_lower
+            for kw in ["wallet", "wallets", "my wallet", "export wallet", "sync wallet"]
+        ):
             return self._get_wallet_knowledge(user_type)
 
         # Lending queries (Morpho)
-        if any(kw in query_lower for kw in ["lending", "lend", "morpho", "vault", "supply", "deposit assets", "earn yield"]):
+        if any(
+            kw in query_lower
+            for kw in [
+                "lending",
+                "lend",
+                "morpho",
+                "vault",
+                "supply",
+                "deposit assets",
+                "earn yield",
+            ]
+        ):
             return self._get_lending_morpho_knowledge(user_type)
 
         # Gas optimizer queries
-        if any(kw in query_lower for kw in ["gas", "gas price", "gas cost", "transaction fee", "optimize gas"]):
+        if any(
+            kw in query_lower
+            for kw in [
+                "gas",
+                "gas price",
+                "gas cost",
+                "transaction fee",
+                "optimize gas",
+            ]
+        ):
             return self._get_gas_optimizer_knowledge(user_type)
 
         # Risk analyzer queries
-        if any(kw in query_lower for kw in ["risk", "safe", "safety", "protocol risk", "tvl", "risk analysis"]):
+        if any(
+            kw in query_lower
+            for kw in [
+                "risk",
+                "safe",
+                "safety",
+                "protocol risk",
+                "tvl",
+                "risk analysis",
+            ]
+        ):
             return self._get_risk_analyzer_knowledge(user_type)
 
         # Money market queries (rate comparison, Aave vs Compound)
-        if any(kw in query_lower for kw in ["money market", "lending rate", "borrowing rate", "apy comparison", "compare rates", "aave rate", "compound rate", "best rate", "supply apy", "borrow apy"]):
+        if any(
+            kw in query_lower
+            for kw in [
+                "money market",
+                "lending rate",
+                "borrowing rate",
+                "apy comparison",
+                "compare rates",
+                "aave rate",
+                "compound rate",
+                "best rate",
+                "supply apy",
+                "borrow apy",
+            ]
+        ):
             return self._get_money_market_knowledge(user_type)
 
         # Default to overview
@@ -146,10 +205,16 @@ class KnowledgeInjector:
                 "feature_name": overview["feature_name"],
                 "core_capabilities": overview["core_capabilities"],
                 "unique_features": overview["unique_features"],
-                "competitive_advantages": overview["getting_started"]["for_investors"]["competitive_advantages"],
-                "value_proposition": overview["getting_started"]["for_investors"]["value_proposition"],
-                "market_position": overview["getting_started"]["for_investors"]["market_position"],
-                "supported_protocols": overview["supported_protocols"]
+                "competitive_advantages": overview["getting_started"]["for_investors"][
+                    "competitive_advantages"
+                ],
+                "value_proposition": overview["getting_started"]["for_investors"][
+                    "value_proposition"
+                ],
+                "market_position": overview["getting_started"]["for_investors"][
+                    "market_position"
+                ],
+                "supported_protocols": overview["supported_protocols"],
             }
         else:
             return {
@@ -158,14 +223,11 @@ class KnowledgeInjector:
                 "core_capabilities": overview["core_capabilities"],
                 "unique_features": overview["unique_features"],
                 "getting_started": overview["getting_started"]["for_users"],
-                "example_use_cases": overview["example_use_cases"]
+                "example_use_cases": overview["example_use_cases"],
             }
 
     def _get_hunter_ai_knowledge(
-        self,
-        detected_intent: str,
-        query_lower: str,
-        user_type: str
+        self, detected_intent: str, query_lower: str, user_type: str
     ) -> Dict[str, Any]:
         """Get Hunter AI knowledge based on specific intent"""
         hunter_ai = self._load_json(KnowledgeFile.HUNTER_AI)
@@ -177,13 +239,13 @@ class KnowledgeInjector:
             "HUNTER_RISK_SIGNALS": 2,
             "HUNTER_TRADING_SIGNALS": 3,
             "HUNTER_PATTERNS": 4,
-            "HUNTER_PORTFOLIO": 5
+            "HUNTER_PORTFOLIO": 5,
         }
 
         base_knowledge = {
             "feature_name": hunter_ai["feature_name"],
             "tagline": hunter_ai["tagline"],
-            "description": hunter_ai["description"]
+            "description": hunter_ai["description"],
         }
 
         # Add specific capability if intent matches
@@ -192,13 +254,18 @@ class KnowledgeInjector:
             base_knowledge["capability"] = hunter_ai["core_capabilities"][idx]
 
         # Add accuracy metrics if query mentions accuracy, performance, or reliability
-        if any(kw in query_lower for kw in ["accurate", "accuracy", "reliable", "performance", "work"]):
+        if any(
+            kw in query_lower
+            for kw in ["accurate", "accuracy", "reliable", "performance", "work"]
+        ):
             base_knowledge["accuracy_metrics"] = hunter_ai["accuracy_metrics"]
             base_knowledge["real_vs_demo_data"] = hunter_ai["real_vs_demo_data"]
 
         # Add investor highlights for investors
         if user_type == "investor":
-            base_knowledge["competitive_advantages"] = hunter_ai["competitive_advantages"]
+            base_knowledge["competitive_advantages"] = hunter_ai[
+                "competitive_advantages"
+            ]
             base_knowledge["investor_highlights"] = hunter_ai["investor_highlights"]
 
         # Add data sources if query mentions sources or data
@@ -208,10 +275,7 @@ class KnowledgeInjector:
         return base_knowledge
 
     def _get_ultra_knowledge(
-        self,
-        detected_intent: str,
-        query_lower: str,
-        user_type: str
+        self, detected_intent: str, query_lower: str, user_type: str
     ) -> Dict[str, Any]:
         """Get ULTRA knowledge based on specific intent"""
         ultra = self._load_json(KnowledgeFile.ULTRA)
@@ -221,13 +285,13 @@ class KnowledgeInjector:
             "ULTRA_ARBITRAGE": 0,
             "ULTRA_FLASH_LOANS": 1,
             "ULTRA_MEV_PROTECTION": 2,
-            "ULTRA_AUTO_EXECUTOR": 3
+            "ULTRA_AUTO_EXECUTOR": 3,
         }
 
         base_knowledge = {
             "feature_name": ultra["feature_name"],
             "tagline": ultra["tagline"],
-            "description": ultra["description"]
+            "description": ultra["description"],
         }
 
         # Add specific capability if intent matches
@@ -236,7 +300,10 @@ class KnowledgeInjector:
             base_knowledge["capability"] = ultra["core_capabilities"][idx]
 
         # Add accuracy/performance metrics
-        if any(kw in query_lower for kw in ["accurate", "accuracy", "performance", "profit", "roi"]):
+        if any(
+            kw in query_lower
+            for kw in ["accurate", "accuracy", "performance", "profit", "roi"]
+        ):
             base_knowledge["accuracy_metrics"] = ultra["accuracy_metrics"]
 
         # Add investor highlights for investors
@@ -263,9 +330,19 @@ class KnowledgeInjector:
             "feature_name": swap["feature_name"],
             "description": swap["description"],
         }
-        
+
         # Always include aggregator details for "what type" queries
-        if any(kw in query_lower for kw in ["what type", "what types", "what can", "types of", "which", "what swaps"]):
+        if any(
+            kw in query_lower
+            for kw in [
+                "what type",
+                "what types",
+                "what can",
+                "types of",
+                "which",
+                "what swaps",
+            ]
+        ):
             base_knowledge["supported_aggregators"] = swap["supported_aggregators"]
             base_knowledge["supported_tokens"] = swap.get("supported_tokens", {})
             base_knowledge["features"] = swap.get("features", [])
@@ -275,11 +352,16 @@ class KnowledgeInjector:
             base_knowledge["supported_aggregators"] = swap["supported_aggregators"]
 
         # Add rate comparison example if asking about rates or savings
-        if any(kw in query_lower for kw in ["rate", "price", "cost", "save", "cheap", "best"]):
+        if any(
+            kw in query_lower
+            for kw in ["rate", "price", "cost", "save", "cheap", "best"]
+        ):
             base_knowledge["rate_comparison_example"] = swap["rate_comparison_example"]
 
         # Add safety features if asking about safety, risk, or security
-        if any(kw in query_lower for kw in ["safe", "risk", "secure", "protect", "mev"]):
+        if any(
+            kw in query_lower for kw in ["safe", "risk", "secure", "protect", "mev"]
+        ):
             base_knowledge["safety_features"] = swap["safety_features"]
             base_knowledge["features"] = swap["features"]
 
@@ -303,7 +385,7 @@ class KnowledgeInjector:
             "quick_start_commands": shortcuts["quick_start_commands"],
             "command_categories": shortcuts["command_categories"],
             "power_user_tips": shortcuts["power_user_tips"],
-            "multi_step_flows": shortcuts["multi_step_flows"]
+            "multi_step_flows": shortcuts["multi_step_flows"],
         }
 
     def _get_portfolio_knowledge(self, user_type: str) -> Dict[str, Any]:
@@ -316,12 +398,16 @@ class KnowledgeInjector:
             "description": portfolio["description"],
             "core_capabilities": portfolio["core_capabilities"],
             "api_endpoints": portfolio["api_endpoints"],
-            "features": portfolio["features"]
+            "features": portfolio["features"],
         }
 
         if user_type == "investor":
-            base_knowledge["competitive_advantages"] = portfolio["competitive_advantages"]
-            base_knowledge["getting_started"] = portfolio["getting_started"]["for_investors"]
+            base_knowledge["competitive_advantages"] = portfolio[
+                "competitive_advantages"
+            ]
+            base_knowledge["getting_started"] = portfolio["getting_started"][
+                "for_investors"
+            ]
 
         return base_knowledge
 
@@ -335,12 +421,14 @@ class KnowledgeInjector:
             "description": wallet["description"],
             "core_capabilities": wallet["core_capabilities"],
             "api_endpoints": wallet["api_endpoints"],
-            "features": wallet["features"]
+            "features": wallet["features"],
         }
 
         if user_type == "investor":
             base_knowledge["competitive_advantages"] = wallet["competitive_advantages"]
-            base_knowledge["getting_started"] = wallet["getting_started"]["for_investors"]
+            base_knowledge["getting_started"] = wallet["getting_started"][
+                "for_investors"
+            ]
 
         return base_knowledge
 
@@ -355,12 +443,14 @@ class KnowledgeInjector:
             "core_capabilities": lending["core_capabilities"],
             "api_endpoints": lending["api_endpoints"],
             "features": lending["features"],
-            "important_notes": lending.get("important_notes", [])
+            "important_notes": lending.get("important_notes", []),
         }
 
         if user_type == "investor":
             base_knowledge["competitive_advantages"] = lending["competitive_advantages"]
-            base_knowledge["getting_started"] = lending["getting_started"]["for_investors"]
+            base_knowledge["getting_started"] = lending["getting_started"][
+                "for_investors"
+            ]
 
         return base_knowledge
 
@@ -374,12 +464,16 @@ class KnowledgeInjector:
             "description": gas_optimizer["description"],
             "core_capabilities": gas_optimizer["core_capabilities"],
             "supported_chains": gas_optimizer["supported_chains"],
-            "features": gas_optimizer["features"]
+            "features": gas_optimizer["features"],
         }
 
         if user_type == "investor":
-            base_knowledge["competitive_advantages"] = gas_optimizer["competitive_advantages"]
-            base_knowledge["getting_started"] = gas_optimizer["getting_started"]["for_investors"]
+            base_knowledge["competitive_advantages"] = gas_optimizer[
+                "competitive_advantages"
+            ]
+            base_knowledge["getting_started"] = gas_optimizer["getting_started"][
+                "for_investors"
+            ]
 
         return base_knowledge
 
@@ -393,12 +487,16 @@ class KnowledgeInjector:
             "description": risk_analyzer["description"],
             "core_capabilities": risk_analyzer["core_capabilities"],
             "risk_score_scale": risk_analyzer["risk_score_scale"],
-            "features": risk_analyzer["features"]
+            "features": risk_analyzer["features"],
         }
 
         if user_type == "investor":
-            base_knowledge["competitive_advantages"] = risk_analyzer["competitive_advantages"]
-            base_knowledge["getting_started"] = risk_analyzer["getting_started"]["for_investors"]
+            base_knowledge["competitive_advantages"] = risk_analyzer[
+                "competitive_advantages"
+            ]
+            base_knowledge["getting_started"] = risk_analyzer["getting_started"][
+                "for_investors"
+            ]
 
         return base_knowledge
 
@@ -416,18 +514,26 @@ class KnowledgeInjector:
             "supported_chains": money_market["supported_chains"],
             "features": money_market["features"],
             "api_endpoints": money_market["api_endpoints"],
-            "common_questions": money_market["common_questions"]
+            "common_questions": money_market["common_questions"],
         }
 
         if user_type == "investor":
-            base_knowledge["competitive_advantages"] = money_market["competitive_advantages"]
+            base_knowledge["competitive_advantages"] = money_market[
+                "competitive_advantages"
+            ]
             base_knowledge["background_tasks"] = money_market["background_tasks"]
             base_knowledge["technical_details"] = money_market["technical_details"]
-            base_knowledge["getting_started"] = money_market["getting_started"]["for_investors"]
+            base_knowledge["getting_started"] = money_market["getting_started"][
+                "for_investors"
+            ]
         else:
             base_knowledge["command_formats"] = money_market["command_formats"]
-            base_knowledge["natural_language_examples"] = money_market["natural_language_examples"]
-            base_knowledge["getting_started"] = money_market["getting_started"]["for_users"]
+            base_knowledge["natural_language_examples"] = money_market[
+                "natural_language_examples"
+            ]
+            base_knowledge["getting_started"] = money_market["getting_started"][
+                "for_users"
+            ]
 
         return base_knowledge
 
@@ -437,7 +543,7 @@ class KnowledgeInjector:
         detected_intent: str,
         user_type: str = "user",
         base_system_prompt: Optional[str] = None,
-        compression_level: str = "medium"
+        compression_level: str = "medium",
     ) -> str:
         """
         Create enhanced system prompt with injected knowledge.
@@ -456,16 +562,21 @@ class KnowledgeInjector:
         Returns:
             Enhanced system prompt with knowledge injection
         """
-        knowledge = self.get_knowledge_for_intent(user_query, detected_intent, user_type)
+        knowledge = self.get_knowledge_for_intent(
+            user_query, detected_intent, user_type
+        )
 
         # Apply compression if requested
         if compression_level != "none":
-            from app.application.chat.services.knowledge_compressor import compress_knowledge
+            from app.application.chat.services.knowledge_compressor import (
+                compress_knowledge,
+            )
+
             compressed_text, estimated_tokens = compress_knowledge(
                 knowledge=knowledge,
                 intent=detected_intent,
                 user_query=user_query,
-                level=compression_level
+                level=compression_level,
             )
             knowledge_text = compressed_text
         else:
@@ -601,7 +712,7 @@ def inject_knowledge(
     detected_intent: str,
     user_type: str = "user",
     base_system_prompt: Optional[str] = None,
-    compression_level: str = "medium"
+    compression_level: str = "medium",
 ) -> str:
     """
     Convenience function to inject knowledge into system prompt with token optimization.
@@ -650,5 +761,5 @@ def inject_knowledge(
         detected_intent=detected_intent,
         user_type=user_type,
         base_system_prompt=base_system_prompt,
-        compression_level=compression_level
+        compression_level=compression_level,
     )

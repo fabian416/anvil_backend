@@ -31,7 +31,9 @@ class SubscriptionRepository(Protocol):
     ) -> int: ...
 
     @abstractmethod
-    async def update_stripe_ids(self, *, id_: int, stripe_price_id: str, stripe_product_id: str) -> None: ...
+    async def update_stripe_ids(
+        self, *, id_: int, stripe_price_id: str, stripe_product_id: str
+    ) -> None: ...
 
 
 class SubscriptionUserRepository(Protocol):
@@ -52,7 +54,9 @@ class SubscriptionUserRepository(Protocol):
     async def update_status(self, *, id_: int, status: str) -> None: ...
 
     @abstractmethod
-    async def update_stripe_subscription_id(self, *, id_: int, stripe_subscription_id: str) -> None: ...
+    async def update_stripe_subscription_id(
+        self, *, id_: int, stripe_subscription_id: str
+    ) -> None: ...
 
     @abstractmethod
     async def read_by_checkout_session_id(self, *, session_id: str) -> dict | None: ...
@@ -82,19 +86,25 @@ class PaymentRepository(Protocol):
     ) -> int: ...
 
     @abstractmethod
-    async def find_pending_for_subscription_user(self, *, subscription_user_id: int) -> dict | None: ...
+    async def find_pending_for_subscription_user(
+        self, *, subscription_user_id: int
+    ) -> dict | None: ...
 
     @abstractmethod
     async def update_status(self, *, id_: int, status: str) -> None: ...
 
     @abstractmethod
-    async def list_by_subscription_user(self, *, subscription_user_id: int) -> list[dict]: ...
+    async def list_by_subscription_user(
+        self, *, subscription_user_id: int
+    ) -> list[dict]: ...
 
     @abstractmethod
     async def update_data_json(self, *, id_: int, data_json: dict) -> None: ...
 
     @abstractmethod
-    async def read_by_user_paginated(self, *, user_id: int, offset: int, limit: int) -> list[dict]: ...
+    async def read_by_user_paginated(
+        self, *, user_id: int, offset: int, limit: int
+    ) -> list[dict]: ...
 
     @abstractmethod
     async def find_or_create_transaction(
@@ -105,5 +115,3 @@ class PaymentRepository(Protocol):
         currency: str,
         description: str,
     ) -> dict: ...
-
-

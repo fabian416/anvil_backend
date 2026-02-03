@@ -58,7 +58,6 @@ LENDING_TESTS = [
         "category": "workflow",
         "subcategory": "lending_basic",
     },
-    
     # Protocol-Specific
     {
         "test_id": "lend_protocol_001",
@@ -81,7 +80,6 @@ LENDING_TESTS = [
         "category": "workflow",
         "subcategory": "lending_protocol",
     },
-    
     # Vault Selection
     {
         "test_id": "lend_vault_001",
@@ -97,7 +95,6 @@ LENDING_TESTS = [
         "category": "workflow",
         "subcategory": "lending_vault",
     },
-    
     # Edge Cases
     {
         "test_id": "lend_edge_001",
@@ -121,15 +118,17 @@ LENDING_TESTS = [
 @pytest.mark.llm_validation
 class TestLendingWorkflow:
     """Tests for Lending workflow agent with LLM validation."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
-    async def setup(self, authenticated_client, conversation_id, csv_reporter, llm_validator):
+    async def setup(
+        self, authenticated_client, conversation_id, csv_reporter, llm_validator
+    ):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
         self.llm_validator = llm_validator
-    
+
     @pytest.mark.parametrize("test_case", LENDING_TESTS, ids=lambda t: t["test_id"])
     async def test_lending(self, test_case: dict):
         """Test lending workflow routing and response with LLM validation."""
@@ -138,7 +137,7 @@ class TestLendingWorkflow:
             self.conversation_id,
             test_case["input"],
         )
-        
+
         # LLM Validation
         llm_validation = None
         if not response_data.get("error"):
@@ -149,9 +148,13 @@ class TestLendingWorkflow:
                 user_input=test_case["input"],
                 agent_output=parsed.get("content", ""),
                 expected_behavior="Response should present lending/deposit details including vaults, APY rates, and confirmation or ask for clarification.",
-                additional_context={"test_category": "lending_workflow", "subcategory": test_case.get("subcategory", ""), "user_type": "authenticated"}
+                additional_context={
+                    "test_category": "lending_workflow",
+                    "subcategory": test_case.get("subcategory", ""),
+                    "user_type": "authenticated",
+                },
             )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -160,22 +163,30 @@ class TestLendingWorkflow:
             conversation_id=self.conversation_id,
             llm_validation=llm_validation,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         # Assertions
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         parsed = parse_response(response_data)
         content = parsed.get("content", "").lower()
         agents = parsed.get("agents_used", "")
-        
+
         # Verify lending-related response
         assert any(
             indicator in content or indicator in agents.lower()
-            for indicator in ["deposit", "lend", "vault", "apy", "yield", "earn", "supply"]
+            for indicator in [
+                "deposit",
+                "lend",
+                "vault",
+                "apy",
+                "yield",
+                "earn",
+                "supply",
+            ]
         ), f"Lending query should return lending-related response: {content[:200]}"
-    
+
     async def test_lending_full_flow(self, authenticated_client, csv_reporter):
         """Test complete lending flow with vault selection."""
         # Create fresh conversation
@@ -185,14 +196,14 @@ class TestLendingWorkflow:
         )
         assert response.status_code in (200, 201)
         conv_id = response.json().get("id")
-        
+
         # Step 1: Request deposit
         response_data, time1 = await send_message(
             authenticated_client,
             conv_id,
             "deposit 1000 USDC",
         )
-        
+
         result1 = create_test_result(
             test_id="lend_flow_step1",
             test_case={
@@ -209,16 +220,16 @@ class TestLendingWorkflow:
             conversation_id=conv_id,
         )
         csv_reporter.add_result(result1)
-        
+
         assert not response_data.get("error")
-        
+
         # Step 2: Confirm
         response_data, time2 = await send_message(
             authenticated_client,
             conv_id,
             "yes",
         )
-        
+
         result2 = create_test_result(
             test_id="lend_flow_step2",
             test_case={

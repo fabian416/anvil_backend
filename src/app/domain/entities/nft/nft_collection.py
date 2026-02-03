@@ -49,7 +49,9 @@ class NFTCollection:
             "image_url": self.image_url,
             "banner_image_url": self.banner_image_url,
             "total_supply": self.total_supply,
-            "created_date": self.created_date.isoformat() if self.created_date else None,
+            "created_date": self.created_date.isoformat()
+            if self.created_date
+            else None,
             "contracts": self.contracts,
         }
 

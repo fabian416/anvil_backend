@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 @dataclass
 class TestConversation:
     """Test conversation data class."""
+
     id: UUID
     user_id: int
     created_at: datetime
@@ -39,7 +40,7 @@ class TestConversation:
 
 class ConversationBuilder:
     """Fluent builder for Conversation test data."""
-    
+
     def __init__(self):
         """Initialize with default values."""
         self._id: UUID = uuid4()
@@ -48,29 +49,31 @@ class ConversationBuilder:
         self._updated_at: datetime = datetime.now(timezone.utc)
         self._title: Optional[str] = None
         self._messages: List[dict] = []
-    
-    def with_id(self, id_: UUID) -> 'ConversationBuilder':
+
+    def with_id(self, id_: UUID) -> "ConversationBuilder":
         """Set conversation ID."""
         self._id = id_
         return self
-    
-    def with_user_id(self, user_id: int) -> 'ConversationBuilder':
+
+    def with_user_id(self, user_id: int) -> "ConversationBuilder":
         """Set user ID."""
         self._user_id = user_id
         return self
-    
-    def with_title(self, title: str) -> 'ConversationBuilder':
+
+    def with_title(self, title: str) -> "ConversationBuilder":
         """Set conversation title."""
         self._title = title
         return self
-    
-    def with_timestamps(self, created_at: datetime, updated_at: datetime) -> 'ConversationBuilder':
+
+    def with_timestamps(
+        self, created_at: datetime, updated_at: datetime
+    ) -> "ConversationBuilder":
         """Set timestamps."""
         self._created_at = created_at
         self._updated_at = updated_at
         return self
 
-    def with_messages(self, count: int = 1) -> 'ConversationBuilder':
+    def with_messages(self, count: int = 1) -> "ConversationBuilder":
         """Add pairs of user/agent messages (count pairs = 2*count messages)."""
         for i in range(count):
             # User message
@@ -90,7 +93,7 @@ class ConversationBuilder:
                 "created_at": datetime.now(timezone.utc).isoformat(),
             })
         return self
-    
+
     def build_dict(self) -> dict:
         """Build as dictionary."""
         return {
@@ -112,14 +115,14 @@ class ConversationBuilder:
             title=self._title,
             messages=self._messages,
         )
-    
+
     @classmethod
-    def a_conversation(cls) -> 'ConversationBuilder':
+    def a_conversation(cls) -> "ConversationBuilder":
         """Start building a conversation."""
         return cls()
-    
+
     @classmethod
-    def default(cls) -> 'ConversationBuilder':
+    def default(cls) -> "ConversationBuilder":
         """Create with default values."""
         return cls()
 

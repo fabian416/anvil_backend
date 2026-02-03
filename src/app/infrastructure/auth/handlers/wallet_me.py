@@ -131,7 +131,7 @@ class GetMyWalletsHandler:
         Get all wallets for the current user.
 
         Returns:
-            WalletsResponse with wallets from local DB and/or Privy 
+            WalletsResponse with wallets from local DB and/or Privy
             based on WALLETS_SOURCE_MODE.
         """
         # Get current user
@@ -191,9 +191,7 @@ class GetMyWalletsHandler:
                                 chain_type=pw.chain_type.value,
                             )
                         except DataMapperError as e:
-                            logger.warning(
-                                f"Failed to persist Privy wallet to DB: {e}"
-                            )
+                            logger.warning(f"Failed to persist Privy wallet to DB: {e}")
 
             except WalletProviderError as e:
                 logger.warning(

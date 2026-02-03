@@ -31,9 +31,7 @@ class MarketNotFoundError(AaveError):
     def __init__(self, asset: str, chain: str = "ethereum"):
         self.asset = asset
         self.chain = chain
-        super().__init__(
-            f"Aave market not found: {asset} on {chain}"
-        )
+        super().__init__(f"Aave market not found: {asset} on {chain}")
 
 
 class PositionNotFoundError(AaveError):
@@ -50,9 +48,7 @@ class PositionNotFoundError(AaveError):
     def __init__(self, user_address: str, chain: str = "ethereum"):
         self.user_address = user_address
         self.chain = chain
-        super().__init__(
-            f"No Aave position found for {user_address} on {chain}"
-        )
+        super().__init__(f"No Aave position found for {user_address} on {chain}")
 
 
 class InvalidAddressError(AaveError):
@@ -68,9 +64,7 @@ class InvalidAddressError(AaveError):
 
     def __init__(self, address: str, message: str | None = None):
         self.address = address
-        super().__init__(
-            message or f"Invalid address format: {address}"
-        )
+        super().__init__(message or f"Invalid address format: {address}")
 
 
 class InsufficientCollateralError(AaveError):
@@ -134,9 +128,7 @@ class AssetNotCollateralError(AaveError):
 
     def __init__(self, asset: str):
         self.asset = asset
-        super().__init__(
-            f"Asset {asset} cannot be used as collateral on Aave"
-        )
+        super().__init__(f"Asset {asset} cannot be used as collateral on Aave")
 
 
 class BorrowCapReachedError(AaveError):
@@ -153,9 +145,7 @@ class BorrowCapReachedError(AaveError):
     def __init__(self, asset: str, cap: str):
         self.asset = asset
         self.cap = cap
-        super().__init__(
-            f"Borrow cap reached for {asset}: {cap}"
-        )
+        super().__init__(f"Borrow cap reached for {asset}: {cap}")
 
 
 class SupplyCapReachedError(AaveError):
@@ -172,9 +162,7 @@ class SupplyCapReachedError(AaveError):
     def __init__(self, asset: str, cap: str):
         self.asset = asset
         self.cap = cap
-        super().__init__(
-            f"Supply cap reached for {asset}: {cap}"
-        )
+        super().__init__(f"Supply cap reached for {asset}: {cap}")
 
 
 class AaveAPIError(AaveError):
@@ -226,9 +214,7 @@ class UnsupportedChainError(AaveError):
 
     def __init__(self, chain: str):
         self.chain = chain
-        super().__init__(
-            f"Chain not supported by Aave V3: {chain}"
-        )
+        super().__init__(f"Chain not supported by Aave V3: {chain}")
 
 
 class RateLimitError(AaveError):

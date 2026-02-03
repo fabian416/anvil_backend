@@ -360,7 +360,9 @@ class ConversationExportModel:
     status: Mapped[str] = mapped_column(String(20), nullable=False)
 
     # Configuration
-    include_metadata: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    include_metadata: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True
+    )
     include_timestamps: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True
     )

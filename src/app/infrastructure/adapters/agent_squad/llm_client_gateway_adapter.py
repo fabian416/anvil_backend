@@ -60,11 +60,14 @@ Return JSON: {"intent": "...", "confidence": 0.0-1.0, "reasoning": "..."}""",
             max_tokens=300,
         )
 
-        return self._parse_json_response(response, {
-            "intent": "unknown",
-            "confidence": 0.5,
-            "reasoning": response,
-        })
+        return self._parse_json_response(
+            response,
+            {
+                "intent": "unknown",
+                "confidence": 0.5,
+                "reasoning": response,
+            },
+        )
 
     async def recommend_agents(
         self,
@@ -90,10 +93,13 @@ Return JSON: {"agents": ["agent1", "agent2"], "reasoning": "..."}""",
             max_tokens=500,
         )
 
-        return self._parse_json_response(response, {
-            "agents": [],
-            "reasoning": response,
-        })
+        return self._parse_json_response(
+            response,
+            {
+                "agents": [],
+                "reasoning": response,
+            },
+        )
 
     async def plan_workflow(
         self,
@@ -119,9 +125,12 @@ Return JSON: {{"tasks": [{{"agent": "...", "task": "...", "order": 1}}]}}""",
             max_tokens=800,
         )
 
-        return self._parse_json_response(response, {
-            "tasks": [],
-        })
+        return self._parse_json_response(
+            response,
+            {
+                "tasks": [],
+            },
+        )
 
     async def chat(
         self,

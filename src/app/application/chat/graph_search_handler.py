@@ -156,7 +156,7 @@ class ChatGraphSearchHandler:
 
     This service integrates hybrid retrieval with natural language
     understanding to provide chat-friendly protocol search results.
-    
+
     Supports multi-language queries and responses (EN, ES, PT, ZH, FR).
     Uses multilingual embeddings (BAAI/bge-m3) for cross-language search.
     """
@@ -250,9 +250,9 @@ class ChatGraphSearchHandler:
             for word in ["safe", "low-risk", "secure", "conservative"]
         ):
             params["risk_level"] = "LOW"
-            params["query"] = message_lower.replace("low-risk", "").replace(
-                "safe", ""
-            ).strip()
+            params["query"] = (
+                message_lower.replace("low-risk", "").replace("safe", "").strip()
+            )
         elif any(
             word in message_lower
             for word in ["risky", "high-risk", "aggressive", "volatile"]
@@ -356,7 +356,7 @@ class ChatGraphSearchHandler:
 
         # High TVL
         if result.tvl > 1_000_000_000:
-            reasons.append(t["high_tvl"].format(tvl=f"{result.tvl/1e9:.1f}"))
+            reasons.append(t["high_tvl"].format(tvl=f"{result.tvl / 1e9:.1f}"))
 
         # Well audited
         if result.audit_count >= 5:
@@ -405,12 +405,14 @@ class ChatGraphSearchHandler:
     ) -> str:
         """Generate natural language explanation of search results (localized)."""
         t = self._get_translations(language)
-        
+
         if result_count == 0:
             return t["no_results"]
 
         plural = "s" if result_count != 1 else ""
-        explanation_parts = [t["found_protocols"].format(count=result_count, plural=plural)]
+        explanation_parts = [
+            t["found_protocols"].format(count=result_count, plural=plural)
+        ]
 
         # Add filters explanation
         filters = []
@@ -435,7 +437,7 @@ class ChatGraphSearchHandler:
     ) -> List[str]:
         """Generate contextual recommendations based on results (localized)."""
         t = self._get_translations(language)
-        
+
         if not results:
             return [
                 t["broaden_search"],

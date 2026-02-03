@@ -12,20 +12,20 @@ Supported Providers:
 
 Usage:
     scanner = MempoolScanner(alchemy_api_key="...")
-    
+
     # Start scanning
     await scanner.start()
-    
+
     # Check if our transaction is being attacked
     attack = await scanner.detect_attack_on_transaction(
         our_tx=our_pending_tx,
         token_pair=("WETH", "USDC"),
     )
-    
+
     if attack:
         print(f"Attack detected: {attack.type}")
         # Route via Flashbots instead
-    
+
     await scanner.stop()
 """
 
@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 class AttackType(str, Enum):
     """Types of MEV attacks."""
-    
+
     SANDWICH = "sandwich"
     FRONT_RUN = "front_run"
     BACK_RUN = "back_run"
@@ -55,7 +55,7 @@ class AttackType(str, Enum):
 
 class Chain(str, Enum):
     """Supported chains."""
-    
+
     ETHEREUM = "ethereum"
     ARBITRUM = "arbitrum"
     OPTIMISM = "optimism"
@@ -132,7 +132,7 @@ DEX_ROUTERS = {
 @dataclass
 class PendingTransaction:
     """A pending transaction from the mempool."""
-    
+
     hash: str
     from_address: str
     to_address: str
@@ -143,14 +143,14 @@ class PendingTransaction:
     input_data: str
     nonce: int
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
-    
+
     @property
     def effective_gas_price(self) -> int:
         """Get effective gas price for comparison."""
         if self.max_priority_fee:
             return self.max_priority_fee
         return self.gas_price
-    
+
     def is_swap(self) -> bool:
         """Check if transaction is a swap."""
         # Common swap function selectors
@@ -165,12 +165,12 @@ class PendingTransaction:
             "0x12aa3caf",  # swap (1inch)
         ]
         return any(self.input_data.startswith(sel) for sel in swap_selectors)
-    
+
     def get_token_pair(self) -> tuple[str, str] | None:
         """Extract token pair from swap data (simplified)."""
         # In production, would decode input_data
         return None
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -189,7 +189,7 @@ class PendingTransaction:
 @dataclass
 class AttackDetection:
     """Detected MEV attack."""
-    
+
     attack_type: AttackType
     confidence: float  # 0-1
     attacker_address: str
@@ -199,11 +199,11 @@ class AttackDetection:
     gas_price_delta: float  # % higher than victim
     token_pair: tuple[str, str] | None
     detected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
-    
+
     # For sandwich attacks
     front_run_tx: str | None = None
     back_run_tx: str | None = None
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -224,65 +224,65 @@ class AttackDetection:
 @dataclass
 class MempoolScannerConfig:
     """Configuration for mempool scanner."""
-    
+
     chain: Chain = Chain.ETHEREUM
-    
+
     # API keys
     alchemy_api_key: str = ""
     infura_api_key: str = ""
-    
+
     # Provider preference (alchemy or infura)
     preferred_provider: str = "alchemy"  # "alchemy" or "infura"
-    
+
     # Detection thresholds
     gas_price_threshold: float = 0.02  # 2% higher = suspicious
     sandwich_window_blocks: int = 2  # Look within N blocks
     min_trade_value_usd: Decimal = Decimal("100")  # Ignore small trades
-    
+
     # Scanning
     scan_interval_ms: int = 100  # Check every 100ms
     max_pending_txs: int = 1000  # Max txs to track
-    
+
     @property
     def websocket_url(self) -> str:
         """Get WebSocket URL."""
         chain_endpoints = WEBSOCKET_ENDPOINTS.get(self.chain, {})
-        
+
         # Try preferred provider first
         if self.preferred_provider == "infura" and self.infura_api_key:
             if "infura" in chain_endpoints:
                 return chain_endpoints["infura"].format(key=self.infura_api_key)
-        
+
         # Try Alchemy
         if self.alchemy_api_key and "alchemy" in chain_endpoints:
             return chain_endpoints["alchemy"].format(key=self.alchemy_api_key)
-        
+
         # Fallback to Infura
         if self.infura_api_key and "infura" in chain_endpoints:
             return chain_endpoints["infura"].format(key=self.infura_api_key)
-        
+
         return ""
-    
+
     @property
     def rpc_url(self) -> str:
         """Get HTTP RPC URL."""
         chain_endpoints = RPC_ENDPOINTS.get(self.chain, {})
-        
+
         # Try preferred provider first
         if self.preferred_provider == "infura" and self.infura_api_key:
             if "infura" in chain_endpoints:
                 return chain_endpoints["infura"].format(key=self.infura_api_key)
-        
+
         # Try Alchemy
         if self.alchemy_api_key and "alchemy" in chain_endpoints:
             return chain_endpoints["alchemy"].format(key=self.alchemy_api_key)
-        
+
         # Fallback to Infura
         if self.infura_api_key and "infura" in chain_endpoints:
             return chain_endpoints["infura"].format(key=self.infura_api_key)
-        
+
         return ""
-    
+
     @property
     def active_provider(self) -> str:
         """Get which provider is being used."""
@@ -297,36 +297,36 @@ class MempoolScannerConfig:
 
 class MempoolScanner:
     """Real-time mempool scanner for MEV attack detection.
-    
+
     Monitors pending transactions to detect:
     - Sandwich attacks (front-run + back-run)
     - Front-running
     - Arbitrage competing with your trades
-    
+
     Example:
         >>> scanner = MempoolScanner(
         ...     alchemy_api_key="your-key",
         ...     chain=Chain.ETHEREUM,
         ... )
-        >>> 
+        >>>
         >>> # Start scanning
         >>> await scanner.start()
-        >>> 
+        >>>
         >>> # Check for attacks on your transaction
         >>> attack = await scanner.detect_attack_on_transaction(
         ...     our_tx_hash="0x...",
         ...     token_pair=("WETH", "USDC"),
         ...     our_gas_price=50_000_000_000,  # 50 gwei
         ... )
-        >>> 
+        >>>
         >>> if attack:
         ...     print(f"Attack: {attack.attack_type}")
         ...     print(f"Confidence: {attack.confidence * 100:.0f}%")
         ...     print(f"Estimated loss: ${attack.estimated_loss_usd}")
-        >>> 
+        >>>
         >>> await scanner.stop()
     """
-    
+
     def __init__(
         self,
         alchemy_api_key: str = "",
@@ -336,7 +336,7 @@ class MempoolScanner:
         config: MempoolScannerConfig | None = None,
     ):
         """Initialize mempool scanner.
-        
+
         Args:
             alchemy_api_key: Alchemy API key
             infura_api_key: Infura API key
@@ -353,13 +353,13 @@ class MempoolScanner:
                 infura_api_key=infura_api_key,
                 preferred_provider=preferred_provider,
             )
-        
+
         self._pending_txs: dict[str, PendingTransaction] = {}
         self._attack_callbacks: list[Callable[[AttackDetection], None]] = []
         self._running = False
         self._scan_task: asyncio.Task | None = None
         self._http_client: httpx.AsyncClient | None = None
-        
+
         # Statistics
         self._stats = {
             "txs_scanned": 0,
@@ -368,34 +368,34 @@ class MempoolScanner:
             "sandwich_attacks": 0,
             "front_runs": 0,
         }
-    
+
     async def _get_http_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client."""
         if self._http_client is None:
             self._http_client = httpx.AsyncClient(timeout=10.0)
         return self._http_client
-    
+
     async def start(self) -> None:
         """Start mempool scanning.
-        
+
         Begins monitoring pending transactions for MEV attacks.
         """
         if self._running:
             logger.warning("Scanner already running")
             return
-        
+
         if not self.config.websocket_url:
             logger.warning("No WebSocket URL configured, using HTTP polling")
-        
+
         self._running = True
         self._scan_task = asyncio.create_task(self._scan_loop())
-        
+
         logger.info(f"Mempool scanner started for {self.config.chain.value}")
-    
+
     async def stop(self) -> None:
         """Stop mempool scanning."""
         self._running = False
-        
+
         if self._scan_task:
             self._scan_task.cancel()
             try:
@@ -403,60 +403,60 @@ class MempoolScanner:
             except asyncio.CancelledError:
                 pass
             self._scan_task = None
-        
+
         if self._http_client:
             await self._http_client.aclose()
             self._http_client = None
-        
+
         logger.info("Mempool scanner stopped")
-    
+
     def on_attack_detected(self, callback: Callable[[AttackDetection], None]) -> None:
         """Register callback for attack detection.
-        
+
         Args:
             callback: Function to call when attack is detected
         """
         self._attack_callbacks.append(callback)
-    
+
     async def _scan_loop(self) -> None:
         """Main scanning loop."""
         while self._running:
             try:
                 # Fetch pending transactions
                 pending = await self._fetch_pending_transactions()
-                
+
                 for tx in pending:
                     self._pending_txs[tx.hash] = tx
                     self._stats["txs_scanned"] += 1
-                    
+
                     if tx.is_swap():
                         self._stats["swaps_detected"] += 1
-                
+
                 # Clean old transactions
                 self._cleanup_old_txs()
-                
+
                 # Sleep before next scan
                 await asyncio.sleep(self.config.scan_interval_ms / 1000)
-                
+
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 logger.error(f"Scan error: {e}")
                 await asyncio.sleep(1)
-    
+
     async def _fetch_pending_transactions(self) -> list[PendingTransaction]:
         """Fetch pending transactions from mempool.
-        
+
         Returns:
             List of pending transactions
         """
         client = await self._get_http_client()
-        
+
         # Use HTTP RPC URL
         rpc_url = self.config.rpc_url
         if not rpc_url:
             return []
-        
+
         try:
             # Get pending transactions (Alchemy specific)
             response = await client.post(
@@ -469,32 +469,40 @@ class MempoolScanner:
                 },
             )
             response.raise_for_status()
-            
+
             result = response.json()
             block = result.get("result", {})
             transactions = block.get("transactions", [])
-            
+
             pending = []
-            for tx in transactions[:self.config.max_pending_txs]:
+            for tx in transactions[: self.config.max_pending_txs]:
                 if isinstance(tx, dict):
-                    pending.append(PendingTransaction(
-                        hash=tx.get("hash", ""),
-                        from_address=tx.get("from", ""),
-                        to_address=tx.get("to", ""),
-                        value=int(tx.get("value", "0x0"), 16),
-                        gas_price=int(tx.get("gasPrice", "0x0"), 16),
-                        max_fee_per_gas=int(tx.get("maxFeePerGas", "0x0"), 16) if tx.get("maxFeePerGas") else None,
-                        max_priority_fee=int(tx.get("maxPriorityFeePerGas", "0x0"), 16) if tx.get("maxPriorityFeePerGas") else None,
-                        input_data=tx.get("input", "0x"),
-                        nonce=int(tx.get("nonce", "0x0"), 16),
-                    ))
-            
+                    pending.append(
+                        PendingTransaction(
+                            hash=tx.get("hash", ""),
+                            from_address=tx.get("from", ""),
+                            to_address=tx.get("to", ""),
+                            value=int(tx.get("value", "0x0"), 16),
+                            gas_price=int(tx.get("gasPrice", "0x0"), 16),
+                            max_fee_per_gas=int(tx.get("maxFeePerGas", "0x0"), 16)
+                            if tx.get("maxFeePerGas")
+                            else None,
+                            max_priority_fee=int(
+                                tx.get("maxPriorityFeePerGas", "0x0"), 16
+                            )
+                            if tx.get("maxPriorityFeePerGas")
+                            else None,
+                            input_data=tx.get("input", "0x"),
+                            nonce=int(tx.get("nonce", "0x0"), 16),
+                        )
+                    )
+
             return pending
-            
+
         except Exception as e:
             logger.debug(f"Failed to fetch pending txs: {e}")
             return []
-    
+
     def _cleanup_old_txs(self) -> None:
         """Remove old transactions from tracking."""
         if len(self._pending_txs) > self.config.max_pending_txs:
@@ -503,9 +511,9 @@ class MempoolScanner:
                 self._pending_txs.items(),
                 key=lambda x: x[1].timestamp,
             )
-            for tx_hash, _ in sorted_txs[:-self.config.max_pending_txs]:
+            for tx_hash, _ in sorted_txs[: -self.config.max_pending_txs]:
                 del self._pending_txs[tx_hash]
-    
+
     async def detect_attack_on_transaction(
         self,
         our_tx_hash: str | None = None,
@@ -514,55 +522,59 @@ class MempoolScanner:
         our_amount_usd: Decimal = Decimal("0"),
     ) -> AttackDetection | None:
         """Detect if our transaction is being attacked.
-        
+
         Args:
             our_tx_hash: Our pending transaction hash
             token_pair: Token pair we're trading (e.g., ("WETH", "USDC"))
             our_gas_price: Our transaction's gas price
             our_amount_usd: Our trade amount in USD
-            
+
         Returns:
             Attack detection if found, None otherwise
         """
         if not self._pending_txs:
             return None
-        
+
         # Look for suspicious transactions
         for tx_hash, tx in self._pending_txs.items():
             if tx_hash == our_tx_hash:
                 continue
-            
+
             # Skip if not a swap
             if not tx.is_swap():
                 continue
-            
+
             # Check 1: Known MEV bot
-            is_known_bot = tx.from_address.lower() in {a.lower() for a in KNOWN_MEV_BOTS}
-            
+            is_known_bot = tx.from_address.lower() in {
+                a.lower() for a in KNOWN_MEV_BOTS
+            }
+
             # Check 2: Targeting same DEX router
-            is_same_router = tx.to_address.lower() in {r.lower() for r in DEX_ROUTERS.values()}
-            
+            is_same_router = tx.to_address.lower() in {
+                r.lower() for r in DEX_ROUTERS.values()
+            }
+
             # Check 3: Higher gas price (front-running indicator)
             gas_delta = 0.0
             if our_gas_price > 0:
                 gas_delta = (tx.effective_gas_price - our_gas_price) / our_gas_price
-            
+
             is_higher_gas = gas_delta > self.config.gas_price_threshold
-            
+
             # Determine attack type and confidence
             confidence = 0.0
             attack_type = None
-            
+
             if is_known_bot:
                 confidence += 0.5
-            
+
             if is_same_router:
                 confidence += 0.2
-            
+
             if is_higher_gas:
                 confidence += 0.3
                 attack_type = AttackType.FRONT_RUN
-            
+
             # Look for sandwich pattern (another tx from same address with lower gas)
             back_run_tx = None
             for other_hash, other_tx in self._pending_txs.items():
@@ -572,11 +584,11 @@ class MempoolScanner:
                         attack_type = AttackType.SANDWICH
                         confidence += 0.2
                         break
-            
+
             # If confidence is high enough, report attack
             if confidence >= 0.5 and attack_type:
                 estimated_loss = our_amount_usd * Decimal("0.15")  # ~15% typical loss
-                
+
                 attack = AttackDetection(
                     attack_type=attack_type,
                     confidence=min(confidence, 1.0),
@@ -586,59 +598,62 @@ class MempoolScanner:
                     estimated_loss_usd=estimated_loss,
                     gas_price_delta=gas_delta,
                     token_pair=token_pair,
-                    front_run_tx=tx_hash if attack_type == AttackType.SANDWICH else None,
+                    front_run_tx=tx_hash
+                    if attack_type == AttackType.SANDWICH
+                    else None,
                     back_run_tx=back_run_tx,
                 )
-                
+
                 self._stats["attacks_detected"] += 1
                 if attack_type == AttackType.SANDWICH:
                     self._stats["sandwich_attacks"] += 1
                 else:
                     self._stats["front_runs"] += 1
-                
+
                 # Notify callbacks
                 for callback in self._attack_callbacks:
                     try:
                         callback(attack)
                     except Exception as e:
                         logger.error(f"Callback error: {e}")
-                
+
                 logger.warning(
                     f"🚨 {attack_type.value.upper()} detected! "
-                    f"Confidence: {confidence*100:.0f}%, "
+                    f"Confidence: {confidence * 100:.0f}%, "
                     f"Loss: ${estimated_loss}"
                 )
-                
+
                 return attack
-        
+
         return None
-    
+
     async def get_mempool_statistics(self) -> dict[str, Any]:
         """Get mempool statistics.
-        
+
         Returns:
             Statistics about pending transactions
         """
         swaps = [tx for tx in self._pending_txs.values() if tx.is_swap()]
-        
+
         # Gas price distribution
         gas_prices = [tx.effective_gas_price for tx in self._pending_txs.values()]
         avg_gas = sum(gas_prices) / len(gas_prices) if gas_prices else 0
-        
+
         return {
             "pending_transactions": len(self._pending_txs),
             "pending_swaps": len(swaps),
             "average_gas_price_gwei": avg_gas / 1e9,
             "known_mev_bots_active": len([
-                tx for tx in self._pending_txs.values()
+                tx
+                for tx in self._pending_txs.values()
                 if tx.from_address.lower() in {a.lower() for a in KNOWN_MEV_BOTS}
             ]),
             "scanner_stats": self._stats.copy(),
         }
-    
+
     def get_stats(self) -> dict[str, Any]:
         """Get scanner statistics.
-        
+
         Returns:
             Scanner statistics
         """
@@ -655,29 +670,30 @@ class MempoolScanner:
 # MEV Monitor - High-level wrapper
 # ============================================================================
 
+
 class MEVMonitor:
     """High-level MEV monitoring and protection.
-    
+
     Combines mempool scanning with Flashbots protection for
     automatic MEV attack detection and mitigation.
-    
+
     Example:
         >>> monitor = MEVMonitor(alchemy_api_key="...")
         >>> await monitor.start()
-        >>> 
+        >>>
         >>> # Protected transaction submission
         >>> result = await monitor.submit_protected_transaction(
         ...     signed_tx="0x...",
         ...     token_pair=("WETH", "USDC"),
         ...     amount_usd=Decimal("10000"),
         ... )
-        >>> 
+        >>>
         >>> if result["protected"]:
         ...     print("Routed via Flashbots due to attack detection")
-        >>> 
+        >>>
         >>> await monitor.stop()
     """
-    
+
     def __init__(
         self,
         alchemy_api_key: str = "",
@@ -685,7 +701,7 @@ class MEVMonitor:
         chain: Chain = Chain.ETHEREUM,
     ):
         """Initialize MEV monitor.
-        
+
         Args:
             alchemy_api_key: Alchemy API key
             private_key: Private key for Flashbots signing
@@ -698,17 +714,17 @@ class MEVMonitor:
         self.private_key = private_key
         self.chain = chain
         self._alchemy_key = alchemy_api_key
-    
+
     async def start(self) -> None:
         """Start MEV monitoring."""
         await self.scanner.start()
         logger.info("MEV Monitor started")
-    
+
     async def stop(self) -> None:
         """Stop MEV monitoring."""
         await self.scanner.stop()
         logger.info("MEV Monitor stopped")
-    
+
     async def check_transaction_safety(
         self,
         token_pair: tuple[str, str],
@@ -716,12 +732,12 @@ class MEVMonitor:
         gas_price: int,
     ) -> dict[str, Any]:
         """Check if it's safe to submit a transaction.
-        
+
         Args:
             token_pair: Token pair being traded
             amount_usd: Trade amount in USD
             gas_price: Gas price in wei
-            
+
         Returns:
             Safety analysis with recommendation
         """
@@ -731,10 +747,10 @@ class MEVMonitor:
             our_gas_price=gas_price,
             our_amount_usd=amount_usd,
         )
-        
+
         # Get mempool stats
         mempool_stats = await self.scanner.get_mempool_statistics()
-        
+
         # Determine safety level
         if attack:
             safety = "DANGEROUS"
@@ -748,7 +764,7 @@ class MEVMonitor:
         else:
             safety = "SAFE"
             recommendation = "NORMAL_SUBMISSION"
-        
+
         return {
             "safety_level": safety,
             "recommendation": recommendation,
@@ -756,7 +772,7 @@ class MEVMonitor:
             "mempool_stats": mempool_stats,
             "suggested_gas_increase": 1.1 if attack else 1.0,
         }
-    
+
     async def submit_protected_transaction(
         self,
         signed_tx: str,
@@ -764,19 +780,22 @@ class MEVMonitor:
         amount_usd: Decimal = Decimal("0"),
     ) -> dict[str, Any]:
         """Submit transaction with automatic MEV protection.
-        
+
         Checks for attacks and routes via Flashbots if needed.
-        
+
         Args:
             signed_tx: Signed transaction hex string
             token_pair: Token pair being traded
             amount_usd: Trade amount in USD
-            
+
         Returns:
             Submission result with protection info
         """
-        from app.application.ultra.flashbots_client import FlashbotsClient, MEVBlockerClient
-        
+        from app.application.ultra.flashbots_client import (
+            FlashbotsClient,
+            MEVBlockerClient,
+        )
+
         # Check for attacks
         attack = None
         if token_pair:
@@ -784,16 +803,16 @@ class MEVMonitor:
                 token_pair=token_pair,
                 our_amount_usd=amount_usd,
             )
-        
+
         # Decide submission method
         use_flashbots = attack is not None or amount_usd > Decimal("1000")
-        
+
         result = {
             "protected": use_flashbots,
             "attack_detected": attack.to_dict() if attack else None,
             "submission_method": "flashbots" if use_flashbots else "public",
         }
-        
+
         try:
             if use_flashbots:
                 # Use MEV Blocker (simplest)
@@ -808,9 +827,9 @@ class MEVMonitor:
                 # Would submit to public mempool
                 result["status"] = "would_submit_public"
                 result["note"] = "Public submission not implemented for safety"
-                
+
         except Exception as e:
             result["status"] = "failed"
             result["error"] = str(e)
-        
+
         return result

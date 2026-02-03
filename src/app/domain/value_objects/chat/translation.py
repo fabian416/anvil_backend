@@ -62,7 +62,9 @@ class TranslationResult:
             "source_language": self.source_language.value,
             "target_language": self.target_language.value,
             "confidence_score": self.confidence_score,
-            "detected_language": self.detected_language.value if self.detected_language else None,
+            "detected_language": self.detected_language.value
+            if self.detected_language
+            else None,
             "preserved_terms": self.preserved_terms,
             "translation_time_ms": self.translation_time_ms,
         }
@@ -93,26 +95,77 @@ class PreservedTermsConfig:
     def __post_init__(self):
         """Initialize with default DeFi terms."""
         if self.protocols is None:
-            object.__setattr__(self, "protocols", [
-                "Aave", "Compound", "Curve", "Uniswap", "MakerDAO",
-                "Lido", "Morpho", "Balancer", "Convex", "Yearn",
-                "SushiSwap", "PancakeSwap", "QuickSwap",
-            ])
+            object.__setattr__(
+                self,
+                "protocols",
+                [
+                    "Aave",
+                    "Compound",
+                    "Curve",
+                    "Uniswap",
+                    "MakerDAO",
+                    "Lido",
+                    "Morpho",
+                    "Balancer",
+                    "Convex",
+                    "Yearn",
+                    "SushiSwap",
+                    "PancakeSwap",
+                    "QuickSwap",
+                ],
+            )
 
         if self.tokens is None:
-            object.__setattr__(self, "tokens", [
-                "ETH", "WETH", "BTC", "WBTC", "USDC", "USDT", "DAI",
-                "stETH", "wstETH", "CRV", "AAVE", "UNI", "COMP",
-                "LINK", "SNX", "MKR", "YFI", "BAL", "CVX",
-            ])
+            object.__setattr__(
+                self,
+                "tokens",
+                [
+                    "ETH",
+                    "WETH",
+                    "BTC",
+                    "WBTC",
+                    "USDC",
+                    "USDT",
+                    "DAI",
+                    "stETH",
+                    "wstETH",
+                    "CRV",
+                    "AAVE",
+                    "UNI",
+                    "COMP",
+                    "LINK",
+                    "SNX",
+                    "MKR",
+                    "YFI",
+                    "BAL",
+                    "CVX",
+                ],
+            )
 
         if self.technical_terms is None:
-            object.__setattr__(self, "technical_terms", [
-                "APY", "APR", "TVL", "DeFi", "liquidity pool",
-                "smart contract", "gas fee", "slippage", "impermanent loss",
-                "yield farming", "staking", "governance", "oracle",
-                "flash loan", "DEX", "CEX", "collateral",
-            ])
+            object.__setattr__(
+                self,
+                "technical_terms",
+                [
+                    "APY",
+                    "APR",
+                    "TVL",
+                    "DeFi",
+                    "liquidity pool",
+                    "smart contract",
+                    "gas fee",
+                    "slippage",
+                    "impermanent loss",
+                    "yield farming",
+                    "staking",
+                    "governance",
+                    "oracle",
+                    "flash loan",
+                    "DEX",
+                    "CEX",
+                    "collateral",
+                ],
+            )
 
     def should_preserve(self, term: str) -> bool:
         """Check if a term should be preserved."""
@@ -230,7 +283,9 @@ class UserLanguagePreference:
             "translation_mode": self.translation_mode.value,
             "preserve_technical_terms": self.preserve_technical_terms,
             "show_original_on_hover": self.show_original_on_hover,
-            "preferred_terms_config": self.preferred_terms_config.to_dict() if self.preferred_terms_config else None,
+            "preferred_terms_config": self.preferred_terms_config.to_dict()
+            if self.preferred_terms_config
+            else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

@@ -201,13 +201,17 @@ async def demo_pii_redaction(adapter, conversation, messages):
     )
 
     import json
+
     data = json.loads(content.decode())
 
     print(f"✓ Generated: {file_path}")
     print(f"✓ PII redaction applied")
     print(f"\nSample redacted message:")
     for msg in data["messages"]:
-        if "wallet" in msg["content"].lower() or "example.com" in msg["content"].lower():
+        if (
+            "wallet" in msg["content"].lower()
+            or "example.com" in msg["content"].lower()
+        ):
             print(f"  Original contained: wallet address and email")
             print(f"  Redacted: {msg['content']}")
             break
@@ -349,9 +353,13 @@ async def demo_compliance_validation(adapter):
     for format, standard in invalid_combos:
         try:
             adapter.validate_compliance(format, standard)
-            print(f"  - {format.value.upper()} + {standard.value.upper()}: Should have failed!")
+            print(
+                f"  - {format.value.upper()} + {standard.value.upper()}: Should have failed!"
+            )
         except Exception as e:
-            print(f"  - {format.value.upper()} + {standard.value.upper()}: ✓ Correctly rejected")
+            print(
+                f"  - {format.value.upper()} + {standard.value.upper()}: ✓ Correctly rejected"
+            )
 
 
 async def main():

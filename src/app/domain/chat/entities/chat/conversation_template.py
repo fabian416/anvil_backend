@@ -138,8 +138,7 @@ class ConversationTemplate:
     def get_parallel_steps(self) -> List[int]:
         """Get indices of steps that can run in parallel."""
         return [
-            i for i, step in enumerate(self.agent_sequence)
-            if step.parallel_execution
+            i for i, step in enumerate(self.agent_sequence) if step.parallel_execution
         ]
 
     def validate_inputs(self, inputs: Dict[str, Any]) -> tuple[bool, Optional[str]]:

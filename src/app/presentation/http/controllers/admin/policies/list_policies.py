@@ -76,9 +76,15 @@ def create_list_policies_router() -> APIRouter:
         limit: int | None = Query(default=None, ge=1, le=1000),
         chain_type: str | None = Query(default=None),
         include_raw: bool = Query(default=False),
-        refresh: bool = Query(default=False, description="If true, refresh from Privy before returning."),
-        meta_key: str | None = Query(default=None, description="Filter by local metadata key."),
-        meta_value: str | None = Query(default=None, description="Filter by local metadata key value."),
+        refresh: bool = Query(
+            default=False, description="If true, refresh from Privy before returning."
+        ),
+        meta_key: str | None = Query(
+            default=None, description="Filter by local metadata key."
+        ),
+        meta_value: str | None = Query(
+            default=None, description="Filter by local metadata key value."
+        ),
     ) -> ListPoliciesResponse:
         result = await query.execute(
             ListPrivyPoliciesRequest(
@@ -110,4 +116,3 @@ def create_list_policies_router() -> APIRouter:
         )
 
     return router
-

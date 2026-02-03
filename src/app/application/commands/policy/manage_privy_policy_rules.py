@@ -77,7 +77,9 @@ class CreatePrivyPolicyRule:
         current_user = await self._current_user_service.get_current_user()
         authorize(
             CanManageRole(),
-            context=RoleManagementContext(subject=current_user, target_role=UserRole.USER),
+            context=RoleManagementContext(
+                subject=current_user, target_role=UserRole.USER
+            ),
         )
         try:
             result = await self._privy_client.create_policy_rule(
@@ -89,17 +91,26 @@ class CreatePrivyPolicyRule:
             try:
                 policy_raw = await self._privy_client.get_policy(request.policy_id)
                 dto = PrivyPolicyDTO.from_api(policy_raw)
-                actor_user_id = getattr(current_user, "id_", None).value if getattr(current_user, "id_", None) else None
+                actor_user_id = (
+                    getattr(current_user, "id_", None).value
+                    if getattr(current_user, "id_", None)
+                    else None
+                )
                 repo = PolicyRepositorySqla(self._session)
                 await repo.upsert_from_privy(
                     policy=dto,
-                    privy_raw=policy_raw if isinstance(policy_raw, dict) else {"raw": policy_raw},
+                    privy_raw=policy_raw
+                    if isinstance(policy_raw, dict)
+                    else {"raw": policy_raw},
                     actor_user_id=actor_user_id,
                     action="rule_create",
                     extra_audit_payload={"rule_result": result},
                 )
             except Exception:
-                logger.exception("CreatePrivyPolicyRule: failed to refresh cached policy_id=%s", request.policy_id)
+                logger.exception(
+                    "CreatePrivyPolicyRule: failed to refresh cached policy_id=%s",
+                    request.policy_id,
+                )
             logger.info(
                 "CreatePrivyPolicyRule: policy_id=%s rule_id=%s",
                 request.policy_id,
@@ -111,7 +122,9 @@ class CreatePrivyPolicyRule:
         except PrivyClientError as e:
             raise PolicyRuleOperationError(str(e)) from e
         except Exception as e:
-            if isinstance(e, (AuthorizationError, PolicyNotFoundError, PolicyRuleOperationError)):
+            if isinstance(
+                e, (AuthorizationError, PolicyNotFoundError, PolicyRuleOperationError)
+            ):
                 raise
             raise PolicyRuleOperationError(str(e)) from e
 
@@ -133,7 +146,9 @@ class UpdatePrivyPolicyRule:
         current_user = await self._current_user_service.get_current_user()
         authorize(
             CanManageRole(),
-            context=RoleManagementContext(subject=current_user, target_role=UserRole.USER),
+            context=RoleManagementContext(
+                subject=current_user, target_role=UserRole.USER
+            ),
         )
         try:
             result = await self._privy_client.update_policy_rule(
@@ -146,17 +161,29 @@ class UpdatePrivyPolicyRule:
             try:
                 policy_raw = await self._privy_client.get_policy(request.policy_id)
                 dto = PrivyPolicyDTO.from_api(policy_raw)
-                actor_user_id = getattr(current_user, "id_", None).value if getattr(current_user, "id_", None) else None
+                actor_user_id = (
+                    getattr(current_user, "id_", None).value
+                    if getattr(current_user, "id_", None)
+                    else None
+                )
                 repo = PolicyRepositorySqla(self._session)
                 await repo.upsert_from_privy(
                     policy=dto,
-                    privy_raw=policy_raw if isinstance(policy_raw, dict) else {"raw": policy_raw},
+                    privy_raw=policy_raw
+                    if isinstance(policy_raw, dict)
+                    else {"raw": policy_raw},
                     actor_user_id=actor_user_id,
                     action="rule_update",
-                    extra_audit_payload={"rule_result": result, "rule_id": request.rule_id},
+                    extra_audit_payload={
+                        "rule_result": result,
+                        "rule_id": request.rule_id,
+                    },
                 )
             except Exception:
-                logger.exception("UpdatePrivyPolicyRule: failed to refresh cached policy_id=%s", request.policy_id)
+                logger.exception(
+                    "UpdatePrivyPolicyRule: failed to refresh cached policy_id=%s",
+                    request.policy_id,
+                )
             logger.info(
                 "UpdatePrivyPolicyRule: policy_id=%s rule_id=%s",
                 request.policy_id,
@@ -168,7 +195,9 @@ class UpdatePrivyPolicyRule:
         except PrivyClientError as e:
             raise PolicyRuleOperationError(str(e)) from e
         except Exception as e:
-            if isinstance(e, (AuthorizationError, PolicyNotFoundError, PolicyRuleOperationError)):
+            if isinstance(
+                e, (AuthorizationError, PolicyNotFoundError, PolicyRuleOperationError)
+            ):
                 raise
             raise PolicyRuleOperationError(str(e)) from e
 
@@ -190,7 +219,9 @@ class DeletePrivyPolicyRule:
         current_user = await self._current_user_service.get_current_user()
         authorize(
             CanManageRole(),
-            context=RoleManagementContext(subject=current_user, target_role=UserRole.USER),
+            context=RoleManagementContext(
+                subject=current_user, target_role=UserRole.USER
+            ),
         )
         try:
             result = await self._privy_client.delete_policy_rule(
@@ -202,17 +233,29 @@ class DeletePrivyPolicyRule:
             try:
                 policy_raw = await self._privy_client.get_policy(request.policy_id)
                 dto = PrivyPolicyDTO.from_api(policy_raw)
-                actor_user_id = getattr(current_user, "id_", None).value if getattr(current_user, "id_", None) else None
+                actor_user_id = (
+                    getattr(current_user, "id_", None).value
+                    if getattr(current_user, "id_", None)
+                    else None
+                )
                 repo = PolicyRepositorySqla(self._session)
                 await repo.upsert_from_privy(
                     policy=dto,
-                    privy_raw=policy_raw if isinstance(policy_raw, dict) else {"raw": policy_raw},
+                    privy_raw=policy_raw
+                    if isinstance(policy_raw, dict)
+                    else {"raw": policy_raw},
                     actor_user_id=actor_user_id,
                     action="rule_delete",
-                    extra_audit_payload={"rule_result": result, "rule_id": request.rule_id},
+                    extra_audit_payload={
+                        "rule_result": result,
+                        "rule_id": request.rule_id,
+                    },
                 )
             except Exception:
-                logger.exception("DeletePrivyPolicyRule: failed to refresh cached policy_id=%s", request.policy_id)
+                logger.exception(
+                    "DeletePrivyPolicyRule: failed to refresh cached policy_id=%s",
+                    request.policy_id,
+                )
             logger.info(
                 "DeletePrivyPolicyRule: policy_id=%s rule_id=%s",
                 request.policy_id,
@@ -224,7 +267,8 @@ class DeletePrivyPolicyRule:
         except PrivyClientError as e:
             raise PolicyRuleOperationError(str(e)) from e
         except Exception as e:
-            if isinstance(e, (AuthorizationError, PolicyNotFoundError, PolicyRuleOperationError)):
+            if isinstance(
+                e, (AuthorizationError, PolicyNotFoundError, PolicyRuleOperationError)
+            ):
                 raise
             raise PolicyRuleOperationError(str(e)) from e
-

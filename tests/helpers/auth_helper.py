@@ -237,12 +237,13 @@ class AuthHelper:
         from datetime import datetime, timedelta
 
         # Generate user ID and email
-        user_id_int = abs(hash(str(uuid4()))) % (10 ** 9)  # Convert UUID to integer
+        user_id_int = abs(hash(str(uuid4()))) % (10**9)  # Convert UUID to integer
         if email is None:
             email = f"test_{uuid4().hex[:8]}@example.com"
 
         # Hash password
         import bcrypt
+
         password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
         # Insert user into database
@@ -265,7 +266,7 @@ class AuthHelper:
                 "password": password_hash,
                 "created_at": _utc_now(),
                 "updated_at": _utc_now(),
-            }
+            },
         )
         created_user_id = result.scalar_one()
 
@@ -285,7 +286,7 @@ class AuthHelper:
                 "id": session_id,
                 "user_id": created_user_id,
                 "expiration": expiration,
-            }
+            },
         )
 
         await db_session.commit()

@@ -35,9 +35,7 @@ class AssetSymbol(ValueObject[str]):
     def _validate_format(self) -> None:
         """Validate symbol contains only alphanumeric characters."""
         if not self.value.isalnum():
-            raise DomainFieldError(
-                f"Asset symbol must be alphanumeric: {self.value}"
-            )
+            raise DomainFieldError(f"Asset symbol must be alphanumeric: {self.value}")
 
     def _validate_length(self) -> None:
         """Validate symbol length (2-10 characters)."""
@@ -53,9 +51,7 @@ class AssetSymbol(ValueObject[str]):
     def _validate_uppercase(self) -> None:
         """Validate symbol is uppercase."""
         if not self.value.isupper():
-            raise DomainFieldError(
-                f"Asset symbol must be uppercase: {self.value}"
-            )
+            raise DomainFieldError(f"Asset symbol must be uppercase: {self.value}")
 
     @property
     def is_stablecoin(self) -> bool:

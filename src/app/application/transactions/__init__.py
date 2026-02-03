@@ -7,4 +7,3 @@ from app.application.transactions.services.confirmation_service import (
 __all__ = [
     "TransactionConfirmationService",
 ]
-

@@ -21,7 +21,12 @@ import warnings
 from datetime import datetime
 
 
-pytestmark = [pytest.mark.skip(reason="Requires proper LLM mock for multi-step flows"), pytest.mark.asyncio, pytest.mark.integration, pytest.mark.multi_step_flows]
+pytestmark = [
+    pytest.mark.skip(reason="Requires proper LLM mock for multi-step flows"),
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+    pytest.mark.multi_step_flows,
+]
 
 
 class TestMultiStepFlowOrchestration:
@@ -39,8 +44,8 @@ class TestMultiStepFlowOrchestration:
             "/api/v1/guest/chat",
             json={
                 "content": "I want to swap ETH for USDC and then lend the USDC on Aave",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -52,7 +57,9 @@ class TestMultiStepFlowOrchestration:
 
         # Should handle nested swap → lend flow
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 100, "Should provide comprehensive response for nested flow (100+ chars)"
+        assert len(agent_response) > 100, (
+            "Should provide comprehensive response for nested flow (100+ chars)"
+        )
 
     @pytest.mark.llm_validation
     async def test_parallel_flow_execution(self, client: AsyncClient, llm_validator):
@@ -66,8 +73,8 @@ class TestMultiStepFlowOrchestration:
             "/api/v1/guest/chat",
             json={
                 "content": "Check Bitcoin price, Ethereum gas fees, and Solana network status",
-                "language": "en"
-            }
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -78,7 +85,9 @@ class TestMultiStepFlowOrchestration:
 
         # Should handle parallel information requests
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 100, "Should address all parallel requests (100+ chars)"
+        assert len(agent_response) > 100, (
+            "Should address all parallel requests (100+ chars)"
+        )
 
     @pytest.mark.llm_validation
     async def test_flow_state_persistence(self, client: AsyncClient, llm_validator):
@@ -91,10 +100,7 @@ class TestMultiStepFlowOrchestration:
         # First message establishes context
         response1 = await client.post(
             "/api/v1/guest/chat",
-            json={
-                "content": "I want to buy $1000 worth of Bitcoin",
-                "language": "en"
-            }
+            json={"content": "I want to buy $1000 worth of Bitcoin", "language": "en"},
         )
 
         assert response1.status_code == status.HTTP_200_OK
@@ -104,10 +110,7 @@ class TestMultiStepFlowOrchestration:
         # Follow-up message in same conversation should use context
         response2 = await client.post(
             f"/api/v1/guest/chat?conversation_id={conversation_id}",
-            json={
-                "content": "Actually, make it $1500",
-                "language": "en"
-            }
+            json={"content": "Actually, make it $1500", "language": "en"},
         )
 
         assert response2.status_code == status.HTTP_200_OK
@@ -115,7 +118,9 @@ class TestMultiStepFlowOrchestration:
 
         assert "agent_message" in data2
         agent_response = data2["agent_message"]["content"]
-        assert len(agent_response) > 50, "Should understand context from previous message"
+        assert len(agent_response) > 50, (
+            "Should understand context from previous message"
+        )
 
     @pytest.mark.llm_validation
     async def test_flow_timeout_handling(self, client: AsyncClient, llm_validator):
@@ -129,9 +134,9 @@ class TestMultiStepFlowOrchestration:
             "/api/v1/guest/chat",
             json={
                 "content": "Analyze all DeFi protocols, compare their TVL, APY, risks, "
-                          "and recommend the best strategy for yield farming",
-                "language": "en"
-            }
+                "and recommend the best strategy for yield farming",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -142,7 +147,9 @@ class TestMultiStepFlowOrchestration:
 
         # Should complete within timeout or provide partial results
         agent_response = data["agent_message"]["content"]
-        assert len(agent_response) > 50, "Should provide response even for complex query"
+        assert len(agent_response) > 50, (
+            "Should provide response even for complex query"
+        )
 
     @pytest.mark.llm_validation
     async def test_flow_dependency_resolution(self, client: AsyncClient, llm_validator):
@@ -156,9 +163,9 @@ class TestMultiStepFlowOrchestration:
             "/api/v1/guest/chat",
             json={
                 "content": "First check if I have enough ETH, then estimate gas for a swap, "
-                          "then calculate the total cost",
-                "language": "en"
-            }
+                "then calculate the total cost",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -183,9 +190,9 @@ class TestMultiStepFlowOrchestration:
             "/api/v1/guest/chat",
             json={
                 "content": "If ETH price is above $2000, recommend buying, "
-                          "otherwise suggest waiting",
-                "language": "en"
-            }
+                "otherwise suggest waiting",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -210,9 +217,9 @@ class TestMultiStepFlowOrchestration:
             "/api/v1/guest/chat",
             json={
                 "content": "Get prices for BTC, ETH, and SOL, then calculate my total "
-                          "portfolio value if I have 0.1 BTC, 2 ETH, and 100 SOL",
-                "language": "en"
-            }
+                "portfolio value if I have 0.1 BTC, 2 ETH, and 100 SOL",
+                "language": "en",
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK

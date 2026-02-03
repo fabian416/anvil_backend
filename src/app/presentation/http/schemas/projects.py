@@ -1,4 +1,5 @@
 """Pydantic schemas for projects APIs."""
+
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from uuid import UUID
@@ -9,6 +10,7 @@ from pydantic import BaseModel, Field, ConfigDict
 # Project Schemas
 class ProjectBase(BaseModel):
     """Base project schema."""
+
     name: str
     description: Optional[str] = None
     icon: Optional[str] = None
@@ -27,6 +29,7 @@ class ProjectBase(BaseModel):
 
 class ProjectCreate(ProjectBase):
     """Create project request."""
+
     slug: str
     status: str = "draft"
     visibility: str = "public"
@@ -34,6 +37,7 @@ class ProjectCreate(ProjectBase):
 
 class ProjectUpdate(BaseModel):
     """Update project request."""
+
     name: Optional[str] = None
     description: Optional[str] = None
     icon: Optional[str] = None
@@ -52,6 +56,7 @@ class ProjectUpdate(BaseModel):
 
 class ProjectResponse(ProjectBase):
     """Project response."""
+
     id: UUID
     slug: str
     status: str
@@ -66,6 +71,7 @@ class ProjectResponse(ProjectBase):
 # Knowledge Document Schemas
 class KnowledgeDocumentCreate(BaseModel):
     """Create knowledge document request."""
+
     title: str
     content: str
     doc_type: str
@@ -77,6 +83,7 @@ class KnowledgeDocumentCreate(BaseModel):
 
 class KnowledgeDocumentResponse(BaseModel):
     """Knowledge document response."""
+
     id: UUID
     knowledge_base_id: UUID
     title: str
@@ -95,6 +102,7 @@ class KnowledgeDocumentResponse(BaseModel):
 # Assignment Rule Schemas
 class AssignmentRuleCreate(BaseModel):
     """Create assignment rule request."""
+
     rule_name: str
     condition_type: str
     condition_params: Dict[str, Any]
@@ -104,6 +112,7 @@ class AssignmentRuleCreate(BaseModel):
 
 class AssignmentRuleUpdate(BaseModel):
     """Update assignment rule request."""
+
     rule_name: Optional[str] = None
     condition_params: Optional[Dict[str, Any]] = None
     priority: Optional[int] = None
@@ -113,6 +122,7 @@ class AssignmentRuleUpdate(BaseModel):
 
 class AssignmentRuleResponse(BaseModel):
     """Assignment rule response."""
+
     id: UUID
     project_id: UUID
     rule_name: str
@@ -130,12 +140,14 @@ class AssignmentRuleResponse(BaseModel):
 # User Assignment Schemas
 class UserAssignmentCreate(BaseModel):
     """Create user assignment request."""
+
     user_id: UUID
     assignment_reason: Optional[str] = None
 
 
 class UserAssignmentResponse(BaseModel):
     """User assignment response."""
+
     id: UUID
     user_id: UUID
     project_id: UUID
@@ -151,6 +163,7 @@ class UserAssignmentResponse(BaseModel):
 # User-facing Schemas
 class ProjectSummaryResponse(BaseModel):
     """Project summary for users."""
+
     id: UUID
     slug: str
     name: str
@@ -165,5 +178,6 @@ class ProjectSummaryResponse(BaseModel):
 
 class UserProjectsResponse(BaseModel):
     """User's available projects."""
+
     assigned_projects: List[ProjectSummaryResponse]
     active_project_id: Optional[UUID]

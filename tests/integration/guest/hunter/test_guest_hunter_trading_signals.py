@@ -20,7 +20,7 @@ class TestGuestHunterTradingSignals:
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "What are the trading signals for BTC?", "language": "en"}
+            json={"content": "What are the trading signals for BTC?", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -30,7 +30,10 @@ class TestGuestHunterTradingSignals:
         content = data["agent_message"]["content"]
 
         # Should show trading signals
-        assert any(word in content.lower() for word in ["signal", "buy", "sell", "trading", "trade"])
+        assert any(
+            word in content.lower()
+            for word in ["signal", "buy", "sell", "trading", "trade"]
+        )
         assert "BTC" in content
 
         # Should have enrichment
@@ -46,14 +49,17 @@ class TestGuestHunterTradingSignals:
             assert reg_required.get("required") is False
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_signal_types(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_signal_types(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that trading signals show valid signal types."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH trading signals", "language": "en"}
+            json={"content": "ETH trading signals", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -72,14 +78,17 @@ class TestGuestHunterTradingSignals:
         assert any(signal.lower() in content.lower() for signal in valid_signals)
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_strength_levels(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_strength_levels(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that trading signals show strength levels."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "BTC trading recommendations", "language": "en"}
+            json={"content": "BTC trading recommendations", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -100,9 +109,12 @@ class TestGuestHunterTradingSignals:
             assert "disclaimer" in enrichment
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_multiple_tokens(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_multiple_tokens(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test trading signals for different tokens."""
 
         tokens = ["BTC", "ETH", "SOL"]
@@ -112,7 +124,7 @@ class TestGuestHunterTradingSignals:
         for token in tokens:
             response = await client.post(
                 "/api/v1/guest/chat",
-                json={"content": f"trading signals for {token}", "language": "en"}
+                json={"content": f"trading signals for {token}", "language": "en"},
             )
             assert response.status_code == 200
             data = response.json()
@@ -125,14 +137,17 @@ class TestGuestHunterTradingSignals:
             last_status = response.status_code
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_technical_indicators(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_technical_indicators(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that signals include technical indicators."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH buy sell signals", "language": "en"}
+            json={"content": "ETH buy sell signals", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -145,18 +160,31 @@ class TestGuestHunterTradingSignals:
         assert "signal_strength" in enrichment
 
         # Should mention technical analysis or signal reasoning
-        ta_keywords = ["rsi", "macd", "moving average", "support", "resistance", "indicator", "signal", "strength", "analysis"]
+        ta_keywords = [
+            "rsi",
+            "macd",
+            "moving average",
+            "support",
+            "resistance",
+            "indicator",
+            "signal",
+            "strength",
+            "analysis",
+        ]
         assert any(keyword in content.lower() for keyword in ta_keywords)
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_entry_exit_points(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_entry_exit_points(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that signals provide entry/exit recommendations."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "BTC trading signals", "language": "en"}
+            json={"content": "BTC trading signals", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -173,14 +201,17 @@ class TestGuestHunterTradingSignals:
         assert any(keyword in content.lower() for keyword in price_keywords)
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_stop_loss_recommendations(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_stop_loss_recommendations(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that signals include risk management."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "SOL trading recommendations", "language": "en"}
+            json={"content": "SOL trading recommendations", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -200,14 +231,17 @@ class TestGuestHunterTradingSignals:
         assert any(keyword in content.lower() for keyword in risk_keywords)
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_hunter_tool_tag(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_hunter_tool_tag(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that response includes hunter_tool tag."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "BTC trading signals", "language": "en"}
+            json={"content": "BTC trading signals", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -218,14 +252,17 @@ class TestGuestHunterTradingSignals:
         assert enrichment["hunter_tool"] == "signal_generator"
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_uses_real_data(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_uses_real_data(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that signals use real price and volume data."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH buy sell signals", "language": "en"}
+            json={"content": "ETH buy sell signals", "language": "en"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -240,14 +277,17 @@ class TestGuestHunterTradingSignals:
         assert isinstance(enrichment["signal_type"], str)
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_multilingual_spanish(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_multilingual_spanish(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test trading signals in Spanish."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "señales de trading para BTC", "language": "es"}
+            json={"content": "señales de trading para BTC", "language": "es"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -261,33 +301,42 @@ class TestGuestHunterTradingSignals:
         # assert any(word in content for word in ["Señal", "Signal", "Compra", "Buy", "Venta", "Sell"])
 
         validation = None
+
+
 class TestGuestHunterTradingSignalsStorytellingQuality:
     """Test storytelling and UX quality of trading signal responses."""
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_uses_emojis(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_uses_emojis(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that trading signals use emojis for visual appeal."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "BTC trading signals", "language": "en"}
+            json={"content": "BTC trading signals", "language": "en"},
         )
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
 
         # Should have emoji indicators
-        assert any(emoji in content for emoji in ["📊", "📈", "📉", "🟢", "🔴", "💹", "⚡"])
+        assert any(
+            emoji in content for emoji in ["📊", "📈", "📉", "🟢", "🔴", "💹", "⚡"]
+        )
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_clear_formatting(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_clear_formatting(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that trading signals have clear visual formatting."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH buy sell signals", "language": "en"}
+            json={"content": "ETH buy sell signals", "language": "en"},
         )
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
@@ -299,14 +348,17 @@ class TestGuestHunterTradingSignalsStorytellingQuality:
         assert "\n\n" in content or "\n" in content  # Line breaks
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_clear_recommendations(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_clear_recommendations(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that recommendations are clearly stated."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "SOL trading signals", "language": "en"}
+            json={"content": "SOL trading signals", "language": "en"},
         )
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
@@ -316,31 +368,43 @@ class TestGuestHunterTradingSignalsStorytellingQuality:
         assert any(keyword in content.lower() for keyword in action_keywords)
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_disclaimers(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_disclaimers(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that signals include appropriate disclaimers."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "BTC trading signals", "language": "en"}
+            json={"content": "BTC trading signals", "language": "en"},
         )
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]
 
         # Should have disclaimer language
-        disclaimer_keywords = ["not financial advice", "dyor", "research", "risk", "own decision"]
+        disclaimer_keywords = [
+            "not financial advice",
+            "dyor",
+            "research",
+            "risk",
+            "own decision",
+        ]
         assert any(keyword in content.lower() for keyword in disclaimer_keywords)
 
         validation = None
+
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_trading_signals_educational_context(self, client, llm_validator, csv_tracker):
+    async def test_trading_signals_educational_context(
+        self, client, llm_validator, csv_tracker
+    ):
         """Test that signals provide educational context."""
 
         response = await client.post(
             "/api/v1/guest/chat",
-            json={"content": "ETH trading recommendations", "language": "en"}
+            json={"content": "ETH trading recommendations", "language": "en"},
         )
         assert response.status_code == 200
         content = response.json()["agent_message"]["content"]

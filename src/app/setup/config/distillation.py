@@ -3,13 +3,14 @@ Distillation configuration settings.
 
 Provides granular control over request distillation system.
 """
+
 from typing import Optional
 from pydantic import BaseModel, Field
 
 
 class DistillationRetrySettings(BaseModel):
     """Retry settings for distillation providers."""
-    
+
     enabled: bool = Field(
         default=True,
         description="Enable retry for distillation requests",
@@ -71,7 +72,7 @@ class VertexAISettings(BaseModel):
 
 class DeepInfraSettings(BaseModel):
     """DeepInfra provider settings."""
-    
+
     api_key: str = Field(
         default="",
         description="DeepInfra API key",
@@ -88,7 +89,7 @@ class DeepInfraSettings(BaseModel):
 
 class DistillationTelemetrySettings(BaseModel):
     """Telemetry settings for distillation."""
-    
+
     enabled: bool = Field(
         default=True,
         description="Enable telemetry collection",
@@ -114,10 +115,10 @@ class DistillationTelemetrySettings(BaseModel):
 class DistillationSettings(BaseModel):
     """
     Main distillation system settings.
-    
+
     Controls all aspects of the request distillation system.
     """
-    
+
     enabled: bool = Field(
         default=True,
         description="Master switch for distillation system (env: DISTILLATION_ENABLED)",
@@ -152,7 +153,7 @@ class DistillationSettings(BaseModel):
         default=True,
         description="Allow requests if distillation fails",
     )
-    
+
     # Provider-specific settings
     vertex_ai: VertexAISettings = Field(
         default_factory=VertexAISettings,
@@ -162,19 +163,19 @@ class DistillationSettings(BaseModel):
         default_factory=DeepInfraSettings,
         description="DeepInfra provider configuration",
     )
-    
+
     # Retry settings
     retry: DistillationRetrySettings = Field(
         default_factory=DistillationRetrySettings,
         description="Retry configuration for providers",
     )
-    
+
     # Telemetry settings
     telemetry: DistillationTelemetrySettings = Field(
         default_factory=DistillationTelemetrySettings,
         description="Telemetry configuration",
     )
-    
+
     # Rate limiting (requests per minute)
     rate_limit_per_user: int = Field(
         default=100,
@@ -192,7 +193,7 @@ class DistillationSettings(BaseModel):
 
 class DistillationDisabledError(Exception):
     """Raised when attempting to use disabled distillation system."""
-    
+
     def __init__(self, message: str = "Distillation system is disabled"):
         self.message = message
         super().__init__(self.message)

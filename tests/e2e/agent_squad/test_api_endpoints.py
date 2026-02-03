@@ -40,7 +40,7 @@ class TestAgentSquadAPIEndpoints:
     def auth_headers(self) -> dict:
         """
         Mock authentication headers.
-        
+
         In real tests, would use actual JWT token from login endpoint.
         """
         return {
@@ -54,7 +54,7 @@ class TestAgentSquadAPIEndpoints:
     ):
         """
         Test basic message sending flow.
-        
+
         Flow:
         1. Create conversation
         2. Send message with Agent Squad
@@ -95,7 +95,7 @@ class TestAgentSquadAPIEndpoints:
     ):
         """
         Test sending message with forced agent routing.
-        
+
         Verifies:
         - force_agent parameter bypasses intent classification
         - Correct agent is used
@@ -127,7 +127,7 @@ class TestAgentSquadAPIEndpoints:
     ):
         """
         Test supervisor workflow execution.
-        
+
         Flow:
         1. Submit complex task
         2. Supervisor plans workflow
@@ -179,7 +179,7 @@ class TestAgentSquadAPIEndpoints:
     ):
         """
         Test listing enabled agents.
-        
+
         Verifies:
         - All enabled agents returned
         - Agent metadata included (model, temperature, etc.)
@@ -216,7 +216,7 @@ class TestAgentSquadAPIEndpoints:
     ):
         """
         Test listing agents filtered by subscription tier.
-        
+
         Verifies:
         - Free tier: 5 agents
         - Pro tier: 10 agents
@@ -259,7 +259,7 @@ class TestAgentSquadAPIEndpoints:
     ):
         """
         Test conversation context is preserved across multiple messages.
-        
+
         Flow:
         1. Send first message
         2. Send follow-up message (references first)
@@ -289,7 +289,10 @@ class TestAgentSquadAPIEndpoints:
         if response1.status_code == 201 and response2.status_code == 201:
             data2 = response2.json()
             # Response should reference Aave (context preserved)
-            assert "aave" in data2["content"].lower() or "protocol" in data2["content"].lower()
+            assert (
+                "aave" in data2["content"].lower()
+                or "protocol" in data2["content"].lower()
+            )
 
     async def test_agent_routing_accuracy(
         self,
@@ -298,7 +301,7 @@ class TestAgentSquadAPIEndpoints:
     ):
         """
         Test intent classification routes to correct agents.
-        
+
         Verifies:
         - Trading intent -> Execution agent
         - Research intent -> Research agent
@@ -333,7 +336,7 @@ class TestAgentSquadAPIEndpoints:
     ):
         """
         Test error handling for various failure scenarios.
-        
+
         Scenarios:
         - Invalid conversation ID
         - Empty message content
@@ -367,7 +370,7 @@ class TestAgentSquadAPIEndpoints:
     ):
         """
         Test telemetry metrics are tracked correctly.
-        
+
         Verifies:
         - Latency is measured
         - Token usage is tracked

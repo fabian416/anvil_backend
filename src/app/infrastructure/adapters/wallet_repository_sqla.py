@@ -151,11 +151,12 @@ class SqlaWalletRepository(WalletRepository):
             # Check if transaction is in failed state and rollback if needed
             try:
                 from sqlalchemy import text
+
                 await self._session.execute(text("SELECT 1"))
             except Exception:
                 # Transaction is in failed state, rollback first
                 await self._session.rollback()
-            
+
             table = self._get_table()
             stmt: Select = (
                 select(table)
@@ -327,11 +328,12 @@ class SqlaWalletRepository(WalletRepository):
             # Check if transaction is in failed state and rollback if needed
             try:
                 from sqlalchemy import text
+
                 await self._session.execute(text("SELECT 1"))
             except Exception:
                 # Transaction is in failed state, rollback first
                 await self._session.rollback()
-            
+
             table = self._get_table()
             now = datetime.now(UTC)
 
@@ -372,6 +374,7 @@ class SqlaWalletRepository(WalletRepository):
             # On conflict update existing row
             # Use index_elements with LOWER() to match our case-insensitive unique index
             from sqlalchemy import func
+
             stmt = stmt.on_conflict_do_update(
                 index_elements=[table.c.user_id, func.lower(table.c.address)],
                 set_={
@@ -395,6 +398,7 @@ class SqlaWalletRepository(WalletRepository):
         except SQLAlchemyError as error:
             # Log the actual error for debugging
             import logging
+
             logger = logging.getLogger(__name__)
             logger.error(
                 f"Error in wallet upsert for user {user_id.value}, address {address[:10]}...: {error}",
@@ -509,9 +513,8 @@ class SqlaWalletRepository(WalletRepository):
         """Get wallet counts grouped by provider."""
         try:
             table = self._get_table()
-            stmt = (
-                select(table.c.provider, func.count().label("count"))
-                .group_by(table.c.provider)
+            stmt = select(table.c.provider, func.count().label("count")).group_by(
+                table.c.provider
             )
             result = await self._session.execute(stmt)
             rows = result.all()

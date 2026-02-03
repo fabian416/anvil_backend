@@ -88,9 +88,7 @@ class UserPreferencesService:
         # TODO: Save preferences
         return saved_search
 
-    async def delete_saved_search(
-        self, user_id: UUID, search_id: UUID
-    ) -> bool:
+    async def delete_saved_search(self, user_id: UUID, search_id: UUID) -> bool:
         """Delete a saved search."""
         prefs = await self.get_user_preferences(user_id)
         removed = prefs.search_settings.remove_saved_search(search_id)

@@ -16,10 +16,10 @@ Alternative Relays (also free):
 
 Usage:
     client = FlashbotsClient(private_key="0x...")
-    
+
     # Submit single transaction privately
     result = await client.send_private_transaction(signed_tx)
-    
+
     # Submit bundle for atomic execution
     result = await client.send_bundle(
         transactions=[signed_tx1, signed_tx2],
@@ -40,7 +40,7 @@ import httpx
 
 class Chain(str, Enum):
     """Supported chains for Flashbots."""
-    
+
     ETHEREUM = "ethereum"
     GOERLI = "goerli"  # Testnet
     SEPOLIA = "sepolia"  # Testnet
@@ -48,7 +48,7 @@ class Chain(str, Enum):
 
 class RelayType(str, Enum):
     """MEV relay types."""
-    
+
     FLASHBOTS = "flashbots"
     MEV_BLOCKER = "mev_blocker"
     EDEN = "eden"
@@ -72,7 +72,7 @@ RELAY_ENDPOINTS = {
 
 class BundleStatus(str, Enum):
     """Bundle submission status."""
-    
+
     PENDING = "pending"
     SUBMITTED = "submitted"
     INCLUDED = "included"
@@ -82,7 +82,7 @@ class BundleStatus(str, Enum):
 @dataclass
 class BundleResult:
     """Result of bundle submission."""
-    
+
     bundle_hash: str
     status: BundleStatus
     target_block: int
@@ -92,7 +92,7 @@ class BundleResult:
     gas_used: int | None = None
     effective_gas_price: int | None = None
     submitted_at: datetime = field(default_factory=lambda: datetime.now(UTC))
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -111,50 +111,52 @@ class BundleResult:
 @dataclass
 class FlashbotsConfig:
     """Configuration for Flashbots client."""
-    
+
     chain: Chain = Chain.ETHEREUM
     relay_type: RelayType = RelayType.FLASHBOTS
-    
+
     # Signing
     private_key: str = ""  # For signing bundles (required for real execution)
-    
+
     # Bundle settings
     max_block_number: int = 25  # Try N blocks ahead
     simulation_enabled: bool = True
-    
+
     # Timeouts
     request_timeout: float = 10.0
-    
+
     @property
     def relay_url(self) -> str:
         """Get relay URL for current chain."""
         chain_relays = RELAY_ENDPOINTS.get(self.chain, {})
-        return chain_relays.get(self.relay_type, RELAY_ENDPOINTS[Chain.ETHEREUM][RelayType.FLASHBOTS])
+        return chain_relays.get(
+            self.relay_type, RELAY_ENDPOINTS[Chain.ETHEREUM][RelayType.FLASHBOTS]
+        )
 
 
 class FlashbotsClient:
     """Client for Flashbots MEV protection relay.
-    
+
     Flashbots is FREE - no API key needed.
-    
+
     Features:
     - Private transaction submission (bypass public mempool)
     - Bundle submission (atomic multi-tx execution)
     - Bundle simulation (dry-run before submission)
     - Bundle status checking
-    
+
     Example:
         >>> client = FlashbotsClient(
         ...     private_key="0x...",
         ...     chain=Chain.ETHEREUM,
         ... )
-        >>> 
+        >>>
         >>> # Send private transaction
         >>> result = await client.send_private_transaction(
         ...     signed_tx="0x..."
         ... )
         >>> print(f"Status: {result.status}")
-        >>> 
+        >>>
         >>> # Send bundle
         >>> result = await client.send_bundle(
         ...     transactions=["0x...", "0x..."],
@@ -162,7 +164,7 @@ class FlashbotsClient:
         ... )
         >>> print(f"Bundle hash: {result.bundle_hash}")
     """
-    
+
     def __init__(
         self,
         private_key: str = "",
@@ -171,7 +173,7 @@ class FlashbotsClient:
         config: FlashbotsConfig | None = None,
     ):
         """Initialize Flashbots client.
-        
+
         Args:
             private_key: Private key for signing bundles (hex string)
             chain: Target chain
@@ -186,10 +188,10 @@ class FlashbotsClient:
                 relay_type=relay_type,
                 private_key=private_key,
             )
-        
+
         self._client: httpx.AsyncClient | None = None
         self._request_id = 0
-    
+
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client."""
         if self._client is None:
@@ -200,24 +202,24 @@ class FlashbotsClient:
                 },
             )
         return self._client
-    
+
     async def close(self) -> None:
         """Close HTTP client."""
         if self._client:
             await self._client.aclose()
             self._client = None
-    
+
     def _next_request_id(self) -> int:
         """Get next JSON-RPC request ID."""
         self._request_id += 1
         return self._request_id
-    
+
     def _calculate_bundle_hash(self, transactions: list[str]) -> str:
         """Calculate bundle hash from transactions.
-        
+
         Args:
             transactions: List of signed transaction hex strings
-            
+
         Returns:
             Bundle hash (keccak256)
         """
@@ -225,43 +227,43 @@ class FlashbotsClient:
         # In production, would use proper keccak256
         combined = "".join(transactions)
         return "0x" + hashlib.sha256(combined.encode()).hexdigest()
-    
+
     async def _call_relay(
         self,
         method: str,
         params: list[Any],
     ) -> dict[str, Any]:
         """Make JSON-RPC call to relay.
-        
+
         Args:
             method: JSON-RPC method
             params: Method parameters
-            
+
         Returns:
             Response result
         """
         client = await self._get_client()
-        
+
         payload = {
             "jsonrpc": "2.0",
             "id": self._next_request_id(),
             "method": method,
             "params": params,
         }
-        
+
         response = await client.post(
             self.config.relay_url,
             json=payload,
         )
         response.raise_for_status()
-        
+
         result = response.json()
-        
+
         if "error" in result:
             raise Exception(f"Relay error: {result['error']}")
-        
+
         return result.get("result", {})
-    
+
     async def send_bundle(
         self,
         transactions: list[str],
@@ -271,20 +273,20 @@ class FlashbotsClient:
         reverting_tx_hashes: list[str] | None = None,
     ) -> BundleResult:
         """Submit bundle to Flashbots relay.
-        
+
         Bundles are atomic - all transactions execute or none do.
         Transactions bypass the public mempool, preventing sandwich attacks.
-        
+
         Args:
             transactions: List of signed transaction hex strings
             target_block: Block number to target for inclusion
             min_timestamp: Minimum block timestamp (optional)
             max_timestamp: Maximum block timestamp (optional)
             reverting_tx_hashes: Allow these txs to revert (optional)
-            
+
         Returns:
             Bundle submission result
-            
+
         Example:
             >>> result = await client.send_bundle(
             ...     transactions=["0x...", "0x..."],
@@ -298,22 +300,22 @@ class FlashbotsClient:
             "txs": transactions,
             "blockNumber": hex(target_block),
         }
-        
+
         if min_timestamp is not None:
             bundle_params["minTimestamp"] = min_timestamp
         if max_timestamp is not None:
             bundle_params["maxTimestamp"] = max_timestamp
         if reverting_tx_hashes:
             bundle_params["revertingTxHashes"] = reverting_tx_hashes
-        
+
         bundle_hash = self._calculate_bundle_hash(transactions)
-        
+
         try:
             # Simulate first if enabled
             simulation_success = None
             simulation_error = None
             gas_used = None
-            
+
             if self.config.simulation_enabled:
                 sim_result = await self.simulate_bundle(
                     transactions=transactions,
@@ -322,7 +324,7 @@ class FlashbotsClient:
                 simulation_success = sim_result.get("success", False)
                 simulation_error = sim_result.get("error")
                 gas_used = sim_result.get("totalGasUsed")
-                
+
                 if not simulation_success:
                     return BundleResult(
                         bundle_hash=bundle_hash,
@@ -332,13 +334,13 @@ class FlashbotsClient:
                         simulation_success=False,
                         simulation_error=simulation_error or "Simulation failed",
                     )
-            
+
             # Submit bundle
             await self._call_relay(
                 method="eth_sendBundle",
                 params=[bundle_params],
             )
-            
+
             return BundleResult(
                 bundle_hash=bundle_hash,
                 status=BundleStatus.SUBMITTED,
@@ -347,7 +349,7 @@ class FlashbotsClient:
                 simulation_success=simulation_success,
                 gas_used=gas_used,
             )
-            
+
         except Exception as e:
             return BundleResult(
                 bundle_hash=bundle_hash,
@@ -357,7 +359,7 @@ class FlashbotsClient:
                 simulation_success=False,
                 simulation_error=str(e),
             )
-    
+
     async def simulate_bundle(
         self,
         transactions: list[str],
@@ -365,17 +367,17 @@ class FlashbotsClient:
         state_block: str = "latest",
     ) -> dict[str, Any]:
         """Simulate bundle execution.
-        
+
         Dry-run the bundle to check if it will succeed.
-        
+
         Args:
             transactions: List of signed transaction hex strings
             target_block: Block number to target
             state_block: State block for simulation ("latest" or block number)
-            
+
         Returns:
             Simulation result with gas usage and success status
-            
+
         Example:
             >>> result = await client.simulate_bundle(
             ...     transactions=["0x..."],
@@ -387,13 +389,15 @@ class FlashbotsClient:
         try:
             result = await self._call_relay(
                 method="eth_callBundle",
-                params=[{
-                    "txs": transactions,
-                    "blockNumber": hex(target_block),
-                    "stateBlockNumber": state_block,
-                }],
+                params=[
+                    {
+                        "txs": transactions,
+                        "blockNumber": hex(target_block),
+                        "stateBlockNumber": state_block,
+                    }
+                ],
             )
-            
+
             # Parse simulation results
             return {
                 "success": True,
@@ -401,13 +405,13 @@ class FlashbotsClient:
                 "results": result.get("results", []),
                 "coinbaseDiff": result.get("coinbaseDiff"),
             }
-            
+
         except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
             }
-    
+
     async def send_private_transaction(
         self,
         signed_tx: str,
@@ -415,17 +419,17 @@ class FlashbotsClient:
         fast: bool = True,
     ) -> BundleResult:
         """Send single transaction privately.
-        
+
         Bypasses public mempool to prevent frontrunning.
-        
+
         Args:
             signed_tx: Signed transaction hex string
             max_block_number: Maximum block to include in
             fast: Use fast mode (higher priority)
-            
+
         Returns:
             Submission result
-            
+
         Example:
             >>> result = await client.send_private_transaction(
             ...     signed_tx="0x...",
@@ -437,18 +441,18 @@ class FlashbotsClient:
             "tx": signed_tx,
             "fast": fast,
         }
-        
+
         if max_block_number:
             tx_params["maxBlockNumber"] = hex(max_block_number)
-        
+
         bundle_hash = self._calculate_bundle_hash([signed_tx])
-        
+
         try:
             result = await self._call_relay(
                 method="eth_sendPrivateTransaction",
                 params=[tx_params],
             )
-            
+
             return BundleResult(
                 bundle_hash=bundle_hash,
                 status=BundleStatus.SUBMITTED,
@@ -456,7 +460,7 @@ class FlashbotsClient:
                 transactions=[signed_tx],
                 simulation_success=True,
             )
-            
+
         except Exception as e:
             return BundleResult(
                 bundle_hash=bundle_hash,
@@ -466,23 +470,23 @@ class FlashbotsClient:
                 simulation_success=False,
                 simulation_error=str(e),
             )
-    
+
     async def get_bundle_stats(
         self,
         bundle_hash: str,
         target_block: int,
     ) -> dict[str, Any]:
         """Get bundle statistics.
-        
+
         Check if bundle was included and get execution details.
-        
+
         Args:
             bundle_hash: Bundle hash from submission
             target_block: Target block number
-            
+
         Returns:
             Bundle statistics
-            
+
         Example:
             >>> stats = await client.get_bundle_stats(
             ...     bundle_hash="0x...",
@@ -493,19 +497,21 @@ class FlashbotsClient:
         try:
             return await self._call_relay(
                 method="flashbots_getBundleStats",
-                params=[{
-                    "bundleHash": bundle_hash,
-                    "blockNumber": hex(target_block),
-                }],
+                params=[
+                    {
+                        "bundleHash": bundle_hash,
+                        "blockNumber": hex(target_block),
+                    }
+                ],
             )
         except Exception as e:
             return {"error": str(e)}
-    
+
     async def get_user_stats(self) -> dict[str, Any]:
         """Get user statistics.
-        
+
         Returns lifetime stats for the signing address.
-        
+
         Returns:
             User statistics including success rate
         """
@@ -516,19 +522,27 @@ class FlashbotsClient:
             )
         except Exception as e:
             return {"error": str(e)}
-    
+
     def get_supported_relays(self) -> dict[str, str]:
         """Get all supported relay endpoints.
-        
+
         Returns:
             Dictionary of relay name to URL
         """
         return {
-            "Flashbots (Ethereum)": RELAY_ENDPOINTS[Chain.ETHEREUM][RelayType.FLASHBOTS],
-            "MEV Blocker (Free, no signing)": RELAY_ENDPOINTS[Chain.ETHEREUM][RelayType.MEV_BLOCKER],
+            "Flashbots (Ethereum)": RELAY_ENDPOINTS[Chain.ETHEREUM][
+                RelayType.FLASHBOTS
+            ],
+            "MEV Blocker (Free, no signing)": RELAY_ENDPOINTS[Chain.ETHEREUM][
+                RelayType.MEV_BLOCKER
+            ],
             "Eden Network": RELAY_ENDPOINTS[Chain.ETHEREUM][RelayType.EDEN],
-            "Flashbots (Goerli Testnet)": RELAY_ENDPOINTS[Chain.GOERLI][RelayType.FLASHBOTS],
-            "Flashbots (Sepolia Testnet)": RELAY_ENDPOINTS[Chain.SEPOLIA][RelayType.FLASHBOTS],
+            "Flashbots (Goerli Testnet)": RELAY_ENDPOINTS[Chain.GOERLI][
+                RelayType.FLASHBOTS
+            ],
+            "Flashbots (Sepolia Testnet)": RELAY_ENDPOINTS[Chain.SEPOLIA][
+                RelayType.FLASHBOTS
+            ],
         }
 
 
@@ -536,53 +550,54 @@ class FlashbotsClient:
 # MEV Blocker Client (Simpler Alternative)
 # ============================================================================
 
+
 class MEVBlockerClient:
     """Simple MEV Blocker client.
-    
+
     MEV Blocker is the simplest option:
     - No API key
     - No bundle signing
     - Just use as RPC endpoint
-    
+
     Usage:
         Simply replace your RPC URL with:
         https://rpc.mevblocker.io
-        
+
     Example with Web3:
         from web3 import Web3
         w3 = Web3(Web3.HTTPProvider("https://rpc.mevblocker.io"))
         w3.eth.send_raw_transaction(signed_tx)
     """
-    
+
     RPC_URL = "https://rpc.mevblocker.io"
-    
+
     def __init__(self):
         """Initialize MEV Blocker client."""
         self._client: httpx.AsyncClient | None = None
-    
+
     async def _get_client(self) -> httpx.AsyncClient:
         """Get HTTP client."""
         if self._client is None:
             self._client = httpx.AsyncClient(timeout=10.0)
         return self._client
-    
+
     async def close(self) -> None:
         """Close client."""
         if self._client:
             await self._client.aclose()
             self._client = None
-    
+
     async def send_raw_transaction(self, signed_tx: str) -> str:
         """Send raw transaction via MEV Blocker.
-        
+
         Args:
             signed_tx: Signed transaction hex string
-            
+
         Returns:
             Transaction hash
         """
         client = await self._get_client()
-        
+
         response = await client.post(
             self.RPC_URL,
             json={
@@ -593,10 +608,10 @@ class MEVBlockerClient:
             },
         )
         response.raise_for_status()
-        
+
         result = response.json()
-        
+
         if "error" in result:
             raise Exception(f"MEV Blocker error: {result['error']}")
-        
+
         return result.get("result", "")

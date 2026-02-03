@@ -31,11 +31,13 @@ class TestGetAdminMetricsOverviewHandler:
         repo = MagicMock()
         repo.count_all = AsyncMock(return_value=100)
         repo.count_active_wallets = AsyncMock(return_value=80)
-        repo.count_by_provider = AsyncMock(side_effect=lambda p: {
-            WalletProvider.PRIVY: 50,
-            WalletProvider.IMPORTED: 30,
-            WalletProvider.EXTERNAL: 20,
-        }.get(p, 0))
+        repo.count_by_provider = AsyncMock(
+            side_effect=lambda p: {
+                WalletProvider.PRIVY: 50,
+                WalletProvider.IMPORTED: 30,
+                WalletProvider.EXTERNAL: 20,
+            }.get(p, 0)
+        )
         return repo
 
     @pytest.fixture
@@ -43,11 +45,13 @@ class TestGetAdminMetricsOverviewHandler:
         """Create a mock transaction repository."""
         repo = MagicMock()
         repo.count_all = AsyncMock(return_value=500)
-        repo.count_by_status = AsyncMock(side_effect=lambda s: {
-            TransactionStatus.PENDING: 10,
-            TransactionStatus.SUCCESS: 450,
-            TransactionStatus.FAILED: 40,
-        }.get(s, 0))
+        repo.count_by_status = AsyncMock(
+            side_effect=lambda s: {
+                TransactionStatus.PENDING: 10,
+                TransactionStatus.SUCCESS: 450,
+                TransactionStatus.FAILED: 40,
+            }.get(s, 0)
+        )
         repo.get_unique_user_count = AsyncMock(return_value=50)
         return repo
 
@@ -147,11 +151,13 @@ class TestGetTransactionTimeSeriesHandler:
         """Create a mock transaction repository."""
         repo = MagicMock()
         now = datetime.now(UTC)
-        repo.get_daily_transaction_counts = AsyncMock(return_value=[
-            (now - timedelta(days=2), 10),
-            (now - timedelta(days=1), 25),
-            (now, 30),
-        ])
+        repo.get_daily_transaction_counts = AsyncMock(
+            return_value=[
+                (now - timedelta(days=2), 10),
+                (now - timedelta(days=1), 25),
+                (now, 30),
+            ]
+        )
         repo.count_transactions_in_range = AsyncMock(return_value=65)
         return repo
 
@@ -233,11 +239,13 @@ class TestGetWalletTimeSeriesHandler:
         """Create a mock wallet repository."""
         repo = MagicMock()
         now = datetime.now(UTC)
-        repo.get_daily_wallet_counts = AsyncMock(return_value=[
-            (now - timedelta(days=2), 5),
-            (now - timedelta(days=1), 8),
-            (now, 12),
-        ])
+        repo.get_daily_wallet_counts = AsyncMock(
+            return_value=[
+                (now - timedelta(days=2), 5),
+                (now - timedelta(days=1), 8),
+                (now, 12),
+            ]
+        )
         repo.count_wallets_created_in_range = AsyncMock(return_value=25)
         return repo
 
@@ -277,11 +285,13 @@ class TestGetUserActivityTimeSeriesHandler:
         """Create a mock transaction repository."""
         repo = MagicMock()
         now = datetime.now(UTC)
-        repo.get_active_users_per_day = AsyncMock(return_value=[
-            (now - timedelta(days=2), 15),
-            (now - timedelta(days=1), 20),
-            (now, 25),
-        ])
+        repo.get_active_users_per_day = AsyncMock(
+            return_value=[
+                (now - timedelta(days=2), 15),
+                (now - timedelta(days=1), 20),
+                (now, 25),
+            ]
+        )
         return repo
 
     @pytest.fixture
@@ -321,11 +331,13 @@ class TestGetWalletDistributionHandler:
     def mock_wallet_repository(self) -> MagicMock:
         """Create a mock wallet repository."""
         repo = MagicMock()
-        repo.get_wallet_counts_by_provider = AsyncMock(return_value={
-            "privy": 50,
-            "imported": 30,
-            "external": 20,
-        })
+        repo.get_wallet_counts_by_provider = AsyncMock(
+            return_value={
+                "privy": 50,
+                "imported": 30,
+                "external": 20,
+            }
+        )
         return repo
 
     @pytest.fixture
@@ -363,19 +375,25 @@ class TestGetTransactionDistributionHandler:
         """Create a mock transaction repository."""
         repo = MagicMock()
         repo.count_all = AsyncMock(return_value=100)
-        repo.get_transaction_counts_by_chain = AsyncMock(return_value={
-            "ethereum": 60,
-            "polygon": 40,
-        })
-        repo.get_transaction_counts_by_status = AsyncMock(return_value={
-            "SUCCESS": 80,
-            "PENDING": 15,
-            "FAILED": 5,
-        })
-        repo.get_transaction_counts_by_type = AsyncMock(return_value={
-            "SEND": 70,
-            "SWAP": 30,
-        })
+        repo.get_transaction_counts_by_chain = AsyncMock(
+            return_value={
+                "ethereum": 60,
+                "polygon": 40,
+            }
+        )
+        repo.get_transaction_counts_by_status = AsyncMock(
+            return_value={
+                "SUCCESS": 80,
+                "PENDING": 15,
+                "FAILED": 5,
+            }
+        )
+        repo.get_transaction_counts_by_type = AsyncMock(
+            return_value={
+                "SEND": 70,
+                "SWAP": 30,
+            }
+        )
         return repo
 
     @pytest.fixture

@@ -44,12 +44,12 @@ async def calculate_pagerank(
     max_iterations: int = Query(100, ge=10, le=500, description="Max iterations"),
 ) -> PageRankListResponse:
     """Calculate PageRank for protocols"""
-    
+
     results = await interactor.execute(
         damping_factor=damping_factor,
         max_iterations=max_iterations,
     )
-    
+
     return PageRankListResponse(
         results=[
             PageRankResponse(
@@ -80,9 +80,9 @@ async def detect_communities(
     algorithm: str = Query("label_propagation", description="Detection algorithm"),
 ) -> CommunityListResponse:
     """Detect protocol communities"""
-    
+
     communities = await interactor.execute(algorithm=algorithm)
-    
+
     return CommunityListResponse(
         communities=[
             CommunityResponse(
@@ -109,12 +109,14 @@ async def detect_communities(
 async def calculate_centrality(
     authorization: Annotated[str, Security(bearer_scheme)],
     interactor: FromDishka[CalculateCentralityInteractor],
-    protocol_id: Optional[UUID] = Query(None, description="Specific protocol (optional)"),
+    protocol_id: Optional[UUID] = Query(
+        None, description="Specific protocol (optional)"
+    ),
 ) -> CentralityListResponse:
     """Calculate centrality metrics"""
-    
+
     results = await interactor.execute(protocol_id=protocol_id)
-    
+
     return CentralityListResponse(
         results=[
             CentralityResponse(
@@ -144,17 +146,19 @@ async def simulate_contagion(
     protocol_id: UUID,
     authorization: Annotated[str, Security(bearer_scheme)],
     interactor: FromDishka[SimulateContagionInteractor],
-    propagation_probability: float = Query(0.8, ge=0.0, le=1.0, description="Cascade probability"),
+    propagation_probability: float = Query(
+        0.8, ge=0.0, le=1.0, description="Cascade probability"
+    ),
     max_depth: int = Query(5, ge=1, le=10, description="Max cascade depth"),
 ) -> ContagionSimulationResponse:
     """Simulate contagion cascade"""
-    
+
     result = await interactor.execute(
         origin_protocol_id=protocol_id,
         propagation_probability=propagation_probability,
         max_depth=max_depth,
     )
-    
+
     return ContagionSimulationResponse(
         origin_protocol_id=str(result.origin_protocol_id),
         origin_protocol_name=result.origin_protocol_name,

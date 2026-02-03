@@ -44,7 +44,9 @@ class ValidationPromptGenerator:
         # Import strategies here to avoid circular imports
         from tests.helpers.prompt_strategies.simple_query import SimpleQueryStrategy
         from tests.helpers.prompt_strategies.multi_step import MultiStepFlowStrategy
-        from tests.helpers.prompt_strategies.intent_detection import IntentDetectionStrategy
+        from tests.helpers.prompt_strategies.intent_detection import (
+            IntentDetectionStrategy,
+        )
         from tests.helpers.prompt_strategies.security import SecurityTestStrategy
 
         self.strategies: dict[TestType, PromptStrategy] = {
@@ -76,7 +78,9 @@ class ValidationPromptGenerator:
         Returns:
             Custom validation prompt optimized for test type
         """
-        strategy = self.strategies.get(test_metadata.test_type, self.strategies[TestType.SIMPLE_QUERY])
+        strategy = self.strategies.get(
+            test_metadata.test_type, self.strategies[TestType.SIMPLE_QUERY]
+        )
 
         return strategy.build_prompt(
             test_metadata=test_metadata,

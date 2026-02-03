@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from app.presentation.http.schemas.admin.stats import AdminStats, AgentUsage
 
+
 def create_admin_stats_router() -> APIRouter:
     router = APIRouter(prefix="/admin/stats", tags=["admin"])
 
@@ -12,7 +13,8 @@ def create_admin_stats_router() -> APIRouter:
             active_agents=5,
             agent_usage=[
                 AgentUsage(agent_type="trading", count=50),
-                AgentUsage(agent_type="research", count=30)
-            ]
+                AgentUsage(agent_type="research", count=30),
+            ],
         )
+
     return router

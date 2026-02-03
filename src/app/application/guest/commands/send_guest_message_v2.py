@@ -36,17 +36,17 @@ MESSAGES_PER_HOUR = 20
 class SendGuestMessageV2:
     """
     Send Guest Message Command - Pure LLM-Based.
-    
+
     Architecture:
     - NO intent classification
     - NO regex-based fast paths
     - ALL queries go to SupervisorCoordinator
     - LLM decides what agents/actions are needed
-    
+
     The only "patterns" we check are security-related (harmful content).
     Everything else is understood by LLM.
     """
-    
+
     def __init__(
         self,
         guest_repository: GuestRepository,
@@ -56,7 +56,7 @@ class SendGuestMessageV2:
         self._guest_repo = guest_repository
         self._supervisor_coordinator = supervisor_coordinator
         self._agent_orchestrator = agent_orchestrator
-    
+
     async def execute(
         self,
         ip_address: str,
@@ -68,7 +68,7 @@ class SendGuestMessageV2:
     ) -> dict:
         """
         Execute guest message command.
-        
+
         Flow:
         1. Validate input & check rate limits
         2. Security check (harmful content only)
@@ -76,35 +76,35 @@ class SendGuestMessageV2:
         4. Return response
         """
         start_time = time.time()
-        
+
         # === STEP 1: Basic Validation ===
         if language not in ("en", "es", "pt", "zh"):
             language = "en"
-        
+
         if len(content) > MAX_MESSAGE_LENGTH:
             content = content[:MAX_MESSAGE_LENGTH]
-        
+
         # Get or create guest
         guest = await self._get_or_create_guest(ip_address, language, fingerprint)
-        
+
         if guest.is_blocked:
             return self._blocked_response(language)
-        
+
         # Rate limit check
         is_rate_limited, messages_remaining = await self._check_rate_limit(guest)
         if is_rate_limited:
             return self._rate_limited_response(language, messages_remaining)
-        
+
         # Get or create conversation
         conversation = await self._get_or_create_conversation(guest, language)
-        
+
         # === STEP 2: Security Check (Harmful Content Only) ===
         if self._is_harmful_content(content):
             return self._harmful_content_response(language, conversation.id)
-        
+
         # === STEP 3: Build Context ===
         context = await self._build_conversation_context(conversation.id)
-        
+
         # === STEP 4: Send to SupervisorCoordinator (LLM-Based) ===
         # The Supervisor will use LLM to understand the query and plan workflow
         try:
@@ -114,9 +114,9 @@ class SendGuestMessageV2:
                     "ip_address": ip_address,
                     "conversation_id": str(conversation.id),
                     "content_preview": content[:100],
-                }
+                },
             )
-            
+
             result = await self._process_with_supervisor(
                 content=content,
                 language=language,
@@ -124,26 +124,26 @@ class SendGuestMessageV2:
                 context=context,
                 ip_address=ip_address,
             )
-            
+
             # Calculate total time
             total_time_ms = int((time.time() - start_time) * 1000)
-            
+
             # Update counters
             guest.increment_messages()
             conversation.increment_messages()
             await self._guest_repo.update_guest(guest)
             await self._guest_repo.update_conversation(conversation)
-            
+
             # Add timing to result
             result["total_time_ms"] = total_time_ms
             result["messages_remaining"] = messages_remaining - 1
-            
+
             return result
-            
+
         except Exception as e:
             logger.error(f"SupervisorCoordinator failed: {e}", exc_info=True)
             return self._error_response(language, str(e))
-    
+
     async def _process_with_supervisor(
         self,
         content: str,
@@ -154,12 +154,12 @@ class SendGuestMessageV2:
     ) -> dict:
         """
         Process message with SupervisorCoordinator.
-        
+
         The Supervisor uses LLM to:
         1. Understand the user's request (semantic understanding)
         2. Determine what agents/actions are needed
         3. Create and execute workflow plan
-        
+
         NO INTENTS. Pure LLM comprehension.
         """
         from app.domain.value_objects.conversation_id import ConversationId
@@ -168,14 +168,16 @@ class SendGuestMessageV2:
             ConversationContext as AgentSquadContext,
         )
         from app.domain.enums.agent_type import AgentType
-        
+
         # Build conversation context for agents
         messages = await self._guest_repo.get_messages(conversation.id, limit=10)
         conversation_history = [
             {
                 "role": msg.role.value,
                 "content": msg.content,
-                "timestamp": msg.created_at.isoformat() if hasattr(msg.created_at, "isoformat") else str(msg.created_at),
+                "timestamp": msg.created_at.isoformat()
+                if hasattr(msg.created_at, "isoformat")
+                else str(msg.created_at),
             }
             for msg in messages
         ]
@@ -184,13 +186,13 @@ class SendGuestMessageV2:
             "content": content,
             "timestamp": datetime.now(UTC).isoformat(),
         })
-        
+
         agent_squad_context = AgentSquadContext(
             conversation_history=conversation_history,
             user_metadata={"language": language, "is_guest": True},
             session_metadata={"ip_address": ip_address},
         )
-        
+
         # Get available agents
         available_agents = [
             AgentType.CHAT,
@@ -201,7 +203,7 @@ class SendGuestMessageV2:
             AgentType.GAS_OPTIMIZER,
             AgentType.GUEST_AUTH,  # For restricted features
         ]
-        
+
         # === LLM-BASED WORKFLOW PLANNING ===
         # The Supervisor uses LLM to understand the query and create workflow
         workflow_plan = await self._supervisor_coordinator.create_workflow_plan(
@@ -210,24 +212,28 @@ class SendGuestMessageV2:
             conversation_context=agent_squad_context,
             available_agents=available_agents,
         )
-        
+
         logger.info(
             f"📋 Workflow plan created: {len(workflow_plan.tasks)} tasks",
             extra={
                 "tasks": [t.agent_type.value for t in workflow_plan.tasks],
                 "conversation_id": str(conversation.id),
-            }
+            },
         )
-        
+
         # === EXECUTE WORKFLOW ===
         # Pass original_message explicitly to prevent conversation context pollution
-        response_content, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
+        (
+            response_content,
+            sources_raw,
+            agent_timings,
+        ) = await self._supervisor_coordinator.execute_workflow(
             conversation_id=ConversationId(conversation.id),
             workflow_plan=workflow_plan,
             conversation_context=agent_squad_context,
             original_message=content,  # Explicitly pass current user message
         )
-        
+
         # Convert sources to serializable format
         sources = []
         if sources_raw:
@@ -238,7 +244,7 @@ class SendGuestMessageV2:
                     sources.append(s)
                 else:
                     sources.append(str(s))
-        
+
         # Create user message
         user_message = GuestMessage.create_user_message(
             conversation_id=conversation.id,
@@ -246,7 +252,7 @@ class SendGuestMessageV2:
             language=language,
         )
         await self._guest_repo.create_message(user_message)
-        
+
         # Create agent message
         agent_message = GuestMessage.create_assistant_message(
             conversation_id=conversation.id,
@@ -258,7 +264,7 @@ class SendGuestMessageV2:
             is_restricted_action=False,
         )
         await self._guest_repo.create_message(agent_message)
-        
+
         # Build result
         return {
             "conversation_id": str(conversation.id),
@@ -291,16 +297,16 @@ class SendGuestMessageV2:
             },
             "sources": sources if sources else None,
         }
-    
+
     def _is_harmful_content(self, content: str) -> bool:
         """
         Check for harmful content patterns.
-        
+
         This is the ONLY pattern-based check we do.
         Everything else is handled by LLM understanding.
         """
         content_lower = content.lower()
-        
+
         # Harmful patterns (security only)
         harmful_patterns = [
             "ignore previous instructions",
@@ -312,15 +318,15 @@ class SendGuestMessageV2:
             "developer mode",
             "bypass your filters",
         ]
-        
+
         return any(pattern in content_lower for pattern in harmful_patterns)
-    
+
     async def _get_or_create_guest(
         self, ip_address: str, language: str, fingerprint: str | None
     ) -> GuestUser:
         """Get or create guest user."""
         guest = await self._guest_repo.get_by_ip(ip_address)
-        
+
         if guest is None:
             guest = GuestUser.create(
                 ip_address=ip_address,
@@ -328,39 +334,39 @@ class SendGuestMessageV2:
                 fingerprint=fingerprint,
             )
             await self._guest_repo.create_guest(guest)
-        
+
         return guest
-    
+
     async def _check_rate_limit(self, guest: GuestUser) -> tuple[bool, int]:
         """Check rate limits."""
         messages_in_hour = await self._guest_repo.count_messages_in_period(
             guest.id, hours=1
         )
-        
+
         is_limited = messages_in_hour >= MESSAGES_PER_HOUR
         remaining = max(0, MESSAGES_PER_HOUR - messages_in_hour)
-        
+
         return is_limited, remaining
-    
+
     async def _get_or_create_conversation(
         self, guest: GuestUser, language: str
     ) -> GuestConversation:
         """Get active conversation or create new one."""
         conversation = await self._guest_repo.get_active_conversation(guest.id)
-        
+
         if conversation is None:
             conversation = GuestConversation.create(
                 guest_id=guest.id,
                 language=language,
             )
             await self._guest_repo.create_conversation(conversation)
-        
+
         return conversation
-    
+
     async def _build_conversation_context(self, conversation_id: UUID) -> list[dict]:
         """Build conversation context from message history."""
         messages = await self._guest_repo.get_messages(conversation_id, limit=10)
-        
+
         return [
             {
                 "role": msg.role.value,
@@ -368,7 +374,7 @@ class SendGuestMessageV2:
             }
             for msg in messages
         ]
-    
+
     def _blocked_response(self, language: str) -> dict:
         """Response for blocked users."""
         messages = {
@@ -381,7 +387,7 @@ class SendGuestMessageV2:
             "error": "blocked",
             "message": messages.get(language, messages["en"]),
         }
-    
+
     def _rate_limited_response(self, language: str, remaining: int) -> dict:
         """Response for rate limited users."""
         messages = {
@@ -395,7 +401,7 @@ class SendGuestMessageV2:
             "message": messages.get(language, messages["en"]),
             "messages_remaining": remaining,
         }
-    
+
     def _harmful_content_response(self, language: str, conversation_id: UUID) -> dict:
         """Response for harmful content."""
         messages = {
@@ -415,7 +421,7 @@ class SendGuestMessageV2:
                 "is_llm_based": False,
             },
         }
-    
+
     def _error_response(self, language: str, error: str) -> dict:
         """Response for errors."""
         messages = {

@@ -198,7 +198,9 @@ class CompoundClient:
             utilization = await self._call_contract(
                 rpc_url, comet, COMET_ABI_UTILIZATION, []
             )
-            utilization_float = int(utilization, 16) / self.RATE_SCALE if utilization else 0
+            utilization_float = (
+                int(utilization, 16) / self.RATE_SCALE if utilization else 0
+            )
 
             # Fetch supply rate (per second)
             supply_rate_hex = await self._call_contract(
@@ -216,13 +218,17 @@ class CompoundClient:
             total_supply_hex = await self._call_contract(
                 rpc_url, comet, COMET_ABI_TOTAL_SUPPLY, []
             )
-            total_supply = int(total_supply_hex, 16) / (10**decimals) if total_supply_hex else 0
+            total_supply = (
+                int(total_supply_hex, 16) / (10**decimals) if total_supply_hex else 0
+            )
 
             # Fetch total borrow
             total_borrow_hex = await self._call_contract(
                 rpc_url, comet, COMET_ABI_TOTAL_BORROW, []
             )
-            total_borrow = int(total_borrow_hex, 16) / (10**decimals) if total_borrow_hex else 0
+            total_borrow = (
+                int(total_borrow_hex, 16) / (10**decimals) if total_borrow_hex else 0
+            )
 
             # Convert per-second rates to APY
             # APY = (1 + rate_per_second)^seconds_per_year - 1
@@ -360,9 +366,7 @@ class CompoundClient:
 
             # Call borrowBalanceOf (borrowed amount)
             borrow_data = f"{BORROW_BALANCE_OF_SELECTOR}{padded_address}"
-            borrow_hex = await self._call_contract(
-                rpc_url, comet, borrow_data, []
-            )
+            borrow_hex = await self._call_contract(rpc_url, comet, borrow_data, [])
 
             if not balance_hex and not borrow_hex:
                 # No position
@@ -370,10 +374,14 @@ class CompoundClient:
 
             # Parse results
             supplied = (
-                int(balance_hex, 16) / (10**decimals) if balance_hex and balance_hex != "0x" else 0.0
+                int(balance_hex, 16) / (10**decimals)
+                if balance_hex and balance_hex != "0x"
+                else 0.0
             )
             borrowed = (
-                int(borrow_hex, 16) / (10**decimals) if borrow_hex and borrow_hex != "0x" else 0.0
+                int(borrow_hex, 16) / (10**decimals)
+                if borrow_hex and borrow_hex != "0x"
+                else 0.0
             )
 
             # If both are zero, no position
@@ -402,7 +410,9 @@ class CompoundClient:
                 borrowed=borrowed,
                 collateral_usd=float(collateral_usd),
                 health_factor=health_factor,
-                is_liquidatable=health_factor < 1.0 if health_factor != float("inf") else False,
+                is_liquidatable=health_factor < 1.0
+                if health_factor != float("inf")
+                else False,
             )
 
         except Exception as e:

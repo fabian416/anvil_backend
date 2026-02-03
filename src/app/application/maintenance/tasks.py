@@ -22,5 +22,3 @@ class CleanupExpiredPasswordResetsTask:
     async def run(self) -> int:
         now = datetime.now(tz=timezone.utc)
         return await self._repo.delete_expired(now)
-
-

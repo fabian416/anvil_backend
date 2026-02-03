@@ -36,8 +36,9 @@ class TestAuthenticationBypass:
             else:
                 response = client.post(endpoint, json={})
 
-            assert response.status_code in (401, 403, 422), \
+            assert response.status_code in (401, 403, 422), (
                 f"Endpoint {method} {endpoint} should require auth"
+            )
 
     def test_cannot_access_with_empty_token(self, client):
         """
@@ -84,20 +85,22 @@ class TestTokenManipulation:
                 # Add padding for base64
                 padded_payload = parts[1] + "=" * (4 - len(parts[1]) % 4)
                 payload = json.loads(base64.urlsafe_b64decode(padded_payload))
-                
+
                 # Modify to admin role
                 payload["role"] = "admin"
-                
+
                 # Re-encode (without proper signature)
-                modified_payload = base64.urlsafe_b64encode(
-                    json.dumps(payload).encode()
-                ).decode().rstrip("=")
-                
+                modified_payload = (
+                    base64.urlsafe_b64encode(json.dumps(payload).encode())
+                    .decode()
+                    .rstrip("=")
+                )
+
                 tampered_token = f"{parts[0]}.{modified_payload}.{parts[2]}"
-                
+
                 headers = {"Authorization": f"Bearer {tampered_token}"}
                 response = client.get("/api/v1/account/me", headers=headers)
-                
+
                 # Should reject tampered token
                 assert response.status_code in (401, 403)
             except Exception:
@@ -111,10 +114,10 @@ class TestTokenManipulation:
         # Create expired token (would need special helper)
         # For now, document expected behavior
         expired_token = "expired.jwt.token"
-        
+
         headers = {"Authorization": f"Bearer {expired_token}"}
         response = client.get("/api/v1/account/me", headers=headers)
-        
+
         assert response.status_code in (401, 403)
 
     def test_token_from_different_secret_rejected(self, client):
@@ -123,10 +126,10 @@ class TestTokenManipulation:
         """
         # Token signed with wrong secret
         wrong_secret_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
-        
+
         headers = {"Authorization": f"Bearer {wrong_secret_token}"}
         response = client.get("/api/v1/account/me", headers=headers)
-        
+
         assert response.status_code in (401, 403)
 
 
@@ -150,7 +153,7 @@ class TestSessionSecurity:
 
         # Try to use token after logout
         post_logout_response = client.get("/api/v1/account/me", headers=headers)
-        
+
         # Token should be rejected after logout
         # (Implementation dependent)
 

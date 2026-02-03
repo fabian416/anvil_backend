@@ -24,7 +24,9 @@ ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdXRoX3Nlc3Npb25faWQiOiJ
 async def client():
     """Create test client."""
     app = make_app()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
 
@@ -52,7 +54,10 @@ async def test_user_ultra_flash_loan_arbitrage_explanation(
     """Test ULTRA flash loan arbitrage explanation for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "Explain how flash loan arbitrage works and the risks involved", "language": "en"},
+        json={
+            "content": "Explain how flash loan arbitrage works and the risks involved",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -75,10 +80,10 @@ async def test_user_ultra_flash_loan_arbitrage_explanation(
             ),
             test_func=self.test_user_ultra_flash_loan_arbitrage_explanation,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'flash_loan_education',
-                'user_type': 'authenticated',
-                'topic': 'arbitrage'
-            }
+                "test_category": "flash_loan_education",
+                "user_type": "authenticated",
+                "topic": "arbitrage",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -87,32 +92,62 @@ async def test_user_ultra_flash_loan_arbitrage_explanation(
             )
 
     # CSV tracking
-    await csv_tracker("user", "ultra", {
-        "test_id": "user_ultra_flash_loan_001",
-        "s_multistep": False,
-        "input": "Explain how flash loan arbitrage works and the risks involved",
-        "output": content,
-        "test_label_sequence": "ultra_flash_loan",
-        "output_expected": "Flash loan mechanics with arbitrage opportunities and risk analysis",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "ultra",
+        {
+            "test_id": "user_ultra_flash_loan_001",
+            "s_multistep": False,
+            "input": "Explain how flash loan arbitrage works and the risks involved",
+            "output": content,
+            "test_label_sequence": "ultra_flash_loan",
+            "output_expected": "Flash loan mechanics with arbitrage opportunities and risk analysis",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -127,7 +162,10 @@ async def test_user_ultra_mev_protection_strategies(
     """Test ULTRA MEV protection strategies for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "How can I protect my transactions from MEV bots using Flashbots?", "language": "en"},
+        json={
+            "content": "How can I protect my transactions from MEV bots using Flashbots?",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -150,10 +188,10 @@ async def test_user_ultra_mev_protection_strategies(
             ),
             test_func=self.test_user_ultra_mev_protection_strategies,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'mev_protection',
-                'user_type': 'authenticated',
-                'tool': 'flashbots'
-            }
+                "test_category": "mev_protection",
+                "user_type": "authenticated",
+                "tool": "flashbots",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -162,32 +200,62 @@ async def test_user_ultra_mev_protection_strategies(
             )
 
     # CSV tracking
-    await csv_tracker("user", "ultra", {
-        "test_id": "user_ultra_mev_protection_002",
-        "s_multistep": False,
-        "input": "How can I protect my transactions from MEV bots using Flashbots?",
-        "output": content,
-        "test_label_sequence": "ultra_mev_protection",
-        "output_expected": "MEV protection strategies with Flashbots, private transactions, and RPC endpoints",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "ultra",
+        {
+            "test_id": "user_ultra_mev_protection_002",
+            "s_multistep": False,
+            "input": "How can I protect my transactions from MEV bots using Flashbots?",
+            "output": content,
+            "test_label_sequence": "ultra_mev_protection",
+            "output_expected": "MEV protection strategies with Flashbots, private transactions, and RPC endpoints",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -202,7 +270,10 @@ async def test_user_ultra_slippage_tolerance_recommendations(
     """Test ULTRA slippage tolerance recommendations for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "What slippage tolerance should I set for a $10,000 ETH swap on Uniswap?", "language": "en"},
+        json={
+            "content": "What slippage tolerance should I set for a $10,000 ETH swap on Uniswap?",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -225,11 +296,11 @@ async def test_user_ultra_slippage_tolerance_recommendations(
             ),
             test_func=self.test_user_ultra_slippage_tolerance_recommendations,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'slippage_recommendation',
-                'user_type': 'authenticated',
-                'swap_size': '$10000',
-                'asset': 'ETH'
-            }
+                "test_category": "slippage_recommendation",
+                "user_type": "authenticated",
+                "swap_size": "$10000",
+                "asset": "ETH",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -238,32 +309,62 @@ async def test_user_ultra_slippage_tolerance_recommendations(
             )
 
     # CSV tracking
-    await csv_tracker("user", "ultra", {
-        "test_id": "user_ultra_slippage_tolerance_003",
-        "s_multistep": False,
-        "input": "What slippage tolerance should I set for a $10,000 ETH swap on Uniswap?",
-        "output": content,
-        "test_label_sequence": "ultra_slippage_tolerance",
-        "output_expected": "Slippage tolerance recommendations considering liquidity depth and market conditions",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "ultra",
+        {
+            "test_id": "user_ultra_slippage_tolerance_003",
+            "s_multistep": False,
+            "input": "What slippage tolerance should I set for a $10,000 ETH swap on Uniswap?",
+            "output": content,
+            "test_label_sequence": "ultra_slippage_tolerance",
+            "output_expected": "Slippage tolerance recommendations considering liquidity depth and market conditions",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -278,7 +379,10 @@ async def test_user_ultra_gas_price_prediction_accuracy(
     """Test ULTRA gas price prediction for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "Estimate gas costs for swapping tokens on Ethereum right now", "language": "en"},
+        json={
+            "content": "Estimate gas costs for swapping tokens on Ethereum right now",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -301,11 +405,11 @@ async def test_user_ultra_gas_price_prediction_accuracy(
             ),
             test_func=self.test_user_ultra_gas_price_prediction_accuracy,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'gas_estimation',
-                'user_type': 'authenticated',
-                'chain': 'ethereum',
-                'operation': 'token_swap'
-            }
+                "test_category": "gas_estimation",
+                "user_type": "authenticated",
+                "chain": "ethereum",
+                "operation": "token_swap",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -314,32 +418,62 @@ async def test_user_ultra_gas_price_prediction_accuracy(
             )
 
     # CSV tracking
-    await csv_tracker("user", "ultra", {
-        "test_id": "user_ultra_gas_price_prediction_004",
-        "s_multistep": False,
-        "input": "Estimate gas costs for swapping tokens on Ethereum right now",
-        "output": content,
-        "test_label_sequence": "ultra_gas_estimation",
-        "output_expected": "Current gas price estimates with gwei and USD cost for token swaps",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "ultra",
+        {
+            "test_id": "user_ultra_gas_price_prediction_004",
+            "s_multistep": False,
+            "input": "Estimate gas costs for swapping tokens on Ethereum right now",
+            "output": content,
+            "test_label_sequence": "ultra_gas_estimation",
+            "output_expected": "Current gas price estimates with gwei and USD cost for token swaps",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -354,7 +488,10 @@ async def test_user_ultra_multi_hop_swap_routing(
     """Test ULTRA multi-hop swap routing optimization for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "What's the best route to swap LINK to MATIC with minimal slippage?", "language": "en"},
+        json={
+            "content": "What's the best route to swap LINK to MATIC with minimal slippage?",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -377,11 +514,11 @@ async def test_user_ultra_multi_hop_swap_routing(
             ),
             test_func=self.test_user_ultra_multi_hop_swap_routing,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'swap_routing',
-                'user_type': 'authenticated',
-                'from_token': 'LINK',
-                'to_token': 'MATIC'
-            }
+                "test_category": "swap_routing",
+                "user_type": "authenticated",
+                "from_token": "LINK",
+                "to_token": "MATIC",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -390,32 +527,62 @@ async def test_user_ultra_multi_hop_swap_routing(
             )
 
     # CSV tracking
-    await csv_tracker("user", "ultra", {
-        "test_id": "user_ultra_multi_hop_swap_routing_005",
-        "s_multistep": False,
-        "input": "What's the best route to swap LINK to MATIC with minimal slippage?",
-        "output": content,
-        "test_label_sequence": "ultra_swap_routing",
-        "output_expected": "Optimal routing analysis for LINK to MATIC swap with intermediate tokens and trade-offs",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "ultra",
+        {
+            "test_id": "user_ultra_multi_hop_swap_routing_005",
+            "s_multistep": False,
+            "input": "What's the best route to swap LINK to MATIC with minimal slippage?",
+            "output": content,
+            "test_label_sequence": "ultra_swap_routing",
+            "output_expected": "Optimal routing analysis for LINK to MATIC swap with intermediate tokens and trade-offs",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -430,7 +597,10 @@ async def test_user_ultra_impermanent_loss_warnings(
     """Test ULTRA impermanent loss risk disclosure for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "Explain impermanent loss risk for providing ETH/USDC liquidity", "language": "en"},
+        json={
+            "content": "Explain impermanent loss risk for providing ETH/USDC liquidity",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -453,10 +623,10 @@ async def test_user_ultra_impermanent_loss_warnings(
             ),
             test_func=self.test_user_ultra_impermanent_loss_warnings,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'impermanent_loss',
-                'user_type': 'authenticated',
-                'pair': 'ETH/USDC'
-            }
+                "test_category": "impermanent_loss",
+                "user_type": "authenticated",
+                "pair": "ETH/USDC",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -465,32 +635,62 @@ async def test_user_ultra_impermanent_loss_warnings(
             )
 
     # CSV tracking
-    await csv_tracker("user", "ultra", {
-        "test_id": "user_ultra_impermanent_loss_006",
-        "s_multistep": False,
-        "input": "Explain impermanent loss risk for providing ETH/USDC liquidity",
-        "output": content,
-        "test_label_sequence": "ultra_impermanent_loss",
-        "output_expected": "Impermanent loss explanation for ETH/USDC pair with price divergence and risk mitigation",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "ultra",
+        {
+            "test_id": "user_ultra_impermanent_loss_006",
+            "s_multistep": False,
+            "input": "Explain impermanent loss risk for providing ETH/USDC liquidity",
+            "output": content,
+            "test_label_sequence": "ultra_impermanent_loss",
+            "output_expected": "Impermanent loss explanation for ETH/USDC pair with price divergence and risk mitigation",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -505,7 +705,10 @@ async def test_user_ultra_yield_farming_roi_calculations(
     """Test ULTRA yield farming ROI transparency for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "Calculate real APY for Curve 3pool considering all fees and IL", "language": "en"},
+        json={
+            "content": "Calculate real APY for Curve 3pool considering all fees and IL",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -528,11 +731,11 @@ async def test_user_ultra_yield_farming_roi_calculations(
             ),
             test_func=self.test_user_ultra_yield_farming_roi_calculations,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'yield_calculation',
-                'user_type': 'authenticated',
-                'protocol': 'curve',
-                'pool': '3pool'
-            }
+                "test_category": "yield_calculation",
+                "user_type": "authenticated",
+                "protocol": "curve",
+                "pool": "3pool",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -541,32 +744,62 @@ async def test_user_ultra_yield_farming_roi_calculations(
             )
 
     # CSV tracking
-    await csv_tracker("user", "ultra", {
-        "test_id": "user_ultra_yield_farming_roi_007",
-        "s_multistep": False,
-        "input": "Calculate real APY for Curve 3pool considering all fees and IL",
-        "output": content,
-        "test_label_sequence": "ultra_yield_calculation",
-        "output_expected": "Comprehensive ROI calculation for Curve 3pool with trading fees, CRV rewards, and gas costs",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "ultra",
+        {
+            "test_id": "user_ultra_yield_farming_roi_007",
+            "s_multistep": False,
+            "input": "Calculate real APY for Curve 3pool considering all fees and IL",
+            "output": content,
+            "test_label_sequence": "ultra_yield_calculation",
+            "output_expected": "Comprehensive ROI calculation for Curve 3pool with trading fees, CRV rewards, and gas costs",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -581,7 +814,10 @@ async def test_user_ultra_liquidation_risk_monitoring(
     """Test ULTRA liquidation risk monitoring for authenticated user."""
     response = await client.post(
         f"/api/v1/user/chat/conversations/{conversation_id}/messages",
-        json={"content": "How can I monitor my Aave position to avoid liquidation?", "language": "en"},
+        json={
+            "content": "How can I monitor my Aave position to avoid liquidation?",
+            "language": "en",
+        },
         headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
     )
 
@@ -604,10 +840,10 @@ async def test_user_ultra_liquidation_risk_monitoring(
             ),
             test_func=self.test_user_ultra_liquidation_risk_monitoring,  # PHASE 3: Custom prompt generation
             additional_context={
-                'test_category': 'liquidation_monitoring',
-                'user_type': 'authenticated',
-                'protocol': 'aave'
-            }
+                "test_category": "liquidation_monitoring",
+                "user_type": "authenticated",
+                "protocol": "aave",
+            },
         )
         if validation.verdict != "PASS":
             warnings.warn(
@@ -616,29 +852,59 @@ async def test_user_ultra_liquidation_risk_monitoring(
             )
 
     # CSV tracking
-    await csv_tracker("user", "ultra", {
-        "test_id": "user_ultra_liquidation_risk_monitoring_008",
-        "s_multistep": False,
-        "input": "How can I monitor my Aave position to avoid liquidation?",
-        "output": content,
-        "test_label_sequence": "ultra_liquidation_monitoring",
-        "output_expected": "Liquidation risk monitoring guidance with health factor, price alerts, and preventive actions",
-        "status": "PASS" if response.status_code in (200, 201) else "FAIL",
-        "date": datetime.utcnow().isoformat(),
-        "quality": validation.confidence if validation else None,
-        "qa_status": validation.verdict if validation else "SKIPPED",
-        "qa_output": validation.reasoning if validation else None,
-    # Enhanced validation fields (PHASE 3)
-    "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-    "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-    "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-    "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-    "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-    "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-    "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-    "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-    "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-    "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-    "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-    "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-    })
+    await csv_tracker(
+        "user",
+        "ultra",
+        {
+            "test_id": "user_ultra_liquidation_risk_monitoring_008",
+            "s_multistep": False,
+            "input": "How can I monitor my Aave position to avoid liquidation?",
+            "output": content,
+            "test_label_sequence": "ultra_liquidation_monitoring",
+            "output_expected": "Liquidation risk monitoring guidance with health factor, price alerts, and preventive actions",
+            "status": "PASS" if response.status_code in (200, 201) else "FAIL",
+            "date": datetime.utcnow().isoformat(),
+            "quality": validation.confidence if validation else None,
+            "qa_status": validation.verdict if validation else "SKIPPED",
+            "qa_output": validation.reasoning if validation else None,
+            # Enhanced validation fields (PHASE 3)
+            "accuracy_score": validation.scoring.accuracy_score
+            if validation and validation.scoring
+            else None,
+            "relevance_score": validation.scoring.relevance_score
+            if validation and validation.scoring
+            else None,
+            "safety_score": validation.scoring.safety_score
+            if validation and validation.scoring
+            else None,
+            "coherence_score": validation.scoring.coherence_score
+            if validation and validation.scoring
+            else None,
+            "test_category": validation.metadata.test_category
+            if validation and validation.metadata
+            else None,
+            "test_type": validation.metadata.test_type
+            if validation and validation.metadata
+            else None,
+            "expected_intents": json.dumps(validation.metadata.expected_intents)
+            if validation and validation.metadata
+            else None,
+            "token_usage": validation.metadata.token_usage
+            if validation and validation.metadata
+            else None,
+            "improvement_suggestions": json.dumps(
+                validation.recommendations.improvement_suggestions
+            )
+            if validation and validation.recommendations
+            else None,
+            "critical_issues": json.dumps(validation.recommendations.critical_issues)
+            if validation and validation.recommendations
+            else None,
+            "next_steps": json.dumps(validation.recommendations.next_steps)
+            if validation and validation.recommendations
+            else None,
+            "model_used": validation.metadata.model_used
+            if validation and validation.metadata
+            else None,
+        },
+    )

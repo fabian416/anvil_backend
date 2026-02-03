@@ -66,7 +66,9 @@ class AdminTransactionHistoryResponse(BaseModel):
 
 
 def create_admin_transactions_router() -> APIRouter:
-    router = ErrorAwareRouter(prefix="/admin/transactions", tags=["Admin - Transactions"])
+    router = ErrorAwareRouter(
+        prefix="/admin/transactions", tags=["Admin - Transactions"]
+    )
 
     @router.get(
         "",
@@ -96,11 +98,17 @@ def create_admin_transactions_router() -> APIRouter:
             default=None, description="Filter by wallet address (recommended)"
         ),
         user_id: int | None = Query(
-            default=None, ge=1, description="Filter by user id (aggregates across wallets)"
+            default=None,
+            ge=1,
+            description="Filter by user id (aggregates across wallets)",
         ),
-        limit: int = Query(default=50, ge=1, le=100, description="Maximum number of results"),
+        limit: int = Query(
+            default=50, ge=1, le=100, description="Maximum number of results"
+        ),
         offset: int = Query(default=0, ge=0, description="Number of results to skip"),
-        chain: str | None = Query(default=None, description="Filter by chain (ethereum, base, ...)"),
+        chain: str | None = Query(
+            default=None, description="Filter by chain (ethereum, base, ...)"
+        ),
         status_: str | None = Query(
             default=None,
             alias="status",
@@ -154,4 +162,3 @@ def create_admin_transactions_router() -> APIRouter:
         )
 
     return router
-

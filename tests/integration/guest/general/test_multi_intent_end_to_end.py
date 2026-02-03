@@ -7,7 +7,10 @@ and formatting pipeline against real-world use cases.
 import pytest
 
 pytestmark = pytest.mark.skip(reason="Multi-intent requires proper mocking")
-from app.application.chat.services.intent_detector_v2 import IntentDetectorV2, ChatIntentV2
+from app.application.chat.services.intent_detector_v2 import (
+    IntentDetectorV2,
+    ChatIntentV2,
+)
 from app.application.chat.services.intent_orchestrator import IntentOrchestrator
 from app.application.chat.services.multi_intent_response_formatter import (
     MultiIntentResponseFormatter,
@@ -54,7 +57,9 @@ class TestMultiIntentEndToEnd:
 
         # Verify detection
         assert multi_intent is not None
-        assert len(multi_intent.intents) == 3, f"Expected 3 intents, got {len(multi_intent.intents)}"
+        assert len(multi_intent.intents) == 3, (
+            f"Expected 3 intents, got {len(multi_intent.intents)}"
+        )
         assert multi_intent.orchestration_strategy == OrchestrationStrategy.PARALLEL
         assert multi_intent.has_dependencies is False
 
@@ -192,9 +197,7 @@ class TestMultiIntentEndToEnd:
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
-    async def test_multi_language_spanish(
-        self, detector, orchestrator, formatter
-    ):
+    async def test_multi_language_spanish(self, detector, orchestrator, formatter):
         """
         Test: "mostrar precio de btc eth" (Spanish)
 
@@ -256,7 +259,9 @@ class TestMultiIntentEndToEnd:
 
         # Execution time should be reasonable (< 200ms for simulated handlers)
         # In real implementation with parallel asyncio.gather(), this would be much faster
-        assert execution_time < 200, f"Execution took {execution_time}ms (expected < 200ms)"
+        assert execution_time < 200, (
+            f"Execution took {execution_time}ms (expected < 200ms)"
+        )
 
         # Format
         formatted = formatter.format(orchestrated, language)
@@ -292,12 +297,18 @@ class TestMultiIntentCSVValidation:
         assert len(multi_intent.intents) == 3, "Should detect 3 separate intents"
 
         for i, intent in enumerate(multi_intent.intents):
-            assert intent.intent == ChatIntentV2.HUNTER_PRICE_PREDICTION, f"Intent {i} should be PRICE"
-            assert intent.confidence >= 0.90, f"Intent {i} confidence should be >= 0.90, got {intent.confidence}"
+            assert intent.intent == ChatIntentV2.HUNTER_PRICE_PREDICTION, (
+                f"Intent {i} should be PRICE"
+            )
+            assert intent.confidence >= 0.90, (
+                f"Intent {i} confidence should be >= 0.90, got {intent.confidence}"
+            )
             assert len(intent.entities) == 1, f"Intent {i} should have 1 entity"
 
         # Overall confidence should be high
-        assert multi_intent.confidence >= 0.90, f"Overall confidence should be >= 0.90, got {multi_intent.confidence}"
+        assert multi_intent.confidence >= 0.90, (
+            f"Overall confidence should be >= 0.90, got {multi_intent.confidence}"
+        )
 
         print(f"\n✅ CSV Validation PASSED: Triple intent query")
         print(f"   Previous confidence: 0.00")

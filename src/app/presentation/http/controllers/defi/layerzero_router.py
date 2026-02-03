@@ -155,7 +155,9 @@ def create_layerzero_router() -> APIRouter:
         return ChainsResponse(
             chains=[LZChainResponse.from_domain(c) for c in response.chains],
             evm_chains=[LZChainResponse.from_domain(c) for c in response.evm_chains],
-            non_evm_chains=[LZChainResponse.from_domain(c) for c in response.non_evm_chains],
+            non_evm_chains=[
+                LZChainResponse.from_domain(c) for c in response.non_evm_chains
+            ],
         )
 
     @router.get(
@@ -172,7 +174,9 @@ def create_layerzero_router() -> APIRouter:
         source_chain: str,
         destination_chain: str,
         query: FromDishka[EstimateFees],
-        payload_size: int = Query(default=100, ge=1, le=10000, description="Payload size"),
+        payload_size: int = Query(
+            default=100, ge=1, le=10000, description="Payload size"
+        ),
     ) -> FeeEstimateResponse:
         """Estimate message fees."""
         request = EstimateFeesRequest(

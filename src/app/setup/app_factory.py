@@ -19,21 +19,21 @@ from app.setup.config.settings import AppSettings
 async def init_database(engine: AsyncEngine) -> None:
     """
     Initialize the database by ensuring all tables exist.
-    
+
     This function:
     - Registers all SQLAlchemy mappings
     - Creates any missing tables (idempotent - does NOT drop existing tables)
     - Does NOT recreate or drop existing tables
-    
+
     Note: SQLAlchemy's create_all() only creates tables that don't exist.
     For a full reset (drop + recreate), use: make init-db
     """
     logger = logging.getLogger(__name__)
-    
+
     try:
         # Ensure all table mappings are registered
         map_tables()
-        
+
         # Import entities to ensure they are registered
         from app.domain.entities.user import User
         from app.domain.atlas.entities.country import Country
@@ -45,9 +45,10 @@ async def init_database(engine: AsyncEngine) -> None:
         from app.domain.entities.session import Session
         from app.domain.entities.subscription import Subscription
         from app.domain.entities.subscription_user import SubscriptionUser
-        
+
         # Check existing tables before creating
         from sqlalchemy import text
+
         async with engine.connect() as conn:
             result = await conn.execute(
                 text("""
@@ -58,11 +59,11 @@ async def init_database(engine: AsyncEngine) -> None:
                 """)
             )
             existing_count = result.scalar()
-        
+
         # Create all tables (only creates missing ones - idempotent)
         async with engine.begin() as conn:
             await conn.run_sync(mapping_registry.metadata.create_all)
-        
+
         # Check tables after creation
         async with engine.connect() as conn:
             result = await conn.execute(
@@ -74,7 +75,7 @@ async def init_database(engine: AsyncEngine) -> None:
                 """)
             )
             final_count = result.scalar()
-        
+
         if final_count > existing_count:
             logger.info(
                 f"Database initialized: Created {final_count - existing_count} new table(s). "
@@ -110,7 +111,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logger.error(f"Failed to initialize database: {str(e)}")
         # You might want to raise here depending on your requirements
         # raise
-    
+
     yield None
     await app.state.dishka_container.close()
     # https://dishka.readthedocs.io/en/stable/integrations/fastapi.html
@@ -173,6 +174,7 @@ def configure_app(
 
     # Register global exception handlers for standardized error responses
     from app.presentation.http.errors.handlers import register_exception_handlers
+
     register_exception_handlers(app)
 
 

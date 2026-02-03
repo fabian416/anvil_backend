@@ -185,7 +185,9 @@ class LeverageLoopInteractor:
             max_iterations=command.max_iterations,
         )
 
-        logger.info(f"Calculated {iterations} iterations for {command.target_leverage}x leverage")
+        logger.info(
+            f"Calculated {iterations} iterations for {command.target_leverage}x leverage"
+        )
 
         # STEP 3: Get current position and market data
         position = await self._aave_gateway.get_user_position(
@@ -240,7 +242,7 @@ class LeverageLoopInteractor:
 
         # Calculate iteration steps
         for i in range(iterations):
-            logger.debug(f"Calculating iteration {i+1}/{iterations}")
+            logger.debug(f"Calculating iteration {i + 1}/{iterations}")
 
             # Calculate how much we can safely borrow
             max_borrow_usd = self._calculate_max_safe_borrow(
@@ -251,9 +253,9 @@ class LeverageLoopInteractor:
             )
 
             if max_borrow_usd <= Decimal("1.0"):  # Stop if borrow amount too small
-                logger.info(f"Stopping at iteration {i+1}: borrow amount too small")
+                logger.info(f"Stopping at iteration {i + 1}: borrow amount too small")
                 warnings.append(
-                    f"Loop stopped at iteration {i+1} due to insufficient borrow capacity"
+                    f"Loop stopped at iteration {i + 1} due to insufficient borrow capacity"
                 )
                 break
 
@@ -270,7 +272,7 @@ class LeverageLoopInteractor:
 
             if hf_after_borrow < command.min_health_factor:
                 logger.warning(
-                    f"Stopping at iteration {i+1}: HF would be {hf_after_borrow:.2f} "
+                    f"Stopping at iteration {i + 1}: HF would be {hf_after_borrow:.2f} "
                     f"< min {command.min_health_factor:.2f}"
                 )
                 warnings.append(
@@ -337,7 +339,7 @@ class LeverageLoopInteractor:
             current_debt_usd = projected_debt_usd
 
             logger.debug(
-                f"After iteration {i+1}: collateral={current_collateral} {command.asset}, "
+                f"After iteration {i + 1}: collateral={current_collateral} {command.asset}, "
                 f"debt=${current_debt_usd:.2f}, HF={hf_after_borrow:.2f}"
             )
 
@@ -352,7 +354,9 @@ class LeverageLoopInteractor:
         # Calculate estimated APY (supply APY - borrow APY)
         supply_apy = collateral_market.supply_apy
         borrow_apy = borrow_market.variable_borrow_apy
-        net_apy = (supply_apy * actual_leverage) - (borrow_apy * (actual_leverage - Decimal("1")))
+        net_apy = (supply_apy * actual_leverage) - (
+            borrow_apy * (actual_leverage - Decimal("1"))
+        )
 
         # Add warnings
         if actual_leverage < command.target_leverage * Decimal("0.95"):
@@ -403,7 +407,11 @@ class LeverageLoopInteractor:
     ) -> None:
         """Validate user has sufficient balance to start loop."""
         # Get token address for balance check
-        token_address = "native" if asset.upper() == "ETH" else await self._get_token_address(asset, chain)
+        token_address = (
+            "native"
+            if asset.upper() == "ETH"
+            else await self._get_token_address(asset, chain)
+        )
 
         has_balance = await self._balance_checker.check_balance(
             wallet_address=wallet_address,
@@ -459,6 +467,7 @@ class LeverageLoopInteractor:
         # Solving: n = log(1 - (1-ltv) * 0.95 * target) / log(ltv)
 
         import math
+
         try:
             # Calculate required sum multiplier
             required_sum = float(target_leverage) * 0.95

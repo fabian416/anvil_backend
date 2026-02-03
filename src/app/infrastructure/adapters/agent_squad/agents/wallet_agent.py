@@ -17,7 +17,9 @@ from typing import Any, TYPE_CHECKING
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.conversation_id import ConversationId
 from app.domain.value_objects.message_content import MessageContent
-from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+from app.domain.value_objects.agent_squad.conversation_context import (
+    ConversationContext,
+)
 from app.domain.ports.agent_squad.agent_gateway import AgentGateway, AgentResponse
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 
@@ -30,25 +32,25 @@ logger = logging.getLogger(__name__)
 class WalletAgent:
     """
     Wallet Agent implementation for authenticated users.
-    
+
     Implements: AgentGateway
-    
+
     Purpose: Wallet management and balance queries
-    
+
     Capabilities:
     - List user's connected wallets
     - Show balances for each wallet
     - Multi-chain wallet support
     - Primary wallet identification
     - Wallet provider information (Privy, External, Imported)
-    
+
     IMPORTANT: This agent requires user authentication.
     Guest users should be redirected to GuestAuthAgent.
-    
+
     Model: gemini-2.0-flash (Vertex AI)
     Temperature: 0.3 (balanced)
     """
-    
+
     def __init__(
         self,
         llm_client: LLMClientGateway,
@@ -58,7 +60,7 @@ class WalletAgent:
     ):
         """
         Initialize wallet agent.
-        
+
         Args:
             llm_client: LLM client gateway (Vertex AI or DeepInfra)
             model: Model to use (default: gemini-2.0-flash)
@@ -69,12 +71,12 @@ class WalletAgent:
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
-    
+
     @property
     def agent_type(self) -> AgentType:
         """Get agent type."""
         return AgentType.WALLET
-    
+
     async def execute(
         self,
         conversation_id: ConversationId,
@@ -83,36 +85,36 @@ class WalletAgent:
     ) -> AgentResponse:
         """
         Execute wallet agent - handle wallet queries.
-        
+
         Expects user_context in conversation_context.user_metadata containing:
         - wallets: List of WalletSummary
         - primary_wallet: WalletSummary or None
         """
         start_time = time.time()
-        
+
         # Extract user context from conversation metadata
         user_context = self._extract_user_context(conversation_context)
-        
+
         if not user_context:
             # User is not authenticated or no wallet data
             return self._create_auth_required_response(start_time)
-        
+
         # Build context string with user's wallet data
         wallet_context = self._build_wallet_context(user_context)
-        
+
         # Get portfolio balance for context-aware suggestions
         # Try multiple sources for balance data
         total_balance = 0.0
-        
+
         # First try direct total_balance_usd (set by authenticated supervisor)
         if user_context.get("total_balance_usd") is not None:
             total_balance = float(user_context.get("total_balance_usd", 0) or 0)
-        
+
         # Fallback to portfolio_summary
         if total_balance == 0:
             portfolio_summary = user_context.get("portfolio_summary", {})
             total_balance = float(portfolio_summary.get("total_value_usd", 0) or 0)
-        
+
         # Build suggestions based on balance - ALWAYS show balance
         if total_balance < 1:
             suggestions = f"""
@@ -130,7 +132,7 @@ Your wallet is ready! Add funds to start using Anvil:
 • 🔄 **Swap** - Trade between different cryptocurrencies
 • 💰 **Earn yield** - Deposit to DeFi protocols
 • 📊 **Portfolio** - Say "my portfolio" for detailed holdings"""
-        
+
         # Build enhanced prompt with actual wallet data
         enhanced_message = f"""User Query: {message.value}
 
@@ -143,47 +145,53 @@ Your wallet is ready! Add funds to start using Anvil:
 Respond to the user's query using ONLY the wallet data provided above.
 CRITICAL: Show the FULL wallet address - never truncate it!
 Include the balance and suggestions at the end."""
-        
+
         messages = [
             {"role": "system", "content": self._get_system_prompt()},
             {"role": "user", "content": enhanced_message},
         ]
-        
+
         response = await self._llm_client.chat(
             messages=messages,
             model=self._model,
             temperature=self._temperature,
             max_tokens=self._max_tokens,
         )
-        
+
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         # Build sources
         from datetime import datetime, UTC
         from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
             create_llm_source,
             create_database_source,
         )
-        
+
         sources = []
         fetched_at = datetime.now(UTC)
-        
+
         # Add database source (wallet data)
-        sources.append(create_database_source(
-            citation_text="Your wallet data from Anvil",
-            fetched_at=fetched_at,
-            metadata={"query_type": "wallet_info"},
-        ))
-        
+        sources.append(
+            create_database_source(
+                citation_text="Your wallet data from Anvil",
+                fetched_at=fetched_at,
+                metadata={"query_type": "wallet_info"},
+            )
+        )
+
         # Add LLM source
         model_name = response.get("model", self._model)
-        sources.append(create_llm_source(
-            model=model_name,
-            fetched_at=fetched_at,
-        ))
-        
-        provider_info = response.get("provider", "vertex_ai" if "gemini" in model_name.lower() else "deepinfra")
-        
+        sources.append(
+            create_llm_source(
+                model=model_name,
+                fetched_at=fetched_at,
+            )
+        )
+
+        provider_info = response.get(
+            "provider", "vertex_ai" if "gemini" in model_name.lower() else "deepinfra"
+        )
+
         return AgentResponse(
             content=response["content"],
             agent_type=self.agent_type,
@@ -194,27 +202,31 @@ Include the balance and suggestions at the end."""
                 "latency_ms": latency_ms,
                 "model": model_name,
                 "provider": provider_info,
-                "wallet_count": len(user_context.get("wallets", [])) if user_context else 0,
+                "wallet_count": len(user_context.get("wallets", []))
+                if user_context
+                else 0,
             },
         )
-    
+
     async def is_available(self) -> bool:
         """Check if agent is available."""
         return True
-    
-    def _extract_user_context(self, conversation_context: ConversationContext) -> dict[str, Any] | None:
+
+    def _extract_user_context(
+        self, conversation_context: ConversationContext
+    ) -> dict[str, Any] | None:
         """Extract user context from conversation metadata."""
         if not conversation_context.user_metadata:
             return None
-        
+
         # Check for user_context or direct wallet data
         if "user_context" in conversation_context.user_metadata:
             return conversation_context.user_metadata["user_context"]
-        
+
         # Check for direct wallet data
         if "wallets" in conversation_context.user_metadata:
             return conversation_context.user_metadata
-        
+
         # Check for flat structure (user_id, wallet_address, is_authenticated at top level)
         # This is how the supervisor passes user context
         if conversation_context.user_metadata.get("is_authenticated"):
@@ -222,26 +234,36 @@ Include the balance and suggestions at the end."""
             return {
                 "user_id": conversation_context.user_metadata.get("user_id"),
                 "wallet_address": wallet_address,
-                "wallets": [{
-                    "address": wallet_address,
-                    "chain_type": conversation_context.user_metadata.get("wallet_chain"),
-                    "is_primary": True,
-                }] if wallet_address else [],
+                "wallets": [
+                    {
+                        "address": wallet_address,
+                        "chain_type": conversation_context.user_metadata.get(
+                            "wallet_chain"
+                        ),
+                        "is_primary": True,
+                    }
+                ]
+                if wallet_address
+                else [],
                 "primary_wallet": {
                     "address": wallet_address,
-                    "chain_type": conversation_context.user_metadata.get("wallet_chain"),
-                } if wallet_address else None,
+                    "chain_type": conversation_context.user_metadata.get(
+                        "wallet_chain"
+                    ),
+                }
+                if wallet_address
+                else None,
             }
-        
+
         return None
-    
+
     def _build_wallet_context(self, user_context: dict[str, Any]) -> str:
         """Build wallet context string from user data."""
         lines = []
-        
+
         wallets = user_context.get("wallets", [])
         primary_wallet = user_context.get("primary_wallet")
-        
+
         if not wallets:
             return """**Your Wallet is Being Set Up! 🔐**
 
@@ -256,19 +278,20 @@ Once your wallet is ready, you'll be able to:
 • View your balances across all chains
 • Swap, buy, and trade tokens
 • Track your portfolio automatically"""
-        
+
         lines.append(f"**Connected Wallets: {len(wallets)}**\n")
-        
+
         for i, wallet in enumerate(wallets, 1):
-            is_primary = (primary_wallet and 
-                         wallet.get("address") == primary_wallet.get("address"))
-            
+            is_primary = primary_wallet and wallet.get("address") == primary_wallet.get(
+                "address"
+            )
+
             address = wallet.get("address", "Unknown")
-            
+
             primary_marker = " (PRIMARY)" if is_primary else ""
             provider = wallet.get("provider")
             chain = wallet.get("chain_type")
-            
+
             lines.append(f"**Wallet {i}{primary_marker}:**")
             # ALWAYS show the FULL address - users need the complete address
             lines.append(f"  - Address: `{address}`")
@@ -278,13 +301,13 @@ Once your wallet is ready, you'll be able to:
             if chain and chain.lower() not in ("unknown", "none", ""):
                 lines.append(f"  - Chain: {chain}")
             lines.append("")
-        
+
         return "\n".join(lines)
-    
+
     def _create_auth_required_response(self, start_time: float) -> AgentResponse:
         """Create response for unauthenticated users."""
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         content = """**Wallet Access Requires Authentication**
 
 To view your wallet information, balances, and connected addresses, you need to sign in to your Anvil account.
@@ -299,21 +322,25 @@ To view your wallet information, balances, and connected addresses, you need to 
    - Portfolio overview
 
 Would you like me to help you with something else, or are you ready to sign in?"""
-        
+
         from datetime import datetime, UTC
-        from app.infrastructure.adapters.agent_squad.agents.source_helpers import create_llm_source
-        
+        from app.infrastructure.adapters.agent_squad.agents.source_helpers import (
+            create_llm_source,
+        )
+
         return AgentResponse(
             content=content,
             agent_type=self.agent_type,
             tools_used=[],
-            sources=[create_llm_source(model=self._model, fetched_at=datetime.now(UTC))],
+            sources=[
+                create_llm_source(model=self._model, fetched_at=datetime.now(UTC))
+            ],
             metadata={
                 "latency_ms": latency_ms,
                 "auth_required": True,
             },
         )
-    
+
     def _get_system_prompt(self) -> str:
         """Get system prompt for wallet agent."""
         return """You are the Wallet Agent, Anvil's wallet management specialist.

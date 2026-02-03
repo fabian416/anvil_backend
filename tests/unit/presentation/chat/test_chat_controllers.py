@@ -22,13 +22,15 @@ class TestCreateConversationController:
         """Create mock CreateConversation interactor."""
         interactor = AsyncMock()
         conv_id = uuid4()
-        interactor.execute = AsyncMock(return_value={
-            "id": str(conv_id),
-            "user_id": str(uuid4()),
-            "title": "New Conversation",
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
-        })
+        interactor.execute = AsyncMock(
+            return_value={
+                "id": str(conv_id),
+                "user_id": str(uuid4()),
+                "title": "New Conversation",
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat(),
+            }
+        )
         return interactor
 
     def test_create_conversation_request_structure(self):
@@ -46,7 +48,9 @@ class TestCreateConversationController:
 
         assert len(request_data) == 0
 
-    def test_create_conversation_response_structure(self, mock_create_conversation_interactor):
+    def test_create_conversation_response_structure(
+        self, mock_create_conversation_interactor
+    ):
         """Test create conversation returns expected response."""
         response = {
             "id": str(uuid4()),
@@ -79,18 +83,20 @@ class TestListConversationsController:
     def mock_list_conversations_interactor(self):
         """Create mock ListConversations interactor."""
         interactor = AsyncMock()
-        interactor.execute = AsyncMock(return_value=[
-            {
-                "id": str(uuid4()),
-                "title": "Conversation 1",
-                "created_at": datetime.utcnow().isoformat(),
-            },
-            {
-                "id": str(uuid4()),
-                "title": "Conversation 2",
-                "created_at": datetime.utcnow().isoformat(),
-            },
-        ])
+        interactor.execute = AsyncMock(
+            return_value=[
+                {
+                    "id": str(uuid4()),
+                    "title": "Conversation 1",
+                    "created_at": datetime.utcnow().isoformat(),
+                },
+                {
+                    "id": str(uuid4()),
+                    "title": "Conversation 2",
+                    "created_at": datetime.utcnow().isoformat(),
+                },
+            ]
+        )
         return interactor
 
     def test_list_conversations_supports_pagination(self):
@@ -140,12 +146,14 @@ class TestGetConversationController:
         """Create mock GetConversation interactor."""
         interactor = AsyncMock()
         conv_id = uuid4()
-        interactor.execute = AsyncMock(return_value={
-            "id": str(conv_id),
-            "user_id": str(uuid4()),
-            "title": "Test Conversation",
-            "created_at": datetime.utcnow().isoformat(),
-        })
+        interactor.execute = AsyncMock(
+            return_value={
+                "id": str(conv_id),
+                "user_id": str(uuid4()),
+                "title": "Test Conversation",
+                "created_at": datetime.utcnow().isoformat(),
+            }
+        )
         return interactor
 
     def test_get_conversation_by_uuid(self):
@@ -190,21 +198,23 @@ class TestSendMessageController:
     def mock_send_message_interactor(self):
         """Create mock SendMessage interactor."""
         interactor = AsyncMock()
-        interactor.execute = AsyncMock(return_value=(
-            {
-                "id": str(uuid4()),
-                "role": "user",
-                "content": "Hello",
-                "created_at": datetime.utcnow().isoformat(),
-            },
-            {
-                "id": str(uuid4()),
-                "role": "assistant",
-                "content": "Hello! How can I help you with DeFi today?",
-                "agent_type": "chat",
-                "created_at": datetime.utcnow().isoformat(),
-            },
-        ))
+        interactor.execute = AsyncMock(
+            return_value=(
+                {
+                    "id": str(uuid4()),
+                    "role": "user",
+                    "content": "Hello",
+                    "created_at": datetime.utcnow().isoformat(),
+                },
+                {
+                    "id": str(uuid4()),
+                    "role": "assistant",
+                    "content": "Hello! How can I help you with DeFi today?",
+                    "agent_type": "chat",
+                    "created_at": datetime.utcnow().isoformat(),
+                },
+            )
+        )
         return interactor
 
     def test_send_message_request_structure(self):
@@ -282,20 +292,22 @@ class TestGetMessagesController:
     def mock_get_messages_interactor(self):
         """Create mock GetMessages interactor."""
         interactor = AsyncMock()
-        interactor.execute = AsyncMock(return_value=[
-            {
-                "id": str(uuid4()),
-                "role": "user",
-                "content": "Hello",
-                "created_at": "2024-01-01T00:00:00Z",
-            },
-            {
-                "id": str(uuid4()),
-                "role": "assistant",
-                "content": "Hi there!",
-                "created_at": "2024-01-01T00:00:01Z",
-            },
-        ])
+        interactor.execute = AsyncMock(
+            return_value=[
+                {
+                    "id": str(uuid4()),
+                    "role": "user",
+                    "content": "Hello",
+                    "created_at": "2024-01-01T00:00:00Z",
+                },
+                {
+                    "id": str(uuid4()),
+                    "role": "assistant",
+                    "content": "Hi there!",
+                    "created_at": "2024-01-01T00:00:01Z",
+                },
+            ]
+        )
         return interactor
 
     def test_get_messages_supports_limit(self):
@@ -337,34 +349,21 @@ class TestChatBuilderIntegration:
 
     def test_conversation_builder_creates_valid_conversation(self):
         """Test ConversationBuilder creates valid conversation."""
-        conversation = (
-            a_conversation()
-            .with_title("Test Chat")
-            .build()
-        )
+        conversation = a_conversation().with_title("Test Chat").build()
 
         assert conversation.title == "Test Chat"
         assert conversation.id is not None
 
     def test_conversation_builder_with_messages(self):
         """Test ConversationBuilder can include messages."""
-        conversation = (
-            a_conversation()
-            .with_messages(3)
-            .build()
-        )
+        conversation = a_conversation().with_messages(3).build()
 
         # 3 user messages + 3 agent responses = 6 total messages
         assert conversation.message_count == 6
 
     def test_message_builder_creates_user_message(self):
         """Test MessageBuilder creates user message."""
-        message = (
-            a_message()
-            .from_user()
-            .with_content("Hello, bot!")
-            .build()
-        )
+        message = a_message().from_user().with_content("Hello, bot!").build()
 
         assert message.role == "user"
         assert message.content == "Hello, bot!"

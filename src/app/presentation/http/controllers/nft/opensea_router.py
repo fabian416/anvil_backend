@@ -11,13 +11,19 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Query, status
 from fastapi_error_map import ErrorAwareRouter, rule
 
-from app.application.queries.nft.get_collection import GetCollection, GetCollectionRequest
+from app.application.queries.nft.get_collection import (
+    GetCollection,
+    GetCollectionRequest,
+)
 from app.application.queries.nft.get_collection_stats import (
     GetCollectionStats,
     GetCollectionStatsRequest,
 )
 from app.application.queries.nft.get_listings import GetListings, GetListingsRequest
-from app.application.queries.nft.get_nft_details import GetNFTDetails, GetNFTDetailsRequest
+from app.application.queries.nft.get_nft_details import (
+    GetNFTDetails,
+    GetNFTDetailsRequest,
+)
 from app.application.queries.nft.get_nft_portfolio import (
     GetNFTPortfolio,
     GetNFTPortfolioRequest,
@@ -102,7 +108,9 @@ def create_opensea_router() -> APIRouter:
         address: str,
         query: FromDishka[GetNFTPortfolio],
         chain: str = Query(default="ethereum", description="Blockchain"),
-        include_valuation: bool = Query(default=True, description="Include floor price valuation"),
+        include_valuation: bool = Query(
+            default=True, description="Include floor price valuation"
+        ),
     ) -> NFTPortfolioResponse:
         """Get NFT portfolio."""
         request = GetNFTPortfolioRequest(

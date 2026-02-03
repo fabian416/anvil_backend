@@ -56,18 +56,19 @@ def process_agent_response(conversation_id: str, message_id: str):
     """
     Background task to process a user message and generate an AI response.
     """
+
     async def runner(container):
         from app.domain.ports.ai.agent_gateway import AgentGateway
         from uuid import UUID
-        
+
         # Get Gateway
         gateway = await container.get(AgentGateway)
-        
+
         # Execute (Mock User ID for now, would be passed in task payload in real impl)
         await gateway.process_message(
             user_id=UUID("00000000-0000-0000-0000-000000000000"),
             session_id=str(conversation_id),
-            message="Task processing..." # In real task, fetch message content from DB
+            message="Task processing...",  # In real task, fetch message content from DB
         )
 
     asyncio.run(_run_task(runner))
@@ -78,6 +79,7 @@ def update_agent_stats():
     """
     Periodic task to aggregate agent performance stats.
     """
+
     async def runner(container):
         # Logic to query logs and update agent_performance_stats table
         print("Updating agent stats...")
@@ -98,26 +100,31 @@ from app.infrastructure.celery.tasks.projects_tasks import (
     aggregate_project_analytics,
     check_knowledge_base_health,
 )
+
 # Import LLM ranking tasks
 from app.infrastructure.celery.tasks.llm_ranking import (
     recalculate_all_rankings,
     recalculate_agent_rankings,
 )
+
 # Import user context tasks
 from app.infrastructure.celery.tasks.user_context_tasks import (
     update_user_context,
     create_missing_user_contexts,
     user_context_analytics,
 )
+
 # Import Privy balance sync tasks
 from app.infrastructure.celery.tasks.privy_balance_tasks import (
     sync_wallet_balances,
     sync_single_wallet_balance,
 )
+
 # Import Etherscan token balance sync tasks
 from app.infrastructure.celery.tasks.etherscan_balance_tasks import (
     sync_all_tokens_etherscan,
 )
+
 # Import lending tasks
 from app.application.lending.tasks import (
     MonitorHealthFactorsTask,
@@ -131,19 +138,20 @@ def populate_graph_protocols():
     """
     Populate/update protocols in the knowledge graph.
     """
+
     async def runner(container):
         from app.application.graph import PopulateGraphInteractor
         from app.domain.graph.ports import GraphRepository
         from app.domain.ports.external_data import DefiDataProvider
-        
+
         graph_repo = await container.get(GraphRepository)
         data_provider = await container.get(DefiDataProvider)
-        
+
         interactor = PopulateGraphInteractor(graph_repo, data_provider)
         stats = await interactor.populate_protocols(limit=100)
-        
+
         print(f"Graph population complete: {stats}")
-    
+
     asyncio.run(_run_task(runner))
 
 
@@ -152,19 +160,20 @@ def update_graph_metadata():
     """
     Update graph metadata and statistics.
     """
+
     async def runner(container):
         from app.domain.graph.ports import GraphRepository
         from sqlalchemy import text
-        
+
         graph_repo = await container.get(GraphRepository)
-        
+
         # Update graph stats using helper function
         await graph_repo.execute_cypher(
             "SELECT update_graph_stats('defi_knowledge_graph')"
         )
-        
+
         print("Graph metadata updated")
-    
+
     asyncio.run(_run_task(runner))
 
 
@@ -173,24 +182,25 @@ def validate_graph_integrity():
     """
     Validate graph integrity and identify issues.
     """
+
     async def runner(container):
         from app.domain.graph.services import GraphService
         from app.domain.graph.ports import GraphRepository
-        
+
         graph_repo = await container.get(GraphRepository)
         graph_service = GraphService(graph_repo)
-        
+
         # Find circular dependencies
         cycles = await graph_service.find_circular_dependencies()
-        
+
         if cycles:
             print(f"⚠️ Found {len(cycles)} circular dependencies!")
             for cycle in cycles[:5]:  # Log first 5
-                names = [n.properties.get('name', 'Unknown') for n in cycle]
+                names = [n.properties.get("name", "Unknown") for n in cycle]
                 print(f"  Cycle: {' -> '.join(names)}")
         else:
             print("✅ No circular dependencies found")
-    
+
     asyncio.run(_run_task(runner))
 
 
@@ -199,17 +209,18 @@ def generate_protocol_embeddings():
     """
     Generate embeddings for protocols.
     """
+
     async def runner(container):
         from app.application.graph import GenerateEmbeddingsInteractor
-        
+
         interactor = await container.get(GenerateEmbeddingsInteractor)
         stats = await interactor.generate_protocol_embeddings(
             limit=100,
             force_regenerate=False,
         )
-        
+
         print(f"Embedding generation complete: {stats}")
-    
+
     asyncio.run(_run_task(runner))
 
 
@@ -217,21 +228,22 @@ def generate_protocol_embeddings():
 def check_user_risk_alerts():
     """
     Check all users' protocols for risk changes and generate alerts.
-    
+
     Runs every 15 minutes to monitor for:
     - Risk score increases
     - Anomaly detection
     - Critical risk levels
     - Dependency risks
     """
+
     async def runner(container):
         from app.application.alerts import RiskAlertMonitor
-        
+
         monitor = await container.get(RiskAlertMonitor)
         alert_count = await monitor.check_all_users()
-        
+
         print(f"Risk alert check complete: {alert_count} alerts generated")
-    
+
     asyncio.run(_run_task(runner))
 
 
@@ -239,23 +251,26 @@ def check_user_risk_alerts():
 def archive_guest_conversations():
     """
     Archive inactive guest conversations.
-    
+
     Runs every hour at :00 to archive conversations that have been
     inactive for more than 1 hour. This keeps the guest_conversations
     table clean and ensures new sessions get fresh conversations.
     """
+
     async def runner(container):
         from datetime import datetime, UTC, timedelta
         from app.domain.guest.ports.guest_repository import GuestRepository
-        
+
         repository = await container.get(GuestRepository)
-        
+
         # Archive conversations older than 1 hour
         one_hour_ago = datetime.now(UTC) - timedelta(hours=1)
         archived_count = await repository.archive_inactive_conversations(one_hour_ago)
-        
-        print(f"Guest conversation archival complete: {archived_count} conversations archived")
-    
+
+        print(
+            f"Guest conversation archival complete: {archived_count} conversations archived"
+        )
+
     asyncio.run(_run_task(runner))
 
 
@@ -263,28 +278,29 @@ def archive_guest_conversations():
 def monitor_lending_health_factors():
     """
     Monitor all active lending positions and check health factors.
-    
+
     Runs every 15 minutes to:
     - Fetch all active positions from Aave and Morpho
     - Calculate current health factors
     - Save health check snapshots
     - Generate alerts for critical positions (HF < 1.5)
     """
+
     async def runner(container):
         from app.application.lending.tasks import (
             LendingRepository,
             PositionProvider,
             MonitorHealthFactorsTask,
         )
-        
+
         repository = await container.get(LendingRepository)
         position_provider = await container.get(PositionProvider)
-        
+
         task = MonitorHealthFactorsTask(repository, position_provider)
         stats = await task.run()
-        
+
         print(f"Lending health factor monitoring complete: {stats}")
-    
+
     asyncio.run(_run_task(runner))
 
 
@@ -292,17 +308,18 @@ def monitor_lending_health_factors():
 def check_user_lending_health(user_id: str, protocol: str, chain: str = "ethereum"):
     """
     Check health factor for a specific user position.
-    
+
     Used for:
     - On-demand health checks
     - Critical position monitoring
     - Pre-transaction validation
-    
+
     Args:
         user_id: User UUID as string
         protocol: Protocol name ("aave" or "morpho")
         chain: Blockchain network (default: "ethereum")
     """
+
     async def runner(container):
         from uuid import UUID
         from app.application.lending.tasks import (
@@ -310,22 +327,22 @@ def check_user_lending_health(user_id: str, protocol: str, chain: str = "ethereu
             PositionProvider,
             CheckUserHealthFactorTask,
         )
-        
+
         repository = await container.get(LendingRepository)
         position_provider = await container.get(PositionProvider)
-        
+
         task = CheckUserHealthFactorTask(repository, position_provider)
         health_check = await task.run(
             user_id=UUID(user_id),
             protocol=protocol,
             chain=chain,
         )
-        
+
         print(
             f"Health check complete for user {user_id}, protocol {protocol}: "
             f"HF={health_check.health_factor:.2f}, level={health_check.health_factor_level}"
         )
-    
+
     asyncio.run(_run_task(runner))
 
 
@@ -333,25 +350,26 @@ def check_user_lending_health(user_id: str, protocol: str, chain: str = "ethereu
 def refresh_lending_positions():
     """
     Refresh lending positions from protocols.
-    
+
     Runs every hour to fetch latest position data from Aave and Morpho
     and keep database in sync with on-chain state.
     """
+
     async def runner(container):
         from app.application.lending.tasks import (
             LendingRepository,
             PositionProvider,
             RefreshPositionsTask,
         )
-        
+
         repository = await container.get(LendingRepository)
         position_provider = await container.get(PositionProvider)
-        
+
         task = RefreshPositionsTask(repository, position_provider)
         stats = await task.run()
-        
+
         print(f"Lending position refresh complete: {stats}")
-    
+
     asyncio.run(_run_task(runner))
 
 

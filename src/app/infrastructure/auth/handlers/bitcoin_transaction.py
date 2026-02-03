@@ -16,7 +16,9 @@ from app.domain.transactions.entities.transaction import Transaction, Transactio
 from app.domain.enums.chain_type import ChainType
 from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.enums.transaction_type import TransactionType
-from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.ports.transaction.transaction_repository import (
+    TransactionRepository,
+)
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.value_objects.created_at import CreatedAt
 from app.domain.value_objects.user_id import UserId
@@ -126,9 +128,7 @@ class LogBitcoinTransactionHandler:
                 to_address=input_data.to_address,
                 amount_btc=input_data.amount_btc,
                 created_at=existing.created_at.value.isoformat(),
-                explorer_url=get_btc_explorer_url(
-                    input_data.network, existing.tx_hash
-                ),
+                explorer_url=get_btc_explorer_url(input_data.network, existing.tx_hash),
             )
 
         # Find or create wallet reference for user
@@ -231,9 +231,7 @@ class LogBitcoinTransactionHandler:
                 to_address=input_data.to_address,
                 amount_btc=input_data.amount_btc,
                 created_at=saved_tx.created_at.value.isoformat(),
-                explorer_url=get_btc_explorer_url(
-                    input_data.network, saved_tx.tx_hash
-                ),
+                explorer_url=get_btc_explorer_url(input_data.network, saved_tx.tx_hash),
             )
 
         except Exception as e:
@@ -316,9 +314,7 @@ class LogBitcoinTransactionHandler:
             )
 
         except Exception as e:
-            logger.warning(
-                f"Failed to log receiver BTC transaction: {e}"
-            )
+            logger.warning(f"Failed to log receiver BTC transaction: {e}")
 
 
 # ============================================================
@@ -469,7 +465,9 @@ class GetBitcoinTransactionHistoryHandler:
             from_address = (
                 tx.tx_metadata.get("from_address")
                 if tx.tx_metadata and is_incoming
-                else tx.tx_metadata.get("from_address") if tx.tx_metadata else None
+                else tx.tx_metadata.get("from_address")
+                if tx.tx_metadata
+                else None
             )
 
             items.append(

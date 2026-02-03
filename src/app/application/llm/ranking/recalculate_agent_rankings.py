@@ -99,7 +99,9 @@ class RecalculateAgentRankings:
         )
 
         if not telemetry_metrics:
-            logger.warning(f"No telemetry data for {agent_type} in last {hours_to_analyze}h")
+            logger.warning(
+                f"No telemetry data for {agent_type} in last {hours_to_analyze}h"
+            )
             return RecalculateAgentRankingsResult(
                 agent_type=agent_type,
                 models_evaluated=0,
@@ -110,7 +112,7 @@ class RecalculateAgentRankings:
 
         # 3. Get weight profile
         weight_profile_data = await self._repository.get_weight_profile(agent_type)
-        
+
         if weight_profile_data:
             weight_profile = WeightProfile(
                 agent_type=weight_profile_data.agent_type,
@@ -162,15 +164,15 @@ class RecalculateAgentRankings:
 
             # Calculate component scores
             success_rate = metrics.success_rate
-            
+
             latency_score = self._ranking_engine.calculate_latency_score(
                 metrics.avg_latency_ms, max_latency_ms
             )
-            
+
             cost_score = self._ranking_engine.calculate_cost_score(
                 metrics.avg_cost_per_request, max_cost
             )
-            
+
             recency_bonus = self._ranking_engine.calculate_recency_bonus(
                 metrics.last_used_at, weight_profile.recency_decay_hours
             )
@@ -212,7 +214,11 @@ class RecalculateAgentRankings:
                     # Simplified position calculation
                     # In reality, positions change based on all models' scores
                     change_reason = self._generate_change_reason(
-                        old_score, new_ranking_score, success_rate, latency_score, cost_score
+                        old_score,
+                        new_ranking_score,
+                        success_rate,
+                        latency_score,
+                        cost_score,
                     )
 
                     changes.append(
@@ -268,7 +274,7 @@ class RecalculateAgentRankings:
             Reason string
         """
         diff = new_score - old_score
-        
+
         if diff > Decimal("0.1"):
             direction = "Significant improvement"
         elif diff > Decimal("0.01"):

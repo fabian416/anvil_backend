@@ -28,11 +28,11 @@ def get_total_coverage(data: dict) -> float:
     """Extract total coverage percentage from coverage data."""
     if not data:
         return 0.0
-    
+
     totals = data.get("totals", {})
     covered = totals.get("covered_lines", 0)
     total = totals.get("num_statements", 1)  # Avoid division by zero
-    
+
     return (covered / total) * 100 if total > 0 else 0.0
 
 
@@ -46,16 +46,16 @@ def main():
     print("=" * 60)
     print("Coverage Trend Analysis")
     print("=" * 60)
-    
+
     # Load current coverage
     coverage_data = load_coverage_json()
     if not coverage_data:
         print("\n⚠️  Could not load coverage data. Skipping trend check.")
         sys.exit(0)  # Don't fail workflow if no coverage data
-    
+
     current_coverage = get_total_coverage(coverage_data)
     print(f"\n📊 Current Coverage: {current_coverage:.2f}%")
-    
+
     # Check minimum threshold
     min_threshold = 60.0
     if check_coverage_threshold(current_coverage, min_threshold):
@@ -64,14 +64,14 @@ def main():
         print(f"❌ Coverage below minimum threshold ({min_threshold}%)")
         print(f"   Current: {current_coverage:.2f}% < Required: {min_threshold}%")
         sys.exit(1)
-    
+
     # Check for coverage regression (if historical data exists)
     history_file = Path(".coverage_history.json")
     if history_file.exists():
         try:
             with open(history_file) as f:
                 history = json.load(f)
-            
+
             last_coverage = history.get("last_coverage", 0)
             if current_coverage < last_coverage - 2.0:  # Allow 2% variance
                 print(f"⚠️  Coverage regression detected!")
@@ -80,14 +80,14 @@ def main():
                 print(f"   Difference: {current_coverage - last_coverage:.2f}%")
         except (json.JSONDecodeError, KeyError):
             pass
-    
+
     # Save current coverage to history
     try:
         with open(history_file, "w") as f:
             json.dump({"last_coverage": current_coverage}, f)
     except IOError:
         pass  # Non-critical
-    
+
     print("\n" + "=" * 60)
     print("Coverage trend check completed successfully.")
     print("=" * 60)

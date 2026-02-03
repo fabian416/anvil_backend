@@ -33,14 +33,18 @@ class RefreshTokenHandler:
 
     async def execute(self, request_data: RefreshTokenRequest) -> dict:
         # Look up existing session by opaque refresh token instead of decoding JWT
-        row = await self._session_store.read_by_refresh_token(request_data.refresh_token)
+        row = await self._session_store.read_by_refresh_token(
+            request_data.refresh_token
+        )
         if row is None:
             raise AuthenticationError("Invalid or expired refresh token")
         user_id = UserId(int(row["user_id"]))  # type: ignore[index]
 
         # If an access token is provided (cookie), validate it's a logged-in user and matches payload
         try:
-            current_user_id = await self._auth_session_service.get_authenticated_user_id()
+            current_user_id = (
+                await self._auth_session_service.get_authenticated_user_id()
+            )
             if current_user_id.value != user_id.value:
                 # Optional: we could invalidate the old session here
                 log.debug(
@@ -51,7 +55,9 @@ class RefreshTokenHandler:
         except AuthenticationError:
             # No valid access token available; proceed with refresh-token only flow
             pass
-        auth_session, access_token = await self._auth_session_service.create_session(user_id)  # type: ignore[arg-type]
+        auth_session, access_token = await self._auth_session_service.create_session(
+            user_id
+        )  # type: ignore[arg-type]
 
         # Prefer updating existing row; if not found, add a new one
         await self._session_store.update_tokens(
@@ -73,5 +79,3 @@ class RefreshTokenHandler:
                 "expires_in": 900,
             },
         }
-
-

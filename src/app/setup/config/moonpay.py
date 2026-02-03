@@ -47,4 +47,3 @@ class MoonPaySettings(BaseModel):
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.environment == "production"
-

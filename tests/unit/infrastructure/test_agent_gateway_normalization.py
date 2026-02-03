@@ -154,4 +154,3 @@ def test_normalize_number_falls_back_to_str(agent_gateway):
 def test_normalize_bool_falls_back_to_str(agent_gateway):
     """Booleans should be converted via str()."""
     assert agent_gateway._normalize_agent_response(True) == "True"
-

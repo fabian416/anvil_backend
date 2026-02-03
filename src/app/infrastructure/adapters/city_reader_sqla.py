@@ -36,5 +36,3 @@ class SqlaCityReader(CityQueryGateway):
             return int(row[0]) if row else None
         except SQLAlchemyError as error:
             raise ReaderError(DB_QUERY_FAILED) from error
-
-

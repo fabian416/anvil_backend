@@ -71,9 +71,7 @@ class MoneyMarketRateComparison:
         """Validate entity invariants."""
         # Must have either user_id OR guest_session_id (not both, not neither)
         if self.user_id is None and self.guest_session_id is None:
-            raise ValueError(
-                "Must provide either user_id or guest_session_id."
-            )
+            raise ValueError("Must provide either user_id or guest_session_id.")
         if self.user_id is not None and self.guest_session_id is not None:
             raise ValueError(
                 "Cannot provide both user_id and guest_session_id. "
@@ -92,9 +90,7 @@ class MoneyMarketRateComparison:
 
         # Validate protocols_compared
         if not self.protocols_compared or len(self.protocols_compared) == 0:
-            raise ValueError(
-                "protocols_compared must contain at least one protocol."
-            )
+            raise ValueError("protocols_compared must contain at least one protocol.")
 
         # Validate best_supply_protocol
         if not self.best_supply_protocol or len(self.best_supply_protocol.strip()) == 0:
@@ -106,16 +102,13 @@ class MoneyMarketRateComparison:
 
         # Validate latency_ms (must be positive)
         if self.latency_ms <= 0:
-            raise ValueError(
-                f"latency_ms must be positive. Got: {self.latency_ms}"
-            )
+            raise ValueError(f"latency_ms must be positive. Got: {self.latency_ms}")
 
         # Validate language (must be valid ISO code)
         valid_languages = ("en", "es", "pt", "zh", "ja", "ko", "fr", "de", "ru")
         if self.language not in valid_languages:
             raise ValueError(
-                f"Invalid language: {self.language}. "
-                f"Must be one of {valid_languages}."
+                f"Invalid language: {self.language}. Must be one of {valid_languages}."
             )
 
     @property

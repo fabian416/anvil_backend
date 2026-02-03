@@ -96,7 +96,14 @@ When suggesting strategies, include health factor targets and safety recommendat
 AGENT_METADATA = {
     "category": "defi_specialist",
     "protocol": "aave",
-    "tags": ["aave", "lending", "borrowing", "liquidation", "health-factor", "collateral"],
+    "tags": [
+        "aave",
+        "lending",
+        "borrowing",
+        "liquidation",
+        "health-factor",
+        "collateral",
+    ],
     "use_cases": [
         "Lending and borrowing strategy",
         "Health factor monitoring",

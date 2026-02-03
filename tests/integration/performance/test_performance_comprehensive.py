@@ -44,6 +44,7 @@ class TestConcurrentLoad:
         WHEN sending chat messages simultaneously
         THEN all requests should complete within acceptable time
         """
+
         async def send_guest_message(user_num: int):
             start_time = time.time()
             response = await client.post(
@@ -84,6 +85,7 @@ class TestConcurrentLoad:
         WHEN sending 5 parallel messages to same conversation
         THEN all should process without deadlocks
         """
+
         async def send_message(msg_num: int):
             start_time = time.time()
             response = await authenticated_client.post(
@@ -122,6 +124,7 @@ class TestConcurrentLoad:
         WHEN hitting different endpoints concurrently
         THEN system should handle mixed load
         """
+
         async def create_conversation():
             response = await authenticated_client.post(
                 "/api/v1/conversations",
@@ -262,8 +265,8 @@ class TestResponseTimeBenchmarks:
         assert avg_time < 1.0, f"Average {avg_time:.3f}s exceeds 1s"
 
         print(f"\n📊 Shortcuts API Performance:")
-        print(f"  Median: {median_time*1000:.0f}ms")
-        print(f"  Avg: {avg_time*1000:.0f}ms")
+        print(f"  Median: {median_time * 1000:.0f}ms")
+        print(f"  Avg: {avg_time * 1000:.0f}ms")
 
 
 @pytest.mark.asyncio
@@ -296,8 +299,9 @@ class TestRateLimitValidation:
                 break
 
         # Should hit rate limit before 25 messages
-        assert rate_limited or success_count <= 20, \
+        assert rate_limited or success_count <= 20, (
             "Rate limiting not enforced (sent >20 without 429)"
+        )
 
         print(f"\n🚦 Rate Limit: {success_count} successful before limit")
 
@@ -331,8 +335,7 @@ class TestRateLimitValidation:
                 break
 
         # Authenticated users should handle more messages
-        assert success_count >= 8, \
-            "Authenticated users rate limited too aggressively"
+        assert success_count >= 8, "Authenticated users rate limited too aggressively"
 
     async def test_rate_limit_003_concurrent_rate_limit_enforcement(
         self,
@@ -343,6 +346,7 @@ class TestRateLimitValidation:
         WHEN multiple requests from same IP
         THEN rate limit should apply globally
         """
+
         async def send_message(msg_num: int):
             response = await client.post(
                 "/api/v1/guest/chat",
@@ -362,10 +366,13 @@ class TestRateLimitValidation:
         rate_limited_count = status_codes.count(429)
 
         # Should have some rate limiting
-        assert rate_limited_count > 0 or success_count <= 20, \
+        assert rate_limited_count > 0 or success_count <= 20, (
             "No rate limiting on concurrent requests"
+        )
 
-        print(f"\n🚦 Concurrent Rate Limit: {success_count} success, {rate_limited_count} limited")
+        print(
+            f"\n🚦 Concurrent Rate Limit: {success_count} success, {rate_limited_count} limited"
+        )
 
 
 @pytest.mark.asyncio
@@ -404,8 +411,8 @@ class TestDatabasePerformance:
         assert max_time < 2.0, f"Max creation time {max_time:.3f}s too slow"
 
         print(f"\n💾 Conversation Creation Performance:")
-        print(f"  Avg: {avg_time*1000:.0f}ms")
-        print(f"  Max: {max_time*1000:.0f}ms")
+        print(f"  Avg: {avg_time * 1000:.0f}ms")
+        print(f"  Max: {max_time * 1000:.0f}ms")
 
     async def test_db_performance_002_message_retrieval_speed(
         self,
@@ -444,7 +451,7 @@ class TestDatabasePerformance:
             assert avg_time < 0.5, f"Average retrieval {avg_time:.3f}s exceeds 500ms"
 
             print(f"\n💾 Message Retrieval Performance:")
-            print(f"  Avg: {avg_time*1000:.0f}ms")
+            print(f"  Avg: {avg_time * 1000:.0f}ms")
 
     async def test_db_performance_003_no_n_plus_1_queries(
         self,
@@ -481,4 +488,4 @@ class TestDatabasePerformance:
         assert elapsed < 1.0, f"List retrieval {elapsed:.3f}s indicates N+1 problem"
 
         print(f"\n💾 Conversation List Performance:")
-        print(f"  {len(conv_ids)} conversations in {elapsed*1000:.0f}ms")
+        print(f"  {len(conv_ids)} conversations in {elapsed * 1000:.0f}ms")

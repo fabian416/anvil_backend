@@ -8,10 +8,10 @@ generating detailed CSV reports.
 Usage:
     # Run all tests
     python -m pytest tests/integration/user/test_runner.py -v
-    
+
     # Run specific category
     python -m pytest tests/integration/user/test_runner.py -v -k "swap"
-    
+
     # Run with external server
     TEST_BASE_URL=http://localhost:8080 python -m pytest tests/integration/user/test_runner.py -v
 """
@@ -40,6 +40,7 @@ except ImportError:
     # Standalone execution
     import sys
     from pathlib import Path
+
     sys.path.insert(0, str(Path(__file__).parent))
     from conftest import (
         TokenManager,
@@ -107,7 +108,6 @@ WORKFLOW_TESTS = [
         "subcategory": "swap_multilang",
         "language": "zh",
     },
-    
     # ========== LENDING WORKFLOW ==========
     {
         "test_id": "lend_001",
@@ -157,7 +157,6 @@ WORKFLOW_TESTS = [
         "subcategory": "lending_multilang",
         "language": "pt",
     },
-    
     # ========== TRANSFER WORKFLOW ==========
     {
         "test_id": "transfer_001",
@@ -199,7 +198,6 @@ WORKFLOW_TESTS = [
         "subcategory": "transfer_multilang",
         "language": "es",
     },
-    
     # ========== BUY WORKFLOW ==========
     {
         "test_id": "buy_001",
@@ -249,7 +247,6 @@ WORKFLOW_TESTS = [
         "subcategory": "buy_multilang",
         "language": "pt",
     },
-    
     # ========== MONEY MARKET WORKFLOW ==========
     {
         "test_id": "mm_001",
@@ -343,7 +340,6 @@ AGENT_TESTS = [
         "subcategory": "hunter_news",
         "language": "en",
     },
-    
     # ========== DEFI YIELD ==========
     {
         "test_id": "yield_001",
@@ -369,7 +365,6 @@ AGENT_TESTS = [
         "subcategory": "yield",
         "language": "en",
     },
-    
     # ========== PORTFOLIO ==========
     {
         "test_id": "portfolio_001",
@@ -395,7 +390,6 @@ AGENT_TESTS = [
         "subcategory": "portfolio",
         "language": "en",
     },
-    
     # ========== WALLET ==========
     {
         "test_id": "wallet_001",
@@ -421,7 +415,6 @@ AGENT_TESTS = [
         "subcategory": "wallet",
         "language": "en",
     },
-    
     # ========== TRANSACTION HISTORY ==========
     {
         "test_id": "tx_001",
@@ -447,7 +440,6 @@ AGENT_TESTS = [
         "subcategory": "transactions",
         "language": "en",
     },
-    
     # ========== RESEARCH ==========
     {
         "test_id": "research_001",
@@ -473,7 +465,6 @@ AGENT_TESTS = [
         "subcategory": "research",
         "language": "en",
     },
-    
     # ========== RISK ANALYZER ==========
     {
         "test_id": "risk_001",
@@ -526,7 +517,6 @@ MULTISTEP_TESTS = [
         "subcategory": "swap_modify",
         "language": "en",
     },
-    
     # ========== LENDING CONFIRMATION FLOW ==========
     {
         "test_id": "lend_confirm_001",
@@ -548,7 +538,6 @@ MULTISTEP_TESTS = [
         "subcategory": "lending_cancel",
         "language": "en",
     },
-    
     # ========== MONEY MARKET FLOW ==========
     {
         "test_id": "mm_select_001",
@@ -567,18 +556,19 @@ MULTISTEP_TESTS = [
 # Test Classes
 # ============================================================
 
+
 @pytest.mark.asyncio
 @pytest.mark.integration
 class TestUserWorkflows:
     """Tests for authenticated user workflow agents."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, conversation_id, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
-    
+
     @pytest.mark.parametrize("test_case", WORKFLOW_TESTS, ids=lambda t: t["test_id"])
     async def test_workflow(self, test_case: dict[str, Any]):
         """Test workflow routing and response."""
@@ -588,7 +578,7 @@ class TestUserWorkflows:
             test_case["input"],
             test_case.get("language", "en"),
         )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -596,17 +586,17 @@ class TestUserWorkflows:
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         # Assert basic success
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         # Check agent routing
         parsed = parse_response(response_data)
         expected_agent = test_case["expected_agent"]
         actual_agents = parsed.get("agents_used", "")
-        
+
         assert expected_agent in actual_agents or any(
             kw in parsed.get("content", "").lower()
             for kw in ["swap", "deposit", "lend", "send", "buy", "compare", "rate"]
@@ -617,14 +607,14 @@ class TestUserWorkflows:
 @pytest.mark.integration
 class TestUserAgents:
     """Tests for authenticated user agent queries."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, conversation_id, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.conversation_id = conversation_id
         self.reporter = csv_reporter
-    
+
     @pytest.mark.parametrize("test_case", AGENT_TESTS, ids=lambda t: t["test_id"])
     async def test_agent(self, test_case: dict[str, Any]):
         """Test agent routing and response."""
@@ -634,7 +624,7 @@ class TestUserAgents:
             test_case["input"],
             test_case.get("language", "en"),
         )
-        
+
         result = create_test_result(
             test_id=test_case["test_id"],
             test_case=test_case,
@@ -642,12 +632,12 @@ class TestUserAgents:
             response_time_ms=response_time_ms,
             conversation_id=self.conversation_id,
         )
-        
+
         self.reporter.add_result(result)
-        
+
         # Assert basic success
         assert not response_data.get("error"), f"Request failed: {response_data}"
-        
+
         # Check response has content
         parsed = parse_response(response_data)
         assert len(parsed.get("content", "")) > 20, "Response too short"
@@ -657,13 +647,13 @@ class TestUserAgents:
 @pytest.mark.integration
 class TestUserMultiStep:
     """Tests for multi-step conversation flows."""
-    
+
     @pytest_asyncio.fixture(autouse=True)
     async def setup(self, authenticated_client, csv_reporter):
         """Setup test fixtures."""
         self.client = authenticated_client
         self.reporter = csv_reporter
-    
+
     @pytest.mark.parametrize("test_case", MULTISTEP_TESTS, ids=lambda t: t["test_id"])
     async def test_multistep_flow(self, test_case: dict[str, Any]):
         """Test multi-step conversation flow."""
@@ -674,10 +664,10 @@ class TestUserMultiStep:
         )
         assert response.status_code in (200, 201)
         conversation_id = response.json().get("id")
-        
+
         steps = test_case["steps"]
         total_steps = len(steps)
-        
+
         for step_num, step in enumerate(steps, 1):
             response_data, response_time_ms = await send_message(
                 self.client,
@@ -685,7 +675,7 @@ class TestUserMultiStep:
                 step["input"],
                 test_case.get("language", "en"),
             )
-            
+
             # Create result for this step
             step_test_case = {
                 **test_case,
@@ -696,7 +686,7 @@ class TestUserMultiStep:
                 "total_steps": total_steps,
                 "requires_execute": step.get("expect_execute", False),
             }
-            
+
             result = create_test_result(
                 test_id=f"{test_case['test_id']}_step{step_num}",
                 test_case=step_test_case,
@@ -704,25 +694,29 @@ class TestUserMultiStep:
                 response_time_ms=response_time_ms,
                 conversation_id=conversation_id,
             )
-            
+
             self.reporter.add_result(result)
-            
+
             # Validate step expectations
-            assert not response_data.get("error"), f"Step {step_num} failed: {response_data}"
-            
+            assert not response_data.get("error"), (
+                f"Step {step_num} failed: {response_data}"
+            )
+
             parsed = parse_response(response_data)
-            
+
             if step.get("expect_execute"):
                 # Final step should have execute data
-                assert parsed.get("execute_data"), f"Step {step_num} should have execute_data"
-            
+                assert parsed.get("execute_data"), (
+                    f"Step {step_num} should have execute_data"
+                )
+
             if step.get("expect_cancelled"):
                 # Cancelled flow should indicate cancellation
                 assert any(
                     word in parsed.get("content", "").lower()
                     for word in ["cancel", "cancelled", "abort", "exit"]
                 ), f"Step {step_num} should indicate cancellation"
-            
+
             # Small delay between steps
             await asyncio.sleep(0.5)
 
@@ -731,38 +725,39 @@ class TestUserMultiStep:
 # Standalone Runner
 # ============================================================
 
+
 async def run_all_tests():
     """Run all tests and generate reports."""
     import httpx
     import os
-    
+
     base_url = os.environ.get("TEST_BASE_URL", "http://localhost:8080")
     reporter = CSVReporter(category="all_workflows")
-    
+
     # Get token
     async with httpx.AsyncClient(base_url=base_url, timeout=60.0) as client:
         token_info = await TokenManager.get_token(client)
         client.headers["Authorization"] = token_info.authorization_header
-        
+
         # Create conversation
         response = await client.post(
             "/api/v1/conversations",
             json={"title": "Comprehensive Test Run"},
         )
-        
+
         if response.status_code not in (200, 201):
             print(f"Failed to create conversation: {response.text}")
             return
-        
+
         conversation_id = response.json().get("id")
         print(f"Using conversation: {conversation_id}")
-        
+
         # Run workflow tests
         all_tests = WORKFLOW_TESTS + AGENT_TESTS
-        
+
         for i, test_case in enumerate(all_tests, 1):
             print(f"\n[{i}/{len(all_tests)}] Testing: {test_case['input'][:50]}...")
-            
+
             try:
                 response_data, response_time_ms = await send_message(
                     client,
@@ -770,7 +765,7 @@ async def run_all_tests():
                     test_case["input"],
                     test_case.get("language", "en"),
                 )
-                
+
                 result = create_test_result(
                     test_id=test_case["test_id"],
                     test_case=test_case,
@@ -778,13 +773,13 @@ async def run_all_tests():
                     response_time_ms=response_time_ms,
                     conversation_id=conversation_id,
                 )
-                
+
                 reporter.add_result(result)
-                
+
                 print(f"    Status: {result.status}")
                 print(f"    Agents: {result.actual_agents}")
                 print(f"    Time: {result.response_time_ms}ms")
-                
+
             except Exception as e:
                 print(f"    Error: {e}")
                 result = TestResult(
@@ -796,15 +791,15 @@ async def run_all_tests():
                     error_message=str(e),
                 )
                 reporter.add_result(result)
-            
+
             # Small delay
             await asyncio.sleep(1)
-    
+
     # Write reports
     csv_path = reporter.write_csv()
     summary_path = reporter.write_summary()
     reporter.print_summary()
-    
+
     print(f"\nCSV output: {csv_path}")
     print(f"Summary: {summary_path}")
 

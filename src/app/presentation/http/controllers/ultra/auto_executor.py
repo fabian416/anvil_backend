@@ -14,16 +14,20 @@ class ConfigUpdateRequest(BaseModel):
     """Request model for config update."""
 
     min_profit_usd: Optional[float] = Field(None, description="Minimum profit USD")
-    scan_interval_seconds: Optional[int] = Field(None, description="Scan interval seconds")
+    scan_interval_seconds: Optional[int] = Field(
+        None, description="Scan interval seconds"
+    )
     max_gas_price_gwei: Optional[int] = Field(None, description="Max gas price gwei")
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "min_profit_usd": 75.0,
-            "scan_interval_seconds": 10,
-            "max_gas_price_gwei": 120,
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "min_profit_usd": 75.0,
+                "scan_interval_seconds": 10,
+                "max_gas_price_gwei": 120,
+            }
         }
-    })
+    )
 
 
 def create_auto_executor_router() -> APIRouter:

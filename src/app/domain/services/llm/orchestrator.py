@@ -17,7 +17,10 @@ from app.domain.ports.llm_provider_port import (
     NonRetryableError,
 )
 from app.domain.value_objects.llm import LLMRequest, LLMResponse
-from app.domain.services.llm.retry_engine import RetryEngine, AllProvidersExhaustedException
+from app.domain.services.llm.retry_engine import (
+    RetryEngine,
+    AllProvidersExhaustedException,
+)
 from app.domain.services.llm.circuit_breaker import CircuitBreakerManager
 
 logger = logging.getLogger(__name__)
