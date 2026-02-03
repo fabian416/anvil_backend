@@ -7,7 +7,7 @@ echo "🚀 Starting FastAPI entrypoint..."
 echo "⏳ Waiting for Postgres..."
 max_attempts=30
 attempt=0
-until PGPASSWORD=$POSTGRES_PASSWORD psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q' 2>/dev/null; do
+until PGPASSWORD=$POSTGRES_PASSWORD psql -h "$POSTGRES_HOST" -p "${POSTGRES_PORT:-5432}" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c '\q' 2>/dev/null; do
   attempt=$((attempt + 1))
   if [ $attempt -eq $max_attempts ]; then
     echo "❌ Postgres did not become ready in time"
