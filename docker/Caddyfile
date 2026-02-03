@@ -12,6 +12,7 @@
         X-Frame-Options "DENY"
         X-XSS-Protection "1; mode=block"
         Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https://cdn.jsdelivr.net https://fastapi.tiangolo.com; font-src 'self' data: https://cdn.jsdelivr.net;"
     }
 
     # Flower (Celery Monitoring) - with basic auth
@@ -78,6 +79,15 @@
 
     # FastAPI - catch all remaining traffic
     handle {
-        reverse_proxy fastapi:8080
+        reverse_proxy fastapi:8080 {
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Port {http.request.port}
+            header_up X-Forwarded-Prefix /
+            
+            # Remove CSP from FastAPI response so we can use our own
+            header_down -Content-Security-Policy
+        }
     }
 }
