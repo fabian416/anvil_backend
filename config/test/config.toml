@@ -1,6 +1,6 @@
 # PostgreSQL
 [postgres]
-DB = "anvil_db"
+DB = "anvil_test"
 HOST = "localhost"
 PORT = 5432
 DRIVER = "psycopg"
