@@ -1,9 +1,30 @@
-name: anvil-production
+name: anvil-development
 
 services:
   # ===================================================
   # INFRASTRUCTURE - PostgreSQL & Redis
   # ===================================================
+  
+  postgres:
+    image: postgres:16-alpine
+    container_name: anvil_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - anvil-network
 
   redis:
     image: redis:7-alpine
@@ -28,29 +49,6 @@ services:
   fastapi:
     image: ghcr.io/${GHCR_USERNAME}/anvil-backend-api:${IMAGE_TAG:-production}
     container_name: anvil_fastapi
-    entrypoint: 
-      - /bin/bash
-      - -c
-      - |
-        echo '🚀 Starting FastAPI with port fix...'
-        echo '⏳ Waiting for Postgres...'
-        max_attempts=30
-        attempt=0
-        until PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -p ${POSTGRES_PORT:-5432} -U $POSTGRES_USER -d $POSTGRES_DB -c '\q' 2>/dev/null; do
-          attempt=$((attempt + 1))
-          if [ $attempt -eq $max_attempts ]; then
-            echo '❌ Postgres did not become ready in time'
-            exit 1
-          fi
-          echo "   Postgres is unavailable - sleeping (attempt $attempt/$max_attempts)"
-          sleep 2
-        done
-        echo '✅ Postgres is ready!'
-        echo '🔄 Running Alembic migrations...'
-        alembic upgrade head
-        echo '✅ Migrations complete!'
-        echo '🚀 Starting uvicorn...'
-        exec uvicorn app.run:make_app --factory --host 0.0.0.0 --port 8080 --loop uvloop
     environment:
       - APP_ENV=${APP_ENV}
       - DATABASE_URL=${DATABASE_URL}
@@ -60,7 +58,6 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_PORT=${POSTGRES_PORT}
-      - PGSSLMODE=require
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
     ports:
@@ -68,6 +65,8 @@ services:
     volumes:
       - ./config:/app/config:ro
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
     restart: unless-stopped
@@ -99,6 +98,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - anvil-network
@@ -115,6 +116,8 @@ services:
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     volumes:
       - ./config:/app/config:ro
@@ -142,6 +145,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - anvil-network
@@ -160,6 +165,8 @@ services:
       - ./config:/app/config:ro
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -180,6 +187,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - anvil-network
@@ -198,6 +207,8 @@ services:
       - ./config:/app/config:ro
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -218,6 +229,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - anvil-network
@@ -236,6 +249,8 @@ services:
       - ./config:/app/config:ro
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -256,6 +271,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - anvil-network
@@ -275,6 +292,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - anvil-network
@@ -293,6 +312,8 @@ services:
       - ./config:/app/config:ro
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -474,6 +495,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - anvil-network
@@ -518,12 +541,13 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     environment:
-      - DOMAIN=${DOMAIN:-anvil.zk-access.xyz}
+      - DOMAIN=${DOMAIN:-development.anvil.zk-access.xyz}
       - FLOWER_DOMAIN=${FLOWER_DOMAIN}
       - FLOWER_USER=${FLOWER_USER}
       - FLOWER_HASH=${FLOWER_HASH}
 
 volumes:
+  pg_data:
   redis_data:
   celery_beat_schedule:
   caddy_data:

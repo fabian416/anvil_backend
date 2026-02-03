@@ -1,23 +1,23 @@
-name: anvil-docker
+name: anvil-local
 
 services:
   # ===================================================
-  # INFRAESTRUCTURA - PostgreSQL y Redis
+  # INFRASTRUCTURE - PostgreSQL & Redis
   # ===================================================
   
   postgres:
     image: postgres:16-alpine
     container_name: anvil_postgres
     environment:
-      POSTGRES_USER: anvil
-      POSTGRES_PASSWORD: changethis
-      POSTGRES_DB: anvil_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U anvil -d anvil_db" ]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -34,7 +34,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -47,37 +47,33 @@ services:
   # ===================================================
   
   fastapi:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.fastapi
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-api:${IMAGE_TAG:-production}
     container_name: anvil_fastapi
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - POSTGRES_USER=anvil
-      - POSTGRES_PASSWORD=changethis
-      - POSTGRES_DB=anvil_db
-      - POSTGRES_PORT=5432
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
     ports:
       - "8080:8080"
+    volumes:
+      - ./config:/app/config:ro
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
     restart: unless-stopped
     networks:
       - anvil-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -87,54 +83,44 @@ services:
   # CELERY - Background Job Processing
   # ===================================================
   
-  # General Worker (all queues)
   celery-worker:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.celery
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker:${IMAGE_TAG:-production}
     container_name: anvil_celery_worker
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+      - ./config:/app/config:ro
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
-  # Beat Scheduler
   celery-beat:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.celery-beat
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-beat:${IMAGE_TAG:-production}
     container_name: anvil_celery_beat
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
     volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
+      - ./config:/app/config:ro
       - celery_beat_schedule:/tmp
     restart: unless-stopped
     networks:
@@ -145,226 +131,190 @@ services:
   # ===================================================
   
   celery-worker-agents:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.celery-workers.agents
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-agents:${IMAGE_TAG:-production}
     container_name: anvil_celery_agents
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+      - ./config:/app/config:ro
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   celery-worker-transactions:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.celery-workers.transactions
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-transactions:${IMAGE_TAG:-production}
     container_name: anvil_celery_transactions
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+      - ./config:/app/config:ro
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   celery-worker-graph:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.celery-workers.graph
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-graph:${IMAGE_TAG:-production}
     container_name: anvil_celery_graph
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+      - ./config:/app/config:ro
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   celery-worker-distillation:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.celery-workers.distillation
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-distillation:${IMAGE_TAG:-production}
     container_name: anvil_celery_distillation
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+      - ./config:/app/config:ro
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   celery-worker-projects:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.celery-workers.projects
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-projects:${IMAGE_TAG:-production}
     container_name: anvil_celery_projects
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+      - ./config:/app/config:ro
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   celery-worker-llm:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.celery-workers.llm
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-llm:${IMAGE_TAG:-production}
     container_name: anvil_celery_llm
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+      - ./config:/app/config:ro
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   celery-worker-maintenance:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.celery-workers.maintenance
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-maintenance:${IMAGE_TAG:-production}
     container_name: anvil_celery_maintenance
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+      - ./config:/app/config:ro
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   celery-worker-risk:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.celery-workers.risk
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-risk:${IMAGE_TAG:-production}
     container_name: anvil_celery_risk
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+      - ./config:/app/config:ro
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   celery-worker-email:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.celery-workers.email
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-celery-worker-email:${IMAGE_TAG:-production}
     container_name: anvil_celery_email
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+      - ./config:/app/config:ro
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
     restart: unless-stopped
     networks:
       - anvil-network
@@ -374,166 +324,154 @@ services:
   # ===================================================
   
   mcp-1inch:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.mcp
-      args:
-        MCP_SERVER: oneinch_mcp
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-1inch:${IMAGE_TAG:-production}
     container_name: anvil_mcp_1inch
     environment:
-      - APP_ENV=local
+      - APP_ENV=${APP_ENV}
+      - ONEINCH_API_KEY=${ONEINCH_API_KEY}
     ports:
       - "8081:8081"
+    volumes:
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   mcp-defillama:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.mcp
-      args:
-        MCP_SERVER: defillama_mcp
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-defillama:${IMAGE_TAG:-production}
     container_name: anvil_mcp_defillama
     environment:
-      - APP_ENV=local
+      - APP_ENV=${APP_ENV}
     ports:
       - "8082:8082"
+    volumes:
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   mcp-thegraph:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.mcp
-      args:
-        MCP_SERVER: thegraph_mcp
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-thegraph:${IMAGE_TAG:-production}
     container_name: anvil_mcp_thegraph
     environment:
-      - APP_ENV=local
+      - APP_ENV=${APP_ENV}
+      - THEGRAPH_API_KEY=${THEGRAPH_API_KEY}
     ports:
       - "8083:8083"
+    volumes:
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   mcp-coingecko:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.mcp
-      args:
-        MCP_SERVER: coingecko_mcp
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-coingecko:${IMAGE_TAG:-production}
     container_name: anvil_mcp_coingecko
     environment:
-      - APP_ENV=local
+      - APP_ENV=${APP_ENV}
+      - COINGECKO_API_KEY=${COINGECKO_API_KEY}
     ports:
       - "8084:8084"
+    volumes:
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   mcp-aave:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.mcp
-      args:
-        MCP_SERVER: aave_mcp
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-aave:${IMAGE_TAG:-production}
     container_name: anvil_mcp_aave
     environment:
-      - APP_ENV=local
+      - APP_ENV=${APP_ENV}
+      - AAVE_RPC_URL=${AAVE_RPC_URL}
     ports:
       - "8085:8085"
+    volumes:
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   mcp-portfolio:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.mcp
-      args:
-        MCP_SERVER: portfolio_mcp
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-portfolio:${IMAGE_TAG:-production}
     container_name: anvil_mcp_portfolio
     environment:
-      - APP_ENV=local
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
     ports:
       - "8086:8086"
+    volumes:
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   mcp-perplexity:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.mcp
-      args:
-        MCP_SERVER: perplexity_mcp
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-perplexity:${IMAGE_TAG:-production}
     container_name: anvil_mcp_perplexity
     environment:
-      - APP_ENV=local
+      - APP_ENV=${APP_ENV}
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
     ports:
       - "8087:8087"
+    volumes:
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   mcp-morpho:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.mcp
-      args:
-        MCP_SERVER: morpho_mcp
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-morpho:${IMAGE_TAG:-production}
     container_name: anvil_mcp_morpho
     environment:
-      - APP_ENV=local
+      - APP_ENV=${APP_ENV}
+      - MORPHO_API_KEY=${MORPHO_API_KEY}
     ports:
       - "8088:8088"
+    volumes:
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   mcp-curve:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.mcp
-      args:
-        MCP_SERVER: curve_mcp
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-curve:${IMAGE_TAG:-production}
     container_name: anvil_mcp_curve
     environment:
-      - APP_ENV=local
+      - APP_ENV=${APP_ENV}
+      - CURVE_API_URL=${CURVE_API_URL}
     ports:
       - "8089:8089"
+    volumes:
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   mcp-hyperliquid:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.mcp
-      args:
-        MCP_SERVER: hyperliquid_mcp
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-hyperliquid:${IMAGE_TAG:-production}
     container_name: anvil_mcp_hyperliquid
     environment:
-      - APP_ENV=local
+      - APP_ENV=${APP_ENV}
+      - HYPERLIQUID_API_KEY=${HYPERLIQUID_API_KEY}
     ports:
       - "8090:8090"
+    volumes:
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - anvil-network
 
   mcp-layerzero:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.mcp
-      args:
-        MCP_SERVER: layerzero_mcp
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-mcp-layerzero:${IMAGE_TAG:-production}
     container_name: anvil_mcp_layerzero
     environment:
-      - APP_ENV=local
+      - APP_ENV=${APP_ENV}
+      - LAYERZERO_API_KEY=${LAYERZERO_API_KEY}
     ports:
       - "8091:8091"
+    volumes:
+      - ./config:/app/config:ro
     restart: unless-stopped
     networks:
       - anvil-network
@@ -543,26 +481,22 @@ services:
   # ===================================================
   
   tx-confirmation:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.tx-confirmation
+    image: ghcr.io/${GHCR_USERNAME}/anvil-backend-tx-confirmation:${IMAGE_TAG:-production}
     container_name: anvil_tx_confirmation
     environment:
-      - APP_ENV=local
-      - DATABASE_URL=postgresql://anvil:changethis@postgres:5432/anvil_db
-      - REDIS_URL=redis://redis:6379
-      - POSTGRES_HOST=postgres
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - APP_ENV=${APP_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    volumes:
+      - ./config:/app/config:ro
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    volumes:
-      - ./config/local/config.toml:/app/config/local/config.toml:ro
-      - ./config/local/.env:/app/config/local/.env:ro
-      - ./config/local/.secrets.toml:/app/config/local/.secrets.toml:ro
     restart: unless-stopped
     networks:
       - anvil-network
@@ -575,10 +509,9 @@ services:
     image: mher/flower:1.2.0
     container_name: anvil_flower
     environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
-    ports:
-      - "5555:5555"
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      - FLOWER_BASIC_AUTH=${FLOWER_BASIC_AUTH}
     depends_on:
       redis:
         condition: service_healthy

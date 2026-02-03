@@ -1,4 +1,4 @@
-name: anvil-production
+name: anvil-staging
 
 services:
   # ===================================================
@@ -518,7 +518,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     environment:
-      - DOMAIN=${DOMAIN:-anvil.zk-access.xyz}
+      - DOMAIN=${DOMAIN:-staging.anvil.zk-access.xyz}
       - FLOWER_DOMAIN=${FLOWER_DOMAIN}
       - FLOWER_USER=${FLOWER_USER}
       - FLOWER_HASH=${FLOWER_HASH}
