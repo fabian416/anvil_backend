@@ -505,8 +505,6 @@ services:
     depends_on:
       fastapi:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
     ports:
       - "3000:3000"
     restart: unless-stopped
