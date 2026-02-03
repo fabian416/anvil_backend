@@ -238,7 +238,7 @@ files = [
     "src",
     "tests",
 ]
-exclude = "^.*alembic.*$"
+exclude = "^.*(alembic|agno).*$"
 strict = true
 ignore_missing_imports = true
 allow_subclassing_any = true

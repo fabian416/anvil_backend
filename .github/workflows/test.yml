@@ -96,11 +96,13 @@ jobs:
         REDIS_HOST: localhost
         REDIS_PORT: 6379
       run: |
-        make code.test
+        pytest -v
     
     - name: Generate coverage report
       run: |
-        make code.cov
+        coverage run -m pytest
+        coverage combine
+        coverage report
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
