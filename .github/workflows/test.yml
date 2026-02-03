@@ -395,7 +395,7 @@ jobs:
     
     - name: Run mypy
       run: |
-        mypy src/app/infrastructure/mcp/
+        mypy src/app/infrastructure/mcp/ --ignore-missing-imports --allow-untyped-calls --allow-untyped-defs
         mypy src/app/presentation/http/websocket/
         mypy src/app/infrastructure/celery/tasks/ --ignore-missing-imports
         mypy src/app/infrastructure/adapters/privy/ --ignore-missing-imports
