@@ -13,6 +13,7 @@ on:
       - 'tests/**'
       - 'pyproject.toml'
       - 'alembic/**'
+      - 'config/**'
       - '.github/workflows/**'
   pull_request:
     branches: [ master, staging, development ]
@@ -21,6 +22,7 @@ on:
       - 'tests/**'
       - 'pyproject.toml'
       - 'alembic/**'
+      - 'config/**'
       - '.github/workflows/**'
 
 # Cancel in-progress runs when new commit is pushed
