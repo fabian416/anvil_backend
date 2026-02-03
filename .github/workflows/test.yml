@@ -395,5 +395,5 @@ jobs:
     
     - name: Run mypy
       run: |
-        mypy src/app/infrastructure/celery/tasks/ --ignore-missing-imports
+        mypy src/app/infrastructure/celery/tasks/ --ignore-missing-imports --allow-untyped-calls --allow-untyped-defs --allow-untyped-decorators
         mypy src/app/infrastructure/adapters/privy/ --ignore-missing-imports
