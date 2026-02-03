@@ -1,24 +1,17 @@
 name: Build & Push All Docker Images
 
 on:
-  push:
+  # Build images only after tests pass
+  workflow_run:
+    workflows: ["Test Suite"]
+    types:
+      - completed
     branches:
       - master
       - main
       - staging
       - development
-    paths:
-      - 'src/**'
-      - 'docker/**'
-      - 'pyproject.toml'
-      - 'requirements.txt'
-      - '.github/workflows/build.yml'
-  pull_request:
-    branches:
-      - master
-      - main
-      - staging
-      - development
+  # Allow manual builds (bypass test requirement)
   workflow_dispatch:
     inputs:
       build_all:
@@ -33,8 +26,11 @@ env:
   IMAGE_VERSION: ${{ github.ref_name }}
 
 jobs:
+  # Only build if tests passed (for workflow_run trigger) or manual dispatch
   build:
     runs-on: ubuntu-latest
+    # Skip build if tests failed (but allow manual dispatch)
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: read
       packages: write
