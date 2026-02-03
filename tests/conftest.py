@@ -279,10 +279,18 @@ async def cleanup_database(request, test_db_engine):
 
     from sqlalchemy.ext.asyncio import create_async_engine
     from sqlalchemy import text
+    import os
+
+    # Build async connection string from environment variables
+    db_user = os.getenv("POSTGRES_USER", "postgres")
+    db_password = os.getenv("POSTGRES_PASSWORD", "postgres")
+    db_host = os.getenv("POSTGRES_HOST", "localhost")
+    db_port = os.getenv("POSTGRES_PORT", "5432")
+    db_name = os.getenv("POSTGRES_DB", "anvil_test")
 
     # Create async engine for proper async cleanup
     async_engine = create_async_engine(
-        "postgresql+asyncpg://anvil:changethis@localhost:5432/anvil_test",
+        f"postgresql+asyncpg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}",
         pool_pre_ping=True,
         echo=False,
     )
