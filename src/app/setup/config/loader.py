@@ -44,6 +44,7 @@ ENV_TO_DIR_PATHS: Final[Mapping[ValidEnvs, Path]] = MappingProxyType({
     ValidEnvs.LOCAL: CONFIG_PATH / ValidEnvs.LOCAL,
     ValidEnvs.DEV: CONFIG_PATH / ValidEnvs.DEV,
     ValidEnvs.PROD: CONFIG_PATH / ValidEnvs.PROD,
+    ValidEnvs.TEST: CONFIG_PATH / ValidEnvs.TEST,
 })
 
 
