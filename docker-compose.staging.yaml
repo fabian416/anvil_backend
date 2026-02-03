@@ -497,6 +497,23 @@ services:
       - anvil-network
 
   # ===================================================
+  # FRONTEND WEBAPP
+  # ===================================================
+  frontend:
+    image: ghcr.io/${GHCR_USERNAME}/anvil_frontend:${IMAGE_TAG:-production}
+    container_name: frontend
+    depends_on:
+      fastapi:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - anvil-network
+
+  # ===================================================
   # REVERSE PROXY - Caddy (HTTPS)
   # ===================================================
   
@@ -519,6 +536,7 @@ services:
       - caddy_config:/config
     environment:
       - DOMAIN=${DOMAIN:-staging.anvil.zk-access.xyz}
+      - API_DOMAIN=${API_DOMAIN:-staging.api.anvil.zk-access.xyz}
       - FLOWER_DOMAIN=${FLOWER_DOMAIN}
       - FLOWER_USER=${FLOWER_USER}
       - FLOWER_HASH=${FLOWER_HASH}
