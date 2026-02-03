@@ -182,9 +182,12 @@ dev = [
     "slotscheck==0.19.1",
 ]
 test = [
+    "agno>=0.1.0",
+    "agent-squad>=0.1.0",
     "asyncpg>=0.29.0",
     "coverage==7.10.0",
     "line-profiler==5.0.0",
+    "openai>=1.0.0",
     "pytest==8.4.1",
     "pytest-asyncio==1.1.0",
     "pytest-mock==3.14.0",
