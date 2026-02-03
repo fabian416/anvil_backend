@@ -1,0 +1,20 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+research_002,2026-01-22T16:04:39.912237+00:00,agent,research,NO,1,1,what is Uniswap,"🔍 **Protocol Search Results (Demo)**
+
+Here are some top DeFi protocols matching your criteria:
+
+• **Aave** (Lending)
+  TVL: $12.5B | Risk: LOW | Chain: Ethereum
+• **Compound** (Lending)
+  TVL: $3.2B | Risk: LOW | Chain: Ethereum
+• **Uniswap** (DEX)
+  TVL: $5.8B | Risk: LOW | Chain: Ethereum
+• **Curve** (DEX)
+  TVL: $4.1B | Risk: LOW | Chain: Ethereum
+• **Lido** (Staking)
+  TVL: $25.0B | Risk: LOW | Chain: Ethereum
+
+Register for full access to:
+  ✓ Search 500+ protocols
+  ✓ Custom filters
+  ✓ Rea",research,,,graphrag_handler,465,NO,,guest,en,FAIL,,f96a6bdf-f0b1-40ef-b246-d5d3fe67a896,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,

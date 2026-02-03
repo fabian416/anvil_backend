@@ -314,41 +314,50 @@ class SendMultiStepHandler:
         translations = {
             "en": {
                 "title": "🔍 **Review Your Transaction**\\n\\n",
-                "step": "**Step 4 of 4:** Confirm before sending\\n\\n",
                 "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n",
                 "you_send": f"📤 **You're Sending:** {amount} {token} {emoji}",
                 "destination": f"📍 **Destination:** `{display_address}`",
                 "network": f"🌐 **Network:** {network}",
                 "fee_estimate": "⚡ **Est. Network Fee:** ~$2.50 (varies)",
-                "warning": "\\n⚠️ **FINAL WARNING:**\\n• Once confirmed, this transaction CANNOT be reversed\\n• Double-check the destination address\\n• Make sure you trust the recipient",
-                "confirm_title": "\\n**Ready to send?**",
-                "confirm_options": "\\n✅ Reply `confirm` or `yes` to send\\n📝 Reply `change amount to X` to adjust\\n❌ Reply `cancel` to abort",
+                "warning": "\\n⚠️ **WARNING:**\\n• Once confirmed, this transaction CANNOT be reversed\\n• Double-check the destination address\\n• Make sure you trust the recipient",
             },
             "es": {
                 "title": "🔍 **Revisa Tu Transacción**\\n\\n",
-                "step": "**Paso 4 de 4:** Confirma antes de enviar\\n\\n",
                 "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n",
                 "you_send": f"📤 **Vas a Enviar:** {amount} {token} {emoji}",
                 "destination": f"📍 **Destino:** `{display_address}`",
                 "network": f"🌐 **Red:** {network}",
                 "fee_estimate": "⚡ **Tarifa Est. de Red:** ~$2.50 (varía)",
-                "warning": "\\n⚠️ **ADVERTENCIA FINAL:**\\n• Una vez confirmado, esta transacción NO SE PUEDE REVERTIR\\n• Verifica la dirección de destino\\n• Asegúrate de confiar en el destinatario",
-                "confirm_title": "\\n**¿Listo para enviar?**",
-                "confirm_options": "\\n✅ Responde `confirmar` o `sí` para enviar\\n📝 Responde `cambiar cantidad a X` para ajustar\\n❌ Responde `cancelar` para abortar",
+                "warning": "\\n⚠️ **ADVERTENCIA:**\\n• Una vez confirmado, esta transacción NO SE PUEDE REVERTIR\\n• Verifica la dirección de destino\\n• Asegúrate de confiar en el destinatario",
+            },
+            "pt": {
+                "title": "🔍 **Revise Sua Transação**\\n\\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n",
+                "you_send": f"📤 **Você Enviará:** {amount} {token} {emoji}",
+                "destination": f"📍 **Destino:** `{display_address}`",
+                "network": f"🌐 **Rede:** {network}",
+                "fee_estimate": "⚡ **Taxa de Rede Est.:** ~$2.50 (varia)",
+                "warning": "\\n⚠️ **AVISO:**\\n• Uma vez confirmado, esta transação NÃO PODE ser revertida\\n• Verifique o endereço de destino\\n• Certifique-se de confiar no destinatário",
+            },
+            "zh": {
+                "title": "🔍 **审核您的交易**\\n\\n",
+                "divider": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n",
+                "you_send": f"📤 **您将发送：** {amount} {token} {emoji}",
+                "destination": f"📍 **目标地址：** `{display_address}`",
+                "network": f"🌐 **网络：** {network}",
+                "fee_estimate": "⚡ **预计网络费用：** ~$2.50（变化）",
+                "warning": "\\n⚠️ **警告：**\\n• 一旦确认，此交易无法撤销\\n• 仔细核对目标地址\\n• 确保您信任收款人",
             },
         }
         t = translations.get(language, translations["en"])
 
-        # Build content
-        content = f"{t['title']}{t['step']}{t['divider']}"
+        # Build content - no reply instructions (frontend shows card with execute_data)
+        content = f"{t['title']}{t['divider']}"
         content += f"{t['you_send']}\\n"
         content += f"{t['destination']}\\n"
         content += f"{t['network']}\\n"
-        content += f"{t['fee_estimate']}\\n"
-        content += f"{t['warning']}\\n"
-        content += f"{t['divider']}"
-        content += f"{t['confirm_title']}\\n"
-        content += t["confirm_options"]
+        content += f"{t['fee_estimate']}"
+        content += f"{t['warning']}"
 
         return {
             "content": content,
@@ -382,7 +391,7 @@ class SendMultiStepHandler:
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n"
                 "**Next Step: Create Your Account**\\n\\n"
                 "To complete this transaction securely, you'll need to sign up:\\n\\n"
-                "👉 **[Sign Up Now](/signup)** - Takes just 2 minutes!\\n\\n"
+                "👉 **Sign Up Now** - Takes just 2 minutes!\\n\\n"
                 "✨ Your transaction details are saved and ready to execute once you're registered.\\n\\n"
                 "🔒 *Secure • Fast • Easy*"
             ),
@@ -392,7 +401,7 @@ class SendMultiStepHandler:
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n"
                 "**Siguiente Paso: Crea Tu Cuenta**\\n\\n"
                 "Para completar esta transacción de forma segura, necesitas registrarte:\\n\\n"
-                "👉 **[Regístrate Ahora](/signup)** - ¡Solo toma 2 minutos!\\n\\n"
+                "👉 **Regístrate Ahora** - ¡Solo toma 2 minutos!\\n\\n"
                 "✨ Los detalles de tu transacción están guardados y listos para ejecutar una vez que te registres.\\n\\n"
                 "🔒 *Seguro • Rápido • Fácil*"
             ),

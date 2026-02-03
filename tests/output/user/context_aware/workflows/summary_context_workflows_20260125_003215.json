@@ -1,0 +1,33 @@
+{
+  "run_timestamp": "2026-01-25T00:32:15.730488+00:00",
+  "category": "context_workflows",
+  "total_tests": 1,
+  "passed": 0,
+  "partial": 1,
+  "failed": 0,
+  "pass_rate": "0.0%",
+  "by_category": {
+    "active_allowed": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    }
+  },
+  "by_agent": {
+    "swap_workflow": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    }
+  },
+  "avg_response_time_ms": 7225,
+  "slowest_tests": [
+    {
+      "test_id": "allow_active_swap_001",
+      "response_time_ms": 7225,
+      "status": "PARTIAL"
+    }
+  ]
+}

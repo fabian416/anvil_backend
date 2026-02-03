@@ -1,0 +1,5 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score,portfolio_state,activity_level,user_type,total_balance_usd,template_used,template_key,workflow_blocked,block_reason,context_enhanced_prompt,response_style
+empty_portfolio_001,2026-01-25T00:28:51.847378+00:00,portfolio_state,empty_query,NO,1,1,my portfolio,"Your portfolio is empty - no holdings yet.
+
+Try 'buy 100 USD of ETH' to get started.
+",,portfolio,"[{""source_type"": ""database"", ""source_name"": ""Anvil Database"", ""source_id"": null, ""url"": null, ""citation_text"": ""Your portfolio data from Anvil"", ""fetched_at"": ""2026-01-25T00:28:51.785175+00:00"", ""data",authenticated_supervisor,3770,NO,,new_user,en,PARTIAL,,3c8a2751-5ffb-497c-801a-f60a04bd4ad3,,0.0,,,,,,empty,new,new_user,0,,,NO,,NO,

@@ -1,0 +1,26 @@
+{
+  "run_timestamp": "2026-01-22T07:27:51.145580+00:00",
+  "category": "test_verification",
+  "total_tests": 1,
+  "passed": 1,
+  "partial": 0,
+  "failed": 0,
+  "pass_rate": "100.0%",
+  "by_category": {
+    "test": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    }
+  },
+  "by_agent": {},
+  "avg_response_time_ms": 0,
+  "slowest_tests": [
+    {
+      "test_id": "test_001",
+      "response_time_ms": 0,
+      "status": "PASS"
+    }
+  ]
+}

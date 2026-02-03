@@ -370,8 +370,10 @@ class SqlaWalletRepository(WalletRepository):
             )
 
             # On conflict update existing row
+            # Use index_elements with LOWER() to match our case-insensitive unique index
+            from sqlalchemy import func
             stmt = stmt.on_conflict_do_update(
-                constraint="unique_user_wallet_address",
+                index_elements=[table.c.user_id, func.lower(table.c.address)],
                 set_={
                     "privy_wallet_id": wallet_id,
                     "provider": provider.value,

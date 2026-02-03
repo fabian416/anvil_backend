@@ -138,8 +138,10 @@ class TestMessage:
     
     def test_message_defaults_timestamp_if_not_provided(self):
         """Test message sets default timestamp."""
+        from datetime import timezone
+        
         # Arrange
-        before = datetime.utcnow()
+        before = datetime.now(timezone.utc)
         
         # Act
         message = Message(
@@ -150,10 +152,14 @@ class TestMessage:
         )
         
         # After
-        after = datetime.utcnow()
+        after = datetime.now(timezone.utc)
         
-        # Assert
-        assert before <= message.created_at <= after
+        # Assert - handle both naive and aware datetimes
+        created_at = message.created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        
+        assert before <= created_at <= after
     
     def test_message_accepts_empty_content(self):
         """Test message accepts empty content (edge case)."""

@@ -1,0 +1,326 @@
+{
+  "feature_name": "Lending Risk Classification",
+  "version": "1.0",
+  "last_updated": "2026-01-27",
+  "description": "Risk classification system for DeFi lending positions including LTV levels, health factor ranges, and liquidation thresholds",
+
+  "ltv_risk_classification": {
+    "description": "Loan-to-Value (LTV) risk classification with 6 levels",
+    "levels": {
+      "ultra_safe": {
+        "ltv_range": "0% - 30%",
+        "risk_level": "MINIMAL",
+        "color": "#00C853",
+        "color_name": "green",
+        "health_factor_range": "> 2.75",
+        "description": "Extremely conservative position with massive liquidation buffer",
+        "recommendation": "Position is very safe. Can consider increasing utilization if seeking higher returns.",
+        "price_drop_tolerance": "> 60%",
+        "emoji": "white_check_mark"
+      },
+      "safe": {
+        "ltv_range": "30% - 50%",
+        "risk_level": "LOW",
+        "color": "#4CAF50",
+        "color_name": "green",
+        "health_factor_range": "1.65 - 2.75",
+        "description": "Healthy position with substantial buffer against market volatility",
+        "recommendation": "Good balance of capital efficiency and safety. Monitor during high volatility.",
+        "price_drop_tolerance": "40% - 60%",
+        "emoji": "green_circle"
+      },
+      "moderate": {
+        "ltv_range": "50% - 65%",
+        "risk_level": "MEDIUM",
+        "color": "#FFEB3B",
+        "color_name": "yellow",
+        "health_factor_range": "1.27 - 1.65",
+        "description": "Moderate risk position requiring active monitoring",
+        "recommendation": "Set up liquidation alerts. Consider reducing exposure in volatile markets.",
+        "price_drop_tolerance": "25% - 40%",
+        "emoji": "yellow_circle"
+      },
+      "aggressive": {
+        "ltv_range": "65% - 75%",
+        "risk_level": "HIGH",
+        "color": "#FF9800",
+        "color_name": "orange",
+        "health_factor_range": "1.10 - 1.27",
+        "description": "High-risk position close to danger zone",
+        "recommendation": "Actively monitor. Prepare to repay debt or add collateral. Not recommended for volatile assets.",
+        "price_drop_tolerance": "15% - 25%",
+        "emoji": "orange_circle"
+      },
+      "danger": {
+        "ltv_range": "75% - 82%",
+        "risk_level": "CRITICAL",
+        "color": "#F44336",
+        "color_name": "red",
+        "health_factor_range": "1.00 - 1.10",
+        "description": "Position at imminent liquidation risk",
+        "recommendation": "IMMEDIATE ACTION REQUIRED. Repay debt or add collateral NOW.",
+        "price_drop_tolerance": "< 15%",
+        "emoji": "red_circle"
+      },
+      "liquidatable": {
+        "ltv_range": "> 82%",
+        "risk_level": "LIQUIDATABLE",
+        "color": "#B71C1C",
+        "color_name": "dark_red",
+        "health_factor_range": "< 1.00",
+        "description": "Position can be liquidated",
+        "recommendation": "Emergency: Position is being or will be liquidated. Act immediately if possible.",
+        "price_drop_tolerance": "0%",
+        "emoji": "rotating_light"
+      }
+    }
+  },
+
+  "health_factor_classification": {
+    "description": "Health Factor interpretation with 5 levels for agent response behavior",
+    "levels": {
+      "safe": {
+        "range": ">= 2.0",
+        "status": "SAFE",
+        "color": "#4CAF50",
+        "emoji": "green_circle",
+        "action_required": "None",
+        "description": "Position is healthy with strong buffer against liquidation",
+        "typical_ltv": "< 40%",
+        "agent_behavior": "Positive tone, optional optimization suggestions",
+        "sample_response": {
+          "en": "Your position is healthy! Health Factor of {hf} means you have a strong safety margin. Your collateral would need to drop by approximately {drop_pct}% before reaching liquidation risk.",
+          "es": "Su posicion esta saludable! Factor de Salud de {hf} significa que tiene un margen de seguridad solido. Su colateral tendria que caer aproximadamente {drop_pct}% antes de alcanzar riesgo de liquidacion.",
+          "pt": "Sua posicao esta saudavel! Fator de Saude de {hf} significa que voce tem uma margem de seguranca solida. Seu colateral precisaria cair aproximadamente {drop_pct}% antes de atingir risco de liquidacao.",
+          "zh": "您的仓位是健康的！健康因子 {hf} 意味着您有强大的安全边际。您的抵押品需要下跌约 {drop_pct}% 才会面临清算风险。"
+        }
+      },
+      "caution": {
+        "range": "1.5 - 1.99",
+        "status": "CAUTION",
+        "color": "#FFEB3B",
+        "emoji": "yellow_circle",
+        "action_required": "Monitor closely",
+        "description": "Position requires attention during volatile markets",
+        "typical_ltv": "40% - 55%",
+        "agent_behavior": "Warning tone, recommend alerts and monitoring",
+        "sample_response": {
+          "en": "Your Health Factor of {hf} is in the CAUTION zone. While not immediately dangerous, I recommend monitoring your position during volatile periods. Set alerts at HF = 1.3 for early warning.",
+          "es": "Su Factor de Salud de {hf} esta en la zona de PRECAUCION. Aunque no es inmediatamente peligroso, recomiendo monitorear su posicion durante periodos volatiles. Configure alertas en HF = 1.3 para advertencia temprana.",
+          "pt": "Seu Fator de Saude de {hf} esta na zona de CUIDADO. Embora nao seja imediatamente perigoso, recomendo monitorar sua posicao durante periodos volateis. Configure alertas em HF = 1.3 para aviso antecipado.",
+          "zh": "您的健康因子 {hf} 处于注意区域。虽然不是立即危险，但我建议在波动期间监控您的仓位。在 HF = 1.3 时设置警报以获得预警。"
+        }
+      },
+      "danger": {
+        "range": "1.2 - 1.49",
+        "status": "DANGER",
+        "color": "#FF9800",
+        "emoji": "orange_circle",
+        "action_required": "Repay debt or add collateral",
+        "description": "Position at elevated risk - action recommended",
+        "typical_ltv": "55% - 75%",
+        "agent_behavior": "Urgent tone, calculate exact repayment amounts",
+        "sample_response": {
+          "en": "WARNING: Your Health Factor of {hf} is in the DANGER zone. A {drop_pct}% price drop would trigger liquidation. I strongly recommend repaying at least ${repay_amount} to improve your position to HF > 1.5.",
+          "es": "ADVERTENCIA: Su Factor de Salud de {hf} esta en la zona de PELIGRO. Una caida de precio del {drop_pct}% desencadenaria la liquidacion. Recomiendo fuertemente pagar al menos ${repay_amount} para mejorar su posicion a HF > 1.5.",
+          "pt": "AVISO: Seu Fator de Saude de {hf} esta na zona de PERIGO. Uma queda de preco de {drop_pct}% desencadearia a liquidacao. Recomendo fortemente pagar pelo menos ${repay_amount} para melhorar sua posicao para HF > 1.5.",
+          "zh": "警告：您的健康因子 {hf} 处于危险区域。价格下跌 {drop_pct}% 将触发清算。我强烈建议至少偿还 ${repay_amount} 以将您的仓位改善至 HF > 1.5。"
+        }
+      },
+      "critical": {
+        "range": "1.0 - 1.19",
+        "status": "CRITICAL",
+        "color": "#F44336",
+        "emoji": "red_circle",
+        "action_required": "Immediate action required",
+        "description": "Liquidation imminent - emergency action needed",
+        "typical_ltv": "75% - 82%",
+        "agent_behavior": "Emergency tone, one-click repayment option, skip educational content",
+        "sample_response": {
+          "en": "CRITICAL: Your Health Factor is {hf}. Liquidation can occur at any moment. IMMEDIATE ACTION: Repay ${repay_amount} NOW to reach safety. [Execute Repayment]",
+          "es": "CRITICO: Su Factor de Salud es {hf}. La liquidacion puede ocurrir en cualquier momento. ACCION INMEDIATA: Pague ${repay_amount} AHORA para alcanzar seguridad. [Ejecutar Pago]",
+          "pt": "CRITICO: Seu Fator de Saude e {hf}. A liquidacao pode ocorrer a qualquer momento. ACAO IMEDIATA: Pague ${repay_amount} AGORA para alcancar seguranca. [Executar Pagamento]",
+          "zh": "紧急：您的健康因子是 {hf}。清算可能随时发生。立即行动：现在偿还 ${repay_amount} 以达到安全状态。[执行还款]"
+        }
+      },
+      "liquidatable": {
+        "range": "< 1.0",
+        "status": "LIQUIDATABLE",
+        "color": "#B71C1C",
+        "emoji": "rotating_light",
+        "action_required": "Position can be liquidated NOW",
+        "description": "Position is eligible for liquidation",
+        "typical_ltv": "> 82%",
+        "agent_behavior": "Crisis tone, explain options for remaining collateral",
+        "sample_response": {
+          "en": "Your position is LIQUIDATABLE with HF = {hf}. Liquidators may seize your collateral at any moment. If you still have time, repay ${repay_amount} immediately. If already liquidated, I can help you understand what happened.",
+          "es": "Su posicion es LIQUIDABLE con HF = {hf}. Los liquidadores pueden tomar su colateral en cualquier momento. Si aun tiene tiempo, pague ${repay_amount} inmediatamente. Si ya fue liquidado, puedo ayudarle a entender lo que paso.",
+          "pt": "Sua posicao e LIQUIDAVEL com HF = {hf}. Os liquidantes podem tomar seu colateral a qualquer momento. Se ainda tiver tempo, pague ${repay_amount} imediatamente. Se ja foi liquidado, posso ajuda-lo a entender o que aconteceu.",
+          "zh": "您的仓位可被清算，HF = {hf}。清算者可能随时没收您的抵押品。如果您还有时间，请立即偿还 ${repay_amount}。如果已被清算，我可以帮助您了解发生了什么。"
+        }
+      }
+    }
+  },
+
+  "liquidation_thresholds_by_asset": {
+    "description": "Liquidation thresholds and bonuses by asset for Aave V3 and Morpho",
+    "assets": {
+      "ETH": {
+        "aave_lt": "82.5%",
+        "aave_bonus": "5%",
+        "morpho_lltv": "86%",
+        "morpho_bonus": "5%",
+        "volatility": "high"
+      },
+      "WBTC": {
+        "aave_lt": "75%",
+        "aave_bonus": "6.5%",
+        "morpho_lltv": "80%",
+        "morpho_bonus": "6%",
+        "volatility": "high"
+      },
+      "USDC": {
+        "aave_lt": "88%",
+        "aave_bonus": "4%",
+        "morpho_lltv": "91.5%",
+        "morpho_bonus": "4%",
+        "volatility": "low"
+      },
+      "DAI": {
+        "aave_lt": "85%",
+        "aave_bonus": "4%",
+        "morpho_lltv": "88%",
+        "morpho_bonus": "4%",
+        "volatility": "low"
+      },
+      "LINK": {
+        "aave_lt": "70%",
+        "aave_bonus": "7%",
+        "morpho_lltv": "75%",
+        "morpho_bonus": "7%",
+        "volatility": "high"
+      },
+      "AAVE": {
+        "aave_lt": "66%",
+        "aave_bonus": "7.5%",
+        "morpho_lltv": "70%",
+        "morpho_bonus": "7%",
+        "volatility": "high"
+      },
+      "stETH": {
+        "aave_lt": "82.5%",
+        "aave_bonus": "5%",
+        "morpho_lltv": "85%",
+        "morpho_bonus": "5%",
+        "volatility": "medium",
+        "e_mode_eligible": true
+      }
+    }
+  },
+
+  "price_drop_scenarios": {
+    "description": "Standard price drop scenarios for risk assessment",
+    "scenarios": [
+      {"drop_percent": 10, "label": "Minor correction"},
+      {"drop_percent": 20, "label": "Moderate dip"},
+      {"drop_percent": 30, "label": "Significant decline"},
+      {"drop_percent": 40, "label": "Major crash"},
+      {"drop_percent": 50, "label": "Severe crash"},
+      {"drop_percent": 60, "label": "Extreme event"}
+    ],
+    "calculation_formula": "New HF = Current HF * (1 - drop_percent/100)"
+  },
+
+  "repayment_calculator": {
+    "description": "Formula for calculating minimum repayment to reach target health factor",
+    "formula": "Repayment = Total_Debt - (Total_Collateral * Liquidation_Threshold) / Target_HF",
+    "target_hf_recommendations": {
+      "from_danger_to_safe": 1.8,
+      "from_critical_to_caution": 1.5,
+      "emergency_minimum": 1.3
+    }
+  },
+
+  "validation_rules": {
+    "borrow_minimum_hf": 1.2,
+    "withdraw_minimum_hf": 1.3,
+    "recommended_hf_target": 1.8,
+    "safe_hf_threshold": 2.0,
+    "emergency_hf_threshold": 1.05,
+    "rejection_messages": {
+      "borrow_blocked": {
+        "en": "Borrow blocked: Would result in HF {new_hf} (minimum required: 1.2)",
+        "es": "Prestamo bloqueado: Resultaria en HF {new_hf} (minimo requerido: 1.2)",
+        "pt": "Emprestimo bloqueado: Resultaria em HF {new_hf} (minimo requerido: 1.2)",
+        "zh": "借款被阻止：将导致 HF {new_hf}（最低要求：1.2）"
+      },
+      "withdraw_blocked": {
+        "en": "Withdrawal blocked: Would result in HF {new_hf} (minimum required: 1.3)",
+        "es": "Retiro bloqueado: Resultaria en HF {new_hf} (minimo requerido: 1.3)",
+        "pt": "Retirada bloqueada: Resultaria em HF {new_hf} (minimo requerido: 1.3)",
+        "zh": "提款被阻止：将导致 HF {new_hf}（最低要求：1.3）"
+      }
+    }
+  },
+
+  "risk_warnings": {
+    "leverage_warning": {
+      "trigger": "User requests leverage or loop strategy",
+      "message": {
+        "en": "WARNING: Leverage amplifies both gains AND losses. Your position can be liquidated if collateral value drops. Only proceed if you understand and accept these risks.",
+        "es": "ADVERTENCIA: El apalancamiento amplifica tanto las ganancias COMO las perdidas. Su posicion puede ser liquidada si el valor del colateral cae. Solo proceda si entiende y acepta estos riesgos.",
+        "pt": "AVISO: A alavancagem amplifica tanto os ganhos QUANTO as perdas. Sua posicao pode ser liquidada se o valor do colateral cair. So prossiga se voce entende e aceita esses riscos.",
+        "zh": "警告：杠杆会放大收益和损失。如果抵押品价值下跌，您的仓位可能会被清算。只有在理解并接受这些风险的情况下才能继续。"
+      }
+    },
+    "first_time_warning": {
+      "trigger": "User's first lending transaction",
+      "message": {
+        "en": "Before your first lending transaction: Start with a small amount, verify contract addresses, understand you can lose funds if liquidated, keep reserves for gas fees.",
+        "es": "Antes de su primera transaccion de prestamo: Comience con una cantidad pequena, verifique las direcciones de contrato, entienda que puede perder fondos si es liquidado, mantenga reservas para tarifas de gas.",
+        "pt": "Antes da sua primeira transacao de emprestimo: Comece com uma quantia pequena, verifique os enderecos de contrato, entenda que voce pode perder fundos se for liquidado, mantenha reservas para taxas de gas.",
+        "zh": "在您第一次借贷交易之前：从小额开始，验证合约地址，了解如果被清算可能会损失资金，保留gas费储备。"
+      }
+    },
+    "large_amount_warning": {
+      "trigger": "Transaction > 50% of wallet balance",
+      "message": {
+        "en": "You're about to supply more than 50% of your {asset} balance. Consider keeping reserves for gas and emergencies.",
+        "es": "Esta a punto de suministrar mas del 50% de su saldo de {asset}. Considere mantener reservas para gas y emergencias.",
+        "pt": "Voce esta prestes a fornecer mais de 50% do seu saldo de {asset}. Considere manter reservas para gas e emergencias.",
+        "zh": "您即将供应超过50%的 {asset} 余额。考虑保留一些用于gas费和紧急情况。"
+      }
+    }
+  },
+
+  "multi_language_status_labels": {
+    "en": {
+      "safe": "SAFE",
+      "caution": "CAUTION",
+      "danger": "DANGER",
+      "critical": "CRITICAL",
+      "liquidatable": "LIQUIDATABLE"
+    },
+    "es": {
+      "safe": "SEGURO",
+      "caution": "PRECAUCION",
+      "danger": "PELIGRO",
+      "critical": "CRITICO",
+      "liquidatable": "LIQUIDABLE"
+    },
+    "pt": {
+      "safe": "SEGURO",
+      "caution": "CUIDADO",
+      "danger": "PERIGO",
+      "critical": "CRITICO",
+      "liquidatable": "LIQUIDAVEL"
+    },
+    "zh": {
+      "safe": "安全",
+      "caution": "注意",
+      "danger": "危险",
+      "critical": "紧急",
+      "liquidatable": "可清算"
+    }
+  }
+}

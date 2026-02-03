@@ -89,6 +89,9 @@ class HyperliquidMCPServer(MCPServer):
         )
 
         self.perpetual_gateway = perpetual_gateway
+        
+        # Register tools
+        self.setup_tools()
 
     def setup_tools(self):
         """Register Hyperliquid perpetual trading tools."""

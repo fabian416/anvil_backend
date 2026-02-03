@@ -1,0 +1,19 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score,portfolio_state,activity_level,user_type,total_balance_usd,template_used,template_key,workflow_blocked,block_reason,context_enhanced_prompt,response_style
+template_swap_blocked_001,2026-01-25T04:24:03.954278+00:00,templates,workflow_block,NO,1,1,swap 1 ETH to USDC,"📊 **Swap Quote**
+
+**1 ETH** → **2930.780799 USDC**
+
+💰 **ETH Price:** $2,937.62 (📉 -0.8% 24h)
+💵 **Value:** ~$2,937.62 USD
+
+• Price Impact: 0.00%
+• Network: BASE
+• Aggregator: LIFI
+⛽ **Est. Gas:** ~$0.0059
+💡 Base L2 has consistently low fees (~$0.01)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to swap?**
+Reply ""yes"" to confirm or ""cancel"" to abort.
+You can also modify: ""change to 1 ETH"" ",,swap_workflow,,authenticated_supervisor,5117,NO,,authenticated,en,PARTIAL,,165849a2-eeb8-4ca9-b21f-47655393e9bd,,0.0,,,,,,empty,,authenticated,,,,NO,,NO,

@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_sentiment_003,2026-01-22T17:33:13.128694+00:00,agent,hunter_sentiment,NO,1,1,bitcoin social sentiment,,hunter_ai,,,,186,NO,,authenticated,en,FAIL,,f4180a1f-7ca2-48b2-9e64-9c99c318a2f8,,0.0,,,,,

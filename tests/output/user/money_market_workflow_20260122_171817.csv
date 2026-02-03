@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+mm_asset_001,2026-01-22T17:18:17.607930+00:00,workflow,money_market_asset,NO,1,1,stablecoin lending rates,,money_market_workflow,,,,449,NO,,authenticated,en,FAIL,,a5a99389-995b-4008-8ee5-ded7e9769cbf,,0.0,,,,,

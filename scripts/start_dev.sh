@@ -141,6 +141,12 @@ if command -v lsof >/dev/null 2>&1; then
     lsof -ti :8080 | xargs kill -9 2>/dev/null || true
 fi
 
+# Clear Python bytecode cache to ensure fresh code is loaded
+echo -e "${CYAN}🧹 Limpiando Python bytecode cache...${NC}"
+find "$PROJECT_DIR/src" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+find "$PROJECT_DIR/src" -name "*.pyc" -delete 2>/dev/null || true
+export PYTHONDONTWRITEBYTECODE=1
+
 # Kill any process using ports 8081-8091 (MCP servers)
 for port in {8081..8091}; do
     lsof -ti :$port | xargs kill -9 2>/dev/null || true
@@ -183,11 +189,14 @@ echo -e "${MAGENTA}════════════════════�
 # Activate virtualenv
 source env/bin/activate
 
+# Use venv Python explicitly to ensure correct environment
+VENV_PYTHON="./env/bin/python3.12"
+
 # ============================================
 # 1. Start FastAPI
 # ============================================
 echo -e "${GREEN}📡 Iniciando FastAPI Server...${NC}"
-PYTHONPATH=src python3.12 -m uvicorn app.run:make_app \
+PYTHONPATH=src $VENV_PYTHON -m uvicorn app.run:make_app \
     --factory \
     --host 0.0.0.0 \
     --port 8080 \
@@ -230,7 +239,7 @@ declare -a MCP_SERVERS=(
 for server_config in "${MCP_SERVERS[@]}"; do
     IFS=':' read -r name port module <<< "$server_config"
     
-    PYTHONPATH=src python3.12 -m "app.infrastructure.mcp.servers.${module}" \
+    PYTHONPATH=src $VENV_PYTHON -m "app.infrastructure.mcp.servers.${module}" \
         > "$LOG_DIR/mcp/${module}.log" 2>&1 &
     
     MCP_PID=$!
@@ -293,7 +302,7 @@ fi
 for worker_config in "${CELERY_WORKERS[@]}"; do
     IFS=':' read -r name queue concurrency max_tasks <<< "$worker_config"
     
-    PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
+    PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src ./env/bin/celery -A app.infrastructure.celery.app.celery_app worker \
         --loglevel=INFO \
         -Q "$queue" \
         -n "${name}@%h" \

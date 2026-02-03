@@ -22,6 +22,8 @@ from app.infrastructure.auth.session.constants import AUTH_INVALID_PASSWORD
 from app.infrastructure.auth.session.service import AuthSessionService
 from app.application.common.ports.session_recorder import SessionRecorder
 from app.domain.value_objects.ip_address import IpAddress
+from app.application.chat.services.user_context_service import UserContextService
+from app.domain.ports.chat_repository import ChatUserRepository
 from datetime import datetime, UTC
 
 log = logging.getLogger(__name__)
@@ -57,6 +59,9 @@ class LogInHandler:
         auth_session_service: AuthSessionService,
         transaction_manager: TransactionManager,
         session_recorder: SessionRecorder,
+        # Context-aware agents dependencies (optional for backwards compat)
+        user_context_service: UserContextService | None = None,
+        chat_user_repository: ChatUserRepository | None = None,
     ):
         self._current_user_service = current_user_service
         self._user_command_gateway = user_command_gateway
@@ -64,6 +69,9 @@ class LogInHandler:
         self._auth_session_service = auth_session_service
         self._transaction_manager = transaction_manager
         self._session_recorder = session_recorder
+        # Context-aware agents
+        self._user_context_service = user_context_service
+        self._chat_user_repository = chat_user_repository
 
     async def execute(self, request_data: LogInRequest) -> None | dict:
         """
@@ -143,6 +151,10 @@ class LogInHandler:
         )
         await self._transaction_manager.commit()
 
+        # Ensure user context exists for context-aware agents
+        if self._user_context_service and self._chat_user_repository:
+            await self._ensure_user_context(user)
+
         log.info(
             "Log in: done. User, ID: '%s', email '%s', role '%s'.",
             user.id_.value,
@@ -158,3 +170,67 @@ class LogInHandler:
             "is_active": True,
             "access_token": access_token,
         }
+
+    async def _ensure_user_context(self, user: User) -> None:
+        """
+        Ensure user context entry exists for context-aware agents.
+        
+        This is called on login to create the context if it doesn't exist.
+        For existing users, the Celery task will update their context.
+        """
+        try:
+            # Get or create chat user (UUID-based)
+            chat_user = await self._chat_user_repository.get_by_user_id(user.id_.value)
+            
+            if not chat_user:
+                # Create chat user entry
+                from app.domain.chat.entities import ChatUser
+                from uuid import uuid4
+                
+                chat_user = ChatUser(
+                    id_=uuid4(),
+                    user_id=user.id_.value,
+                    email=user.email.value,
+                    subscription_tier="free",
+                    total_messages=0,
+                    language="en",
+                    chat_preferences={},
+                    first_seen_at=datetime.now(UTC),
+                    last_seen_at=datetime.now(UTC),
+                    created_at=datetime.now(UTC),
+                    updated_at=datetime.now(UTC),
+                )
+                chat_user = await self._chat_user_repository.create(chat_user)
+            
+            # Check if context already exists
+            existing = await self._user_context_service.exists(chat_user.id_)
+            if existing:
+                log.debug(
+                    "User context already exists for user %s (chat_user_id=%s)",
+                    user.id_.value,
+                    chat_user.id_,
+                )
+                return
+            
+            # Create user context with defaults
+            await self._user_context_service.create_for_new_user(
+                chat_user_id=chat_user.id_,
+                legacy_user_id=user.id_.value,
+                wallet_address=str(user.primary_wallet_address.value) if user.primary_wallet_address else None,
+                wallet_provider="email",  # Regular login is email-based
+                language="en",
+            )
+            
+            log.info(
+                "Created user context for user %s (chat_user_id=%s)",
+                user.id_.value,
+                chat_user.id_,
+            )
+            
+        except Exception as e:
+            # Log but don't fail login if context creation fails
+            log.warning(
+                "Failed to ensure user context for user %s: %s",
+                user.id_.value,
+                e,
+            )

@@ -4,33 +4,32 @@ Unified Chat Dependency Injection Provider.
 Provides DI setup for unified chat components that serve both guest and
 authenticated users:
 - Chat repositories (chat_users, chat_conversations, chat_messages)
-- Chat command handlers
-- UnifiedChatHandler
 - GuestCache (shared across all users)
 """
 
 import logging
 from dishka import Provider, Scope, provide
-
-from app.application.chat.commands.get_or_create_chat_user import (
-    GetOrCreateChatUserCommand,
-)
-from app.application.chat.commands.get_or_create_chat_conversation import (
-    GetOrCreateChatConversationCommand,
-)
-from app.application.chat.commands.create_chat_message import (
-    CreateChatMessageCommand,
-)
-from app.application.chat.handlers.unified_chat_handler import UnifiedChatHandler
+from app.application.chat.services.user_context_service import UserContextService
+from app.application.chat.services.response_template_service import ResponseTemplateService
 from app.domain.ports.chat_repository import (
     ChatUserRepository,
     ChatConversationRepository,
     ChatMessageRepository,
 )
+from app.domain.chat.ports.user_context_repository import UserContextRepository
+from app.domain.chat.ports.wallet_balance import WalletBalancePort
+from app.domain.chat.ports.analytics_repository import AnalyticsRepository
 from app.infrastructure.adapters.chat_repository_sqla import (
     ChatUserRepositorySqla,
     ChatConversationRepositorySqla,
     ChatMessageRepositorySqla,
+)
+from app.infrastructure.adapters.user_context_repository_sqla import (
+    UserContextRepositorySqla,
+)
+from app.infrastructure.adapters.wallet_balance_db import WalletBalanceDbAdapter
+from app.infrastructure.adapters.analytics_repository_sqla import (
+    AnalyticsRepositorySqla,
 )
 from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.caching.guest_cache import GuestCache
@@ -69,49 +68,119 @@ class ChatProvider(Provider):
         """Provide ChatMessageRepository implementation."""
         return ChatMessageRepositorySqla(session)
 
-    # ========== Authenticated Chat Command Handlers ==========
+    @provide(scope=Scope.REQUEST)
+    def provide_user_context_repository(
+        self,
+        session: MainAsyncSession,
+    ) -> UserContextRepository:
+        """
+        Provide UserContextRepository implementation.
+        
+        Used for context-aware agent responses - stores pre-computed
+        user classification data (portfolio state, activity level, user type).
+        """
+        return UserContextRepositorySqla(session)
 
     @provide(scope=Scope.REQUEST)
-    def provide_get_or_create_chat_user(
+    def provide_wallet_balance_adapter(
+        self,
+        session: MainAsyncSession,
+    ) -> WalletBalancePort:
+        """
+        Provide WalletBalancePort implementation.
+        
+        Used for aggregating wallet balances from local DB tables
+        (wallets, chain_addresses, portfolio_snapshots) to calculate
+        accurate portfolio_state classification.
+        """
+        return WalletBalanceDbAdapter(session)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_analytics_repository(
+        self,
+        session: MainAsyncSession,
+    ) -> AnalyticsRepository:
+        """
+        Provide AnalyticsRepository implementation.
+        
+        Used for persisting and querying user context analytics snapshots.
+        Supports daily/weekly/monthly snapshots, trends, and cohort analysis.
+        """
+        return AnalyticsRepositorySqla(session)
+
+    # ========== User Context Service ==========
+
+    @provide(scope=Scope.REQUEST)
+    def provide_user_context_service(
+        self,
+        context_repo: UserContextRepository,
+        message_repo: ChatMessageRepository,
+        conversation_repo: ChatConversationRepository,
+        wallet_balance_adapter: WalletBalancePort,
+    ) -> UserContextService:
+        """
+        Provide UserContextService for context-aware agents.
+        
+        This service:
+        1. Creates context for new users (privy-login)
+        2. Updates context periodically (Celery task)
+        3. Provides context for chat sessions
+        
+        The wallet_balance_adapter enables accurate portfolio_state
+        classification based on real wallet balances.
+        """
+        return UserContextService(
+            context_repository=context_repo,
+            chat_message_repository=message_repo,
+            chat_conversation_repository=conversation_repo,
+            wallet_repository=None,  # Deprecated - use wallet_balance_adapter
+            wallet_balance_adapter=wallet_balance_adapter,
+        )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_optional_user_context_service(
+        self,
+        user_context_service: UserContextService,
+    ) -> UserContextService | None:
+        """
+        Provide Optional[UserContextService] for backwards compatibility.
+        
+        Some commands (like PrivyLogin) declare UserContextService as optional
+        to maintain backwards compatibility. This provider bridges the gap
+        between the required service and the optional type hint.
+        """
+        return user_context_service
+
+    @provide(scope=Scope.REQUEST)
+    def provide_optional_chat_user_repository(
         self,
         chat_user_repo: ChatUserRepository,
-    ) -> GetOrCreateChatUserCommand:
+    ) -> ChatUserRepository | None:
         """
-        Provide GetOrCreateChatUser command.
+        Provide Optional[ChatUserRepository] for backwards compatibility.
+        
+        Some commands (like PrivyLogin) declare ChatUserRepository as optional
+        to maintain backwards compatibility.
+        """
+        return chat_user_repo
 
-        Creates or retrieves chat user bridging to legacy users table.
+    @provide(scope=Scope.APP)
+    def provide_response_template_service(self) -> ResponseTemplateService:
         """
-        return GetOrCreateChatUserCommand(chat_user_repository=chat_user_repo)
-
-    @provide(scope=Scope.REQUEST)
-    def provide_get_or_create_chat_conversation(
-        self,
-        chat_conversation_repo: ChatConversationRepository,
-    ) -> GetOrCreateChatConversationCommand:
+        Provide ResponseTemplateService for context-aware agents.
+        
+        This service loads and serves pre-defined response templates
+        based on user classification (portfolio state, activity level, 
+        user type). Templates are loaded once at app startup and cached
+        in memory.
+        
+        Benefits:
+        - Reduces LLM calls for common scenarios
+        - Ensures consistent, localized messaging
+        - Supports multi-language (en, es, pt, zh)
+        - Provides workflow blocking logic
         """
-        Provide GetOrCreateChatConversation command.
-
-        Gets active conversation or creates new one.
-        """
-        return GetOrCreateChatConversationCommand(
-            chat_conversation_repository=chat_conversation_repo
-        )
-
-    @provide(scope=Scope.REQUEST)
-    def provide_create_chat_message(
-        self,
-        chat_message_repo: ChatMessageRepository,
-        chat_conversation_repo: ChatConversationRepository,
-    ) -> CreateChatMessageCommand:
-        """
-        Provide CreateChatMessage command.
-
-        Creates message and increments conversation message count.
-        """
-        return CreateChatMessageCommand(
-            chat_message_repository=chat_message_repo,
-            chat_conversation_repository=chat_conversation_repo,
-        )
+        return ResponseTemplateService()
 
     # ========== Shared Cache Infrastructure ==========
 
@@ -158,58 +227,6 @@ class ChatProvider(Provider):
         if redis_cache._client is None:
             await redis_cache.connect()
         return RateLimiter(redis_client=redis_cache._client)
-
-    # ========== Unified Chat Handler ==========
-
-    @provide(scope=Scope.REQUEST)
-    def provide_unified_chat_handler(
-        self,
-        # Authenticated chat command handlers
-        get_or_create_chat_user: GetOrCreateChatUserCommand,
-        get_or_create_chat_conversation: GetOrCreateChatConversationCommand,
-        create_chat_message: CreateChatMessageCommand,
-        # Shared infrastructure
-        cache: GuestCache,
-    ) -> UnifiedChatHandler:
-        """
-        Provide UnifiedChatHandler with all dependencies.
-
-        This handler serves both guest and authenticated users through
-        context abstraction. Guest handlers are imported dynamically
-        from the guest provider to maintain modularity.
-
-        Args:
-            get_or_create_chat_user: Authenticated user command
-            get_or_create_chat_conversation: Authenticated conversation command
-            create_chat_message: Authenticated message command
-            cache: Shared GuestCache for Hunter AI responses
-
-        Returns:
-            Configured UnifiedChatHandler instance
-
-        Note:
-            Guest handlers (get_or_create_guest_user, etc.) and hunter_service
-            are currently NOT injected via Dishka. They will be added when
-            we fully migrate the guest system to use the unified handler.
-
-            For now, hunter_service must be injected directly in the endpoint
-            function to avoid Request context dependency issues.
-        """
-        logger.info("Creating UnifiedChatHandler (hunter_service will be set by endpoint)")
-
-        return UnifiedChatHandler(
-            # Guest handlers (not yet migrated to unified handler)
-            get_or_create_guest_user=None,
-            get_or_create_guest_conversation=None,
-            create_guest_message=None,
-            # Authenticated handlers
-            get_or_create_chat_user=get_or_create_chat_user,
-            get_or_create_chat_conversation=get_or_create_chat_conversation,
-            create_chat_message=create_chat_message,
-            # Shared infrastructure
-            cache=cache,
-            hunter_service=None,  # Will be injected in endpoint via setter
-        )
 
 
 def chat_provider() -> ChatProvider:

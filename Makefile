@@ -34,7 +34,7 @@ dotenv:
 	@$(PYTHON) $(TOML_CONFIG_MANAGER) ${APP_ENV}
 
 start:
-	. env/bin/activate && PYTHONPATH=src python3.12 -m uvicorn app.run:make_app --factory --host 0.0.0.0 --port 8080 --reload
+	. env/bin/activate && PYTHONPATH=src ./env/bin/python3.12 -m uvicorn app.run:make_app --factory --host 0.0.0.0 --port 8080 --reload --reload-dir src
 
 # Development environment - Start FastAPI + MCP Servers + Celery + Beat + Flower
 # Use CELERY_DEV_MODE=full for specialized workers (slower startup)
@@ -400,17 +400,17 @@ code.lint: code.format
 	mypy
 
 code.test:
-	pytest -v
+	.venv/bin/pytest -v
 
 code.cov:
-	coverage run -m pytest
-	coverage combine
-	coverage report
+	.venv/bin/coverage run -m pytest
+	.venv/bin/coverage combine
+	.venv/bin/coverage report
 
 code.cov.html:
-	coverage run -m pytest
-	coverage combine
-	coverage html
+	.venv/bin/coverage run -m pytest
+	.venv/bin/coverage combine
+	.venv/bin/coverage html
 
 code.check: code.lint code.test
 

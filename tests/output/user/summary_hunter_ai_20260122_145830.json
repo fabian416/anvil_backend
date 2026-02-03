@@ -1,0 +1,33 @@
+{
+  "run_timestamp": "2026-01-22T14:58:30.366146+00:00",
+  "category": "hunter_ai",
+  "total_tests": 1,
+  "passed": 1,
+  "partial": 0,
+  "failed": 0,
+  "pass_rate": "100.0%",
+  "by_category": {
+    "hunter_price": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    }
+  },
+  "by_agent": {
+    "hunter_ai": {
+      "total": 1,
+      "pass": 1,
+      "partial": 0,
+      "fail": 0
+    }
+  },
+  "avg_response_time_ms": 2759,
+  "slowest_tests": [
+    {
+      "test_id": "hunter_price_003",
+      "response_time_ms": 2759,
+      "status": "PASS"
+    }
+  ]
+}

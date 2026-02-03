@@ -172,3 +172,4 @@ todo/
 # Local runtime artifacts (do not commit)
 celerybeat-schedule.db
 dump.rdb
+logs/.dev_pids

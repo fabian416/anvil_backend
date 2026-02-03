@@ -1,6 +1,0 @@
-  push:
-    branches: [ master, main ]
-  schedule:
-    # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
-

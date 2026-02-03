@@ -1,0 +1,127 @@
+{
+  "version": "1.0",
+  "description": "Response templates based on user activity level",
+  
+  "new": {
+    "description": "User registered recently (< 7 days)",
+    "messages": {
+      "welcome": {
+        "en": "**Welcome to Anvil!** I'm your AI crypto assistant.\n\n**Quick Start:**\n→ \"buy ETH\" - Purchase crypto\n→ \"what is DeFi\" - Learn the basics\n→ \"show prices\" - Check market\n\nWhat would you like to do?",
+        "es": "**¡Bienvenido a Anvil!** Soy tu asistente AI de crypto.\n\n**Inicio Rápido:**\n→ \"comprar ETH\" - Compra crypto\n→ \"qué es DeFi\" - Aprende lo básico\n→ \"mostrar precios\" - Ver mercado",
+        "pt": "**Bem-vindo ao Anvil!** Sou seu assistente AI de crypto.\n\n**Início Rápido:**\n→ \"comprar ETH\" - Compre crypto\n→ \"o que é DeFi\" - Aprenda o básico\n→ \"mostrar preços\" - Ver mercado",
+        "zh": "**欢迎来到 Anvil！** 我是您的 AI 加密助手。\n\n**快速开始：**\n→ \"购买 ETH\" - 购买加密货币\n→ \"什么是 DeFi\" - 学习基础知识\n→ \"显示价格\" - 查看市场"
+      },
+      "first_action_complete": {
+        "en": "**Great job!** You just completed your first {action}. 🎉\n\n**What's next?**\n→ \"my portfolio\" - See your holdings\n→ \"earn yield\" - Start earning on your crypto",
+        "es": "**¡Excelente!** Completaste tu primera {action}. 🎉\n\n**¿Qué sigue?**\n→ \"mi portafolio\" - Ver tus holdings\n→ \"ganar rendimiento\" - Empieza a ganar",
+        "pt": "**Ótimo trabalho!** Você acabou de completar sua primeira {action}. 🎉\n\n**O que vem a seguir?**\n→ \"meu portfólio\" - Veja seus holdings\n→ \"ganhar rendimento\" - Comece a ganhar",
+        "zh": "**太棒了！** 您刚刚完成了第一次 {action}。🎉\n\n**接下来？**\n→ \"我的投资组合\" - 查看您的持有\n→ \"赚取收益\" - 开始赚取"
+      },
+      "tip": {
+        "en": "💡 **Tip for new users:** Start with small amounts to learn how things work. Gas fees and slippage can surprise first-timers!",
+        "es": "💡 **Consejo para nuevos usuarios:** Empieza con cantidades pequeñas para aprender. ¡Las comisiones de gas pueden sorprender!",
+        "pt": "💡 **Dica para novos usuários:** Comece com quantias pequenas para aprender. Taxas de gas podem surpreender!",
+        "zh": "💡 **新用户提示：** 从小额开始学习。Gas 费用可能会让新手感到惊讶！"
+      }
+    },
+    "show_tutorials": true,
+    "suggested_actions": ["learn", "buy", "explore"]
+  },
+  
+  "very_active": {
+    "description": "User is highly engaged (5+ sessions/week)",
+    "messages": {
+      "greeting": {
+        "en": "Hey! Ready to make moves today?",
+        "es": "¡Hola! ¿Listo para operar hoy?",
+        "pt": "Oi! Pronto para movimentar hoje?",
+        "zh": "嘿！今天准备好行动了吗？"
+      },
+      "daily_summary": {
+        "en": "**Your Daily Summary:**\n→ Portfolio: ${total_usd} ({change_24h})\n→ Top mover: {top_mover}\n→ Pending: {pending_actions}",
+        "es": "**Resumen Diario:**\n→ Portafolio: ${total_usd} ({change_24h})\n→ Mayor cambio: {top_mover}\n→ Pendiente: {pending_actions}",
+        "pt": "**Resumo Diário:**\n→ Portfólio: ${total_usd} ({change_24h})\n→ Maior variação: {top_mover}\n→ Pendente: {pending_actions}",
+        "zh": "**每日摘要：**\n→ 投资组合：${total_usd}（{change_24h}）\n→ 最大变动：{top_mover}\n→ 待处理：{pending_actions}"
+      }
+    },
+    "show_tutorials": false,
+    "enable_shortcuts": true,
+    "suggested_actions": ["trade", "analyze", "optimize"]
+  },
+  
+  "active": {
+    "description": "User is regularly engaged (2-4 sessions/week)",
+    "messages": {
+      "greeting": {
+        "en": "Welcome back! What can I help you with today?",
+        "es": "¡Bienvenido de vuelta! ¿En qué puedo ayudarte hoy?",
+        "pt": "Bem-vindo de volta! Como posso ajudar hoje?",
+        "zh": "欢迎回来！今天有什么可以帮您的？"
+      }
+    },
+    "show_tutorials": false,
+    "suggested_actions": ["check_portfolio", "swap", "earn"]
+  },
+  
+  "weekly_active": {
+    "description": "User engages weekly (1 session/week)",
+    "messages": {
+      "greeting": {
+        "en": "Good to see you! Here's what happened this week:\n→ Market {market_direction}\n→ Your portfolio: {portfolio_change}",
+        "es": "¡Qué gusto verte! Esto pasó esta semana:\n→ Mercado {market_direction}\n→ Tu portafolio: {portfolio_change}",
+        "pt": "Bom te ver! Aqui está o que aconteceu esta semana:\n→ Mercado {market_direction}\n→ Seu portfólio: {portfolio_change}",
+        "zh": "很高兴见到您！本周发生了什么：\n→ 市场 {market_direction}\n→ 您的投资组合：{portfolio_change}"
+      }
+    },
+    "show_weekly_summary": true,
+    "suggested_actions": ["review", "rebalance", "learn"]
+  },
+  
+  "monthly_active": {
+    "description": "User engages monthly",
+    "messages": {
+      "greeting": {
+        "en": "Welcome back! It's been a while. Here's your monthly update:\n→ Portfolio: ${total_usd}\n→ Change: {monthly_change}\n\nWant a full analysis?",
+        "es": "¡Bienvenido de vuelta! Ha pasado un tiempo. Tu actualización mensual:\n→ Portafolio: ${total_usd}\n→ Cambio: {monthly_change}",
+        "pt": "Bem-vindo de volta! Faz um tempo. Sua atualização mensal:\n→ Portfólio: ${total_usd}\n→ Variação: {monthly_change}",
+        "zh": "欢迎回来！已经有一段时间了。这是您的月度更新：\n→ 投资组合：${total_usd}\n→ 变化：{monthly_change}"
+      }
+    },
+    "show_monthly_summary": true,
+    "suggested_actions": ["review", "optimize", "learn_updates"]
+  },
+  
+  "inactive": {
+    "description": "User hasn't engaged in 30+ days",
+    "messages": {
+      "reengagement": {
+        "en": "**We missed you!** A lot has happened in crypto:\n\n→ {news_highlight}\n→ Your portfolio: ${total_usd}\n\nWant to catch up?",
+        "es": "**¡Te extrañamos!** Mucho ha pasado en crypto:\n\n→ {news_highlight}\n→ Tu portafolio: ${total_usd}\n\n¿Quieres ponerte al día?",
+        "pt": "**Sentimos sua falta!** Muito aconteceu em crypto:\n\n→ {news_highlight}\n→ Seu portfólio: ${total_usd}\n\nQuer se atualizar?",
+        "zh": "**我们想念您！** 加密世界发生了很多事情：\n\n→ {news_highlight}\n→ 您的投资组合：${total_usd}\n\n想了解一下吗？"
+      },
+      "whats_new": {
+        "en": "**What's New:**\n→ {feature_update}\n→ {market_update}\n\nReady to explore?",
+        "es": "**Novedades:**\n→ {feature_update}\n→ {market_update}\n\n¿Listo para explorar?",
+        "pt": "**Novidades:**\n→ {feature_update}\n→ {market_update}\n\nPronto para explorar?",
+        "zh": "**新功能：**\n→ {feature_update}\n→ {market_update}\n\n准备好探索了吗？"
+      }
+    },
+    "show_reengagement": true,
+    "suggested_actions": ["review_portfolio", "learn_updates", "explore"]
+  },
+  
+  "reactivated": {
+    "description": "User returned after being inactive",
+    "messages": {
+      "welcome_back": {
+        "en": "**Welcome back!** Great to see you again. 🎉\n\nQuick update on your portfolio:\n→ Value: ${total_usd}\n→ Since last visit: {change_since_last}\n\nWhat would you like to do?",
+        "es": "**¡Bienvenido de vuelta!** Qué gusto verte de nuevo. 🎉\n\nActualización de tu portafolio:\n→ Valor: ${total_usd}\n→ Desde tu última visita: {change_since_last}",
+        "pt": "**Bem-vindo de volta!** Bom te ver novamente. 🎉\n\nAtualização do seu portfólio:\n→ Valor: ${total_usd}\n→ Desde última visita: {change_since_last}",
+        "zh": "**欢迎回来！** 很高兴再次见到您。🎉\n\n投资组合快速更新：\n→ 价值：${total_usd}\n→ 自上次访问以来：{change_since_last}"
+      }
+    },
+    "show_tutorials": false,
+    "suggested_actions": ["review", "catch_up", "trade"]
+  }
+}

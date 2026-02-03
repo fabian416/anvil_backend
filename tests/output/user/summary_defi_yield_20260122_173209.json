@@ -1,0 +1,26 @@
+{
+  "run_timestamp": "2026-01-22T17:32:09.113971+00:00",
+  "category": "defi_yield",
+  "total_tests": 1,
+  "passed": 0,
+  "partial": 0,
+  "failed": 1,
+  "pass_rate": "0.0%",
+  "by_category": {
+    "research": {
+      "total": 1,
+      "pass": 0,
+      "partial": 0,
+      "fail": 1
+    }
+  },
+  "by_agent": {},
+  "avg_response_time_ms": 186,
+  "slowest_tests": [
+    {
+      "test_id": "research_001",
+      "response_time_ms": 186,
+      "status": "FAIL"
+    }
+  ]
+}

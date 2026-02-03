@@ -1,0 +1,19 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score,portfolio_state,activity_level,user_type,total_balance_usd,template_used,template_key,workflow_blocked,block_reason,context_enhanced_prompt,response_style
+block_empty_transfer_001,2026-01-25T00:32:04.137462+00:00,workflows,empty_blocked,NO,1,1,send 50 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e,"🔍 **Review Your Transfer**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📤 **Sending:** 50 USDC 💵
+📍 **To:** `0x742d35...38f44e`
+🌐 **Network:** Ethereum
+⚡ **Est. Fee:** ~$1-3 (varies)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ **WARNING:**
+• Once confirmed, this transaction CANNOT be reversed
+• Double-check the destination address
+• Make sure you trust the recipient
+
+**Ready to send?**
+Reply ""yes"" to confirm or ""cancel"" to abort.",,transfer_workflow,,authenticated_supervisor,3512,YES,transfer,authenticated,en,PARTIAL,,0df55406-34d8-40aa-b60c-9841d5ffd9c6,,0.0,,,,,,empty,,authenticated,,,,YES,Blocked due to portfolio state,NO,

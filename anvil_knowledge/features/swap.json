@@ -1,242 +1,169 @@
 {
   "feature_name": "Token Swap",
   "category": "trading_execution",
-  "description": "Execute instant token swaps across multiple DEX aggregators with automatic best-rate selection and slippage protection",
-
-  "how_it_works": {
-    "step_1": "User requests swap: 'swap 100 USDC to ETH'",
-    "step_2": "Anvil queries multiple DEX aggregators in parallel (1inch, Hyperliquid, UniswapX)",
-    "step_3": "Compares rates and finds best execution price",
-    "step_4": "Displays swap details: rate, gas cost, slippage, total cost",
-    "step_5": "User confirms and transaction executes with MEV protection"
-  },
+  "description": "Execute instant meme token swaps on Hyperliquid Spot exchange with real-time order book quotes and zero gas fees. IMPORTANT: Only meme tokens (PURR, TRUMP, PEPE, etc.) are supported - major tokens like ETH, BTC, SOL are NOT available.",
 
   "supported_aggregators": [
     {
-      "name": "1inch",
-      "description": "Leading DEX aggregator with smart routing across 100+ liquidity sources",
-      "supported_chains": ["Ethereum", "Polygon", "Arbitrum", "Optimism", "Base"],
-      "typical_gas": "Medium",
-      "mcp_server": "mcp.oneinch"
-    },
-    {
-      "name": "Hyperliquid",
-      "description": "High-performance perpetual futures exchange with sub-second execution",
-      "supported_chains": ["Hyperliquid L1"],
-      "typical_gas": "None (no gas fees)",
-      "mcp_server": "mcp.hyperliquid",
-      "unique_features": ["20,000+ TPS", "Native order book", "No gas fees"]
-    },
-    {
-      "name": "UniswapX",
-      "description": "Uniswap's Dutch auction-based swap protocol with automatic routing",
-      "supported_chains": ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
-      "typical_gas": "Low (gasless for some routes)",
-      "mcp_server": "mcp.oneinch"
-    },
-    {
-      "name": "LiFi",
-      "description": "Cross-chain bridge and swap aggregator for seamless multi-chain swaps",
-      "supported_chains": ["Ethereum", "Polygon", "Arbitrum", "Optimism", "Base", "Avalanche", "BSC"],
-      "typical_gas": "Varies by chain",
-      "mcp_server": "mcp.lifi",
-      "unique_features": ["Cross-chain swaps", "Bridge aggregation", "Multi-chain routing"]
+      "name": "Hyperliquid Spot",
+      "description": "High-performance spot exchange for MEME TOKENS ONLY. Zero gas fees, 0.02% trading fee, 20,000+ TPS.",
+      "chains": ["Hyperliquid L1"],
+      "limitation": "ONLY supports meme tokens paired with USDC. Major tokens (ETH, BTC, SOL, etc.) NOT available."
     }
   ],
 
+  "important_limitations": {
+    "hyperliquid_spot_only": true,
+    "supported_tokens": "MEME TOKENS ONLY (USDC as quote currency)",
+    "major_tokens_NOT_supported": "ETH, BTC, SOL, WBTC, LINK, UNI, AAVE, etc. are NOT available on Hyperliquid Spot",
+    "reason": "Hyperliquid is primarily a PERPETUAL FUTURES exchange. The Spot market only offers meme token trading.",
+    "alternatives_for_major_tokens": [
+      "Hyperliquid Perps (perpetual futures) for ETH, BTC, SOL, etc.",
+      "External DEX aggregators: 1inch, Uniswap, 0x Protocol",
+      "Anvil still supports: price checking, portfolio tracking, market analysis for major tokens"
+    ]
+  },
+
+  "how_it_works": {
+    "step_1": "User requests swap: 'swap 100 USDC to PURR'",
+    "step_2": "Anvil fetches real-time quote from Hyperliquid Spot order book",
+    "step_3": "Displays swap details: rate, spread, output amount",
+    "step_4": "User confirms and transaction executes on Hyperliquid",
+    "note": "Hyperliquid has ZERO gas fees and sub-second execution"
+  },
+
+  "supported_provider": {
+    "name": "Hyperliquid Spot",
+    "description": "High-performance spot exchange with order book-based pricing",
+    "chain": "Hyperliquid L1",
+    "gas_fees": "ZERO (no gas fees)",
+    "trading_fee": "0.02%",
+    "speed": "20,000+ TPS",
+    "unique_features": ["Zero gas fees", "Native order book", "Real-time quotes", "Sub-second execution"]
+  },
+
   "supported_tokens": {
-    "major_tokens": ["BTC", "WBTC", "ETH", "USDC", "USDT", "DAI", "SOL", "MATIC", "AVAX", "LINK"],
-    "stablecoins": ["USDC", "USDT", "DAI", "FRAX", "LUSD"],
-    "layer2_tokens": ["ARB", "OP", "MATIC"],
-    "defi_tokens": ["AAVE", "UNI", "COMP", "CRV", "SNX"],
-    "total_supported": "100+ tokens across multiple chains"
+    "quote_currency": "USDC (required for all swaps)",
+    "meme_tokens_supported": [
+      "PURR", "HFUN", "TRUMP", "PEPE", "MOG", "POINTS", "JEFF",
+      "GMEOW", "LICK", "MANLET", "SIX", "WAGMI", "CAPPY",
+      "XULIAN", "RUG", "CZ", "BAGS", "ANSEM", "TATE", "FUN",
+      "BIGBEN", "KOBE", "VEGAS", "PUMP", "SCHIZO", "CATNIP",
+      "HAPPY", "SELL", "HBOOST", "GPT", "PANDA", "HODL", "RAGE",
+      "ASI", "LEAP", "VAPOR", "X", "PILL", "CAT", "HPEPE",
+      "MBAPPE", "MAGA", "OMNIX", "COKE", "MEOW", "ANT", "NEIRO"
+    ],
+    "major_tokens_NOT_supported": [
+      "ETH", "BTC", "SOL", "WBTC", "WETH", "LINK", "UNI", "AAVE",
+      "CRV", "MKR", "DAI", "USDT", "MATIC", "ARB", "OP", "AVAX",
+      "DOT", "ATOM", "APT", "SUI", "SEI", "TIA", "INJ", "FTM"
+    ],
+    "total_meme_tokens": "50+ meme tokens",
+    "all_pairs": "All pairs are XXX/USDC format"
   },
 
   "command_formats": {
     "english": [
-      "swap [amount] [from_token] to [to_token]",
-      "exchange [amount] [from_token] for [to_token]",
-      "convert [amount] [from_token] to [to_token]",
-      "trade [amount] [from_token] to [to_token]"
+      "swap [amount] USDC to [meme_token]",
+      "swap [amount] [meme_token] to USDC",
+      "exchange [amount] USDC for PURR"
     ],
     "spanish": [
-      "cambiar [cantidad] [token_origen] a [token_destino]",
-      "intercambiar [cantidad] [token_origen] por [token_destino]",
-      "convertir [cantidad] [token_origen] a [token_destino]"
+      "cambiar [cantidad] USDC a [meme_token]",
+      "intercambiar [cantidad] [meme_token] por USDC"
     ],
     "portuguese": [
-      "trocar [quantidade] [token_origem] para [token_destino]",
-      "cambiar [quantidade] [token_origem] para [token_destino]"
-    ],
-    "chinese": [
-      "兑换 [数量] [代币] 到 [代币]",
-      "交换 [数量] [代币] 到 [代币]"
+      "trocar [quantidade] USDC para [meme_token]",
+      "cambiar [quantidade] [meme_token] para USDC"
     ]
   },
 
   "natural_language_examples": {
-    "english": [
-      "swap 100 USDC to ETH",
-      "exchange 0.5 BTC for SOL",
-      "convert 1000 USDT to USDC",
-      "trade 50 DAI for MATIC",
-      "I want to swap 100 dollars to bitcoin"
+    "valid_swaps": [
+      "swap 100 USDC to PURR",
+      "exchange 50 USDC for TRUMP",
+      "convert 1000 USDC to PEPE",
+      "trade my HFUN to USDC"
     ],
-    "spanish": [
-      "cambiar 100 USDC a ETH",
-      "intercambiar 0.5 BTC por SOL",
-      "convertir 1000 USDT a BTC"
-    ],
-    "portuguese": [
-      "trocar 100 USDC para ETH",
-      "converter 0.5 BTC em SOL"
-    ],
-    "chinese": [
-      "兑换100 USDC到ETH",
-      "交换0.5 BTC为SOL"
+    "invalid_swaps_with_error_response": [
+      {
+        "user_input": "swap 100 USDC to ETH",
+        "error_response": "ETH is NOT available on Hyperliquid Spot. Hyperliquid Spot only supports meme tokens paired with USDC. For ETH trading, use Hyperliquid Perps or external DEX aggregators."
+      },
+      {
+        "user_input": "swap BTC to USDC",
+        "error_response": "BTC is NOT available on Hyperliquid Spot. Hyperliquid Spot only supports meme tokens. For BTC trading, use Hyperliquid Perps."
+      }
     ]
   },
 
   "features": {
-    "best_rate_guarantee": {
-      "description": "Automatically finds the best rate across all aggregators",
-      "example": "If 1inch offers 0.045 ETH and Hyperliquid offers 0.048 ETH for 100 USDC, Anvil routes to Hyperliquid"
+    "real_time_quotes": {
+      "description": "Fetches live order book data from Hyperliquid",
+      "includes": ["Current price", "Spread (bps)", "Available liquidity"]
     },
-
-    "slippage_protection": {
-      "description": "Configurable slippage tolerance to protect against front-running",
-      "default": "0.5% for stablecoins, 1% for volatile assets",
-      "user_configurable": true
+    "zero_gas_fees": {
+      "description": "Hyperliquid has no gas fees for spot trading",
+      "benefit": "100% of your funds go to the trade"
     },
-
-    "mev_protection": {
-      "description": "Transactions protected from MEV attacks through ULTRA agent integration",
-      "methods": ["Flashbots RPC", "Private mempool", "Slippage limits"]
+    "sub_second_execution": {
+      "description": "Trades execute in <1 second on Hyperliquid",
+      "tps": "20,000+ transactions per second"
     },
-
-    "gas_optimization": {
-      "description": "Automatic gas price optimization based on network congestion",
-      "strategies": ["Dynamic gas pricing", "Transaction batching", "Layer 2 routing"]
+    "low_trading_fee": {
+      "description": "Only 0.02% trading fee on Hyperliquid",
+      "comparison": "Lower than most DEXs (Uniswap is 0.3%)"
     }
   },
 
   "usage_patterns": {
-    "basic_swap": {
+    "buy_meme_token": {
+      "user_input": "swap 100 USDC to PURR",
+      "anvil_response": "🔵 **HYPERLIQUID SPOT**\n\n💱 **Swap Quote**\n\n**From:** 100 USDC\n**To:** ~1,234.56 PURR\n\n**Rate:** 1 USDC = 12.3456 PURR\n**Spread:** 5.2 bps\n**Network:** Hyperliquid\n**Fee:** 0.02%\n\nReady to execute? Type **1** to confirm."
+    },
+    "sell_meme_token": {
+      "user_input": "swap 500 TRUMP to USDC",
+      "anvil_response": "🔵 **HYPERLIQUID SPOT**\n\n💱 **Swap Quote**\n\n**From:** 500 TRUMP\n**To:** ~75.50 USDC\n\n**Rate:** 1 TRUMP = 0.151 USDC\n**Spread:** 8.1 bps\n**Network:** Hyperliquid\n\nReady to execute?"
+    },
+    "unsupported_major_token": {
       "user_input": "swap 100 USDC to ETH",
-      "anvil_interpretation": {
-        "action": "swap",
-        "from_token": "USDC",
-        "to_token": "ETH",
-        "amount": 100,
-        "currency": "USDC"
-      },
-      "anvil_response": "🔄 Let's swap 100 USDC to ETH!\n\n**Best Rate Found:**\n1inch: 0.0345 ETH (~$103.50)\nRate: 1 USDC = 0.000345 ETH\nSlippage: 0.5%\nGas: ~$2.50\n\n**Total Cost:** $100 USDC → 0.0345 ETH\n\nConfirm to execute?"
-    },
-
-    "advanced_features": {
-      "rate_comparison": {
-        "description": "Automatically compares rates across all aggregators",
-        "benefit": "Ensures you always get the best price",
-        "example": "1inch: 0.0368 ETH | Hyperliquid: 0.0371 ETH ← Best rate!"
-      },
-      "slippage_protection": {
-        "description": "Configurable slippage tolerance to prevent unfavorable execution",
-        "default": "0.5%",
-        "adjustable": true,
-        "command": "Set slippage to 1% for this swap"
-      },
-      "gas_optimization": {
-        "description": "Automatically selects route with best net outcome (rate - gas cost)",
-        "example": "May route through Hyperliquid (no gas) instead of 1inch (higher gas) if net result is better"
-      },
-      "mev_protection": {
-        "description": "Protects against front-running and sandwich attacks",
-        "method": "Private mempool submission via Flashbots/MEV Blocker"
-      }
+      "anvil_response": "⚠️ **ETH Not Available for Spot Swap**\n\n**ETH** is a major token that is **NOT available on Hyperliquid Spot**.\n\nHyperliquid Spot only supports **meme tokens** paired with USDC:\n• PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.\n\n**For ETH trading:**\n• Hyperliquid offers **perpetual futures** (perps) for ETH\n• For spot swaps, use DEX aggregators like 1inch or Uniswap\n\n**Available on Anvil for ETH:**\n• 📈 Check price and market data\n• 📊 Portfolio tracking\n• 🔮 Price predictions via Hunter AI"
     }
   },
 
-  "supported_flows": {
-    "basic_swap": {
-      "input": "swap [amount] [from_token] to [to_token]",
-      "examples": [
-        "swap 100 USDC to ETH",
-        "exchange 0.5 BTC for SOL",
-        "trade 1000 USDT for MATIC"
-      ],
-      "multi_language": {
-        "spanish": "cambiar 100 USDC a ETH",
-        "portuguese": "trocar 100 USDC por ETH",
-        "chinese": "兌換 100 USDC 到 ETH"
-      }
-    },
-
-    "moonpay_swap": {
-      "description": "Crypto-to-crypto swaps via MoonPay for major assets",
-      "supported_assets": ["BTC", "ETH", "SOL", "USDC", "USDT"],
-      "unique_feature": "No wallet connection required for some swaps",
-      "input": "moonpay swap [amount] [from] to [to]"
-    },
-
-    "multi_step_flow": {
-      "description": "Interactive flow for incomplete requests",
-      "example_conversation": [
-        "User: I want to swap BTC",
-        "Anvil: Great! How much BTC do you want to swap?",
-        "User: 0.5 BTC",
-        "Anvil: Perfect! Which token would you like to receive?",
-        "User: ETH",
-        "Anvil: [Shows rate and confirms swap]"
-      ]
-    }
-  },
-
-  "rate_comparison_example": {
-    "query": "swap 1000 USDC to ETH",
-    "aggregator_quotes": [
-      {
-        "aggregator": "1inch",
-        "output_amount": "0.4523 ETH",
-        "gas_cost": "$8.50",
-        "total_cost": "1000 USDC + $8.50 gas"
-      },
-      {
-        "aggregator": "Hyperliquid",
-        "output_amount": "0.4531 ETH",
-        "gas_cost": "$0 (no gas fees)",
-        "total_cost": "1000 USDC"
-      },
-      {
-        "aggregator": "UniswapX",
-        "output_amount": "0.4518 ETH",
-        "gas_cost": "$3.20 (subsidized)",
-        "total_cost": "1000 USDC + $3.20 gas"
-      }
-    ],
-    "anvil_selection": "Hyperliquid (best rate + no gas)",
-    "user_savings": "$8.50 in gas + 0.0008 ETH better rate"
+  "multi_step_flow": {
+    "description": "Interactive flow for incomplete requests",
+    "example_conversation": [
+      "User: I want to swap USDC",
+      "Anvil: Great! Which meme token would you like to receive?\n\n1. PURR\n2. TRUMP\n3. PEPE\n4. HFUN\n5. MOG\n6. GMEOW",
+      "User: PURR",
+      "Anvil: Perfect! How much USDC do you want to swap to PURR?",
+      "User: 100",
+      "Anvil: [Shows quote and confirms swap]"
+    ]
   },
 
   "safety_features": {
-    "slippage_protection": "Maximum 1% slippage by default (configurable)",
-    "price_impact_warning": "Warns if trade moves market >2%",
-    "liquidity_check": "Ensures sufficient liquidity before execution",
-    "timeout_protection": "Cancels if execution takes >30 seconds",
+    "spread_display": "Shows bid-ask spread in basis points",
+    "liquidity_check": "Ensures sufficient liquidity in order book",
+    "real_time_pricing": "Quotes refresh every 30 seconds",
     "wallet_balance_check": "Verifies sufficient balance before confirming"
   },
 
   "fees": {
-    "anvil_fee": "0.25% platform fee on executed swaps",
-    "aggregator_fees": "Included in quoted rate",
-    "gas_fees": "Variable by chain (shown before confirmation)",
-    "total_transparency": "All fees displayed upfront, no hidden costs"
+    "trading_fee": "0.02% (Hyperliquid)",
+    "gas_fee": "ZERO (no gas on Hyperliquid)",
+    "anvil_fee": "None for spot swaps",
+    "total_transparency": "All fees shown upfront"
   },
 
   "implementation_details": {
-    "handler": "unified_chat_handler.py -> swap_flow_handler()",
-    "mcp_integrations": [
-      "mcp.oneinch - 1inch API integration",
-      "mcp.hyperliquid - Hyperliquid API integration"
+    "handler": "swap_handler_v2.py",
+    "client": "hyperliquid_client.py",
+    "methods": [
+      "get_spot_quote() - Fetches order book and calculates output",
+      "get_spot_meta() - Gets available spot markets",
+      "get_spot_order_book() - Real-time order book data"
     ],
     "database_tables": [
       "chat_messages (metadata.swap_info)",
@@ -247,32 +174,32 @@
 
   "common_questions": {
     "q1": {
-      "question": "How does Anvil get the best rate?",
-      "answer": "Anvil queries multiple DEX aggregators in parallel, compares all quotes, and automatically selects the best rate considering both output amount and gas costs."
+      "question": "Can I swap ETH or BTC on Anvil?",
+      "answer": "No, Hyperliquid Spot only supports meme tokens paired with USDC. For ETH/BTC spot swaps, use external DEX aggregators like 1inch or Uniswap. However, Anvil can track your ETH/BTC portfolio, show prices, and provide market analysis."
     },
     "q2": {
-      "question": "Is my wallet safe?",
-      "answer": "Yes. Anvil is non-custodial, meaning you always control your assets. We never have access to your private keys. Transactions require your explicit approval in your wallet."
+      "question": "What tokens can I swap?",
+      "answer": "Anvil supports meme token swaps via Hyperliquid Spot: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, and 50+ other meme tokens. All pairs are with USDC as the quote currency."
     },
     "q3": {
-      "question": "What happens if the price moves during the swap?",
-      "answer": "Anvil uses slippage protection (default 1%). If the price moves more than the slippage tolerance, the transaction automatically reverts and your funds are safe."
+      "question": "Why doesn't Anvil support ETH swaps?",
+      "answer": "Anvil uses Hyperliquid for swaps. Hyperliquid is primarily a perpetual futures exchange - their Spot market only offers meme tokens. For major tokens like ETH, they offer perpetual futures (perps), not spot trading."
     },
     "q4": {
-      "question": "Can I swap any token?",
-      "answer": "Anvil supports 100+ major tokens. If a token has sufficient liquidity on supported DEXs, you can swap it. Exotic tokens may not be available."
+      "question": "Are there any gas fees?",
+      "answer": "No! Hyperliquid has zero gas fees for all trades. You only pay the 0.02% trading fee, which is lower than most DEXs."
     },
     "q5": {
-      "question": "How long does a swap take?",
-      "answer": "Most swaps execute in 10-30 seconds. Hyperliquid swaps are sub-second. Time depends on blockchain confirmation speed and network congestion."
+      "question": "How fast are swaps?",
+      "answer": "Swaps on Hyperliquid execute in less than 1 second. The exchange can handle 20,000+ transactions per second."
     }
   },
 
   "investor_highlights": {
-    "market_size": "DEX aggregation is $100B+ annual volume market",
-    "competitive_edge": "AI-powered routing beats manual DEX selection by 2-5% on average",
-    "user_experience": "Natural language removes technical barrier (no need to understand DEXs, slippage, gas)",
-    "network_effects": "More users → more volume → better rates through aggregator partnerships",
-    "monetization": "0.25% fee on swaps + premium features subscription model"
+    "unique_positioning": "First AI chat assistant with native Hyperliquid Spot integration",
+    "meme_token_focus": "Tapped into high-volume meme token market via Hyperliquid",
+    "cost_advantage": "Zero gas fees + 0.02% trading fee = lowest cost meme trading",
+    "user_experience": "Natural language removes technical barrier for meme trading",
+    "expansion_potential": "Can integrate additional DEX aggregators for major tokens in future"
   }
 }

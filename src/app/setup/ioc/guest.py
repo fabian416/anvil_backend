@@ -36,13 +36,13 @@ from app.infrastructure.adapters.external.moonpay_swap_client import MoonPaySwap
 # Dishka needs actual types at runtime, not string literals
 try:
     from app.domain.services.agent_squad.intent_classifier import IntentClassifier
-    from app.domain.services.agent_squad.supervisor_coordinator import SupervisorCoordinator
+    from app.domain.services.agent_squad.guest_supervisor import GuestSupervisorCoordinator
     from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
 except ImportError:
     # Agent Squad not available - create dummy types for type hints
     from typing import Any
     IntentClassifier = Any  # type: ignore
-    SupervisorCoordinator = Any  # type: ignore
+    GuestSupervisorCoordinator = Any  # type: ignore
     AgentOrchestrator = Any  # type: ignore
 
 
@@ -256,21 +256,26 @@ class GuestProvider(Provider):
         guest_repository: GuestRepository,
         handler_service: GuestHandlerService,
         intent_detector: IntentDetectorService,
-        supervisor_coordinator: SupervisorCoordinator = None,  # type: ignore
+        guest_supervisor_coordinator: GuestSupervisorCoordinator = None,  # type: ignore
         agent_orchestrator: AgentOrchestrator = None,  # type: ignore
     ) -> SendGuestMessage:
         """
-        Provide SendGuestMessage command with Agent Squad Supervisor as PRIMARY handler.
+        Provide SendGuestMessage command with GuestSupervisorCoordinator as PRIMARY handler.
         
-        Agent Squad SupervisorCoordinator is the PRIMARY handler - it routes ALL queries
-        to appropriate agents. This provides intelligent routing without manual patterns.
+        GuestSupervisorCoordinator is the PRIMARY handler - it routes ALL queries
+        to appropriate agents with guest-specific prompts and routing.
         
-        SupervisorCoordinator is injected from AgentSquadDomainProvider if available.
+        ARCHITECTURE NOTE:
+        - GuestSupervisorCoordinator is ISOLATED from AuthenticatedSupervisorCoordinator
+        - Changes to guest prompts do NOT affect authenticated users
+        - Changes to authenticated prompts do NOT affect guests
+        
+        GuestSupervisorCoordinator is injected from AgentSquadDomainProvider if available.
         If not available (None), falls back to normal intent detection flow.
         """
         distillation_engine = None
         
-        # SupervisorCoordinator is PRIMARY - handles all routing intelligently
+        # GuestSupervisorCoordinator is PRIMARY - handles all routing intelligently
         # If None, command will fall back to normal flow gracefully
         
         return SendGuestMessage(
@@ -278,7 +283,7 @@ class GuestProvider(Provider):
             intent_detector=intent_detector,
             handler_service=handler_service,
             distillation_engine=distillation_engine,
-            supervisor_coordinator=supervisor_coordinator,  # PRIMARY handler (from AgentSquadDomainProvider)
+            supervisor_coordinator=guest_supervisor_coordinator,  # PRIMARY handler (GuestSupervisorCoordinator)
             agent_orchestrator=agent_orchestrator,  # From AgentSquadDomainProvider
         )
 

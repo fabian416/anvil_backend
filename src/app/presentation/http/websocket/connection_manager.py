@@ -187,8 +187,9 @@ class ConnectionManager:
                 return
             sessions = {session_id: sessions[session_id]}
         
-        # Send to all matching sessions
-        for sid, websocket in sessions.items():
+        # Send to all matching sessions (copy items to avoid dict modification during iteration)
+        failed_sessions: list[tuple[str, Any]] = []
+        for sid, websocket in list(sessions.items()):
             try:
                 await websocket.send_json(message)
                 self.total_messages_sent += 1
@@ -203,8 +204,12 @@ class ConnectionManager:
                     f"Error sending to user {user_id} session {sid}: {e}",
                     exc_info=True,
                 )
-                # Disconnect broken connection
-                await self.disconnect(websocket, user_id, sid)
+                # Mark for disconnection (don't modify dict during iteration)
+                failed_sessions.append((sid, websocket))
+        
+        # Disconnect broken connections after iteration
+        for sid, websocket in failed_sessions:
+            await self.disconnect(websocket, user_id, sid)
     
     async def broadcast(
         self,

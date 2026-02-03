@@ -42,7 +42,7 @@ from app.domain.ports.chat.intent_detection_port import IntentDetectionResult
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from app.domain.services.agent_squad.supervisor_coordinator import SupervisorCoordinator
+    from app.domain.services.agent_squad.guest_supervisor import GuestSupervisorCoordinator
     from app.domain.services.agent_squad.agent_orchestrator import AgentOrchestrator
 
 logger = logging.getLogger(__name__)
@@ -153,14 +153,24 @@ class SendGuestMessage:
         intent_detector: IntentDetectorService | None = None,
         handler_service: GuestHandlerService | None = None,
         distillation_engine: DistillationEngine | None = None,
-        supervisor_coordinator: Any | None = None,  # SupervisorCoordinator - injected manually
+        supervisor_coordinator: Any | None = None,  # GuestSupervisorCoordinator - ISOLATED from authenticated
         agent_orchestrator: Any | None = None,  # AgentOrchestrator - injected manually
     ):
+        """
+        Initialize guest message command.
+        
+        ARCHITECTURE NOTE:
+        supervisor_coordinator should be a GuestSupervisorCoordinator instance,
+        which is ISOLATED from AuthenticatedSupervisorCoordinator. This ensures:
+        - Changes to guest prompts don't affect authenticated users
+        - Changes to authenticated prompts don't affect guests
+        - Each user type can be optimized independently
+        """
         self._guest_repo = guest_repository
         self._intent_detector = intent_detector
         self._handler_service = handler_service or GuestHandlerService()
         self._distillation_engine = distillation_engine
-        self._supervisor_coordinator = supervisor_coordinator
+        self._supervisor_coordinator = supervisor_coordinator  # GuestSupervisorCoordinator
         self._agent_orchestrator = agent_orchestrator
 
     async def execute(
@@ -279,6 +289,7 @@ class SendGuestMessage:
                     "role": agent_message.role.value,
                     "content": block_response,
                     "created_at": agent_message.created_at.isoformat(),
+                    "sources": [],  # Always include sources (empty for blocked messages)
                 },
                 routing={
                     "intent": "BLOCKED",
@@ -287,7 +298,12 @@ class SendGuestMessage:
                     "language": language,
                     "is_demo_mode": False,
                 },
-                enrichment={"blocked": True, "reason": "harmful_content"},
+                enrichment={
+                    "blocked": True,
+                    "reason": "harmful_content",
+                    "agent_timings": [],  # Always include agent_timings (empty for blocked messages)
+                },
+                sources=[],  # Always include sources at top level
                 guest_info={
                     "messages_remaining": messages_remaining,
                     "session_active": True,
@@ -295,10 +311,110 @@ class SendGuestMessage:
             )
 
         # ============================================================
-        # ✨ LLM-BASED ROUTING (NO INTENTS, NO FAST-PATHS) ✨
+        # ✨ SWAP RATE FAST-PATH (Hyperliquid Spot) ✨
         # ============================================================
-        # The CEO directive: NO intent classification, NO regex patterns.
-        # Send EVERYTHING to SupervisorCoordinator which uses LLM to:
+        # The LLM supervisor incorrectly routes "swap rate" to defi_yield.
+        # This override ensures swap rate queries go directly to Hunter AI.
+        # ============================================================
+        content_lower = content.lower()
+        is_swap_rate_query = (
+            any(phrase in content_lower for phrase in ["swap rate", "exchange rate", "best rate", "convert"]) and
+            any(tok in content_lower for tok in ["eth", "btc", "usdc", "usdt"]) and
+            "yield" not in content_lower and "apy" not in content_lower and "farm" not in content_lower
+        )
+        
+        logger.info(f"🔍 SWAP RATE CHECK: is_swap_rate_query={is_swap_rate_query}, has_orchestrator={self._agent_orchestrator is not None}")
+        
+        if is_swap_rate_query and self._agent_orchestrator:
+            logger.info(
+                "🔄 SWAP RATE FAST-PATH: Routing directly to Hunter AI (bypassing LLM supervisor)",
+                extra={
+                    "ip_address": ip_address,
+                    "conversation_id": str(conversation.id),
+                    "content_preview": content[:100],
+                }
+            )
+            try:
+                # Call Hunter AI directly for swap rate queries
+                from app.domain.enums.agent_type import AgentType
+                from app.domain.value_objects.conversation_id import ConversationId
+                from app.domain.value_objects.message_content import MessageContent
+                from app.domain.value_objects.agent_squad.conversation_context import ConversationContext
+                
+                # Build context
+                conv_context = ConversationContext(
+                    conversation_history=[{"role": "user", "content": content}],
+                    user_metadata={"language": language, "user_type": "guest"},
+                )
+                
+                # Execute Hunter AI directly
+                response = await self._agent_orchestrator.execute_agent(
+                    conversation_id=ConversationId(conversation.id),
+                    agent_type=AgentType.HUNTER_AI,
+                    message=MessageContent(content),
+                    conversation_context=conv_context,
+                )
+                
+                # Save messages and return result
+                user_message = GuestMessage.create_user_message(
+                    conversation_id=conversation.id,
+                    content=content,
+                    language=language,
+                )
+                await self._guest_repo.create_message(user_message)
+                
+                agent_message = GuestMessage.create_assistant_message(
+                    conversation_id=conversation.id,
+                    content=response.content,
+                    handler="hunter_ai_swap_rate",
+                    language=language,
+                )
+                await self._guest_repo.create_message(agent_message)
+                
+                # Calculate remaining messages
+                hour_ago = datetime.now(UTC) - timedelta(hours=1)
+                messages_this_hour = await self._guest_repo.get_message_count_since(guest.id, hour_ago)
+                messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
+                
+                return GuestMessageResult(
+                    conversation_id=conversation.id,
+                    message_id=agent_message.id,
+                    user_message={
+                        "id": str(user_message.id),
+                        "role": user_message.role.value,
+                        "content": user_message.content,
+                        "created_at": user_message.created_at.isoformat(),
+                    },
+                    agent_message={
+                        "id": str(agent_message.id),
+                        "role": agent_message.role.value,
+                        "content": response.content,
+                        "created_at": agent_message.created_at.isoformat(),
+                        "sources": [s.to_dict() for s in response.sources] if response.sources else [],  # Always include sources
+                    },
+                    routing={
+                        "intent": "SWAP_RATE",
+                        "confidence": 1.0,
+                        "handler": "hunter_ai_swap_rate",
+                        "language": language,
+                        "is_demo_mode": False,
+                    },
+                    enrichment={
+                        "agent_timings": [],  # Always include agent_timings (empty for fast-path)
+                    },
+                    sources=[s.to_dict() for s in response.sources] if response.sources else [],
+                    guest_info={
+                        "messages_remaining": messages_remaining,
+                        "session_active": True,
+                    },
+                )
+            except Exception as e:
+                logger.warning(f"Swap rate fast-path failed: {e}, falling back to LLM routing", exc_info=True)
+        
+        # ============================================================
+        # ✨ LLM-BASED ROUTING ✨
+        # ============================================================
+        # Send queries to SupervisorCoordinator which uses LLM to:
         # 1. Understand the user's request semantically
         # 2. Determine what agents/actions are needed
         # 3. Execute the workflow
@@ -352,6 +468,21 @@ class SendGuestMessage:
             content_lower.startswith("explain "),
             content_lower.startswith("tell me about "),
             content_lower.startswith("describe "),
+            # "Can I" questions about capabilities (informational, not action requests)
+            content_lower.startswith("can i "),
+            content_lower.startswith("can you "),
+            content_lower.startswith("do you "),
+            content_lower.startswith("how do i "),
+            content_lower.startswith("how to "),
+            # Spanish
+            content_lower.startswith("puedo "),
+            content_lower.startswith("como puedo "),
+            content_lower.startswith("cómo puedo "),
+            # Portuguese
+            content_lower.startswith("posso "),
+            content_lower.startswith("como posso "),
+            # Chinese
+            "可以" in content_lower and "?" in content or "？" in content,
         ]
         
         # If it's a simple informational query (and not asking for price), use fast path
@@ -362,6 +493,9 @@ class SendGuestMessage:
                 "cost" in content_lower,
                 "how much" in content_lower,
                 "current price" in content_lower,
+                # Exclude actual execution requests
+                " to " in content_lower and any(tok in content_lower for tok in ["swap", "convert", "exchange"]),  # "swap X to Y"
+                content_lower.startswith("swap ") and any(char.isdigit() for char in content_lower),  # "swap 100 USDC"
             ])
         )
         
@@ -370,9 +504,11 @@ class SendGuestMessage:
         # Go directly to LLM (ChatAgent) for natural, conversational responses
         import re
         is_simple_greeting = bool(re.search(
-            r"^(hi|hello|hey|hola|holi|hey there|greetings|good (morning|afternoon|evening))(\s|$|!|\?|\.)",
+            r"^(hi|hello|hey|hola|holi|hey there|greetings|buenos dias|buenas tardes|buenas noches|oi|olá|good (morning|afternoon|evening))(\s|$|!|\?|\.)*$",
             content_lower
         ))
+        
+        logger.info(f"🎯 Greeting check: is_simple_greeting={is_simple_greeting}, content='{content[:30]}', has_orchestrator={self._agent_orchestrator is not None}")
         
         if is_simple_greeting and self._agent_orchestrator:
             try:
@@ -469,9 +605,10 @@ class SendGuestMessage:
                     "task_count": 1,
                     "disclaimer": get_demo_disclaimer(language),
                     "agents_used": ["chat"],
+                    "agent_timings": [],  # Initialize as empty array
                 }
                 
-                if debug_timing_enabled:
+                if debug_timing_enabled and greeting_execution_time_ms:
                     enrichment["agent_timings"] = [{
                         "agent_type": "chat",
                         "task_description": "Direct LLM greeting response | Tools: LLM (Vertex AI/DeepInfra)",
@@ -674,10 +811,12 @@ class SendGuestMessage:
                 )
                 
                 # Execute fast-path workflow (parallel execution)
+                # Pass original_message explicitly to prevent conversation context pollution
                 _, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
                     conversation_id=ConversationId(conversation.id),
                     workflow_plan=fast_path_plan,
                     conversation_context=agent_squad_context,
+                    original_message=content,  # Explicitly pass current user message
                 )
                 
                 # ⚡ FAST AGGREGATION: Simple code-based combination (no LLM call)
@@ -1584,7 +1723,7 @@ class SendGuestMessage:
                         "zh": "注册以执行此操作。",
                     },
                     "cta": GUEST_CTA_MESSAGES,
-                    "signup_url": "/signup",
+                    # signup_url removed - URLs not shown in guest chat
                 }
             else:
                 registration_required = None
@@ -1664,6 +1803,10 @@ class SendGuestMessage:
         # Build enrichment - use handler enrichment if available, otherwise disclaimer
         final_enrichment = enrichment if enrichment else {}
         final_enrichment["disclaimer"] = get_demo_disclaimer(language)
+        
+        # Ensure agent_timings is always present (even if empty)
+        if "agent_timings" not in final_enrichment:
+            final_enrichment["agent_timings"] = []
 
         # Extract sources from handler result
         sources = []
@@ -1678,11 +1821,8 @@ class SendGuestMessage:
             "role": agent_message.role.value,
             "content": agent_message.content,
             "created_at": agent_message.created_at.isoformat(),
+            "sources": sources if sources else [],  # Always include sources inside agent_message (even if empty array)
         }
-        
-        # Add sources if available
-        if sources:
-            agent_message_dict["sources"] = sources
 
         return GuestMessageResult(
             conversation_id=conversation.id,
@@ -1854,10 +1994,12 @@ class SendGuestMessage:
         )
         
         # === EXECUTE WORKFLOW ===
+        # Pass original_message explicitly to prevent conversation context pollution
         response_content, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
             conversation_id=ConversationId(conversation.id),
             workflow_plan=workflow_plan,
             conversation_context=agent_squad_context,
+            original_message=content,  # Explicitly pass current user message
         )
         
         # Calculate total time
@@ -1882,7 +2024,26 @@ class SendGuestMessage:
         )
         await self._guest_repo.create_message(user_message)
         
+        # Check if GUEST_AUTH agent was used (indicates restricted action)
+        registration_required = None
+        used_guest_auth = any(t.agent_type == AgentType.GUEST_AUTH for t in workflow_plan.tasks)
+        if used_guest_auth:
+            # Build registration required response for restricted actions
+            registration_required = {
+                "required": True,
+                "reason": "action_required",
+                "message": {
+                    "en": "Sign up to access this feature. It takes just 30 seconds!",
+                    "es": "Regístrate para acceder a esta función. ¡Solo toma 30 segundos!",
+                    "pt": "Cadastre-se para acessar este recurso. Leva apenas 30 segundos!",
+                    "zh": "注册以访问此功能。只需 30 秒！",
+                },
+                "cta": GUEST_CTA_MESSAGES,
+                # signup_url removed - URLs not shown in guest chat
+            }
+        
         # Create agent message
+        # Set is_restricted_action=True if GUEST_AUTH agent was used
         agent_message = GuestMessage.create_assistant_message(
             conversation_id=conversation.id,
             content=response_content,
@@ -1890,7 +2051,7 @@ class SendGuestMessage:
             handler="supervisor_llm",
             confidence=1.0,  # LLM-based, no classification confidence
             language=language,
-            is_restricted_action=False,
+            is_restricted_action=used_guest_auth,  # Set based on whether GUEST_AUTH was used
         )
         await self._guest_repo.create_message(agent_message)
         
@@ -1915,11 +2076,9 @@ class SendGuestMessage:
             "agents_used": [t.agent_type.value for t in workflow_plan.tasks],
             "total_time_ms": total_time_ms,
             "disclaimer": get_demo_disclaimer(language),
+            "agent_timings": agent_timings if agent_timings else [],  # Always include agent_timings (even if empty)
         }
-        
-        if agent_timings:
-            enrichment["agent_timings"] = agent_timings
-        
+
         return GuestMessageResult(
             conversation_id=conversation.id,
             message_id=agent_message.id,
@@ -1934,7 +2093,7 @@ class SendGuestMessage:
                 "role": "assistant",
                 "content": response_content,
                 "created_at": agent_message.created_at.isoformat(),
-                "sources": sources,
+                "sources": sources if sources else [],  # Always include sources (even if empty array)
             },
             routing={
                 "intent": "LLM_WORKFLOW",
@@ -1946,8 +2105,8 @@ class SendGuestMessage:
                 "is_llm_based": True,
             },
             enrichment=enrichment,
-            sources=sources if sources else None,
-            registration_required=None,
+            sources=sources if sources else [],  # Always include sources at top level (even if empty)
+            registration_required=registration_required,
             guest_info={
                 "messages_remaining": messages_remaining,
                 "session_active": True,
@@ -2651,7 +2810,7 @@ class SendGuestMessage:
             "reason": reason,
             "message": messages,
             "cta": GUEST_CTA_MESSAGES,
-            "signup_url": "/signup",
+            # signup_url removed - URLs not shown in guest chat
         }
 
     def _build_registration_response(self, reason: str, language: str) -> str:
@@ -2660,7 +2819,7 @@ class SendGuestMessage:
         message = messages.get(language, messages.get("en", ""))
         cta = get_cta_message(language)
 
-        return f"{message}\n\n👉 {cta}: /signup"
+        return f"{message}\n\n👉 {cta}"
 
     # NOTE: Manual pattern detection methods removed
     # Compound intent detection is now handled by LLM-based AgentSquadIntentAdapter
@@ -2731,7 +2890,7 @@ class SendGuestMessage:
                 ConversationContext as AgentSquadContext,
             )
             from app.domain.enums.agent_type import AgentType
-            
+
             # Guest-accessible agents (read-only, no execution)
             # NOTE: PORTFOLIO is NOT accessible to guests - requires authentication
             GUEST_ACCESSIBLE_AGENTS = [
@@ -2741,6 +2900,7 @@ class SendGuestMessage:
                 AgentType.RISK_ANALYZER,
                 AgentType.HUNTER_AI,  # Market analysis
                 AgentType.DEFI_YIELD,  # Lending rates (read-only)
+                AgentType.GUEST_AUTH,  # Authentication prompts for restricted features
             ]
             
             # Build Agent Squad conversation context
@@ -2797,11 +2957,24 @@ class SendGuestMessage:
             )
             
             # Execute workflow
-            aggregated_response, sources, agent_timings = await self._supervisor_coordinator.execute_workflow(
+            # Pass original_message explicitly to prevent conversation context pollution
+            aggregated_response, sources_raw, agent_timings = await self._supervisor_coordinator.execute_workflow(
                 conversation_id=ConversationId(conversation.id),
                 workflow_plan=workflow_plan,
                 conversation_context=agent_squad_context,
+                original_message=content,  # Explicitly pass current user message
             )
+            
+            # Convert sources to serializable format (always initialize as list)
+            sources = []
+            if sources_raw:
+                for s in sources_raw:
+                    if hasattr(s, "to_dict"):
+                        sources.append(s.to_dict())
+                    elif isinstance(s, dict):
+                        sources.append(s)
+                    else:
+                        sources.append(str(s))
             
             # Create user message
             user_message = GuestMessage.create_user_message(
@@ -2816,20 +2989,12 @@ class SendGuestMessage:
             settings = load_settings()
             debug_timing_enabled = getattr(settings.agent_squad, 'debug_agent_timing', False)
             
-            # Build enrichment with optional timing
-            enrichment = {
-                "agent_squad": True,
-                "workflow_type": "supervisor_coordinator",
-                "task_count": len(workflow_plan.tasks),
-                "disclaimer": get_demo_disclaimer(language),
-                "agents_used": [task.agent_type.value for task in workflow_plan.tasks],
-            }
+            # Build enrichment with timing (always include agent_timings, even if empty)
+            # Initialize agent_timings list
+            all_timings = []
             
             # Add timing if debug enabled
             if debug_timing_enabled:
-                # Initialize agent_timings list
-                all_timings = []
-                
                 # Add distillation timing if available
                 if distillation_timing_ms is not None:
                     all_timings.append({
@@ -2850,11 +3015,36 @@ class SendGuestMessage:
                 # Add agent execution timings from workflow
                 if agent_timings:
                     all_timings.extend(agent_timings)
-                
-                if all_timings:
-                    enrichment["agent_timings"] = all_timings
+            
+            enrichment = {
+                "agent_squad": True,
+                "workflow_type": "supervisor_coordinator",
+                "task_count": len(workflow_plan.tasks),
+                "disclaimer": get_demo_disclaimer(language),
+                "agents_used": [task.agent_type.value for task in workflow_plan.tasks],
+                "agent_timings": all_timings,  # Always include agent_timings (even if empty)
+            }
+            
+            # Check if GUEST_AUTH agent was used (indicates restricted action)
+            registration_required = None
+            used_guest_auth = any(task.agent_type == AgentType.GUEST_AUTH for task in workflow_plan.tasks)
+            if used_guest_auth:
+                # Build registration required response for restricted actions
+                registration_required = {
+                    "required": True,
+                    "reason": "action_required",
+                    "message": {
+                        "en": "Sign up to access this feature. It takes just 30 seconds!",
+                        "es": "Regístrate para acceder a esta función. ¡Solo toma 30 segundos!",
+                        "pt": "Cadastre-se para acessar este recurso. Leva apenas 30 segundos!",
+                        "zh": "注册以访问此功能。只需 30 秒！",
+                    },
+                    "cta": GUEST_CTA_MESSAGES,
+                    # signup_url removed - URLs not shown in guest chat
+                }
             
             # Create agent message with aggregated response
+            # Set is_restricted_action=True if GUEST_AUTH agent was used
             agent_message = GuestMessage.create_assistant_message(
                 conversation_id=conversation.id,
                 content=aggregated_response,
@@ -2862,16 +3052,16 @@ class SendGuestMessage:
                 handler="agent_squad_supervisor",
                 confidence=0.95,
                 language=language,
-                is_restricted_action=False,
+                is_restricted_action=used_guest_auth,  # Set based on whether GUEST_AUTH was used
             )
             await self._guest_repo.create_message(agent_message)
-            
+
             # Update counters
             guest.increment_messages()
             conversation.increment_messages()
             await self._guest_repo.update_guest(guest)
             await self._guest_repo.update_conversation(conversation)
-            
+
             # Log telemetry
             await self._guest_repo.log_telemetry(
                 guest_user_id=guest.id,
@@ -2888,14 +3078,14 @@ class SendGuestMessage:
                 referer=referer,
                 language=language,
             )
-            
+
             # Calculate remaining messages
             hour_ago = datetime.now(UTC) - timedelta(hours=1)
             messages_this_hour = await self._guest_repo.get_message_count_since(
                 guest.id, hour_ago
             )
             messages_remaining = max(0, RATE_LIMIT_MESSAGES_PER_HOUR - messages_this_hour)
-            
+
             return GuestMessageResult(
                 conversation_id=conversation.id,
                 message_id=agent_message.id,
@@ -2910,7 +3100,7 @@ class SendGuestMessage:
                     "role": agent_message.role.value,
                     "content": agent_message.content,
                     "created_at": agent_message.created_at.isoformat(),
-                    "sources": sources,  # Include sources from agent execution
+                    "sources": sources if sources else [],  # Always include sources (even if empty array)
                 },
                 routing={
                     "intent": "COMPLEX_WORKFLOW",
@@ -2922,8 +3112,8 @@ class SendGuestMessage:
                     "workflow_tasks": len(workflow_plan.tasks),
                 },
                 enrichment=enrichment,
-                sources=None,
-                registration_required=None,
+                sources=sources if sources else [],  # Always include sources at top level (even if empty)
+                registration_required=registration_required,
                 guest_info={
                     "messages_remaining": messages_remaining,
                     "rate_limit": RATE_LIMIT_MESSAGES_PER_HOUR,
@@ -3246,7 +3436,7 @@ class SendGuestMessage:
                     "zh": "您已达到演示限制。注册以获得无限访问。",
                 },
                 "cta": GUEST_CTA_MESSAGES,
-                "signup_url": "/signup",
+                # signup_url removed - URLs not shown in guest chat
             },
             rate_limited=True,
         )

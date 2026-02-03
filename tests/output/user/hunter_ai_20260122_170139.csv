@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_price_004,2026-01-22T17:01:41.871862+00:00,agent,hunter_price,NO,1,1,current price of SOL,"📈 **Price Prediction for SOL**
+
+**Current Price:** $1,964.57
+**7-Day Forecast:** $2,023.50
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_prediction_handler,539,NO,,guest,en,FAIL,,8da9437f-aec5-4612-8f60-44f57919f2b1,WARNING,0.8,"The response provides a price prediction and forecast, which is more than just the current price requested. While the current price is included, the additional information could be considered extraneous. The price itself seems plausible, and the formatting is clear. The response understands the user's intent to get the current price of SOL. However, the inclusion of a 7-day forecast and a signup link is not part of the expected behavior, making it a warning rather than a pass.",,,,

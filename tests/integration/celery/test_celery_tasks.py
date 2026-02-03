@@ -67,6 +67,44 @@ class TestMaintenanceTasks:
 
 
 @pytest.mark.integration
+class TestPrivyBalanceTasks:
+    """Tests for Privy wallet balance sync tasks."""
+    
+    def test_privy_sync_wallet_balances_task_exists(self):
+        """Test Privy sync wallet balances task exists."""
+        from app.infrastructure.celery.tasks import sync_wallet_balances
+        assert sync_wallet_balances is not None
+        assert callable(sync_wallet_balances)
+    
+    def test_privy_sync_single_wallet_balance_task_exists(self):
+        """Test Privy sync single wallet balance task exists."""
+        from app.infrastructure.celery.tasks import sync_single_wallet_balance
+        assert sync_single_wallet_balance is not None
+        assert callable(sync_single_wallet_balance)
+    
+    def test_privy_balance_task_module_exists(self):
+        """Test Privy balance tasks module exists and is importable."""
+        from app.infrastructure.celery.tasks.privy_balance_tasks import (
+            sync_wallet_balances,
+            sync_single_wallet_balance,
+            fetch_privy_wallet_balance,
+            CHAIN_ID_MAP,
+        )
+        assert sync_wallet_balances is not None
+        assert sync_single_wallet_balance is not None
+        assert fetch_privy_wallet_balance is not None
+        assert isinstance(CHAIN_ID_MAP, dict)
+    
+    def test_privy_balance_task_registered(self):
+        """Test Privy balance sync task is registered with Celery."""
+        from app.infrastructure.celery.tasks.privy_balance_tasks import sync_wallet_balances
+        
+        # Celery task decorator adds 'name' attribute
+        assert hasattr(sync_wallet_balances, 'name')
+        assert sync_wallet_balances.name == "privy.sync_wallet_balances"
+
+
+@pytest.mark.integration
 class TestTaskExecution:
     """Tests for task execution patterns."""
     

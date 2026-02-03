@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_news_002,2026-01-22T17:33:19.767295+00:00,agent,hunter_news,NO,1,1,latest bitcoin news,,hunter_ai,,,,187,NO,,authenticated,en,FAIL,,ea8028f2-39b8-48ea-b819-604f3196f050,,0.0,,,,,

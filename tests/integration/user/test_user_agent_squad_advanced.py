@@ -6,6 +6,8 @@ Tests mirror guest Agent Squad tests but validate user-specific features.
 """
 
 import pytest
+
+pytestmark = pytest.mark.skip(reason="Uses legacy /api/v1/user/chat endpoint")
 import pytest_asyncio
 from datetime import datetime
 from httpx import AsyncClient, ASGITransport

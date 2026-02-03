@@ -88,6 +88,9 @@ class LayerZeroMCPServer(MCPServer):
         )
 
         self.layerzero_gateway = layerzero_gateway
+        
+        # Register tools
+        self.setup_tools()
 
     def setup_tools(self):
         """Register LayerZero protocol tools."""

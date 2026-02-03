@@ -1,0 +1,265 @@
+{
+  "feature_name": "Lending Protocol Comparison",
+  "version": "1.0",
+  "last_updated": "2026-01-27",
+  "description": "Comprehensive comparison of lending protocols supported by Anvil (Aave V3 and Morpho)",
+
+  "protocols": {
+    "aave": {
+      "name": "Aave V3",
+      "description": "Leading DeFi lending protocol with multi-chain support, flash loans, and efficiency modes",
+      "type": "Lending Pool",
+      "characteristics": {
+        "tvl": "$6.2B+ across all chains",
+        "chains": ["ethereum", "polygon", "arbitrum", "optimism", "base", "avalanche"],
+        "chain_count": 6,
+        "features": [
+          "Flash loans (0.09% fee)",
+          "E-mode (Efficiency Mode for correlated assets)",
+          "Isolation mode (for new assets)",
+          "Portal (cross-chain liquidity)",
+          "Variable and stable interest rates",
+          "Credit delegation"
+        ],
+        "supply_apy_range": {
+          "usdc": "2.5% - 8%",
+          "eth": "1.5% - 5%",
+          "wbtc": "0.5% - 3%",
+          "average": "2% - 6%"
+        },
+        "borrow_apy_range": {
+          "usdc": "4% - 12%",
+          "eth": "2.5% - 8%",
+          "wbtc": "1.5% - 5%",
+          "average": "3% - 10%"
+        }
+      },
+      "mcp_integration": {
+        "port": 8085,
+        "tools": [
+          "aave_get_market_data",
+          "aave_get_user_positions",
+          "aave_calculate_health_factor",
+          "aave_get_available_to_borrow",
+          "aave_get_liquidation_risk",
+          "aave_supply_asset",
+          "aave_borrow_asset",
+          "aave_repay_loan",
+          "aave_withdraw_supply"
+        ],
+        "tool_count": 9
+      },
+      "risk_profile": {
+        "risk_tier": "LOW",
+        "audit_status": "Multiple audits (Trail of Bits, OpenZeppelin, Certora, Sigma Prime)",
+        "insurance": "Nexus Mutual, InsurAce coverage available",
+        "governance": "AAVE token holders",
+        "track_record": "Operating since 2020, no major exploits on V3"
+      },
+      "liquidation": {
+        "default_threshold": "82.5%",
+        "bonus": "5-10% depending on asset",
+        "assets": {
+          "ETH": {"threshold": "82.5%", "bonus": "5%"},
+          "WBTC": {"threshold": "75%", "bonus": "6.5%"},
+          "USDC": {"threshold": "88%", "bonus": "4%"},
+          "DAI": {"threshold": "85%", "bonus": "4%"},
+          "LINK": {"threshold": "70%", "bonus": "7%"}
+        }
+      }
+    },
+    "morpho": {
+      "name": "Morpho",
+      "description": "Optimized lending with higher yields through peer-to-peer matching and MetaMorpho vaults",
+      "type": "P2P Lending Optimizer + MetaMorpho Vaults",
+      "characteristics": {
+        "tvl": "$2B+",
+        "chains": ["ethereum", "base"],
+        "chain_count": 2,
+        "features": [
+          "Peer-to-peer matching for better rates",
+          "MetaMorpho vaults (ERC-4626)",
+          "Morpho Blue isolated markets",
+          "Curator-managed vault strategies",
+          "No flash loans",
+          "Higher APY through P2P optimization"
+        ],
+        "supply_apy_range": {
+          "usdc": "5% - 15%",
+          "eth": "2.5% - 8%",
+          "wbtc": "1% - 5%",
+          "average": "4% - 12%"
+        },
+        "apy_premium_over_aave": "20-40% higher via P2P matching",
+        "borrow_support": "Limited (supply-focused, Morpho Blue for borrowing)"
+      },
+      "mcp_integration": {
+        "port": 8088,
+        "tools": [
+          "morpho_get_vaults",
+          "morpho_get_vault_details",
+          "morpho_get_vault_apy",
+          "morpho_get_markets",
+          "morpho_get_user_positions",
+          "morpho_compare_yields"
+        ],
+        "tool_count": 6
+      },
+      "risk_profile": {
+        "risk_tier": "LOW-MEDIUM",
+        "audit_status": "Audited by Spearbit, Cantina",
+        "insurance": "Limited coverage",
+        "governance": "Morpho DAO",
+        "track_record": "Operating since 2022, no major exploits"
+      },
+      "vault_types": {
+        "curated": {
+          "description": "Whitelisted vaults managed by trusted curators",
+          "risk_level": "LOW",
+          "identifier": "whitelisted: true",
+          "examples": ["Steakhouse USDC", "Gauntlet WETH", "Re7 USDC"]
+        },
+        "non_curated": {
+          "description": "Community vaults without curator oversight",
+          "risk_level": "MEDIUM-HIGH",
+          "identifier": "whitelisted: false"
+        }
+      }
+    }
+  },
+
+  "comparison": {
+    "best_for_supply": {
+      "winner": "Morpho",
+      "reason": "Generally offers 20-40% higher APY due to P2P matching optimization",
+      "caveat": "Lower TVL means less liquidity for large withdrawals"
+    },
+    "best_for_borrow": {
+      "winner": "Aave",
+      "reason": "Full borrowing support with variable/stable rates (Morpho is supply-focused)",
+      "caveat": "Higher borrow rates than some competitors"
+    },
+    "best_for_leverage": {
+      "winner": "Aave",
+      "reason": "Requires borrow capability, E-mode for correlated assets",
+      "caveat": "Leverage increases liquidation risk significantly"
+    },
+    "tvl_comparison": {
+      "aave": "$6.2B+",
+      "morpho": "$2B+",
+      "ratio": "Aave has 3x higher TVL (more liquidity depth)"
+    },
+    "chain_support": {
+      "aave": 6,
+      "morpho": 2,
+      "note": "Aave supports more chains (6 vs 2) for cross-chain flexibility"
+    },
+    "flash_loans": {
+      "aave": "Yes (0.09% fee)",
+      "morpho": "No",
+      "use_case": "Aave for arbitrage, collateral swaps, self-liquidation"
+    },
+    "risk_comparison": {
+      "aave": "LOW - Battle-tested, multiple audits, larger TVL",
+      "morpho": "LOW-MEDIUM - Newer, but well-audited, P2P model adds complexity"
+    }
+  },
+
+  "recommendation_matrix": {
+    "scenarios": [
+      {
+        "scenario": "Maximum yield seeking (supply only)",
+        "recommended": "Morpho",
+        "reasoning": "Higher APY via P2P matching, curated vaults for safety"
+      },
+      {
+        "scenario": "Multi-chain DeFi positions",
+        "recommended": "Aave",
+        "reasoning": "6+ chains supported vs Morpho's 2 chains"
+      },
+      {
+        "scenario": "Flash loan strategies",
+        "recommended": "Aave",
+        "reasoning": "Native flash loan support (Morpho doesn't offer flash loans)"
+      },
+      {
+        "scenario": "Conservative, large deposits (>$1M)",
+        "recommended": "Aave",
+        "reasoning": "Battle-tested with $10B+ TVL, better liquidity for large positions"
+      },
+      {
+        "scenario": "Base chain yield optimization",
+        "recommended": "Morpho",
+        "reasoning": "Strong Base presence with curated vaults, lower gas fees"
+      },
+      {
+        "scenario": "Borrow against collateral",
+        "recommended": "Aave",
+        "reasoning": "Full borrowing support (Morpho Blue has limited borrowing)"
+      },
+      {
+        "scenario": "Supply-only yield farming",
+        "recommended": "Morpho",
+        "reasoning": "Optimized for suppliers with higher rates"
+      },
+      {
+        "scenario": "Leverage/loop strategies",
+        "recommended": "Aave",
+        "reasoning": "E-mode for correlated assets, full borrow capability"
+      }
+    ]
+  },
+
+  "top_vaults_example": {
+    "base_usdc": [
+      {"name": "Steakhouse USDC", "protocol": "morpho", "apy": "12.50%", "tvl": "$45M", "risk": "low"},
+      {"name": "Gauntlet USDC", "protocol": "morpho", "apy": "8.20%", "tvl": "$28M", "risk": "low"},
+      {"name": "Aave V3 USDC", "protocol": "aave", "apy": "7.80%", "tvl": "$450M", "risk": "low"}
+    ],
+    "ethereum_eth": [
+      {"name": "Re7 WETH", "protocol": "morpho", "apy": "5.10%", "tvl": "$12M", "risk": "medium"},
+      {"name": "Gauntlet WETH", "protocol": "morpho", "apy": "4.20%", "tvl": "$28M", "risk": "low"},
+      {"name": "Aave V3 WETH", "protocol": "aave", "apy": "2.85%", "tvl": "$1.2B", "risk": "low"}
+    ],
+    "note": "APY values are examples and fluctuate based on utilization and market conditions"
+  },
+
+  "multi_language_labels": {
+    "en": {
+      "protocol": "Protocol",
+      "supply_apy": "Supply APY",
+      "borrow_apy": "Borrow APY",
+      "tvl": "Total Value Locked",
+      "chains": "Supported Chains",
+      "risk_tier": "Risk Tier",
+      "features": "Key Features"
+    },
+    "es": {
+      "protocol": "Protocolo",
+      "supply_apy": "APY de Suministro",
+      "borrow_apy": "APY de Prestamo",
+      "tvl": "Valor Total Bloqueado",
+      "chains": "Cadenas Soportadas",
+      "risk_tier": "Nivel de Riesgo",
+      "features": "Caracteristicas Clave"
+    },
+    "pt": {
+      "protocol": "Protocolo",
+      "supply_apy": "APY de Fornecimento",
+      "borrow_apy": "APY de Emprestimo",
+      "tvl": "Valor Total Bloqueado",
+      "chains": "Redes Suportadas",
+      "risk_tier": "Nivel de Risco",
+      "features": "Recursos Principais"
+    },
+    "zh": {
+      "protocol": "协议",
+      "supply_apy": "供应年化收益率",
+      "borrow_apy": "借款年化收益率",
+      "tvl": "总锁仓量",
+      "chains": "支持的链",
+      "risk_tier": "风险等级",
+      "features": "主要特性"
+    }
+  }
+}

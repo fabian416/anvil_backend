@@ -46,45 +46,6 @@ class TestGuestHunterTradingSignals:
             assert reg_required.get("required") is False
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_basic",
-                user_input="What are the trading signals for BTC?",
-                agent_output=content,
-                expected_behavior="Response should provide trading signals for BTC with buy/sell/hold recommendations.",
-                test_func=self.test_trading_signals_basic,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading', 'user_type': 'guest', 'token': 'BTC'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_basic_001",
-            "s_multistep": False,
-            "input": "What are the trading signals for BTC?",
-            "output": content,
-            "test_label_sequence": "hunter_trading_basic",
-            "output_expected": "Trading signals for BTC with buy/sell/hold recommendations",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_signal_types(self, client, llm_validator, csv_tracker):
@@ -111,45 +72,6 @@ class TestGuestHunterTradingSignals:
         assert any(signal.lower() in content.lower() for signal in valid_signals)
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_signal_types",
-                user_input="ETH trading signals",
-                agent_output=content,
-                expected_behavior="Response should provide ETH trading signals with valid signal types (BUY/SELL/HOLD/STRONG_BUY/STRONG_SELL).",
-                test_func=self.test_trading_signals_signal_types,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading', 'user_type': 'guest', 'token': 'ETH', 'feature': 'signal_types'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_signal_types_002",
-            "s_multistep": False,
-            "input": "ETH trading signals",
-            "output": content,
-            "test_label_sequence": "hunter_trading_signal_types",
-            "output_expected": "ETH trading signals with valid signal types",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_strength_levels(self, client, llm_validator, csv_tracker):
@@ -178,45 +100,6 @@ class TestGuestHunterTradingSignals:
             assert "disclaimer" in enrichment
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_strength_levels",
-                user_input="BTC trading recommendations",
-                agent_output=content,
-                expected_behavior="Response should show BTC trading signals with strength levels and confidence indicators or disclaimers.",
-                test_func=self.test_trading_signals_strength_levels,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading', 'user_type': 'guest', 'token': 'BTC', 'feature': 'strength_levels'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_strength_003",
-            "s_multistep": False,
-            "input": "BTC trading recommendations",
-            "output": content,
-            "test_label_sequence": "hunter_trading_strength",
-            "output_expected": "BTC trading signals with strength levels and confidence",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_multiple_tokens(self, client, llm_validator, csv_tracker):
@@ -242,44 +125,6 @@ class TestGuestHunterTradingSignals:
             last_status = response.status_code
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_multiple_tokens",
-                user_input="trading signals for BTC, ETH, SOL (sequential)",
-                agent_output=last_content,
-                expected_behavior="Response should provide trading signals for multiple tokens sequentially.",
-                additional_context={'test_category': 'hunter_trading', 'user_type': 'guest', 'tokens': tokens, 'feature': 'multiple_tokens'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_multiple_004",
-            "s_multistep": True,
-            "input": "trading signals for BTC, ETH, SOL (sequential)",
-            "output": last_content,
-            "test_label_sequence": "hunter_trading_multiple",
-            "output_expected": "Trading signals for multiple tokens",
-            "status": "PASS" if last_status == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_technical_indicators(self, client, llm_validator, csv_tracker):
@@ -304,45 +149,6 @@ class TestGuestHunterTradingSignals:
         assert any(keyword in content.lower() for keyword in ta_keywords)
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_technical_indicators",
-                user_input="ETH buy sell signals",
-                agent_output=content,
-                expected_behavior="Response should include technical indicators like RSI, MACD, moving averages for ETH signals.",
-                test_func=self.test_trading_signals_technical_indicators,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading', 'user_type': 'guest', 'token': 'ETH', 'feature': 'technical_indicators'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_indicators_005",
-            "s_multistep": False,
-            "input": "ETH buy sell signals",
-            "output": content,
-            "test_label_sequence": "hunter_trading_indicators",
-            "output_expected": "ETH signals with technical indicators",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_entry_exit_points(self, client, llm_validator, csv_tracker):
@@ -367,45 +173,6 @@ class TestGuestHunterTradingSignals:
         assert any(keyword in content.lower() for keyword in price_keywords)
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_entry_exit_points",
-                user_input="BTC trading signals",
-                agent_output=content,
-                expected_behavior="Response should provide entry and exit points with price levels for BTC trading.",
-                test_func=self.test_trading_signals_entry_exit_points,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading', 'user_type': 'guest', 'token': 'BTC', 'feature': 'entry_exit'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_entry_exit_006",
-            "s_multistep": False,
-            "input": "BTC trading signals",
-            "output": content,
-            "test_label_sequence": "hunter_trading_entry_exit",
-            "output_expected": "BTC signals with entry and exit points",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_stop_loss_recommendations(self, client, llm_validator, csv_tracker):
@@ -433,45 +200,6 @@ class TestGuestHunterTradingSignals:
         assert any(keyword in content.lower() for keyword in risk_keywords)
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_stop_loss_recommendations",
-                user_input="SOL trading recommendations",
-                agent_output=content,
-                expected_behavior="Response should include stop-loss recommendations and risk management for SOL trading.",
-                test_func=self.test_trading_signals_stop_loss_recommendations,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading', 'user_type': 'guest', 'token': 'SOL', 'feature': 'stop_loss'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_stop_loss_007",
-            "s_multistep": False,
-            "input": "SOL trading recommendations",
-            "output": content,
-            "test_label_sequence": "hunter_trading_stop_loss",
-            "output_expected": "SOL signals with stop-loss and risk management",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_hunter_tool_tag(self, client, llm_validator, csv_tracker):
@@ -490,45 +218,6 @@ class TestGuestHunterTradingSignals:
         assert enrichment["hunter_tool"] == "signal_generator"
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_hunter_tool_tag",
-                user_input="BTC trading signals",
-                agent_output=content,
-                expected_behavior="Response should include BTC trading signals with hunter_tool tag in enrichment.",
-                test_func=self.test_trading_signals_hunter_tool_tag,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading', 'user_type': 'guest', 'token': 'BTC', 'feature': 'hunter_tool_tag'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_tool_tag_008",
-            "s_multistep": False,
-            "input": "BTC trading signals",
-            "output": content,
-            "test_label_sequence": "hunter_trading_tool_tag",
-            "output_expected": "BTC signals with hunter_tool tag",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_uses_real_data(self, client, llm_validator, csv_tracker):
@@ -551,45 +240,6 @@ class TestGuestHunterTradingSignals:
         assert isinstance(enrichment["signal_type"], str)
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_uses_real_data",
-                user_input="ETH buy sell signals",
-                agent_output=content,
-                expected_behavior="Response should use real price and volume data for ETH trading signals.",
-                test_func=self.test_trading_signals_uses_real_data,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading', 'user_type': 'guest', 'token': 'ETH', 'feature': 'real_data'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_real_data_009",
-            "s_multistep": False,
-            "input": "ETH buy sell signals",
-            "output": content,
-            "test_label_sequence": "hunter_trading_real_data",
-            "output_expected": "ETH signals using real price and volume data",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_multilingual_spanish(self, client, llm_validator, csv_tracker):
@@ -611,46 +261,6 @@ class TestGuestHunterTradingSignals:
         # assert any(word in content for word in ["Señal", "Signal", "Compra", "Buy", "Venta", "Sell"])
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_multilingual_spanish",
-                user_input="señales de trading para BTC",
-                agent_output=content,
-                expected_behavior="Response should provide BTC trading signals in Spanish or English fallback with multilingual support.",
-                test_func=self.test_trading_signals_multilingual_spanish,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading', 'user_type': 'guest', 'language': 'es', 'token': 'BTC', 'feature': 'multilingual'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_spanish_010",
-            "s_multistep": False,
-            "input": "señales de trading para BTC",
-            "output": content,
-            "test_label_sequence": "hunter_trading_spanish",
-            "output_expected": "BTC trading signals in Spanish with multilingual support",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
-
 class TestGuestHunterTradingSignalsStorytellingQuality:
     """Test storytelling and UX quality of trading signal responses."""
 
@@ -670,45 +280,6 @@ class TestGuestHunterTradingSignalsStorytellingQuality:
         assert any(emoji in content for emoji in ["📊", "📈", "📉", "🟢", "🔴", "💹", "⚡"])
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_uses_emojis",
-                user_input="BTC trading signals",
-                agent_output=content,
-                expected_behavior="Response should use emojis for visual appeal and engagement.",
-                test_func=self.test_trading_signals_uses_emojis,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading_quality', 'user_type': 'guest', 'token': 'BTC', 'feature': 'emojis'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_emojis_011",
-            "s_multistep": False,
-            "input": "BTC trading signals",
-            "output": content,
-            "test_label_sequence": "hunter_trading_emojis",
-            "output_expected": "BTC trading signals with emojis for visual appeal",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_clear_formatting(self, client, llm_validator, csv_tracker):
@@ -728,45 +299,6 @@ class TestGuestHunterTradingSignalsStorytellingQuality:
         assert "\n\n" in content or "\n" in content  # Line breaks
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_clear_formatting",
-                user_input="ETH buy sell signals",
-                agent_output=content,
-                expected_behavior="Response should have clear visual formatting with markdown and structured sections.",
-                test_func=self.test_trading_signals_clear_formatting,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading_quality', 'user_type': 'guest', 'token': 'ETH', 'feature': 'formatting'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_formatting_012",
-            "s_multistep": False,
-            "input": "ETH buy sell signals",
-            "output": content,
-            "test_label_sequence": "hunter_trading_formatting",
-            "output_expected": "ETH signals with clear visual formatting",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_clear_recommendations(self, client, llm_validator, csv_tracker):
@@ -784,45 +316,6 @@ class TestGuestHunterTradingSignalsStorytellingQuality:
         assert any(keyword in content.lower() for keyword in action_keywords)
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_clear_recommendations",
-                user_input="SOL trading signals",
-                agent_output=content,
-                expected_behavior="Response should have clearly stated trading recommendations with action verbs.",
-                test_func=self.test_trading_signals_clear_recommendations,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading_quality', 'user_type': 'guest', 'token': 'SOL', 'feature': 'clear_recommendations'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_recommendations_013",
-            "s_multistep": False,
-            "input": "SOL trading signals",
-            "output": content,
-            "test_label_sequence": "hunter_trading_recommendations",
-            "output_expected": "SOL signals with clear trading recommendations",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_disclaimers(self, client, llm_validator, csv_tracker):
@@ -840,45 +333,6 @@ class TestGuestHunterTradingSignalsStorytellingQuality:
         assert any(keyword in content.lower() for keyword in disclaimer_keywords)
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_disclaimers",
-                user_input="BTC trading signals",
-                agent_output=content,
-                expected_behavior="Response should include appropriate disclaimers about financial advice and risk.",
-                test_func=self.test_trading_signals_disclaimers,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading_quality', 'user_type': 'guest', 'token': 'BTC', 'feature': 'disclaimers'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_disclaimers_014",
-            "s_multistep": False,
-            "input": "BTC trading signals",
-            "output": content,
-            "test_label_sequence": "hunter_trading_disclaimers",
-            "output_expected": "BTC signals with appropriate disclaimers",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_trading_signals_educational_context(self, client, llm_validator, csv_tracker):
@@ -900,41 +354,3 @@ class TestGuestHunterTradingSignalsStorytellingQuality:
         # assert any(keyword in content.lower() for keyword in reasoning_keywords)
 
         validation = None
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_trading_signals_educational_context",
-                user_input="ETH trading recommendations",
-                agent_output=content,
-                expected_behavior="Response should provide educational context explaining the reasoning behind trading signals.",
-                test_func=self.test_trading_signals_educational_context,  # PHASE 3: Custom prompt generation
-                additional_context={'test_category': 'hunter_trading_quality', 'user_type': 'guest', 'token': 'ETH', 'feature': 'educational_context'}
-            )
-            if validation.verdict != "PASS":
-                warnings.warn(f"LLM validation concern (confidence={validation.confidence:.2f}): {validation.reasoning}")
-
-        await csv_tracker("guest", "hunter", {
-            "test_id": "guest_hunter_trading_education_015",
-            "s_multistep": False,
-            "input": "ETH trading recommendations",
-            "output": content,
-            "test_label_sequence": "hunter_trading_education",
-            "output_expected": "ETH signals with educational context and reasoning",
-            "status": "PASS" if response.status_code == 200 else "FAIL",
-            "date": datetime.utcnow().isoformat(),
-            "quality": validation.confidence if validation else None,
-            "qa_status": validation.verdict if validation else "SKIPPED",
-            "qa_output": validation.reasoning if validation else None,
-        # Enhanced validation fields (PHASE 3)
-        "accuracy_score": validation.scoring.accuracy_score if validation and validation.scoring else None,
-        "relevance_score": validation.scoring.relevance_score if validation and validation.scoring else None,
-        "safety_score": validation.scoring.safety_score if validation and validation.scoring else None,
-        "coherence_score": validation.scoring.coherence_score if validation and validation.scoring else None,
-        "test_category": validation.metadata.test_category if validation and validation.metadata else None,
-        "test_type": validation.metadata.test_type if validation and validation.metadata else None,
-        "expected_intents": json.dumps(validation.metadata.expected_intents) if validation and validation.metadata else None,
-        "token_usage": validation.metadata.token_usage if validation and validation.metadata else None,
-        "improvement_suggestions": json.dumps(validation.recommendations.improvement_suggestions) if validation and validation.recommendations else None,
-        "critical_issues": json.dumps(validation.recommendations.critical_issues) if validation and validation.recommendations else None,
-        "next_steps": json.dumps(validation.recommendations.next_steps) if validation and validation.recommendations else None,
-        "model_used": validation.metadata.model_used if validation and validation.metadata else None,
-        })

@@ -15,6 +15,9 @@ Test Cases:
 """
 
 import pytest
+
+# Skip - legacy /api/v1/user/chat/conversations endpoint removed
+pytestmark = pytest.mark.skip(reason="Legacy user chat endpoint removed")
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from uuid import UUID, uuid4
@@ -33,7 +36,7 @@ async def client():
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_user_chat_endpoint_structure(client: AsyncClient, llm_validator):
+async def test_user_chat_endpoint_structure(client: AsyncClient):
     """
     Test that user chat endpoint exists and has correct structure.
     
@@ -70,29 +73,11 @@ async def test_user_chat_endpoint_structure(client: AsyncClient, llm_validator):
     print(f"\nGuest endpoint structure: {list(guest_data.keys())}")
     print(f"Guest response status: {guest_response.status_code}")
 
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_user_chat_endpoint_structure",
-            user_input="Hello",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
-
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_user_chat_requires_valid_conversation(client: AsyncClient, llm_validator):
+async def test_user_chat_requires_valid_conversation(client: AsyncClient):
     """
     Test that user chat endpoint requires valid conversation.
     
@@ -104,9 +89,9 @@ async def test_user_chat_requires_valid_conversation(client: AsyncClient, llm_va
     fake_id = str(uuid4())
     
     response = await client.post(
-    f"/api/v1/user/chat/conversations/{fake_id}/messages",
-    json={"content": "Hello", "language": "en"},
-    headers={"Authorization": "Bearer invalid-token"},
+        f"/api/v1/user/chat/conversations/{fake_id}/messages",
+        json={"content": "Hello", "language": "en"},
+        headers={"Authorization": "Bearer invalid-token"},
     )
     
     # Should fail auth first
@@ -114,31 +99,13 @@ async def test_user_chat_requires_valid_conversation(client: AsyncClient, llm_va
     
     print(f"\nUser endpoint response status: {response.status_code}")
     if response.status_code != 401:
-    print(f"Response: {response.text[:200]}")
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_user_chat_requires_valid_conversation",
-            user_input="Hello",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
+        print(f"Response: {response.text[:200]}")
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.llm_validation
-async def test_compare_guest_vs_user_endpoints(client: AsyncClient, llm_validator):
+async def test_compare_guest_vs_user_endpoints(client: AsyncClient):
     """
     Compare guest and user endpoints to identify differences.
     
@@ -149,9 +116,9 @@ async def test_compare_guest_vs_user_endpoints(client: AsyncClient, llm_validato
     """
     # Test guest endpoint
     guest_response = await client.post(
-    "/api/v1/guest/chat",
-    json={"content": "What is Bitcoin?", "language": "en"},
-    headers={"X-Forwarded-For": "127.0.0.2"},
+        "/api/v1/guest/chat",
+        json={"content": "What is Bitcoin?", "language": "en"},
+        headers={"X-Forwarded-For": "127.0.0.2"},
     )
     
     assert guest_response.status_code == 200
@@ -174,22 +141,4 @@ async def test_compare_guest_vs_user_endpoints(client: AsyncClient, llm_validato
     
     # Verify guest endpoint works correctly
     assert guest_data.get("agent_message", {}).get("content"), "Guest should return agent message"
-
-    # Optional LLM semantic validation (environment-gated)
-    if llm_validator.enabled:
-        validation = await llm_validator.validate_single_response(
-            test_name="test_compare_guest_vs_user_endpoints",
-            user_input="What is Bitcoin?",
-            agent_output=agent_response,
-            expected_behavior=(
-                "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-            ),
-            additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-        )
-        if validation.verdict != "PASS":
-            pytest.warn(UserWarning(
-                f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                f"{validation.reasoning}"
-            ))
-
     assert guest_data.get("routing", {}).get("intent"), "Guest should return routing intent"

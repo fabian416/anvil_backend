@@ -23,6 +23,7 @@ class KnowledgeFile(str, Enum):
     LENDING_MORPHO = "lending_morpho"
     GAS_OPTIMIZER = "gas_optimizer"
     RISK_ANALYZER = "risk_analyzer"
+    MONEY_MARKET = "money_market"
 
 
 class KnowledgeInjector:
@@ -128,6 +129,10 @@ class KnowledgeInjector:
         # Risk analyzer queries
         if any(kw in query_lower for kw in ["risk", "safe", "safety", "protocol risk", "tvl", "risk analysis"]):
             return self._get_risk_analyzer_knowledge(user_type)
+
+        # Money market queries (rate comparison, Aave vs Compound)
+        if any(kw in query_lower for kw in ["money market", "lending rate", "borrowing rate", "apy comparison", "compare rates", "aave rate", "compound rate", "best rate", "supply apy", "borrow apy"]):
+            return self._get_money_market_knowledge(user_type)
 
         # Default to overview
         return self._get_overview_knowledge(user_type)
@@ -394,6 +399,35 @@ class KnowledgeInjector:
         if user_type == "investor":
             base_knowledge["competitive_advantages"] = risk_analyzer["competitive_advantages"]
             base_knowledge["getting_started"] = risk_analyzer["getting_started"]["for_investors"]
+
+        return base_knowledge
+
+    def _get_money_market_knowledge(self, user_type: str) -> Dict[str, Any]:
+        """Get money market rate comparison knowledge"""
+        money_market = self._load_json(KnowledgeFile.MONEY_MARKET)
+
+        base_knowledge = {
+            "feature_name": money_market["feature_name"],
+            "description": money_market["description"],
+            "supported_protocols": money_market["supported_protocols"],
+            "caching_system": money_market["caching_system"],
+            "rate_comparison_features": money_market["rate_comparison_features"],
+            "supported_assets": money_market["supported_assets"],
+            "supported_chains": money_market["supported_chains"],
+            "features": money_market["features"],
+            "api_endpoints": money_market["api_endpoints"],
+            "common_questions": money_market["common_questions"]
+        }
+
+        if user_type == "investor":
+            base_knowledge["competitive_advantages"] = money_market["competitive_advantages"]
+            base_knowledge["background_tasks"] = money_market["background_tasks"]
+            base_knowledge["technical_details"] = money_market["technical_details"]
+            base_knowledge["getting_started"] = money_market["getting_started"]["for_investors"]
+        else:
+            base_knowledge["command_formats"] = money_market["command_formats"]
+            base_knowledge["natural_language_examples"] = money_market["natural_language_examples"]
+            base_knowledge["getting_started"] = money_market["getting_started"]["for_users"]
 
         return base_knowledge
 

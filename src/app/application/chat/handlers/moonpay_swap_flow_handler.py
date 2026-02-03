@@ -40,7 +40,7 @@ class MoonPaySwapInfo:
 
     # MoonPay supported tokens for swaps
     SUPPORTED_TOKENS: list[str] = field(
-        default_factory=lambda: ["ETH", "USDC", "USDT", "BTC", "SOL"]
+        default_factory=lambda: ["ETH", "USDC", "USDT", "DAI", "BTC", "SOL", "WBTC", "WETH"]
     )
 
     @property
@@ -262,10 +262,13 @@ Por favor tente novamente ou escolha tokens diferentes.""",
 # Token emoji mapping
 TOKEN_EMOJIS = {
     "BTC": "₿",
+    "WBTC": "₿",
     "ETH": "Ξ",
+    "WETH": "Ξ",
     "SOL": "◎",
     "USDC": "💵",
     "USDT": "💵",
+    "DAI": "💵",
 }
 
 
@@ -296,7 +299,7 @@ class MoonPaySwapFlowHandler:
         self._moonpay_handler = moonpay_swap_handler
         self._ox_client = ox_client
         self._wallet_repository = wallet_repository
-        self._supported_tokens = ["ETH", "USDC", "USDT", "BTC", "SOL"]
+        self._supported_tokens = ["ETH", "USDC", "USDT", "DAI", "BTC", "SOL", "WBTC", "WETH"]
 
     # ========================================================================
     # Main Entry Point

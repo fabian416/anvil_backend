@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_news_002,2026-01-22T17:02:43.627034+00:00,agent,hunter_news,NO,1,1,latest bitcoin news,"📊 **Sentiment Analysis for BTC**
+
+**Overall:** Bullish (64.6/100)
+**Confidence:** 50%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 50/100
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_sentiment_handler,464,NO,,guest,en,FAIL,,430934ad-bfa7-4053-be5b-c714026d3098,WARNING,0.75,"The response provides a sentiment analysis for Bitcoin based on different sources, which aligns with providing crypto news. However, it lacks specific news articles or headlines. While sentiment analysis can be considered a form of news, the expected behavior mentions 'news with sources and recency indicators,' implying more concrete news items. The response shows understanding of the user's intent to get Bitcoin news, but the format is more of a sentiment summary than a news report. The signup ",,,,

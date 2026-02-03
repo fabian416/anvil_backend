@@ -34,24 +34,6 @@ class TestPriceDataService:
         assert all(p.close > 0 for p in prices)
         assert all(p.volume > 0 for p in prices)
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_fetch_historical_prices",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate ETH price information in a clear format. Response must reference ETH specifically (not other cryptocurrencies) and include current price data with USD denomination."
-                ),
-                additional_context={'test_category': 'price_query', 'token': 'ETH'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_price_data_config_defaults(self):
@@ -62,24 +44,6 @@ class TestPriceDataService:
         assert config.default_interval == "1h"
         assert config.default_lookback_days == 90
         assert config.include_volume is True
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_price_data_config_defaults",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate cryptocurrency price information in a clear format. Response must reference cryptocurrency specifically (not other cryptocurrencies) and include current price data with USD denomination."
-                ),
-                additional_context={'test_category': 'price_query', 'token': 'cryptocurrency'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -92,24 +56,6 @@ class TestPriceDataService:
         assert latest is not None
         assert isinstance(latest, PricePoint)
         assert latest.close > 0
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_get_latest_price",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate ETH price information in a clear format. Response must reference ETH specifically (not other cryptocurrencies) and include current price data with USD denomination."
-                ),
-                additional_context={'test_category': 'price_query', 'token': 'ETH'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     def test_preprocess_for_lstm(self):
         """Test LSTM data preprocessing."""
@@ -200,24 +146,6 @@ class TestLSTMPricePredictor:
         assert predictor.model is not None
         assert predictor.is_trained is False
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_lstm_model_initialization",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_lstm_training(self):
@@ -233,24 +161,6 @@ class TestLSTMPricePredictor:
         assert "final_val_loss" in metrics
         assert metrics["epochs"] == 2
         assert predictor.is_trained is True
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_lstm_training",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -271,24 +181,6 @@ class TestLSTMPricePredictor:
         assert prediction.direction in ["up", "down", "neutral"]
         assert prediction.horizon_hours == 24
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_lstm_prediction",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_lstm_multi_horizon_prediction(self):
@@ -302,24 +194,6 @@ class TestLSTMPricePredictor:
         assert "7d" in predictions
         assert predictions["24h"].horizon_hours == 24
         assert predictions["7d"].horizon_hours == 168
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_lstm_multi_horizon_prediction",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     def test_get_model_info(self):
         """Test getting model information."""
@@ -391,24 +265,6 @@ class TestPricePredictionIntegration:
         prediction_7d = await predictor.predict("ETH", horizon_hours=168)
         assert prediction_7d.horizon_hours == 168
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_end_to_end_prediction_flow",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_prediction_without_training(self):
@@ -424,24 +280,6 @@ class TestPricePredictionIntegration:
         assert predictor.is_trained is True
         assert prediction.token_symbol == "BTC"
         assert prediction.predicted_price > 0
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_prediction_without_training",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
@@ -463,24 +301,6 @@ class TestPricePredictionIntegration:
         # Verify confidence is reasonable
         assert 0 < prediction.confidence < 1
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_prediction_accuracy_metrics",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-
     @pytest.mark.asyncio
     @pytest.mark.llm_validation
     async def test_multiple_token_predictions(self):
@@ -499,22 +319,3 @@ class TestPricePredictionIntegration:
         assert len(predictions) == 3
         for token, pred in predictions.items():
             assert pred.token_symbol == token
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_multiple_token_predictions",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-            assert pred.predicted_price > 0

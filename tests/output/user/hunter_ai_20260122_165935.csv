@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_signals_001,2026-01-22T16:59:36.948639+00:00,agent,hunter_signals,NO,1,1,BTC trading signals,,hunter_ai,,,,455,NO,,authenticated,en,FAIL,,f4ad9a73-f63c-4ef3-951c-9a99140ceeca,,0.0,,,,,

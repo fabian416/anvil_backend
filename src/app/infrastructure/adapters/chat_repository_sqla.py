@@ -33,23 +33,38 @@ class ChatUserRepositorySqla(ChatUserRepository):
         map_chat_tables()
 
     async def create(self, chat_user: ChatUser) -> ChatUser:
-        """Create a new chat user."""
+        """Create a new chat user.
+        
+        Maps AuthChatUser entity to unified chat_users table:
+        - entity.user_id -> table.identifier (as string)
+        - entity.language -> table.preferred_language
+        - entity.subscription_tier -> table.metadata['subscription_tier']
+        - entity.chat_preferences -> table.metadata['chat_preferences']
+        - entity.total_messages -> table.metadata['total_messages']
+        """
         try:
             table = mapping_registry.metadata.tables["chat_users"]
+            
+            # Build metadata JSONB with extra fields
+            metadata = {
+                "subscription_tier": chat_user.subscription_tier,
+                "total_messages": chat_user.total_messages,
+                "chat_preferences": chat_user.chat_preferences or {},
+            }
+            
             stmt = (
                 table.insert()
                 .values(
                     id=chat_user.id_,
-                    user_id=chat_user.user_id,
+                    user_type="authenticated",
+                    identifier=str(chat_user.user_id),  # Legacy user_id as string
+                    privy_id=None,  # Will be set via privy-login
                     email=chat_user.email,
-                    subscription_tier=chat_user.subscription_tier,
-                    total_messages=chat_user.total_messages,
-                    language=chat_user.language,
-                    chat_preferences=chat_user.chat_preferences,
-                    first_seen_at=chat_user.first_seen_at,
-                    last_seen_at=chat_user.last_seen_at,
+                    preferred_language=chat_user.language,
                     created_at=chat_user.created_at,
-                    updated_at=chat_user.updated_at,
+                    last_active_at=chat_user.last_seen_at,
+                    is_blocked=False,
+                    metadata=metadata,
                 )
                 .returning(table.c.id)
             )
@@ -76,10 +91,18 @@ class ChatUserRepositorySqla(ChatUserRepository):
             raise DataMapperError("Failed to get chat user") from e
 
     async def get_by_user_id(self, user_id: int) -> Optional[ChatUser]:
-        """Get chat user by legacy user ID."""
+        """Get chat user by legacy user ID.
+        
+        The chat_users table uses 'identifier' column to store the legacy user ID
+        as a string, with user_type='authenticated' for logged-in users.
+        """
         try:
             table = mapping_registry.metadata.tables["chat_users"]
-            stmt = select(table).where(table.c.user_id == user_id)
+            # Query by identifier (legacy user_id as string) and user_type
+            stmt = select(table).where(
+                table.c.identifier == str(user_id),
+                table.c.user_type == "authenticated",
+            )
             result = await self._session.execute(stmt)
             row = result.mappings().first()
             return self._row_to_entity(row) if row else None
@@ -100,20 +123,28 @@ class ChatUserRepositorySqla(ChatUserRepository):
             raise DataMapperError("Failed to get chat user") from e
 
     async def update(self, chat_user: ChatUser) -> ChatUser:
-        """Update existing chat user."""
+        """Update existing chat user.
+        
+        Maps AuthChatUser entity fields to unified chat_users table columns.
+        """
         try:
             table = mapping_registry.metadata.tables["chat_users"]
+            
+            # Build metadata JSONB with extra fields
+            metadata = {
+                "subscription_tier": chat_user.subscription_tier,
+                "total_messages": chat_user.total_messages,
+                "chat_preferences": chat_user.chat_preferences or {},
+            }
+            
             stmt = (
                 update(table)
                 .where(table.c.id == chat_user.id_)
                 .values(
                     email=chat_user.email,
-                    subscription_tier=chat_user.subscription_tier,
-                    total_messages=chat_user.total_messages,
-                    language=chat_user.language,
-                    chat_preferences=chat_user.chat_preferences,
-                    last_seen_at=chat_user.last_seen_at,
-                    updated_at=datetime.now(UTC),
+                    preferred_language=chat_user.language,
+                    last_active_at=chat_user.last_seen_at or datetime.now(UTC),
+                    metadata=metadata,
                 )
             )
             await self._session.execute(stmt)
@@ -143,7 +174,7 @@ class ChatUserRepositorySqla(ChatUserRepository):
             stmt = (
                 update(table)
                 .where(table.c.id == chat_user_id)
-                .values(last_seen_at=datetime.now(UTC), updated_at=datetime.now(UTC))
+                .values(last_active_at=datetime.now(UTC))
             )
             await self._session.execute(stmt)
             await self._session.commit()
@@ -153,18 +184,31 @@ class ChatUserRepositorySqla(ChatUserRepository):
             raise DataMapperError("Failed to update last seen") from e
 
     async def increment_message_count(self, chat_user_id: UUID) -> None:
-        """Increment total message count."""
+        """Increment total message count in metadata JSONB.
+        
+        The unified chat_users table stores total_messages in the metadata
+        JSONB column, not as a separate column.
+        """
         try:
             table = mapping_registry.metadata.tables["chat_users"]
-            stmt = (
+            # Get current metadata
+            select_stmt = select(table.c.metadata).where(table.c.id == chat_user_id)
+            result = await self._session.execute(select_stmt)
+            current_metadata = result.scalar_one_or_none() or {}
+            
+            # Increment message count
+            current_metadata["total_messages"] = current_metadata.get("total_messages", 0) + 1
+            
+            # Update
+            update_stmt = (
                 update(table)
                 .where(table.c.id == chat_user_id)
                 .values(
-                    total_messages=table.c.total_messages + 1,
-                    updated_at=datetime.now(UTC),
+                    metadata=current_metadata,
+                    last_active_at=datetime.now(UTC),
                 )
             )
-            await self._session.execute(stmt)
+            await self._session.execute(update_stmt)
             await self._session.commit()
         except SQLAlchemyError as e:
             await self._session.rollback()
@@ -173,19 +217,36 @@ class ChatUserRepositorySqla(ChatUserRepository):
 
     @staticmethod
     def _row_to_entity(row) -> ChatUser:
-        """Convert database row to ChatUser entity."""
+        """Convert database row to ChatUser entity.
+        
+        Maps unified chat_users table to AuthChatUser entity:
+        - table.identifier -> entity.user_id (as int)
+        - table.preferred_language -> entity.language
+        - table.metadata['subscription_tier'] -> entity.subscription_tier
+        - table.metadata['chat_preferences'] -> entity.chat_preferences
+        - table.metadata['total_messages'] -> entity.total_messages
+        """
+        # Extract metadata fields with defaults
+        metadata = row.get("metadata") or {}
+        
+        # Try to convert identifier to int (for legacy user_id)
+        try:
+            user_id = int(row["identifier"])
+        except (ValueError, TypeError):
+            user_id = 0  # Guest users don't have numeric user_id
+        
         return ChatUser(
             id_=row["id"],
-            user_id=row["user_id"],
-            email=row["email"],
-            subscription_tier=row["subscription_tier"],
-            total_messages=row["total_messages"],
-            language=row["language"],
-            chat_preferences=row["chat_preferences"] or {},
-            first_seen_at=row["first_seen_at"],
-            last_seen_at=row["last_seen_at"],
-            created_at=row["created_at"],
-            updated_at=row["updated_at"],
+            user_id=user_id,
+            email=row.get("email") or "",
+            subscription_tier=metadata.get("subscription_tier", "free"),
+            total_messages=metadata.get("total_messages", 0),
+            language=row.get("preferred_language") or "en",
+            chat_preferences=metadata.get("chat_preferences") or {},
+            first_seen_at=row.get("created_at"),
+            last_seen_at=row.get("last_active_at"),
+            created_at=row.get("created_at"),
+            updated_at=row.get("last_active_at"),
         )
 
 
@@ -599,3 +660,158 @@ class ChatMessageRepositorySqla(ChatMessageRepository):
             metadata=row["metadata"] if "metadata" in row else row.get("extra_metadata", {}),
             created_at=row["created_at"],
         )
+
+    # ═══════════════════════════════════════════════════════════════
+    # AGGREGATION METHODS FOR USER CONTEXT SERVICE
+    # ═══════════════════════════════════════════════════════════════
+
+    async def get_user_stats(self, chat_user_id: UUID) -> dict:
+        """
+        Get aggregated message statistics for a user.
+        
+        Used by UserContextService for context-aware agents.
+        
+        Args:
+            chat_user_id: The chat user's UUID
+            
+        Returns:
+            Dictionary with:
+            - total: Total message count
+            - last_7d: Messages in last 7 days
+            - last_30d: Messages in last 30 days
+            - last_at: Last message timestamp
+        """
+        try:
+            from datetime import timedelta
+            
+            messages_table = mapping_registry.metadata.tables["chat_messages"]
+            conversations_table = mapping_registry.metadata.tables["chat_conversations"]
+            
+            now = datetime.now(UTC)
+            seven_days_ago = now - timedelta(days=7)
+            thirty_days_ago = now - timedelta(days=30)
+            
+            # Join messages with conversations to filter by user
+            stmt = select(
+                func.count(messages_table.c.id).label("total"),
+                func.count(messages_table.c.id).filter(
+                    messages_table.c.created_at >= seven_days_ago
+                ).label("last_7d"),
+                func.count(messages_table.c.id).filter(
+                    messages_table.c.created_at >= thirty_days_ago
+                ).label("last_30d"),
+                func.max(messages_table.c.created_at).label("last_at"),
+            ).select_from(
+                messages_table.join(
+                    conversations_table,
+                    messages_table.c.conversation_id == conversations_table.c.id,
+                )
+            ).where(
+                and_(
+                    conversations_table.c.chat_user_id == chat_user_id,
+                    messages_table.c.role == "user",  # Only count user messages
+                )
+            )
+            
+            result = await self._session.execute(stmt)
+            row = result.mappings().first()
+            
+            if not row:
+                return {"total": 0, "last_7d": 0, "last_30d": 0, "last_at": None}
+            
+            return {
+                "total": row["total"] or 0,
+                "last_7d": row["last_7d"] or 0,
+                "last_30d": row["last_30d"] or 0,
+                "last_at": row["last_at"],
+            }
+            
+        except SQLAlchemyError as e:
+            logger.error(f"Failed to get user stats: {e}")
+            return {"total": 0, "last_7d": 0, "last_30d": 0, "last_at": None}
+
+    async def get_execution_stats(self, chat_user_id: UUID) -> dict:
+        """
+        Get execution statistics from message metadata.
+        
+        Counts workflow completions by checking message metadata
+        for workflow_completed flags.
+        
+        Args:
+            chat_user_id: The chat user's UUID
+            
+        Returns:
+            Dictionary with execution counts by type
+        """
+        try:
+            messages_table = mapping_registry.metadata.tables["chat_messages"]
+            conversations_table = mapping_registry.metadata.tables["chat_conversations"]
+            
+            # Query messages with execute_data in metadata
+            # This indicates a completed workflow
+            stmt = select(
+                messages_table.c.handler,
+                messages_table.c.metadata,
+            ).select_from(
+                messages_table.join(
+                    conversations_table,
+                    messages_table.c.conversation_id == conversations_table.c.id,
+                )
+            ).where(
+                and_(
+                    conversations_table.c.user_id == chat_user_id,  # Fixed: column is user_id, not chat_user_id
+                    messages_table.c.role == "assistant",
+                    # Check for execute_data in metadata (JSONB)
+                    messages_table.c.metadata.op('?')('execute_data'),
+                )
+            )
+            
+            result = await self._session.execute(stmt)
+            rows = result.mappings().all()
+            
+            # Count by handler/workflow type
+            stats = {
+                "swap": 0,
+                "buy": 0,
+                "cashout": 0,
+                "lending": 0,
+                "money_market": 0,
+                "transfer": 0,
+                "total": 0,
+                "failed": 0,
+            }
+            
+            for row in rows:
+                handler = row.get("handler", "") or ""
+                metadata = row.get("metadata", {}) or {}
+                
+                # Determine type from handler name
+                handler_lower = handler.lower()
+                if "swap" in handler_lower:
+                    stats["swap"] += 1
+                elif "buy" in handler_lower:
+                    stats["buy"] += 1
+                elif "cashout" in handler_lower or "withdraw" in handler_lower:
+                    stats["cashout"] += 1
+                elif "lending" in handler_lower or "deposit" in handler_lower:
+                    stats["lending"] += 1
+                elif "money_market" in handler_lower:
+                    stats["money_market"] += 1
+                elif "transfer" in handler_lower or "send" in handler_lower:
+                    stats["transfer"] += 1
+                
+                stats["total"] += 1
+                
+                # Check for failed status in metadata
+                if metadata.get("status") == "failed":
+                    stats["failed"] += 1
+            
+            return stats
+            
+        except SQLAlchemyError as e:
+            logger.error(f"Failed to get execution stats: {e}")
+            return {
+                "swap": 0, "buy": 0, "cashout": 0,
+                "lending": 0, "money_market": 0, "transfer": 0,
+                "total": 0, "failed": 0,
+            }

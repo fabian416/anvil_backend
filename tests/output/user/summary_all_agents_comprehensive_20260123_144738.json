@@ -1,0 +1,228 @@
+{
+  "run_timestamp": "2026-01-23T14:47:38.801963+00:00",
+  "category": "all_agents_comprehensive",
+  "total_tests": 52,
+  "passed": 48,
+  "partial": 1,
+  "failed": 3,
+  "pass_rate": "92.3%",
+  "by_category": {
+    "chat": {
+      "total": 4,
+      "pass": 4,
+      "partial": 0,
+      "fail": 0
+    },
+    "knowledge": {
+      "total": 4,
+      "pass": 4,
+      "partial": 0,
+      "fail": 0
+    },
+    "hunter_ai": {
+      "total": 10,
+      "pass": 9,
+      "partial": 1,
+      "fail": 0
+    },
+    "risk_analyzer": {
+      "total": 2,
+      "pass": 2,
+      "partial": 0,
+      "fail": 0
+    },
+    "defi_yield": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "gas_optimizer": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "portfolio": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "wallet": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "transaction_history": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "swap": {
+      "total": 3,
+      "pass": 0,
+      "partial": 0,
+      "fail": 3
+    },
+    "lending": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "buy": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "transfer": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "money_market": {
+      "total": 5,
+      "pass": 5,
+      "partial": 0,
+      "fail": 0
+    }
+  },
+  "by_agent": {
+    "chat": {
+      "total": 4,
+      "pass": 4,
+      "partial": 0,
+      "fail": 0
+    },
+    "knowledge": {
+      "total": 4,
+      "pass": 4,
+      "partial": 0,
+      "fail": 0
+    },
+    "hunter_ai": {
+      "total": 9,
+      "pass": 9,
+      "partial": 0,
+      "fail": 0
+    },
+    "defi_yield": {
+      "total": 5,
+      "pass": 4,
+      "partial": 1,
+      "fail": 0
+    },
+    "risk_analyzer": {
+      "total": 5,
+      "pass": 5,
+      "partial": 0,
+      "fail": 0
+    },
+    "gas_optimizer": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "portfolio": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "wallet": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "transaction_history": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "lending_workflow": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "buy_workflow": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "transfer_workflow": {
+      "total": 3,
+      "pass": 3,
+      "partial": 0,
+      "fail": 0
+    },
+    "money_market_workflow": {
+      "total": 5,
+      "pass": 5,
+      "partial": 0,
+      "fail": 0
+    }
+  },
+  "avg_response_time_ms": 6762,
+  "slowest_tests": [
+    {
+      "test_id": "yield_003",
+      "response_time_ms": 24708,
+      "status": "PASS"
+    },
+    {
+      "test_id": "yield_001",
+      "response_time_ms": 22860,
+      "status": "PASS"
+    },
+    {
+      "test_id": "knowledge_003",
+      "response_time_ms": 19046,
+      "status": "PASS"
+    },
+    {
+      "test_id": "risk_001",
+      "response_time_ms": 17810,
+      "status": "PASS"
+    },
+    {
+      "test_id": "yield_002",
+      "response_time_ms": 14734,
+      "status": "PASS"
+    },
+    {
+      "test_id": "risk_002",
+      "response_time_ms": 11699,
+      "status": "PASS"
+    },
+    {
+      "test_id": "hunter_010",
+      "response_time_ms": 10170,
+      "status": "PARTIAL"
+    },
+    {
+      "test_id": "hunter_008",
+      "response_time_ms": 8613,
+      "status": "PASS"
+    },
+    {
+      "test_id": "hunter_007",
+      "response_time_ms": 8337,
+      "status": "PASS"
+    },
+    {
+      "test_id": "gas_002",
+      "response_time_ms": 8080,
+      "status": "PASS"
+    }
+  ]
+}

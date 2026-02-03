@@ -13,6 +13,7 @@ Structure:
 - /api/v1/admin/projects - Project management
 - /api/v1/admin/security - Security dashboard & OWASP scan results
 - /api/v1/admin/chat - Chat analytics dashboard
+- /api/v1/admin/analytics - User context analytics
 """
 
 from fastapi import APIRouter
@@ -37,6 +38,7 @@ def create_admin_router() -> APIRouter:
     from app.presentation.http.controllers.telemetry.router import router as telemetry_router
     from app.presentation.http.controllers.admin.security_dashboard_router import router as security_dashboard_router
     from app.presentation.http.controllers.admin.chat_dashboard import router as chat_dashboard_router
+    from app.presentation.http.controllers.admin.analytics_router import router as analytics_router
 
     # Include all admin routers - they already have their own prefixes
     # But we need to strip /admin/ from their prefixes since we're adding it here
@@ -51,5 +53,6 @@ def create_admin_router() -> APIRouter:
     router.include_router(telemetry_router)  # /telemetry
     router.include_router(security_dashboard_router)  # /security
     router.include_router(chat_dashboard_router)  # /chat
+    router.include_router(analytics_router)  # /analytics
 
     return router

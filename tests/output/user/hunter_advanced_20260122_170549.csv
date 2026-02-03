@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_sentiment_multi_001,2026-01-22T17:05:50.951746+00:00,agent,hunter_sentiment_multi,NO,1,1,"What's the overall sentiment about Solana across news, Reddit, and Twitter?","📊 **Sentiment Analysis for SOL**
+
+**Overall:** Bullish (66.0/100)
+**Confidence:** 43%
+
+**By Source:**
+- Twitter: 🟢 63/100
+- Reddit: 🟢 72/100
+- Discord: 🟢 92/100
+- News: 🟡 48/100
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_sentiment_handler,1262,NO,,guest,en,FAIL,,1656e6ae-1c1b-4044-b418-ce8bd2c6e1de,,0.0,,,,,

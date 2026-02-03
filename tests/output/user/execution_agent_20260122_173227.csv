@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+exec_data_lend_001_init,2026-01-22T17:32:27.368128+00:00,execution,data_structure,NO,1,1,deposit 100 USDC on Morpho,,lending_workflow,,,,185,NO,,authenticated,en,FAIL,,03e68f20-3f93-48e0-a8a9-a00169354588,,0.0,,,,,

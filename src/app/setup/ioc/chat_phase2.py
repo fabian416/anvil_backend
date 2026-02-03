@@ -146,9 +146,15 @@ from app.domain.chat.ports.conversation_repository import ConversationRepository
 
 # DeFi Shortcut Handlers
 from app.application.chat.handlers.lending_handler import LendingHandler
+from app.application.lending.interactors.leverage_loop_interactor import (
+    LeverageLoopInteractor,
+)
+from app.domain.ports.lending_repository import ILendingRepository
 from app.application.chat.handlers.portfolio_handler import PortfolioHandler
 from app.application.chat.handlers.swap_handler import SwapHandler
+from app.application.chat.handlers.swap_handler_v2 import SwapHandlerV2
 from app.application.chat.handlers.activity_handler import ActivityHandler
+from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
 from app.application.chat.handlers.receive_handler import ReceiveHandler
 from app.application.chat.handlers.buy_handler import BuyHandler
 from app.application.chat.handlers.money_market_handler import MoneyMarketHandler
@@ -156,8 +162,16 @@ from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandle
 from app.domain.ports.morpho_gateway import MorphoGateway
 from app.domain.ports.aave_gateway import AaveGateway
 from app.domain.ports.compound_gateway import CompoundGateway
+from app.domain.ports.money_market.money_market_cache_gateway import (
+    MoneyMarketCacheGateway,
+)
+from app.domain.ports.money_market.money_market_comparison_gateway import (
+    MoneyMarketComparisonGateway,
+)
+from app.domain.ports.balance_checker import IBalanceChecker
 from app.infrastructure.adapters.external.compound_client import CompoundClient
 from app.infrastructure.adapters.external.compound_adapter import CompoundAdapter
+from app.infrastructure.adapters.balance.portfolio_balance_checker import PortfolioBalanceChecker
 from app.infrastructure.adapters.external.oneinch_client import OneInchClient
 from app.infrastructure.adapters.external.lifi_client import LiFiClient
 from app.infrastructure.adapters.external.moonpay_swap_client import MoonPaySwapClient
@@ -521,7 +535,6 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_user_chat_analytics_service(
         self,
-        conversation_repository: ConversationRepository,
         analytics_repository: AnalyticsRepository,
     ) -> UserChatAnalyticsService:
         """
@@ -530,14 +543,12 @@ class ChatPhase2Provider(Provider):
         Generates personalized analytics for individual users.
         """
         return UserChatAnalyticsService(
-            conversation_repository=conversation_repository,
             analytics_repository=analytics_repository,
         )
 
     @provide
     def provide_admin_chat_analytics_service(
         self,
-        conversation_repository: ConversationRepository,
         analytics_repository: AnalyticsRepository,
     ) -> AdminChatAnalyticsService:
         """
@@ -546,7 +557,6 @@ class ChatPhase2Provider(Provider):
         Aggregates analytics across all users for admin dashboards.
         """
         return AdminChatAnalyticsService(
-            conversation_repository=conversation_repository,
             analytics_repository=analytics_repository,
         )
 
@@ -557,15 +567,16 @@ class ChatPhase2Provider(Provider):
     @provide
     def provide_advanced_intent_detector(
         self,
-        conversation_repository: ConversationRepository,
+        message_repository: ChatMessageRepositorySqla,
     ) -> AdvancedIntentDetector:
         """
         Provide advanced intent detection service.
 
         Analyzes user input to detect intent and provide real-time suggestions.
+        Uses unified chat message repository for similar conversation search.
         """
         return AdvancedIntentDetector(
-            conversation_repository=conversation_repository,
+            message_repository=message_repository,
         )
 
     # ========================================
@@ -635,9 +646,25 @@ class ChatPhase2Provider(Provider):
     # ========================================
 
     @provide
+    def provide_balance_checker(
+        self,
+        portfolio_service: PortfolioService,
+    ) -> IBalanceChecker:
+        """
+        Provide balance checker for validating wallet balances.
+
+        Uses PortfolioService for real-time RPC balance checks.
+        Critical for preventing transactions with insufficient balance.
+        """
+        return PortfolioBalanceChecker(portfolio_service=portfolio_service)
+
+    @provide(scope=Scope.REQUEST)
     def provide_lending_handler(
         self,
         morpho_gateway: MorphoGateway,
+        balance_checker: IBalanceChecker,
+        leverage_loop_interactor: LeverageLoopInteractor,
+        lending_repository: ILendingRepository,
     ) -> LendingHandler:
         """
         Provide lending handler for Morpho vault operations.
@@ -647,8 +674,22 @@ class ChatPhase2Provider(Provider):
         - Base L2 vaults (USDC, ETH, etc.)
         - APY comparison
         - Whitelisted vault recommendations
+
+        Includes:
+        - Balance validation via BalanceChecker to prevent insufficient balance transactions
+        - Leverage loop operations via LeverageLoopInteractor (provided by LendingProvider)
+        - Position persistence via ILendingRepository (provided by LendingProvider)
+
+        Per CEO spec: Morpho only for lending (top 3 vaults by APY).
+        Leverage loops and position tracking are optional features enabled when
+        LendingProvider is registered in provider_registry.
         """
-        return LendingHandler(morpho_gateway=morpho_gateway)
+        return LendingHandler(
+            morpho_gateway=morpho_gateway,
+            balance_checker=balance_checker,
+            leverage_loop_interactor=leverage_loop_interactor,
+            lending_repository=lending_repository,
+        )
 
     @provide
     def provide_portfolio_handler(
@@ -685,6 +726,53 @@ class ChatPhase2Provider(Provider):
             lifi_client=None,
             hyperliquid_client=None,
         )
+
+    @provide
+    def provide_hyperliquid_client(self) -> HyperliquidClient | None:
+        """
+        Provide HyperliquidClient for spot swap quotes.
+        
+        Returns:
+            HyperliquidClient configured for mainnet, or None if disabled.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            client = HyperliquidClient(testnet=False)
+            logger.info("✅ HyperliquidClient enabled for SwapHandlerV2")
+            return client
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to create HyperliquidClient: {e}")
+            return None
+
+    @provide
+    def provide_swap_handler_v2(
+        self,
+        hyperliquid_client: HyperliquidClient | None,
+    ) -> SwapHandlerV2:
+        """
+        Provide SwapHandlerV2 with Hyperliquid spot (ONLY provider).
+        
+        Features:
+        - Real-time Hyperliquid spot quotes
+        - Zero gas fees
+        - High-speed execution (20,000+ TPS)
+        - 0.02% trading fee
+        
+        Supported tokens (16):
+        ETH, USDC, USDT, DAI, WBTC, WETH, BTC, SOL,
+        MATIC, ARB, OP, LINK, UNI, AAVE, CRV, MKR
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        if hyperliquid_client:
+            logger.info("🔵 SwapHandlerV2 initialized with Hyperliquid spot (ONLY provider)")
+        else:
+            logger.error("❌ SwapHandlerV2: Hyperliquid client not available - swaps will fail")
+        
+        return SwapHandlerV2(hyperliquid_client=hyperliquid_client)
 
     @provide
     def provide_activity_handler(
@@ -793,25 +881,34 @@ class ChatPhase2Provider(Provider):
         """Provide Compound V3 gateway adapter."""
         return CompoundAdapter(client=compound_client)
 
-    @provide
+    @provide(scope=Scope.REQUEST)
     def provide_money_market_handler(
         self,
         aave_gateway: AaveGateway,
         compound_gateway: CompoundGateway,
+        cache_gateway: MoneyMarketCacheGateway,
+        comparison_gateway: MoneyMarketComparisonGateway,
     ) -> MoneyMarketHandler:
         """
         Provide money market handler for rate comparison.
 
         Per CEO spec: Aave + Compound only for money market.
         (Morpho is handled by LendingHandler for vault deposits)
-        
+
         Uses real data from:
         - Aave: AaveGateway for market rates
         - Compound: CompoundGateway for market rates
+        - Cache: MoneyMarketCacheGateway for 60s TTL rate caching (provided by MoneyMarketProvider)
+        - Comparison: MoneyMarketComparisonGateway for analytics logging (provided by MoneyMarketProvider)
+
+        Cache and comparison gateways are provided by MoneyMarketProvider (registered in provider_registry).
+        Both are required dependencies - MoneyMarketProvider must be registered for this to work.
         """
         return MoneyMarketHandler(
             aave_gateway=aave_gateway,
             compound_gateway=compound_gateway,
+            cache_gateway=cache_gateway,
+            comparison_gateway=comparison_gateway,
         )
 
     @provide

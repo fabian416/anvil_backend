@@ -1,0 +1,33 @@
+{
+  "run_timestamp": "2026-01-25T00:32:00.540022+00:00",
+  "category": "context_workflows",
+  "total_tests": 1,
+  "passed": 0,
+  "partial": 1,
+  "failed": 0,
+  "pass_rate": "0.0%",
+  "by_category": {
+    "empty_blocked": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    }
+  },
+  "by_agent": {
+    "transfer_workflow": {
+      "total": 1,
+      "pass": 0,
+      "partial": 1,
+      "fail": 0
+    }
+  },
+  "avg_response_time_ms": 3512,
+  "slowest_tests": [
+    {
+      "test_id": "block_empty_transfer_001",
+      "response_time_ms": 3512,
+      "status": "PARTIAL"
+    }
+  ]
+}

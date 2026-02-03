@@ -1,0 +1,31 @@
+{
+  "run_timestamp": "2026-01-22T16:05:00.644887+00:00",
+  "category": "execution_agent",
+  "total_tests": 2,
+  "passed": 0,
+  "partial": 0,
+  "failed": 2,
+  "pass_rate": "0.0%",
+  "by_category": {
+    "swap_execute": {
+      "total": 2,
+      "pass": 0,
+      "partial": 0,
+      "fail": 2
+    }
+  },
+  "by_agent": {},
+  "avg_response_time_ms": 342,
+  "slowest_tests": [
+    {
+      "test_id": "exec_swap_ready_001_step1",
+      "response_time_ms": 483,
+      "status": "FAIL"
+    },
+    {
+      "test_id": "exec_swap_ready_001_step2",
+      "response_time_ms": 201,
+      "status": "FAIL"
+    }
+  ]
+}

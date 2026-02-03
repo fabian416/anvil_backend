@@ -6,8 +6,8 @@
   "tagline": "Just Ask - Natural Language for Every DeFi Action",
 
   "overview": {
-    "total_intents": 16,
-    "categories": ["Trading & Swaps", "Market Intelligence", "DeFi Automation", "Portfolio Management", "Protocol Research"],
+    "total_intents": 22,
+    "categories": ["Trading & Swaps", "Market Intelligence", "DeFi Automation", "Lending & Borrowing", "Portfolio Management", "Protocol Research"],
     "multi_language": ["English", "Spanish", "Portuguese", "Chinese"],
     "endpoint": "POST /api/v1/conversations/{id}/messages (authenticated) or POST /api/v1/guest/chat (guests)"
   },
@@ -27,14 +27,14 @@
         }
       },
       {
-        "command": "swap 100 USDC to ETH",
+        "command": "swap 100 USDC to PURR",
         "category": "Trading",
-        "response": "Execute token swap with best rate",
+        "response": "Execute meme token swap via Hyperliquid Spot (meme tokens only)",
         "languages": {
-          "english": "swap 100 USDC to ETH",
-          "spanish": "cambiar 100 USDC a ETH",
-          "portuguese": "trocar 100 USDC por ETH",
-          "chinese": "兑换 100 USDC 到 ETH"
+          "english": "swap 100 USDC to PURR",
+          "spanish": "cambiar 100 USDC a PURR",
+          "portuguese": "trocar 100 USDC por PURR",
+          "chinese": "兑换 100 USDC 到 PURR"
         }
       },
       {
@@ -75,37 +75,51 @@
 
   "command_categories": {
     "trading_swaps": {
-      "title": "💱 Trading & Token Swaps",
-      "description": "Execute token swaps across multiple DEXs with best-rate optimization",
+      "title": "💱 Trading & Token Swaps (Hyperliquid Spot)",
+      "description": "Execute MEME TOKEN swaps via Hyperliquid Spot. IMPORTANT: Only meme tokens (PURR, TRUMP, PEPE, etc.) paired with USDC are supported. Major tokens (ETH, BTC, SOL) are NOT available for swaps.",
       "intent": "SWAP",
+      "limitation": "Hyperliquid Spot ONLY supports meme tokens paired with USDC. ETH, BTC, SOL, WBTC, LINK, etc. are NOT supported.",
       "commands": [
         {
-          "pattern": "swap [amount] [from_token] to [to_token]",
+          "pattern": "swap [amount] USDC to [meme_token]",
           "examples": [
-            "swap 100 USDC to ETH",
-            "exchange 0.5 BTC for SOL",
-            "convert 1000 USDT to USDC",
-            "trade 50 DAI to MATIC"
+            "swap 100 USDC to PURR",
+            "swap 50 USDC to TRUMP",
+            "swap 1000 USDC to PEPE",
+            "exchange 200 USDC for HFUN"
           ],
+          "supported_tokens": ["PURR", "TRUMP", "PEPE", "HFUN", "MOG", "GMEOW", "LICK", "MANLET", "JEFF", "WAGMI"],
+          "not_supported": ["ETH", "BTC", "SOL", "WBTC", "LINK", "UNI", "AAVE", "CRV", "MKR"],
           "multi_language": {
-            "spanish": ["cambiar 100 USDC a ETH", "intercambiar 0.5 BTC por SOL"],
-            "portuguese": ["trocar 100 USDC para ETH", "converter 0.5 BTC em SOL"],
-            "chinese": ["兑换100 USDC到ETH", "交换0.5 BTC为SOL"]
+            "spanish": ["cambiar 100 USDC a PURR", "intercambiar 50 USDC por TRUMP"],
+            "portuguese": ["trocar 100 USDC para PURR", "converter 50 USDC em TRUMP"],
+            "chinese": ["兑换100 USDC到PURR", "交换50 USDC为TRUMP"]
           },
-          "response_type": "Rate comparison across aggregators (1inch, Hyperliquid, UniswapX) with gas costs and slippage",
-          "execution": "Automatic best-rate selection with MEV protection"
+          "response_type": "Real-time quote from Hyperliquid Spot order book with spread and output amount",
+          "execution": "Zero gas fees, 0.02% trading fee, sub-second execution on Hyperliquid L1"
         },
         {
-          "pattern": "what's the rate for [from_token] to [to_token]?",
+          "pattern": "swap [amount] [meme_token] to USDC",
           "examples": [
-            "what's the rate for ETH to USDC?",
-            "how much USDC for 1 ETH?",
-            "exchange rate BTC to SOL"
+            "swap 1000 PURR to USDC",
+            "sell 500 TRUMP for USDC",
+            "convert my PEPE to USDC"
           ],
-          "response_type": "Current exchange rate across multiple DEXs",
+          "response_type": "Real-time sell quote from Hyperliquid Spot",
+          "execution": "Zero gas fees, instant settlement"
+        },
+        {
+          "pattern": "what's the rate for [token] to [token]?",
+          "examples": [
+            "what's the rate for PURR to USDC?",
+            "how much USDC for 1000 TRUMP?",
+            "PEPE price"
+          ],
+          "response_type": "Current exchange rate from Hyperliquid Spot order book",
           "execution": "Read-only query (no transaction)"
         }
-      ]
+      ],
+      "why_meme_tokens_only": "Hyperliquid is primarily a perpetual futures exchange. Their Spot market only offers meme token trading. For major tokens like ETH/BTC, use Hyperliquid Perps or external DEX aggregators."
     },
 
     "price_queries": {
@@ -439,15 +453,16 @@
       {
         "modifier": "with slippage [percentage]",
         "applies_to": ["swap"],
-        "example": "swap 100 USDC to ETH with 1% slippage",
+        "example": "swap 100 USDC to PURR with 1% slippage",
         "effect": "Set custom slippage tolerance"
       },
       {
         "modifier": "on [chain]",
-        "applies_to": ["swap", "arbitrage", "protocol_search"],
-        "example": "swap 100 USDC to ETH on Arbitrum",
+        "applies_to": ["arbitrage", "protocol_search"],
+        "example": "find arbitrage on Arbitrum",
         "effect": "Specify blockchain network",
-        "supported_chains": ["Ethereum", "Arbitrum", "Polygon", "Optimism", "Base", "Solana"]
+        "supported_chains": ["Ethereum", "Arbitrum", "Polygon", "Optimism", "Base"],
+        "note": "Swaps are only available on Hyperliquid L1 (meme tokens)"
       },
       {
         "modifier": "for [time_period]",
@@ -472,13 +487,14 @@
       {
         "trigger": "I want to swap",
         "steps": [
-          "Anvil: Great! How much do you want to swap?",
+          "Anvil: Great! How much USDC do you want to swap? (Note: Only meme tokens like PURR, TRUMP, PEPE are supported)",
           "User: 100 USDC",
-          "Anvil: Perfect! What token would you like to receive?",
-          "User: ETH",
-          "Anvil: [Shows rate comparison and executes swap]"
+          "Anvil: Perfect! Which meme token would you like? Options: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW...",
+          "User: PURR",
+          "Anvil: [Shows Hyperliquid Spot quote and executes swap]"
         ],
-        "use_case": "Incomplete swap requests trigger interactive flow"
+        "use_case": "Incomplete swap requests trigger interactive flow",
+        "note": "Major tokens (ETH, BTC, SOL) are NOT supported - only meme tokens via Hyperliquid Spot"
       },
       {
         "trigger": "tell me about [protocol]",
@@ -521,7 +537,7 @@
       {
         "tip": "Use natural language variations",
         "description": "Anvil understands many ways to phrase the same command",
-        "example": "'swap 100 USDC to ETH' = 'exchange 100 USDC for ETH' = 'convert 100 USDC to ETH'"
+        "example": "'swap 100 USDC to PURR' = 'exchange 100 USDC for PURR' = 'convert 100 USDC to PURR'"
       },
       {
         "tip": "Combine features in one query",
@@ -651,5 +667,538 @@
     "multi_language": "Native support for 4 languages (not translations) expands TAM by 3x",
     "user_experience": "Single endpoint, natural commands vs 10+ different protocol UIs",
     "developer_experience": "Simple REST API for integration vs complex protocol-specific SDKs"
+  },
+
+  "lending": {
+    "title": "💰 Lending & Yield",
+    "description": "Supply assets to earn yield and borrow against collateral via Morpho and Aave protocols",
+    "intent_group": ["LENDING_HEALTH_CHECK", "LENDING_SUPPLY", "LENDING_BORROW", "LENDING_LOOP", "LENDING_COMPARE", "LENDING_POSITION"],
+    "protocols_supported": ["Morpho", "Aave V3"],
+    "chains_supported": ["Ethereum", "Base", "Arbitrum", "Optimism"],
+    "commands": [
+      {
+        "intent": "LENDING_HEALTH_CHECK",
+        "category": "lending",
+        "description": {
+          "en": "Check your current lending positions and health factor",
+          "es": "Verifica tus posiciones de préstamo y factor de salud",
+          "pt": "Verifique suas posições de empréstimo e fator de saúde",
+          "zh": "检查您当前的借贷仓位和健康因子"
+        },
+        "patterns": {
+          "en": [
+            "check my lending health",
+            "show lending positions",
+            "what's my health factor",
+            "am I at risk of liquidation",
+            "lending status",
+            "check my loan health",
+            "show my collateral",
+            "how safe is my position"
+          ],
+          "es": [
+            "verifica mi salud de préstamo",
+            "muestra posiciones de préstamo",
+            "cuál es mi factor de salud",
+            "riesgo de liquidación",
+            "estado de préstamo",
+            "verifica mi colateral"
+          ],
+          "pt": [
+            "verifica minha saúde de empréstimo",
+            "mostra posições de empréstimo",
+            "qual é meu fator de saúde",
+            "risco de liquidação",
+            "status de empréstimo",
+            "verifica meu colateral"
+          ],
+          "zh": [
+            "检查我的借贷健康",
+            "显示借贷仓位",
+            "我的健康因子是多少",
+            "清算风险",
+            "贷款状态",
+            "检查我的抵押品"
+          ]
+        },
+        "agent": "LENDING_WORKFLOW",
+        "parameters": {
+          "action": "health_check",
+          "protocol": "all"
+        },
+        "requires_auth": true,
+        "requires_wallet": true,
+        "response_type": "Health factor analysis with collateral, debt breakdown, and risk assessment"
+      },
+      {
+        "intent": "LENDING_SUPPLY",
+        "category": "lending",
+        "description": {
+          "en": "Supply assets to earn yield via lending protocols",
+          "es": "Suministra activos para ganar rendimiento mediante protocolos de préstamo",
+          "pt": "Forneça ativos para ganhar rendimento através de protocolos de empréstimo",
+          "zh": "通过借贷协议提供资产以赚取收益"
+        },
+        "patterns": {
+          "en": [
+            "supply {amount} {asset}",
+            "deposit {amount} {asset} to earn yield",
+            "lend my {asset}",
+            "supply {asset} to {protocol}",
+            "deposit to lending",
+            "start earning on {asset}",
+            "put my {asset} to work"
+          ],
+          "es": [
+            "suministrar {amount} {asset}",
+            "depositar {amount} {asset}",
+            "prestar mi {asset}",
+            "suministrar {asset} a {protocol}",
+            "ganar rendimiento en {asset}"
+          ],
+          "pt": [
+            "fornecer {amount} {asset}",
+            "depositar {amount} {asset}",
+            "emprestar meu {asset}",
+            "fornecer {asset} para {protocol}",
+            "ganhar rendimento em {asset}"
+          ],
+          "zh": [
+            "供应 {amount} {asset}",
+            "存入 {amount} {asset}",
+            "借出我的 {asset}",
+            "供应 {asset} 到 {protocol}",
+            "赚取 {asset} 收益"
+          ]
+        },
+        "agent": "LENDING_WORKFLOW",
+        "parameters": {
+          "action": "supply",
+          "protocol": "morpho"
+        },
+        "parameter_extraction": {
+          "amount": {
+            "regex": "\\b(\\d+\\.?\\d*)\\b",
+            "type": "decimal",
+            "required": false,
+            "prompt_if_missing": {
+              "en": "How much {asset} would you like to supply?",
+              "es": "¿Cuánto {asset} te gustaría suministrar?",
+              "pt": "Quanto {asset} você gostaria de fornecer?",
+              "zh": "您想供应多少 {asset}？"
+            }
+          },
+          "asset": {
+            "regex": "\\b(ETH|WETH|USDC|USDT|DAI|WBTC|wstETH)\\b",
+            "type": "string",
+            "case_insensitive": true,
+            "required": true,
+            "valid_values": ["ETH", "WETH", "USDC", "USDT", "DAI", "WBTC", "wstETH"],
+            "prompt_if_missing": {
+              "en": "Which asset would you like to supply? (USDC, ETH, DAI, etc.)",
+              "es": "¿Qué activo te gustaría suministrar? (USDC, ETH, DAI, etc.)",
+              "pt": "Qual ativo você gostaria de fornecer? (USDC, ETH, DAI, etc.)",
+              "zh": "您想供应哪种资产？(USDC, ETH, DAI等)"
+            }
+          },
+          "protocol": {
+            "regex": "\\b(aave|morpho)\\b",
+            "type": "string",
+            "case_insensitive": true,
+            "default": "morpho",
+            "valid_values": ["aave", "morpho"]
+          }
+        },
+        "validation": {
+          "balance_check": true,
+          "balance_checker_port": "IBalanceChecker",
+          "minimum_gas": "0.01 ETH",
+          "insufficient_balance_flow": "suggest_alternatives"
+        },
+        "requires_auth": true,
+        "requires_wallet": true,
+        "response_type": "Multi-step: Vault selection -> Balance check -> Transaction preview -> Execution"
+      },
+      {
+        "intent": "LENDING_BORROW",
+        "category": "lending",
+        "description": {
+          "en": "Borrow assets against your collateral",
+          "es": "Pide prestado activos contra tu colateral",
+          "pt": "Empreste ativos contra sua garantia",
+          "zh": "根据您的抵押品借入资产"
+        },
+        "patterns": {
+          "en": [
+            "borrow {amount} {asset}",
+            "take a loan of {amount} {asset}",
+            "borrow against my collateral",
+            "get a loan",
+            "borrow {asset} from {protocol}",
+            "I want to borrow {asset}"
+          ],
+          "es": [
+            "pedir prestado {amount} {asset}",
+            "tomar un préstamo de {amount} {asset}",
+            "pedir prestado contra mi colateral",
+            "quiero pedir prestado {asset}"
+          ],
+          "pt": [
+            "emprestar {amount} {asset}",
+            "fazer um empréstimo de {amount} {asset}",
+            "emprestar contra minha garantia",
+            "quero pedir emprestado {asset}"
+          ],
+          "zh": [
+            "借入 {amount} {asset}",
+            "获得 {amount} {asset} 贷款",
+            "根据我的抵押品借款",
+            "我想借 {asset}"
+          ]
+        },
+        "agent": "LENDING_BORROWING",
+        "parameters": {
+          "action": "borrow",
+          "protocol": "aave"
+        },
+        "parameter_extraction": {
+          "amount": {
+            "regex": "\\b(\\d+\\.?\\d*)\\b",
+            "type": "decimal",
+            "required": false,
+            "prompt_if_missing": {
+              "en": "How much {asset} would you like to borrow?",
+              "es": "¿Cuánto {asset} te gustaría pedir prestado?",
+              "pt": "Quanto {asset} você gostaria de emprestar?",
+              "zh": "您想借入多少 {asset}？"
+            }
+          },
+          "asset": {
+            "regex": "\\b(USDC|USDT|DAI|ETH)\\b",
+            "type": "string",
+            "case_insensitive": true,
+            "required": true,
+            "valid_values": ["USDC", "USDT", "DAI", "ETH"],
+            "prompt_if_missing": {
+              "en": "Which asset would you like to borrow?",
+              "es": "¿Qué activo te gustaría pedir prestado?",
+              "pt": "Qual ativo você gostaria de emprestar?",
+              "zh": "您想借入哪种资产？"
+            }
+          },
+          "protocol": {
+            "regex": "\\b(aave|morpho)\\b",
+            "type": "string",
+            "case_insensitive": true,
+            "default": "aave"
+          }
+        },
+        "validation": {
+          "balance_check": true,
+          "health_factor_check": true,
+          "minimum_health_factor_after": 1.2,
+          "warn_if_hf_below": 1.5,
+          "reject_if_hf_below": 1.1
+        },
+        "requires_auth": true,
+        "requires_wallet": true,
+        "requires_collateral": true,
+        "response_type": "Risk assessment -> Health factor simulation -> Execution (with safety checks)",
+        "safety_warning": {
+          "en": "⚠️ Borrowing increases liquidation risk. Ensure your health factor remains above 1.5 (recommended).",
+          "es": "⚠️ Pedir prestado aumenta el riesgo de liquidación. Asegúrate de que tu factor de salud permanezca por encima de 1.5 (recomendado).",
+          "pt": "⚠️ Emprestar aumenta o risco de liquidação. Certifique-se de que seu fator de saúde permaneça acima de 1.5 (recomendado).",
+          "zh": "⚠️ 借款会增加清算风险。确保您的健康因子保持在1.5以上（建议）。"
+        }
+      },
+      {
+        "intent": "LENDING_LOOP",
+        "category": "lending",
+        "description": {
+          "en": "Create leveraged position through recursive supply-borrow strategy",
+          "es": "Crea una posición apalancada a través de una estrategia recursiva de suministro y préstamo",
+          "pt": "Crie uma posição alavancada através de uma estratégia recursiva de fornecimento e empréstimo",
+          "zh": "通过递归供应-借贷策略创建杠杆仓位"
+        },
+        "patterns": {
+          "en": [
+            "leverage {asset}",
+            "loop {asset}",
+            "{multiplier}x leverage on {asset}",
+            "recursive {asset} strategy",
+            "leverage my {asset}",
+            "create leveraged position"
+          ],
+          "es": [
+            "apalancar {asset}",
+            "bucle {asset}",
+            "{multiplier}x apalancamiento en {asset}",
+            "estrategia recursiva {asset}",
+            "apalancar mi {asset}"
+          ],
+          "pt": [
+            "alavancar {asset}",
+            "loop {asset}",
+            "{multiplier}x alavancagem em {asset}",
+            "estratégia recursiva {asset}",
+            "alavancar meu {asset}"
+          ],
+          "zh": [
+            "杠杆 {asset}",
+            "循环 {asset}",
+            "{multiplier}倍杠杆 {asset}",
+            "递归 {asset} 策略",
+            "杠杆我的 {asset}"
+          ]
+        },
+        "agent": "LENDING_BORROWING",
+        "parameters": {
+          "action": "leverage_loop",
+          "protocol": "aave"
+        },
+        "parameter_extraction": {
+          "asset": {
+            "regex": "\\b(ETH|WETH|wstETH)\\b",
+            "type": "string",
+            "case_insensitive": true,
+            "required": true,
+            "valid_values": ["ETH", "WETH", "wstETH"],
+            "prompt_if_missing": {
+              "en": "Which asset would you like to leverage?",
+              "es": "¿Qué activo te gustaría apalancar?",
+              "pt": "Qual ativo você gostaria de alavancar?",
+              "zh": "您想杠杆哪种资产？"
+            }
+          },
+          "leverage_multiplier": {
+            "regex": "(\\d)x",
+            "type": "integer",
+            "default": 3,
+            "min": 2,
+            "max": 4,
+            "prompt_if_missing": {
+              "en": "What leverage multiplier would you like? (2x-4x)",
+              "es": "¿Qué multiplicador de apalancamiento te gustaría? (2x-4x)",
+              "pt": "Qual multiplicador de alavancagem você gostaria? (2x-4x)",
+              "zh": "您想要什么杠杆倍数？（2x-4x）"
+            }
+          }
+        },
+        "validation": {
+          "health_factor_check": true,
+          "minimum_health_factor_after": 1.3,
+          "warn_if_hf_below": 1.5,
+          "reject_if_hf_below": 1.2
+        },
+        "requires_auth": true,
+        "requires_wallet": true,
+        "requires_collateral": true,
+        "multi_step_approval": true,
+        "approval_steps": 3,
+        "response_type": "Advanced strategy simulation -> Risk warning -> Multi-step execution (3+ separate approvals)",
+        "risk_level": "HIGH",
+        "safety_warning": {
+          "en": "⚠️ HIGH RISK: Leverage amplifies both gains AND losses. Liquidation risk increases significantly. You will need to sign 3+ separate transactions.",
+          "es": "⚠️ ALTO RIESGO: El apalancamiento amplifica tanto las ganancias como las pérdidas. El riesgo de liquidación aumenta significativamente. Necesitarás firmar 3+ transacciones separadas.",
+          "pt": "⚠️ ALTO RISCO: A alavancagem amplifica ganhos E perdas. O risco de liquidação aumenta significativamente. Você precisará assinar 3+ transações separadas.",
+          "zh": "⚠️ 高风险：杠杆会放大收益和损失。清算风险显著增加。您需要签署3+个单独的交易。"
+        }
+      },
+      {
+        "intent": "LENDING_COMPARE",
+        "category": "lending",
+        "description": {
+          "en": "Compare lending rates and yields across protocols",
+          "es": "Compara tasas de préstamo y rendimientos entre protocolos",
+          "pt": "Compare taxas de empréstimo e rendimentos entre protocolos",
+          "zh": "比较协议间的借贷利率和收益"
+        },
+        "patterns": {
+          "en": [
+            "best yield for {asset}",
+            "compare lending rates",
+            "where to supply {asset}",
+            "what's the best yield",
+            "morpho vs aave rates",
+            "highest APY for {asset}",
+            "compare {protocol1} and {protocol2}",
+            "best lending vaults",
+            "top vaults",
+            "best morpho vaults",
+            "show best vaults",
+            "compare vaults",
+            "vault comparison",
+            "vault recommendations",
+            "vaults with best apy",
+            "list morpho vaults",
+            "find best vaults"
+          ],
+          "es": [
+            "mejor rendimiento para {asset}",
+            "comparar tasas de préstamo",
+            "dónde suministrar {asset}",
+            "cuál es el mejor rendimiento",
+            "tasas morpho vs aave",
+            "mejores bóvedas de préstamo",
+            "mejores bóvedas morpho",
+            "comparar bóvedas",
+            "recomendaciones de bóvedas"
+          ],
+          "pt": [
+            "melhor rendimento para {asset}",
+            "comparar taxas de empréstimo",
+            "onde fornecer {asset}",
+            "qual é o melhor rendimento",
+            "taxas morpho vs aave",
+            "melhores cofres de empréstimo",
+            "melhores cofres morpho",
+            "comparar cofres",
+            "recomendações de cofres"
+          ],
+          "zh": [
+            "{asset} 的最佳收益",
+            "比较借贷利率",
+            "在哪里供应 {asset}",
+            "最好的收益是什么",
+            "morpho vs aave 利率",
+            "最佳借贷金库",
+            "最佳morpho金库",
+            "比较金库",
+            "金库推荐"
+          ]
+        },
+        "agent": "DEFI_YIELD",
+        "parameters": {
+          "action": "compare_rates"
+        },
+        "parameter_extraction": {
+          "asset": {
+            "regex": "\\b(ETH|WETH|USDC|USDT|DAI|WBTC|wstETH)\\b",
+            "type": "string",
+            "case_insensitive": true,
+            "default": "USDC",
+            "valid_values": ["ETH", "WETH", "USDC", "USDT", "DAI", "WBTC", "wstETH"]
+          },
+          "chain": {
+            "regex": "\\b(ethereum|base|arbitrum|optimism)\\b",
+            "type": "string",
+            "case_insensitive": true,
+            "default": "base"
+          }
+        },
+        "requires_auth": false,
+        "guest_allowed": true,
+        "response_type": "Comparison table with APY, risk tier, TVL, and recommendations across protocols",
+        "response_format": {
+          "include_table": true,
+          "sort_by": "apy",
+          "limit": 5,
+          "include_risk_tier": true,
+          "include_tvl": true
+        }
+      },
+      {
+        "intent": "LENDING_POSITION",
+        "category": "lending",
+        "description": {
+          "en": "View your detailed lending positions across all protocols",
+          "es": "Ve tus posiciones de préstamo detalladas en todos los protocolos",
+          "pt": "Veja suas posições de empréstimo detalhadas em todos os protocolos",
+          "zh": "查看您在所有协议中的详细借贷仓位"
+        },
+        "patterns": {
+          "en": [
+            "show my lending positions",
+            "my lending portfolio",
+            "what am I earning",
+            "show all my supplies",
+            "where is my money earning",
+            "my lending summary"
+          ],
+          "es": [
+            "muestra mis posiciones de préstamo",
+            "mi cartera de préstamos",
+            "qué estoy ganando",
+            "muestra todos mis suministros",
+            "dónde está ganando mi dinero"
+          ],
+          "pt": [
+            "mostra minhas posições de empréstimo",
+            "minha carteira de empréstimos",
+            "o que estou ganhando",
+            "mostra todos os meus fornecimentos",
+            "onde meu dinheiro está ganhando"
+          ],
+          "zh": [
+            "显示我的借贷仓位",
+            "我的借贷投资组合",
+            "我赚了多少",
+            "显示我所有的供应",
+            "我的钱在哪里赚钱"
+          ]
+        },
+        "agent": "LENDING_WORKFLOW",
+        "parameters": {
+          "action": "view_positions"
+        },
+        "requires_auth": true,
+        "requires_wallet": true,
+        "response_type": "Portfolio overview with positions by protocol, total value, weighted APY, and earnings summary",
+        "response_format": {
+          "group_by_protocol": true,
+          "show_total_value": true,
+          "show_weighted_apy": true,
+          "show_earnings_summary": true,
+          "show_optimization_opportunities": true
+        }
+      }
+    ],
+    "routing": {
+      "LENDING_HEALTH_CHECK": {
+        "agent": "LENDING_WORKFLOW",
+        "action": "health_check",
+        "mcp_tools": ["aave_get_user_positions", "morpho_get_user_positions", "aave_calculate_health_factor"],
+        "validation": []
+      },
+      "LENDING_SUPPLY": {
+        "agent": "LENDING_WORKFLOW",
+        "action": "supply",
+        "mcp_tools": ["morpho_get_vaults", "morpho_compare_yields", "aave_get_market_data", "portfolio_get_balance"],
+        "validation": ["balance_check", "gas_check"]
+      },
+      "LENDING_BORROW": {
+        "agent": "LENDING_BORROWING",
+        "action": "borrow",
+        "mcp_tools": ["aave_get_user_positions", "aave_calculate_health_factor", "aave_get_available_to_borrow"],
+        "validation": ["balance_check", "health_factor_check", "collateral_check"]
+      },
+      "LENDING_LOOP": {
+        "agent": "LENDING_BORROWING",
+        "action": "leverage_loop",
+        "mcp_tools": ["aave_get_user_positions", "aave_calculate_health_factor", "aave_get_available_to_borrow"],
+        "validation": ["health_factor_check", "collateral_check", "multi_step_approval"],
+        "workflow_type": "multi_step"
+      },
+      "LENDING_COMPARE": {
+        "agent": "DEFI_YIELD",
+        "action": "compare_rates",
+        "mcp_tools": ["morpho_compare_yields", "aave_get_market_data", "morpho_get_vaults"],
+        "validation": []
+      },
+      "LENDING_POSITION": {
+        "agent": "LENDING_WORKFLOW",
+        "action": "view_positions",
+        "mcp_tools": ["aave_get_user_positions", "morpho_get_user_positions", "portfolio_get_balance"],
+        "validation": []
+      }
+    },
+    "implementation_notes": {
+      "balance_validation": "All supply and borrow operations must check balance BEFORE generating execute_data",
+      "health_factor_validation": "All borrow operations must validate health factor. Block if projected HF < 1.2",
+      "leverage_loop_approvals": "Leverage loops require 3+ separate user approvals (NO batch processing)",
+      "guest_restrictions": "Guests can view rates and compare protocols, but cannot execute transactions",
+      "multi_language_support": "All error messages and prompts must support en, es, pt, zh",
+      "agent_coordination": "Complex flows may require coordination between multiple agents (Market Scanner -> Risk Guardian -> Executor)"
+    }
   }
 }

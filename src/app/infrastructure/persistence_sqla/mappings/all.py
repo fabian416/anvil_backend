@@ -30,12 +30,14 @@ from app.infrastructure.persistence_sqla.mappings.email_verification import map_
 from app.infrastructure.persistence_sqla.mappings.notification import map_notifications_table
 from app.infrastructure.persistence_sqla.mappings.password_reset import map_password_resets_table
 from app.infrastructure.persistence_sqla.mappings.payment import map_payments_table
-from app.infrastructure.persistence_sqla.mappings.session import map_sessions_table
+# REMOVED: Legacy session mapping (use auth_session instead)
+# from app.infrastructure.persistence_sqla.mappings.session import map_sessions_table
 from app.infrastructure.persistence_sqla.mappings.subscription import map_subscriptions_table
 from app.infrastructure.persistence_sqla.mappings.subscription_user import map_subscription_users_table
 from app.infrastructure.persistence_sqla.mappings.user import map_users_table
-from app.infrastructure.persistence_sqla.mappings.conversation import map_conversation_table
-from app.infrastructure.persistence_sqla.mappings.message import map_message_table
+# REMOVED: Legacy conversation/message mappings (use chat_unified instead)
+# from app.infrastructure.persistence_sqla.mappings.conversation import map_conversation_table
+# from app.infrastructure.persistence_sqla.mappings.message import map_message_table
 from app.infrastructure.persistence_sqla.mappings.agent_session import map_agent_session_table
 from app.infrastructure.persistence_sqla.mappings.conversation_analytics import (
     map_conversation_analytics_table,
@@ -47,10 +49,29 @@ from app.infrastructure.persistence_sqla.mappings.ai_telemetry import map_ai_tel
 from app.infrastructure.persistence_sqla.mappings.system_config import map_system_config_tables
 from app.infrastructure.persistence_sqla.mappings.portfolio_snapshot import map_portfolio_snapshot_tables
 from app.infrastructure.persistence_sqla.mappings.policy import map_policy_tables
+# Guest Chat - Still in active use by /guest/ router
 from app.infrastructure.persistence_sqla.mappings.guest import map_guest_tables
 from app.infrastructure.persistence_sqla.mappings.chat_unified import map_unified_chat_tables
 from app.infrastructure.persistence_sqla.mappings.moonpay import map_moonpay_customer_tokens_table
+# Distillation System (from HEAD)
 from app.infrastructure.persistence_sqla.mappings.distillation import map_distillation_tables
+# User Context & Lending (from master)
+from app.infrastructure.persistence_sqla.mappings.user_context import map_user_context_aware_table
+from app.infrastructure.persistence_sqla.mappings.lending_position_mapping import map_lending_positions_table
+from app.infrastructure.persistence_sqla.mappings.lending_supply_mapping import map_lending_supplies_table
+from app.infrastructure.persistence_sqla.mappings.lending_borrow_mapping import map_lending_borrows_table
+from app.infrastructure.persistence_sqla.mappings.lending_transaction_mapping import map_lending_transactions_table
+from app.infrastructure.persistence_sqla.mappings.user_lending_preferences_mapping import map_user_lending_preferences_table
+from app.infrastructure.persistence_sqla.mappings.lending_health_check_mapping import map_lending_health_checks_table
+from app.infrastructure.persistence_sqla.mappings.leverage_loop_execution_mapping import map_leverage_loop_executions_table
+from app.infrastructure.persistence_sqla.mappings.lending_alert_mapping import map_lending_alerts_table
+# Money Market Tables
+from app.infrastructure.persistence_sqla.mappings.money_market_protocol_mapping import map_money_market_protocols_table
+from app.infrastructure.persistence_sqla.mappings.money_market_rate_mapping import map_money_market_rates_table
+from app.infrastructure.persistence_sqla.mappings.money_market_rate_alerts_mapping import map_money_market_rate_alerts_table
+from app.infrastructure.persistence_sqla.mappings.money_market_comparison_mapping import map_money_market_comparisons_table
+from app.infrastructure.persistence_sqla.mappings.money_market_alert_history_mapping import map_money_market_alert_history_table
+from app.infrastructure.persistence_sqla.mappings.money_market_user_preference_mapping import map_money_market_user_preferences_table
 
 
 def map_tables() -> None:
@@ -62,12 +83,12 @@ def map_tables() -> None:
     map_notifications_table()
     map_password_resets_table()
     map_payments_table()
-    map_sessions_table()
+    # REMOVED: map_sessions_table() - Legacy session (use auth_sessions)
     map_subscriptions_table()
     map_subscription_users_table()
-    # DeFi Chat mappings
-    map_conversation_table()
-    map_message_table()
+    # REMOVED: Legacy DeFi Chat mappings (use unified chat)
+    # map_conversation_table()
+    # map_message_table()
     map_agent_session_table()
     map_conversation_analytics_table()
     # Wallet & Transactions
@@ -83,7 +104,7 @@ def map_tables() -> None:
     map_system_config_tables()
     # Portfolio Snapshots
     map_portfolio_snapshot_tables()
-    # Guest Chat
+    # Guest Chat - Still in active use by /guest/ router
     map_guest_tables()
     # Unified Chat (guest + authenticated) - Primary chat system
     map_unified_chat_tables()
@@ -91,3 +112,21 @@ def map_tables() -> None:
     map_moonpay_customer_tokens_table()
     # Distillation System
     map_distillation_tables()
+    # User Context Aware (context-aware agent responses)
+    map_user_context_aware_table()
+    # Lending Tables (Aave & Morpho)
+    map_lending_positions_table()
+    map_lending_supplies_table()
+    map_lending_borrows_table()
+    map_lending_transactions_table()
+    map_user_lending_preferences_table()
+    map_lending_health_checks_table()
+    map_leverage_loop_executions_table()
+    map_lending_alerts_table()
+    # Money Market Tables (protocols must be mapped first due to foreign key)
+    map_money_market_protocols_table()
+    map_money_market_rates_table()
+    map_money_market_rate_alerts_table()  # Must be before alert_history (FK dependency)
+    map_money_market_comparisons_table()
+    map_money_market_alert_history_table()
+    map_money_market_user_preferences_table()

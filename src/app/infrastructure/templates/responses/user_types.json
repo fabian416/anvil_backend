@@ -1,0 +1,101 @@
+{
+  "version": "1.0",
+  "description": "Response templates based on user behavior type classification",
+  
+  "new_user": {
+    "description": "User is new with minimal interactions",
+    "messages": {
+      "general_help": {
+        "en": "**I can help you with:**\n\n🛒 **Buy Crypto**\n→ \"buy 100 USD of ETH\"\n\n💱 **Swap Tokens**\n→ \"swap ETH to USDC\"\n\n💰 **Earn Yield**\n→ \"show me yields\"\n\n📊 **Track Portfolio**\n→ \"my portfolio\"\n\nWhat would you like to try first?",
+        "es": "**Puedo ayudarte con:**\n\n🛒 **Comprar Crypto**\n→ \"comprar 100 USD de ETH\"\n\n💱 **Intercambiar Tokens**\n→ \"cambiar ETH a USDC\"\n\n💰 **Ganar Rendimiento**\n→ \"mostrar rendimientos\"\n\n📊 **Seguir Portafolio**\n→ \"mi portafolio\"",
+        "pt": "**Posso ajudar você com:**\n\n🛒 **Comprar Crypto**\n→ \"comprar 100 USD de ETH\"\n\n💱 **Trocar Tokens**\n→ \"trocar ETH para USDC\"\n\n💰 **Ganhar Rendimento**\n→ \"mostrar rendimentos\"\n\n📊 **Acompanhar Portfólio**\n→ \"meu portfólio\"",
+        "zh": "**我可以帮助您：**\n\n🛒 **购买加密货币**\n→ \"购买 100 美元的 ETH\"\n\n💱 **交换代币**\n→ \"将 ETH 换成 USDC\"\n\n💰 **赚取收益**\n→ \"显示收益\"\n\n📊 **跟踪投资组合**\n→ \"我的投资组合\""
+      }
+    },
+    "response_style": "educational",
+    "include_explanations": true,
+    "suggested_complexity": "simple"
+  },
+  
+  "casual": {
+    "description": "User interacts casually with few executions",
+    "messages": {
+      "general_help": {
+        "en": "How can I help? You can:\n→ Check prices and market\n→ View your portfolio\n→ Make trades when ready",
+        "es": "¿Cómo puedo ayudar? Puedes:\n→ Ver precios y mercado\n→ Ver tu portafolio\n→ Hacer trades cuando quieras",
+        "pt": "Como posso ajudar? Você pode:\n→ Ver preços e mercado\n→ Ver seu portfólio\n→ Fazer trades quando quiser",
+        "zh": "有什么可以帮助您的？您可以：\n→ 查看价格和市场\n→ 查看您的投资组合\n→ 准备好时进行交易"
+      }
+    },
+    "response_style": "friendly",
+    "include_explanations": true,
+    "suggested_complexity": "simple"
+  },
+  
+  "trader": {
+    "description": "User focuses on swaps and trading",
+    "messages": {
+      "swap_suggestion": {
+        "en": "**Trade Opportunity:**\n→ {from_token}/{to_token}\n→ Best rate: {rate}\n→ Via: {dex}\n\nQuick swap?",
+        "es": "**Oportunidad de Trade:**\n→ {from_token}/{to_token}\n→ Mejor tasa: {rate}\n→ Vía: {dex}\n\n¿Swap rápido?",
+        "pt": "**Oportunidade de Trade:**\n→ {from_token}/{to_token}\n→ Melhor taxa: {rate}\n→ Via: {dex}\n\nSwap rápido?",
+        "zh": "**交易机会：**\n→ {from_token}/{to_token}\n→ 最佳汇率：{rate}\n→ 通过：{dex}\n\n快速交换？"
+      },
+      "market_alert": {
+        "en": "**{token} Alert:** {direction} {percentage}% in {timeframe}\n\nCurrent: ${price}\nYour holding: {holding_amount}",
+        "es": "**Alerta {token}:** {direction} {percentage}% en {timeframe}\n\nActual: ${price}\nTu holding: {holding_amount}",
+        "pt": "**Alerta {token}:** {direction} {percentage}% em {timeframe}\n\nAtual: ${price}\nSeu holding: {holding_amount}",
+        "zh": "**{token} 提醒：** {timeframe} 内 {direction} {percentage}%\n\n当前：${price}\n您的持有：{holding_amount}"
+      }
+    },
+    "response_style": "concise",
+    "include_explanations": false,
+    "show_advanced_metrics": true,
+    "suggested_complexity": "advanced"
+  },
+  
+  "yield_farmer": {
+    "description": "User focuses on lending and yield",
+    "messages": {
+      "yield_update": {
+        "en": "**Your Yield Positions:**\n{positions_summary}\n\n**Total Earning:** ${daily_yield}/day\n\n**Opportunities:**\n→ {best_opportunity}",
+        "es": "**Tus Posiciones de Rendimiento:**\n{positions_summary}\n\n**Ganando:** ${daily_yield}/día\n\n**Oportunidades:**\n→ {best_opportunity}",
+        "pt": "**Suas Posições de Rendimento:**\n{positions_summary}\n\n**Ganhando:** ${daily_yield}/dia\n\n**Oportunidades:**\n→ {best_opportunity}",
+        "zh": "**您的收益仓位：**\n{positions_summary}\n\n**总收益：** ${daily_yield}/天\n\n**机会：**\n→ {best_opportunity}"
+      },
+      "yield_comparison": {
+        "en": "**Yield Comparison for {token}:**\n\n| Protocol | APY | TVL | Risk |\n|----------|-----|-----|------|\n{comparison_table}\n\nRecommendation: {recommendation}",
+        "es": "**Comparación de Rendimiento para {token}:**\n\n| Protocolo | APY | TVL | Riesgo |\n|-----------|-----|-----|--------|\n{comparison_table}",
+        "pt": "**Comparação de Rendimento para {token}:**\n\n| Protocolo | APY | TVL | Risco |\n|-----------|-----|-----|-------|\n{comparison_table}",
+        "zh": "**{token} 收益比较：**\n\n| 协议 | APY | TVL | 风险 |\n|------|-----|-----|------|\n{comparison_table}"
+      }
+    },
+    "response_style": "analytical",
+    "include_explanations": false,
+    "show_apy_details": true,
+    "suggested_complexity": "advanced"
+  },
+  
+  "power_user": {
+    "description": "User is highly active with diverse operations",
+    "messages": {
+      "dashboard": {
+        "en": "**Dashboard:**\n\n💰 Portfolio: ${total_usd} ({change_24h})\n📊 Positions: {active_positions}\n⚡ Pending: {pending_txs}\n\n**Quick Actions:** [Swap] [Lend] [Analyze]",
+        "es": "**Dashboard:**\n\n💰 Portafolio: ${total_usd} ({change_24h})\n📊 Posiciones: {active_positions}\n⚡ Pendiente: {pending_txs}",
+        "pt": "**Dashboard:**\n\n💰 Portfólio: ${total_usd} ({change_24h})\n📊 Posições: {active_positions}\n⚡ Pendente: {pending_txs}",
+        "zh": "**仪表板：**\n\n💰 投资组合：${total_usd}（{change_24h}）\n📊 仓位：{active_positions}\n⚡ 待处理：{pending_txs}"
+      },
+      "advanced_analysis": {
+        "en": "**Analysis for {query}:**\n\n{detailed_analysis}\n\n**Risk Assessment:** {risk_level}\n**Recommendation:** {recommendation}",
+        "es": "**Análisis para {query}:**\n\n{detailed_analysis}\n\n**Evaluación de Riesgo:** {risk_level}\n**Recomendación:** {recommendation}",
+        "pt": "**Análise para {query}:**\n\n{detailed_analysis}\n\n**Avaliação de Risco:** {risk_level}\n**Recomendação:** {recommendation}",
+        "zh": "**{query} 分析：**\n\n{detailed_analysis}\n\n**风险评估：** {risk_level}\n**建议：** {recommendation}"
+      }
+    },
+    "response_style": "expert",
+    "include_explanations": false,
+    "show_advanced_metrics": true,
+    "enable_batch_operations": true,
+    "suggested_complexity": "expert"
+  }
+}

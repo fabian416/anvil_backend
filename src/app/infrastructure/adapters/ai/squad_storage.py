@@ -1,32 +1,45 @@
 """
-Storage adapter for Agent Squad to use our conversation repository.
+Storage adapter for Agent Squad to use unified chat repository.
+
+Updated to use the unified chat system (ChatMessageRepositorySqla)
+instead of the deprecated ConversationRepository.
 """
 
 from typing import Any, List, Dict, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, UTC
 
-from app.domain.chat.ports.conversation_repository import ConversationRepository
-from app.domain.chat.entities.message import Message
-from app.domain.value_objects.message_role import MessageRole
+from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
+
+
+class ChatMessageRepositoryProtocol:
+    """Protocol for chat message repository used by squad storage."""
+    
+    async def save(self, message: ChatMessage) -> ChatMessage: ...
+    async def list_for_conversation(
+        self,
+        conversation_id: UUID,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[ChatMessage]: ...
 
 
 class AnvilSquadStorage:
     """
-    Storage adapter that bridges Agent Squad's storage interface with our domain repository.
+    Storage adapter that bridges Agent Squad's storage interface with unified chat repository.
     
     This adapter allows Agent Squad to persist and retrieve conversation history
-    using our existing conversation repository infrastructure.
+    using the unified chat repository infrastructure (chat_messages table).
     """
     
-    def __init__(self, repo: ConversationRepository):
+    def __init__(self, message_repo: ChatMessageRepositoryProtocol):
         """
         Initialize storage adapter.
         
         Args:
-            repo: Our domain conversation repository
+            message_repo: Unified chat message repository
         """
-        self._repo = repo
+        self._message_repo = message_repo
     
     async def save_message(
         self, 
@@ -54,27 +67,31 @@ class AnvilSquadStorage:
         except (ValueError, AttributeError):
             raise ValueError(f"Invalid session_id format: {session_id}")
         
-        # Map role string to enum
+        # Map role string to MessageRole enum
         role_map = {
             "user": MessageRole.USER,
-            "assistant": MessageRole.AGENT,
-            "agent": MessageRole.AGENT,
+            "assistant": MessageRole.ASSISTANT,
+            "agent": MessageRole.ASSISTANT,
             "system": MessageRole.SYSTEM,
         }
         message_role = role_map.get(role.lower(), MessageRole.USER)
         
-        # Create message entity (using plain types, not value objects)
-        message = Message.create(
-            conversation_id=conversation_id,  # UUID, not ConversationId value object
-            role=message_role,  # MessageRole enum
-            content=content,  # str, not MessageContent value object
-            agent_type=agent_type  # Optional[str], not AgentType enum
+        # Create message entity using unified chat system
+        message = ChatMessage(
+            conversation_id=conversation_id,
+            role=message_role,
+            content=content,
+            metadata=metadata or {},
         )
+        
+        # Add agent_type to metadata if provided
+        if agent_type:
+            message.metadata["agent_type"] = agent_type
 
         # Save to repository
-        await self._repo.add_message(message)
+        saved_message = await self._message_repo.save(message)
 
-        return str(message.id)  # message.id is UUID, not value object
+        return str(saved_message.id)
     
     async def get_chat_history(
         self, 
@@ -96,8 +113,8 @@ class AnvilSquadStorage:
         except (ValueError, AttributeError):
             raise ValueError(f"Invalid session_id format: {session_id}")
         
-        # Get messages from repository
-        messages = await self._repo.get_messages(
+        # Get messages from unified chat repository
+        messages = await self._message_repo.list_for_conversation(
             conversation_id=conversation_id,
             limit=limit
         )
@@ -105,17 +122,17 @@ class AnvilSquadStorage:
         # Convert to Agent Squad format
         history = []
         for msg in messages:
-            # Map our role enum to string
+            # Map role enum to string
             role_str = "user" if msg.role == MessageRole.USER else "assistant"
             if msg.role == MessageRole.SYSTEM:
                 role_str = "system"
 
             history.append({
-                "id": str(msg.id),  # msg.id is UUID, not value object
+                "id": str(msg.id),
                 "role": role_str,
-                "content": msg.content,  # msg.content is str, not value object
-                "agent_type": msg.agent_type if msg.agent_type else None,  # Optional[str]
-                "created_at": msg.created_at.isoformat() if msg.created_at else None,  # datetime
+                "content": msg.content,
+                "agent_type": msg.metadata.get("agent_type") if msg.metadata else None,
+                "created_at": msg.created_at.isoformat() if msg.created_at else None,
             })
 
         return history
@@ -153,11 +170,5 @@ class AnvilSquadStorage:
         Args:
             session_id: Conversation ID
         """
-        try:
-            conversation_id = UUID(session_id)
-        except (ValueError, AttributeError):
-            raise ValueError(f"Invalid session_id format: {session_id}")
-        
-        # This would need to be implemented in the repository
-        # For now, we'll skip implementation as it's not critical for MVP
+        # Not implemented - soft delete preferred over hard delete
         pass

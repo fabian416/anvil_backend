@@ -37,7 +37,7 @@ class AgentType(Enum):
     - DAO_GOVERNANCE: Voting, proposals, delegation
     """
     
-    # Core User-Facing Agents (12)
+    # Core User-Facing Agents (14)
     CHAT = "chat"
     GUEST_AUTH = "guest_auth"
     KNOWLEDGE = "knowledge"  # Knowledge Anvil - Educational queries and Anvil knowledge
@@ -50,6 +50,17 @@ class AgentType(Enum):
     DEFI_YIELD = "defi_yield"
     SECURITY_AUDITOR = "security_auditor"
     GAS_OPTIMIZER = "gas_optimizer"
+    
+    # Authenticated User Agents (requires login)
+    WALLET = "wallet"  # Wallet management & balances (authenticated only)
+    TRANSACTION_HISTORY = "transaction_history"  # Transaction history queries (authenticated only)
+    
+    # Workflow Agents (multi-step operations for authenticated users)
+    SWAP_WORKFLOW = "swap_workflow"  # Multi-step swap workflow
+    LENDING_WORKFLOW = "lending_workflow"  # Multi-step lending/deposit workflow
+    BUY_WORKFLOW = "buy_workflow"  # Multi-step fiat on-ramp workflow
+    TRANSFER_WORKFLOW = "transfer_workflow"  # Multi-step token transfer workflow
+    MONEY_MARKET_WORKFLOW = "money_market_workflow"  # Multi-step compare & select workflow
     
     # Enterprise Agents (8)
     COMPLIANCE_MONITOR = "compliance_monitor"
@@ -100,6 +111,35 @@ class AgentType(Enum):
         ]
     
     @classmethod
+    def get_authenticated_agents(cls) -> list["AgentType"]:
+        """Get list of agents that require authentication."""
+        return [
+            cls.WALLET,
+            cls.TRANSACTION_HISTORY,
+        ]
+    
+    @classmethod
+    def is_authenticated_agent(cls, agent_type: "AgentType") -> bool:
+        """Check if agent requires authentication."""
+        return agent_type in cls.get_authenticated_agents()
+    
+    @classmethod
+    def get_workflow_agents(cls) -> list["AgentType"]:
+        """Get list of workflow agents (multi-step operations)."""
+        return [
+            cls.SWAP_WORKFLOW,
+            cls.LENDING_WORKFLOW,
+            cls.BUY_WORKFLOW,
+            cls.TRANSFER_WORKFLOW,
+            cls.MONEY_MARKET_WORKFLOW,
+        ]
+    
+    @classmethod
+    def is_workflow_agent(cls, agent_type: "AgentType") -> bool:
+        """Check if agent is a workflow agent."""
+        return agent_type in cls.get_workflow_agents()
+    
+    @classmethod
     def get_enterprise_agents(cls) -> list["AgentType"]:
         """Get list of enterprise agents."""
         return [
@@ -115,5 +155,5 @@ class AgentType(Enum):
     
     @classmethod
     def get_all_agents(cls) -> list["AgentType"]:
-        """Get all 18 agents (excluding legacy aliases)."""
-        return cls.get_core_agents() + cls.get_enterprise_agents()
+        """Get all agents (excluding legacy aliases)."""
+        return cls.get_core_agents() + cls.get_authenticated_agents() + cls.get_enterprise_agents()

@@ -1,0 +1,21 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+exec_swap_ready_001_step1,2026-01-22T16:05:01.191094+00:00,execution,swap_execute,YES,1,2,swap 0.1 ETH to USDC,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 0.1 ETH → ~333.333000 USDC
+📊 **Rate:** 1 ETH = 3333.330000 USDC
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap_workflow,,,moonpay_swap_flow_handler,483,YES,swap,guest,en,FAIL,,bd73b829-5393-4ed2-a30b-7a505214175c,,0.0,,,,,
+exec_swap_ready_001_step2,2026-01-22T16:05:01.392882+00:00,execution,swap_execute,YES,2,2,yes,"💱 **Swap Quote**
+
+**From:** 0.1 ETH
+**To:** ~333.333000 USDC
+
+**Rate:** 1 ETH = 3333.330000 USDC
+**Price Impact:** 0.05%
+**Network:** Ethereum
+
+Ready to execute? Type **1** to confirm and proceed with the swap.",,,,swap_handler,201,YES,swap,guest,en,FAIL,,bd73b829-5393-4ed2-a30b-7a505214175c,,0.0,,,,,

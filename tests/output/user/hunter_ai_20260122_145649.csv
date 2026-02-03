@@ -1,0 +1,12 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_sentiment_001,2026-01-22T14:56:57.843829+00:00,agent,hunter_sentiment,NO,1,1,ethereum sentiment,"Okay, here's the Ethereum sentiment analysis based on my assessment of real-time market data, social media, news, and technical indicators:
+
+**Ethereum (ETH) Sentiment Analysis**
+
+*   **Overall Sentiment Score:** 62/100 (leaning Bullish)
+
+*   **Classification:** Bullish-Neutral
+
+**Key Drivers of Sentiment:**
+
+*   **Real-Time Market Data:** Ethereum is currently trading at $2,942.84, with a 24-hour change of -1.15%. While the price has decreased slightly in the last 24 hours, it's holding above t",hunter_ai,hunter_ai,"[{""source_type"": ""api"", ""source_name"": ""CoinGecko"", ""source_id"": ""coin:ethereum"", ""url"": ""https://www.coingecko.com/en/coins/ethereum"", ""citation_text"": ""Real-time price data for ETHEREUM from CoinGec",authenticated_supervisor,6976,NO,,authenticated,en,PASS,,2ab8639a-866b-44b9-8dcd-1d69d08745ac,PASS,0.95,"The agent's response aligns well with the expected behavior. It provides a sentiment analysis for Ethereum, including a classification (Bullish-Neutral), a score (62/100), and a breakdown of the sentiment based on various sources (market data, social media, news, technical analysis). The response is contextually appropriate, given the user's input and the additional context provided. The agent also includes relevant risk factors, a short-term prediction, and a disclaimer, which are all good prac",,,,

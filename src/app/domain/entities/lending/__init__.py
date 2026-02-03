@@ -1,21 +1,25 @@
-"""Lending domain entities."""
+"""
+Lending domain entities.
+"""
 
-from app.domain.entities.lending.aave_market import AaveMarket
-from app.domain.entities.lending.aave_position import (
-    AaveBorrowPosition,
-    AavePosition,
-    AaveSupplyPosition,
+from app.domain.entities.lending.lending_position import (
+    LendingPosition,
+    SupplyPosition,
+    BorrowPosition,
 )
-from app.domain.entities.lending.morpho_market import MorphoMarket
-from app.domain.entities.lending.morpho_position import MorphoPosition
-from app.domain.entities.lending.morpho_vault import MorphoVault
+from app.domain.entities.lending.lending_transaction import LendingTransaction
+from app.domain.entities.lending.user_lending_preferences import UserLendingPreferences
+from app.domain.entities.lending.lending_health_check import LendingHealthCheck
+from app.domain.entities.lending.leverage_loop_execution import LeverageLoopExecution
+from app.domain.entities.lending.lending_alert import LendingAlert
 
 __all__ = [
-    "AaveMarket",
-    "AavePosition",
-    "AaveSupplyPosition",
-    "AaveBorrowPosition",
-    "MorphoVault",
-    "MorphoMarket",
-    "MorphoPosition",
+    "LendingPosition",
+    "SupplyPosition",
+    "BorrowPosition",
+    "LendingTransaction",
+    "UserLendingPreferences",
+    "LendingHealthCheck",
+    "LeverageLoopExecution",
+    "LendingAlert",
 ]

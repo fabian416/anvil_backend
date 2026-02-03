@@ -96,6 +96,16 @@ class IntentClassifier:
         "optimize_gas": AgentType.GAS_OPTIMIZER,
         "gas_estimation": AgentType.GAS_OPTIMIZER,
         
+        # Authenticated user intents (requires login)
+        "wallet_info": AgentType.WALLET,
+        "check_balance": AgentType.WALLET,
+        "list_wallets": AgentType.WALLET,
+        "wallet_status": AgentType.WALLET,
+        "transaction_history": AgentType.TRANSACTION_HISTORY,
+        "recent_transactions": AgentType.TRANSACTION_HISTORY,
+        "transaction_details": AgentType.TRANSACTION_HISTORY,
+        "activity_summary": AgentType.TRANSACTION_HISTORY,
+        
         # Enterprise intents
         "check_compliance": AgentType.COMPLIANCE_MONITOR,
         "screen_wallet": AgentType.COMPLIANCE_MONITOR,
@@ -109,6 +119,13 @@ class IntentClassifier:
         "cross_chain": AgentType.BRIDGE_CROSSCHAIN,
         "borrow_assets": AgentType.LENDING_BORROWING,
         "leverage_position": AgentType.LENDING_BORROWING,
+
+        # Lending workflow intents
+        "check_lending_health": AgentType.LENDING_WORKFLOW,
+        "supply_assets": AgentType.LENDING_WORKFLOW,
+        "view_lending_positions": AgentType.LENDING_WORKFLOW,
+        "compare_lending_rates": AgentType.DEFI_YIELD,
+        "lending_yield": AgentType.DEFI_YIELD,
         "manage_nfts": AgentType.NFT_ASSET_MANAGER,
         "nft_valuation": AgentType.NFT_ASSET_MANAGER,
         "dao_voting": AgentType.DAO_GOVERNANCE,
@@ -269,17 +286,38 @@ Guidelines:
 - **Price queries** (e.g., "what is the price of btc?", "how much is ETH?", "current price of bitcoin") → Use "price_query" intent
 - **Anvil knowledge** (e.g., "what is Anvil?", "how does Anvil work?", "Anvil features") → Use "anvil_knowledge" intent
 - **General questions** (e.g., "what is DeFi?", "explain yield farming", "what are NFTs?") → Use "general_question" intent
+- **Wallet queries** (e.g., "show my wallets", "what's my wallet address?", "list connected wallets") → Use "wallet_info" intent (requires auth)
+- **Balance queries** (e.g., "what's my balance?", "how much ETH do I have?", "my crypto balance") → Use "check_balance" intent (requires auth)
+- **Transaction history** (e.g., "show my transactions", "recent activity", "my transaction history") → Use "transaction_history" intent (requires auth)
 - **Shortcuts** (e.g., "swap BTC to ETH", "show my portfolio", "lend USDC") → Use appropriate intent:
   * "swap BTC to ETH" → "swap_tokens"
   * "show my portfolio" → "optimize_portfolio"
-  * "lend USDC" → "find_yield"
-  * "what's my balance?" → "optimize_portfolio"
+  * "lend USDC" → "supply_assets" (lending workflow)
+  * "supply ETH" → "supply_assets" (lending workflow)
+  * "deposit USDC" → "supply_assets" (lending workflow)
+  * "earn yield" → "supply_assets" (lending workflow)
+  * "what's my balance?" → "check_balance" (authenticated wallet agent)
+  * "show my wallets" → "wallet_info" (authenticated wallet agent)
+  * "my transactions" → "transaction_history" (authenticated)
+- **Lending Operations** → Use lending-specific intents:
+  * "check my lending position" / "check health factor" → "check_lending_health"
+  * "supply ETH" / "deposit USDC" / "earn yield" → "supply_assets"
+  * "borrow USDC" / "take a loan" / "leverage" → "borrow_assets"
+  * "compare lending rates" / "best yield" → "compare_lending_rates"
+  * "show my lending positions" → "view_lending_positions"
+  * Spanish: "depositar ETH" / "suministrar USDC" → "supply_assets"
+  * Spanish: "pedir prestado" / "apalancamiento" → "borrow_assets"
+  * Portuguese: "depositar ETH" / "fornecer USDC" → "supply_assets"
+  * Portuguese: "pegar emprestado" / "alavancagem" → "borrow_assets"
+  * Chinese: "存款" / "供应" → "supply_assets"
+  * Chinese: "借入" / "杠杆" → "borrow_assets"
 - **Multi-step operations** → Use "general_chat" and let SupervisorCoordinator create workflow
 - Use "general_chat" for casual conversation or unclear intent
 - Use specific intent if message clearly matches (confidence >= 0.85)
 - Consider conversation context for multi-turn conversations
 - Enterprise intents (compliance, multisig, crisis) require explicit keywords
 - **IMPORTANT**: "what is X" or "explain X" queries should use "general_question" intent for fast single-agent response
+- **AUTHENTICATED INTENTS**: wallet_info, check_balance, transaction_history require user login - route to these only if user is asking about THEIR personal data
 """
     
     def _build_complex_task_prompt(
@@ -311,6 +349,8 @@ Agent Capabilities:
 - defi_yield: Yield farming
 - security_auditor: Smart contract security
 - gas_optimizer: Gas optimization
+- wallet: Wallet management & balances (authenticated only)
+- transaction_history: Transaction history & analytics (authenticated only)
 - compliance_monitor: AML/KYC (enterprise)
 - multisig_coordinator: Treasury management (enterprise)
 - alert_monitoring: Real-time alerts (enterprise)

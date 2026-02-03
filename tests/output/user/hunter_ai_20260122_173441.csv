@@ -1,0 +1,2 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_signals_002,2026-01-22T17:34:42.060719+00:00,agent,hunter_signals,NO,1,1,ETH buy or sell signal,,hunter_ai,,,,191,NO,,authenticated,en,FAIL,,128bd2e8-3d2b-4699-bf7a-e6cabd91ba3b,,0.0,,,,,

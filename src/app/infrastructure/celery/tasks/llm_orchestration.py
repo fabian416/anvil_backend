@@ -184,32 +184,5 @@ def cleanup_old_llm_data(days_to_keep: int = 90):
 # ============================================================================
 # TASK SCHEDULE
 # ============================================================================
-
-# Configure Celery Beat schedule
-celery_app.conf.beat_schedule = {
-    # Recalculate rankings every hour
-    "recalculate-llm-rankings": {
-        "task": "recalculate_llm_rankings",
-        "schedule": 3600.0,  # Every hour
-    },
-    # Aggregate telemetry every hour
-    "aggregate-llm-telemetry": {
-        "task": "aggregate_llm_telemetry",
-        "schedule": 3600.0,  # Every hour
-    },
-    # Health checks every 5 minutes
-    "llm-provider-health-checks": {
-        "task": "llm_provider_health_checks",
-        "schedule": 300.0,  # Every 5 minutes
-    },
-    # Reset daily budgets at midnight
-    "reset-daily-budgets": {
-        "task": "reset_daily_budgets",
-        "schedule": 86400.0,  # Daily
-    },
-    # Cleanup old data every week
-    "cleanup-old-llm-data": {
-        "task": "cleanup_old_llm_data",
-        "schedule": 604800.0,  # Weekly
-    },
-}
+# NOTE: Beat schedule is defined in app.py - the single source of truth
+# Do NOT define beat_schedule here to avoid conflicts

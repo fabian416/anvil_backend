@@ -1,0 +1,19 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_signals_001,2026-01-22T17:02:27.500906+00:00,agent,hunter_signals,NO,1,1,BTC trading signals,"💹 **Trading Signal for BTC**
+
+**Signal:** 🟡 BUY
+**Strength:** 64/100
+**Confidence:** 62%
+**Timeframe:** 4h
+
+**Entry Price:** $1,964.57
+**Stop Loss:** $1,852.27
+**Take Profit:** $2,189.16
+
+**Factor Scores:**
+- Sentiment: 65/100
+- Prediction: 56/100
+- Risk: 71/100
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_signals_handler,2128,NO,,guest,en,FAIL,,09d6da64-ae62-4a25-8675-969c9848f4ea,PASS,0.95,"The agent's response aligns well with the expected behavior. It provides a trading signal for BTC, including entry/exit points (Entry Price, Take Profit), Stop Loss, and confidence levels (Strength, Confidence, Factor Scores). The response is contextually appropriate, given the user's input and the additional context provided. The response demonstrates an understanding of the user's intent to receive trading signals.",,,,

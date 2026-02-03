@@ -32,6 +32,7 @@ class PrivySettings(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     app_id: str = Field(..., alias="APP_ID", description="Privy App ID")
+    client_id: str = Field(default="", alias="CLIENT_ID", description="Privy Client ID (for frontend SDK)")
     app_secret: str = Field(default="", alias="APP_SECRET", description="Privy App Secret")
     api_base_url: str = Field(
         default="https://api.privy.io",

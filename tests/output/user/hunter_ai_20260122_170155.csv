@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_prediction_002,2026-01-22T17:01:57.834784+00:00,agent,hunter_prediction,NO,1,1,will ETH go up,"📈 **Price Prediction for ETH**
+
+**Current Price:** $1,964.57
+**7-Day Forecast:** $2,023.50
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_prediction_handler,461,NO,,guest,en,FAIL,,9f24463f-13ec-4788-9ed0-ba2d6358e25e,PASS,0.95,"The agent's response successfully provides a price prediction for ETH, including a 7-day forecast, expected change, direction, and confidence level. It also mentions the model used and the horizon, fulfilling the expected behavior. The response is contextually appropriate, given the user's question about ETH's price movement. The response demonstrates a clear understanding of the user's intent to get a price prediction.",,,,

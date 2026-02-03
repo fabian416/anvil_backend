@@ -1,0 +1,11 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+buy_basic_003,2026-01-22T17:13:51.501513+00:00,workflow,buy_basic,NO,1,1,buy BTC with card,"💰 **Buying ₿ BTC**
+
+**Step 2 of 3:** How much USD would you like to spend?
+
+💡 *Enter amount in USD:*
+• `50` ($50)
+• `100` ($100)
+• `500` ($500)
+
+📊 *Minimum: $20 • Maximum: $10,000*",buy_workflow,,,buy_handler,493,NO,,guest,en,FAIL,,e5bcd9d5-773f-4ac3-97bc-009c18b23af0,PASS,0.95,"The agent's response aligns with the expected behavior. The user initiated a 'buy BTC with card' request, and the agent correctly interpreted this as a fiat-to-crypto purchase. The agent then prompted the user for the amount of USD they would like to spend, providing suggested amounts and limits, which is appropriate for this scenario. The response demonstrates an understanding of the user's intent and provides a relevant next step in the buy workflow.",,,,

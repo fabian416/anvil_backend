@@ -11,14 +11,16 @@ from uuid import UUID
 
 from dishka.integrations.fastapi import FromDishka, inject
 from fastapi import APIRouter, HTTPException, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.application.chat.services.conversation_service import ConversationService
 from app.application.chat.services.user_service import UserService
 from app.application.chat.services.rate_limit_service import RateLimitService
 from app.application.chat.services.conversation_memory import ConversationMemory
 from app.application.chat.services.intent_detector_v2 import IntentDetectorV2, RESTRICTED_INTENTS
+from app.application.chat.services.user_context_service import UserContextService
 from app.application.chat.handlers.swap_handler_v2 import SwapHandlerV2
+from app.application.chat.commands.send_message_with_supervisor import SendMessageWithSupervisor
 from app.application.chat.handlers.moonpay_swap_flow_handler import MoonPaySwapFlowHandler
 from app.application.chat.handlers.moonpay_swap_handler import MoonPaySwapHandler
 from app.application.chat.handlers.restricted_handler import RestrictedActionHandler
@@ -28,6 +30,15 @@ from app.infrastructure.adapters.chat_unified_repository_sqla import ChatMessage
 from app.application.common.services.current_user import CurrentUserService
 from app.application.common.exceptions.authorization import AuthorizationError
 from app.infrastructure.auth.exceptions import AuthenticationError
+from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.entities.transaction import Transaction, TransactionId
+from app.domain.entities.wallet import WalletId
+from app.domain.enums.chain_type import ChainType
+from app.domain.enums.transaction_status import TransactionStatus
+from app.domain.enums.transaction_type import TransactionType
+from app.domain.value_objects.user_id import UserId
+from app.domain.value_objects.created_at import CreatedAt
+from decimal import Decimal
 
 
 # ========================================
@@ -89,6 +100,8 @@ class ConversationWithMessagesResponse(BaseModel):
 
 class ExecuteActionData(BaseModel):
     """Execute action data for executable intents (swap, deposit, withdraw, etc.)."""
+    
+    model_config = {"extra": "ignore"}  # Ignore unknown fields from workflows
 
     action_type: str = Field(..., description="Type of action: swap, deposit, withdraw, transfer, approve, bridge")
     provider: str | None = Field(default=None, description="Execution provider: privy_0x for Privy + 0x swaps")
@@ -96,6 +109,18 @@ class ExecuteActionData(BaseModel):
     from_token: str | None = Field(default=None, description="Source token symbol or address")
     to_token: str | None = Field(default=None, description="Destination token symbol (for swap)")
     amount: str | None = Field(default=None, description="Amount to execute (human readable)")
+    
+    @field_validator("amount", "quote_amount", "exchange_rate", "network_fee_usd", 
+                     "min_amount_out", "price_impact", "gas_estimate",
+                     "from_token_price_usd", "to_token_price_usd", 
+                     "from_token_24h_change", "value_usd", mode="before")
+    @classmethod
+    def coerce_to_str(cls, v):
+        """Coerce numeric values to string (workflows may return int/float)."""
+        if v is not None:
+            return str(v)
+        return v
+    
     protocol: str | None = Field(default=None, description="Protocol name (for deposit/withdraw)")
     vault_address: str | None = Field(default=None, description="Vault address (for Morpho deposits)")
     asset_address: str | None = Field(default=None, description="Underlying asset address (for Morpho deposits)")
@@ -114,9 +139,46 @@ class ExecuteActionData(BaseModel):
     # Quote preview fields (for display before execution)
     quote_id: str | None = Field(default=None, description="Quote identifier")
     quote_amount: str | None = Field(default=None, description="Estimated output amount")
+    min_amount_out: str | None = Field(default=None, description="Minimum output amount with slippage")
     exchange_rate: str | None = Field(default=None, description="Exchange rate for the swap")
     network_fee_usd: str | None = Field(default=None, description="Estimated network fee in USD")
     expires_at: str | None = Field(default=None, description="Quote expiration timestamp")
+    
+    # Price impact and gas fields
+    price_impact: str | None = Field(default=None, description="Price impact percentage")
+    gas_estimate: str | None = Field(default=None, description="Estimated gas units")
+    
+    # Token address fields
+    from_token_address: str | None = Field(default=None, description="Source token contract address")
+    to_token_address: str | None = Field(default=None, description="Destination token contract address")
+    
+    # Market data fields
+    from_token_price_usd: str | None = Field(default=None, description="Source token price in USD")
+    to_token_price_usd: str | None = Field(default=None, description="Destination token price in USD")
+    from_token_24h_change: str | None = Field(default=None, description="Source token 24h price change %")
+    value_usd: str | None = Field(default=None, description="Total transaction value in USD")
+    
+    # ========================================
+    # Multi-step execution fields (Hyperliquid)
+    # ========================================
+    execution_mode: str | None = Field(default=None, description="Execution mode: 'multi_step' for Hyperliquid")
+    steps: list[dict[str, Any]] | None = Field(default=None, description="Array of execution steps for multi-step swaps")
+    current_step: int | None = Field(default=None, description="Current step number (1-indexed)")
+    total_steps: int | None = Field(default=None, description="Total number of steps")
+    
+    # Hyperliquid balance info
+    hyperliquid_balances: dict[str, Any] | None = Field(default=None, description="User's Hyperliquid Perps/Spot balances")
+    requires_deposit: bool | None = Field(default=None, description="Whether user needs to deposit to Hyperliquid")
+    requires_transfer: bool | None = Field(default=None, description="Whether user needs to transfer from Perps to Spot")
+    
+    # Bridge configuration
+    bridge_config: dict[str, Any] | None = Field(default=None, description="Hyperliquid bridge contract addresses")
+    
+    # LiFi bridge configuration (for Hyperliquid swaps via LiFi)
+    lifi_config: dict[str, Any] | None = Field(
+        default=None, 
+        description="LiFi bridge config with token_balances (can_pay_gas, usdc, weth per chain)"
+    )
 
 
 class ChatResponse(BaseModel):
@@ -566,7 +628,7 @@ def create_conversations_router() -> APIRouter:
     @router.post(
         "/{conversation_id}/messages",
         response_model=ChatResponse,
-        status_code=status.HTTP_201_CREATED,
+        status_code=status.HTTP_200_OK,
         summary="Send Message",
         description="""
         Send a message to a conversation.
@@ -597,6 +659,9 @@ def create_conversations_router() -> APIRouter:
         message_repository: FromDishka[ChatMessageRepositorySqla],
         llm_gateway: FromDishka[LLMGateway],
         moonpay_swap_handler: FromDishka[MoonPaySwapHandler],
+        swap_handler_v2: FromDishka[SwapHandlerV2],  # Hyperliquid spot swap handler
+        supervisor_command: FromDishka[SendMessageWithSupervisor] = None,  # Supervisor for authenticated users
+        user_context_service: FromDishka[UserContextService] = None,  # Context-aware agents
     ) -> ChatResponse:
         """Send a message to a conversation."""
         from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
@@ -660,6 +725,231 @@ def create_conversations_router() -> APIRouter:
         # Get conversation context for memory
         context = await conversation_memory.get_context(conversation_id)
         
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # ============================================================
+        # ✨ AUTHENTICATED SUPERVISOR PATH (LLM-based Multi-Agent) ✨
+        # ============================================================
+        # For authenticated users, use the AuthenticatedSupervisorCoordinator
+        # for intelligent LLM-based routing to multiple agents.
+        # This provides the same quality as guest chat but with real data access.
+        # ============================================================
+        if not user.is_guest and supervisor_command is not None:
+            try:
+                logger.info(
+                    f"🔄 Using Authenticated Supervisor for user {user.identifier}",
+                    extra={
+                        "conversation_id": str(conversation_id),
+                        "message_preview": request_body.content[:100],
+                        "wallet_address": wallet_address[:10] + "..." if wallet_address else None,
+                    }
+                )
+                
+                # Build conversation history from context
+                # Note: context.messages is returned NEWEST-FIRST from the repository
+                # We need the most recent messages for workflow continuation detection
+                conversation_history = []
+                if context.messages:
+                    # Take first 10 (newest) messages and reverse to get chronological order
+                    # This matches MAX_CONTEXT_MESSAGES in conversation_memory.py
+                    recent_messages = context.messages[:10]
+                    for msg in reversed(recent_messages):  # Oldest-first for history
+                        # ChatMessage objects have role and content attributes
+                        role = msg.role.value if hasattr(msg.role, 'value') else str(msg.role)
+                        msg_dict = {
+                            "role": role,
+                            "content": msg.content if hasattr(msg, 'content') else str(msg),
+                        }
+                        # Include metadata for workflow continuation detection
+                        if hasattr(msg, 'metadata') and msg.metadata:
+                            msg_dict["metadata"] = msg.metadata
+                        conversation_history.append(msg_dict)
+                
+                # Build user context for supervisor
+                user_context = {
+                    "user_id": user.identifier,
+                    "wallet_address": wallet_address,
+                    "is_authenticated": True,
+                }
+                
+                # Load context-aware data for personalized responses
+                if user_context_service and not user.is_guest:
+                    try:
+                        context_aware = await user_context_service.get_context(user.id)
+                        if context_aware:
+                            user_context["context_aware"] = context_aware
+                            logger.debug(
+                                f"Loaded context-aware data: portfolio={context_aware.portfolio_state}, "
+                                f"activity={context_aware.activity_level}, type={context_aware.user_type}"
+                            )
+                            
+                            # If context_aware shows zero balance but user has wallet,
+                            # try to fetch real-time portfolio data as fallback
+                            # This handles cases where Celery task hasn't synced balance yet
+                            if (
+                                wallet_address
+                                and float(context_aware.total_balance_usd or 0) == 0
+                                and hasattr(handler_service, '_portfolio_service')
+                                and handler_service._portfolio_service
+                            ):
+                                try:
+                                    from app.domain.enums.chain_type import ChainType
+                                    from decimal import Decimal
+                                    
+                                    logger.info(f"Context-aware shows $0, fetching real-time balance for {wallet_address[:10]}...")
+                                    portfolio = await handler_service._portfolio_service.get_portfolio_by_address(
+                                        address=wallet_address,
+                                        chain=ChainType.BASE,
+                                    )
+                                    
+                                    if portfolio and portfolio.total_usd > 0:
+                                        # Update context_aware with real-time balance
+                                        context_aware.total_balance_usd = Decimal(str(portfolio.total_usd))
+                                        context_aware.token_count = len(portfolio.tokens) if portfolio.tokens else 0
+                                        context_aware.primary_chain = portfolio.chain
+                                        logger.info(f"Updated context with real-time balance: ${portfolio.total_usd:.2f}")
+                                except Exception as portfolio_err:
+                                    logger.debug(f"Real-time portfolio fetch failed (non-critical): {portfolio_err}")
+                    except Exception as ctx_err:
+                        logger.warning(f"Failed to load context-aware data: {ctx_err}")
+                
+                # Check for fast-path greeting
+                if supervisor_command.is_simple_greeting(request_body.content):
+                    supervisor_result = await supervisor_command.execute_fast_path_greeting(
+                        conversation_id=conversation_id,
+                        message=request_body.content,
+                        language=request_body.language,
+                    )
+                else:
+                    # Full supervisor workflow
+                    supervisor_result = await supervisor_command.execute(
+                        conversation_id=conversation_id,
+                        message=request_body.content,
+                        language=request_body.language,
+                        conversation_history=conversation_history,
+                        user_context=user_context,
+                    )
+                
+                # Create user message (timedelta already imported at module level)
+                user_timestamp = datetime.now(UTC)
+                from app.domain.chat.entities.chat_message import ChatMessage
+                
+                user_message = ChatMessage.create_user_message(
+                    conversation_id=conversation_id,
+                    content=request_body.content,
+                    language=request_body.language,
+                    created_at=user_timestamp,
+                )
+                await message_repository.save(user_message)
+                
+                # Create assistant message
+                assistant_timestamp = user_timestamp + timedelta(milliseconds=1)
+                
+                # Build message metadata including workflow state for multi-step continuation
+                message_metadata = {
+                    "agents_used": supervisor_result.agents_used,
+                    "workflow_type": supervisor_result.workflow_type,
+                    "task_count": supervisor_result.task_count,
+                    "total_time_ms": supervisor_result.total_time_ms,
+                }
+                
+                # Include workflow state from supervisor result (for multi-step workflows)
+                if supervisor_result.metadata:
+                    if supervisor_result.metadata.get("workflow_state"):
+                        message_metadata["workflow_state"] = supervisor_result.metadata["workflow_state"]
+                    if supervisor_result.metadata.get("workflow_name"):
+                        message_metadata["workflow_name"] = supervisor_result.metadata["workflow_name"]
+                
+                assistant_message = ChatMessage.create_assistant_message(
+                    conversation_id=conversation_id,
+                    content=supervisor_result.content,
+                    intent="SUPERVISOR_WORKFLOW",
+                    handler="authenticated_supervisor",
+                    is_restricted_action=False,
+                    language=request_body.language,
+                    metadata=message_metadata,
+                    created_at=assistant_timestamp,
+                )
+                await message_repository.save(assistant_message)
+                
+                # Build response
+                routing = {
+                    "intent": "SUPERVISOR_WORKFLOW",
+                    "confidence": 1.0,
+                    "handler": "authenticated_supervisor",
+                    "language": request_body.language,
+                    "user_type": user.user_type.value,
+                    "agents_used": supervisor_result.agents_used,
+                }
+                
+                rate_limit_status = {
+                    "user_type": user.user_type.value,
+                    "remaining_hourly": rate_result.remaining_hourly,
+                    "remaining_daily": rate_result.remaining_daily,
+                }
+                
+                enrichment = {
+                    "agent_squad": True,
+                    "workflow_type": supervisor_result.workflow_type,
+                    "task_count": supervisor_result.task_count,
+                    "agents_used": supervisor_result.agents_used,
+                    "agent_timings": supervisor_result.agent_timings,
+                    "sources": supervisor_result.sources,
+                    "total_time_ms": supervisor_result.total_time_ms,
+                }
+                
+                # Extract execute_data from supervisor result (workflow agents like swap_workflow)
+                execute_action_data = None
+                if supervisor_result.execute_data:
+                    try:
+                        execute_action_data = ExecuteActionData(**supervisor_result.execute_data)
+                    except Exception as ed_err:
+                        logger.warning(f"Failed to parse execute_data: {ed_err}")
+                
+                return ChatResponse(
+                    conversation_id=str(conversation_id),
+                    message_id=str(assistant_message.id),
+                    user_message={
+                        "id": str(user_message.id),
+                        "role": user_message.role.value,
+                        "content": user_message.content,
+                        "created_at": user_message.created_at.isoformat(),
+                    },
+                    agent_message={
+                        "id": str(assistant_message.id),
+                        "role": assistant_message.role.value,
+                        "content": assistant_message.content,
+                        "created_at": assistant_message.created_at.isoformat(),
+                        "sources": supervisor_result.sources,  # Match guest endpoint structure
+                    },
+                    routing=routing,
+                    enrichment=enrichment,
+                    registration_required=None,  # Authenticated users don't need registration
+                    rate_limit_status=rate_limit_status,
+                    execute=execute_action_data,  # Execute data from workflow agents (swap, lending, etc.)
+                )
+                
+            except Exception as e:
+                import traceback
+                logger.warning(
+                    f"Authenticated Supervisor failed, falling back to legacy flow: {e}",
+                    extra={
+                        "conversation_id": str(conversation_id),
+                        "error": str(e),
+                        "traceback": traceback.format_exc(),
+                    },
+                )
+                # Print full traceback to console for debugging
+                print(f"[SUPERVISOR ERROR] {e}")
+                traceback.print_exc()
+                # Fall through to legacy flow below
+        
+        # ============================================================
+        # LEGACY FLOW (Keyword-based Intent Detection)
+        # Used for: Guests, or when Supervisor fails/unavailable
+        # ============================================================
+        
         # Detect intent with context
         intent_detector = IntentDetectorV2()
         intent_result = intent_detector.detect(
@@ -669,8 +959,6 @@ def create_conversations_router() -> APIRouter:
         )
         
         # Debug logging for intent detection
-        import logging
-        logger = logging.getLogger(__name__)
         logger.debug(
             f"Intent detected: {intent_result.intent.value} "
             f"(confidence: {intent_result.confidence}, "
@@ -870,6 +1158,7 @@ def create_conversations_router() -> APIRouter:
         execute_data = None  # Execute action data for /execute endpoint
         used_agent_gateway = False  # Flag for when AgentGateway (LLM) was used
         handler_result = {}  # Default empty handler result for metadata extraction
+        workflow_metadata = None  # Workflow metadata from BuyWorkflowAgent for state persistence
         
         # Handle based on intent
         if intent_result.is_restricted:
@@ -894,6 +1183,7 @@ def create_conversations_router() -> APIRouter:
                     "BALANCE": ChatIntent.BALANCE,
                     "ACTIVITY": ChatIntent.ACTIVITY,
                     "RECEIVE": ChatIntent.RECEIVE,
+                    "SEND": ChatIntent.SEND,
                 }
                 mapped_intent = intent_map.get(intent_result.intent.value, ChatIntent.GENERAL_CONVERSATION)
                 
@@ -912,71 +1202,9 @@ def create_conversations_router() -> APIRouter:
                 pending_action = handler_result.get("pending_action")
                 registration_required = None
         
-        elif intent_result.intent.value.startswith("SWAP"):
-            # Swap flow (including continuation)
-            try:
-                swap_handler = SwapHandlerV2()
-                
-                # Check for continuation metadata
-                continuation_step = None
-                continuation_value = None
-                if intent_result.metadata:
-                    continuation_step = intent_result.metadata.get("step")
-                    continuation_value = intent_result.metadata.get("value")
-                
-                # Get previous swap info from context for multi-turn flow
-                previous_swap_info = context.pending_swap_info
-                
-                handler_result = await swap_handler.handle(
-                    message=request_body.content,
-                    context=context,
-                    language=request_body.language,
-                    continuation_step=continuation_step,
-                    continuation_value=continuation_value,
-                    previous_swap_info=previous_swap_info,
-                )
-                agent_content = handler_result.content
-                enrichment = handler_result.enrichment
-                pending_action = handler_result.pending_action
-                
-                # Extract execute data if swap is complete (no pending_action means ready to execute)
-                execute_data = None
-                if handler_result.execute_data and not pending_action:
-                    # Swap is complete and ready for execution
-                    execute_data = ExecuteActionData(**handler_result.execute_data)
-                
-                if user.is_guest and handler_result.requires_registration:
-                    registration_required = {
-                        "required": True,
-                        "reason": "action_required",
-                        "signup_url": "/signup",
-                    }
-            except Exception as e:
-                # Log the error for debugging
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"SwapHandlerV2 error for message '{request_body.content}': {e}", exc_info=True)
-                
-                # Fallback to guest handler service for swap
-                from app.application.chat.services.intent_detector import ChatIntent
-                context_str = conversation_memory.build_context_string(context)
-                handler_result = await handler_service.handle_intent(
-                    intent=ChatIntent.SWAP,
-                    content=request_body.content,
-                    language=request_body.language,
-                    context=context_str,
-                    is_authenticated=not user.is_guest,
-                )
-                agent_content = handler_result.get("content", "")
-                enrichment = handler_result.get("enrichment")
-                if user.is_guest and handler_result.get("requires_registration"):
-                    registration_required = {
-                        "required": True,
-                        "reason": "action_required",
-                        "signup_url": "/signup",
-                    }
-
         elif intent_result.intent.value.startswith("MOONPAY_SWAP"):
+            # MOONPAY_SWAP: Uses Privy + 0x Protocol for major tokens (ETH, BTC, SOL, etc.)
+            # This MUST be checked BEFORE generic SWAP to avoid routing to wrong handler
             # MoonPay Swap flow (including continuation)
             try:
                 moonpay_swap_flow_handler = MoonPaySwapFlowHandler(
@@ -1023,6 +1251,90 @@ def create_conversations_router() -> APIRouter:
                 logger = logging.getLogger(__name__)
                 logger.error(f"MoonPaySwapFlowHandler error for message '{request_body.content}': {e}", exc_info=True)
 
+                # Fallback to guest handler service for swap
+                from app.application.chat.services.intent_detector import ChatIntent
+                context_str = conversation_memory.build_context_string(context)
+                handler_result = await handler_service.handle_intent(
+                    intent=ChatIntent.SWAP,
+                    content=request_body.content,
+                    language=request_body.language,
+                    context=context_str,
+                    is_authenticated=not user.is_guest,
+                )
+                agent_content = handler_result.get("content", "")
+                enrichment = handler_result.get("enrichment")
+                if user.is_guest and handler_result.get("requires_registration"):
+                    registration_required = {
+                        "required": True,
+                        "reason": "action_required",
+                        "signup_url": "/signup",
+                    }
+
+        elif intent_result.intent.value.startswith("SWAP"):
+            # SWAP: Uses Hyperliquid spot quotes (meme tokens only)
+            # Note: Major tokens (ETH, BTC, etc.) are handled by MOONPAY_SWAP above
+            try:
+                # Use injected swap_handler_v2 with Hyperliquid integration
+                swap_handler = swap_handler_v2
+                
+                # Check for continuation metadata
+                continuation_step = None
+                continuation_value = None
+                if intent_result.metadata:
+                    continuation_step = intent_result.metadata.get("step")
+                    continuation_value = intent_result.metadata.get("value")
+                
+                # Get previous swap info from context for multi-turn flow
+                previous_swap_info = context.pending_swap_info
+                
+                # Get user context-aware data for balance checking
+                # Note: user_context is only defined for authenticated users with supervisor_command
+                swap_user_context = None
+                try:
+                    if user_context and user_context.get("context_aware"):
+                        swap_user_context = user_context.get("context_aware")
+                except NameError:
+                    # user_context not defined (guest user without supervisor)
+                    pass
+                
+                # Try to load context if not already available
+                if swap_user_context is None and user_context_service and not user.is_guest:
+                    try:
+                        swap_user_context = await user_context_service.get_context(user.id)
+                    except Exception:
+                        pass  # Silently ignore - balance recommendation is not critical
+                
+                handler_result = await swap_handler.handle(
+                    message=request_body.content,
+                    context=context,
+                    language=request_body.language,
+                    continuation_step=continuation_step,
+                    continuation_value=continuation_value,
+                    previous_swap_info=previous_swap_info,
+                    user_context=swap_user_context,
+                )
+                agent_content = handler_result.content
+                enrichment = handler_result.enrichment
+                pending_action = handler_result.pending_action
+                
+                # Extract execute data if swap is complete (no pending_action means ready to execute)
+                execute_data = None
+                if handler_result.execute_data and not pending_action:
+                    # Swap is complete and ready for execution
+                    execute_data = ExecuteActionData(**handler_result.execute_data)
+                
+                if user.is_guest and handler_result.requires_registration:
+                    registration_required = {
+                        "required": True,
+                        "reason": "action_required",
+                        "signup_url": "/signup",
+                    }
+            except Exception as e:
+                # Log the error for debugging
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"SwapHandlerV2 error for message '{request_body.content}': {e}", exc_info=True)
+                
                 # Fallback to guest handler service for swap
                 from app.application.chat.services.intent_detector import ChatIntent
                 context_str = conversation_memory.build_context_string(context)
@@ -1117,15 +1429,14 @@ def create_conversations_router() -> APIRouter:
         
         elif intent_result.intent.value.startswith("BUY"):
             # Handle BUY and BUY_CONTINUE intents (on-ramp crypto purchase with multi-turn flow)
-            from app.application.chat.handlers.buy_handler import BuyHandler, BuyInfo
-            
+
             # [BUY_DEBUG] Log entry to BUY handler
             logger.info(f"[BUY_DEBUG] Entering BUY handler section")
             logger.info(f"[BUY_DEBUG] Intent: {intent_result.intent.value}")
             logger.info(f"[BUY_DEBUG] User is_guest: {user.is_guest}")
             logger.info(f"[BUY_DEBUG] User identifier: {user.identifier}")
-            
-            # For guests, use the old informative flow
+
+            # For guests, use the informative handler (legacy flow)
             if user.is_guest:
                 from app.application.chat.services.intent_detector import ChatIntent
                 context_str = conversation_memory.build_context_string(context)
@@ -1147,95 +1458,28 @@ def create_conversations_router() -> APIRouter:
                         "signup_url": "/signup",
                     }
             else:
-                # Authenticated users get the multi-turn conversational flow
-                logger.info(f"[BUY_DEBUG] User is authenticated, using multi-turn flow")
-                try:
-                    # Get dependencies for BuyHandler
-                    from app.domain.ports.wallet.wallet_repository import WalletRepository
-                    from dishka import AsyncContainer
-                    
-                    container: AsyncContainer = http_request.state.dishka_container
-                    wallet_repo = await container.get(WalletRepository)
-                    
-                    buy_handler = BuyHandler(
-                        wallet_repository=wallet_repo,
-                        current_user_service=current_user,
-                    )
-                    
-                    # Check for continuation metadata
-                    continuation_step = None
-                    continuation_value = None
-                    if intent_result.metadata:
-                        continuation_step = intent_result.metadata.get("step")
-                        continuation_value = intent_result.metadata.get("value")
-                    
-                    logger.info(f"[BUY_DEBUG] continuation_step: {continuation_step}")
-                    logger.info(f"[BUY_DEBUG] continuation_value: {continuation_value}")
-                    
-                    # Get previous buy info from context for multi-turn flow
-                    previous_buy_info = None
-                    if context.pending_buy_info:
-                        previous_buy_info = BuyInfo.from_dict(context.pending_buy_info)
-                        logger.info(f"[BUY_DEBUG] previous_buy_info: {previous_buy_info}")
-                    else:
-                        logger.info(f"[BUY_DEBUG] No previous_buy_info in context")
-                    
-                    # Handle based on whether it's a continuation or new buy request
-                    if continuation_step and continuation_value:
-                        # Continuation of multi-turn flow
-                        logger.info(f"[BUY_DEBUG] Calling handle_buy_continuation()")
-                        handler_result = await buy_handler.handle_buy_continuation(
-                            user_id=int(user.identifier),
-                            message=continuation_value,
-                            step=continuation_step,
-                            previous_buy_info=previous_buy_info,
-                            language=request_body.language,
-                        )
-                    else:
-                        # New buy request - start the flow
-                        logger.info(f"[BUY_DEBUG] Calling start_buy_flow()")
-                        handler_result = await buy_handler.start_buy_flow(
-                            user_id=int(user.identifier),
-                            message=request_body.content,
-                            language=request_body.language,
-                        )
-                    
-                    logger.info(f"[BUY_DEBUG] handler_result.content: {handler_result.content[:100] if handler_result.content else 'None'}...")
-                    logger.info(f"[BUY_DEBUG] handler_result.pending_action: {handler_result.pending_action}")
-                    agent_content = handler_result.content
-                    enrichment = {
-                        "wallet_address": handler_result.wallet_address,
-                        "supported_assets": handler_result.supported_assets,
-                        "supported_networks": handler_result.supported_networks,
-                        "requires_privy_modal": handler_result.requires_privy_modal,
-                        "action_type": "fund_wallet" if handler_result.requires_privy_modal else None,
-                    }
-                    pending_action = handler_result.pending_action
-                    
-                    # Extract execute data if buy is complete (no pending_action means ready to execute)
-                    if handler_result.execute_data and not pending_action:
-                        execute_data = ExecuteActionData(**handler_result.execute_data)
-                    
-                except Exception as e:
-                    # Log the error and fallback to old handler
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.error(f"BuyHandler error for message '{request_body.content}': {e}", exc_info=True)
-                    
-                    # Fallback to old handler service
-                    from app.application.chat.services.intent_detector import ChatIntent
-                    context_str = conversation_memory.build_context_string(context)
-                    handler_result = await handler_service.handle_intent(
-                        intent=ChatIntent.BUY,
-                        content=request_body.content,
-                        language=request_body.language,
-                        context=context_str,
-                        is_authenticated=True,
-                        user_id=int(user.identifier),
-                    )
-                    agent_content = handler_result.get("content", "")
-                    enrichment = handler_result.get("enrichment")
-                    pending_action = handler_result.get("pending_action")
+                # Authenticated users: This is the LEGACY FALLBACK path
+                # The primary path for authenticated users is the Supervisor (lines 688-853)
+                # If we reach here, it means the supervisor failed or is unavailable
+                # Use the informational handler - DO NOT use workflow agents directly
+                # to avoid conflicting state management with the supervisor
+                logger.warning(
+                    f"[BUY_DEBUG] Authenticated user in legacy BUY path - supervisor may have failed. "
+                    f"Using informational handler as fallback."
+                )
+                from app.application.chat.services.intent_detector import ChatIntent
+                context_str = conversation_memory.build_context_string(context)
+                handler_result = await handler_service.handle_intent(
+                    intent=ChatIntent.BUY,
+                    content=request_body.content,
+                    language=request_body.language,
+                    context=context_str,
+                    is_authenticated=True,
+                    user_id=int(user.identifier),
+                )
+                agent_content = handler_result.get("content", "")
+                enrichment = handler_result.get("enrichment")
+                pending_action = handler_result.get("pending_action")
         
         else:
             # Use existing handler service for other intents
@@ -1421,10 +1665,24 @@ Response Guidelines:
             }
         
         # Store buy info for multi-turn buy flow persistence
-        if intent_result.intent.value.startswith("BUY") and hasattr(handler_result, "metadata"):
-            buy_info = handler_result.metadata
-            if buy_info:
-                metadata["buy_info"] = buy_info
+        # For authenticated users using BuyWorkflowAgent, store workflow_state
+        # For guests using BuyHandler, store buy_info
+        if intent_result.intent.value.startswith("BUY"):
+            # Check if we have workflow_metadata from BuyWorkflowAgent (authenticated users)
+            if 'workflow_metadata' in locals() and workflow_metadata:
+                # Store workflow state from BuyWorkflowAgent
+                if workflow_metadata.get("workflow_state"):
+                    metadata["workflow_state"] = workflow_metadata["workflow_state"]
+                    logger.info(f"[BUY_DEBUG] Saving workflow_state to message metadata")
+                if workflow_metadata.get("workflow_name"):
+                    metadata["workflow_name"] = workflow_metadata["workflow_name"]
+                if workflow_metadata.get("current_step"):
+                    metadata["current_step"] = workflow_metadata["current_step"]
+            # Fallback for BuyHandler (guests or error fallback)
+            elif hasattr(handler_result, "metadata") and handler_result.metadata:
+                buy_info = handler_result.metadata
+                if buy_info:
+                    metadata["buy_info"] = buy_info
         
         # Determine handler name for routing info
         handler_name = "agent_gateway_llm" if used_agent_gateway else intent_result.handler
@@ -1476,6 +1734,33 @@ Response Guidelines:
             "remaining_daily": rate_result.remaining_daily,
         }
         
+        # Normalize enrichment to always include agent_timings and sources
+        # This ensures consistent response structure for frontend
+        if enrichment is None:
+            enrichment = {}
+        
+        # Ensure agent_timings is always present
+        if "agent_timings" not in enrichment:
+            enrichment["agent_timings"] = [{
+                "agent_type": handler_name or "handler",
+                "task_description": f"Handle {intent_result.intent.value} intent",
+                "execution_time_ms": 0,  # Not tracked in legacy flow
+                "status": "completed",
+            }]
+        
+        # Ensure sources is always present
+        if "sources" not in enrichment:
+            enrichment["sources"] = []
+        
+        # Build agent_message with sources included (match supervisor format)
+        agent_message_response = {
+            "id": str(assistant_message.id),
+            "role": assistant_message.role.value,
+            "content": assistant_message.content,
+            "created_at": assistant_message.created_at.isoformat(),
+            "sources": enrichment.get("sources", []),
+        }
+        
         return ChatResponse(
             conversation_id=str(conversation_id),
             message_id=str(assistant_message.id),
@@ -1485,12 +1770,7 @@ Response Guidelines:
                 "content": user_message.content,
                 "created_at": user_message.created_at.isoformat(),
             },
-            agent_message={
-                "id": str(assistant_message.id),
-                "role": assistant_message.role.value,
-                "content": assistant_message.content,
-                "created_at": assistant_message.created_at.isoformat(),
-            },
+            agent_message=agent_message_response,
             routing=routing,
             enrichment=enrichment,
             registration_required=registration_required,
@@ -1724,6 +2004,531 @@ Response Guidelines:
             message_id=str(message_id),
             metadata=updated_message.metadata,
         )
-    
+
+    # ------------------------------------------
+    # Leverage Loop Execute Endpoint
+    # ------------------------------------------
+
+    class ExecuteRequest(BaseModel):
+        """Request to execute a transaction step."""
+
+        transaction_hash: str = Field(..., description="Transaction hash of completed step")
+        metadata: dict[str, Any] | None = Field(None, description="Additional metadata (e.g., loop_id for leverage loops)")
+
+    class ExecuteResponse(BaseModel):
+        """Response from executing a transaction step."""
+
+        message: str = Field(..., description="Status message")
+        execute_data: dict[str, Any] | None = Field(None, description="Next step execute data (if any)")
+        metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+
+    @router.post(
+        "/{conversation_id}/execute",
+        response_model=ExecuteResponse,
+        status_code=status.HTTP_200_OK,
+        summary="Execute Transaction Step",
+        description="""
+        Execute an approved transaction and continue multi-step workflows.
+
+        **Use Cases:**
+        - Leverage loop continuation (multi-step supply → borrow → swap cycles)
+        - Multi-signature transaction workflows
+        - Batch transaction execution
+
+        **Metadata:**
+        - loop_id: UUID of leverage loop execution (for leverage loops)
+        - batch_id: UUID of batch execution (for batch transactions)
+        """,
+    )
+    @inject
+    async def execute_transaction(
+        conversation_id: UUID,
+        request: ExecuteRequest,
+        http_request: Request,
+        user_service: FromDishka[UserService],
+        current_user: FromDishka[CurrentUserService],
+        transaction_repository: FromDishka["TransactionRepository"] = None,
+    ) -> ExecuteResponse:
+        """Execute approved transaction and continue multi-step workflows."""
+        import logging
+        from app.application.chat.handlers.lending_handler import LendingHandler
+        from app.domain.ports.morpho_gateway import MorphoGateway
+        from app.domain.ports.balance_checker import IBalanceChecker
+        from app.domain.ports.lending_repository import ILendingRepository
+        from app.application.lending.interactors.leverage_loop_interactor import LeverageLoopInteractor
+
+        logger = logging.getLogger(__name__)
+
+        # Resolve user
+        user = await _resolve_chat_user(
+            http_request=http_request,
+            user_service=user_service,
+            current_user=current_user,
+        )
+
+        # ============================================================
+        # LENDING OPERATIONS (Leverage Loops, Supply, Borrow, etc.)
+        # ============================================================
+        LENDING_ACTIONS = {
+            "supply", "withdraw", "borrow", "repay", "liquidate",
+            "leverage_loop", "loop_supply", "loop_borrow", "loop_swap"
+        }
+
+        if request.metadata and (
+            request.metadata.get("loop_id") or
+            request.metadata.get("action") in LENDING_ACTIONS
+        ):
+            action = request.metadata.get("action", "leverage_loop")
+            tx_hash = request.transaction_hash
+            loop_id = request.metadata.get("loop_id")
+
+            # Extract lending metadata
+            protocol = request.metadata.get("protocol", "morpho")  # morpho, aave
+            chain = request.metadata.get("chain", "base")
+            asset = request.metadata.get("asset") or request.metadata.get("token")
+            amount = request.metadata.get("amount")
+            step_completed = request.metadata.get("step_completed", 1)
+            total_steps = request.metadata.get("total_steps", 1)
+
+            logger.info(
+                f"Lending operation: action={action}, protocol={protocol}, "
+                f"tx_hash={tx_hash}, loop_id={loop_id}, user_id={user.id}"
+            )
+
+            # Persist to transactions table (general ledger)
+            transaction_id = None
+            if transaction_repository:
+                try:
+                    # Get user ID
+                    app_user = None
+                    try:
+                        app_user = await current_user.get_current_user()
+                        user_id_value = app_user.id_.value
+                    except (AuthenticationError, AuthorizationError):
+                        user_id_value = int(user.identifier) if user.identifier.isdigit() else 0
+
+                    # Parse chain
+                    try:
+                        chain_enum = ChainType[chain.upper()]
+                    except (KeyError, AttributeError):
+                        chain_enum = ChainType.BASE
+
+                    # Parse amount
+                    amount_decimal = None
+                    if amount:
+                        try:
+                            amount_decimal = Decimal(str(amount))
+                        except (ValueError, TypeError):
+                            pass
+
+                    # Map lending action to transaction type
+                    action_to_type = {
+                        "supply": TransactionType.FUND,  # Supply = Deposit
+                        "withdraw": TransactionType.SEND,  # Withdraw = Send out
+                        "borrow": TransactionType.FUND,
+                        "repay": TransactionType.SEND,
+                        "leverage_loop": TransactionType.SWAP,
+                        "loop_supply": TransactionType.FUND,
+                        "loop_borrow": TransactionType.FUND,
+                        "loop_swap": TransactionType.SWAP,
+                    }
+                    tx_type = action_to_type.get(action, TransactionType.SWAP)
+
+                    # Build metadata
+                    tx_metadata = {
+                        "conversation_id": str(conversation_id),
+                        "action": action,
+                        "protocol": protocol,
+                        "loop_id": str(loop_id) if loop_id else None,
+                        "step_completed": step_completed,
+                        "total_steps": total_steps,
+                        "workflow_type": "lending",
+                    }
+
+                    # Create transaction
+                    transaction = Transaction(
+                        id_=TransactionId(0),
+                        user_id=UserId(user_id_value),
+                        wallet_id=WalletId(0),
+                        to_address=None,
+                        type=tx_type,
+                        chain=chain_enum,
+                        asset_in=asset,
+                        amount_in=amount_decimal,
+                        asset_out=None,
+                        amount_out=None,
+                        fee=None,
+                        fee_usd=None,
+                        tx_hash=tx_hash,
+                        status=TransactionStatus.SUCCESS,
+                        dex_aggregator=f"{protocol}_{action}",
+                        dex_route=None,
+                        slippage=None,
+                        error_message=None,
+                        block_number=None,
+                        confirmed_at=None,
+                        created_at=CreatedAt.now(),
+                        gas_used=None,
+                        gas_price=None,
+                        tx_metadata=tx_metadata,
+                    )
+
+                    saved_transaction = await transaction_repository.save(transaction)
+                    transaction_id = saved_transaction.id_.value
+
+                    logger.info(
+                        f"✅ Lending transaction persisted: id={transaction_id}, "
+                        f"action={action}, protocol={protocol}, tx_hash={tx_hash[:10]}..."
+                    )
+                except Exception as save_error:
+                    logger.error(f"Failed to persist lending transaction: {save_error}", exc_info=True)
+
+            # Build response message
+            action_messages = {
+                "supply": f"Supply transaction confirmed on {protocol}.",
+                "withdraw": f"Withdrawal transaction confirmed.",
+                "borrow": f"Borrow transaction confirmed.",
+                "repay": f"Repayment transaction confirmed.",
+                "leverage_loop": "Leverage loop step completed.",
+                "loop_supply": "Loop supply completed.",
+                "loop_borrow": "Loop borrow completed.",
+                "loop_swap": "Loop swap completed.",
+            }
+
+            message = action_messages.get(action, f"Lending operation {action} completed.")
+            is_complete = step_completed >= total_steps
+
+            if not is_complete:
+                message += f" Ready for step {step_completed + 1} of {total_steps}."
+            elif total_steps > 1:
+                message = f"🎉 All {total_steps} steps completed! {message}"
+
+            return ExecuteResponse(
+                message=message,
+                execute_data=None,
+                metadata={
+                    "action": action,
+                    "protocol": protocol,
+                    "transaction_hash": tx_hash,
+                    "transaction_id": transaction_id,
+                    "loop_id": str(loop_id) if loop_id else None,
+                    "step_completed": step_completed,
+                    "total_steps": total_steps,
+                    "status": "complete" if is_complete else "in_progress",
+                    "saved_to_db": transaction_id is not None,
+                }
+            )
+
+        # Handle swap workflow step confirmations
+        # Supported actions from swap_workflow multi-step execution:
+        # - lifi_bridge: Bridge tokens via LiFi (step 1)
+        # - transfer_to_spot: Transfer from Perps to Spot on Hyperliquid (step 2)
+        # - spot_swap: Execute the final swap on Hyperliquid Spot (step 3)
+        # - lifi_swap, swap, bridge, 1inch_swap: Single-step swaps
+        SWAP_WORKFLOW_ACTIONS = {
+            # Multi-step swap workflow actions
+            "lifi_bridge",
+            "transfer_to_spot",
+            "spot_swap",
+            # Single-step swap actions
+            "lifi_swap",
+            "swap",
+            "bridge",
+            "1inch_swap",
+            # Additional swap providers
+            "uniswap_swap",
+            "sushiswap_swap",
+            "hyperliquid_swap",
+        }
+
+        if request.metadata and request.metadata.get("action") in SWAP_WORKFLOW_ACTIONS:
+            action = request.metadata.get("action")
+            step_completed = request.metadata.get("step_completed", 1)
+            total_steps = request.metadata.get("total_steps", 1)
+            tx_hash = request.transaction_hash
+
+            # Extract additional metadata for tracking
+            from_token = request.metadata.get("from_token")
+            to_token = request.metadata.get("to_token")
+            amount = request.metadata.get("amount")
+            chain = request.metadata.get("chain")
+            source_chain = request.metadata.get("source_chain")
+            destination_chain = request.metadata.get("destination_chain")
+
+            logger.info(
+                f"Swap workflow step confirmed: action={action}, "
+                f"step={step_completed}/{total_steps}, tx_hash={tx_hash}, "
+                f"conversation_id={conversation_id}, user_id={user.id}"
+            )
+
+            # Determine if workflow is complete or has more steps
+            is_workflow_complete = step_completed >= total_steps
+            next_step = step_completed + 1 if not is_workflow_complete else None
+
+            # Build response message based on action type
+            action_messages = {
+                "lifi_bridge": f"Bridge transaction confirmed. Tokens bridging to destination chain.",
+                "transfer_to_spot": "Transfer to Spot account confirmed.",
+                "spot_swap": "Swap executed successfully!",
+                "lifi_swap": "LiFi swap completed successfully!",
+                "swap": "Swap completed successfully!",
+                "bridge": "Bridge transaction confirmed.",
+                "1inch_swap": "1inch swap completed successfully!",
+                "uniswap_swap": "Uniswap swap completed successfully!",
+                "sushiswap_swap": "SushiSwap swap completed successfully!",
+                "hyperliquid_swap": "Hyperliquid swap completed successfully!",
+            }
+
+            message = action_messages.get(action, f"Step {step_completed} completed.")
+            if not is_workflow_complete:
+                message += f" Ready for step {next_step} of {total_steps}."
+            elif total_steps > 1:
+                message = f"🎉 All {total_steps} steps completed! {message}"
+
+            # Persist swap transaction to database for history/analytics
+            transaction_id = None
+            if transaction_repository:
+                try:
+                    # Get authenticated user for user_id
+                    app_user = None
+                    wallet_id_value = 0  # Default, will be resolved by repository
+
+                    try:
+                        app_user = await current_user.get_current_user()
+                        user_id_value = app_user.id_.value
+                    except (AuthenticationError, AuthorizationError):
+                        # For guest users or auth failures, use identifier from chat_user
+                        # Note: This is a fallback - ideally we should have user_id
+                        user_id_value = int(user.identifier) if user.identifier.isdigit() else 0
+
+                    # Parse chain
+                    try:
+                        chain_enum = ChainType[chain.upper()] if chain else ChainType.BASE
+                    except (KeyError, AttributeError):
+                        chain_mapping = {
+                            "ethereum": ChainType.ETHEREUM,
+                            "base": ChainType.BASE,
+                            "polygon": ChainType.POLYGON,
+                            "arbitrum": ChainType.ARBITRUM,
+                            "optimism": ChainType.OPTIMISM,
+                        }
+                        chain_enum = chain_mapping.get(chain.lower() if chain else "base", ChainType.BASE)
+
+                    # Parse amounts (if available)
+                    amount_in = None
+                    amount_out = None
+                    if amount:
+                        try:
+                            amount_in = Decimal(str(amount))
+                        except (ValueError, TypeError):
+                            pass
+
+                    # Build comprehensive metadata
+                    tx_metadata = {
+                        "conversation_id": str(conversation_id),
+                        "action": action,
+                        "step_completed": step_completed,
+                        "total_steps": total_steps,
+                        "source_chain": source_chain,
+                        "destination_chain": destination_chain,
+                        "workflow_type": "multi_step" if total_steps > 1 else "single_step",
+                    }
+
+                    # Create transaction entity
+                    transaction = Transaction(
+                        id_=TransactionId(0),  # Will be auto-generated
+                        user_id=UserId(user_id_value),
+                        wallet_id=WalletId(wallet_id_value),
+                        to_address=None,  # Not applicable for swaps
+                        type=TransactionType.SWAP,
+                        chain=chain_enum,
+                        asset_in=from_token or "UNKNOWN",
+                        amount_in=amount_in,
+                        asset_out=to_token or "UNKNOWN",
+                        amount_out=amount_out,
+                        fee=None,
+                        fee_usd=None,
+                        tx_hash=tx_hash,
+                        status=TransactionStatus.SUCCESS,  # Already confirmed by user
+                        dex_aggregator=action,  # e.g., "lifi_bridge", "1inch_swap"
+                        dex_route=None,
+                        slippage=None,
+                        error_message=None,
+                        block_number=None,
+                        confirmed_at=None,
+                        created_at=CreatedAt.now(),
+                        gas_used=None,
+                        gas_price=None,
+                        tx_metadata=tx_metadata,
+                    )
+
+                    # Save to database
+                    saved_transaction = await transaction_repository.save(transaction)
+                    transaction_id = saved_transaction.id_.value
+
+                    logger.info(
+                        f"✅ Transaction persisted: id={transaction_id}, "
+                        f"tx_hash={tx_hash[:10]}..., action={action}, user_id={user_id_value}"
+                    )
+
+                except Exception as save_error:
+                    # Log error but don't fail the request
+                    logger.error(
+                        f"Failed to persist transaction (non-critical): {save_error}",
+                        exc_info=True
+                    )
+
+            return ExecuteResponse(
+                message=message,
+                execute_data=None,
+                metadata={
+                    "action": action,
+                    "transaction_hash": tx_hash,
+                    "transaction_id": transaction_id,  # Database ID for tracking
+                    "step_completed": step_completed,
+                    "total_steps": total_steps,
+                    "next_step": next_step,
+                    "is_workflow_complete": is_workflow_complete,
+                    "status": "complete" if is_workflow_complete else "in_progress",
+                    "conversation_id": str(conversation_id),
+                    # Include swap details for tracking
+                    "from_token": from_token,
+                    "to_token": to_token,
+                    "amount": amount,
+                    "chain": chain,
+                    "source_chain": source_chain,
+                    "destination_chain": destination_chain,
+                    "saved_to_db": transaction_id is not None,  # Confirmation flag
+                }
+            )
+
+        # ============================================================
+        # MONEY MARKET OPERATIONS (Rate Comparisons, Deposits, etc.)
+        # ============================================================
+        MONEY_MARKET_ACTIONS = {
+            "money_market_deposit", "money_market_withdraw",
+            "rate_comparison", "yield_optimization"
+        }
+
+        if request.metadata and request.metadata.get("action") in MONEY_MARKET_ACTIONS:
+            action = request.metadata.get("action")
+            tx_hash = request.transaction_hash
+            protocol = request.metadata.get("protocol", "aave")
+            chain = request.metadata.get("chain", "base")
+            asset = request.metadata.get("asset") or request.metadata.get("token")
+            amount = request.metadata.get("amount")
+            apy = request.metadata.get("apy") or request.metadata.get("rate")
+
+            logger.info(
+                f"Money market operation: action={action}, protocol={protocol}, "
+                f"tx_hash={tx_hash}, user_id={user.id}"
+            )
+
+            # Persist to transactions table
+            transaction_id = None
+            if transaction_repository:
+                try:
+                    # Get user ID
+                    try:
+                        app_user = await current_user.get_current_user()
+                        user_id_value = app_user.id_.value
+                    except (AuthenticationError, AuthorizationError):
+                        user_id_value = int(user.identifier) if user.identifier.isdigit() else 0
+
+                    # Parse chain
+                    try:
+                        chain_enum = ChainType[chain.upper()]
+                    except (KeyError, AttributeError):
+                        chain_enum = ChainType.BASE
+
+                    # Parse amount
+                    amount_decimal = None
+                    if amount:
+                        try:
+                            amount_decimal = Decimal(str(amount))
+                        except (ValueError, TypeError):
+                            pass
+
+                    # Determine transaction type
+                    tx_type = TransactionType.FUND if "deposit" in action else TransactionType.SEND
+
+                    # Build metadata
+                    tx_metadata = {
+                        "conversation_id": str(conversation_id),
+                        "action": action,
+                        "protocol": protocol,
+                        "apy": apy,
+                        "workflow_type": "money_market",
+                    }
+
+                    # Create transaction
+                    transaction = Transaction(
+                        id_=TransactionId(0),
+                        user_id=UserId(user_id_value),
+                        wallet_id=WalletId(0),
+                        to_address=None,
+                        type=tx_type,
+                        chain=chain_enum,
+                        asset_in=asset,
+                        amount_in=amount_decimal,
+                        asset_out=None,
+                        amount_out=None,
+                        fee=None,
+                        fee_usd=None,
+                        tx_hash=tx_hash,
+                        status=TransactionStatus.SUCCESS,
+                        dex_aggregator=f"{protocol}_money_market",
+                        dex_route=None,
+                        slippage=None,
+                        error_message=None,
+                        block_number=None,
+                        confirmed_at=None,
+                        created_at=CreatedAt.now(),
+                        gas_used=None,
+                        gas_price=None,
+                        tx_metadata=tx_metadata,
+                    )
+
+                    saved_transaction = await transaction_repository.save(transaction)
+                    transaction_id = saved_transaction.id_.value
+
+                    logger.info(
+                        f"✅ Money market transaction persisted: id={transaction_id}, "
+                        f"action={action}, protocol={protocol}"
+                    )
+                except Exception as save_error:
+                    logger.error(f"Failed to persist money market transaction: {save_error}", exc_info=True)
+
+            # Build response
+            action_messages = {
+                "money_market_deposit": f"Deposit confirmed on {protocol} money market.",
+                "money_market_withdraw": f"Withdrawal confirmed from {protocol}.",
+                "rate_comparison": f"Rate comparison completed across {protocol}.",
+                "yield_optimization": f"Yield optimization executed on {protocol}.",
+            }
+
+            message = action_messages.get(action, f"Money market operation {action} completed.")
+
+            return ExecuteResponse(
+                message=message,
+                execute_data=None,
+                metadata={
+                    "action": action,
+                    "protocol": protocol,
+                    "transaction_hash": tx_hash,
+                    "transaction_id": transaction_id,
+                    "apy": apy,
+                    "status": "complete",
+                    "saved_to_db": transaction_id is not None,
+                }
+            )
+
+        # Handle unknown execution types
+        logger.warning(f"Unknown execution type for conversation {conversation_id}, metadata={request.metadata}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unknown execution type. Supported: swap actions, lending operations, money_market operations.",
+        )
+
     return router
 

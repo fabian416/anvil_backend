@@ -14,11 +14,30 @@ Note: Money Market (Aave/Compound) is handled separately.
 """
 
 import time
+import logging
 from typing import Optional
 from dataclasses import dataclass
+from decimal import Decimal
+from datetime import datetime
+from uuid import UUID, uuid4
 
 from app.domain.ports.morpho_gateway import MorphoGateway
+from app.domain.ports.balance_checker import IBalanceChecker
+from app.domain.ports.lending_repository import ILendingRepository
 from app.domain.entities.lending.morpho_vault import MorphoVault
+from app.domain.entities.lending.leverage_loop_execution import LeverageLoopExecution
+from app.domain.entities.lending.lending_alert import LendingAlert
+from app.application.lending.interactors.leverage_loop_interactor import (
+    LeverageLoopInteractor,
+    InsufficientBalanceError,
+    UnsupportedAssetError,
+)
+from app.application.lending.commands.leverage_loop_command import (
+    LeverageLoopCommand,
+    LeverageLoopResult,
+)
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -57,15 +76,27 @@ class LendingHandler:
     
     # Per CEO spec: Show top 3 vaults
     MAX_VAULTS_TO_SHOW = 3
-    
-    def __init__(self, morpho_gateway: MorphoGateway):
+
+    def __init__(
+        self,
+        morpho_gateway: MorphoGateway,
+        balance_checker: Optional[IBalanceChecker] = None,
+        leverage_loop_interactor: Optional[LeverageLoopInteractor] = None,
+        lending_repository: Optional[ILendingRepository] = None,
+    ):
         """
         Initialize lending handler.
-        
+
         Args:
             morpho_gateway: Gateway to Morpho protocol data
+            balance_checker: Optional balance checker for validation before execute_data generation
+            leverage_loop_interactor: Optional interactor for leverage loop operations
+            lending_repository: Optional repository for lending position persistence
         """
         self._morpho = morpho_gateway
+        self._balance_checker = balance_checker
+        self._leverage_loop_interactor = leverage_loop_interactor
+        self._lending_repository = lending_repository
     
     async def execute(
         self,
@@ -76,10 +107,11 @@ class LendingHandler:
         language: str = "en",
         continuation_step: str | None = None,
         previous_lending_info: dict | None = None,
+        wallet_address: str | None = None,
     ) -> LendingHandlerResult:
         """
         Handle lending intent and return vault recommendations.
-        
+
         Args:
             message: User's message (for context)
             chain: Blockchain (ethereum, base)
@@ -88,7 +120,8 @@ class LendingHandler:
             language: Response language (en, es, fr, zh, pt)
             continuation_step: If continuing a flow, which step (select_asset, select_chain, check_later)
             previous_lending_info: Previous lending info for continuation
-        
+            wallet_address: User's wallet address for balance checking (optional)
+
         Returns:
             LendingHandlerResult with formatted content and vault data
         """
@@ -171,14 +204,57 @@ class LendingHandler:
 
         # Generate execute data if vaults found and no pending action
         execute_data = None
+        insufficient_balance_error = None
+
         if not pending_action and vaults:
             # Use best vault (highest APY) for execute data
             best_vault = vaults[0]
-            execute_data = self._generate_execute_data(
-                vault=best_vault,
-                amount="1000",  # Default amount (can be made configurable)
-                chain=chain,
-            )
+            default_amount = "1000"  # Default amount (can be made configurable)
+
+            # Check balance BEFORE generating execute_data (critical for UX)
+            if self._balance_checker and wallet_address:
+                has_balance = await self._check_sufficient_balance(
+                    wallet_address=wallet_address,
+                    token_address=best_vault.asset_address,
+                    required_amount=Decimal(default_amount),
+                    chain=chain,
+                    asset_symbol=best_vault.asset,
+                )
+
+                if not has_balance:
+                    # Get current balance for error message
+                    current_balance = await self._balance_checker.get_balance(
+                        wallet_address=wallet_address,
+                        token_address=best_vault.asset_address,
+                        chain=chain,
+                    )
+                    insufficient_balance_error = self._format_insufficient_balance_error(
+                        asset=best_vault.asset,
+                        current_balance=current_balance,
+                        required_amount=Decimal(default_amount),
+                        language=language,
+                    )
+                    # Don't generate execute_data if insufficient balance
+                    execute_data = None
+                else:
+                    # Balance is sufficient, generate execute_data
+                    execute_data = self._generate_execute_data(
+                        vault=best_vault,
+                        amount=default_amount,
+                        chain=chain,
+                    )
+            else:
+                # No balance checker or wallet address - generate execute_data anyway
+                # (Balance will be checked on frontend before transaction submission)
+                execute_data = self._generate_execute_data(
+                    vault=best_vault,
+                    amount=default_amount,
+                    chain=chain,
+                )
+
+        # Prepend insufficient balance error to content if applicable
+        if insufficient_balance_error:
+            content = insufficient_balance_error + "\n\n" + content
 
         result = LendingHandlerResult(
             content=content,
@@ -191,11 +267,11 @@ class LendingHandler:
             pending_action=pending_action,
             execute_data=execute_data,
         )
-        
+
         # Store lending_info in result for metadata
         if lending_info:
             result.lending_info = lending_info
-        
+
         return result
 
     def _generate_execute_data(
@@ -707,3 +783,713 @@ Continuarei verificando novos vaults. Aqui estão algumas sugestões:
             language=language,
             pending_action=None,
         )
+
+    async def _check_sufficient_balance(
+        self,
+        wallet_address: str,
+        token_address: str,
+        required_amount: Decimal,
+        chain: str,
+        asset_symbol: str,
+    ) -> bool:
+        """
+        Check if wallet has sufficient balance for deposit.
+
+        Args:
+            wallet_address: User's wallet address
+            token_address: Token contract address
+            required_amount: Required amount in token units
+            chain: Blockchain name
+            asset_symbol: Token symbol (for logging)
+
+        Returns:
+            True if sufficient balance exists, False otherwise
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        if not self._balance_checker:
+            # No balance checker configured - optimistically assume balance exists
+            logger.warning(
+                "BalanceChecker not configured - skipping balance validation"
+            )
+            return True
+
+        try:
+            has_balance = await self._balance_checker.check_balance(
+                wallet_address=wallet_address,
+                token_address=token_address,
+                required_amount=required_amount,
+                chain=chain,
+            )
+
+            if has_balance:
+                logger.info(
+                    f"✅ Balance check passed for {wallet_address}: "
+                    f"has sufficient {asset_symbol} on {chain}"
+                )
+            else:
+                logger.warning(
+                    f"⚠️ Insufficient balance for {wallet_address}: "
+                    f"needs {required_amount} {asset_symbol} on {chain}"
+                )
+
+            return has_balance
+
+        except Exception as e:
+            logger.error(
+                f"❌ Balance check failed for {wallet_address}: {type(e).__name__}: {e}"
+            )
+            # Conservative approach: return False if check fails
+            return False
+
+    def _format_insufficient_balance_error(
+        self,
+        asset: str,
+        current_balance: Decimal,
+        required_amount: Decimal,
+        language: str,
+    ) -> str:
+        """
+        Format insufficient balance error message with i18n support.
+
+        Args:
+            asset: Token symbol (USDC, ETH, etc.)
+            current_balance: User's current balance
+            required_amount: Required amount for transaction
+            language: Response language (en, es, pt, zh)
+
+        Returns:
+            Formatted error message
+        """
+        error_templates = {
+            "en": {
+                "header": "Insufficient Balance",
+                "body": (
+                    f"You need **{required_amount} {asset}** to deposit, "
+                    f"but you only have **{current_balance} {asset}**."
+                ),
+                "suggestion": "Please add more funds to your wallet or try a smaller amount.",
+            },
+            "es": {
+                "header": "Saldo Insuficiente",
+                "body": (
+                    f"Necesitas **{required_amount} {asset}** para depositar, "
+                    f"pero solo tienes **{current_balance} {asset}**."
+                ),
+                "suggestion": "Agrega más fondos a tu billetera o intenta con una cantidad menor.",
+            },
+            "pt": {
+                "header": "Saldo Insuficiente",
+                "body": (
+                    f"Você precisa de **{required_amount} {asset}** para depositar, "
+                    f"mas você tem apenas **{current_balance} {asset}**."
+                ),
+                "suggestion": "Adicione mais fundos à sua carteira ou tente um valor menor.",
+            },
+            "zh": {
+                "header": "余额不足",
+                "body": (
+                    f"您需要 **{required_amount} {asset}** 才能存款，"
+                    f"但您只有 **{current_balance} {asset}**。"
+                ),
+                "suggestion": "请向您的钱包添加更多资金或尝试较小的金额。",
+            },
+        }
+
+        template = error_templates.get(language, error_templates["en"])
+
+        return f"""❌ **{template["header"]}**
+
+{template["body"]}
+
+💡 **{template["suggestion"]}**
+"""
+
+    async def handle_leverage_loop(
+        self,
+        user_id: UUID,
+        wallet_address: str,
+        asset: str,
+        target_leverage: Decimal,
+        chain: str = "ethereum",
+        min_health_factor: Optional[Decimal] = None,
+        language: str = "en",
+    ) -> dict:
+        """
+        Handle LENDING_LOOP shortcut - multi-step leverage workflow.
+
+        CRITICAL: This returns ONLY the first step's execute_data.
+        User must approve each step individually (NO batch processing).
+
+        Args:
+            user_id: User's unique identifier
+            wallet_address: User's wallet address
+            asset: Asset to leverage (ETH, WETH, wstETH)
+            target_leverage: Target leverage multiplier (2.0-4.0)
+            chain: Blockchain network (ethereum, base, etc.)
+            min_health_factor: Minimum acceptable health factor (default: 1.5)
+            language: Response language (en, es, pt, zh)
+
+        Returns:
+            Response dict with message, execute_data, and metadata
+        """
+        if not self._leverage_loop_interactor:
+            return self._format_error(
+                message=self._translate("leverage_loop_unavailable", language),
+                language=language,
+            )
+
+        if not self._balance_checker:
+            return self._format_error(
+                message=self._translate("balance_checker_unavailable", language),
+                language=language,
+            )
+
+        try:
+            # 1. Get initial balance
+            token_address = self._get_token_address(asset, chain)
+            balance = await self._balance_checker.get_balance(
+                wallet_address=wallet_address,
+                token_address=token_address,
+                chain=chain
+            )
+
+            if balance <= 0:
+                return self._format_error(
+                    message=self._translate("insufficient_balance", language).format(
+                        asset=asset
+                    ),
+                    language=language
+                )
+
+            # 2. Get user preferences for safety thresholds
+            if self._lending_repository:
+                preferences = await self._lending_repository.get_user_preferences(user_id)
+                if preferences:
+                    min_hf = preferences.min_health_factor
+                    max_leverage = preferences.max_leverage
+
+                    # Check if user's target exceeds their max
+                    if target_leverage > max_leverage:
+                        return self._format_warning(
+                            message=self._translate("leverage_exceeds_preference", language).format(
+                                target=target_leverage,
+                                max=max_leverage
+                            ),
+                            language=language
+                        )
+                else:
+                    min_hf = min_health_factor or Decimal("1.5")
+            else:
+                min_hf = min_health_factor or Decimal("1.5")
+
+            # 3. Create leverage loop command
+            command = LeverageLoopCommand(
+                user_id=user_id,
+                asset=asset,
+                initial_amount=balance,
+                target_leverage=target_leverage,
+                protocol="aave",
+                chain=chain,
+                min_health_factor=min_hf
+            )
+
+            # 4. Calculate loop steps
+            result = await self._leverage_loop_interactor.calculate_loop_steps(
+                command=command,
+                wallet_address=wallet_address,
+            )
+
+            # 5. Save loop execution state
+            if self._lending_repository:
+                await self._lending_repository.save_loop_execution(
+                    LeverageLoopExecution(
+                        id=result.loop_id,
+                        user_id=user_id,
+                        protocol="aave",
+                        chain=chain,
+                        asset_address=token_address,
+                        asset_symbol=asset,
+                        initial_amount=balance,
+                        target_leverage=target_leverage,
+                        actual_leverage=result.actual_leverage,
+                        total_steps=result.total_steps,
+                        current_step=0,
+                        steps_completed=[],
+                        status="pending",
+                        final_health_factor=result.final_health_factor,
+                        final_collateral_usd=None,
+                        final_debt_usd=None,
+                        total_gas_used=None,
+                        total_cost_usd=result.total_cost_usd,
+                        error_message=None,
+                        metadata=result.to_dict(),
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow(),
+                        completed_at=None,
+                    )
+                )
+
+            # 6. Format response with execution plan
+            response_message = self._format_leverage_loop_plan(
+                result=result,
+                asset=asset,
+                language=language
+            )
+
+            # 7. Return ONLY first step's execute_data
+            # User must approve each step individually
+            return {
+                "message": response_message,
+                "execute_data": result.steps[0].execute_data if result.steps else None,
+                "metadata": {
+                    "requires_confirmation": True,
+                    "loop_id": str(result.loop_id),
+                    "total_steps": result.total_steps,
+                    "current_step": 1,
+                    "warnings": result.warnings,
+                    "action_type": "leverage_loop_start"
+                }
+            }
+
+        except InsufficientBalanceError as e:
+            return self._format_error(
+                message=self._translate("insufficient_balance", language).format(
+                    asset=asset
+                ),
+                language=language
+            )
+        except UnsupportedAssetError as e:
+            return self._format_error(
+                message=self._translate("unsupported_leverage_asset", language).format(
+                    asset=asset
+                ),
+                language=language
+            )
+        except ValueError as e:
+            if "leverage must be between" in str(e).lower():
+                return self._format_error(
+                    message=self._translate("leverage_too_high", language).format(
+                        max="4.0"
+                    ),
+                    language=language
+                )
+            raise
+
+    async def continue_leverage_loop(
+        self,
+        user_id: UUID,
+        wallet_address: str,
+        loop_id: UUID,
+        completed_tx_hash: str,
+        language: str = "en",
+    ) -> dict:
+        """
+        Continue leverage loop after user completes a step.
+
+        Called by /execute endpoint after user approves and signs a step.
+
+        Args:
+            user_id: User's unique identifier
+            wallet_address: User's wallet address
+            loop_id: Leverage loop execution ID
+            completed_tx_hash: Transaction hash of completed step
+            language: Response language (en, es, pt, zh)
+
+        Returns:
+            Response dict with next step or completion message
+        """
+        if not self._lending_repository:
+            return self._format_error(
+                message=self._translate("repository_unavailable", language),
+                language=language
+            )
+
+        # 1. Load loop execution state
+        loop_execution = await self._lending_repository.get_loop_execution(loop_id)
+
+        if not loop_execution:
+            return self._format_error(
+                message=self._translate("loop_not_found", language),
+                language=language
+            )
+
+        # 2. Update loop state with completed step
+        updated_steps = loop_execution.steps_completed + [completed_tx_hash]
+        current_step = loop_execution.current_step + 1
+        status = "completed" if current_step >= loop_execution.total_steps else "in_progress"
+
+        # Create updated execution
+        updated_execution = LeverageLoopExecution(
+            id=loop_execution.id,
+            user_id=loop_execution.user_id,
+            protocol=loop_execution.protocol,
+            chain=loop_execution.chain,
+            asset_address=loop_execution.asset_address,
+            asset_symbol=loop_execution.asset_symbol,
+            initial_amount=loop_execution.initial_amount,
+            target_leverage=loop_execution.target_leverage,
+            actual_leverage=loop_execution.actual_leverage,
+            total_steps=loop_execution.total_steps,
+            current_step=current_step,
+            steps_completed=updated_steps,
+            status=status,
+            final_health_factor=loop_execution.final_health_factor,
+            final_collateral_usd=loop_execution.final_collateral_usd,
+            final_debt_usd=loop_execution.final_debt_usd,
+            total_gas_used=loop_execution.total_gas_used,
+            total_cost_usd=loop_execution.total_cost_usd,
+            error_message=None,
+            metadata=loop_execution.metadata,
+            created_at=loop_execution.created_at,
+            updated_at=datetime.utcnow(),
+            completed_at=datetime.utcnow() if status == "completed" else None,
+        )
+
+        await self._lending_repository.update_loop_execution(updated_execution)
+
+        # 3. Check if loop is complete
+        if status == "completed":
+            # Create completion alert
+            if self._lending_repository:
+                await self._lending_repository.create_alert(
+                    LendingAlert(
+                        id=uuid4(),
+                        user_id=user_id,
+                        alert_type="loop_completed",
+                        severity="info",
+                        title=self._translate("loop_completed_title", language),
+                        message=self._translate("loop_completed_message", language).format(
+                            leverage=loop_execution.actual_leverage
+                        ),
+                        health_factor=loop_execution.final_health_factor,
+                        threshold_value=None,
+                        position_id=None,
+                        asset_symbol=loop_execution.asset_symbol,
+                        metadata=None,
+                        is_read=False,
+                        created_at=datetime.utcnow(),
+                        read_at=None,
+                    )
+                )
+
+            return {
+                "message": self._format_loop_completion(updated_execution, language),
+                "execute_data": None,
+                "metadata": {
+                    "loop_completed": True,
+                    "final_leverage": str(updated_execution.actual_leverage),
+                    "final_health_factor": str(updated_execution.final_health_factor)
+                }
+            }
+
+        # 4. Recalculate health factor with latest data (safety check)
+        # Get current HF from the loop execution metadata
+        result_dict = loop_execution.metadata
+        if result_dict and "steps" in result_dict:
+            steps = result_dict["steps"]
+            if current_step < len(steps):
+                next_step_data = steps[current_step]
+
+                # Check if HF is still safe
+                health_factor_after = Decimal(next_step_data.get("health_factor_after", "1.5"))
+
+                if health_factor_after < Decimal("1.2"):
+                    # Mark loop as failed
+                    failed_execution = LeverageLoopExecution(
+                        id=updated_execution.id,
+                        user_id=updated_execution.user_id,
+                        protocol=updated_execution.protocol,
+                        chain=updated_execution.chain,
+                        asset_address=updated_execution.asset_address,
+                        asset_symbol=updated_execution.asset_symbol,
+                        initial_amount=updated_execution.initial_amount,
+                        target_leverage=updated_execution.target_leverage,
+                        actual_leverage=updated_execution.actual_leverage,
+                        total_steps=updated_execution.total_steps,
+                        current_step=updated_execution.current_step,
+                        steps_completed=updated_execution.steps_completed,
+                        status="failed",
+                        final_health_factor=updated_execution.final_health_factor,
+                        final_collateral_usd=updated_execution.final_collateral_usd,
+                        final_debt_usd=updated_execution.final_debt_usd,
+                        total_gas_used=updated_execution.total_gas_used,
+                        total_cost_usd=updated_execution.total_cost_usd,
+                        error_message="Health factor dropped below safety threshold",
+                        metadata=updated_execution.metadata,
+                        created_at=updated_execution.created_at,
+                        updated_at=datetime.utcnow(),
+                        completed_at=None,
+                    )
+
+                    await self._lending_repository.update_loop_execution(failed_execution)
+
+                    # Create critical alert
+                    if self._lending_repository:
+                        await self._lending_repository.create_alert(
+                            LendingAlert(
+                                id=uuid4(),
+                                user_id=user_id,
+                                alert_type="loop_failed",
+                                severity="critical",
+                                title=self._translate("loop_failed_title", language),
+                                message=self._translate("loop_failed_hf", language),
+                                health_factor=health_factor_after,
+                                threshold_value=Decimal("1.2"),
+                                position_id=None,
+                                asset_symbol=updated_execution.asset_symbol,
+                                metadata=None,
+                                is_read=False,
+                                created_at=datetime.utcnow(),
+                                read_at=None,
+                            )
+                        )
+
+                    return self._format_error(
+                        message=self._translate("loop_hf_unsafe", language).format(
+                            hf=health_factor_after
+                        ),
+                        language=language
+                    )
+
+                # 5. Get next step's execute_data
+                return {
+                    "message": self._format_next_step(
+                        execution=updated_execution,
+                        next_step_data=next_step_data,
+                        language=language
+                    ),
+                    "execute_data": next_step_data.get("execute_data"),
+                    "metadata": {
+                        "requires_confirmation": True,
+                        "loop_id": str(loop_id),
+                        "total_steps": updated_execution.total_steps,
+                        "current_step": current_step + 1,
+                        "action_type": "leverage_loop_continue"
+                    }
+                }
+
+        # Fallback if metadata is missing
+        return self._format_error(
+            message=self._translate("loop_metadata_missing", language),
+            language=language
+        )
+
+    def _get_token_address(self, asset: str, chain: str) -> str:
+        """Get token contract address for asset."""
+        TOKEN_ADDRESSES = {
+            "ethereum": {
+                "ETH": "native",
+                "WETH": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                "wstETH": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
+            },
+            "base": {
+                "ETH": "native",
+                "WETH": "0x4200000000000000000000000000000000000006",
+            },
+        }
+        return TOKEN_ADDRESSES.get(chain.lower(), {}).get(asset.upper(), "native")
+
+    def _format_leverage_loop_plan(
+        self,
+        result: LeverageLoopResult,
+        asset: str,
+        language: str,
+    ) -> str:
+        """Format leverage loop execution plan for user."""
+        translations = {
+            "en": {
+                "title": "Leverage Loop Execution Plan",
+                "leverage": "Target Leverage",
+                "actual": "Actual Leverage",
+                "steps": "Total Steps",
+                "hf": "Final Health Factor",
+                "apy": "Estimated Net APY",
+                "cost": "Estimated Cost",
+                "warning": "WARNING",
+                "signatures": "This will require {} separate wallet signatures",
+                "risk": "Leverage trading is high risk - you could be liquidated"
+            },
+            "es": {
+                "title": "Plan de Ejecución de Bucle de Apalancamiento",
+                "leverage": "Apalancamiento Objetivo",
+                "actual": "Apalancamiento Real",
+                "steps": "Pasos Totales",
+                "hf": "Factor de Salud Final",
+                "apy": "APY Neto Estimado",
+                "cost": "Costo Estimado",
+                "warning": "ADVERTENCIA",
+                "signatures": "Esto requerirá {} firmas de billetera separadas",
+                "risk": "El trading con apalancamiento es de alto riesgo - podrías ser liquidado"
+            },
+            "pt": {
+                "title": "Plano de Execução de Loop de Alavancagem",
+                "leverage": "Alavancagem Alvo",
+                "actual": "Alavancagem Real",
+                "steps": "Passos Totais",
+                "hf": "Fator de Saúde Final",
+                "apy": "APY Líquido Estimado",
+                "cost": "Custo Estimado",
+                "warning": "AVISO",
+                "signatures": "Isso exigirá {} assinaturas de carteira separadas",
+                "risk": "Trading com alavancagem é de alto risco - você pode ser liquidado"
+            },
+            "zh": {
+                "title": "杠杆循环执行计划",
+                "leverage": "目标杠杆",
+                "actual": "实际杠杆",
+                "steps": "总步骤",
+                "hf": "最终健康因子",
+                "apy": "预估净APY",
+                "cost": "预估成本",
+                "warning": "警告",
+                "signatures": "这将需要{}个单独的钱包签名",
+                "risk": "杠杆交易是高风险的 - 您可能会被清算",
+                "continue": "回复'是'以开始步骤1，或'取消'以中止"
+            },
+        }
+
+        t = translations.get(language, translations["en"])
+
+        return f"""
+🔄 **{t['title']}**
+
+{t['leverage']}: {result.target_leverage}x
+{t['actual']}: {result.actual_leverage:.2f}x
+{t['steps']}: {result.total_steps}
+{t['hf']}: {result.final_health_factor:.2f}
+{t['apy']}: {result.estimated_apy:.2f}%
+{t['cost']}: ${result.total_cost_usd:.2f}
+
+⚠️ **{t['warning']}**:
+- {t['signatures'].format(result.total_steps)}
+- {t['risk']}
+
+💬 {t['continue']}
+"""
+
+    def _format_loop_completion(
+        self,
+        execution: LeverageLoopExecution,
+        language: str,
+    ) -> str:
+        """Format loop completion message."""
+        translations = {
+            "en": "Loop completed! Achieved {leverage:.2f}x leverage with final health factor {hf:.2f}",
+            "es": "¡Bucle completado! Se logró apalancamiento de {leverage:.2f}x con factor de salud final {hf:.2f}",
+            "pt": "Loop concluído! Alavancagem de {leverage:.2f}x alcançada com fator de saúde final {hf:.2f}",
+            "zh": "循环完成！达到{leverage:.2f}x杠杆，最终健康因子{hf:.2f}",
+        }
+
+        template = translations.get(language, translations["en"])
+        return template.format(
+            leverage=execution.actual_leverage or 0,
+            hf=execution.final_health_factor or 0
+        )
+
+    def _format_next_step(
+        self,
+        execution: LeverageLoopExecution,
+        next_step_data: dict,
+        language: str,
+    ) -> str:
+        """Format next step message."""
+        action = next_step_data.get("action", "unknown")
+        step_num = next_step_data.get("step_number", 0)
+
+        translations = {
+            "en": f"Step {step_num}/{execution.total_steps}: {action} - Ready to continue?",
+            "es": f"Paso {step_num}/{execution.total_steps}: {action} - ¿Listo para continuar?",
+            "pt": f"Passo {step_num}/{execution.total_steps}: {action} - Pronto para continuar?",
+            "zh": f"步骤 {step_num}/{execution.total_steps}: {action} - 准备继续？",
+        }
+
+        return translations.get(language, translations["en"])
+
+    def _translate(self, key: str, language: str, **kwargs) -> str:
+        """Translate a message key to the specified language."""
+        # Placeholder translations - should be moved to lending_morpho.json
+        translations = {
+            "leverage_loop_unavailable": {
+                "en": "Leverage loop feature is not available",
+                "es": "La función de bucle de apalancamiento no está disponible",
+                "pt": "Recurso de loop de alavancagem não disponível",
+                "zh": "杠杆循环功能不可用",
+            },
+            "insufficient_balance": {
+                "en": "Insufficient {asset} balance",
+                "es": "Saldo de {asset} insuficiente",
+                "pt": "Saldo de {asset} insuficiente",
+                "zh": "{asset} 余额不足",
+            },
+            "unsupported_leverage_asset": {
+                "en": "Asset {asset} is not supported for leverage loops",
+                "es": "El activo {asset} no está soportado para bucles de apalancamiento",
+                "pt": "Ativo {asset} não é suportado para loops de alavancagem",
+                "zh": "资产 {asset} 不支持杠杆循环",
+            },
+            "leverage_too_high": {
+                "en": "Leverage must be between 2.0x and {max}x",
+                "es": "El apalancamiento debe estar entre 2.0x y {max}x",
+                "pt": "Alavancagem deve estar entre 2.0x e {max}x",
+                "zh": "杠杆必须在 2.0x 和 {max}x 之间",
+            },
+            "loop_not_found": {
+                "en": "Leverage loop not found",
+                "es": "Bucle de apalancamiento no encontrado",
+                "pt": "Loop de alavancagem não encontrado",
+                "zh": "未找到杠杆循环",
+            },
+            "loop_completed_title": {
+                "en": "Leverage Loop Completed",
+                "es": "Bucle de Apalancamiento Completado",
+                "pt": "Loop de Alavancagem Concluído",
+                "zh": "杠杆循环完成",
+            },
+            "loop_completed_message": {
+                "en": "Successfully completed leverage loop with {leverage}x leverage",
+                "es": "Bucle de apalancamiento completado exitosamente con {leverage}x apalancamiento",
+                "pt": "Loop de alavancagem concluído com sucesso com {leverage}x alavancagem",
+                "zh": "成功完成 {leverage}x 杠杆循环",
+            },
+            "loop_failed_title": {
+                "en": "Leverage Loop Failed",
+                "es": "Bucle de Apalancamiento Falló",
+                "pt": "Loop de Alavancagem Falhou",
+                "zh": "杠杆循环失败",
+            },
+            "loop_failed_hf": {
+                "en": "Loop stopped due to unsafe health factor",
+                "es": "Bucle detenido debido a factor de salud inseguro",
+                "pt": "Loop parado devido a fator de saúde inseguro",
+                "zh": "由于不安全的健康因子，循环已停止",
+            },
+            "loop_hf_unsafe": {
+                "en": "Health factor {hf} is too low to continue safely",
+                "es": "Factor de salud {hf} es demasiado bajo para continuar de manera segura",
+                "pt": "Fator de saúde {hf} está muito baixo para continuar com segurança",
+                "zh": "健康因子 {hf} 太低，无法安全继续",
+            },
+        }
+
+        template_dict = translations.get(key, {})
+        template = template_dict.get(language, template_dict.get("en", key))
+        return template.format(**kwargs) if kwargs else template
+
+    def _format_error(self, message: str, language: str) -> dict:
+        """Format error response."""
+        return {
+            "message": f"❌ {message}",
+            "execute_data": None,
+            "metadata": {"error": True}
+        }
+
+    def _format_warning(self, message: str, language: str) -> dict:
+        """Format warning response."""
+        return {
+            "message": f"⚠️ {message}",
+            "execute_data": None,
+            "metadata": {"warning": True}
+        }

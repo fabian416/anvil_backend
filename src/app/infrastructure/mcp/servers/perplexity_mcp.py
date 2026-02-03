@@ -69,50 +69,61 @@ class PerplexityMCPServer(MCPServer):
     
     def _register_tools(self):
         """Register Perplexity MCP tools."""
-        self.tools = {
-            "search": {
-                "name": "perplexity_search",
-                "description": "Search the web using Perplexity AI for current information",
-                "parameters": {
+        # Register search tool
+        self.register_tool(
+            name="search",
+            description="Search the web using Perplexity AI for current information",
+            parameters={
+                "type": "object",
+                "properties": {
                     "query": {
                         "type": "string",
                         "description": "The search query",
-                        "required": True,
                     },
                     "model": {
                         "type": "string",
                         "description": "Model to use (sonar-small-online, sonar-medium-online, sonar-large-online)",
-                        "required": False,
                         "default": "sonar-small-online",
                     },
                     "max_tokens": {
                         "type": "integer",
                         "description": "Maximum tokens in response",
-                        "required": False,
                         "default": 1024,
                     },
                 },
-                "handler": self._search,
+                "required": ["query"],
             },
-            "chat": {
-                "name": "perplexity_chat",
-                "description": "Have a conversation with Perplexity AI with web search capabilities",
-                "parameters": {
+            handler=self._search,
+        )
+        
+        # Register chat tool
+        self.register_tool(
+            name="chat",
+            description="Have a conversation with Perplexity AI with web search capabilities",
+            parameters={
+                "type": "object",
+                "properties": {
                     "messages": {
                         "type": "array",
                         "description": "Conversation messages",
-                        "required": True,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "role": {"type": "string"},
+                                "content": {"type": "string"},
+                            },
+                        },
                     },
                     "model": {
                         "type": "string",
                         "description": "Model to use",
-                        "required": False,
                         "default": "sonar-small-online",
                     },
                 },
-                "handler": self._chat,
+                "required": ["messages"],
             },
-        }
+            handler=self._chat,
+        )
     
     async def _search(
         self,
@@ -255,7 +266,7 @@ class PerplexityMCPServer(MCPServer):
             }
         
         tool = self.tools[tool_name]
-        handler = tool["handler"]
+        handler = tool.handler
         
         try:
             return await handler(**parameters)

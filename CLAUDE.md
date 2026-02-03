@@ -2,28 +2,42 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## ⚠️ IMPORTANT: Legacy System Deprecation
+## ✅ Chat System Architecture
 
-**The legacy conversation system is DEPRECATED** and will be removed on **2026-06-01**.
+**Legacy system removal completed on 2026-01-25** (4 months ahead of schedule)
 
-### Legacy System (DO NOT USE)
-- ❌ Router: `src/app/presentation/http/controllers/chat/router.py`
-- ❌ Base Path: `/api/v1/user/chat/*`
-- ❌ Tables: `conversations`, `users` (INTEGER user_id)
+### Current Chat Systems (All Active)
 
-### New System (USE THIS)
+**1. Unified Chat System** (Primary)
 - ✅ Router: `src/app/presentation/http/controllers/chat/conversations_router.py`
 - ✅ Base Path: `/api/v1/conversations/*`
-- ✅ Tables: `chat_conversations`, `chat_users` (UUID user_id)
-- ✅ Features: Guest support, multi-language, intent routing, metadata, status tracking
+- ✅ Tables: `chat_conversations`, `chat_messages`, `chat_users`, `chat_rate_limits`
+- ✅ Features: UUID-based, guest + authenticated support, multi-language, intent routing
 
-### Migration Guide
-See **[docs/DEPRECATION_PLAN.md](docs/DEPRECATION_PLAN.md)** for complete migration instructions.
+**2. Guest Chat System** (Active)
+- ✅ Base Path: `/api/v1/guest/chat`
+- ✅ Tables: `guest_users`, `guest_conversations`, `guest_messages`, `guest_telemetry`
+- ✅ Features: IP-based tracking, rate limiting, conversion analytics
+
+**3. Bridge Adapters** (Backward Compatibility)
+- ✅ `conversation_repository_bridge.py` - Maintains command compatibility
+- ✅ `message_repository_bridge.py` - Maintains command compatibility
+- ℹ️ Bridges old domain interfaces to new unified chat tables
+
+### Legacy System (REMOVED 2026-01-25)
+- ❌ Router: `chat/router.py` - **DELETED** (1,070 lines removed)
+- ❌ Endpoints: `/api/v1/user/chat/*` - **REMOVED**
+- ❌ Tables: `conversations`, `messages`, `sessions` - **DELETED**
+- ❌ Adapters: `conversation_repository_sqla.py`, `message_repository_sqla.py` - **DELETED**
 
 **When developing new features**:
-- Always use the new system (`conversations_router.py`)
-- Never add features to the legacy system (`router.py`)
-- All data has been migrated - both systems currently work in parallel
+- ✅ Use unified chat system (`conversations_router.py`)
+- ✅ Reference `chat_conversations`, `chat_messages`, `chat_users` tables
+- ✅ Use bridge adapters only for existing command compatibility
+- ❌ Never reference deleted legacy tables or routers
+
+### Migration History
+See **[docs/DEPRECATION_PLAN.md](docs/DEPRECATION_PLAN.md)** for historical reference
 
 ---
 

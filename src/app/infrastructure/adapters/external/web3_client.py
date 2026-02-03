@@ -500,3 +500,56 @@ class Web3Client:
             "gas_price_gwei": gas.max_fee_gwei,
             "is_eip1559": block.base_fee_gwei is not None,
         }
+
+    async def is_contract(self, address: str) -> bool:
+        """
+        Check if an address is a smart contract or EOA (Externally Owned Account).
+
+        Uses eth_getCode to check if there's bytecode at the address.
+        - If code exists (not "0x" or "0x0"), it's a contract.
+        - If no code, it's an EOA (regular wallet).
+
+        Args:
+            address: Ethereum address to check (0x...)
+
+        Returns:
+            True if contract, False if EOA
+
+        Example:
+            >>> is_contract = await client.is_contract("0x...")
+            >>> if is_contract:
+            ...     print("This is a smart contract!")
+            ... else:
+            ...     print("This is a regular wallet.")
+        """
+        try:
+            result = await self._call_rpc("eth_getCode", [address, "latest"])
+            # No code = EOA, has code = contract
+            return result is not None and result not in ("0x", "0x0", "")
+        except Exception as e:
+            logger.warning(f"Failed to check if {address[:10]}... is contract: {e}")
+            return False  # Assume EOA on error
+
+    async def get_transaction_count(self, address: str) -> int:
+        """
+        Get the number of transactions sent from an address (nonce).
+
+        Useful to check if an address has ever been used.
+
+        Args:
+            address: Ethereum address (0x...)
+
+        Returns:
+            Number of transactions sent from this address
+
+        Example:
+            >>> count = await client.get_transaction_count("0x...")
+            >>> if count == 0:
+            ...     print("This address has never sent a transaction!")
+        """
+        try:
+            result = await self._call_rpc("eth_getTransactionCount", [address, "latest"])
+            return int(result, 16)
+        except Exception as e:
+            logger.warning(f"Failed to get tx count for {address[:10]}...: {e}")
+            return 0

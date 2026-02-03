@@ -1,0 +1,26 @@
+{
+  "run_timestamp": "2026-01-22T17:40:25.238685+00:00",
+  "category": "agent_squad_advanced",
+  "total_tests": 1,
+  "passed": 0,
+  "partial": 0,
+  "failed": 1,
+  "pass_rate": "0.0%",
+  "by_category": {
+    "handoff_transition": {
+      "total": 1,
+      "pass": 0,
+      "partial": 0,
+      "fail": 1
+    }
+  },
+  "by_agent": {},
+  "avg_response_time_ms": 489,
+  "slowest_tests": [
+    {
+      "test_id": "squad_handoff_001",
+      "response_time_ms": 489,
+      "status": "FAIL"
+    }
+  ]
+}

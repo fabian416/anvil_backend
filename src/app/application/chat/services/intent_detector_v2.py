@@ -54,6 +54,7 @@ class ChatIntentV2(str, Enum):
     ACTIVITY = "ACTIVITY"
     RECEIVE = "RECEIVE"
     TRANSFER = "TRANSFER"
+    SEND = "SEND"  # Send tokens to another wallet
     
     # General
     GENERAL_CONVERSATION = "GENERAL_CONVERSATION"
@@ -92,8 +93,10 @@ INTENT_KEYWORDS: dict[str, dict[str, list[str]]] = {
     },
     "prediction": {
         "en": [
-            "predict", "prediction", "forecast", "will go", "next week",
-            "tomorrow", "price target", "where will", "future price",
+            "predict", "prediction", "forecast", "will go", "go up", "go down",
+            "next week", "tomorrow", "price target", "where will", "future price",
+            "will rise", "will fall", "will increase", "will decrease",
+            "going up", "going down", "bullish", "bearish",
         ],
         "es": [
             "predecir", "predicción", "pronóstico", "mañana", "próxima semana",
@@ -176,13 +179,17 @@ INTENT_KEYWORDS: dict[str, dict[str, list[str]]] = {
         "en": [
             "portfolio", "my positions", "my holdings", "my investments",
             "show portfolio", "portfolio performance",
+            "my tokens", "what tokens", "list my tokens", "tokens i have",
+            "tokens i own", "what do i own", "what do i have",
         ],
         "es": [
             "portafolio", "mis posiciones", "mis inversiones",
             "mi portafolio", "ver portafolio",
+            "mis tokens", "qué tokens tengo", "listar mis tokens",
         ],
         "pt": [
             "portfólio", "minhas posições", "meus investimentos",
+            "meus tokens", "quais tokens", "listar meus tokens",
             "meu portfólio", "ver portfólio",
         ],
     },
@@ -241,8 +248,9 @@ INTENT_KEYWORDS: dict[str, dict[str, list[str]]] = {
     },
     "trading_signals": {
         "en": [
-            "trading signal", "buy signal", "sell signal",
-            "should i buy", "should i sell", "entry point",
+            "trading signal", "trading signals", "buy signal", "sell signal",
+            "should i buy", "should i sell", "entry point", "signals",
+            "buy signals", "sell signals", "trade signals",
         ],
         "es": [
             "señal de trading", "señal de compra", "señal de venta",
@@ -407,6 +415,7 @@ RESTRICTED_INTENTS = {
     ChatIntentV2.ACTIVITY,
     ChatIntentV2.RECEIVE,
     ChatIntentV2.TRANSFER,
+    ChatIntentV2.SEND,
 }
 
 
@@ -466,6 +475,7 @@ class IntentDetectorV2:
             ChatIntentV2.ACTIVITY: "restricted_handler",
             ChatIntentV2.RECEIVE: "restricted_handler",
             ChatIntentV2.TRANSFER: "restricted_handler",
+            ChatIntentV2.SEND: "send_handler",  # Send tokens handler
             ChatIntentV2.GENERAL_CONVERSATION: "general_handler",
         }
     
@@ -933,12 +943,12 @@ class IntentDetectorV2:
             r"\b(arbitraje|préstamo flash|préstamo instantáneo)\b",
             # Arbitrage/MEV/Flash loans (Portuguese)
             r"\b(arbitragem|empréstimo flash)\b",
-            # Other actions (English)
-            r"\b(lend|borrow|stake|deposit|withdraw|supply)\b",
-            # Other actions (Spanish)
-            r"\b(prestar|pedir prestado|staking|depositar|retirar)\b",
-            # Other actions (Portuguese)
-            r"\b(emprestar|tomar emprestado|depositar|retirar)\b",
+            # Other DeFi actions (English) - includes swap/exchange to break out of other flows
+            r"\b(swap|exchange|trade|convert|lend|borrow|stake|deposit|withdraw|supply|buy crypto|purchase crypto|send crypto|transfer crypto)\b",
+            # Other DeFi actions (Spanish)
+            r"\b(cambiar|intercambiar|canjear|prestar|pedir prestado|staking|depositar|retirar|comprar cripto|enviar cripto)\b",
+            # Other DeFi actions (Portuguese)
+            r"\b(trocar|converter|emprestar|tomar emprestado|depositar|retirar|comprar cripto|enviar cripto)\b",
             # Question words with context (less strict - anywhere in message)
             r"\b(what is the|how is the|why is|when will|where can)\b",
             r"\b(qué es el|cómo es el|por qué|cuándo|dónde)\b",
@@ -1057,7 +1067,8 @@ class IntentDetectorV2:
         # Receive address patterns (check before balance - more specific)
         receive_patterns = [
             "receive", "receive address", "my address", "deposit address", "wallet address",
-            "show address", "dirección de recepción", "mi dirección",
+            "show address", "qr code", "qr", "código qr", "código qr",
+            "dirección de recepción", "mi dirección",
             "endereço de recebimento", "meu endereço",
         ]
         for pattern in receive_patterns:
@@ -1072,8 +1083,11 @@ class IntentDetectorV2:
         activity_patterns = [
             "activity", "transaction history", "my transactions",
             "recent activity", "show activity", "wallet activity",
-            "mi actividad", "historial de transacciones",
-            "minha atividade", "histórico de transações",
+            "my trades", "what did i do", "what i did",  # Casual activity queries
+            "mi actividad", "historial de transacciones", "mis operaciones",
+            "qué hice", "lo que hice",
+            "minha atividade", "histórico de transações", "minhas operações",
+            "o que fiz", "o que eu fiz",
         ]
         for pattern in activity_patterns:
             if pattern in message:
@@ -1144,6 +1158,26 @@ class IntentDetectorV2:
                     intent=ChatIntentV2.LENDING,
                     confidence=0.88,
                     handler=self._handler_map[ChatIntentV2.LENDING],
+                )
+
+        # Money Market: Rate comparison queries (MUST be checked BEFORE lending_keywords)
+        # "Compare lending rates" should go to MONEY_MARKET, not LENDING
+        import re
+        money_market_rate_patterns = [
+            r"\bcompare\s+(?:lending\s+)?rates?\b",
+            r"\b(?:lending|borrow)\s+rates?\s+for\b",
+            r"\b(best|top)\s+(?:lending|borrow)\s+rates?\b",
+            r"\bcomparar\s+tasas\b",
+            r"\bmejores\s+tasas\b",
+            r"\bcomparar\s+taxas\b",
+            r"\bmelhores\s+taxas\b",
+        ]
+        for pattern in money_market_rate_patterns:
+            if re.search(pattern, message, flags=re.IGNORECASE):
+                return IntentResult(
+                    intent=ChatIntentV2.MONEY_MARKET,
+                    confidence=0.92,  # Higher than lending_keywords (0.90)
+                    handler=self._handler_map[ChatIntentV2.MONEY_MARKET],
                 )
 
         # Lending: Check for lending/deposit keywords
@@ -1278,6 +1312,69 @@ class IntentDetectorV2:
                     handler=self._handler_map[ChatIntentV2.MOONPAY_SWAP],
                 )
         
+        # Money market patterns (Aave / Compound / Morpho comparisons & rate queries)
+        # NOTE: This intent is handled by MoneyMarketHandler and MUST be checked BEFORE lending.
+        # These patterns match rate comparisons and protocol comparisons.
+        money_market_patterns = [
+            # Explicit "money market" phrasing
+            r"\bmoney\s+market\b",
+            r"\bmercado\s+(?:monetario|de\s+dinero)\b",
+            r"\bmercado\s+monetário\b",
+            # Rate comparison queries (best rates, compare rates)
+            r"\b(best|top|compare)\s+(?:borrow|lending|money\s+market)\s+rates?\b",
+            r"\bcompare\s+(?:lending\s+)?rates?\b",
+            r"\b(?:lending|borrow)\s+rates?\s+for\b",
+            r"\bbest\s+rates?\s+for\s+(usdc|eth|usdt|dai|btc)\b",
+            r"\bmejores\s+tasas\b",
+            r"\bcomparar\s+tasas\b",
+            r"\bmelhores\s+taxas\b",
+            r"\bcomparar\s+taxas\b",
+            # Protocol comparisons (Aave/Compound/Morpho)
+            r"\bcompare\s+aave\b",
+            r"\baave\s+vs\s+compound\b",
+            r"\bcompound\s+vs\s+aave\b",
+            r"\b(compare|comparar)\b.*\b(aave|compound)\b",
+            r"\b(aave|compound|morpho)\b\s*(?:vs|versus|or)\s*\b(aave|compound|morpho)\b",
+            # Where should I deposit (rate comparison intent)
+            r"\bwhere\s+(?:should\s+i|to)\s+deposit\b",
+            r"\bdonde\s+(?:debo|puedo)\s+depositar\b",
+            r"\bonde\s+(?:devo|posso)\s+depositar\b",
+        ]
+        for pattern in money_market_patterns:
+            if re.search(pattern, message, flags=re.IGNORECASE):
+                return IntentResult(
+                    intent=ChatIntentV2.MONEY_MARKET,
+                    confidence=0.88,
+                    handler=self._handler_map[ChatIntentV2.MONEY_MARKET],
+                )
+        
+        # Send/Transfer patterns (send tokens to another wallet)
+        # Must be checked before lending to catch "send USDC to..." properly
+        send_patterns = [
+            # English send patterns
+            r"\bsend\s+(?:\d+\.?\d*\s*)?(usdc|eth|usdt|dai|btc|crypto|tokens?)\b",
+            r"\bsend\s+(?:to|crypto|tokens?)\b",
+            r"\btransfer\s+(?:\d+\.?\d*\s*)?(usdc|eth|usdt|dai|btc)\s+to\b",
+            r"\btransfer\s+(?:to|crypto|tokens?)\b",
+            r"\bi\s+want\s+to\s+send\b",
+            # Spanish patterns
+            r"\benviar\s+(?:\d+\.?\d*\s*)?(usdc|eth|usdt|dai|btc|crypto)\b",
+            r"\benviar\s+(?:a|crypto|tokens?)\b",
+            r"\btransferir\s+(?:\d+\.?\d*\s*)?(usdc|eth|usdt|dai|btc)\b",
+            r"\bquiero\s+enviar\b",
+            # Portuguese patterns
+            r"\benviar\s+(?:\d+\.?\d*\s*)?(usdc|eth|usdt|dai|btc|crypto)\b",
+            r"\btransferir\s+(?:\d+\.?\d*\s*)?(usdc|eth|usdt|dai|btc)\b",
+            r"\bquero\s+enviar\b",
+        ]
+        for pattern in send_patterns:
+            if re.search(pattern, message, flags=re.IGNORECASE):
+                return IntentResult(
+                    intent=ChatIntentV2.SEND,
+                    confidence=0.88,
+                    handler=self._handler_map[ChatIntentV2.SEND],
+                )
+
         # Lending patterns (improved to handle amounts and variations)
         # Use regex patterns to allow numbers and intermediate words
         lending_patterns = [
@@ -1294,11 +1391,11 @@ class IntentDetectorV2:
             r"deposit\s+\d+\.?\d*\s*(usdc|eth|usdt|dai|wbtc|weth|btc)",
             r"deposit\s+(usdc|eth|usdt|dai|wbtc|weth|btc)",
             r"deposit.*vault.*morpho",
-            r"deposit.*in.*vault",
+            r"deposit.*(?:into|in).*vault",
             r"supply\s+\d+\.?\d*\s*(usdc|eth|usdt|dai)",
-            r"supply\s+to\s+aave",
+            r"supply\s+to\s+(?:aave|morpho|compound)\b",
             r"lend\s+my",
-            r"earn\s+yield",
+            r"earn\s+yield\s+on",
             r"earn\s+on\s+morpho",
             # Portuguese patterns
             r"depositar\s+\d+\.?\d*\s*(usdc|eth|usdt|dai)",
@@ -1313,33 +1410,27 @@ class IntentDetectorV2:
                     handler=self._handler_map[ChatIntentV2.LENDING],
                 )
 
-        # Money market patterns (Aave / Compound / Morpho comparisons & rate queries)
-        # NOTE: This intent is handled by MoneyMarketHandler in GuestHandlerService and
-        # is expected by UX flows like "comparar Aave vs Compound vs Morpho".
-        money_market_patterns = [
-            # Explicit "money market" phrasing
-            r"\bmoney\s+market\b",
-            r"\bmercado\s+(?:monetario|de\s+dinero)\b",
-            r"\bmercado\s+monetário\b",
-            # Rate queries
-            r"\b(best|top)\s+(?:borrow|lending)\s+rates?\b",
-            r"\b(?:borrow|lending)\s+rates?\b",
-            r"\bmejores\s+tasas\s+(?:de\s+pr[ée]stamo|de\s+pr[ée]stamos|de\s+cr[ée]dito)\b",
-            r"\btasas\s+(?:de\s+mercado|de\s+pr[ée]stamo|de\s+pr[ée]stamos)\b",
-            r"\bmelhores\s+taxas\s+de\s+empr[ée]stimo\b",
-            r"\btaxas\s+(?:de\s+mercado|de\s+empr[ée]stimo)\b",
-            # Protocol comparisons (Aave/Compound/Morpho)
-            r"\b(compare|comparar|comparar)\b.*\b(aave|compound|morpho)\b",
-            r"\b(aave|compound|morpho)\b\s*(?:vs|versus)\s*\b(aave|compound|morpho)\b",
-            r"\b(aave|compound)\b.*\b(morpho)\b",
-            r"\b(morpho)\b.*\b(aave|compound)\b",
+        # Vault comparison patterns (P0 fix: route "best lending vaults" to LENDING)
+        # These patterns catch vault-specific queries that were falling through to GENERAL_CONVERSATION
+        vault_patterns = [
+            r"\b(best|top|highest)\s+(?:lending\s+)?vaults?\b",
+            r"\b(best|top|highest)\s+(?:morpho\s+)?vaults?\b",
+            r"\bshow\s+(?:me\s+)?(?:best|top)\s+vaults?\b",
+            r"\bcompare\s+(?:morpho\s+)?vaults?\b",
+            r"\bvault\s+(?:comparison|recommendations?)\b",
+            r"\bwhich\s+vaults?\s+(?:have|offer)\b",
+            r"\bvaults?\s+(?:with\s+)?(?:best|highest)\s+(?:apy|yield|returns?)\b",
+            r"\blist\s+(?:morpho\s+)?vaults?\b",
+            r"\bfind\s+(?:best|top)\s+vaults?\b",
         ]
-        for pattern in money_market_patterns:
+        for pattern in vault_patterns:
             if re.search(pattern, message, flags=re.IGNORECASE):
+                logger.info(f"Intent detected: LENDING (vault pattern: {pattern})")
                 return IntentResult(
-                    intent=ChatIntentV2.MONEY_MARKET,
-                    confidence=0.85,
-                    handler=self._handler_map[ChatIntentV2.MONEY_MARKET],
+                    intent=ChatIntentV2.LENDING,
+                    confidence=0.90,
+                    handler=self._handler_map[ChatIntentV2.LENDING],
+                    metadata={"pattern_type": "vault_comparison"}
                 )
         
         # Buy crypto patterns (on-ramp purchase)

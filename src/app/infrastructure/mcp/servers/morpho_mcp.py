@@ -84,6 +84,9 @@ class MorphoMCPServer(MCPServer):
         )
 
         self.morpho_gateway = morpho_gateway
+        
+        # Register tools
+        self.setup_tools()
 
     def setup_tools(self):
         """Register Morpho protocol tools."""

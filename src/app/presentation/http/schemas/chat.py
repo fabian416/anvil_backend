@@ -193,6 +193,12 @@ class ExecuteActionData(BaseModel):
     amount: Optional[str] = Field(default=None, description="Amount to execute (human readable)")
     protocol: Optional[str] = Field(default=None, description="Protocol name (for deposit/withdraw)")
     vault_address: Optional[str] = Field(default=None, description="Vault address (for Morpho deposits)")
+    asset_address: Optional[str] = Field(default=None, description="Asset token address")
+    asset_symbol: Optional[str] = Field(default=None, description="Asset token symbol")
+    pool_address: Optional[str] = Field(default=None, description="Pool address (for liquidity operations)")
+    referral_code: Optional[str] = Field(default=None, description="Referral code for the transaction")
+    supply_apy: Optional[str] = Field(default=None, description="Supply APY for lending protocols")
+    available_liquidity_usd: Optional[str] = Field(default=None, description="Available liquidity in USD")
     recipient: Optional[str] = Field(default=None, description="Recipient address (for transfer)")
     slippage: Optional[float] = Field(default=1.0, description="Slippage tolerance in percent")
     to_chain: Optional[str] = Field(default=None, description="Destination chain (for cross-chain swap/bridge)")
@@ -200,9 +206,24 @@ class ExecuteActionData(BaseModel):
     # Quote preview fields (for display before execution)
     quote_id: Optional[str] = Field(default=None, description="Quote identifier")
     quote_amount: Optional[str] = Field(default=None, description="Estimated output amount")
+    min_amount_out: Optional[str] = Field(default=None, description="Minimum output amount with slippage")
     exchange_rate: Optional[str] = Field(default=None, description="Exchange rate for the swap")
     network_fee_usd: Optional[str] = Field(default=None, description="Estimated network fee in USD")
     expires_at: Optional[str] = Field(default=None, description="Quote expiration timestamp")
+    
+    # Price impact and gas fields
+    price_impact: Optional[str] = Field(default=None, description="Price impact percentage")
+    gas_estimate: Optional[str] = Field(default=None, description="Estimated gas units")
+    
+    # Token address fields
+    from_token_address: Optional[str] = Field(default=None, description="Source token contract address")
+    to_token_address: Optional[str] = Field(default=None, description="Destination token contract address")
+    
+    # Market data fields
+    from_token_price_usd: Optional[str] = Field(default=None, description="Source token price in USD")
+    to_token_price_usd: Optional[str] = Field(default=None, description="Destination token price in USD")
+    from_token_24h_change: Optional[str] = Field(default=None, description="Source token 24h price change %")
+    value_usd: Optional[str] = Field(default=None, description="Total transaction value in USD")
 
 
 class UnifiedChatResponse(BaseModel):

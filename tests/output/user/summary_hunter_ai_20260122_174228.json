@@ -1,0 +1,26 @@
+{
+  "run_timestamp": "2026-01-22T17:42:28.826571+00:00",
+  "category": "hunter_ai",
+  "total_tests": 1,
+  "passed": 0,
+  "partial": 0,
+  "failed": 1,
+  "pass_rate": "0.0%",
+  "by_category": {
+    "hunter_price": {
+      "total": 1,
+      "pass": 0,
+      "partial": 0,
+      "fail": 1
+    }
+  },
+  "by_agent": {},
+  "avg_response_time_ms": 195,
+  "slowest_tests": [
+    {
+      "test_id": "hunter_price_003",
+      "response_time_ms": 195,
+      "status": "FAIL"
+    }
+  ]
+}

@@ -15,10 +15,11 @@ from tests.helpers.error_validator import validate_error_response
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestExportWallet:
     """Integration tests for wallet export."""
 
-    def test_export_wallet_with_valid_credentials(self, client):
+    async def test_export_wallet_with_valid_credentials(self, client):
         """
         WHEN user exports owned wallet
         THEN system SHALL return wallet data with private key
@@ -31,7 +32,7 @@ class TestExportWallet:
             "wallet_address": "0x19BFe2684Aedcbd57454bA80440C24a412CE04C7",
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/wallet/export",
             json=export_request,
             headers=headers,
@@ -47,7 +48,7 @@ class TestExportWallet:
             assert "private_key" in data
             assert "chain_type" in data
 
-    def test_export_nonexistent_wallet(self, client):
+    async def test_export_nonexistent_wallet(self, client):
         """
         WHEN user exports nonexistent wallet
         THEN system SHALL return WALLET_001 error
@@ -59,7 +60,7 @@ class TestExportWallet:
             "wallet_id": f"nonexistent_{uuid4().hex[:20]}",
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/wallet/export",
             json=export_request,
             headers=headers,
@@ -68,7 +69,7 @@ class TestExportWallet:
         # Should return 404 for nonexistent wallet
         assert response.status_code in (401, 404, 500, 503)
 
-    def test_export_wallet_without_auth(self, client):
+    async def test_export_wallet_without_auth(self, client):
         """
         WHEN unauthenticated user exports wallet
         THEN system SHALL return 401
@@ -77,11 +78,11 @@ class TestExportWallet:
             "wallet_id": "g1644aqvat8qxkfqsfzvpuq0",
         }
 
-        response = client.post("/api/v1/wallet/export", json=export_request)
+        response = await client.post("/api/v1/wallet/export", json=export_request)
 
         assert response.status_code in (401, 403, 422)
 
-    def test_export_wallet_missing_wallet_id(self, client):
+    async def test_export_wallet_missing_wallet_id(self, client):
         """
         WHEN wallet_id is missing
         THEN system SHALL return validation error
@@ -94,7 +95,7 @@ class TestExportWallet:
             "wallet_address": "0x19BFe2684Aedcbd57454bA80440C24a412CE04C7",
         }
 
-        response = client.post(
+        response = await client.post(
             "/api/v1/wallet/export",
             json=export_request,
             headers=headers,
@@ -105,6 +106,7 @@ class TestExportWallet:
 
 
 @pytest.mark.integration
+@pytest.mark.asyncio
 class TestWalletErrorResponses:
     """Integration tests for wallet error responses."""
 

@@ -63,6 +63,9 @@ def map_wallet_tables() -> None:
         imported_at = mapped_column(DateTime(timezone=True), nullable=True, default=None)
         last_privy_sync_at = mapped_column(DateTime(timezone=True), nullable=True, default=None)
         
+        # Balance check tracking (for Celery background sync)
+        last_balance_checked_at = mapped_column(DateTime(timezone=True), nullable=True, default=None, index=True)
+        
         # Timestamps
         created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
         updated_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), onupdate=sa.text('CURRENT_TIMESTAMP'))
@@ -88,7 +91,56 @@ def map_wallet_tables() -> None:
         
         # Balance
         balance_usd = mapped_column(Numeric(20, 2), default=0.00)
+        eth_balance = mapped_column(Numeric(30, 18), nullable=True, default=0)  # Native token (ETH) for gas
         last_balance_update = mapped_column(DateTime(timezone=True), nullable=True)
         
         # Timestamps
+        created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))
+
+    @mapping_registry.mapped
+    class TokenBalancesTable:
+        """
+        Multi-token balance tracking per wallet/chain.
+        
+        Tracks all tokens (native, stablecoins, wrapped) with flags:
+        - is_native: True for ETH, MATIC, etc.
+        - can_pay_gas: True only for native tokens (used for gas fee checks)
+        - is_stablecoin: True for USDC, USDT, DAI
+        """
+        __tablename__ = "token_balances"
+        __table_args__ = (
+            UniqueConstraint('wallet_id', 'chain', 'token_symbol', name='unique_wallet_chain_token'),
+            {"extend_existing": True}
+        )
+        
+        # Primary key
+        id = mapped_column(Integer, primary_key=True, autoincrement=True)
+        
+        # Relationships
+        wallet_id = mapped_column(Integer, ForeignKey("wallets.id", ondelete="CASCADE"), nullable=False, index=True)
+        
+        # Chain info
+        chain = mapped_column(String(50), nullable=False, index=True)
+        chain_id = mapped_column(Integer, nullable=False)
+        
+        # Token info
+        token_symbol = mapped_column(String(50), nullable=False, index=True)
+        token_name = mapped_column(String(255), nullable=True)
+        token_address = mapped_column(String(255), nullable=True)  # NULL for native tokens
+        token_decimals = mapped_column(Integer, default=18)
+        
+        # Balance
+        balance_raw = mapped_column(String(78), nullable=True)  # Raw balance as string
+        balance_human = mapped_column(Numeric(38, 18), default=0)  # Human-readable
+        balance_usd = mapped_column(Numeric(20, 2), default=0)  # USD value
+        price_usd = mapped_column(Numeric(20, 8), nullable=True)  # Token price
+        
+        # Flags
+        is_native = mapped_column(Boolean, default=False)  # True for ETH, MATIC, etc.
+        can_pay_gas = mapped_column(Boolean, default=False, index=True)  # True only for native tokens
+        is_stablecoin = mapped_column(Boolean, default=False)  # True for USDC, USDT, DAI
+        
+        # Metadata
+        portfolio_pct = mapped_column(Numeric(5, 2), nullable=True)
+        last_balance_update = mapped_column(DateTime(timezone=True), nullable=True)
         created_at = mapped_column(DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'))

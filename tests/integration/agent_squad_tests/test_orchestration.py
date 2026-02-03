@@ -38,24 +38,6 @@ class TestAgentOrchestration:
         assert result.intent_classification is not None
         assert result.intent_classification.confidence >= 0.85
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_route_to_chat_agent",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-    
     @pytest.mark.llm_validation
     async def test_route_to_hunter_ai_agent(self, mock_intent_classifier, mock_feature_flags):
         """Test routing market sentiment query to Hunter AI agent."""
@@ -77,24 +59,6 @@ class TestAgentOrchestration:
         assert result.agent_type == AgentType.HUNTER_AI
         assert result.intent_classification.confidence >= 0.85
 
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_route_to_hunter_ai_agent",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
-    
     @pytest.mark.llm_validation
     async def test_fallback_to_chat_on_low_confidence(
         self, mock_intent_classifier, mock_feature_flags
@@ -142,24 +106,6 @@ class TestAgentOrchestration:
         assert result.agent_type == AgentType.CHAT  # Fallback
         assert result.fallback_used is True
         # Fallback was used because target agent was disabled
-
-        # Optional LLM semantic validation (environment-gated)
-        if llm_validator.enabled:
-            validation = await llm_validator.validate_single_response(
-                test_name="test_disabled_agent_fallback",
-                user_input="query",
-                agent_output=content,
-                expected_behavior=(
-                    "Should provide accurate and relevant information about crypto/DeFi. Response must focus on crypto/DeFi specifically and provide clear, educational content appropriate for the query."
-                ),
-                additional_context={'test_category': 'info_query', 'topic': 'crypto/DeFi'}
-            )
-            if validation.verdict != "PASS":
-                pytest.warn(UserWarning(
-                    f"LLM validation concern (confidence={validation.confidence:.2f}): "
-                    f"{validation.reasoning}"
-                ))
-
 
 
 @pytest.fixture

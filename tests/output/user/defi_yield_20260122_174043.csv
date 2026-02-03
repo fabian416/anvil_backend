@@ -1,0 +1,17 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+yield_003,2026-01-22T17:40:45.390234+00:00,agent,yield,NO,1,1,yield farming opportunities,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue:**
+
+1. 💵 **USDC** (USD Coin) - ~8.5% APY
+2. 💵 **USDT** (Tether) - ~7.8% APY
+3. 💰 **DAI** (Dai) - ~9.2% APY
+4. Ξ **ETH** (Ethereum) - ~5.4% APY
+5. ₿ **WBTC** (Wrapped Bitcoin) - ~4.2% APY
+
+💬 Reply with the number (1-5) or type the asset name (e.g., ""USDC"")
+",defi_yield,,,lending_handler,198,NO,,guest,en,FAIL,,501be343-f17a-4968-9f54-31f030c13ea4,PASS,0.95,"The agent's response directly addresses the user's query about ""yield farming opportunities."" It provides a list of assets (USDC, USDT, DAI, ETH, WBTC) with their corresponding APY (Annual Percentage Yield) rates, which aligns with the expected behavior of providing yield/APY information. The response is contextually appropriate, given the 'defi_yield' category and the user's authenticated status. The response demonstrates an understanding of the user's intent by offering specific options for ea",,,,

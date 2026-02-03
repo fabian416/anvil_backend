@@ -1,0 +1,148 @@
+name: Performance Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run"
+        required: false
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  workflow_dispatch:  # Manual trigger
+
+# Prevent concurrent performance tests
+concurrency:
+  group: performance-tests
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: anvil_backend_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Install dependencies
+      run: |
+        uv venv
+        source .venv/bin/activate
+        uv pip install -e '.[dev,test]'
+    
+    - name: Run benchmarks
+      run: |
+        source .venv/bin/activate
+        python tests/performance/benchmark.py > benchmark-results.txt
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/anvil_backend_test
+        REDIS_URL: redis://localhost:6379
+        APP_ENV: test
+    
+    - name: Run stress tests
+      run: |
+        source .venv/bin/activate
+        python tests/performance/stress_test.py > stress-test-results.txt
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/anvil_backend_test
+        REDIS_URL: redis://localhost:6379
+        APP_ENV: test
+    
+    - name: Upload results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-results
+        path: |
+          benchmark-results.txt
+          stress-test-results.txt
+    
+    - name: Comment on PR (if applicable)
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const benchmarkResults = fs.readFileSync('benchmark-results.txt', 'utf8');
+          const stressResults = fs.readFileSync('stress-test-results.txt', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## Performance Test Results\n\n### Benchmarks\n\`\`\`\n${benchmarkResults}\n\`\`\`\n\n### Stress Tests\n\`\`\`\n${stressResults}\n\`\`\``
+          });
+
+  load-test:
+    name: Load Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Install locust
+      run: |
+        uv pip install --system locust
+    
+    - name: Run load test
+      run: |
+        locust -f tests/performance/locustfile.py \
+          --host=https://staging.defi-chat.example.com \
+          --headless \
+          --users 100 \
+          --spawn-rate 10 \
+          --run-time 5m \
+          --html=load-test-report.html \
+          --csv=load-test
+    
+    - name: Upload load test report
+      uses: actions/upload-artifact@v3
+      with:
+        name: load-test-report
+        path: |
+          load-test-report.html
+          load-test_*.csv

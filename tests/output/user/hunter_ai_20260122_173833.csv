@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_price_004,2026-01-22T17:38:38.164845+00:00,agent,hunter_price,NO,1,1,current price of SOL,"📈 **Price Prediction for SOL**
+
+**Current Price:** $127.71
+**7-Day Forecast:** $131.54
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_prediction_handler,383,NO,,guest,en,FAIL,,67fc1687-cbb9-44ba-99aa-64961b7994d7,PASS,0.95,"The agent's response successfully provides the current price of SOL in USD, along with a short-term price prediction. The formatting is clear and includes the token name and current market price as expected. The response also includes additional information like a 7-day forecast, expected change, direction, confidence level, model used, and horizon, which enhances the user experience. The response demonstrates a good understanding of the user's intent to retrieve the current price of SOL.",,,,

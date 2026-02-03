@@ -34,6 +34,19 @@ class OneInchClientProtocol(Protocol):
         amount: str,
         slippage: float = 1.0,
     ) -> Any: ...
+
+
+class LiFiClientProtocol(Protocol):
+    """Protocol for LiFiClient to help Dishka distinguish it from other types."""
+    async def get_quote(
+        self,
+        from_chain: str,
+        to_chain: str,
+        from_token: str,
+        to_token: str,
+        from_amount: str,
+        from_address: str,
+    ) -> Any: ...
 from redis.asyncio import Redis
 
 from app.domain.enums.agent_type import AgentType
@@ -42,6 +55,9 @@ from app.domain.ports.agent_squad.context_storage_gateway import ContextStorageG
 from app.domain.ports.agent_squad.feature_flags_gateway import FeatureFlagsGateway
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 from app.domain.ports.ai.llm_gateway import LLMGateway
+from app.domain.ports.morpho_gateway import MorphoGateway
+from app.domain.ports.aave_gateway import AaveGateway
+from app.domain.ports.compound_gateway import CompoundGateway
 from app.infrastructure.adapters.agent_squad.agent_llm_gateway import AgentLLMGateway
 from app.domain.value_objects.agent_squad.agent_squad_config import (
     AgentSquadConfig,
@@ -59,6 +75,7 @@ from app.infrastructure.adapters.agent_squad.llm_client_vertex_ai import LLMClie
 from app.infrastructure.adapters.agent_squad.llm_client_deepinfra import LLMClientDeepInfra
 from app.infrastructure.adapters.agent_squad.llm_client_with_fallback import LLMClientWithFallback
 from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
+from app.infrastructure.adapters.external.defillama_client import DefiLlamaClient
 from app.setup.config.agent_squad import AgentSquadSettings
 from app.setup.config.settings import AppSettings
 
@@ -98,6 +115,23 @@ from app.infrastructure.adapters.agent_squad.agents.security_auditor_agent_slith
 )
 from app.infrastructure.adapters.agent_squad.agents.gas_optimizer_agent import (
     GasOptimizerAgent,
+)
+
+# Authenticated user agents
+from app.infrastructure.adapters.agent_squad.agents.wallet_agent import (
+    WalletAgent,
+)
+from app.infrastructure.adapters.agent_squad.agents.transaction_history_agent import (
+    TransactionHistoryAgent,
+)
+
+# Workflow agents (multi-step operations for authenticated users)
+from app.infrastructure.adapters.agent_squad.agents.workflows import (
+    SwapWorkflowAgent,
+    LendingWorkflowAgent,
+    TransferWorkflowAgent,
+    BuyWorkflowAgent,
+    MoneyMarketWorkflowAgent,
 )
 
 # Enterprise agents (4)
@@ -294,6 +328,19 @@ class AgentSquadInfrastructureProvider(Provider):
         return OneInchClient(api_key=api_key)
     
     @provide(scope=Scope.APP)
+    def provide_lifi_client(self, settings: AgentSquadSettings) -> LiFiClientProtocol | None:
+        """Provide LiFi API client for cross-chain swaps."""
+        # LiFi doesn't require an API key for public endpoints
+        try:
+            from app.infrastructure.adapters.external.lifi_client import LiFiClient
+            return LiFiClient()
+        except ImportError:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning("⚠️ LiFi client not available - cross-chain swaps disabled")
+            return None
+    
+    @provide(scope=Scope.APP)
     def provide_web3_client(self, settings: AgentSquadSettings) -> Web3ClientProtocol | None:
         """Provide Web3Client for Ethereum gas prices if enabled."""
         # Web3Client requires API keys - check if available
@@ -313,6 +360,44 @@ class AgentSquadInfrastructureProvider(Provider):
             alchemy_api_key=alchemy_key if alchemy_key else None,
             infura_api_key=infura_key if infura_key else None,
             chain=Chain.ETHEREUM,  # Default to Ethereum for gas prices
+        )
+    
+    @provide(scope=Scope.APP)
+    def provide_etherscan_client(self, settings: AgentSquadSettings) -> Any:
+        """
+        Provide Etherscan client for address labels and interaction history.
+        
+        Uses Etherscan API V2 - single key works for 60+ EVM chains.
+        
+        Used by TransferWorkflowAgent for:
+        - Address label lookup (exchanges, DeFi protocols)
+        - Contract verification status
+        - Interaction history (previous transfers to recipient)
+        
+        Returns None if ETHERSCAN_API_KEY is not set.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Try multiple env var names (from .secrets.toml or environment)
+        api_key = (
+            os.getenv("ETHERSCAN_API_KEY") or
+            os.getenv("ETHERSCAN__API_KEY") or  # TOML nested format
+            os.getenv("BASESCAN_API_KEY") or
+            os.getenv("EXPLORER_API_KEY", "")
+        )
+        
+        if not api_key:
+            logger.info("ℹ️ ETHERSCAN_API_KEY not set - address labels via Etherscan disabled (local labels still work)")
+            return None
+        
+        logger.info("✅ Etherscan API V2 client initialized (supports 60+ EVM chains)")
+        
+        from app.infrastructure.adapters.external.etherscan_client import EtherscanClient
+        return EtherscanClient(
+            api_key=api_key,
+            network="base",  # Default to Base chain (chainid=8453)
+            use_v2_api=True,  # Use unified V2 endpoint
         )
     
     @provide(scope=Scope.APP)  # APP scope - single instance shared across requests
@@ -420,11 +505,25 @@ class AgentSquadInfrastructureProvider(Provider):
         self,
         llm_client: LLMClientGateway,
         coingecko_client: CoinGeckoClient | None,  # Type-annotated for explicit DI resolution
+        settings: AgentSquadSettings,
     ) -> HunterAIAgent:
-        """Provide Hunter AI agent with optional CoinGecko integration."""
+        """Provide Hunter AI agent with optional CoinGecko and Hyperliquid integration."""
+        # Get Hyperliquid client for spot swap quotes
+        hyperliquid_client = None
+        if settings.external_apis.enable_hyperliquid:
+            try:
+                from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+                hyperliquid_client = HyperliquidClient(testnet=False)
+                import logging
+                logging.getLogger(__name__).info("✅ Hyperliquid client enabled for Hunter AI swap quotes")
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"⚠️ Failed to create Hyperliquid client: {e}")
+        
         return HunterAIAgent(
             llm_client=llm_client,
             coingecko_client=coingecko_client,
+            hyperliquid_client=hyperliquid_client,
         )
 
     @provide
@@ -654,6 +753,210 @@ class AgentSquadInfrastructureProvider(Provider):
         )
 
     # ========================================
+    # Authenticated User Agents (requires login)
+    # ========================================
+
+    @provide
+    def provide_wallet_agent(
+        self, llm_client: LLMClientGateway
+    ) -> WalletAgent:
+        """
+        Provide Wallet Agent for authenticated users.
+        
+        This agent handles wallet queries:
+        - List connected wallets
+        - Show balances
+        - Wallet status and provider info
+        """
+        return WalletAgent(llm_client=llm_client)
+
+    @provide
+    def provide_transaction_history_agent(
+        self, llm_client: LLMClientGateway
+    ) -> TransactionHistoryAgent:
+        """
+        Provide Transaction History Agent for authenticated users.
+        
+        This agent handles transaction queries:
+        - View recent transactions
+        - Filter by chain/type/date
+        - Volume analytics
+        - Activity summaries
+        """
+        return TransactionHistoryAgent(llm_client=llm_client)
+
+    # ========================================
+    # Workflow Agents (multi-step operations)
+    # ========================================
+
+    @provide
+    def provide_swap_workflow_agent(
+        self,
+        llm_client: LLMClientGateway,
+        oneinch_client: OneInchClientProtocol | None,
+        lifi_client: LiFiClientProtocol | None,
+        coingecko_client: CoinGeckoClient | None,
+        settings: AgentSquadSettings,
+    ) -> SwapWorkflowAgent:
+        """
+        Provide Swap Workflow Agent for authenticated users.
+        
+        This agent handles multi-step swap operations:
+        1. Parse swap request (tokens, amount)
+        2. Route to appropriate provider based on token type
+        3. Fetch quotes
+        4. Confirm with user
+        5. Generate execute_data for frontend
+        
+        Provider Routing:
+        - Hyperliquid Spot: Meme tokens (PURR, TRUMP, PEPE, etc.) paired with USDC
+        - 1inch: Major tokens same-chain swaps (ETH, BTC, USDC, etc.)
+        - LiFi: Cross-chain swaps
+        
+        Integrations:
+        - Hyperliquid: Meme token swaps (zero gas fees)
+        - 1inch: Same-chain major token swaps
+        - LiFi: Cross-chain swaps
+        - CoinGecko: Market prices for enrichment
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Create Hyperliquid client for meme token swaps
+        hyperliquid_client = None
+        if settings.external_apis.enable_hyperliquid:
+            try:
+                from app.infrastructure.adapters.external.hyperliquid_client import HyperliquidClient
+                hyperliquid_client = HyperliquidClient(testnet=False)
+                logger.info("✅ Hyperliquid enabled for SwapWorkflowAgent (meme token swaps)")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to create Hyperliquid client for SwapWorkflowAgent: {e}")
+        
+        return SwapWorkflowAgent(
+            llm_client=llm_client,
+            oneinch_client=oneinch_client,
+            lifi_client=lifi_client,
+            coingecko_client=coingecko_client,
+            hyperliquid_client=hyperliquid_client,
+        )
+
+    @provide
+    def provide_lending_workflow_agent(
+        self,
+        llm_client: LLMClientGateway,
+        morpho_gateway: MorphoGateway,
+        aave_gateway: AaveGateway,
+        coingecko_client: CoinGeckoClient | None,
+    ) -> LendingWorkflowAgent:
+        """
+        Provide Lending Workflow Agent for authenticated users.
+        
+        This agent handles multi-step deposit/yield operations:
+        1. Parse deposit request (asset, amount)
+        2. Fetch best vault from Morpho (fallback to Aave)
+        3. Show quote with APY and earnings projection
+        4. Generate execute_data for frontend
+        
+        Integrations:
+        - Morpho: MetaMorpho vaults on Base
+        - Aave: Aave V3 markets as fallback
+        - CoinGecko: Real-time token prices for balance checking
+        """
+        return LendingWorkflowAgent(
+            llm_client=llm_client,
+            morpho_gateway=morpho_gateway,
+            aave_gateway=aave_gateway,
+            coingecko_client=coingecko_client,
+        )
+
+    @provide
+    def provide_transfer_workflow_agent(
+        self,
+        llm_client: LLMClientGateway,
+        web3_client: Web3ClientProtocol | None,
+        etherscan_client: Any,  # From provide_etherscan_client
+    ) -> TransferWorkflowAgent:
+        """
+        Provide Transfer Workflow Agent for authenticated users (Phase 2 enhanced).
+        
+        This agent handles multi-step token transfer operations:
+        1. Parse transfer request (token, amount, recipient)
+        2. Validate recipient address format
+        3. Analyze recipient safety:
+           - EOA vs Contract detection (web3)
+           - Address labels (Etherscan API)
+           - Interaction history (Etherscan API)
+           - Contract verification status
+        4. Show transfer review with safety info and wait for confirmation
+        5. Generate execute_data for frontend
+        
+        Features:
+        - Multi-chain address validation (EVM, Solana)
+        - Network detection from address format
+        - Wallet safety analysis (contract detection, known addresses)
+        - Etherscan label lookup (exchanges, DeFi protocols)
+        - Interaction history check (first-time recipient detection)
+        - Safety score and risk level
+        - User modification support
+        """
+        return TransferWorkflowAgent(
+            llm_client=llm_client,
+            web3_client=web3_client,
+            etherscan_client=etherscan_client,
+        )
+
+    @provide
+    def provide_buy_workflow_agent(
+        self,
+        llm_client: LLMClientGateway,
+    ) -> BuyWorkflowAgent:
+        """
+        Provide Buy Workflow Agent for authenticated users.
+        
+        This agent handles multi-step crypto purchase operations:
+        1. Parse buy request (crypto, fiat amount, currency)
+        2. Validate supported assets
+        3. Show purchase review and wait for confirmation
+        4. Generate execute_data for Privy modal
+        
+        Integrations:
+        - Privy SDK for MoonPay/Coinbase on-ramp
+        """
+        return BuyWorkflowAgent(llm_client=llm_client)
+
+    @provide
+    def provide_money_market_workflow_agent(
+        self,
+        llm_client: LLMClientGateway,
+        aave_gateway: AaveGateway,
+        compound_gateway: CompoundGateway,
+        morpho_gateway: MorphoGateway,
+        defillama_client: DefiLlamaClientProtocol | None,
+    ) -> MoneyMarketWorkflowAgent:
+        """
+        Provide Money Market Workflow Agent for authenticated users.
+        
+        This agent handles multi-step rate comparison operations:
+        1. Parse comparison request (asset)
+        2. Fetch rates from Aave, Compound, Morpho
+        3. Show comparison with best recommendation
+        4. Allow user to select protocol for deposit
+        
+        Integrations:
+        - Aave V3 for lending markets
+        - Compound V3 for lending markets
+        - Morpho for vault rates
+        - DeFiLlama for fallback APY data
+        """
+        return MoneyMarketWorkflowAgent(
+            llm_client=llm_client,
+            aave_gateway=aave_gateway,
+            compound_gateway=compound_gateway,
+            morpho_gateway=morpho_gateway,
+            defillama_client=defillama_client,
+        )
+
+    # ========================================
     # Agent Registry
     # ========================================
 
@@ -673,6 +976,15 @@ class AgentSquadInfrastructureProvider(Provider):
         defi_yield_agent: DefiYieldAgent,
         security_auditor_agent: SecurityAuditorAgentSlither,
         gas_optimizer_agent: GasOptimizerAgent,
+        # Authenticated user agents
+        wallet_agent: WalletAgent,
+        transaction_history_agent: TransactionHistoryAgent,
+        # Workflow agents
+        swap_workflow_agent: SwapWorkflowAgent,
+        lending_workflow_agent: LendingWorkflowAgent,
+        transfer_workflow_agent: TransferWorkflowAgent,
+        buy_workflow_agent: BuyWorkflowAgent,
+        money_market_workflow_agent: MoneyMarketWorkflowAgent,
         # Enterprise agents
         compliance_monitor_agent: ComplianceMonitorAgentChainalysis,
         multisig_coordinator_agent: MultiSigCoordinatorAgentGnosis,
@@ -703,6 +1015,15 @@ class AgentSquadInfrastructureProvider(Provider):
             AgentType.DEFI_YIELD: defi_yield_agent,
             AgentType.SECURITY_AUDITOR: security_auditor_agent,
             AgentType.GAS_OPTIMIZER: gas_optimizer_agent,
+            # Authenticated user agents
+            AgentType.WALLET: wallet_agent,
+            AgentType.TRANSACTION_HISTORY: transaction_history_agent,
+            # Workflow agents
+            AgentType.SWAP_WORKFLOW: swap_workflow_agent,
+            AgentType.LENDING_WORKFLOW: lending_workflow_agent,
+            AgentType.TRANSFER_WORKFLOW: transfer_workflow_agent,
+            AgentType.BUY_WORKFLOW: buy_workflow_agent,
+            AgentType.MONEY_MARKET_WORKFLOW: money_market_workflow_agent,
             # Enterprise agents
             AgentType.COMPLIANCE_MONITOR: compliance_monitor_agent,
             AgentType.MULTISIG_COORDINATOR: multisig_coordinator_agent,

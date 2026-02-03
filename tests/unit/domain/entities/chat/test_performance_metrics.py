@@ -445,7 +445,8 @@ class TestPerformanceMetrics:
 
     def test_is_period_active(self) -> None:
         """Test checking if period is active."""
-        now = datetime.utcnow()
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
         past = now - timedelta(hours=2)
         future = now + timedelta(hours=2)
 

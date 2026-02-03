@@ -1,12 +1,9 @@
 import asyncio
-from dishka import Scope
+
 from celery.schedules import crontab
 
 from app.infrastructure.celery.app import celery_app
-from app.setup.ioc.application import ApplicationProvider
-from app.setup.ioc.infrastructure import infrastructure_provider
-from app.setup.ioc.presentation import PresentationProvider
-from app.setup.ioc.settings import SettingsProvider
+from app.setup.ioc.provider_registry import get_providers
 from app.setup.app_factory import create_async_ioc_container
 from app.setup.config.settings import load_settings
 from app.application.maintenance.tasks import (
@@ -16,14 +13,10 @@ from app.application.maintenance.tasks import (
 
 
 async def _run_task(coro_factory):
+    """Helper to run async tasks with DI container using all registered providers."""
     settings = load_settings()
     container = create_async_ioc_container(
-        providers=(
-            ApplicationProvider(),
-            infrastructure_provider(),
-            PresentationProvider(),
-            SettingsProvider(),
-        ),
+        providers=get_providers(),  # Use all providers including GraphProvider
         settings=settings,
     )
     try:
@@ -109,6 +102,27 @@ from app.infrastructure.celery.tasks.projects_tasks import (
 from app.infrastructure.celery.tasks.llm_ranking import (
     recalculate_all_rankings,
     recalculate_agent_rankings,
+)
+# Import user context tasks
+from app.infrastructure.celery.tasks.user_context_tasks import (
+    update_user_context,
+    create_missing_user_contexts,
+    user_context_analytics,
+)
+# Import Privy balance sync tasks
+from app.infrastructure.celery.tasks.privy_balance_tasks import (
+    sync_wallet_balances,
+    sync_single_wallet_balance,
+)
+# Import Etherscan token balance sync tasks
+from app.infrastructure.celery.tasks.etherscan_balance_tasks import (
+    sync_all_tokens_etherscan,
+)
+# Import lending tasks
+from app.application.lending.tasks import (
+    MonitorHealthFactorsTask,
+    CheckUserHealthFactorTask,
+    RefreshPositionsTask,
 )
 
 
@@ -245,68 +259,103 @@ def archive_guest_conversations():
     asyncio.run(_run_task(runner))
 
 
-celery_app.conf.beat_schedule = {
-    # Existing maintenance tasks
-    "cleanup-expired-sessions": {
-        "task": "cleanup_expired_sessions",
-        "schedule": crontab(hour=0, minute=0),
-    },
-    "cleanup-expired-password-resets": {
-        "task": "cleanup_expired_password_resets",
-        "schedule": crontab(minute=0),
-    },
-    "update-agent-stats": {
-        "task": "update_agent_stats",
-        "schedule": crontab(minute="*/5"), # Every 5 minutes
-    },
-    # New distillation tasks
-    "aggregate-distillation-telemetry": {
-        "task": "aggregate_distillation_telemetry",
-        "schedule": crontab(minute=5),  # Run at :05 of every hour
-    },
-    "cleanup-expired-cache": {
-        "task": "cleanup_expired_cache",
-        "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
-    },
-    # New projects tasks
-    "aggregate-project-analytics": {
-        "task": "aggregate_project_analytics",
-        "schedule": crontab(hour=4, minute=0),  # Daily at 4 AM
-    },
-    "check-knowledge-base-health": {
-        "task": "check_knowledge_base_health",
-        "schedule": crontab(hour=5, minute=0, day_of_week=0),  # Weekly Sunday 5 AM
-    },
-    # Graph maintenance tasks
-    "populate-graph-protocols": {
-        "task": "populate_graph_protocols",
-        "schedule": crontab(hour=2, minute=0),  # Daily at 2 AM
-    },
-    "update-graph-metadata": {
-        "task": "update_graph_metadata",
-        "schedule": crontab(hour="*/6", minute=30),  # Every 6 hours
-    },
-    "validate-graph-integrity": {
-        "task": "validate_graph_integrity",
-        "schedule": crontab(hour=6, minute=0, day_of_week=1),  # Weekly Monday 6 AM
-    },
-    "generate-protocol-embeddings": {
-        "task": "generate_protocol_embeddings",
-        "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
-    },
-    # Risk alert monitoring
-    "check-user-risk-alerts": {
-        "task": "check_user_risk_alerts",
-        "schedule": crontab(minute="*/15"),  # Every 15 minutes
-    },
-    # LLM Ranking recalculation
-    "recalculate-llm-rankings": {
-        "task": "llm_ranking.recalculate_all_rankings",
-        "schedule": crontab(hour=2, minute=0),  # Daily at 02:00 UTC
-    },
-    # Guest conversation archival
-    "archive-guest-conversations": {
-        "task": "archive_guest_conversations",
-        "schedule": crontab(minute=0),  # Every hour at :00
-    },
-}
+@celery_app.task(name="monitor_lending_health_factors")
+def monitor_lending_health_factors():
+    """
+    Monitor all active lending positions and check health factors.
+    
+    Runs every 15 minutes to:
+    - Fetch all active positions from Aave and Morpho
+    - Calculate current health factors
+    - Save health check snapshots
+    - Generate alerts for critical positions (HF < 1.5)
+    """
+    async def runner(container):
+        from app.application.lending.tasks import (
+            LendingRepository,
+            PositionProvider,
+            MonitorHealthFactorsTask,
+        )
+        
+        repository = await container.get(LendingRepository)
+        position_provider = await container.get(PositionProvider)
+        
+        task = MonitorHealthFactorsTask(repository, position_provider)
+        stats = await task.run()
+        
+        print(f"Lending health factor monitoring complete: {stats}")
+    
+    asyncio.run(_run_task(runner))
+
+
+@celery_app.task(name="check_user_lending_health")
+def check_user_lending_health(user_id: str, protocol: str, chain: str = "ethereum"):
+    """
+    Check health factor for a specific user position.
+    
+    Used for:
+    - On-demand health checks
+    - Critical position monitoring
+    - Pre-transaction validation
+    
+    Args:
+        user_id: User UUID as string
+        protocol: Protocol name ("aave" or "morpho")
+        chain: Blockchain network (default: "ethereum")
+    """
+    async def runner(container):
+        from uuid import UUID
+        from app.application.lending.tasks import (
+            LendingRepository,
+            PositionProvider,
+            CheckUserHealthFactorTask,
+        )
+        
+        repository = await container.get(LendingRepository)
+        position_provider = await container.get(PositionProvider)
+        
+        task = CheckUserHealthFactorTask(repository, position_provider)
+        health_check = await task.run(
+            user_id=UUID(user_id),
+            protocol=protocol,
+            chain=chain,
+        )
+        
+        print(
+            f"Health check complete for user {user_id}, protocol {protocol}: "
+            f"HF={health_check.health_factor:.2f}, level={health_check.health_factor_level}"
+        )
+    
+    asyncio.run(_run_task(runner))
+
+
+@celery_app.task(name="refresh_lending_positions")
+def refresh_lending_positions():
+    """
+    Refresh lending positions from protocols.
+    
+    Runs every hour to fetch latest position data from Aave and Morpho
+    and keep database in sync with on-chain state.
+    """
+    async def runner(container):
+        from app.application.lending.tasks import (
+            LendingRepository,
+            PositionProvider,
+            RefreshPositionsTask,
+        )
+        
+        repository = await container.get(LendingRepository)
+        position_provider = await container.get(PositionProvider)
+        
+        task = RefreshPositionsTask(repository, position_provider)
+        stats = await task.run()
+        
+        print(f"Lending position refresh complete: {stats}")
+    
+    asyncio.run(_run_task(runner))
+
+
+# ============================================================================
+# NOTE: Beat schedule is defined in app.py - the single source of truth
+# Do NOT define beat_schedule here to avoid conflicts
+# ============================================================================

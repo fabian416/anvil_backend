@@ -1,0 +1,20 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+research_001,2026-01-22T17:04:57.715445+00:00,agent,research,NO,1,1,tell me about Aave protocol,"🔍 **Protocol Search Results (Demo)**
+
+Here are some top DeFi protocols matching your criteria:
+
+• **Aave** (Lending)
+  TVL: $12.5B | Risk: LOW | Chain: Ethereum
+• **Compound** (Lending)
+  TVL: $3.2B | Risk: LOW | Chain: Ethereum
+• **Uniswap** (DEX)
+  TVL: $5.8B | Risk: LOW | Chain: Ethereum
+• **Curve** (DEX)
+  TVL: $4.1B | Risk: LOW | Chain: Ethereum
+• **Lido** (Staking)
+  TVL: $25.0B | Risk: LOW | Chain: Ethereum
+
+Register for full access to:
+  ✓ Search 500+ protocols
+  ✓ Custom filters
+  ✓ Rea",research,,,graphrag_handler,459,NO,,guest,en,FAIL,,57d8fd92-a623-42dc-9d1e-a669d696995d,WARNING,0.75,"The agent's response partially fulfills the expected behavior. While it identifies Aave and provides some basic information (TVL, Risk, Chain), it doesn't offer educational/informative content *about* the Aave protocol itself. It's more of a search result than an explanation. The response is contextually appropriate given the user's query and the 'research' test category. The user's intent is understood, but the response doesn't go deep enough into explaining the protocol. The signup prompts are",,,,

@@ -1,0 +1,22 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+risk_005,2026-01-22T17:41:15.627485+00:00,agent,risk,NO,1,1,how safe is this vault,"🛡️ **Risk Assessment: Aave (Demo)**
+
+📊 **Risk Score:** 2.5/10
+⚡ **Risk Level:** LOW
+🔒 **Security Audits:** 12
+💰 **Total Value Locked:** $12.5B
+
+**Key Risk Factors:**
+  • Smart Contract Risk: ✅ Low
+  • Liquidity Risk: ✅ Low
+  • Oracle Risk: ✅ Low
+
+Register for full risk analysis including:
+  ✓ Real-time monitoring
+  ✓ Historical data
+  ✓ ML predictions
+  ✓ Alerts
+
+
+
+👉 **Sign up for real-time alerts** → /signup",risk_analyzer,,,graphrag_handler,202,NO,,guest,en,FAIL,,793ef74a-9a84-48fc-a7aa-38dc5948e101,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,

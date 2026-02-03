@@ -1,0 +1,14 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+hunter_price_005,2026-01-22T16:58:11.871662+00:00,agent,hunter_price,NO,1,1,ETH and BTC prices,"📈 **Price Prediction for BTC**
+
+**Current Price:** $89,018.91
+**7-Day Forecast:** $91,689.48
+**Expected Change:** 🟢 +3.0%
+**Direction:** UP
+**Confidence:** 75%
+
+**Model:** LSTM Neural Network
+**Horizon:** 168 hours
+
+
+👉 **Sign up for real-time alerts** → /signup",hunter_ai,,,hunter_prediction_handler,473,NO,,guest,en,FAIL,,3c2d22c6-7d28-4d79-b8f5-a9eb896f08e5,WARNING,0.75,"The response provides the BTC price as requested, but it does not include the ETH price as requested in the user input. While the BTC information is well-formatted and contextually appropriate, the omission of ETH constitutes a partial failure. The response shows understanding of the user's intent to get price information, but only partially fulfills the request.",,,,

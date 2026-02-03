@@ -1,0 +1,647 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+shortcut_lending_Lend,2026-01-23T12:45:09.520122+00:00,shortcuts,lending,NO,1,1,Deposit USDC on Morpho,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue:**
+
+1. 💵 **USDC** (USD Coin) - ~8.5% APY
+2. 💵 **USDT** (Tether) - ~7.8% APY
+3. 💰 **DAI** (Dai) - ~9.2% APY
+4. Ξ **ETH** (Ethereum) - ~5.4% APY
+5. ₿ **WBTC** (Wrapped Bitcoin) - ~4.2% APY
+
+💬 Reply with the number (1-5) or type the asset name (e.g., ""USDC"")
+",lending,lending,,lending_handler,480,NO,,guest,en,PASS,,,PASS,1.0,"The agent's response aligns perfectly with the expected behavior. The user's input clearly indicates a desire to deposit USDC for lending, and the agent correctly interprets this intent by presenting a list of assets available for deposit, including USDC, along with their respective APYs. The response is contextually appropriate and demonstrates a clear understanding of the user's intent.",,,,
+shortcut_lending_Lend,2026-01-23T12:45:10.762300+00:00,shortcuts,lending,NO,1,1,Show best lending vaults,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Earn Yield on Your Crypto
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid asset. Please select from the list below.
+
+Deposit into Morpho vaults to earn passive income. Which asset would you like to deposit?
+
+**Select an asset to continue:**
+
+1. 💵 **USDC** (USD Coin) - ~8.5% APY
+2. 💵 **USDT** (Tether) - ~7.8% APY
+3. 💰 **DAI** (Dai) - ~9.2% APY
+4. Ξ **ETH** (Ethereum) - ~5.4% APY
+5. ₿ **WBTC** (Wrapped Bitcoin) - ~4.2% APY
+
+💬 Reply with t",lending,lending,,lending_handler,211,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent as 'lending' and provides a list of available assets for deposit into lending vaults. The response is contextually appropriate and aligns with the expected behavior. The agent prompts the user to select an asset, which is a logical next step in the lending process.",,,,
+shortcut_lending_Lend,2026-01-23T12:45:11.985210+00:00,shortcuts,lending,NO,1,1,Earn yield on my ETH,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",lending,lending,,lending_handler,196,NO,,guest,en,PASS,,,PASS,0.95,"The agent's response aligns with the expected behavior. The user's input 'Earn yield on my ETH' clearly indicates a lending intent. The agent correctly interprets this and prompts the user to deposit ETH, which is a standard action in a lending scenario. The response is contextually appropriate and demonstrates an understanding of the user's intent.",,,,
+shortcut_lending_Lend,2026-01-23T12:45:13.207856+00:00,shortcuts,lending,NO,1,1,Best lending vaults,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",lending,lending,,lending_handler,239,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent as 'lending' and responded by prompting the user for the amount they would like to deposit. The response is contextually appropriate, given the user's initial query about 'best lending vaults'. The system is behaving as expected.",,,,
+shortcut_lending_Lend,2026-01-23T12:45:14.444708+00:00,shortcuts,lending,NO,1,1,Lending vaults,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",lending,lending,,lending_handler,195,NO,,guest,en,PASS,,,PASS,0.95,The agent correctly identified the user's intent as 'lending' and responded by prompting the user for the amount they would like to deposit. The response is contextually appropriate and aligns with the expected behavior. The system also provides helpful examples of valid input.,,,,
+shortcut_lending_Lend,2026-01-23T12:45:16.369110+00:00,shortcuts,lending,NO,1,1,Earn yield,"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Ξ Deposit ETH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+❌ Invalid amount. Please enter a positive number.
+
+You're depositing **ETH** (Ethereum) into a Morpho vault.
+
+**How much would you like to deposit?**
+
+Examples: 100, 1000, 5000 ETH
+
+💬 Enter the amount to continue
+",lending,lending,,lending_handler,196,NO,,guest,en,PASS,,,PASS,1.0,"The agent correctly identified the user's intent as lending (depositing ETH to earn yield). It prompted the user for the deposit amount, which is the expected next step in a lending interaction. The response is contextually appropriate and shows a clear understanding of the user's goal.",,,,
+shortcut_money_market_Compare_Rates,2026-01-23T12:45:22.195508+00:00,shortcuts,money_market,NO,1,1,Compare Aave vs Compound,"📊 **Money Market Comparison - USDC**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Comparing Aave & Compound rates on ETHEREUM:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+| Protocol | Supply APY | Borrow APY | |
+|----------|-----------|------------|--------|
+| **Aave V3** 🏆 | 4.50% | 5.20% | 🟡 |
+| Compound V3 | 3.68% | 4.49% | 🟢 |
+
+*🟢 Real-time | 🟡 Estimated*
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**🎯 Best Supply Rate:** Aave V3 (4.50% APY)
+**🎯 Best Borrow Rate:** Compound V3 (4",money_market,money_market,,money_market_handler,3892,NO,,guest,en,PASS,,,PASS,0.95,"The agent's response accurately compares Aave and Compound, providing relevant APY information for both supplying and borrowing USDC. The response is contextually appropriate, given the user's request to compare the two platforms. The response also correctly identifies the best supply and borrow rates. The detected intent matches the expected intent.",,,,
+shortcut_money_market_Compare_Rates,2026-01-23T12:45:24.516318+00:00,shortcuts,money_market,NO,1,1,Best money market rates for USDC,"📊 **Money Market Comparison - USDC**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Comparing Aave & Compound rates on ETHEREUM:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+| Protocol | Supply APY | Borrow APY | |
+|----------|-----------|------------|--------|
+| **Aave V3** 🏆 | 4.50% | 5.20% | 🟡 |
+| Compound V3 | 3.68% | 4.49% | 🟢 |
+
+*🟢 Real-time | 🟡 Estimated*
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**🎯 Best Supply Rate:** Aave V3 (4.50% APY)
+**🎯 Best Borrow Rate:** Compound V3 (4",money_market,money_market,,money_market_handler,720,NO,,guest,en,PASS,,,PASS,0.95,"The agent's response accurately addresses the user's request for the best money market rates for USDC. It provides a comparison of Aave and Compound rates on Ethereum, clearly indicating the best supply and borrow rates. The response is contextually appropriate and demonstrates a good understanding of the user's intent. The inclusion of a suggestion for higher yields on Morpho is a helpful addition.",,,,
+shortcut_money_market_Compare_Rates,2026-01-23T12:45:25.992082+00:00,shortcuts,money_market,NO,1,1,Compare lending rates for ETH,"📊 **Money Market Comparison - ETH**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Comparing Aave & Compound rates on ETHEREUM:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+| Protocol | Supply APY | Borrow APY | |
+|----------|-----------|------------|--------|
+| **Aave V3** 🏆 | 2.10% | 3.50% | 🟡 |
+| Compound V3 | 1.80% | 3.20% | 🟡 |
+
+*🟢 Real-time | 🟡 Estimated*
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**🎯 Best Supply Rate:** Aave V3 (2.10% APY)
+**🎯 Best Borrow Rate:** Compound V3 (3.",money_market,money_market,,money_market_handler,197,NO,,guest,en,PASS,,,PASS,1.0,"The agent's response accurately addresses the user's request to compare lending rates for ETH on different money markets (Aave and Compound). The response provides a clear table comparing supply and borrow APYs, identifies the best rates, and even suggests an alternative action for higher yields on stablecoins. The response is contextually appropriate and demonstrates a good understanding of the user's intent.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:27.564160+00:00,shortcuts,swap,NO,1,1,Swap 100 USDC for ETH,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 USDC → ~0.030000 ETH
+📊 **Rate:** 1 USDC = 0.000300 ETH
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,200,NO,,guest,en,PASS,,,WARNING,0.75,"The agent correctly identifies the user's intent to swap and provides a relevant response with details like the swap amount, estimated rate, network, and gas fees. However, the `detected_intent` in the context is `MOONPAY_SWAP`, while the expected intent is `swap`. This discrepancy suggests a potential misclassification or ambiguity in intent detection. While the response is functionally correct, the intent mismatch warrants a warning.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:29.283338+00:00,shortcuts,swap,NO,1,1,Swap USDC from Ethereum to Base,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 USDC → ~0.030000 ETH
+📊 **Rate:** 1 USDC = 0.000300 ETH
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,197,NO,,guest,en,PASS,,,FAIL,0.9,"The agent's response, while providing swap details, fails to correctly identify the intent. The additional context indicates the expected intent was 'swap', but the detected intent was 'MOONPAY_SWAP'. This mismatch suggests a misinterpretation of the user's request, even though the response provides swap-related information. The response is contextually appropriate in that it offers swap details, but the incorrect intent detection is a significant error.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:31.149886+00:00,shortcuts,swap,NO,1,1,Best swap rate for ETH to USDC,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 USDC → ~0.030000 ETH
+📊 **Rate:** 1 USDC = 0.000300 ETH
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,192,NO,,guest,en,PASS,,,FAIL,0.9,"The agent's response, while providing swap details, doesn't align with the expected intent. The additional context indicates that the detected intent was 'MOONPAY_SWAP', while the expected intent was simply 'swap'. This suggests a misinterpretation or incorrect routing of the user's request. The agent provided a swap from USDC to ETH, while the user asked for ETH to USDC. This is a semantic error.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:32.929150+00:00,shortcuts,swap,NO,1,1,Swap BTC to ETH,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 BTC → ~2000.000000 ETH
+📊 **Rate:** 1 BTC = 20.000000 ETH
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,198,NO,,guest,en,PASS,,,WARNING,0.75,"The agent's response seems contextually appropriate and understands the user's intent to swap BTC to ETH. However, the `detected_intent` in the additional context is `MOONPAY_SWAP`, while the expected intent is `swap`. This discrepancy suggests a potential misclassification or ambiguity in intent detection. The response itself is a valid swap execution confirmation, but the underlying intent detection might be flawed.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:34.703696+00:00,shortcuts,swap,NO,1,1,Swap BTC to SOL,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 BTC → ~100.000000 SOL
+📊 **Rate:** 1 BTC = 1.000000 SOL
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,191,NO,,guest,en,PASS,,,FAIL,0.9,"The response indicates a successful swap execution, providing details like the swap amount, rate, network, and estimated gas. However, the 'Additional Context' indicates that the detected intent was 'MOONPAY_SWAP' while the expected intent was 'swap'. This mismatch suggests that the system incorrectly identified the user's intent, even though the response appears superficially correct. The system should have ideally triggered a different flow or at least indicated that it was using Moonpay for t",,,,
+shortcut_swap_Swap,2026-01-23T12:45:36.390951+00:00,shortcuts,swap,NO,1,1,Swap BTC to USDC,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 BTC → ~6666667.000000 USDC
+📊 **Rate:** 1 BTC = 66666.670000 USDC
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,194,NO,,guest,en,PASS,,,WARNING,0.75,"While the agent correctly identifies the user's intent to perform a swap and provides a relevant response with details like the swap amount, rate, network, and estimated gas, the `detected_intent` in the additional context is `MOONPAY_SWAP`, which doesn't align with the expected intent of `swap`. This discrepancy suggests a potential misclassification or ambiguity in the intent detection process. The response itself is functionally correct, but the internal intent classification seems off.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:38.808221+00:00,shortcuts,swap,NO,1,1,Swap ETH to BTC,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 ETH → ~5.000000 BTC
+📊 **Rate:** 1 ETH = 0.050000 BTC
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,192,NO,,guest,en,PASS,,,FAIL,0.95,"The agent's response, while providing a swap confirmation, does not align with the expected `detected_intent` in the context. The context specifies that the `detected_intent` should be `MOONPAY_SWAP`, but the agent's response doesn't indicate any interaction with Moonpay. The response seems to be a generic swap confirmation using 0x Protocol, which contradicts the expected behavior. The agent correctly identified the user's intent to swap, but failed to use the correct swap provider (Moonpay).",,,,
+shortcut_swap_Swap,2026-01-23T12:45:40.922678+00:00,shortcuts,swap,NO,1,1,Swap ETH to SOL,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 ETH → ~2222.000000 SOL
+📊 **Rate:** 1 ETH = 22.220000 SOL
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,192,NO,,guest,en,PASS,,,FAIL,0.9,"The agent's response, while providing a swap execution confirmation, contradicts the provided context. The `expected_intent` is 'swap', but the `detected_intent` is 'MOONPAY_SWAP'. This indicates a mismatch in intent recognition. The agent seems to be defaulting to a specific swap provider (Moonpay) when a generic swap was expected. This is a semantic error because the response doesn't align with the expected behavior based on the provided context.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:42.916948+00:00,shortcuts,swap,NO,1,1,Swap ETH to USDC,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 ETH → ~333333.000000 USDC
+📊 **Rate:** 1 ETH = 3333.330000 USDC
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,195,NO,,guest,en,PASS,,,FAIL,0.9,"The agent's response, while providing a swap execution confirmation, contradicts the provided context. The `expected_intent` is 'swap', but the `detected_intent` is 'MOONPAY_SWAP'. This indicates a mismatch in intent recognition. Even though the response seems functionally correct in executing a swap, the underlying intent detection is flawed according to the provided context. This discrepancy warrants a 'FAIL' verdict.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:45.331044+00:00,shortcuts,swap,NO,1,1,Swap SOL to BTC,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 SOL → ~100.000000 BTC
+📊 **Rate:** 1 SOL = 1.000000 BTC
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,192,NO,,guest,en,PASS,,,FAIL,0.9,"The response indicates a swap from SOL to BTC, which aligns with the user's input. However, the `Additional Context` indicates that the `expected_intent` was 'swap' but the `detected_intent` was 'MOONPAY_SWAP'. This discrepancy suggests a misinterpretation or incorrect routing of the user's request. While the response itself seems to fulfill the swap request, the underlying intent detection is flawed, leading to a failure.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:47.116244+00:00,shortcuts,swap,NO,1,1,Swap SOL to ETH,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 SOL → ~4.500000 ETH
+📊 **Rate:** 1 SOL = 0.045000 ETH
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,192,NO,,guest,en,PASS,,,FAIL,0.9,"The response, while providing a swap confirmation, does not align with the expected `detected_intent`. The `Additional Context` specifies that the `detected_intent` was `MOONPAY_SWAP`, while the `expected_intent` was `swap`. The agent's response doesn't indicate that it correctly identified the intent as a generic 'swap' but rather a 'MOONPAY_SWAP', which is a more specific type of swap. This mismatch indicates a failure in correctly identifying the user's intent as defined in the context.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:48.901589+00:00,shortcuts,swap,NO,1,1,Swap SOL to USDC,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 SOL → ~15000.000000 USDC
+📊 **Rate:** 1 SOL = 150.000000 USDC
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,196,NO,,guest,en,PASS,,,FAIL,0.9,"The agent's response, while providing a swap confirmation message, does not align with the expected intent. The additional context indicates that the expected intent was 'swap', but the detected intent was 'MOONPAY_SWAP'. This suggests a misinterpretation or incorrect routing of the user's request. The response is contextually appropriate in terms of providing swap details, but it fails to correctly identify the intended swap mechanism.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:50.583655+00:00,shortcuts,swap,NO,1,1,Swap USDC to BTC,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 USDC → ~0.001500 BTC
+📊 **Rate:** 1 USDC = 0.000015 BTC
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,195,NO,,guest,en,PASS,,,FAIL,0.9,"The agent's response, while providing a swap confirmation message, does not align with the expected behavior outlined in the 'Additional Context'. The context indicates that the 'expected_intent' was 'swap', but the 'detected_intent' was 'MOONPAY_SWAP'. This suggests the agent incorrectly identified the swap provider or used a specific swap flow (Moonpay) when a generic swap was expected. This mismatch between expected and detected intent constitutes a failure.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:52.230724+00:00,shortcuts,swap,NO,1,1,Swap USDC to ETH,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 USDC → ~0.030000 ETH
+📊 **Rate:** 1 USDC = 0.000300 ETH
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,193,NO,,guest,en,PASS,,,FAIL,0.9,"The agent's response indicates a swap operation, which aligns with the user's intent. However, the `detected_intent` in the additional context is `MOONPAY_SWAP`, while the `expected_intent` is `swap`. This mismatch suggests that the system incorrectly identified the specific type of swap (potentially routing it through Moonpay when it shouldn't have). While the UI output is reasonable, the underlying intent detection is flawed, leading to a failure.",,,,
+shortcut_swap_Swap,2026-01-23T12:45:54.538165+00:00,shortcuts,swap,NO,1,1,Swap USDC to SOL,"✅ **Swap Ready to Execute**
+
+🔄 **Swap:** 100 USDC → ~0.670000 SOL
+📊 **Rate:** 1 USDC = 0.006700 SOL
+⛓️ **Network:** Base
+💸 **Est. Gas:** ~$0.01
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute via Privy + 0x Protocol.",swap,moonpay_swap,,moonpay_swap_flow_handler,199,NO,,guest,en,PASS,,,FAIL,0.9,"The agent's response indicates a swap operation, which aligns with the user's intent. However, the `Additional Context` specifies that the `expected_intent` is 'swap' while the `detected_intent` is 'MOONPAY_SWAP'. This discrepancy suggests a mismatch in intent detection. While the response itself is a valid swap confirmation, the underlying intent detection mechanism seems to be misclassifying the intent, potentially leading to incorrect routing or processing in other parts of the system. This i",,,,
+shortcut_portfolio_Portfolio,2026-01-23T12:45:56.513672+00:00,shortcuts,portfolio,NO,1,1,Show my portfolio,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",portfolio,portfolio,,restricted_handler,200,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the user's intent as 'portfolio'. However, instead of directly displaying the portfolio, it prompts the user to sign up or log in. While this is a valid response in a real-world scenario where authentication is required, it deviates from the expected behavior of simply providing a relevant response based on the detected intent. The response is contextually appropriate given the 'Account Required' message, but it doesn't fulfill the core expectation of showing the p",,,,
+shortcut_portfolio_Portfolio,2026-01-23T12:45:57.342115+00:00,shortcuts,portfolio,NO,1,1,What tokens do I have?,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",portfolio,portfolio,,restricted_handler,197,NO,,guest,en,PASS,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_portfolio_Portfolio,2026-01-23T12:45:59.457999+00:00,shortcuts,portfolio,NO,1,1,List my holdings,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",portfolio,portfolio,,restricted_handler,191,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the intent as 'portfolio' based on the user's request to 'List my holdings'. However, instead of directly displaying the portfolio, it prompts the user to sign up or log in. While this is a valid security measure, it doesn't fully satisfy the user's immediate request. A better approach might be to first acknowledge the request and then inform the user about the login requirement. The response is contextually appropriate given the likely need for authentication to a",,,,
+shortcut_portfolio_Portfolio,2026-01-23T12:46:01.032710+00:00,shortcuts,portfolio,NO,1,1,What tokens do I own?,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",portfolio,portfolio,,restricted_handler,192,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent as wanting to view their portfolio. While it doesn't directly display the portfolio, it responds appropriately by prompting the user to log in or sign up, which is a necessary step before accessing portfolio information. The response is contextually appropriate as it acknowledges the request and provides a reason for not fulfilling it immediately (lack of authentication).",,,,
+shortcut_portfolio_Portfolio,2026-01-23T12:46:03.450677+00:00,shortcuts,portfolio,NO,1,1,Show my holdings,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",portfolio,portfolio,,restricted_handler,194,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the intent as 'portfolio'. However, instead of directly displaying the portfolio, it prompts the user to sign up or log in. While this is a valid response in a real-world scenario where authentication is required, it deviates from the expected behavior of simply providing a relevant response to the 'portfolio' intent. The response is contextually appropriate given the likely need for authentication, but it doesn't fully satisfy the test's implied requirement of sho",,,,
+shortcut_portfolio_Portfolio,2026-01-23T12:46:05.117823+00:00,shortcuts,portfolio,NO,1,1,List my tokens,"🔒 **Account Required**
+
+To view your portfolio, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete portfolio overview
+• Performance analytics
+• Risk assessment
+• AI-powered recommendations",portfolio,portfolio,,restricted_handler,197,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the user's intent related to their portfolio. However, instead of directly providing the portfolio information, it prompts the user to sign up or log in. While this is a valid response in a real-world scenario where the user might not be authenticated, it doesn't fully satisfy the 'provide relevant response' requirement in the 'Expected Behavior'. The system understands the intent but doesn't fulfill it directly due to a likely authentication check.",,,,
+shortcut_balance_Balance,2026-01-23T12:46:06.885735+00:00,shortcuts,balance,NO,1,1,What's my balance?,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,196,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the user's intent as wanting to know their balance. However, instead of providing the balance, it prompts the user to sign up. While this might be a valid business strategy, it doesn't directly answer the user's question. A better response would be to either provide the balance (if possible) or explain why it can't be provided without signing up, and then offer the signup option. The response is contextually appropriate in that it acknowledges the request for balan",,,,
+shortcut_balance_Balance,2026-01-23T12:46:09.208014+00:00,shortcuts,balance,NO,1,1,Check my balance,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,195,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the user's intent as 'balance'. However, instead of directly providing the balance, it prompts the user to sign up. While this might be a valid business strategy, it doesn't fully satisfy the user's immediate request. A better response would be to either display the balance (if the user is already logged in) or explain why the balance cannot be displayed without connecting a wallet and *then* offer the signup option. The response is contextually appropriate given t",,,,
+shortcut_balance_Balance,2026-01-23T12:46:11.335566+00:00,shortcuts,balance,NO,1,1,My balance,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,193,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the user's intent as wanting to know their balance. However, instead of directly providing the balance (or stating it cannot be provided due to lack of wallet connection), it prompts the user to sign up. While the signup suggestion is related to accessing the balance, it's not the most direct or helpful response. A better response would acknowledge the intent, state the requirement for wallet connection, and *then* suggest signing up. The response is contextually a",,,,
+shortcut_balance_Balance,2026-01-23T12:46:14.935328+00:00,shortcuts,balance,NO,1,1,Show my balance,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,193,NO,,guest,en,PASS,,,SKIP,0.0,"LLM validation error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}",,,,
+shortcut_balance_Balance,2026-01-23T12:46:16.506230+00:00,shortcuts,balance,NO,1,1,How much do I have?,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,191,NO,,guest,en,PASS,,,WARNING,0.8,"The agent correctly identifies the user's intent to check their balance. However, instead of directly providing the balance, it prompts the user to connect their wallet and sign up. While this might be a valid security measure or onboarding flow, it doesn't directly answer the user's question. A better response would be to acknowledge the request and then explain the need for wallet connection before providing the balance.",,,,
+shortcut_balance_Balance,2026-01-23T12:46:18.831343+00:00,shortcuts,balance,NO,1,1,Show my USDC balance,"🔒 **Wallet Access Required**
+
+To view your balance, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to access:
+• Real-time balance across all chains
+• Transaction history
+• Portfolio tracking
+• Price alerts",balance,balance,,restricted_handler,194,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent as checking their balance. While it didn't directly display the balance, it responded appropriately by indicating that wallet access is required and prompting the user to sign up. This is a reasonable response given the context of a system that likely requires authentication to access sensitive information like wallet balances. The response also provides helpful information about the benefits of signing up.",,,,
+shortcut_activity_Activity,2026-01-23T12:46:20.792589+00:00,shortcuts,activity,NO,1,1,Show my transactions,"🔒 **Account Required**
+
+To view your transaction history, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete transaction history
+• Profit/loss tracking
+• Tax reporting exports
+• Activity alerts",activity,activity,,restricted_handler,191,NO,,guest,en,PASS,,,WARNING,0.75,"The agent correctly identifies the intent as related to 'activity' (specifically, transaction history). However, the response requires the user to log in or sign up, which might not be necessary if the user is already logged in. The response should ideally check the user's authentication status before prompting for login/signup. If the user *is* logged in, this response is incorrect. If the user is *not* logged in, the response is appropriate, but the system should ideally handle authentication ",,,,
+shortcut_activity_Activity,2026-01-23T12:46:22.622624+00:00,shortcuts,activity,NO,1,1,Recent activity,"🔒 **Account Required**
+
+To view your transaction history, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete transaction history
+• Profit/loss tracking
+• Tax reporting exports
+• Activity alerts",activity,activity,,restricted_handler,193,NO,,guest,en,PASS,,,FAIL,0.95,"The agent's response requires the user to sign up or log in to view their transaction history. While this is a common pattern, it fails to directly address the user's intent of viewing recent activity. The user likely expects to see some form of activity, even if limited, without immediately being prompted to log in. The response indicates that the system detected the 'ACTIVITY' intent, but the response itself is not a direct fulfillment of that intent. It's more of a gatekeeping measure before ",,,,
+shortcut_activity_Activity,2026-01-23T12:46:24.632194+00:00,shortcuts,activity,NO,1,1,What did I do today?,"🔒 **Account Required**
+
+To view your transaction history, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete transaction history
+• Profit/loss tracking
+• Tax reporting exports
+• Activity alerts",activity,activity,,restricted_handler,193,NO,,guest,en,PASS,,,FAIL,0.95,"The agent's response fails to provide the user with their activity history. Instead, it prompts the user to sign up or log in to view their transaction history. While the detected intent might be 'ACTIVITY', the response is not contextually appropriate as it doesn't fulfill the user's request to know what they did today. The response indicates a lack of understanding of the user's immediate need for information and prioritizes account creation instead.",,,,
+shortcut_activity_Activity,2026-01-23T12:46:26.376209+00:00,shortcuts,activity,NO,1,1,My activity,"🔒 **Account Required**
+
+To view your transaction history, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete transaction history
+• Profit/loss tracking
+• Tax reporting exports
+• Activity alerts",activity,activity,,restricted_handler,197,NO,,guest,en,PASS,,,FAIL,0.95,"The agent's response requires the user to sign up or log in to view their transaction history. While 'activity' can relate to transaction history, the user input 'My activity' is too vague to definitively assume that's the intent. The agent should have either provided a more general response about activity or asked for clarification. The response fails to address the user's intent directly and instead pushes for account creation.",,,,
+shortcut_activity_Activity,2026-01-23T12:46:28.834996+00:00,shortcuts,activity,NO,1,1,Transaction history,"🔒 **Account Required**
+
+To view your transaction history, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete transaction history
+• Profit/loss tracking
+• Tax reporting exports
+• Activity alerts",activity,activity,,restricted_handler,196,NO,,guest,en,PASS,,,WARNING,0.75,"The agent correctly identifies the intent as 'activity' (or 'ACTIVITY' as stated in the context). However, the response requires the user to log in or sign up to view the transaction history. While this is a common practice, it's not explicitly stated in the user input that the user is not logged in. A more appropriate response might be to first check if the user is logged in and then, if not, prompt them to log in. The response is contextually appropriate given the common need for authenticatio",,,,
+shortcut_activity_Activity,2026-01-23T12:46:30.902605+00:00,shortcuts,activity,NO,1,1,My trades,"🔒 **Account Required**
+
+To view your transaction history, please sign up or log in.
+
+👉 [Sign Up Free](/signup) to access:
+• Complete transaction history
+• Profit/loss tracking
+• Tax reporting exports
+• Activity alerts",activity,activity,,restricted_handler,193,NO,,guest,en,PASS,,,WARNING,0.75,"The agent correctly identifies the intent as related to 'activity' (specifically, transaction history). However, it requires the user to log in or sign up, which might not be the ideal response if the user is already logged in or if some basic activity information could be provided without authentication. While the response is contextually appropriate in that it addresses transaction history, it could be improved by checking the user's authentication status first. The 'Account Required' message ",,,,
+shortcut_receive_Receive,2026-01-23T12:46:32.182904+00:00,shortcuts,receive,NO,1,1,I want to receive crypto,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,191,NO,,guest,en,PASS,,,PASS,0.95,The agent correctly identified the user's intent as 'receive' and provided a relevant response prompting the user to connect or create a wallet to receive crypto. The response is contextually appropriate as receiving crypto requires a wallet address. There are no apparent semantic errors or inconsistencies. The response demonstrates a clear understanding of the user's intent.,,,,
+shortcut_receive_Receive,2026-01-23T12:46:33.511004+00:00,shortcuts,receive,NO,1,1,Receive crypto,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,194,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent to 'receive' crypto. The response, while requiring the user to connect/create a wallet, is contextually appropriate as receiving crypto necessitates a wallet address. The response provides clear instructions and benefits of signing up, aligning with the expected behavior of guiding the user towards completing the 'receive' action.",,,,
+shortcut_receive_Receive,2026-01-23T12:46:35.122651+00:00,shortcuts,receive,NO,1,1,My address,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,199,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent to receive cryptocurrency, even though the user only provided ""My address"". The response appropriately prompts the user to connect or create a wallet to obtain their receive address. The response is contextually relevant and aligns with the expected behavior.",,,,
+shortcut_receive_Receive,2026-01-23T12:46:36.909315+00:00,shortcuts,receive,NO,1,1,My wallet address,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,193,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent to receive cryptocurrency. While the user provided their wallet address (which is unusual for a 'receive' request, as the system should *provide* the address), the agent appropriately responded by prompting the user to connect or create a wallet to obtain a receive address. The response is contextually appropriate, given the likely scenario that the user is new or hasn't yet set up a wallet within the system. The detected intent matches the expect",,,,
+shortcut_receive_Receive,2026-01-23T12:46:38.340159+00:00,shortcuts,receive,NO,1,1,Deposit address,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,200,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent to receive cryptocurrency. While it prompts the user to sign up or connect a wallet, this is a necessary step to fulfill the 'receive' request, as a wallet is required to provide a deposit address. The response is contextually appropriate and provides helpful information to the user.",,,,
+shortcut_receive_Receive,2026-01-23T12:46:39.780426+00:00,shortcuts,receive,NO,1,1,Receive address,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,314,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent to receive cryptocurrency. While the response requires the user to connect a wallet, this is a necessary step to obtain a receive address. The response is contextually appropriate and provides clear instructions and benefits of signing up. The detected intent matches the expected intent.",,,,
+shortcut_receive_Receive,2026-01-23T12:46:41.153862+00:00,shortcuts,receive,NO,1,1,Give me my QR code,"🔒 **Wallet Required**
+
+To get your receive address, you need to connect or create a wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Get your personal wallet address
+• Receive crypto from any chain
+• QR codes for easy deposits
+• Automatic notifications",receive,receive,,restricted_handler,292,NO,,guest,en,PASS,,,PASS,0.95,The agent correctly identifies the user's intent to receive cryptocurrency and responds by prompting the user to connect or create a wallet. This is a reasonable response given that a wallet is required to generate a receive address and QR code. The response also provides a clear call to action with a signup link and highlights the benefits of creating a wallet.,,,,
+shortcut_buy_Buy,2026-01-23T12:46:42.591512+00:00,shortcuts,buy,NO,1,1,I want to buy crypto,"💳 **Buy Crypto with Fiat**
+
+Let's get you some crypto! 🚀
+
+**Step 1 of 3:** Which crypto would you like to buy?
+
+💎 Available options:
+• **BTC** ₿ Bitcoin
+• **ETH** Ξ Ethereum
+• **SOL** ◎ Solana
+• **USDC** 💵 USD Coin
+• **USDT** 💵 Tether
+• **MATIC** 🔷 Polygon
+
+💡 *Type the crypto symbol, like ""ETH""*",buy,buy,,buy_handler,286,NO,,guest,en,PASS,,,PASS,1.0,"The agent's response aligns perfectly with the expected behavior. The user expressed a desire to buy crypto, and the agent initiated the 'buy crypto' flow by presenting available options. The response is contextually appropriate and demonstrates a clear understanding of the user's intent. There are no semantic errors or inconsistencies.",,,,
+shortcut_buy_Buy,2026-01-23T12:46:46.742751+00:00,shortcuts,buy,NO,1,1,Buy Bitcoin with card,"💰 **Buying ₿ BTC**
+
+**Step 2 of 3:** How much USD would you like to spend?
+
+💡 *Enter amount in USD:*
+• `50` ($50)
+• `100` ($100)
+• `500` ($500)
+
+📊 *Minimum: $20 • Maximum: $10,000*",buy,buy_continue,,buy_handler,2623,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent to buy Bitcoin. The response is contextually appropriate, prompting the user for the amount they wish to spend in USD, which is the next logical step in the 'buy' flow. The response also provides helpful information such as suggested amounts, minimum, and maximum limits. The detected intent BUY_CONTINUE aligns with the expected behavior after the initial 'buy' intent is established.",,,,
+shortcut_buy_Buy,2026-01-23T12:46:48.570684+00:00,shortcuts,buy,NO,1,1,How to buy ETH,"💰 **Buying Ξ ETH**
+
+**Step 2 of 3:** How much USD would you like to spend?
+
+💡 *Enter amount in USD:*
+• `50` ($50)
+• `100` ($100)
+• `500` ($500)
+
+📊 *Minimum: $20 • Maximum: $10,000*",buy,buy,,buy_handler,780,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent to buy ETH. The response is contextually appropriate, providing the next step in the buying process (specifying the USD amount). The response also includes helpful information such as suggested amounts and minimum/maximum limits. The detected intent matches the expected intent.",,,,
+shortcut_buy_Buy,2026-01-23T12:46:50.355045+00:00,shortcuts,buy,NO,1,1,Buy crypto,"💳 **Buy Crypto with Fiat**
+
+Let's get you some crypto! 🚀
+
+**Step 1 of 3:** Which crypto would you like to buy?
+
+💎 Available options:
+• **BTC** ₿ Bitcoin
+• **ETH** Ξ Ethereum
+• **SOL** ◎ Solana
+• **USDC** 💵 USD Coin
+• **USDT** 💵 Tether
+• **MATIC** 🔷 Polygon
+
+💡 *Type the crypto symbol, like ""ETH""*",buy,buy_continue,,buy_handler,782,NO,,guest,en,PASS,,,PASS,0.95,The agent correctly identified the user's intent to buy crypto and provided a relevant response by initiating the purchase flow and presenting available crypto options. The response is contextually appropriate and aligns with the expected behavior. The detected intent BUY_CONTINUE is a reasonable progression from the initial 'buy' intent.,,,,
+shortcut_buy_Buy,2026-01-23T12:46:52.507952+00:00,shortcuts,buy,NO,1,1,Purchase Bitcoin,"💰 **Buying ₿ BTC**
+
+**Step 2 of 3:** How much USD would you like to spend?
+
+💡 *Enter amount in USD:*
+• `50` ($50)
+• `100` ($100)
+• `500` ($500)
+
+📊 *Minimum: $20 • Maximum: $10,000*",buy,buy_continue,,buy_handler,829,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent to buy Bitcoin. The response is contextually appropriate, prompting the user for the amount of USD they wish to spend. The response also provides helpful information such as suggested amounts and minimum/maximum limits. The detected intent BUY_CONTINUE aligns with the expected intent buy, indicating a continuation of the buying process.",,,,
+shortcut_buy_Buy,2026-01-23T12:46:54.686507+00:00,shortcuts,buy,NO,1,1,Buy with fiat,"💳 **Buy Crypto with Fiat**
+
+Let's get you some crypto! 🚀
+
+**Step 1 of 3:** Which crypto would you like to buy?
+
+💎 Available options:
+• **BTC** ₿ Bitcoin
+• **ETH** Ξ Ethereum
+• **SOL** ◎ Solana
+• **USDC** 💵 USD Coin
+• **USDT** 💵 Tether
+• **MATIC** 🔷 Polygon
+
+💡 *Type the crypto symbol, like ""ETH""*",buy,buy_continue,,buy_handler,792,NO,,guest,en,PASS,,,PASS,0.95,"The agent's response aligns with the expected behavior. The user input 'Buy with fiat' clearly indicates a 'buy' intent, and the agent correctly interprets this by initiating the crypto buying process. The response is contextually appropriate, providing a clear and helpful interface for the user to select the desired cryptocurrency. The detected intent BUY_CONTINUE also aligns with the user's intention to proceed with the purchase.",,,,
+shortcut_send_Send,2026-01-23T12:46:56.717249+00:00,shortcuts,send,NO,1,1,Send crypto to a friend,"🔒 **Wallet Required**
+
+To send tokens, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Send tokens to any address
+• Cross-chain transfers
+• MEV protection
+• Transaction tracking",send,send,,send_handler,773,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent to 'send' crypto. While the response indicates a wallet is required and prompts the user to sign up, this is a contextually appropriate response given the likely scenario that the user needs a wallet to perform the 'send' action. The response aligns with the expected behavior of detecting the 'send' intent and providing a relevant response.",,,,
+shortcut_send_Send,2026-01-23T12:46:59.330005+00:00,shortcuts,send,NO,1,1,Transfer ETH to another wallet,"🔒 **Wallet Required**
+
+To send tokens, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Send tokens to any address
+• Cross-chain transfers
+• MEV protection
+• Transaction tracking",send,send,,send_handler,747,NO,,guest,en,PASS,,,WARNING,0.75,"The agent correctly identifies the intent to send tokens. However, instead of directly facilitating the send operation (assuming a connected wallet or prompting for connection in a more direct way), it redirects the user to a signup page. While requiring a wallet is appropriate, the signup suggestion feels like a detour and might not be the most efficient or user-friendly response. A better approach would be to first check for a connected wallet and then, if none exists, prompt the user to conne",,,,
+shortcut_send_Send,2026-01-23T12:47:01.687983+00:00,shortcuts,send,NO,1,1,I want to send USDC,"🔒 **Wallet Required**
+
+To send tokens, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Send tokens to any address
+• Cross-chain transfers
+• MEV protection
+• Transaction tracking",send,send,,send_handler,741,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent to 'send' tokens. The response, while not directly executing the send, appropriately prompts the user to connect their wallet, which is a necessary prerequisite for sending tokens. The response is contextually appropriate as it addresses the user's intent within the constraints of the system's functionality (wallet connection requirement).",,,,
+shortcut_send_Send,2026-01-23T12:47:03.863641+00:00,shortcuts,send,NO,1,1,Send tokens,"🔒 **Wallet Required**
+
+To send tokens, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Send tokens to any address
+• Cross-chain transfers
+• MEV protection
+• Transaction tracking",send,send,,send_handler,749,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identifies the user's intent to 'send' tokens. While it doesn't directly execute the send action, it appropriately responds by prompting the user to connect their wallet, which is a necessary prerequisite for sending tokens. The response is contextually relevant and provides helpful information and options to the user.",,,,
+shortcut_send_Send,2026-01-23T12:47:05.914546+00:00,shortcuts,send,NO,1,1,Transfer crypto,"🔒 **Wallet Required**
+
+To send tokens, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Send tokens to any address
+• Cross-chain transfers
+• MEV protection
+• Transaction tracking",send,send,,send_handler,843,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent to 'send' crypto. While the response indicates a wallet is required and prompts the user to sign up, this is a contextually appropriate response given the user's request to transfer crypto. The system understands the user wants to send crypto and provides a next step (connecting/creating a wallet) to fulfill that intent.",,,,
+shortcut_send_Send,2026-01-23T12:47:08.008903+00:00,shortcuts,send,NO,1,1,Send to wallet,"🔒 **Wallet Required**
+
+To send tokens, you need to connect your wallet.
+
+👉 [Sign Up Free](/signup) to:
+• Send tokens to any address
+• Cross-chain transfers
+• MEV protection
+• Transaction tracking",send,send,,send_handler,755,NO,,guest,en,PASS,,,PASS,0.95,"The agent correctly identified the user's intent to 'send' and provided a relevant response indicating that a wallet connection is required to perform the action. The response is contextually appropriate as it guides the user on how to proceed (signing up). The detected intent matches the expected intent, and there are no apparent semantic errors or inconsistencies.",,,,

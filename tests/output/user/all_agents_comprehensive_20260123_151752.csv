@@ -1,0 +1,114 @@
+test_id,timestamp,category,subcategory,is_multi_step,step_number,total_steps,input,output,expected_agent,actual_agents,sources,handler,response_time_ms,has_execute_data,execute_action_type,user_type,language,status,error_message,conversation_id,llm_verdict,llm_confidence,llm_reasoning,llm_accuracy_score,llm_relevance_score,llm_safety_score,llm_coherence_score
+flow_swap_001_step1,2026-01-23T15:18:45.559026+00:00,multistep,swap,YES,1,2,swap 1 ETH to USDC,"📊 **Swap Quote**
+
+**1 ETH** → **2897.415403 USDC**
+
+• Price Impact: 0.00%
+• Network: BASE
+• Aggregator: LIFI
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to swap?**
+Reply ""yes"" to confirm or ""cancel"" to abort.
+You can also modify: ""change to 1 ETH"" ",swap_workflow,swap_workflow,,authenticated_supervisor,6585,NO,,authenticated,en,PASS,,675870d0-4452-499f-ada1-306e194af3d1,,0.0,,,,,
+flow_swap_001_step2,2026-01-23T15:18:47.389999+00:00,multistep,swap,YES,2,2,yes,"✅ **Ready to Execute!**
+
+**Swap Details:**
+• From: 1 ETH
+• To: ~2897.415403 USDC
+• Network: BASE
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👉 Click **Execute** below to sign the transaction with your wallet.",swap_workflow,swap_workflow,,authenticated_supervisor,823,YES,swap,authenticated,en,PASS,,675870d0-4452-499f-ada1-306e194af3d1,,0.0,,,,,
+flow_lending_001_step1,2026-01-23T15:18:53.003081+00:00,multistep,lending,YES,1,2,deposit 100 USDC on Aave,"📊 **Deposit Quote**
+
+**Aave V3 USDC**
+
+💰 **Deposit Amount:** 100 USDC
+📈 **Current APY:** 0.04%
+💵 **Monthly Earnings:** ~0.00 USDC
+📆 **Yearly Earnings:** ~0.04 USDC
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to deposit?**
+Reply ""yes"" to confirm or ""cancel"" to abort.
+You can also modify: ""change to 500 USDC"" ",lending_workflow,lending_workflow,,authenticated_supervisor,4049,YES,deposit,authenticated,en,PASS,,a0c74cb1-1716-4f67-8dc9-b1d8b2602166,,0.0,,,,,
+flow_lending_001_step2,2026-01-23T15:18:55.002332+00:00,multistep,lending,YES,2,2,yes,"✅ **Deposit Ready to Execute**
+
+🔄 **Depositing:** 100 USDC
+🏦 **Protocol:** Aave V3
+⛓️ **Network:** Base
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute the deposit.",lending_workflow,lending_workflow,,authenticated_supervisor,997,YES,deposit,authenticated,en,PASS,,a0c74cb1-1716-4f67-8dc9-b1d8b2602166,,0.0,,,,,
+flow_buy_001_step1,2026-01-23T15:19:00.198558+00:00,multistep,buy,YES,1,2,buy $50 of ETH,"💳 **Review Your Purchase**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 **Buying:** ETH Ξ
+💵 **Amount:** $50 USD
+🌐 **Network:** Base
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Payment Options:**
+• Credit/Debit Card
+• Apple Pay / Google Pay
+
+**Ready to purchase?**
+Reply ""yes"" to open payment or ""cancel"" to abort.
+You can also modify: ""change to $200"" ",buy_workflow,buy_workflow,,authenticated_supervisor,3642,YES,buy,authenticated,en,PASS,,056afa05-202f-4ef3-8d26-a487db09b152,,0.0,,,,,
+flow_buy_001_step2,2026-01-23T15:19:02.036396+00:00,multistep,buy,YES,2,2,yes,"✅ **Purchase Ready**
+
+💳 **Buying:** $50 of ETH Ξ
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The payment window will open now.
+Complete your purchase via MoonPay or Coinbase.",buy_workflow,buy_workflow,,authenticated_supervisor,836,YES,buy,authenticated,en,PASS,,056afa05-202f-4ef3-8d26-a487db09b152,,0.0,,,,,
+flow_transfer_001_step1,2026-01-23T15:19:08.298335+00:00,multistep,transfer,YES,1,2,send 10 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e,"🔍 **Review Your Transfer**
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📤 **Sending:** 10 USDC 💵
+📍 **To:** `0x742d35...38f44e`
+🌐 **Network:** Ethereum
+⚡ **Est. Fee:** ~$1-3 (varies)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ **WARNING:**
+• Once confirmed, this transaction CANNOT be reversed
+• Double-check the destination address
+• Make sure you trust the recipient
+
+**Ready to send?**
+Reply ""yes"" to confirm or ""cancel"" to abort.",transfer_workflow,transfer_workflow,,authenticated_supervisor,4703,YES,transfer,authenticated,en,PASS,,c3829bff-c1bc-4fb7-8641-1a2287596fbd,,0.0,,,,,
+flow_transfer_001_step2,2026-01-23T15:19:10.119340+00:00,multistep,transfer,YES,2,2,yes,"✅ **Transfer Ready to Execute**
+
+🔄 **Sending:** 10 USDC 💵
+📍 **To:** `0x742d35...38f44e`
+⛓️ **Network:** Base
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Click **Confirm** to execute the transfer.",transfer_workflow,transfer_workflow,,authenticated_supervisor,807,YES,transfer,authenticated,en,PASS,,c3829bff-c1bc-4fb7-8641-1a2287596fbd,,0.0,,,,,
+flow_swap_002_step1,2026-01-23T15:19:17.949142+00:00,multistep,swap_partial,YES,1,3,swap ETH,What tokens would you like to swap? For example: 'swap 0.5 ETH to USDC',swap_workflow,swap_workflow,,authenticated_supervisor,6287,NO,,authenticated,en,PASS,,3d68cf67-65e7-4f37-b80a-635d56b1705a,,0.0,,,,,
+flow_swap_002_step2,2026-01-23T15:19:26.005029+00:00,multistep,swap_partial,YES,2,3,1 ETH to USDC,"📊 **Swap Quote**
+
+**1 ETH** → **2897.732603 USDC**
+
+• Price Impact: 0.00%
+• Network: BASE
+• Aggregator: LIFI
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Ready to swap?**
+Reply ""yes"" to confirm or ""cancel"" to abort.
+You can also modify: ""change to 1 ETH"" ",swap_workflow,swap_workflow,,authenticated_supervisor,7042,NO,,authenticated,en,PASS,,3d68cf67-65e7-4f37-b80a-635d56b1705a,,0.0,,,,,
+flow_swap_002_step3,2026-01-23T15:19:28.565682+00:00,multistep,swap_partial,YES,3,3,yes,What tokens would you like to swap? For example: 'swap 0.5 ETH to USDC',swap_workflow,swap_workflow,,authenticated_supervisor,1559,NO,,authenticated,en,PARTIAL,,3d68cf67-65e7-4f37-b80a-635d56b1705a,,0.0,,,,,

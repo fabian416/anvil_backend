@@ -70,10 +70,25 @@ class LendingMultiStepHandler:
         logger.info(f"[LENDING_MULTISTEP] continuation_step: {continuation_step}")
         logger.info(f"[LENDING_MULTISTEP] previous_lending_info: {previous_lending_info}")
 
-        # Step 1: Ask for asset (initial request)
+        # Step 1: Try to parse asset and amount from initial request
         if not continuation_step and not previous_lending_info:
-            logger.info("[LENDING_MULTISTEP] Step 1: Asking for asset (no continuation)")
-            return await self._ask_for_asset(language)
+            logger.info("[LENDING_MULTISTEP] Step 1: Parsing initial request for asset/amount")
+            # Try to extract asset and amount from the message
+            parsed_asset = self._parse_asset(content)
+            parsed_amount = self._parse_amount(content)
+            
+            if parsed_asset and parsed_amount:
+                # Both asset and amount provided - skip to vault quote
+                logger.info(f"[LENDING_MULTISTEP] Found asset={parsed_asset}, amount={parsed_amount} - skipping to quote")
+                return await self._show_vault_quote(parsed_asset, parsed_amount, language, is_authenticated, wallet_address)
+            elif parsed_asset:
+                # Only asset provided - ask for amount
+                logger.info(f"[LENDING_MULTISTEP] Found asset={parsed_asset} - asking for amount")
+                return await self._ask_for_amount(parsed_asset, language)
+            else:
+                # Neither provided - ask for asset
+                logger.info("[LENDING_MULTISTEP] No asset/amount found - asking for asset")
+                return await self._ask_for_asset(language)
 
         # Step 2: Process asset selection
         if continuation_step == "lending_awaiting_asset" or (
@@ -332,8 +347,6 @@ class LendingMultiStepHandler:
                 "yearly": "Yearly Earnings",
                 "note_title": "📝 Note",
                 "note": "Real-time APY from Morpho protocol. Rates vary based on market conditions.",
-                "confirm_title": "Ready to deposit?",
-                "confirm_actions": 'Reply "confirm" or "yes" to proceed\nReply "cancel" to abort',
                 "signup_required": "⚠️ You'll need to sign up to complete the deposit",
             },
             "es": {
@@ -346,8 +359,6 @@ class LendingMultiStepHandler:
                 "yearly": "Ganancias Anuales",
                 "note_title": "📝 Nota",
                 "note": "APY en tiempo real del protocolo Morpho. Las tasas varían según las condiciones del mercado.",
-                "confirm_title": "¿Listo para depositar?",
-                "confirm_actions": 'Responde "confirmar" o "sí" para proceder\nResponde "cancelar" para abortar',
                 "signup_required": "⚠️ Necesitarás registrarte para completar el depósito",
             },
             "pt": {
@@ -360,8 +371,6 @@ class LendingMultiStepHandler:
                 "yearly": "Ganhos Anuais",
                 "note_title": "📝 Nota",
                 "note": "APY em tempo real do protocolo Morpho. As taxas variam de acordo com as condições do mercado.",
-                "confirm_title": "Pronto para depositar?",
-                "confirm_actions": 'Responda "confirmar" ou "sim" para prosseguir\nResponda "cancelar" para abortar',
                 "signup_required": "⚠️ Você precisará se cadastrar para completar o depósito",
             },
             "zh": {
@@ -374,8 +383,6 @@ class LendingMultiStepHandler:
                 "yearly": "年收益",
                 "note_title": "📝 说明",
                 "note": "显示的是演示定价。实际 APY 根据市场情况而变化。",
-                "confirm_title": "准备存款了吗?",
-                "confirm_actions": '回复"确认"或"是"继续\n回复"取消"中止',
                 "signup_required": "⚠️ 您需要注册才能完成存款",
             },
         }
@@ -463,9 +470,7 @@ class LendingMultiStepHandler:
         # For authenticated users with execute_data: no pending_action, modal will show
         # For guests or if no vault found: ask for confirmation or show error
         if execute_data:
-            # Authenticated flow - modal appears
-            protocol_name = "Morpho" if execute_data.get("protocol") == "morpho" else "Aave V3"
-            content += f"**{msg['confirm_title']}** ({protocol_name})\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n👉 Click **Execute** below to deposit."
+            # Authenticated flow - modal appears (no reply instructions needed)
             return {
                 "content": content,
                 "pending_action": None,  # No pending action - modal shows immediately
@@ -508,20 +513,51 @@ Desafortunadamente, no hay vaults activos de Morpho para **{asset}** en la red B
                 "requires_registration": False,
             }
         else:
-            # Guest flow - ask for text confirmation
-            content += f"""**{msg['confirm_title']}**
+            # Guest flow - skip confirmation, go directly to signup prompt
+            signup_messages = {
+                "en": {
+                    "signup_title": "🚀 Ready to Start Earning?",
+                    "signup_description": f"To deposit **{amount} {asset}** and start earning **{apy:.2f}% APY**, you'll need to create an account.",
+                    "signup_cta": "👉 Sign up now to complete your deposit",
+                    # signup_url removed - URLs not shown in guest chat
+                },
+                "es": {
+                    "signup_title": "🚀 ¿Listo para Empezar a Ganar?",
+                    "signup_description": f"Para depositar **{amount} {asset}** y comenzar a ganar **{apy:.2f}% APY**, necesitarás crear una cuenta.",
+                    "signup_cta": "👉 Regístrate ahora para completar tu depósito",
+                    # signup_url removed - URLs not shown in guest chat
+                },
+                "pt": {
+                    "signup_title": "🚀 Pronto para Começar a Ganhar?",
+                    "signup_description": f"Para depositar **{amount} {asset}** e começar a ganhar **{apy:.2f}% APY**, você precisará criar uma conta.",
+                    "signup_cta": "👉 Cadastre-se agora para completar seu depósito",
+                    # signup_url removed - URLs not shown in guest chat
+                },
+                "zh": {
+                    "signup_title": "🚀 准备开始赚取收益?",
+                    "signup_description": f"要存入 **{amount} {asset}** 并开始赚取 **{apy:.2f}% APY**，您需要创建一个账户。",
+                    "signup_cta": "👉 立即注册完成您的存款",
+                    # signup_url removed - URLs not shown in guest chat
+                },
+            }
+            
+            signup_msg = signup_messages.get(language, signup_messages["en"])
+            
+            content += f"""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{msg['confirm_actions']}
+**{signup_msg['signup_title']}**
 
-{msg['signup_required']}
+{signup_msg['signup_description']}
+
+**{signup_msg['signup_cta']}**
 """
             return {
                 "content": content,
-                "pending_action": "lending_awaiting_confirmation",
-                "lending_info": {"asset": asset, "amount": amount},
+                "pending_action": None,  # No pending action - direct signup prompt
+                "lending_info": None,  # Clear lending info since we're not continuing the flow
                 "enrichment": {
-                    "lending_flow": "step3_confirmation",
+                    "lending_flow": "ready_to_signup",
                     "asset": asset,
                     "amount": amount,
                     "apy": apy,
@@ -713,7 +749,6 @@ Desafortunadamente, no hay vaults activos de Morpho para **{asset}** en la red B
 3. 💰 {msg['step3']}
 
 👉 **{msg['cta']}**
-/signup
 """
 
         return {
