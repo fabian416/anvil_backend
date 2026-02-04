@@ -9,7 +9,7 @@ This specification defines the wallet generation, storage, and lifecycle managem
 ### Scope
 
 - **Ethereum wallet generation**: Create new wallets using ethers.js
-- **AWS KMS integration**: Secure private key encryption/decryption
+- **HashiCorp Vault integration**: Secure private key encryption/decryption
 - **Database persistence**: Store wallet metadata and encrypted keys
 - **Transaction signing**: Sign Hyperliquid API requests with user wallets
 - **Wallet lifecycle**: Generation, activation, suspension, archival
@@ -18,7 +18,7 @@ This specification defines the wallet generation, storage, and lifecycle managem
 ### Key Objectives
 
 1. ✅ Generate secure Ethereum wallets for users on demand
-2. ✅ Protect private keys using AWS KMS envelope encryption
+2. ✅ Protect private keys using HashiCorp Vault
 3. ✅ Enable server-side transaction signing (no frontend exposure)
 4. ✅ Support one-wallet-per-user model (simplicity over complexity)
 5. ✅ Provide audit trail for all wallet operations
@@ -30,10 +30,10 @@ This specification defines the wallet generation, storage, and lifecycle managem
 graph LR
     A[Swap Orchestrator] --> B[Wallet Service]
     B --> C[Wallet Repository]
-    B --> D[KMS Client]
+    B --> D[Vault Client]
     B --> E[Wallet Cache]
     C --> F[(PostgreSQL)]
-    D --> G[AWS KMS]
+    D --> G[HashiCorp Vault]
 
     style B fill:#4a9eff,stroke:#2980b9,color:#fff
     style D fill:#f39c12,stroke:#e67e22,color:#fff
@@ -60,12 +60,12 @@ graph TB
 
     subgraph "Infrastructure Layer"
         E[WalletRepository]
-        F[KMSClient]
+        F[VaultClient]
         G[WalletCache Redis]
     end
 
     subgraph "External Services"
-        H[AWS KMS]
+        H[HashiCorp Vault]
         I[(PostgreSQL)]
     end
 
@@ -90,7 +90,7 @@ sequenceDiagram
     participant User
     participant SwapAgent
     participant WalletService
-    participant KMS
+    participant Vault
     participant DB
 
     User->>SwapAgent: "Swap 10 USDC to PURR"
@@ -103,8 +103,8 @@ sequenceDiagram
     else Wallet Does Not Exist
         WalletService->>WalletService: Generate new Ethereum wallet
         Note over WalletService: ethers.Wallet.createRandom()
-        WalletService->>KMS: Encrypt private key
-        KMS-->>WalletService: {kms_key_id, encrypted_key}
+        WalletService->>Vault: Store private key
+        Vault-->>WalletService: {secret_path}
         WalletService->>DB: INSERT INTO hyperliquid_wallets
         DB-->>WalletService: Wallet created (id=456)
         WalletService-->>SwapAgent: Return new wallet
@@ -119,7 +119,7 @@ sequenceDiagram
 sequenceDiagram
     participant SwapAgent
     participant WalletService
-    participant KMS
+    participant Vault
     participant Cache
     participant HyperliquidAPI
 
@@ -129,10 +129,10 @@ sequenceDiagram
         WalletService->>Cache: GET decrypted_key:456
         Cache-->>WalletService: Private key (TTL: 60s)
     else Cache Miss
-        WalletService->>DB: SELECT kms_key_id, encrypted_key WHERE id=456
-        DB-->>WalletService: Encryption metadata
-        WalletService->>KMS: Decrypt(kms_key_id, encrypted_key)
-        KMS-->>WalletService: Decrypted private key
+        WalletService->>DB: SELECT vault_path WHERE id=456
+        DB-->>WalletService: Vault path
+        WalletService->>Vault: Read secret from path
+        Vault-->>WalletService: Private key
         WalletService->>Cache: SET decrypted_key:456 (TTL: 60s)
     end
 
@@ -142,6 +142,71 @@ sequenceDiagram
     SwapAgent->>HyperliquidAPI: Submit signed transaction
     HyperliquidAPI-->>SwapAgent: Transaction confirmed
 ```
+
+---
+
+## 🚀 HashiCorp Vault Setup
+
+### Local Development Setup (2 minutes)
+
+#### 1. Install Vault
+
+```bash
+# MacOS
+brew install vault
+
+# Ubuntu/Debian  
+wget https://releases.hashicorp.com/vault/1.17.0/vault_1.17.0_linux_amd64.zip
+unzip vault_1.17.0_linux_amd64.zip
+sudo mv vault /usr/local/bin/
+
+# Verify
+vault --version
+```
+
+#### 2. Start Vault DEV Mode (Terminal 1)
+
+```bash
+# SUPERSIMPLE - 1 command
+vault server -dev
+
+# Output:
+# ==> Vault server configuration:
+# API Address: http://127.0.0.1:8200
+# Root Token: hvs.ey... (COPY THIS!)
+# Unseal Key: xxxx.xxxx... (COPY THIS!)
+```
+
+#### 3. Configure Client (Terminal 2)
+
+```bash
+export VAULT_ADDR='http://127.0.0.1:8200'
+export VAULT_TOKEN='hvs.ey...'  # The root token from step 2
+vault status  # ✅ Should show "Active"
+```
+
+#### 4. Create Secret Engine for Hyperliquid
+
+```bash
+# Enable KV v2 secrets engine
+vault secrets enable -path=hyperliquid kv-v2
+
+# Test: Store a private key
+vault kv put hyperliquid/user123 \
+  private_key="0xabc123privatekey..."
+
+# Verify
+vault kv get hyperliquid/user123
+```
+
+### Production Setup
+
+For production, use:
+- **Vault Enterprise** or **HCP Vault** (managed service)
+- **Auto-unseal** with cloud KMS (AWS KMS, GCP KMS, Azure Key Vault)
+- **HA mode** with Consul or Raft storage
+- **TLS everywhere**
+- **AppRole authentication** for backend services
 
 ---
 
@@ -158,9 +223,7 @@ CREATE TABLE hyperliquid_wallets (
 
     -- Hyperliquid-specific Data
     hl_address VARCHAR(42) NOT NULL UNIQUE,  -- Ethereum address (0x...)
-    kms_key_id VARCHAR(255) NOT NULL,        -- AWS KMS key identifier
-    encrypted_private_key TEXT NOT NULL,      -- AES-256 encrypted key
-    derivation_path VARCHAR(100),             -- Optional: HD wallet path
+    vault_path VARCHAR(255) NOT NULL,         -- HashiCorp Vault secret path
 
     -- Status Management
     status VARCHAR(20) DEFAULT 'active',
@@ -222,8 +285,7 @@ erDiagram
         int user_id FK
         int wallet_id FK
         varchar hl_address UK
-        varchar kms_key_id
-        text encrypted_private_key
+        varchar vault_path
         varchar status
         timestamp first_used_at
         timestamp last_used_at
@@ -248,6 +310,160 @@ erDiagram
 
 ## 🔧 Implementation Details
 
+### HashiCorp Vault Client
+
+```python
+# src/app/infrastructure/adapters/vault/vault_client.py
+import logging
+from typing import Optional, Dict
+import hvac
+from hvac.exceptions import VaultError
+
+logger = logging.getLogger(__name__)
+
+
+class VaultClient:
+    """
+    HashiCorp Vault client for private key storage.
+
+    Uses KV v2 secrets engine for:
+    - Storing encrypted private keys
+    - Retrieving keys for transaction signing
+    - Version history for audit trail
+    """
+
+    def __init__(
+        self,
+        vault_addr: str = "http://127.0.0.1:8200",
+        vault_token: Optional[str] = None,
+        mount_point: str = "hyperliquid",
+    ):
+        self._client = hvac.Client(
+            url=vault_addr,
+            token=vault_token,
+        )
+        self._mount_point = mount_point
+        
+        if not self._client.is_authenticated():
+            raise VaultAuthenticationError("Vault authentication failed")
+
+    async def store_private_key(
+        self,
+        user_id: int,
+        private_key: str,
+        metadata: Optional[Dict[str, str]] = None,
+    ) -> str:
+        """
+        Store private key in Vault.
+
+        Args:
+            user_id: User identifier (used in path)
+            private_key: Raw private key (hex string)
+            metadata: Optional metadata for audit
+
+        Returns:
+            Vault secret path
+
+        Raises:
+            VaultStorageError: If storage fails
+        """
+        try:
+            path = f"user_{user_id}"
+            
+            self._client.secrets.kv.v2.create_or_update_secret(
+                mount_point=self._mount_point,
+                path=path,
+                secret={
+                    "private_key": private_key,
+                    "created_by": "hyperliquid_wallet_service",
+                    **(metadata or {}),
+                },
+            )
+
+            logger.info(f"Stored private key for user {user_id} at {self._mount_point}/{path}")
+            return f"{self._mount_point}/{path}"
+
+        except VaultError as e:
+            logger.error(f"Failed to store private key: {e}")
+            raise VaultStorageError(f"Vault storage failed: {e}") from e
+
+    async def get_private_key(
+        self,
+        user_id: int,
+    ) -> str:
+        """
+        Retrieve private key from Vault.
+
+        Args:
+            user_id: User identifier
+
+        Returns:
+            Decrypted private key (hex string)
+
+        Raises:
+            VaultRetrievalError: If retrieval fails
+        """
+        try:
+            path = f"user_{user_id}"
+            
+            response = self._client.secrets.kv.v2.read_secret_version(
+                mount_point=self._mount_point,
+                path=path,
+            )
+
+            private_key = response["data"]["data"]["private_key"]
+            return private_key
+
+        except VaultError as e:
+            logger.error(f"Failed to retrieve private key: {e}")
+            raise VaultRetrievalError(f"Vault retrieval failed: {e}") from e
+
+    async def delete_private_key(
+        self,
+        user_id: int,
+    ) -> None:
+        """
+        Permanently delete private key (use with caution).
+
+        Args:
+            user_id: User identifier
+        """
+        try:
+            path = f"user_{user_id}"
+            
+            # Soft delete (preserves versions)
+            self._client.secrets.kv.v2.delete_latest_version_of_secret(
+                mount_point=self._mount_point,
+                path=path,
+            )
+            
+            logger.warning(f"Deleted private key for user {user_id}")
+
+        except VaultError as e:
+            logger.error(f"Failed to delete private key: {e}")
+            raise VaultDeletionError(f"Vault deletion failed: {e}") from e
+
+
+class VaultAuthenticationError(Exception):
+    """Raised when Vault authentication fails."""
+    pass
+
+
+class VaultStorageError(Exception):
+    """Raised when Vault storage fails."""
+    pass
+
+
+class VaultRetrievalError(Exception):
+    """Raised when Vault retrieval fails."""
+    pass
+
+
+class VaultDeletionError(Exception):
+    """Raised when Vault deletion fails."""
+    pass
+```
+
 ### Core Service: `HyperliquidWalletService`
 
 ```python
@@ -258,8 +474,6 @@ from dataclasses import dataclass
 from datetime import datetime, UTC
 
 from eth_account import Account
-from eth_typing import HexStr
-from web3 import Web3
 
 
 @dataclass
@@ -269,8 +483,7 @@ class HyperliquidWallet:
     user_id: int
     wallet_id: int
     hl_address: str
-    kms_key_id: str
-    encrypted_private_key: str
+    vault_path: str
     status: str
     first_used_at: Optional[datetime]
     last_used_at: Optional[datetime]
@@ -286,7 +499,7 @@ class HyperliquidWalletService:
 
     Responsibilities:
     - Generate new Ethereum wallets
-    - Encrypt/decrypt private keys via AWS KMS
+    - Store/retrieve private keys via HashiCorp Vault
     - Store wallet metadata in database
     - Sign transactions for Hyperliquid API
     - Manage wallet lifecycle (suspend, archive)
@@ -295,11 +508,11 @@ class HyperliquidWalletService:
     def __init__(
         self,
         wallet_repository: "WalletRepository",
-        kms_client: "KMSClient",
+        vault_client: "VaultClient",
         cache_client: "RedisClient",
     ):
         self._repository = wallet_repository
-        self._kms = kms_client
+        self._vault = vault_client
         self._cache = cache_client
         self._cache_ttl = 60  # seconds
 
@@ -320,7 +533,7 @@ class HyperliquidWalletService:
 
         Raises:
             WalletCreationError: If wallet generation fails
-            KMSEncryptionError: If key encryption fails
+            VaultStorageError: If key storage fails
         """
         # Check if wallet exists
         existing = await self._repository.get_by_user_id(user_id)
@@ -339,8 +552,8 @@ class HyperliquidWalletService:
         Generate new Ethereum wallet and store securely.
 
         Process:
-        1. Generate random Ethereum wallet (ethers.js equivalent)
-        2. Encrypt private key with AWS KMS
+        1. Generate random Ethereum wallet
+        2. Store private key in HashiCorp Vault
         3. Store wallet metadata in database
         4. Return wallet instance
 
@@ -353,30 +566,29 @@ class HyperliquidWalletService:
 
         Raises:
             WalletCreationError: If generation fails
-            KMSEncryptionError: If encryption fails
+            VaultStorageError: If storage fails
         """
-        # Generate Ethereum wallet (equivalent to ethers.Wallet.createRandom())
+        # Generate Ethereum wallet
         account = Account.create()
         private_key = account.key.hex()
         address = account.address
 
-        # Encrypt private key with KMS
-        kms_key_id, encrypted_key = await self._kms.encrypt_private_key(
+        # Store private key in Vault
+        vault_path = await self._vault.store_private_key(
+            user_id=user_id,
             private_key=private_key,
-            context={
-                "user_id": str(user_id),
+            metadata={
                 "wallet_type": "hyperliquid",
                 "created_at": datetime.now(UTC).isoformat(),
             }
         )
 
-        # Store in database
+        # Store metadata in database
         wallet = await self._repository.create(
             user_id=user_id,
             wallet_id=wallet_id,
             hl_address=address,
-            kms_key_id=kms_key_id,
-            encrypted_private_key=encrypted_key,
+            vault_path=vault_path,
         )
 
         # Audit log
@@ -406,7 +618,7 @@ class HyperliquidWalletService:
 
         Raises:
             WalletNotFoundError: If wallet doesn't exist
-            KMSDecryptionError: If key decryption fails
+            VaultRetrievalError: If key retrieval fails
             SigningError: If signature generation fails
         """
         # Get wallet metadata
@@ -417,8 +629,8 @@ class HyperliquidWalletService:
         if wallet.status != "active":
             raise WalletSuspendedError(f"Wallet {wallet_id} is {wallet.status}")
 
-        # Get decrypted private key (with caching)
-        private_key = await self._get_decrypted_private_key(wallet)
+        # Get private key (with caching)
+        private_key = await self._get_private_key(wallet)
 
         # Sign transaction
         account = Account.from_key(private_key)
@@ -429,12 +641,12 @@ class HyperliquidWalletService:
 
         return signature.signature.hex()
 
-    async def _get_decrypted_private_key(
+    async def _get_private_key(
         self,
         wallet: HyperliquidWallet,
     ) -> str:
         """
-        Get decrypted private key with Redis caching.
+        Get private key with Redis caching.
 
         Cache key format: "hl_wallet_key:{wallet_id}"
         TTL: 60 seconds
@@ -443,7 +655,7 @@ class HyperliquidWalletService:
             wallet: HyperliquidWallet instance
 
         Returns:
-            Decrypted private key (hex string)
+            Private key (hex string)
         """
         cache_key = f"hl_wallet_key:{wallet.id}"
 
@@ -452,15 +664,8 @@ class HyperliquidWalletService:
         if cached_key:
             return cached_key
 
-        # Decrypt with KMS
-        private_key = await self._kms.decrypt_private_key(
-            kms_key_id=wallet.kms_key_id,
-            encrypted_key=wallet.encrypted_private_key,
-            context={
-                "user_id": str(wallet.user_id),
-                "wallet_type": "hyperliquid",
-            }
-        )
+        # Retrieve from Vault
+        private_key = await self._vault.get_private_key(wallet.user_id)
 
         # Cache for short duration
         await self._cache.set(
@@ -514,134 +719,8 @@ class HyperliquidWalletService:
 
         IMPORTANT: Never log private keys or sensitive data.
         """
-        # Implementation: Write to audit_logs table or CloudWatch
+        # Implementation: Write to audit_logs table
         pass
-```
-
-### AWS KMS Client
-
-```python
-# src/app/infrastructure/adapters/aws/kms_client.py
-import base64
-from typing import Tuple, Dict, Optional
-import boto3
-from botocore.exceptions import ClientError
-
-
-class KMSClient:
-    """
-    AWS KMS client for private key encryption/decryption.
-
-    Uses envelope encryption:
-    1. Generate data key from KMS
-    2. Encrypt private key with data key (AES-256)
-    3. Store encrypted data key (not plain data key)
-    4. For decryption, decrypt data key with KMS, then decrypt private key
-    """
-
-    def __init__(
-        self,
-        kms_key_alias: str = "alias/hyperliquid-wallets",
-        region: str = "us-east-1",
-    ):
-        self._client = boto3.client("kms", region_name=region)
-        self._key_alias = kms_key_alias
-
-    async def encrypt_private_key(
-        self,
-        private_key: str,
-        context: Dict[str, str],
-    ) -> Tuple[str, str]:
-        """
-        Encrypt private key using AWS KMS.
-
-        Args:
-            private_key: Raw private key (hex string)
-            context: Encryption context for audit
-
-        Returns:
-            Tuple of (kms_key_id, encrypted_private_key_base64)
-
-        Raises:
-            KMSEncryptionError: If encryption fails
-        """
-        try:
-            # Encrypt with KMS
-            response = self._client.encrypt(
-                KeyId=self._key_alias,
-                Plaintext=private_key.encode("utf-8"),
-                EncryptionContext=context,
-            )
-
-            # Extract ciphertext and key ID
-            encrypted_key = base64.b64encode(response["CiphertextBlob"]).decode("utf-8")
-            kms_key_id = response["KeyId"]
-
-            return kms_key_id, encrypted_key
-
-        except ClientError as e:
-            raise KMSEncryptionError(f"KMS encryption failed: {e}") from e
-
-    async def decrypt_private_key(
-        self,
-        kms_key_id: str,
-        encrypted_key: str,
-        context: Dict[str, str],
-    ) -> str:
-        """
-        Decrypt private key using AWS KMS.
-
-        Args:
-            kms_key_id: KMS key identifier
-            encrypted_key: Base64-encoded encrypted key
-            context: Encryption context (must match encryption)
-
-        Returns:
-            Decrypted private key (hex string)
-
-        Raises:
-            KMSDecryptionError: If decryption fails
-        """
-        try:
-            # Decode base64
-            ciphertext = base64.b64decode(encrypted_key)
-
-            # Decrypt with KMS
-            response = self._client.decrypt(
-                CiphertextBlob=ciphertext,
-                EncryptionContext=context,
-            )
-
-            # Extract plaintext
-            private_key = response["Plaintext"].decode("utf-8")
-
-            return private_key
-
-        except ClientError as e:
-            raise KMSDecryptionError(f"KMS decryption failed: {e}") from e
-
-    async def rotate_key(self, old_kms_key_id: str) -> str:
-        """
-        Rotate KMS key (90-day policy).
-
-        Args:
-            old_kms_key_id: Current KMS key ID
-
-        Returns:
-            New KMS key ID
-        """
-        # Implementation: Create new key, re-encrypt all wallets
-        pass
-
-
-class KMSEncryptionError(Exception):
-    """Raised when KMS encryption fails."""
-    pass
-
-
-class KMSDecryptionError(Exception):
-    """Raised when KMS decryption fails."""
-    pass
 ```
 
 ### Wallet Repository
@@ -649,7 +728,7 @@ class KMSDecryptionError(Exception):
 ```python
 # src/app/infrastructure/persistence_sqla/repositories/hyperliquid_wallet_repository.py
 from typing import Optional
-from sqlalchemy import select, update
+from sqlalchemy import select, update, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.hyperliquid_wallet import HyperliquidWallet
@@ -666,16 +745,14 @@ class HyperliquidWalletRepository:
         user_id: int,
         wallet_id: int,
         hl_address: str,
-        kms_key_id: str,
-        encrypted_private_key: str,
+        vault_path: str,
     ) -> HyperliquidWallet:
         """Create new Hyperliquid wallet."""
         stmt = insert(hyperliquid_wallets).values(
             user_id=user_id,
             wallet_id=wallet_id,
             hl_address=hl_address,
-            kms_key_id=kms_key_id,
-            encrypted_private_key=encrypted_private_key,
+            vault_path=vault_path,
             status="active",
         ).returning(hyperliquid_wallets)
 
@@ -714,6 +791,47 @@ class HyperliquidWalletRepository:
 
 ---
 
+## 🔧 Configuration
+
+### Environment Variables
+
+```bash
+# .env or config/local/.secrets.toml
+
+# HashiCorp Vault Configuration
+VAULT_ADDR=http://127.0.0.1:8200
+VAULT_TOKEN=hvs.xxxxxxxxxxxxx
+VAULT_MOUNT_POINT=hyperliquid
+
+# For production, use AppRole auth instead of token:
+# VAULT_ROLE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+# VAULT_SECRET_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+
+### Vault Policy (Production)
+
+```hcl
+# hyperliquid-backend-policy.hcl
+
+# Allow reading and writing to hyperliquid secrets
+path "hyperliquid/data/*" {
+  capabilities = ["create", "read", "update", "delete"]
+}
+
+# Allow listing secrets (for admin purposes)
+path "hyperliquid/metadata/*" {
+  capabilities = ["list", "read"]
+}
+
+# Deny deletion of metadata (preserve audit trail)
+path "hyperliquid/metadata/*" {
+  capabilities = ["delete"]
+  denied_parameters = {}
+}
+```
+
+---
+
 ## 🧪 Test Cases
 
 ### Unit Tests
@@ -723,6 +841,7 @@ class HyperliquidWalletRepository:
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from decimal import Decimal
+from datetime import datetime, UTC
 
 from app.application.services.hyperliquid_wallet_service import (
     HyperliquidWalletService,
@@ -734,12 +853,12 @@ from app.application.services.hyperliquid_wallet_service import (
 def wallet_service():
     """Create wallet service with mocked dependencies."""
     repository = AsyncMock()
-    kms_client = AsyncMock()
+    vault_client = AsyncMock()
     cache_client = AsyncMock()
 
     return HyperliquidWalletService(
         wallet_repository=repository,
-        kms_client=kms_client,
+        vault_client=vault_client,
         cache_client=cache_client,
     )
 
@@ -750,8 +869,8 @@ async def test_generate_wallet_creates_valid_ethereum_address(wallet_service):
     # Arrange
     user_id = 123
     wallet_id = 456
-    wallet_service._kms.encrypt_private_key = AsyncMock(
-        return_value=("kms-key-123", "encrypted-key-base64")
+    wallet_service._vault.store_private_key = AsyncMock(
+        return_value="hyperliquid/user_123"
     )
     wallet_service._repository.create = AsyncMock(
         return_value=HyperliquidWallet(
@@ -759,8 +878,7 @@ async def test_generate_wallet_creates_valid_ethereum_address(wallet_service):
             user_id=user_id,
             wallet_id=wallet_id,
             hl_address="0x1234567890abcdef1234567890abcdef12345678",
-            kms_key_id="kms-key-123",
-            encrypted_private_key="encrypted-key-base64",
+            vault_path="hyperliquid/user_123",
             status="active",
             first_used_at=None,
             last_used_at=None,
@@ -778,7 +896,7 @@ async def test_generate_wallet_creates_valid_ethereum_address(wallet_service):
     assert wallet.hl_address.startswith("0x")
     assert len(wallet.hl_address) == 42
     assert wallet.status == "active"
-    wallet_service._kms.encrypt_private_key.assert_called_once()
+    wallet_service._vault.store_private_key.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -791,8 +909,7 @@ async def test_get_or_create_wallet_returns_existing(wallet_service):
         user_id=user_id,
         wallet_id=456,
         hl_address="0xexisting...",
-        kms_key_id="kms-key-123",
-        encrypted_private_key="encrypted-key",
+        vault_path="hyperliquid/user_123",
         status="active",
         first_used_at=None,
         last_used_at=None,
@@ -813,107 +930,20 @@ async def test_get_or_create_wallet_returns_existing(wallet_service):
 
 
 @pytest.mark.asyncio
-async def test_sign_transaction_produces_valid_signature(wallet_service):
-    """Test that transaction signing produces valid signature."""
-    # Arrange
-    wallet = HyperliquidWallet(...)
-    wallet_service._repository.get_by_id = AsyncMock(return_value=wallet)
-    wallet_service._get_decrypted_private_key = AsyncMock(
-        return_value="0xprivatekey123..."
-    )
-
-    tx_data = {"action": "spotOrder", "amount": "10.0"}
-
-    # Act
-    signature = await wallet_service.sign_transaction(wallet.id, tx_data)
-
-    # Assert
-    assert signature.startswith("0x")
-    assert len(signature) == 132  # 66 bytes * 2 hex chars
-    wallet_service._repository.update.assert_called_once()  # last_used_at update
-
-
-@pytest.mark.asyncio
-async def test_kms_encryption_decryption_round_trip():
-    """Test that KMS encrypt->decrypt returns original key."""
-    # Arrange
-    kms_client = KMSClient(kms_key_alias="alias/test")
-    original_key = "0x1234567890abcdef1234567890abcdef12345678"
-    context = {"user_id": "123", "wallet_type": "hyperliquid"}
-
-    # Act
-    kms_key_id, encrypted_key = await kms_client.encrypt_private_key(
-        private_key=original_key,
-        context=context,
-    )
-    decrypted_key = await kms_client.decrypt_private_key(
-        kms_key_id=kms_key_id,
-        encrypted_key=encrypted_key,
-        context=context,
-    )
-
-    # Assert
-    assert decrypted_key == original_key
-
-
-@pytest.mark.asyncio
 async def test_wallet_retrieval_uses_cache(wallet_service):
-    """Test that decrypted keys are cached."""
+    """Test that private keys are cached."""
     # Arrange
-    wallet = HyperliquidWallet(...)
+    wallet = MagicMock()
+    wallet.id = 1
+    wallet.user_id = 123
     wallet_service._cache.get = AsyncMock(return_value="cached-key-123")
 
     # Act
-    key = await wallet_service._get_decrypted_private_key(wallet)
+    key = await wallet_service._get_private_key(wallet)
 
     # Assert
     assert key == "cached-key-123"
-    wallet_service._kms.decrypt_private_key.assert_not_called()
-```
-
-### Integration Tests
-
-```python
-# tests/integration/test_wallet_service_integration.py
-import pytest
-from decimal import Decimal
-
-from app.application.services.hyperliquid_wallet_service import HyperliquidWalletService
-from tests.factories import UserFactory
-
-
-@pytest.mark.integration
-@pytest.mark.asyncio
-async def test_create_wallet_end_to_end(db_session, kms_client, redis_client):
-    """Test complete wallet creation flow with real dependencies."""
-    # Arrange
-    user = UserFactory.create()
-    service = HyperliquidWalletService(
-        wallet_repository=WalletRepository(db_session),
-        kms_client=kms_client,
-        cache_client=redis_client,
-    )
-
-    # Act
-    wallet = await service.generate_wallet(user.id, user.wallets[0].id)
-
-    # Assert
-    assert wallet.id is not None
-    assert wallet.hl_address.startswith("0x")
-
-    # Verify database persistence
-    db_wallet = await db_session.execute(
-        select(hyperliquid_wallets).where(hyperliquid_wallets.c.id == wallet.id)
-    )
-    assert db_wallet is not None
-
-    # Verify KMS encryption (cannot decrypt without proper context)
-    with pytest.raises(KMSDecryptionError):
-        await kms_client.decrypt_private_key(
-            kms_key_id=wallet.kms_key_id,
-            encrypted_key=wallet.encrypted_private_key,
-            context={"invalid": "context"},
-        )
+    wallet_service._vault.get_private_key.assert_not_called()
 ```
 
 ---
@@ -923,15 +953,16 @@ async def test_create_wallet_end_to_end(db_session, kms_client, redis_client):
 ### Private Key Protection
 
 1. **Never log private keys**: Ensure logging filters redact sensitive data
-2. **KMS encryption context**: Include user_id, wallet_type for audit trail
-3. **Cache TTL**: Limit decrypted key cache to 60 seconds
+2. **Vault encryption at rest**: Vault encrypts all data with AES-256-GCM
+3. **Cache TTL**: Limit cached key lifetime to 60 seconds
 4. **Memory cleanup**: Explicitly clear private keys from memory after use
+5. **TLS everywhere**: Use HTTPS for Vault communication in production
 
 ```python
 # Example: Secure memory cleanup
 import gc
 
-private_key = await self._get_decrypted_private_key(wallet)
+private_key = await self._get_private_key(wallet)
 try:
     signature = sign_transaction(private_key, tx_data)
 finally:
@@ -941,60 +972,12 @@ finally:
     gc.collect()
 ```
 
-### AWS KMS Configuration
+### Vault Access Control
 
-**IAM Policy for Backend Service**:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "kms:Decrypt",
-        "kms:Encrypt",
-        "kms:GenerateDataKey"
-      ],
-      "Resource": "arn:aws:kms:us-east-1:ACCOUNT_ID:key/KEY_ID",
-      "Condition": {
-        "StringEquals": {
-          "kms:EncryptionContext:wallet_type": "hyperliquid"
-        }
-      }
-    }
-  ]
-}
-```
-
-### Key Rotation Policy
-
-- **Rotation frequency**: Every 90 days
-- **Process**:
-  1. Create new KMS key
-  2. For each wallet: Decrypt with old key → Encrypt with new key
-  3. Update `kms_key_id` in database
-  4. Disable old KMS key (do not delete for audit)
-
-### Audit Logging
-
-**Log all wallet operations**:
-- Wallet generation (who, when, address)
-- Transaction signing (wallet_id, tx_hash, timestamp)
-- Wallet suspension (reason, operator)
-- Key rotation events
-
-**Example audit log entry**:
-```json
-{
-  "timestamp": "2026-02-04T10:30:00Z",
-  "operation": "wallet_generate",
-  "user_id": 123,
-  "wallet_id": 456,
-  "hl_address": "0x1234...5678",
-  "ip_address": "192.168.1.100",
-  "user_agent": "Hunter-AI-Backend/1.0"
-}
-```
+- Use **AppRole authentication** for backend services
+- **Principle of least privilege**: Only allow read/write to specific paths
+- **Audit logging enabled**: Track all secret access
+- **Auto-seal on failure**: Vault auto-seals if it loses storage connectivity
 
 ---
 
@@ -1008,29 +991,15 @@ finally:
 | Wallet retrieval (cache hit) | < 10ms | < 50ms | > 100ms |
 | Wallet retrieval (cache miss) | < 100ms | < 300ms | > 500ms |
 | Transaction signing (cached key) | < 50ms | < 200ms | > 500ms |
-| KMS encryption | < 50ms | < 200ms | > 500ms |
-| KMS decryption | < 50ms | < 200ms | > 500ms |
+| Vault read | < 50ms | < 200ms | > 500ms |
+| Vault write | < 100ms | < 300ms | > 500ms |
 
 ### Optimization Strategies
 
-1. **Redis caching**: Cache decrypted keys for 60 seconds
-2. **Connection pooling**: Reuse database connections
+1. **Redis caching**: Cache retrieved keys for 60 seconds
+2. **Connection pooling**: Reuse Vault connections
 3. **Batch operations**: Generate multiple wallets in parallel if needed
-4. **Lazy loading**: Only decrypt keys when signing required
-
-### Cost Analysis
-
-**Per wallet per month**:
-- KMS operations (10 swaps/month): $0.001
-- Database storage: $0.0001
-- Redis cache: $0.0001
-- **Total**: ~$0.0012 per active wallet per month
-
-**At scale** (10,000 active users):
-- Monthly KMS costs: $10
-- Database storage: $1
-- Redis cache: $1
-- **Total**: ~$12/month
+4. **Lazy loading**: Only retrieve keys when signing required
 
 ---
 
@@ -1038,15 +1007,16 @@ finally:
 
 ### Related Code Files
 
-- **Swap Workflow Agent**: `src/app/infrastructure/adapters/agent_squad/agents/workflows/swap_workflow_agent.py:331-1630`
+- **Swap Workflow Agent**: `src/app/infrastructure/adapters/agent_squad/agents/workflows/swap_workflow_agent.py`
 - **Transaction Entity**: `src/app/domain/entities/transaction.py`
 - **Existing Wallet System**: `src/app/infrastructure/persistence_sqla/mappings/wallet.py`
 
 ### External Documentation
 
+- **HashiCorp Vault**: https://developer.hashicorp.com/vault/docs
+- **Vault KV v2**: https://developer.hashicorp.com/vault/docs/secrets/kv/kv-v2
+- **hvac Python Client**: https://hvac.readthedocs.io/
 - **Hyperliquid API**: https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api
-- **AWS KMS Envelope Encryption**: https://docs.aws.amazon.com/kms/latest/developerguide/concepts.html#enveloping
-- **ethers.js Wallet**: https://docs.ethers.org/v6/api/wallet/
 
 ### Related Specifications
 
@@ -1057,22 +1027,23 @@ finally:
 
 ## ✅ Implementation Checklist
 
+- [ ] Install HashiCorp Vault locally (`brew install vault` or download)
+- [ ] Start Vault in dev mode for development
 - [ ] Create `hyperliquid_wallets` table migration
+- [ ] Implement `VaultClient` adapter
 - [ ] Implement `HyperliquidWalletService`
-- [ ] Implement `KMSClient` with envelope encryption
 - [ ] Implement `HyperliquidWalletRepository`
-- [ ] Add Redis caching for decrypted keys
-- [ ] Write unit tests (8 test cases)
-- [ ] Write integration tests (2 test scenarios)
-- [ ] Configure AWS KMS key and IAM policies
+- [ ] Add Redis caching for private keys
+- [ ] Add `hvac` to dependencies (`uv pip install hvac`)
+- [ ] Write unit tests
+- [ ] Write integration tests
+- [ ] Configure Vault policy for production
 - [ ] Set up audit logging
-- [ ] Add monitoring dashboards (wallet generation rate, KMS latency)
-- [ ] Document key rotation procedure
-- [ ] Security review and penetration testing
+- [ ] Security review
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2026-02-04
-**Status**: ✅ Ready for Implementation
-**Estimated Implementation Time**: 4 hours
+**Document Version**: 2.0
+**Last Updated**: 2026-02-02
+**Status**: ✅ Ready for Implementation (HashiCorp Vault)
+**Estimated Implementation Time**: 3 hours
