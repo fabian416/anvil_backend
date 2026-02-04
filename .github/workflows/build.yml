@@ -1,17 +1,13 @@
 name: Build & Push All Docker Images
 
 on:
-  # Build images only after tests pass
-  workflow_run:
-    workflows: ["Test Suite"]
-    types:
-      - completed
+  push:
     branches:
       - master
       - main
       - staging
       - development
-  # Allow manual builds (bypass test requirement)
+  # Allow manual builds
   workflow_dispatch:
     inputs:
       build_all:
