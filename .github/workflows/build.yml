@@ -25,6 +25,9 @@ jobs:
   # Only build if tests passed (for workflow_run trigger) or manual dispatch
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     
     strategy:
       fail-fast: false
