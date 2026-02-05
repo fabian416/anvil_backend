@@ -6,11 +6,13 @@ Create money market tables for rate comparison and optimization:
 - money_market_comparisons: User comparison history
 - money_market_user_preferences: User settings and preferences
 - money_market_rate_alerts: Rate monitoring alerts
-- money_market_comparison_assets: M2M junction for comparisons
 - money_market_alert_history: Alert notification log
 - v_latest_money_market_rates: Latest rates view
 - v_best_supply_rates: Best supply rates view
 - v_protocol_comparison_summary: Protocol comparison summary
+
+NOTE: money_market_comparison_assets table was commented out on 2026-02-01
+because no SQLAlchemy mapping or application code exists for it.
 
 Revision ID: money_market_core_001
 Revises: lending_core_002
@@ -806,67 +808,70 @@ def upgrade() -> None:
 
     # =========================================================================
     # TABLE 6: money_market_comparison_assets (M2M Junction)
+    # COMMENTED OUT: This table was never implemented in the application code.
+    # No SQLAlchemy mapping exists and no code references this table.
+    # Removed on 2026-02-01 to keep migrations in sync with actual usage.
     # =========================================================================
 
-    op.create_table(
-        "money_market_comparison_assets",
-        # Primary Key
-        sa.Column(
-            "id",
-            UUID(as_uuid=True),
-            primary_key=True,
-            server_default=sa.text("gen_random_uuid()"),
-        ),
-        # Foreign Keys
-        sa.Column(
-            "comparison_id",
-            UUID(as_uuid=True),
-            sa.ForeignKey("money_market_comparisons.id", ondelete="CASCADE"),
-            nullable=False,
-        ),
-        sa.Column(
-            "asset_symbol",
-            sa.String(20),
-            nullable=False,
-        ),
-        sa.Column(
-            "asset_address",
-            sa.String(42),
-            nullable=True,
-        ),
-        # Amount (optional)
-        sa.Column(
-            "amount",
-            sa.Numeric(78, 18),
-            nullable=True,
-            comment="Amount to supply/borrow (for yield calculation)",
-        ),
-        # Timestamps
-        sa.Column(
-            "created_at",
-            sa.TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=sa.text("NOW()"),
-        ),
-        # Unique constraint
-        sa.UniqueConstraint(
-            "comparison_id",
-            "asset_symbol",
-            name="uq_comparison_asset",
-        ),
-    )
+    # op.create_table(
+    #     "money_market_comparison_assets",
+    #     # Primary Key
+    #     sa.Column(
+    #         "id",
+    #         UUID(as_uuid=True),
+    #         primary_key=True,
+    #         server_default=sa.text("gen_random_uuid()"),
+    #     ),
+    #     # Foreign Keys
+    #     sa.Column(
+    #         "comparison_id",
+    #         UUID(as_uuid=True),
+    #         sa.ForeignKey("money_market_comparisons.id", ondelete="CASCADE"),
+    #         nullable=False,
+    #     ),
+    #     sa.Column(
+    #         "asset_symbol",
+    #         sa.String(20),
+    #         nullable=False,
+    #     ),
+    #     sa.Column(
+    #         "asset_address",
+    #         sa.String(42),
+    #         nullable=True,
+    #     ),
+    #     # Amount (optional)
+    #     sa.Column(
+    #         "amount",
+    #         sa.Numeric(78, 18),
+    #         nullable=True,
+    #         comment="Amount to supply/borrow (for yield calculation)",
+    #     ),
+    #     # Timestamps
+    #     sa.Column(
+    #         "created_at",
+    #         sa.TIMESTAMP(timezone=True),
+    #         nullable=False,
+    #         server_default=sa.text("NOW()"),
+    #     ),
+    #     # Unique constraint
+    #     sa.UniqueConstraint(
+    #         "comparison_id",
+    #         "asset_symbol",
+    #         name="uq_comparison_asset",
+    #     ),
+    # )
 
-    # Indexes for money_market_comparison_assets
-    op.create_index(
-        "idx_money_market_comparison_assets_comparison",
-        "money_market_comparison_assets",
-        ["comparison_id"],
-    )
-    op.create_index(
-        "idx_money_market_comparison_assets_asset",
-        "money_market_comparison_assets",
-        ["asset_symbol"],
-    )
+    # Indexes for money_market_comparison_assets (commented out)
+    # op.create_index(
+    #     "idx_money_market_comparison_assets_comparison",
+    #     "money_market_comparison_assets",
+    #     ["comparison_id"],
+    # )
+    # op.create_index(
+    #     "idx_money_market_comparison_assets_asset",
+    #     "money_market_comparison_assets",
+    #     ["asset_symbol"],
+    # )
 
     # =========================================================================
     # TABLE 7: money_market_alert_history (Alert Log)
@@ -1248,7 +1253,7 @@ def downgrade() -> None:
 
     # Drop tables in reverse order (respecting foreign keys)
     op.drop_table("money_market_alert_history")
-    op.drop_table("money_market_comparison_assets")
+    # op.drop_table("money_market_comparison_assets")  # Table was never created (commented out in upgrade)
     op.drop_table("money_market_rate_alerts")
     op.drop_table("money_market_user_preferences")
     op.drop_table("money_market_comparisons")
