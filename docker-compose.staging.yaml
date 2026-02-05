@@ -61,8 +61,6 @@ services:
       - PGSSLMODE=require
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
-    ports:
-      - "8080:8080"
     volumes:
       - ./config:/app/config:ro
     depends_on:
@@ -306,8 +304,6 @@ services:
     environment:
       - APP_ENV=${APP_ENV}
       - ONEINCH_API_KEY=${ONEINCH_API_KEY}
-    ports:
-      - "8081:8081"
     volumes:
       - ./config:/app/config:ro
     restart: unless-stopped
@@ -319,8 +315,6 @@ services:
     container_name: anvil_mcp_defillama
     environment:
       - APP_ENV=${APP_ENV}
-    ports:
-      - "8082:8082"
     volumes:
       - ./config:/app/config:ro
     restart: unless-stopped
@@ -333,8 +327,6 @@ services:
     environment:
       - APP_ENV=${APP_ENV}
       - THEGRAPH_API_KEY=${THEGRAPH_API_KEY}
-    ports:
-      - "8083:8083"
     volumes:
       - ./config:/app/config:ro
     restart: unless-stopped
@@ -347,8 +339,6 @@ services:
     environment:
       - APP_ENV=${APP_ENV}
       - COINGECKO_API_KEY=${COINGECKO_API_KEY}
-    ports:
-      - "8084:8084"
     volumes:
       - ./config:/app/config:ro
     restart: unless-stopped
@@ -361,8 +351,6 @@ services:
     environment:
       - APP_ENV=${APP_ENV}
       - AAVE_RPC_URL=${AAVE_RPC_URL}
-    ports:
-      - "8085:8085"
     volumes:
       - ./config:/app/config:ro
     restart: unless-stopped
@@ -375,8 +363,6 @@ services:
     environment:
       - APP_ENV=${APP_ENV}
       - DATABASE_URL=${DATABASE_URL}
-    ports:
-      - "8086:8086"
     volumes:
       - ./config:/app/config:ro
     restart: unless-stopped
@@ -389,8 +375,6 @@ services:
     environment:
       - APP_ENV=${APP_ENV}
       - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
-    ports:
-      - "8087:8087"
     volumes:
       - ./config:/app/config:ro
     restart: unless-stopped
@@ -403,8 +387,6 @@ services:
     environment:
       - APP_ENV=${APP_ENV}
       - MORPHO_API_KEY=${MORPHO_API_KEY}
-    ports:
-      - "8088:8088"
     volumes:
       - ./config:/app/config:ro
     restart: unless-stopped
@@ -417,8 +399,6 @@ services:
     environment:
       - APP_ENV=${APP_ENV}
       - CURVE_API_URL=${CURVE_API_URL}
-    ports:
-      - "8089:8089"
     volumes:
       - ./config:/app/config:ro
     restart: unless-stopped
@@ -431,8 +411,6 @@ services:
     environment:
       - APP_ENV=${APP_ENV}
       - HYPERLIQUID_API_KEY=${HYPERLIQUID_API_KEY}
-    ports:
-      - "8090:8090"
     volumes:
       - ./config:/app/config:ro
     restart: unless-stopped
@@ -445,8 +423,6 @@ services:
     environment:
       - APP_ENV=${APP_ENV}
       - LAYERZERO_API_KEY=${LAYERZERO_API_KEY}
-    ports:
-      - "8091:8091"
     volumes:
       - ./config:/app/config:ro
     restart: unless-stopped
@@ -503,8 +479,6 @@ services:
     depends_on:
       fastapi:
         condition: service_healthy
-    ports:
-      - "3000:3000"
     restart: unless-stopped
     networks:
       - anvil-network
