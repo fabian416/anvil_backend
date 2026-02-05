@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from app.presentation.http.controllers.root_router import create_root_router
 from app.setup.app_factory import configure_app, create_app, create_async_ioc_container
+from app.setup.config.loader import get_current_env
 from app.setup.config.logs import configure_logging
 from app.setup.config.settings import AppSettings, load_settings
 from app.setup.ioc.provider_registry import get_providers
@@ -44,7 +45,16 @@ def make_app(
     configure_logging(level=settings.logs.level)
 
     app: FastAPI = create_app()
-    configure_app(app=app, root_router=create_root_router())
+    
+    # Get current environment for CORS configuration
+    # This ensures CORS allows correct origins based on APP_ENV (local/dev/staging/prod)
+    current_env = get_current_env()
+    
+    configure_app(
+        app=app, 
+        root_router=create_root_router(),
+        environment=current_env  # ✅ Pass actual environment from APP_ENV
+    )
 
     async_ioc_container = create_async_ioc_container(
         providers=(*get_providers(), *di_providers),
