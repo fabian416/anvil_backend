@@ -29,7 +29,7 @@ def upgrade() -> None:
             postgresql.UUID(as_uuid=True),
             server_default=sa.text("gen_random_uuid()"),
             nullable=False,
-        ),
+        ), n 
         # Foreign keys
         sa.Column("chat_user_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("legacy_user_id", sa.Integer(), nullable=True),
