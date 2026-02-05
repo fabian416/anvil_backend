@@ -35,7 +35,10 @@ class APICoverageValidator:
         self.backend_inventory_path = (
             project_root / "scripts" / "api_audit" / "data" / "backend_inventory.json"
         )
-        self.docs_dir = project_root / "docs" / "frontend"
+        self.docs_dirs = [
+            project_root / "docs" / "frontend",
+            project_root / "docs" / "api",
+        ]
 
         # Priority classification
         self.critical_paths = [
@@ -77,30 +80,36 @@ class APICoverageValidator:
             return data.get("endpoints", [])
 
     def scan_documentation(self) -> Set[str]:
-        """Scan all frontend documentation for documented endpoints."""
+        """Scan all documentation for documented endpoints."""
         documented = set()
 
-        # Pattern to match API endpoint declarations in markdown
-        # Matches: // GET /api/v1/some/path or WS /api/v1/ws/path
-        endpoint_pattern = re.compile(
-            r"(?:GET|POST|PUT|PATCH|DELETE|WS)\s+(/api/v1/[^\s\n]+)"
-        )
+        # Patterns to match API endpoint declarations in markdown
+        # Pattern 1: `GET /api/v1/path` or `/api/v1/path` (backtick enclosed)
+        # Pattern 2: GET /api/v1/path (inline plain text)
+        endpoint_patterns = [
+            re.compile(r"`(/api/v1/[^`]*)`"),  # backtick-enclosed paths
+            re.compile(r"(?:GET|POST|PUT|PATCH|DELETE|WS)\s+(/api/v1/[^\s\n`|]+)"),  # inline paths
+        ]
 
-        if not self.docs_dir.exists():
-            print(f"⚠️  Documentation directory not found: {self.docs_dir}")
-            return documented
+        for docs_dir in self.docs_dirs:
+            if not docs_dir.exists():
+                print(f"⚠️  Documentation directory not found: {docs_dir}")
+                continue
 
-        # Scan all markdown files
-        for md_file in self.docs_dir.rglob("*.md"):
-            try:
-                content = md_file.read_text()
-                matches = endpoint_pattern.findall(content)
-                for match in matches:
-                    # Clean up the path (remove query params, fragments)
-                    clean_path = match.split("?")[0].split("#")[0]
-                    documented.add(clean_path)
-            except Exception as e:
-                print(f"   ⚠️  Error reading {md_file.name}: {e}")
+            print(f"📚 Scanning documentation in: {docs_dir}")
+
+            # Scan all markdown files
+            for md_file in docs_dir.rglob("*.md"):
+                try:
+                    content = md_file.read_text()
+                    for pattern in endpoint_patterns:
+                        matches = pattern.findall(content)
+                        for match in matches:
+                            # Clean up the path (remove query params, fragments)
+                            clean_path = match.split("?")[0].split("#")[0].strip()
+                            documented.add(clean_path)
+                except Exception as e:
+                    print(f"   ⚠️  Error reading {md_file.name}: {e}")
 
         return documented
 
@@ -141,7 +150,6 @@ class APICoverageValidator:
         print(f"📊 Backend Endpoints: {len(backend_endpoints)}")
 
         # Scan documentation
-        print(f"📚 Scanning documentation in: {self.docs_dir}")
         documented_paths = self.scan_documentation()
         print(f"✅ Documented Endpoints Found: {len(documented_paths)}")
 
