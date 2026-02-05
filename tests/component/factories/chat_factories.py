@@ -23,6 +23,7 @@ from uuid import UUID, uuid4
 from app.domain.entities.conversation import Conversation
 from app.domain.entities.message import Message
 from app.domain.chat.value_objects.message_role import MessageRole
+from app.domain.common.datetime_utils import utc_now
 
 
 class ConversationFactory:
@@ -65,8 +66,8 @@ class ConversationFactory:
             user_id=user_id,
             title=title,
             project_id=project_id,
-            created_at=created_at or datetime.utcnow(),
-            updated_at=updated_at or datetime.utcnow(),
+            created_at=created_at or utc_now(),
+            updated_at=updated_at or utc_now(),
         )
 
     def create_batch(
@@ -159,7 +160,7 @@ class MessageFactory:
             role=MessageRole(role),
             content=content,
             agent_type=agent_type,
-            created_at=created_at or datetime.utcnow(),
+            created_at=created_at or utc_now(),
             metadata=metadata or {},
         )
 

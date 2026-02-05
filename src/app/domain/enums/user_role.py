@@ -45,7 +45,6 @@ class UserRole(StrEnum):
 
     @property
     def is_changeable(self) -> bool:
-        # "Super admin" is an email-based concept in this codebase (USER_ADMIN),
-        # so role-level change restrictions should not block normal admin ops
-        # like deactivate/revoke-admin for non-super-admin accounts.
-        return True
+        # ADMIN role is protected from activation/role changes at the domain level.
+        # "Super admin" (email-based) has additional protections in the application layer.
+        return self != UserRole.ADMIN
