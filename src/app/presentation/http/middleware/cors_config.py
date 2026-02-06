@@ -24,20 +24,31 @@ def get_cors_origins(environment: str = "local") -> List[str]:
         "local": [
             "http://localhost:3000",
             "http://localhost:3001",
+            "http://localhost:5173",  # Vite dev server
             "http://localhost:8080",
             "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
             "http://127.0.0.1:8080",
         ],
         "dev": [
-            "https://dev.anvil.app",
-            "https://dev-api.anvil.app",
+            "https://development.anvil.zk-access.xyz",  # Frontend staging
+            "https://development.api.anvil.zk-access.xyz",  # API staging
             "http://localhost:3000",  # For local development
+            "http://localhost:5173",  # Vite dev server
+        ],
+        "staging": [
+            "https://staging.anvil.zk-access.xyz",  # Frontend staging
+            "https://staging.api.anvil.zk-access.xyz",  # API staging
+            "http://localhost:3000",
+            "http://localhost:5173",
         ],
         "prod": [
-            "https://anvil.app",
-            "https://www.anvil.app",
-            "https://app.anvil.app",
-            "https://api.anvil.app",
+            "https://anvil.zk-access.xyz",  # Frontend production
+            "https://api.anvil.zk-access.xyz",  # API production
+        ],
+        "production": [
+            "https://anvil.zk-access.xyz",
+            "https://api.anvil.zk-access.xyz",
         ],
     }
 
