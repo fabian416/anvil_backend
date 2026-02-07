@@ -29,27 +29,19 @@ def get_cors_origins(environment: str = "local") -> List[str]:
             "http://127.0.0.1:3000",
             "http://127.0.0.1:5173",
             "http://127.0.0.1:8080",
+            "https://development.anvil.zk-access.xyz",  # Frontend development
+            "https://development.api.anvil.zk-access.xyz",  # API development
         ],
         "dev": [
-            "https://development.anvil.zk-access.xyz",  # Frontend staging
-            "https://development.api.anvil.zk-access.xyz",  # API staging
-            "http://localhost:3000",  # For local development
-            "http://localhost:5173",  # Vite dev server
-        ],
-        "staging": [
             "https://staging.anvil.zk-access.xyz",  # Frontend staging
             "https://staging.api.anvil.zk-access.xyz",  # API staging
             "http://localhost:3000",
-            "http://localhost:5173",
+            "http://localhost:5173",  # Vite dev server
         ],
         "prod": [
             "https://anvil.zk-access.xyz",  # Frontend production
             "https://api.anvil.zk-access.xyz",  # API production
-        ],
-        "production": [
-            "https://anvil.zk-access.xyz",
-            "https://api.anvil.zk-access.xyz",
-        ],
+        ]
     }
 
     origins = cors_origins_map.get(environment, cors_origins_map["local"])
