@@ -101,16 +101,18 @@ def create_app() -> FastAPI:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Initialize database tables
-    try:
-        # Get the engine from the container
-        container = app.state.dishka_container
-        engine = await container.get(AsyncEngine)
-        await init_database(engine)
-    except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.error(f"Failed to initialize database: {str(e)}")
-        # You might want to raise here depending on your requirements
-        # raise
+    # NOTE: Disabled when using Alembic migrations (staging/prod)
+    # Uncomment only for local dev without migrations
+    # try:
+    #     # Get the engine from the container
+    #     container = app.state.dishka_container
+    #     engine = await container.get(AsyncEngine)
+    #     await init_database(engine)
+    # except Exception as e:
+    #     logger = logging.getLogger(__name__)
+    #     logger.error(f"Failed to initialize database: {str(e)}")
+    #     # You might want to raise here depending on your requirements
+    #     # raise
 
     yield None
     await app.state.dishka_container.close()
