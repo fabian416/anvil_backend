@@ -1,198 +1,995 @@
 {
   "timestamp": "2025-12-01T12:00:00Z",
   "summary": {
-    "total_backend_endpoints": 7,
-    "documented_endpoints": 0,
-    "missing_endpoints": 7,
-    "coverage_percentage": 0.0
+    "total_backend_endpoints": 51,
+    "documented_endpoints": 7,
+    "missing_endpoints": 44,
+    "coverage_percentage": 13.725490196078432
   },
   "by_priority": {
     "LOW": {
-      "total": 1,
-      "documented": 0,
+      "total": 43,
+      "documented": 1,
       "missing": [
         {
           "method": "GET",
-          "path": "/",
+          "path": "/api/v1/telemetry/flags",
           "priority": "LOW",
-          "module": "root",
-          "file": "src/app/presentation/http/controllers/root_router.py"
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "PUT",
+          "path": "/api/v1/telemetry/flags",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/flags/disable-api/{api_name}",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/flags/enable-api/{api_name}",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/flags/disable-llm/{provider}",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/flags/enable-llm/{provider}",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/flags/save",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/flags/load",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/v1/telemetry/flags/saved",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/metrics",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/prometheus",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/traces",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/traces/{trace_id}",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/slow-calls",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/slow-traces",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/errors",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/health",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/reset",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/llm/metrics",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/llm/costs",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/llm/models",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/llm/alerts",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/llm/providers",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/llm/reset",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/metrics",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/slow-queries",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/patterns",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/pool",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/tables/{table}",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/errors",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/summary",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/db/reset",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/dashboard",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/scans/latest",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/scans/{scan_id}",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/trends",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/posture",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/attacks",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/approvals",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/pii-protection",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/agent-isolation",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/tools",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
         }
       ]
     },
     "CRITICAL": {
-      "total": 4,
-      "documented": 0,
+      "total": 6,
+      "documented": 4,
       "missing": [
         {
           "method": "GET",
-          "path": "/markets/overview",
+          "path": "/api/v1/templates/ws/stats",
           "priority": "CRITICAL",
-          "module": "root",
-          "file": "src/app/presentation/http/controllers/markets/router.py"
+          "module": "templates",
+          "file": "src/app/presentation/http/controllers/templates/websocket_router.py"
         },
         {
           "method": "GET",
-          "path": "/markets/yields",
+          "path": "/api/v1/analytics/ws/stats",
           "priority": "CRITICAL",
-          "module": "root",
-          "file": "src/app/presentation/http/controllers/markets/router.py"
-        },
-        {
-          "method": "GET",
-          "path": "/markets/tokens/{token_symbol}",
-          "priority": "CRITICAL",
-          "module": "{token_symbol}",
-          "file": "src/app/presentation/http/controllers/markets/router.py"
-        },
-        {
-          "method": "GET",
-          "path": "/markets/tokens/{token_symbol}/history",
-          "priority": "CRITICAL",
-          "module": "{token_symbol}",
-          "file": "src/app/presentation/http/controllers/markets/router.py"
+          "module": "analytics",
+          "file": "src/app/presentation/http/controllers/analytics/websocket_router.py"
         }
       ]
     },
     "HIGH": {
       "total": 2,
-      "documented": 0,
-      "missing": [
-        {
-          "method": "GET",
-          "path": "/admin/stats/",
-          "priority": "HIGH",
-          "module": "",
-          "file": "src/app/presentation/http/controllers/admin/stats/router.py"
-        },
-        {
-          "method": "GET",
-          "path": "/admin/agents/",
-          "priority": "HIGH",
-          "module": "",
-          "file": "src/app/presentation/http/controllers/admin/agent/router.py"
-        }
-      ]
+      "documented": 2,
+      "missing": []
     }
   },
   "by_module": {
-    "root": {
-      "total": 3,
-      "documented": 0,
-      "missing": [
-        {
-          "method": "GET",
-          "path": "/",
-          "priority": "LOW",
-          "module": "root",
-          "file": "src/app/presentation/http/controllers/root_router.py"
-        },
-        {
-          "method": "GET",
-          "path": "/markets/overview",
-          "priority": "CRITICAL",
-          "module": "root",
-          "file": "src/app/presentation/http/controllers/markets/router.py"
-        },
-        {
-          "method": "GET",
-          "path": "/markets/yields",
-          "priority": "CRITICAL",
-          "module": "root",
-          "file": "src/app/presentation/http/controllers/markets/router.py"
-        }
-      ]
-    },
-    "{token_symbol}": {
-      "total": 2,
-      "documented": 0,
-      "missing": [
-        {
-          "method": "GET",
-          "path": "/markets/tokens/{token_symbol}",
-          "priority": "CRITICAL",
-          "module": "{token_symbol}",
-          "file": "src/app/presentation/http/controllers/markets/router.py"
-        },
-        {
-          "method": "GET",
-          "path": "/markets/tokens/{token_symbol}/history",
-          "priority": "CRITICAL",
-          "module": "{token_symbol}",
-          "file": "src/app/presentation/http/controllers/markets/router.py"
-        }
-      ]
-    },
     "": {
-      "total": 2,
+      "total": 1,
+      "documented": 1,
+      "missing": []
+    },
+    "telemetry": {
+      "total": 32,
       "documented": 0,
       "missing": [
         {
           "method": "GET",
-          "path": "/admin/stats/",
-          "priority": "HIGH",
-          "module": "",
-          "file": "src/app/presentation/http/controllers/admin/stats/router.py"
+          "path": "/api/v1/telemetry/flags",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "PUT",
+          "path": "/api/v1/telemetry/flags",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/flags/disable-api/{api_name}",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/flags/enable-api/{api_name}",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/flags/disable-llm/{provider}",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/flags/enable-llm/{provider}",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/flags/save",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/flags/load",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "DELETE",
+          "path": "/api/v1/telemetry/flags/saved",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
         },
         {
           "method": "GET",
-          "path": "/admin/agents/",
-          "priority": "HIGH",
-          "module": "",
-          "file": "src/app/presentation/http/controllers/admin/agent/router.py"
+          "path": "/api/v1/telemetry/metrics",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/prometheus",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/traces",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/traces/{trace_id}",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/slow-calls",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/slow-traces",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/errors",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/health",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/reset",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/llm/metrics",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/llm/costs",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/llm/models",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/llm/alerts",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/llm/providers",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/llm/reset",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/metrics",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/slow-queries",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/patterns",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/pool",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/tables/{table}",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/errors",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/telemetry/db/summary",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
+        },
+        {
+          "method": "POST",
+          "path": "/api/v1/telemetry/db/reset",
+          "priority": "LOW",
+          "module": "telemetry",
+          "file": "src/app/presentation/http/controllers/telemetry/router.py"
         }
       ]
+    },
+    "templates": {
+      "total": 1,
+      "documented": 0,
+      "missing": [
+        {
+          "method": "GET",
+          "path": "/api/v1/templates/ws/stats",
+          "priority": "CRITICAL",
+          "module": "templates",
+          "file": "src/app/presentation/http/controllers/templates/websocket_router.py"
+        }
+      ]
+    },
+    "user": {
+      "total": 4,
+      "documented": 4,
+      "missing": []
+    },
+    "analytics": {
+      "total": 1,
+      "documented": 0,
+      "missing": [
+        {
+          "method": "GET",
+          "path": "/api/v1/analytics/ws/stats",
+          "priority": "CRITICAL",
+          "module": "analytics",
+          "file": "src/app/presentation/http/controllers/analytics/websocket_router.py"
+        }
+      ]
+    },
+    "security": {
+      "total": 10,
+      "documented": 0,
+      "missing": [
+        {
+          "method": "GET",
+          "path": "/api/v1/security/dashboard",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/scans/latest",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/scans/{scan_id}",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/trends",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/posture",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/attacks",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/approvals",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/pii-protection",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/agent-isolation",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        },
+        {
+          "method": "GET",
+          "path": "/api/v1/security/tools",
+          "priority": "LOW",
+          "module": "security",
+          "file": "src/app/presentation/http/controllers/admin/security_router.py"
+        }
+      ]
+    },
+    "admin": {
+      "total": 2,
+      "documented": 2,
+      "missing": []
     }
   },
   "undocumented_endpoints": [
     {
       "method": "GET",
-      "path": "/",
+      "path": "/api/v1/telemetry/flags",
       "priority": "LOW",
-      "module": "root",
-      "file": "src/app/presentation/http/controllers/root_router.py"
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/telemetry/flags",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telemetry/flags/disable-api/{api_name}",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telemetry/flags/enable-api/{api_name}",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telemetry/flags/disable-llm/{provider}",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telemetry/flags/enable-llm/{provider}",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telemetry/flags/save",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telemetry/flags/load",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/telemetry/flags/saved",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
     },
     {
       "method": "GET",
-      "path": "/markets/overview",
+      "path": "/api/v1/telemetry/metrics",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/prometheus",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/traces",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/traces/{trace_id}",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/slow-calls",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/slow-traces",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/errors",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/health",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telemetry/reset",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/llm/metrics",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/llm/costs",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/llm/models",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/llm/alerts",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/llm/providers",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telemetry/llm/reset",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/db/metrics",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/db/slow-queries",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/db/patterns",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/db/pool",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/db/tables/{table}",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/db/errors",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/telemetry/db/summary",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/telemetry/db/reset",
+      "priority": "LOW",
+      "module": "telemetry",
+      "file": "src/app/presentation/http/controllers/telemetry/router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/templates/ws/stats",
       "priority": "CRITICAL",
-      "module": "root",
-      "file": "src/app/presentation/http/controllers/markets/router.py"
+      "module": "templates",
+      "file": "src/app/presentation/http/controllers/templates/websocket_router.py"
     },
     {
       "method": "GET",
-      "path": "/markets/yields",
+      "path": "/api/v1/analytics/ws/stats",
       "priority": "CRITICAL",
-      "module": "root",
-      "file": "src/app/presentation/http/controllers/markets/router.py"
+      "module": "analytics",
+      "file": "src/app/presentation/http/controllers/analytics/websocket_router.py"
     },
     {
       "method": "GET",
-      "path": "/markets/tokens/{token_symbol}",
-      "priority": "CRITICAL",
-      "module": "{token_symbol}",
-      "file": "src/app/presentation/http/controllers/markets/router.py"
+      "path": "/api/v1/security/dashboard",
+      "priority": "LOW",
+      "module": "security",
+      "file": "src/app/presentation/http/controllers/admin/security_router.py"
     },
     {
       "method": "GET",
-      "path": "/markets/tokens/{token_symbol}/history",
-      "priority": "CRITICAL",
-      "module": "{token_symbol}",
-      "file": "src/app/presentation/http/controllers/markets/router.py"
+      "path": "/api/v1/security/scans/latest",
+      "priority": "LOW",
+      "module": "security",
+      "file": "src/app/presentation/http/controllers/admin/security_router.py"
     },
     {
       "method": "GET",
-      "path": "/admin/stats/",
-      "priority": "HIGH",
-      "module": "",
-      "file": "src/app/presentation/http/controllers/admin/stats/router.py"
+      "path": "/api/v1/security/scans/{scan_id}",
+      "priority": "LOW",
+      "module": "security",
+      "file": "src/app/presentation/http/controllers/admin/security_router.py"
     },
     {
       "method": "GET",
-      "path": "/admin/agents/",
-      "priority": "HIGH",
-      "module": "",
-      "file": "src/app/presentation/http/controllers/admin/agent/router.py"
+      "path": "/api/v1/security/trends",
+      "priority": "LOW",
+      "module": "security",
+      "file": "src/app/presentation/http/controllers/admin/security_router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/security/posture",
+      "priority": "LOW",
+      "module": "security",
+      "file": "src/app/presentation/http/controllers/admin/security_router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/security/attacks",
+      "priority": "LOW",
+      "module": "security",
+      "file": "src/app/presentation/http/controllers/admin/security_router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/security/approvals",
+      "priority": "LOW",
+      "module": "security",
+      "file": "src/app/presentation/http/controllers/admin/security_router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/security/pii-protection",
+      "priority": "LOW",
+      "module": "security",
+      "file": "src/app/presentation/http/controllers/admin/security_router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/security/agent-isolation",
+      "priority": "LOW",
+      "module": "security",
+      "file": "src/app/presentation/http/controllers/admin/security_router.py"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/security/tools",
+      "priority": "LOW",
+      "module": "security",
+      "file": "src/app/presentation/http/controllers/admin/security_router.py"
     }
   ]
 }
