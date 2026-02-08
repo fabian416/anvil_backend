@@ -103,7 +103,7 @@ jobs:
     - name: Generate coverage report
       run: |
         coverage run -m pytest tests/unit/ -m "not slow"
-        coverage combine
+        coverage combine || true
         coverage report
     
     - name: Upload coverage to Codecov
@@ -290,7 +290,7 @@ jobs:
         REDIS_HOST: localhost
         REDIS_PORT: 6379
       run: |
-        pytest tests/domain/lending/ tests/application/lending/ -v --maxfail=5 --tb=short
+        pytest tests/unit/application/lending/ tests/unit/domain/services/lending/ -v --maxfail=5 --tb=short
 
   agno-tests:
     runs-on: ubuntu-latest

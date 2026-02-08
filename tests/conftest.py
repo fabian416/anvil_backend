@@ -336,15 +336,23 @@ async def cleanup_database(request, test_db_engine):
 @pytest_asyncio.fixture
 async def async_db_session(test_db_engine):
     """Create async test database session for async repositories."""
+    import os
     from sqlalchemy.ext.asyncio import (
         create_async_engine,
         async_sessionmaker,
         AsyncSession,
     )
 
+    # Get database credentials from environment
+    db_user = os.environ.get("POSTGRES_USER", "anvil")
+    db_pass = os.environ.get("POSTGRES_PASSWORD", "changethis")
+    db_host = os.environ.get("POSTGRES_HOST", "localhost")
+    db_port = os.environ.get("POSTGRES_PORT", "5432")
+    db_name = os.environ.get("POSTGRES_DB", "anvil_test")
+
     # Create async engine using asyncpg driver
     async_engine = create_async_engine(
-        "postgresql+asyncpg://anvil:changethis@localhost:5432/anvil_test",
+        f"postgresql+asyncpg://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}",
         pool_pre_ping=True,
         echo=False,
     )
