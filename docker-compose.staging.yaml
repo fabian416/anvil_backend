@@ -26,29 +26,6 @@ services:
   fastapi:
     image: ghcr.io/${GHCR_USERNAME}/anvil-backend-api:${IMAGE_TAG:-production}
     container_name: anvil_fastapi
-    entrypoint: 
-      - /bin/bash
-      - -c
-      - |
-        echo '🚀 Starting FastAPI with port fix...'
-        echo '⏳ Waiting for Postgres...'
-        max_attempts=30
-        attempt=0
-        until PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -p ${POSTGRES_PORT:-5432} -U $POSTGRES_USER -d $POSTGRES_DB -c '\q' 2>/dev/null; do
-          attempt=$((attempt + 1))
-          if [ $attempt -eq $max_attempts ]; then
-            echo '❌ Postgres did not become ready in time'
-            exit 1
-          fi
-          echo "   Postgres is unavailable - sleeping (attempt $attempt/$max_attempts)"
-          sleep 2
-        done
-        echo '✅ Postgres is ready!'
-        echo '🔄 Running Alembic migrations...'
-        alembic upgrade head
-        echo '✅ Migrations complete!'
-        echo '🚀 Starting uvicorn...'
-        exec uvicorn app.run:make_app --factory --host 0.0.0.0 --port 8080 --loop uvloop
     environment:
       - APP_ENV=${APP_ENV}
       - DATABASE_URL=${DATABASE_URL}

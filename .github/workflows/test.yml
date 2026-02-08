@@ -33,6 +33,8 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    name: Unit Tests (Fast)
+    timeout-minutes: 15
     
     strategy:
       matrix:
@@ -85,7 +87,7 @@ jobs:
       run: |
         make code.lint
     
-    - name: Run unit tests
+    - name: Run unit tests (fast only)
       env:
         APP_ENV: test
         POSTGRES_USER: postgres
@@ -96,11 +98,11 @@ jobs:
         REDIS_HOST: localhost
         REDIS_PORT: 6379
       run: |
-        pytest -v
+        pytest tests/unit/ -v -m "not slow" --maxfail=5 --tb=short
     
     - name: Generate coverage report
       run: |
-        coverage run -m pytest
+        coverage run -m pytest tests/unit/ -m "not slow"
         coverage combine
         coverage report
     
@@ -110,9 +112,190 @@ jobs:
         file: ./coverage.xml
         fail_ci_if_error: false
 
+  integration-tests:
+    runs-on: ubuntu-latest
+    name: Integration Tests
+    timeout-minutes: 20
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: anvil_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Install dependencies
+      run: |
+        uv pip install -e '.[dev,test]' --system
+    
+    - name: Run integration tests
+      env:
+        APP_ENV: test
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: anvil_test
+        POSTGRES_HOST: localhost
+        POSTGRES_PORT: 5432
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
+      run: |
+        pytest tests/integration/ -v -m "integration and not slow" --maxfail=5 --tb=short
+
+  chat-tests:
+    runs-on: ubuntu-latest
+    name: Chat System Tests
+    timeout-minutes: 15
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: anvil_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Install dependencies
+      run: |
+        uv pip install -e '.[dev,test]' --system
+    
+    - name: Run chat tests
+      env:
+        APP_ENV: test
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: anvil_test
+        POSTGRES_HOST: localhost
+        POSTGRES_PORT: 5432
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
+      run: |
+        pytest tests/ -v -m "chat" --maxfail=5 --tb=short
+
+  lending-tests:
+    runs-on: ubuntu-latest
+    name: Lending & DeFi Tests
+    timeout-minutes: 15
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: anvil_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+    
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+    
+    - name: Install dependencies
+      run: |
+        uv pip install -e '.[dev,test]' --system
+    
+    - name: Run lending tests
+      env:
+        APP_ENV: test
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_DB: anvil_test
+        POSTGRES_HOST: localhost
+        POSTGRES_PORT: 5432
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
+      run: |
+        pytest tests/domain/lending/ tests/application/lending/ -v --maxfail=5 --tb=short
+
   agno-tests:
     runs-on: ubuntu-latest
     name: Agno Agent Tests
+    timeout-minutes: 20
     
     services:
       postgres:
@@ -185,6 +368,7 @@ jobs:
   websocket-tests:
     runs-on: ubuntu-latest
     name: WebSocket Tests
+    timeout-minutes: 10
     
     services:
       postgres:
@@ -244,6 +428,7 @@ jobs:
   celery-tests:
     runs-on: ubuntu-latest
     name: Celery Task Tests
+    timeout-minutes: 15
     
     services:
       postgres:
@@ -303,6 +488,7 @@ jobs:
   auth-tests:
     runs-on: ubuntu-latest
     name: Auth Integration Tests
+    timeout-minutes: 10
     
     services:
       postgres:
@@ -375,6 +561,7 @@ jobs:
   type-check:
     runs-on: ubuntu-latest
     name: Type Checking
+    timeout-minutes: 10
     
     steps:
     - uses: actions/checkout@v3

@@ -131,9 +131,9 @@ def configure_app(
         environment: Environment name (local, dev, prod)
     """
     app.include_router(root_router)
-    app.add_middleware(ASGIAuthMiddleware)
 
-    # CORS middleware with environment-specific origins
+    # CRITICAL: CORS must come BEFORE Auth middleware
+    # OPTIONS preflight requests need CORS headers before auth validation
     from app.presentation.http.middleware.cors_config import get_cors_config
 
     cors_config = get_cors_config(environment)
@@ -153,6 +153,9 @@ def configure_app(
         expose_headers=cors_config["expose_headers"],
         max_age=cors_config["max_age"],
     )
+
+    # Auth middleware - comes AFTER CORS to allow OPTIONS preflight
+    app.add_middleware(ASGIAuthMiddleware)
 
     # Security headers middleware (OWASP best practices)
     from app.presentation.http.middleware.security_headers import (
