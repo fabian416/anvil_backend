@@ -55,7 +55,6 @@ This documentation package provides a complete blueprint for implementing an **E
 
 ```bash
 # Clone the repository
-git clone https://github.com/faststrat/anvil-backend.git
 cd anvil-backend
 
 # Install dependencies
@@ -284,12 +283,12 @@ Non-technical dashboard featuring:
 - **Documentation**: This package
 - **API Reference**: `/api/` directory
 - **Issues**: GitHub Issues
-- **Email**: engineering@faststrat.com
+- **Email**: engineering@anvilcrypto.com
 
 ---
 
 ## License
 
-Copyright © 2025 FastStrat. All rights reserved.
+Copyright © 2025 Anvil. All rights reserved.
 
 This documentation is proprietary and confidential.

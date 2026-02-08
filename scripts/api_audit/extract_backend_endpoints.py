@@ -127,18 +127,42 @@ class BackendEndpointExtractor:
         return match.group(1) if match else ""
 
     def _build_full_path(self, prefix: str, path: str) -> str:
-        """Build full API path."""
+        """Build full API path with /api/v1 prefix."""
         # Remove trailing slash from prefix
         prefix = prefix.rstrip("/")
         # Ensure path starts with /
         if not path.startswith("/"):
             path = "/" + path
 
-        # If prefix is empty or path is already complete
-        if not prefix or path.startswith("/api/v1/"):
+        # If path is already complete with /api/v1/
+        if path.startswith("/api/v1/"):
             return path
 
-        return prefix + path
+        # Build the path with prefix
+        if prefix:
+            full_path = prefix + path
+        else:
+            full_path = path
+
+        # If prefix already includes /api/v1, return as-is
+        if full_path.startswith("/api/v1/"):
+            return full_path
+
+        # Handle special prefixes that map to /api/v1/user/ or /api/v1/admin/
+        # Check if this is a user-facing endpoint (markets, chat, etc.)
+        user_prefixes = ["/user/", "/markets", "/chat", "/portfolio", "/alerts"]
+        admin_prefixes = ["/admin"]
+
+        for admin_prefix in admin_prefixes:
+            if full_path.startswith(admin_prefix):
+                return "/api/v1" + full_path
+
+        for user_prefix in user_prefixes:
+            if full_path.startswith(user_prefix):
+                return "/api/v1" + full_path
+
+        # Default: add /api/v1 prefix
+        return "/api/v1" + full_path
 
     def _extract_path_params(self, path: str) -> List[str]:
         """Extract path parameters from route path."""
