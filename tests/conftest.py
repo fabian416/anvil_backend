@@ -343,6 +343,14 @@ async def async_db_session(test_db_engine):
         AsyncSession,
     )
 
+    # Initialize SQLAlchemy mappings (required for domain entities)
+    from app.infrastructure.persistence_sqla.mappings.all import map_tables
+    try:
+        map_tables()
+    except Exception:
+        # Mappings may already be initialized, ignore
+        pass
+
     # Get database credentials from environment
     db_user = os.environ.get("POSTGRES_USER", "anvil")
     db_pass = os.environ.get("POSTGRES_PASSWORD", "changethis")
