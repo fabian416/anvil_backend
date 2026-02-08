@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 class TestAuthenticationErrors:
     """Tests for authentication error scenarios."""
 
+    @pytest.mark.asyncio
     async def test_missing_authorization_header(self, client):
         """Test request without authorization header."""
         # Act - Try to access protected endpoint
@@ -21,6 +22,7 @@ class TestAuthenticationErrors:
         # Assert - Should return 401 or 403
         assert response.status_code in [401, 403]
 
+    @pytest.mark.asyncio
     async def test_invalid_token_format(self, client):
         """Test request with invalid token format."""
         # Act
@@ -31,6 +33,7 @@ class TestAuthenticationErrors:
         # Assert
         assert response.status_code in [401, 403]
 
+    @pytest.mark.asyncio
     async def test_expired_token(self, client):
         """Test request with expired token."""
         # Act
@@ -42,6 +45,7 @@ class TestAuthenticationErrors:
         # Assert
         assert response.status_code in [401, 403]
 
+    @pytest.mark.asyncio
     async def test_malformed_jwt_token(self, client):
         """Test request with malformed JWT."""
         # Act
@@ -57,6 +61,7 @@ class TestAuthenticationErrors:
 class TestValidationErrors:
     """Tests for input validation errors."""
 
+    @pytest.mark.asyncio
     async def test_invalid_email_format(self, client):
         """Test signup with invalid email format."""
         # Act
@@ -73,6 +78,7 @@ class TestValidationErrors:
         # Assert - Should return 422 Validation Error
         assert response.status_code == 422
 
+    @pytest.mark.asyncio
     async def test_missing_required_fields(self, client):
         """Test request with missing required fields."""
         # Act
@@ -84,6 +90,7 @@ class TestValidationErrors:
         # Assert
         assert response.status_code == 422
 
+    @pytest.mark.asyncio
     async def test_invalid_field_types(self, client):
         """Test request with invalid field types."""
         # Act
@@ -100,6 +107,7 @@ class TestValidationErrors:
         # Assert
         assert response.status_code == 422
 
+    @pytest.mark.asyncio
     async def test_field_length_validation(self, client):
         """Test field length validation."""
         # Act - Password too short
@@ -121,6 +129,7 @@ class TestValidationErrors:
 class TestResourceNotFoundErrors:
     """Tests for resource not found scenarios."""
 
+    @pytest.mark.asyncio
     async def test_conversation_not_found(self, client):
         """Test accessing nonexistent conversation."""
         # This validates 404 handling
@@ -131,11 +140,13 @@ class TestResourceNotFoundErrors:
 
         assert True
 
+    @pytest.mark.asyncio
     async def test_user_not_found(self, client):
         """Test accessing nonexistent user."""
         # This validates 404 handling
         assert True
 
+    @pytest.mark.asyncio
     async def test_message_not_found(self, client):
         """Test accessing nonexistent message."""
         # This validates 404 handling
@@ -146,6 +157,7 @@ class TestResourceNotFoundErrors:
 class TestAuthorizationErrors:
     """Tests for authorization/permission errors."""
 
+    @pytest.mark.asyncio
     async def test_access_another_user_conversation(self, client):
         """Test user cannot access another user's conversation."""
         # This validates authorization
@@ -156,6 +168,7 @@ class TestAuthorizationErrors:
 
         assert True
 
+    @pytest.mark.asyncio
     async def test_regular_user_cannot_access_admin(self, client):
         """Test regular user cannot access admin endpoints."""
         # This validates admin authorization
@@ -166,6 +179,7 @@ class TestAuthorizationErrors:
 
         assert True
 
+    @pytest.mark.asyncio
     async def test_revoked_admin_loses_access(self, client):
         """Test revoked admin cannot access admin endpoints."""
         # This validates role revocation
@@ -290,6 +304,7 @@ class TestConcurrencyErrors:
 class TestRateLimitingErrors:
     """Tests for rate limiting scenarios."""
 
+    @pytest.mark.asyncio
     async def test_rate_limit_exceeded(self, client):
         """Test rate limit exceeded error."""
         # This validates rate limiting
@@ -301,6 +316,7 @@ class TestRateLimitingErrors:
 
         assert True
 
+    @pytest.mark.asyncio
     async def test_rate_limit_per_user(self, client):
         """Test per-user rate limiting."""
         # This validates user-specific limits
@@ -311,6 +327,7 @@ class TestRateLimitingErrors:
 class TestEdgeCaseScenarios:
     """Tests for edge cases and boundary conditions."""
 
+    @pytest.mark.asyncio
     async def test_extremely_long_input(self, client):
         """Test handling of extremely long input."""
         # Act
@@ -328,6 +345,7 @@ class TestEdgeCaseScenarios:
         # Assert - Should validate/reject
         assert response.status_code in [400, 422]
 
+    @pytest.mark.asyncio
     async def test_special_characters_in_input(self, client):
         """Test handling of special characters."""
         # Act
@@ -344,6 +362,7 @@ class TestEdgeCaseScenarios:
         # Assert - Should sanitize or reject
         assert response.status_code in [200, 201, 400, 422]
 
+    @pytest.mark.asyncio
     async def test_null_values_in_required_fields(self, client):
         """Test handling of null values."""
         # Act
@@ -360,6 +379,7 @@ class TestEdgeCaseScenarios:
         # Assert
         assert response.status_code == 422
 
+    @pytest.mark.asyncio
     async def test_empty_request_body(self, client):
         """Test handling of empty request body."""
         # Act
