@@ -34,6 +34,21 @@ DROP TABLE IF EXISTS llm_telemetry_hourly CASCADE;
 -- Drop alembic_version
 DROP TABLE IF EXISTS alembic_version CASCADE;
 
+-- Drop all ENUM types (must be done AFTER tables are dropped)
+DROP TYPE IF EXISTS llmprovider CASCADE;
+DROP TYPE IF EXISTS userrole CASCADE;
+DROP TYPE IF EXISTS subscriptionstatus CASCADE;
+DROP TYPE IF EXISTS subscriptionplan CASCADE;
+DROP TYPE IF EXISTS messagetype CASCADE;
+DROP TYPE IF EXISTS messagevisibility CASCADE;
+DROP TYPE IF EXISTS languagecode CASCADE;
+DROP TYPE IF EXISTS widgettype CASCADE;
+DROP TYPE IF EXISTS intenttype CASCADE;
+DROP TYPE IF EXISTS blockchainnetwork CASCADE;
+DROP TYPE IF EXISTS transactiontype CASCADE;
+DROP TYPE IF EXISTS transactionstatus CASCADE;
+DROP TYPE IF EXISTS defiprotocol CASCADE;
+
 -- Re-enable foreign key checks
 SET session_replication_role = DEFAULT;
 

@@ -188,7 +188,7 @@ def upgrade() -> None:
         sa.Column("agent_type", sa.String(length=50), nullable=False),
         sa.Column(
             "provider",
-            sa.Enum(
+            postgresql.ENUM(
                 "openai",
                 "anthropic",
                 "vertex",
@@ -196,6 +196,7 @@ def upgrade() -> None:
                 "deepinfra",
                 "other",
                 name="llmprovider",
+                create_type=False,
             ),
             nullable=False,
         ),
@@ -815,7 +816,7 @@ def upgrade() -> None:
         sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
         sa.Column(
             "provider",
-            sa.Enum(
+            postgresql.ENUM(
                 "openai",
                 "anthropic",
                 "vertex",
@@ -823,6 +824,7 @@ def upgrade() -> None:
                 "deepinfra",
                 "other",
                 name="llmprovider",
+                create_type=False,
             ),
             nullable=False,
         ),
@@ -2358,7 +2360,7 @@ def upgrade() -> None:
         sa.Column("model_id", sa.BigInteger(), nullable=True),
         sa.Column(
             "provider",
-            sa.Enum(
+            postgresql.ENUM(
                 "openai",
                 "anthropic",
                 "vertex",
@@ -2366,6 +2368,7 @@ def upgrade() -> None:
                 "deepinfra",
                 "other",
                 name="llmprovider",
+                create_type=False,
             ),
             nullable=False,
         ),
@@ -2512,7 +2515,7 @@ def upgrade() -> None:
         sa.Column("id", sa.BigInteger(), autoincrement=True, nullable=False),
         sa.Column(
             "provider",
-            sa.Enum(
+            postgresql.ENUM(
                 "openai",
                 "anthropic",
                 "vertex",
@@ -2520,6 +2523,7 @@ def upgrade() -> None:
                 "deepinfra",
                 "other",
                 name="llmprovider",
+                create_type=False,
             ),
             nullable=False,
         ),
