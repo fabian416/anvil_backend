@@ -33,13 +33,19 @@ pytestmark = pytest.mark.integration
 @pytest.fixture
 def agent_configs_path() -> Path:
     """Path to agent configuration files."""
-    return Path("/home/ubuntu/anvil_backend/anvil_knowledge/agents")
+    # Use relative path from test file to project root
+    test_dir = Path(__file__).parent
+    project_root = test_dir.parent.parent.parent
+    return project_root / "anvil_knowledge" / "agents"
 
 
 @pytest.fixture
 def knowledge_base_path() -> Path:
     """Path to knowledge base files."""
-    return Path("/home/ubuntu/anvil_backend/anvil_knowledge/features")
+    # Use relative path from test file to project root
+    test_dir = Path(__file__).parent
+    project_root = test_dir.parent.parent.parent
+    return project_root / "anvil_knowledge" / "features"
 
 
 @pytest.fixture
