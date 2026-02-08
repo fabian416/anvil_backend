@@ -13,39 +13,39 @@ from unittest.mock import AsyncMock, MagicMock, patch
 class TestAuthenticationErrors:
     """Tests for authentication error scenarios."""
 
-    def test_missing_authorization_header(self, client: TestClient):
+    async def test_missing_authorization_header(self, client):
         """Test request without authorization header."""
         # Act - Try to access protected endpoint
-        response = client.get("/api/v1/chat/conversations")
+        response = await client.get("/api/v1/chat/conversations")
 
         # Assert - Should return 401 or 403
         assert response.status_code in [401, 403]
 
-    def test_invalid_token_format(self, client: TestClient):
+    async def test_invalid_token_format(self, client):
         """Test request with invalid token format."""
         # Act
-        response = client.get(
+        response = await client.get(
             "/api/v1/chat/conversations", headers={"Authorization": "InvalidFormat"}
         )
 
         # Assert
         assert response.status_code in [401, 403]
 
-    def test_expired_token(self, client: TestClient):
+    async def test_expired_token(self, client):
         """Test request with expired token."""
         # Act
         expired_token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.expired.token"
-        response = client.get(
+        response = await client.get(
             "/api/v1/chat/conversations", headers={"Authorization": expired_token}
         )
 
         # Assert
         assert response.status_code in [401, 403]
 
-    def test_malformed_jwt_token(self, client: TestClient):
+    async def test_malformed_jwt_token(self, client):
         """Test request with malformed JWT."""
         # Act
-        response = client.get(
+        response = await client.get(
             "/api/v1/chat/conversations", headers={"Authorization": "Bearer not.a.jwt"}
         )
 
@@ -57,10 +57,10 @@ class TestAuthenticationErrors:
 class TestValidationErrors:
     """Tests for input validation errors."""
 
-    def test_invalid_email_format(self, client: TestClient):
+    async def test_invalid_email_format(self, client):
         """Test signup with invalid email format."""
         # Act
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/signup",
             json={
                 "email": "not-an-email",
@@ -73,10 +73,10 @@ class TestValidationErrors:
         # Assert - Should return 422 Validation Error
         assert response.status_code == 422
 
-    def test_missing_required_fields(self, client: TestClient):
+    async def test_missing_required_fields(self, client):
         """Test request with missing required fields."""
         # Act
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/signup",
             json={"email": "test@example.com"},  # Missing password, name
         )
@@ -84,10 +84,10 @@ class TestValidationErrors:
         # Assert
         assert response.status_code == 422
 
-    def test_invalid_field_types(self, client: TestClient):
+    async def test_invalid_field_types(self, client):
         """Test request with invalid field types."""
         # Act
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/signup",
             json={
                 "email": 12345,  # Should be string
@@ -100,10 +100,10 @@ class TestValidationErrors:
         # Assert
         assert response.status_code == 422
 
-    def test_field_length_validation(self, client: TestClient):
+    async def test_field_length_validation(self, client):
         """Test field length validation."""
         # Act - Password too short
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/signup",
             json={
                 "email": "test@example.com",
@@ -121,7 +121,7 @@ class TestValidationErrors:
 class TestResourceNotFoundErrors:
     """Tests for resource not found scenarios."""
 
-    def test_conversation_not_found(self, client: TestClient):
+    async def test_conversation_not_found(self, client):
         """Test accessing nonexistent conversation."""
         # This validates 404 handling
         # Full implementation would:
@@ -131,12 +131,12 @@ class TestResourceNotFoundErrors:
 
         assert True
 
-    def test_user_not_found(self, client: TestClient):
+    async def test_user_not_found(self, client):
         """Test accessing nonexistent user."""
         # This validates 404 handling
         assert True
 
-    def test_message_not_found(self, client: TestClient):
+    async def test_message_not_found(self, client):
         """Test accessing nonexistent message."""
         # This validates 404 handling
         assert True
@@ -146,7 +146,7 @@ class TestResourceNotFoundErrors:
 class TestAuthorizationErrors:
     """Tests for authorization/permission errors."""
 
-    def test_access_another_user_conversation(self, client: TestClient):
+    async def test_access_another_user_conversation(self, client):
         """Test user cannot access another user's conversation."""
         # This validates authorization
         # Full implementation would:
@@ -156,7 +156,7 @@ class TestAuthorizationErrors:
 
         assert True
 
-    def test_regular_user_cannot_access_admin(self, client: TestClient):
+    async def test_regular_user_cannot_access_admin(self, client):
         """Test regular user cannot access admin endpoints."""
         # This validates admin authorization
         # Full implementation would:
@@ -166,7 +166,7 @@ class TestAuthorizationErrors:
 
         assert True
 
-    def test_revoked_admin_loses_access(self, client: TestClient):
+    async def test_revoked_admin_loses_access(self, client):
         """Test revoked admin cannot access admin endpoints."""
         # This validates role revocation
         assert True
@@ -290,7 +290,7 @@ class TestConcurrencyErrors:
 class TestRateLimitingErrors:
     """Tests for rate limiting scenarios."""
 
-    def test_rate_limit_exceeded(self, client: TestClient):
+    async def test_rate_limit_exceeded(self, client):
         """Test rate limit exceeded error."""
         # This validates rate limiting
         # Full implementation would:
@@ -301,7 +301,7 @@ class TestRateLimitingErrors:
 
         assert True
 
-    def test_rate_limit_per_user(self, client: TestClient):
+    async def test_rate_limit_per_user(self, client):
         """Test per-user rate limiting."""
         # This validates user-specific limits
         assert True
@@ -311,11 +311,11 @@ class TestRateLimitingErrors:
 class TestEdgeCaseScenarios:
     """Tests for edge cases and boundary conditions."""
 
-    def test_extremely_long_input(self, client: TestClient):
+    async def test_extremely_long_input(self, client):
         """Test handling of extremely long input."""
         # Act
         very_long_string = "x" * 100000
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/signup",
             json={
                 "email": "test@example.com",
@@ -328,10 +328,10 @@ class TestEdgeCaseScenarios:
         # Assert - Should validate/reject
         assert response.status_code in [400, 422]
 
-    def test_special_characters_in_input(self, client: TestClient):
+    async def test_special_characters_in_input(self, client):
         """Test handling of special characters."""
         # Act
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/signup",
             json={
                 "email": "test@example.com",
@@ -344,10 +344,10 @@ class TestEdgeCaseScenarios:
         # Assert - Should sanitize or reject
         assert response.status_code in [200, 201, 400, 422]
 
-    def test_null_values_in_required_fields(self, client: TestClient):
+    async def test_null_values_in_required_fields(self, client):
         """Test handling of null values."""
         # Act
-        response = client.post(
+        response = await client.post(
             "/api/v1/account/signup",
             json={
                 "email": None,
@@ -360,10 +360,10 @@ class TestEdgeCaseScenarios:
         # Assert
         assert response.status_code == 422
 
-    def test_empty_request_body(self, client: TestClient):
+    async def test_empty_request_body(self, client):
         """Test handling of empty request body."""
         # Act
-        response = client.post("/api/v1/account/signup", json={})
+        response = await client.post("/api/v1/account/signup", json={})
 
         # Assert
         assert response.status_code == 422
