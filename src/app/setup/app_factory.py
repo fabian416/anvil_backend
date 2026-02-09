@@ -100,9 +100,13 @@ def create_app() -> FastAPI:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # Initialize database tables
-    # NOTE: Disabled when using Alembic migrations (staging/prod)
-    # Uncomment only for local dev without migrations
+    # CRITICAL: Always register table mappings, even when using Alembic
+    # Alembic creates the DB tables, but the app still needs the mappings
+    # to work with the tables at runtime
+    map_tables()
+
+    # Initialize database tables (disabled when using Alembic in staging/prod)
+    # Uncomment only for local dev without migrations if you want auto table creation
     # try:
     #     # Get the engine from the container
     #     container = app.state.dishka_container

@@ -10,25 +10,40 @@
 }
 
 {$API_DOMAIN} {
-    # Security headers for API domain (OWASP best practices)
+    # CORS headers - allow frontend to access API
     header {
+        # CORS - Allow frontend origin
+        Access-Control-Allow-Origin "{$DOMAIN}"
+        Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Accept, Accept-Language, Content-Type, Authorization, X-Request-ID, X-CSRF-Token"
+        Access-Control-Expose-Headers "X-Request-ID, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset"
+        Access-Control-Allow-Credentials "true"
+        Access-Control-Max-Age "3600"
+
+        # Security headers for API domain (OWASP best practices)
         # Prevent MIME type sniffing
         X-Content-Type-Options "nosniff"
-        
+
         # Enable browser XSS protection
         X-Frame-Options "DENY"
-        
+
         # Prevent clickjacking
         X-XSS-Protection "1; mode=block"
-        
+
         # Control referrer information
         Referrer-Policy "strict-origin-when-cross-origin"
-        
+
         # Content Security Policy
         Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://staging.anvil.zk-access.xyz https://staging.api.anvil.zk-access.xyz wss://staging.api.anvil.zk-access.xyz"
-        
+
         # Permissions Policy
         Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    }
+
+    # Handle preflight OPTIONS requests
+    @options method OPTIONS
+    handle @options {
+        respond 204
     }
 
     # Flower (Celery Monitoring) - with basic auth
