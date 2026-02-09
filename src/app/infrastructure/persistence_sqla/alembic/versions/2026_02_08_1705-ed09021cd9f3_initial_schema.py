@@ -539,7 +539,7 @@ def upgrade() -> None:
         sa.Column("position_id", sa.UUID(), nullable=True),
         sa.Column(
             "alert_type",
-            sa.Enum(
+            postgresql.ENUM(
                 "health_factor_low",
                 "liquidation_risk",
                 "position_closed",
@@ -547,6 +547,7 @@ def upgrade() -> None:
                 "loop_failed",
                 "rate_change",
                 name="alert_type_enum",
+                create_type=False,
             ),
             nullable=False,
         ),
