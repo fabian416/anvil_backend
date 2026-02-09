@@ -3,7 +3,7 @@
 ## Master Index for Software Factory
 
 **Project:** Anvil DeFi Trading Platform  
-**Client:** FastStrat  
+**Client:** Anvil  
 **CTO:** Matias  
 **Documentation Date:** November 2025  
 **Package Version:** 1.0

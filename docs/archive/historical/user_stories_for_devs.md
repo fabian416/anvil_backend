@@ -487,7 +487,7 @@ Each user story includes:
 **Document Status:** Ready for Development ✅  
 **Version:** 1.0  
 **Last Updated:** November 2025  
-**Contact:** CTO@FastStrat
+**Contact:** CTO@Anvil
 
 ---
 

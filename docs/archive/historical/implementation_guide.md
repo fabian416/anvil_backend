@@ -1220,7 +1220,7 @@ async def create_swap(
 ### Escalation Path
 1. Developer → Tech Lead
 2. Tech Lead → Project Manager
-3. Project Manager → Client (FastStrat CTO)
+3. Project Manager → Client (Anvil CTO)
 
 ---
 
