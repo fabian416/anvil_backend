@@ -41,6 +41,25 @@ settings: AppSettings = load_settings()
 config.set_main_option("sqlalchemy.url", settings.postgres.dsn)
 
 
+def render_item(type_, obj, autogen_context):
+    """Add create_type=False to Enum columns to avoid duplicate enum creation.
+
+    When alembic-postgresql-enum creates ENUMs explicitly at the start of the migration,
+    we need to prevent SQLAlchemy from trying to create them again when creating tables.
+    This hook automatically adds create_type=False to all Enum column definitions using postgresql.ENUM.
+    """
+    from sqlalchemy import Enum
+
+    if type_ == "type" and isinstance(obj, Enum):
+        # Get the enum values - they are already strings
+        enum_values = ", ".join(repr(e) for e in obj.enums)
+        # Use postgresql.ENUM with create_type=False to reference existing ENUM types
+        autogen_context.imports.add("from sqlalchemy.dialects import postgresql")
+        return f"postgresql.ENUM({enum_values}, name={obj.name!r}, create_type=False)"
+
+    return False
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -59,6 +78,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        render_item=render_item,  # Add the render hook for offline mode too
     )
 
     with context.begin_transaction():
@@ -66,7 +86,11 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        render_item=render_item,  # Add the render hook
+    )
 
     with context.begin_transaction():
         context.run_migrations()
