@@ -1,8 +1,8 @@
 # Anvil Chat Agent Specifications — Index
 
-**Date**: 2026-02-09  
+**Date**: 2026-02-02  
 **Context**: Chat Response Enrichments for `POST /conversations/{id}/messages`  
-**Total Specs**: 5
+**Total Specs**: 6
 
 ---
 
@@ -15,6 +15,7 @@
 | 03 | **Balance Overview** | `03_balance_overview_spec.md` | `BALANCE_CHECK` | Portfolio with per-token holdings, FIFO P&L, chart_url per token, AI recommendations (earn yield, take profit, diversify). |
 | 04 | **Receive** | `04_receive_spec.md` | `RECEIVE` | QR code generation with EIP-681 URI, chain selector, fee estimates. Integrates existing GET /wallet/receive endpoint. |
 | 05 | **Swap (available_swaps)** | `05_swap_available_swaps_spec.md` | `SWAP` | Multi-provider quote aggregation (Hyperliquid, 1inch, 0x) in parallel. User selects provider → execute via provider_id. |
+| 06 | **Wallet QR Storage** | `06_wallet_qr_storage_spec.md` | `RECEIVE` | Pre-generated QR codes stored with wallet records. DigitalOcean Spaces CDN or local fallback. Celery task generates/migrates QRs every 3 min. |
 
 ---
 
