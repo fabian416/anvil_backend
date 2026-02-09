@@ -81,6 +81,156 @@ Content-Type: application/json
 
 ## 📋 Endpoint Categories
 
+### General Endpoints
+
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| GET | `/api/v1/` | Redirect to Swagger documentation | ✅ Active |
+
+---
+
+### Admin Endpoints (`/api/v1/admin/`)
+
+| Method | Endpoint | Description | Auth | Status |
+|--------|----------|-------------|------|--------|
+| GET | `/api/v1/admin/stats/` | Get admin dashboard statistics | Admin | ✅ Active |
+| GET | `/api/v1/admin/agents/` | List all available agents | Admin | ✅ Active |
+
+#### `GET /api/v1/admin/stats/`
+
+Returns admin dashboard statistics including active conversations, total messages, and agent usage.
+
+**Response**:
+```json
+{
+  "active_conversations": 10,
+  "total_messages": 150,
+  "active_agents": 5,
+  "agent_usage": [
+    {"agent_type": "trading", "count": 50},
+    {"agent_type": "research", "count": 30}
+  ]
+}
+```
+
+#### `GET /api/v1/admin/agents/`
+
+Returns list of all configured agents with their status.
+
+**Response**:
+```json
+[
+  {
+    "type": "trading",
+    "name": "Trading Agent",
+    "description": "Analyzes market trends",
+    "is_active": true
+  },
+  {
+    "type": "research",
+    "name": "Research Agent",
+    "description": "Deep dive into protocols",
+    "is_active": true
+  }
+]
+```
+
+---
+
+### Markets Endpoints (`/api/v1/user/markets/`)
+
+| Method | Endpoint | Description | Auth | Status |
+|--------|----------|-------------|------|--------|
+| GET | `/api/v1/user/markets/overview` | Get comprehensive market overview | Bearer | ✅ Active |
+| GET | `/api/v1/user/markets/yields` | Get aggregated protocol yields | Bearer | ✅ Active |
+| GET | `/api/v1/user/markets/tokens/{token_symbol}` | Get detailed token market data | Bearer | ✅ Active |
+| GET | `/api/v1/user/markets/tokens/{token_symbol}/history` | Get historical price data | Bearer | ✅ Active |
+
+#### `GET /api/v1/user/markets/overview`
+
+Returns comprehensive market overview with top tokens, trending protocols, and personalized recommendations.
+
+**Query Parameters**:
+- `chains` (optional): Comma-separated chain names (e.g., `ethereum,arbitrum`)
+- `risk_filter` (optional): Comma-separated risk levels
+
+**Response**:
+```json
+{
+  "top_tokens": [...],
+  "trending_protocols": [...],
+  "market_trends": {...},
+  "recommendations": [...]
+}
+```
+
+#### `GET /api/v1/user/markets/yields`
+
+Returns aggregated protocol yields across chains with risk-adjusted metrics.
+
+**Query Parameters**:
+- `chains` (optional): Comma-separated chain names
+- `categories` (optional): Comma-separated categories (`lending`, `staking`, `farming`)
+- `min_apy` (optional): Minimum APY threshold
+- `max_risk` (optional): Maximum risk score threshold (0-10)
+
+**Response**:
+```json
+{
+  "yields": [
+    {
+      "protocol": "Aave",
+      "chain": "ethereum",
+      "apy": 5.2,
+      "risk_score": 2.1,
+      "tvl": 10000000000
+    }
+  ]
+}
+```
+
+#### `GET /api/v1/user/markets/tokens/{token_symbol}`
+
+Returns detailed market data for a specific token with ML risk analysis.
+
+**Path Parameters**:
+- `token_symbol`: Token symbol (e.g., `ETH`, `BTC`, `USDC`)
+
+**Response**:
+```json
+{
+  "symbol": "ETH",
+  "name": "Ethereum",
+  "price_usd": 2500.00,
+  "market_cap": 300000000000,
+  "volume_24h": 15000000000,
+  "risk_score": 1.5,
+  "risk_analysis": {...}
+}
+```
+
+#### `GET /api/v1/user/markets/tokens/{token_symbol}/history`
+
+Returns historical price data for a token.
+
+**Path Parameters**:
+- `token_symbol`: Token symbol
+
+**Query Parameters**:
+- `timeframe` (optional): Time range (`1h`, `24h`, `7d`, `30d`). Default: `7d`
+
+**Response**:
+```json
+{
+  "history": [
+    {"timestamp": "2025-01-01T00:00:00Z", "price": 2400.00},
+    {"timestamp": "2025-01-02T00:00:00Z", "price": 2450.00}
+  ]
+}
+```
+
+---
+
 ### Chat Endpoints (`/api/v1/user/chat/`)
 
 | Endpoint | Method | Description | Status |
@@ -137,7 +287,7 @@ Content-Type: application/json
 
 #### Markets & Trading
 - **Endpoint**: `/api/v1/user/markets/*`
-- **Documentation**: Coming soon
+- **Documentation**: [Markets Endpoints](#markets-endpoints-apiv1usermarkets)
 
 #### Hunter AI
 - **Endpoint**: `/api/v1/user/hunter/*`
@@ -234,4 +384,4 @@ X-RateLimit-Reset: 1640000000
 
 ---
 
-**Last Updated**: December 26, 2025
+**Last Updated**: February 1, 2026
