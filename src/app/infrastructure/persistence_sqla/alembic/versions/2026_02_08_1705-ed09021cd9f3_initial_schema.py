@@ -552,7 +552,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "severity",
-            sa.Enum("info", "warning", "critical", name="alert_severity_enum"),
+            postgresql.ENUM("info", "warning", "critical", name="alert_severity_enum, create_type=False),
             nullable=False,
         ),
         sa.Column("title", sa.String(length=255), nullable=False),
@@ -669,12 +669,12 @@ def upgrade() -> None:
         ),
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column(
-            "protocol", sa.Enum("aave", "morpho", name="protocol_enum"), nullable=False
+            "protocol", postgresql.ENUM("aave", "morpho", name="protocol_enum, create_type=False), nullable=False
         ),
         sa.Column("chain", sa.String(length=20), nullable=False),
         sa.Column(
             "position_type",
-            sa.Enum("supply", "borrow", name="position_type_enum"),
+            postgresql.ENUM("supply", "borrow", name="position_type_enum, create_type=False),
             nullable=False,
         ),
         sa.Column("asset_address", sa.String(length=42), nullable=False),
@@ -685,7 +685,7 @@ def upgrade() -> None:
         sa.Column("apy", sa.Numeric(precision=6, scale=2), nullable=False),
         sa.Column(
             "status",
-            sa.Enum("active", "closed", "liquidated", name="lending_status_enum"),
+            postgresql.ENUM("active", "closed", "liquidated", name="lending_status_enum, create_type=False),
             server_default="active",
             nullable=False,
         ),
@@ -845,7 +845,7 @@ def upgrade() -> None:
         sa.Column("max_tokens", sa.Integer(), nullable=True),
         sa.Column(
             "status",
-            sa.Enum("inactive", "active", "deprecated", name="modelstatus"),
+            postgresql.ENUM("inactive", "active", "deprecated", name="modelstatus, create_type=False),
             nullable=False,
         ),
         sa.Column("request_count", sa.BigInteger(), nullable=True),
@@ -1272,7 +1272,7 @@ def upgrade() -> None:
         sa.Column("position_id", sa.UUID(), nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column(
-            "protocol", sa.Enum("aave", "morpho", name="protocol_enum"), nullable=False
+            "protocol", postgresql.ENUM("aave", "morpho", name="protocol_enum, create_type=False), nullable=False
         ),
         sa.Column("chain", sa.String(length=20), nullable=False),
         sa.Column("asset_address", sa.String(length=42), nullable=False),
@@ -1331,7 +1331,7 @@ def upgrade() -> None:
         sa.Column("position_id", sa.UUID(), nullable=False),
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column(
-            "protocol", sa.Enum("aave", "morpho", name="protocol_enum"), nullable=False
+            "protocol", postgresql.ENUM("aave", "morpho", name="protocol_enum, create_type=False), nullable=False
         ),
         sa.Column("chain", sa.String(length=20), nullable=False),
         sa.Column("asset_address", sa.String(length=42), nullable=False),
@@ -1386,7 +1386,7 @@ def upgrade() -> None:
         ),
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column(
-            "protocol", sa.Enum("aave", "morpho", name="protocol_enum"), nullable=False
+            "protocol", postgresql.ENUM("aave", "morpho", name="protocol_enum, create_type=False), nullable=False
         ),
         sa.Column("chain", sa.String(length=20), nullable=False),
         sa.Column(
@@ -1407,7 +1407,7 @@ def upgrade() -> None:
         sa.Column("transaction_hash", sa.String(length=66), nullable=False),
         sa.Column(
             "status",
-            sa.Enum("pending", "confirmed", "failed", name="transaction_status_enum"),
+            postgresql.ENUM("pending", "confirmed", "failed", name="transaction_status_enum, create_type=False),
             server_default="pending",
             nullable=False,
         ),
@@ -1975,7 +1975,7 @@ def upgrade() -> None:
         sa.Column("last_name", sa.String(length=100), nullable=False),
         sa.Column(
             "role",
-            sa.Enum("admin", "moderator", "user", "guest", name="userrole"),
+            postgresql.ENUM("admin", "moderator", "user", "guest", name="userrole, create_type=False),
             nullable=True,
         ),
         sa.Column("is_active", sa.Boolean(), nullable=True),
@@ -2382,7 +2382,7 @@ def upgrade() -> None:
         sa.Column("latency_ms", sa.Integer(), nullable=True),
         sa.Column(
             "status",
-            sa.Enum("success", "failed", "rate_limited", "fallback", name="llmstatus"),
+            postgresql.ENUM("success", "failed", "rate_limited", "fallback", name="llmstatus, create_type=False),
             nullable=True,
         ),
         sa.Column("error_message", sa.Text(), nullable=True),
@@ -3074,7 +3074,7 @@ def upgrade() -> None:
         sa.Column("address", sa.String(length=42), nullable=False),
         sa.Column(
             "provider",
-            sa.Enum("privy", "external", "imported", name="walletprovider"),
+            postgresql.ENUM("privy", "external", "imported", name="walletprovider, create_type=False),
             nullable=False,
         ),
         sa.Column(
@@ -3379,7 +3379,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "status",
-            sa.Enum("active", "withdrawn", "emergency_exit", name="earnstatus"),
+            postgresql.ENUM("active", "withdrawn", "emergency_exit", name="earnstatus, create_type=False),
             nullable=True,
         ),
         sa.Column("transaction_hash", sa.String(length=66), nullable=True),
@@ -3436,7 +3436,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("wallet_id", sa.Integer(), nullable=False),
         sa.Column("symbol", sa.String(length=20), nullable=False),
-        sa.Column("side", sa.Enum("long", "short", name="side"), nullable=False),
+        sa.Column("side", postgresql.ENUM("long", "short", name="side, create_type=False), nullable=False),
         sa.Column("leverage", sa.Numeric(precision=5, scale=2), nullable=False),
         sa.Column("size", sa.Numeric(precision=30, scale=18), nullable=False),
         sa.Column("entry_price", sa.Numeric(precision=20, scale=8), nullable=False),
@@ -3453,7 +3453,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "status",
-            sa.Enum("open", "closed", "liquidated", name="positionstatus"),
+            postgresql.ENUM("open", "closed", "liquidated", name="positionstatus, create_type=False),
             nullable=True,
         ),
         sa.Column("hyperliquid_order_id", sa.String(length=100), nullable=True),
@@ -3683,7 +3683,7 @@ def upgrade() -> None:
         sa.Column("amount", sa.Numeric(precision=30, scale=18), nullable=False),
         sa.Column(
             "frequency",
-            sa.Enum("daily", "weekly", "biweekly", "monthly", name="frequency"),
+            postgresql.ENUM("daily", "weekly", "biweekly", "monthly", name="frequency, create_type=False),
             nullable=False,
         ),
         sa.Column("day_of_week", sa.Integer(), nullable=True),
@@ -3691,7 +3691,7 @@ def upgrade() -> None:
         sa.Column("destination_protocol", sa.String(length=50), nullable=True),
         sa.Column(
             "status",
-            sa.Enum("active", "paused", "completed", "failed", name="schedulestatus"),
+            postgresql.ENUM("active", "paused", "completed", "failed", name="schedulestatus, create_type=False),
             nullable=True,
         ),
         sa.Column("next_execution_at", sa.DateTime(timezone=True), nullable=False),
@@ -3990,7 +3990,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "status",
-            sa.Enum("success", "failed", "timeout", name="agenttoolstatus"),
+            postgresql.ENUM("success", "failed", "timeout", name="agenttoolstatus, create_type=False),
             nullable=True,
         ),
         sa.Column("execution_time_ms", sa.Integer(), nullable=True),

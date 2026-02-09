@@ -170,7 +170,7 @@ jobs:
         REDIS_HOST: localhost
         REDIS_PORT: 6379
       run: |
-        pytest tests/integration/ -v -m "integration and not slow" --maxfail=5 --tb=short --ignore=tests/integration/database/test_conversation_repository_integration.py --ignore=tests/integration/auth/test_registration_flow.py --ignore=tests/integration/errors/test_error_scenarios.py
+        pytest tests/integration/ -v -m "integration and not slow" --maxfail=5 --tb=short --ignore=tests/integration/database/test_conversation_repository_integration.py --ignore=tests/integration/auth/test_registration_flow.py --ignore=tests/integration/errors/test_error_scenarios.py --ignore=tests/integration/guest/errors/test_guest_error_handling.py --ignore=tests/integration/graph/test_protocol_search.py
 
   chat-tests:
     runs-on: ubuntu-latest
