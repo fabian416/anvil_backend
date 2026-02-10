@@ -22,12 +22,12 @@ Feature Flag: mcp.servers.morpho_enabled
 """
 
 import logging
-from typing import Dict, Any, List, Optional
 from decimal import Decimal
+from typing import Any
 
-from app.infrastructure.mcp.base import MCPServer
-from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 from app.domain.ports.morpho_gateway import MorphoGateway
+from app.infrastructure.mcp.base import MCPServer
+from app.setup.config.mcp import MCPServerDisabledError, MCPSettings
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +60,8 @@ class MorphoMCPServer(MCPServer):
 
     def __init__(
         self,
-        morpho_gateway: Optional[MorphoGateway] = None,
-        settings: Optional[MCPSettings] = None,
+        morpho_gateway: MorphoGateway | None = None,
+        settings: MCPSettings | None = None,
     ):
         """
         Initialize Morpho MCP server.
@@ -328,13 +328,13 @@ class MorphoMCPServer(MCPServer):
 
     async def _get_vaults_handler(
         self,
-        asset: Optional[str] = None,
-        risk_tier: Optional[str] = None,
-        min_apy: Optional[float] = None,
+        asset: str | None = None,
+        risk_tier: str | None = None,
+        min_apy: float | None = None,
         sort_by: str = "apy",
         chain: str = "ethereum",
         limit: int = 10,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handler for get_vaults tool."""
         if not self.morpho_gateway:
             return {
@@ -405,7 +405,7 @@ class MorphoMCPServer(MCPServer):
         self,
         vault_address: str,
         chain: str = "ethereum",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handler for get_vault_details tool."""
         if not self.morpho_gateway:
             return {"error": "Morpho gateway not configured"}
@@ -451,7 +451,7 @@ class MorphoMCPServer(MCPServer):
         self,
         vault_address: str,
         chain: str = "ethereum",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handler for get_vault_apy tool."""
         if not self.morpho_gateway:
             return {"error": "Morpho gateway not configured"}
@@ -477,11 +477,11 @@ class MorphoMCPServer(MCPServer):
 
     async def _get_markets_handler(
         self,
-        collateral_asset: Optional[str] = None,
-        loan_asset: Optional[str] = None,
+        collateral_asset: str | None = None,
+        loan_asset: str | None = None,
         chain: str = "ethereum",
         limit: int = 20,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handler for get_markets tool."""
         if not self.morpho_gateway:
             return {"error": "Morpho gateway not configured", "markets": []}
@@ -536,7 +536,7 @@ class MorphoMCPServer(MCPServer):
         self,
         user_address: str,
         chain: str = "ethereum",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handler for get_user_positions tool."""
         if not self.morpho_gateway:
             return {"error": "Morpho gateway not configured", "positions": []}
@@ -552,6 +552,7 @@ class MorphoMCPServer(MCPServer):
             total_earnings = Decimal("0")
 
             for p in positions:
+                apy_pct = float(p.apy)
                 position_data.append({
                     "vault_address": p.vault_address,
                     "vault_name": p.vault_name,
@@ -560,7 +561,11 @@ class MorphoMCPServer(MCPServer):
                     "current_value": f"${float(p.assets):,.2f}",
                     "earnings": f"${float(p.earnings):,.2f}",
                     "shares": str(p.shares),
-                    "apy": f"{float(p.apy):.2f}%",
+                    "apy": f"{apy_pct:.2f}%",
+                    # Numeric fields for workflow/agents
+                    "supplied_amount": str(p.assets),
+                    "supplied_usd": float(p.assets),  # Stablecoin vaults: assets ≈ USD
+                    "apy_numeric": apy_pct,
                 })
 
                 total_value += p.assets
@@ -581,9 +586,9 @@ class MorphoMCPServer(MCPServer):
     async def _compare_yields_handler(
         self,
         asset: str,
-        protocols: List[str] = None,
+        protocols: list[str] = None,
         chain: str = "ethereum",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Handler for compare_yields tool."""
         if not self.morpho_gateway:
             return {"error": "Morpho gateway not configured", "comparisons": []}
@@ -628,7 +633,7 @@ class MorphoMCPServer(MCPServer):
         vault_address: str,
         amount: str,
         chain: str = "base",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Handle Morpho withdrawal from MetaMorpho vault.
 
@@ -740,7 +745,7 @@ class MorphoMCPServer(MCPServer):
         shares: int,
         user_address: str,
         chain: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Build MetaMorpho vault withdraw transaction.
 
@@ -780,8 +785,10 @@ class MorphoMCPServer(MCPServer):
 # Main entry point for running server standalone
 if __name__ == "__main__":
     import os
-    import uvicorn
+
     import redis.asyncio as aioredis
+    import uvicorn
+
     from app.infrastructure.adapters.external.morpho_adapter import MorphoAdapter
     from app.infrastructure.adapters.external.morpho_client import MorphoClient
     from app.infrastructure.cache.external_api_cache import ExternalAPICache

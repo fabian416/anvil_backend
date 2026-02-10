@@ -435,6 +435,10 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             )
             if morpho_result and morpho_result.get("positions"):
                 for pos in morpho_result["positions"]:
+                    # MCP returns supplied_amount, supplied_usd, apy_numeric (and display apy string)
+                    apy_val = pos.get("apy_numeric")
+                    if apy_val is None and isinstance(pos.get("apy"), (int, float)):
+                        apy_val = pos.get("apy")
                     positions.append({
                         "protocol": "morpho",
                         "vault_address": pos.get("vault_address"),
@@ -442,7 +446,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
                         "asset": pos.get("asset", "UNKNOWN"),
                         "supplied_amount": pos.get("supplied_amount", "0"),
                         "supplied_usd": pos.get("supplied_usd", 0),
-                        "apy": pos.get("apy", 0),
+                        "apy": apy_val if apy_val is not None else 0,
                         "chain": "base",
                     })
         except Exception as e:
