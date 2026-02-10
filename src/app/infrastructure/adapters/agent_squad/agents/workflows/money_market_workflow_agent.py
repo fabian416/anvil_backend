@@ -349,27 +349,21 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                 selected_protocol, state.data, language
             )
 
-            # Add funding recommendation if user has insufficient funds
-            if user_context.needs_funding_recommendation:
+            # Add funding recommendation if user has empty portfolio
+            if user_context.has_insufficient_funds:
                 funding_msg = self._get_funding_recommendation(
                     state.data.get("asset", "USDC"),
                     language,
                     balance=user_context.total_balance_usd,
                 )
                 response = funding_msg + "\n" + response
-                # Don't set execute_data when user needs funding
-                state.execute_data = None
                 logger.info(
-                    f"[MoneyMarketWorkflow] User needs funding - not setting execute_data"
+                    f"[MoneyMarketWorkflow] User has low balance - showing funding info"
                 )
-            elif selected_rate:
-                # Only build execute_data if user has funds
-                state.execute_data = self._build_deposit_execute_data(
-                    protocol=selected_protocol,
-                    asset=state.data.get("asset", "USDC"),
-                    chain=state.data.get("chain", "base"),
-                    rate_data=selected_rate,
-                )
+
+            # DON'T set execute_data here - wait for user to enter amount
+            # execute_data will be set in _handle_execute after amount is provided
+            state.execute_data = None
 
             return response, state
 
@@ -469,6 +463,27 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             state.step = WorkflowStep.EXECUTE.value
 
             return response, state
+
+        # User has sufficient funds - build execute_data with amount
+        selected_protocol = state.data.get("selected_protocol", "aave")
+        rates = state.data.get("rates", [])
+        selected_rate = next(
+            (r for r in rates if r["protocol"] == selected_protocol),
+            rates[0] if rates else None,
+        )
+
+        if selected_rate:
+            state.execute_data = self._build_deposit_execute_data(
+                protocol=selected_protocol,
+                asset=asset,
+                chain=state.data.get("chain", "base"),
+                rate_data=selected_rate,
+                amount=amount,  # Include the amount
+            )
+            logger.info(
+                f"[MoneyMarketWorkflow] User has funds (${user_context.total_balance_usd:.2f}) - "
+                f"setting execute_data for {amount} {asset} on {selected_protocol}"
+            )
 
         # The actual deposit is handled by lending_workflow or frontend
         state.step = WorkflowStep.COMPLETED.value
