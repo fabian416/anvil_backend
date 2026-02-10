@@ -297,3 +297,59 @@ class WalletRepository(Protocol):
             List of (date, count) tuples for each day.
         """
         ...
+
+    # ============================================================
+    # QR Code Methods (for background QR generation)
+    # ============================================================
+
+    async def get_wallets_without_qr(self, limit: int = 30) -> list[Wallet]:
+        """
+        Get wallets with qr_storage_type='pending' or NULL.
+
+        Used by Celery task to find wallets needing QR generation.
+        Handles both new wallets (NULL) and failed regeneration (pending).
+
+        Args:
+            limit: Maximum wallets to return
+
+        Returns:
+            List of wallets needing QR generation
+        """
+        ...
+
+    async def get_wallets_with_local_qr(self, limit: int = 30) -> list[Wallet]:
+        """
+        Get wallets with qr_storage_type='local'.
+
+        Used by Celery task to find wallets for CDN migration.
+
+        Args:
+            limit: Maximum wallets to return
+
+        Returns:
+            List of wallets with local QR storage
+        """
+        ...
+
+    async def update_qr_info(
+        self,
+        wallet_id: WalletId,
+        qr_image_url: str,
+        qr_storage_type: str,
+        qr_chain_id: int,
+    ) -> bool:
+        """
+        Update wallet QR information.
+
+        Sets the QR URL, storage type, chain ID, and generated_at timestamp.
+
+        Args:
+            wallet_id: Wallet ID to update
+            qr_image_url: URL to QR image (local or CDN)
+            qr_storage_type: Storage type (local/cdn)
+            qr_chain_id: Chain ID encoded in QR
+
+        Returns:
+            True if updated successfully
+        """
+        ...

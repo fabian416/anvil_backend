@@ -15,6 +15,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.domain.entities.wallet import AdditionalSigner, Wallet, WalletId
 from app.domain.enums.chain_type import ChainType
+from app.domain.enums.qr_storage_type import QRStorageType
 from app.domain.enums.wallet_provider import WalletProvider
 from app.domain.enums.wallet_status import WalletStatus
 from app.domain.ports.wallet.wallet_repository import WalletRepository
@@ -92,6 +93,17 @@ class SqlaWalletRepository(WalletRepository):
                 if isinstance(signer_data, dict):
                     additional_signers.append(AdditionalSigner.from_dict(signer_data))
 
+        # Parse QR storage type
+        qr_storage_type_str = row.get("qr_storage_type")
+        try:
+            qr_storage_type = (
+                QRStorageType(qr_storage_type_str)
+                if qr_storage_type_str
+                else QRStorageType.PENDING
+            )
+        except ValueError:
+            qr_storage_type = QRStorageType.PENDING
+
         return Wallet(
             id_=WalletId(row["id"]),
             user_id=UserId(row["user_id"]),
@@ -110,6 +122,11 @@ class SqlaWalletRepository(WalletRepository):
             exported_at=row.get("exported_at"),
             imported_at=row.get("imported_at"),
             last_privy_sync_at=row.get("last_privy_sync_at"),
+            # QR code fields
+            qr_image_url=row.get("qr_image_url"),
+            qr_storage_type=qr_storage_type,
+            qr_generated_at=row.get("qr_generated_at"),
+            qr_chain_id=row.get("qr_chain_id") or 8453,
         )
 
     async def get_by_id(self, wallet_id: WalletId) -> Wallet | None:
@@ -595,4 +612,84 @@ class SqlaWalletRepository(WalletRepository):
             rows = result.all()
             return [(row.date, row.count) for row in rows]
         except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    # ============================================================
+    # QR Code Methods (for background QR generation)
+    # ============================================================
+
+    async def get_wallets_without_qr(self, limit: int = 30) -> list[Wallet]:
+        """Get wallets with qr_storage_type='pending' or NULL.
+
+        Used by Celery task to find wallets needing QR generation.
+        Handles both new wallets (NULL) and failed regeneration (pending).
+        """
+        try:
+            table = self._get_table()
+            from sqlalchemy import or_
+
+            stmt: Select = (
+                select(table)
+                .where(
+                    or_(
+                        table.c.qr_storage_type == "pending",
+                        table.c.qr_storage_type.is_(None),
+                    )
+                )
+                .order_by(table.c.created_at.asc())  # Oldest first
+                .limit(limit)
+            )
+            rows = (await self._session.execute(stmt)).mappings().all()
+            return [self._row_to_wallet(dict(row)) for row in rows]
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def get_wallets_with_local_qr(self, limit: int = 30) -> list[Wallet]:
+        """Get wallets with qr_storage_type='local'.
+
+        Used by Celery task to find wallets for CDN migration.
+        """
+        try:
+            table = self._get_table()
+            stmt: Select = (
+                select(table)
+                .where(table.c.qr_storage_type == "local")
+                .order_by(table.c.qr_generated_at.asc())  # Oldest QRs first
+                .limit(limit)
+            )
+            rows = (await self._session.execute(stmt)).mappings().all()
+            return [self._row_to_wallet(dict(row)) for row in rows]
+        except SQLAlchemyError as error:
+            raise DataMapperError(DB_QUERY_FAILED) from error
+
+    async def update_qr_info(
+        self,
+        wallet_id: WalletId,
+        qr_image_url: str,
+        qr_storage_type: str,
+        qr_chain_id: int,
+    ) -> bool:
+        """Update wallet QR information.
+
+        Sets the QR URL, storage type, chain ID, and generated_at timestamp.
+        """
+        try:
+            table = self._get_table()
+            now = datetime.now(UTC)
+
+            result = await self._session.execute(
+                update(table)
+                .where(table.c.id == wallet_id.value)
+                .values(
+                    qr_image_url=qr_image_url,
+                    qr_storage_type=qr_storage_type,
+                    qr_chain_id=qr_chain_id,
+                    qr_generated_at=now,
+                    updated_at=now,
+                )
+            )
+            await self._session.commit()
+            return result.rowcount > 0
+        except SQLAlchemyError as error:
+            await self._session.rollback()
             raise DataMapperError(DB_QUERY_FAILED) from error
