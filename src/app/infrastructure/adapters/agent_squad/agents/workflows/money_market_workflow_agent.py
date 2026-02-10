@@ -1509,6 +1509,34 @@ Por favor confirme a transação na sua carteira.""",
     # Execute Data Builder
     # ========================================
 
+    # Token addresses by chain
+    TOKEN_ADDRESSES: dict[str, dict[str, str]] = {
+        "base": {
+            "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "USDT": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2",
+            "WETH": "0x4200000000000000000000000000000000000006",
+            "ETH": "0x4200000000000000000000000000000000000006",
+            "DAI": "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb",
+            "cbETH": "0x2Ae3F1Ec7F1F5012CFEab0185bfc7aa3cf0DEc22",
+        },
+        "ethereum": {
+            "USDC": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+            "USDT": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+            "WETH": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+            "DAI": "0x6B175474E89094C44Da98b954EescdeCB5D6F0A",
+        },
+        "arbitrum": {
+            "USDC": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+            "USDT": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "WETH": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+        },
+    }
+
+    def _get_asset_address(self, asset: str, chain: str) -> str | None:
+        """Get token contract address for asset on chain."""
+        chain_tokens = self.TOKEN_ADDRESSES.get(chain.lower(), {})
+        return chain_tokens.get(asset.upper())
+
     def _build_deposit_execute_data(
         self,
         protocol: str,
@@ -1519,6 +1547,9 @@ Por favor confirme a transação na sua carteira.""",
     ) -> dict[str, Any]:
         """Build execute_data for deposit action."""
 
+        # Get asset address for the chain
+        asset_address = self._get_asset_address(asset, chain)
+
         execute_data = {
             "action_type": "deposit",
             "provider": protocol,
@@ -1526,6 +1557,7 @@ Por favor confirme a transação na sua carteira.""",
             "chain": chain,
             "amount": amount,
             "asset_symbol": asset,
+            "asset_address": asset_address,
             "supply_apy": rate_data.get("supply_apy", 0),
             "slippage": 0.5,
         }
@@ -1533,6 +1565,10 @@ Por favor confirme a transação na sua carteira.""",
         # Add protocol-specific fields
         if protocol == "morpho":
             execute_data["vault_address"] = rate_data.get("vault_address")
+
+        # Add pool address for Aave (from rate data if available)
+        if protocol == "aave":
+            execute_data["pool_address"] = rate_data.get("pool_address")
 
         return execute_data
 
