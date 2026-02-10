@@ -779,7 +779,12 @@ class MorphoMCPServer(MCPServer):
 
 # Main entry point for running server standalone
 if __name__ == "__main__":
+    import os
     import uvicorn
+    import redis.asyncio as aioredis
+    from app.infrastructure.adapters.external.morpho_adapter import MorphoAdapter
+    from app.infrastructure.adapters.external.morpho_client import MorphoClient
+    from app.infrastructure.cache.external_api_cache import ExternalAPICache
 
     print("""
 ╔══════════════════════════════════════════════════════════╗
@@ -795,6 +800,7 @@ Tools Available:
   • get_markets: Get Morpho Blue lending markets
   • get_user_positions: Get user's vault positions
   • compare_yields: Compare yields across protocols
+  • morpho_withdraw: Withdraw from Morpho vaults
 
 Endpoints:
   GET  /           - Server info
@@ -805,5 +811,15 @@ Endpoints:
 Starting server...
     """)
 
-    server = MorphoMCPServer()
+    # Redis from config (REDIS_URL env, e.g. from config/*/config.toml export) - no secrets
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    redis_client = aioredis.from_url(redis_url, decode_responses=True)
+
+    # Create Morpho infrastructure
+    cache = ExternalAPICache(redis_client=redis_client)
+    morpho_client = MorphoClient()
+    morpho_gateway = MorphoAdapter(client=morpho_client, cache=cache)
+
+    # Start server with gateway
+    server = MorphoMCPServer(morpho_gateway=morpho_gateway)
     uvicorn.run(server.app, host="0.0.0.0", port=8088, log_level="info")

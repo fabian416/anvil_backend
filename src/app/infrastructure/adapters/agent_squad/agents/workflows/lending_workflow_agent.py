@@ -430,7 +430,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         # Fetch Morpho positions
         try:
             morpho_result = await self._call_tool(
-                "morpho_get_positions",
+                "morpho_get_user_positions",
                 {"user_address": wallet_address, "chain": "base"},
             )
             if morpho_result and morpho_result.get("positions"):
