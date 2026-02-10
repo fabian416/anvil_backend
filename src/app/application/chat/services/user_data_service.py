@@ -48,6 +48,10 @@ class WalletSummary:
     chain_type: str | None = None
     provider: str | None = None
     is_primary: bool = False
+    # QR code fields (pre-generated)
+    qr_image_url: str | None = None
+    qr_data: str | None = None  # EIP-681 URI: ethereum:{chain_id}:{address}
+    qr_chain_id: int = 8453  # Default: Base
 
 
 @dataclass
@@ -280,7 +284,7 @@ class UserDataService:
         return context
 
     async def _get_wallets(self, user_id: str) -> list[WalletSummary]:
-        """Fetch user's wallets."""
+        """Fetch user's wallets with QR code information."""
         if not self._wallet_repo:
             return []
 
@@ -288,16 +292,27 @@ class UserDataService:
             user_id_vo = UserId(int(user_id))
             wallets = await self._wallet_repo.get_by_user_id(user_id_vo)
 
-            return [
-                WalletSummary(
-                    wallet_id=str(w.id_.value),
-                    address=w.address,
-                    chain_type=w.chain_type if hasattr(w, "chain_type") else None,
-                    provider=w.provider.value if hasattr(w, "provider") else None,
-                    is_primary=getattr(w, "is_primary", False),
+            result = []
+            for w in wallets:
+                # Get QR code chain ID (default to Base)
+                qr_chain_id = getattr(w, "qr_chain_id", None) or 8453
+                # Build EIP-681 QR data for client-side fallback
+                qr_data = f"ethereum:{qr_chain_id}:{w.address}"
+
+                result.append(
+                    WalletSummary(
+                        wallet_id=str(w.id_.value),
+                        address=w.address,
+                        chain_type=w.chain_type if hasattr(w, "chain_type") else None,
+                        provider=w.provider.value if hasattr(w, "provider") else None,
+                        is_primary=getattr(w, "is_primary", False),
+                        # QR code fields from database
+                        qr_image_url=getattr(w, "qr_image_url", None),
+                        qr_data=qr_data,
+                        qr_chain_id=qr_chain_id,
+                    )
                 )
-                for w in wallets
-            ]
+            return result
         except Exception as e:
             logger.error(f"Error fetching wallets: {e}")
             return []

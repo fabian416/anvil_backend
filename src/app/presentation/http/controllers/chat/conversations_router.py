@@ -1032,6 +1032,10 @@ def create_conversations_router() -> APIRouter:
                     "total_time_ms": supervisor_result.total_time_ms,
                 }
 
+                # Extract QR data from supervisor result (for receive flows)
+                if supervisor_result.metadata and supervisor_result.metadata.get("qr_data"):
+                    enrichment["qr_data"] = supervisor_result.metadata["qr_data"]
+
                 # Extract execute_data from supervisor result (workflow agents like swap_workflow)
                 execute_action_data = None
                 if supervisor_result.execute_data:

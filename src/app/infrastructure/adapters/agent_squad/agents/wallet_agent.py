@@ -192,6 +192,26 @@ Include the balance and suggestions at the end."""
             "provider", "vertex_ai" if "gemini" in model_name.lower() else "deepinfra"
         )
 
+        # Extract QR code information for primary wallet
+        qr_image_url = None
+        qr_data = None
+        qr_chain_id = 8453
+        if user_context:
+            primary_wallet = user_context.get("primary_wallet", {})
+            wallets = user_context.get("wallets", [])
+
+            # Try primary wallet first
+            if primary_wallet:
+                qr_image_url = primary_wallet.get("qr_image_url")
+                qr_data = primary_wallet.get("qr_data")
+                qr_chain_id = primary_wallet.get("qr_chain_id", 8453)
+            # Fallback to first wallet
+            elif wallets:
+                first_wallet = wallets[0]
+                qr_image_url = first_wallet.get("qr_image_url")
+                qr_data = first_wallet.get("qr_data")
+                qr_chain_id = first_wallet.get("qr_chain_id", 8453)
+
         return AgentResponse(
             content=response["content"],
             agent_type=self.agent_type,
@@ -205,6 +225,10 @@ Include the balance and suggestions at the end."""
                 "wallet_count": len(user_context.get("wallets", []))
                 if user_context
                 else 0,
+                # QR code data for frontend display
+                "qr_image_url": qr_image_url,
+                "qr_data": qr_data,
+                "qr_chain_id": qr_chain_id,
             },
         )
 
@@ -307,6 +331,15 @@ Once your wallet is ready, you'll be able to:
                 lines.append(f"  - Provider: {provider}")
             if chain and chain.lower() not in ("unknown", "none", ""):
                 lines.append(f"  - Chain: {chain}")
+
+            # QR code information (for receive flows)
+            qr_image_url = wallet.get("qr_image_url")
+            qr_data = wallet.get("qr_data")
+            if qr_image_url:
+                lines.append(f"  - QR Code: {qr_image_url}")
+            elif qr_data:
+                lines.append(f"  - QR Data: {qr_data}")
+
             lines.append("")
 
         return "\n".join(lines)
@@ -367,11 +400,13 @@ Users NEED the full address to receive funds!
 4. DO NOT suggest using external tools like Etherscan
 5. Keep responses SHORT (5-7 lines max)
 6. Include the suggestions provided in the context
+7. If QR code is available, mention it's ready in the app
 
 **RESPONSE FORMAT:**
 Show wallet info in this format:
 - **Your Wallet:** `0xFULL_ADDRESS_HERE`
 - **Balance:** $X.XX (if provided)
+- 📱 **QR Code:** Ready to scan in the app (if QR is available)
 - Include any suggestions from context
 
 **DO NOT:**

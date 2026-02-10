@@ -185,6 +185,42 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                     self._user_context["wallet_chain"] = (
                         self._user_data_context.primary_wallet.chain_type
                     )
+                    # QR code data for receive flows
+                    self._user_context["qr_image_url"] = (
+                        self._user_data_context.primary_wallet.qr_image_url
+                    )
+                    self._user_context["qr_data"] = (
+                        self._user_data_context.primary_wallet.qr_data
+                    )
+                    self._user_context["qr_chain_id"] = (
+                        self._user_data_context.primary_wallet.qr_chain_id
+                    )
+
+                    # Also set primary_wallet dict for agents to consume
+                    self._user_context["primary_wallet"] = {
+                        "address": self._user_data_context.primary_wallet.address,
+                        "chain_type": self._user_data_context.primary_wallet.chain_type,
+                        "provider": self._user_data_context.primary_wallet.provider,
+                        "qr_image_url": self._user_data_context.primary_wallet.qr_image_url,
+                        "qr_data": self._user_data_context.primary_wallet.qr_data,
+                        "qr_chain_id": self._user_data_context.primary_wallet.qr_chain_id,
+                    }
+
+                # Convert wallets to dicts for agents
+                if self._user_data_context.wallets:
+                    self._user_context["wallets"] = [
+                        {
+                            "wallet_id": w.wallet_id,
+                            "address": w.address,
+                            "chain_type": w.chain_type,
+                            "provider": w.provider,
+                            "is_primary": w.is_primary,
+                            "qr_image_url": w.qr_image_url,
+                            "qr_data": w.qr_data,
+                            "qr_chain_id": w.qr_chain_id,
+                        }
+                        for w in self._user_data_context.wallets
+                    ]
 
                 if self._user_data_context.portfolio:
                     self._user_context["portfolio_summary"] = {

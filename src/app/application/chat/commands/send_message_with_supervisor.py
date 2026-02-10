@@ -313,11 +313,12 @@ class SendMessageWithSupervisor:
                 },
             )
 
-            # Extract execute_data and workflow_state from workflow agent responses
+            # Extract execute_data, workflow_state, and QR data from agent responses
             # Workflow agents (like swap_workflow) store these in their response metadata
             execute_data = None
             workflow_state = None
             workflow_name = None
+            qr_data = None  # QR code data from wallet agent
             from app.domain.ports.agent_squad.agent_gateway import AgentResponse
 
             for task in workflow_plan.tasks:
@@ -343,6 +344,18 @@ class SendMessageWithSupervisor:
                                 extra={"workflow_state": workflow_state},
                             )
 
+                        # Check for QR code data (from wallet agent for receive flows)
+                        if result.metadata.get("qr_image_url") or result.metadata.get("qr_data"):
+                            qr_data = {
+                                "qr_image_url": result.metadata.get("qr_image_url"),
+                                "qr_data": result.metadata.get("qr_data"),
+                                "qr_chain_id": result.metadata.get("qr_chain_id", 8453),
+                            }
+                            logger.info(
+                                f"📱 Found QR data from {task.agent_type.value}",
+                                extra={"qr_data": qr_data},
+                            )
+
             # Calculate total time
             total_time_ms = int((time.time() - start_time) * 1000)
 
@@ -358,6 +371,10 @@ class SendMessageWithSupervisor:
                 result_metadata["workflow_state"] = workflow_state
             if workflow_name:
                 result_metadata["workflow_name"] = workflow_name
+
+            # Include QR code data if present (for receive flows)
+            if qr_data:
+                result_metadata["qr_data"] = qr_data
 
             # Build result
             return SupervisorMessageResult(
