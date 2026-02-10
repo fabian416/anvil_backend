@@ -41,6 +41,11 @@ class ReceiveHandlerResult:
     handler: str = "receive_handler"
     pending_action: str | None = None  # For multi-turn flows
 
+    # QR Code fields (from database, pre-generated)
+    qr_image_url: str | None = None  # Pre-generated QR image URL (CDN or local)
+    qr_data: str | None = None  # EIP-681 URI for client-side generation fallback
+    qr_chain_id: int = 8453  # Chain ID encoded in QR (default: Base)
+
 
 class ReceiveHandler:
     """
@@ -85,7 +90,7 @@ class ReceiveHandler:
 
     async def _resolve_user_wallet_address(
         self, user_id: int
-    ) -> tuple[str | None, dict | None]:
+    ) -> tuple[str | None, dict | None, "Wallet | None"]:
         """
         Resolve wallet address and optional metadata (e.g. ENS) for receive flow.
 
@@ -93,7 +98,12 @@ class ReceiveHandler:
         1) Wallets in local DB (WalletRepository)
         2) Privy provider (if configured and user has privy_user_id)
         3) primary_wallet_address on the user record (if set)
+
+        Returns:
+            Tuple of (address, metadata, wallet_entity)
         """
+        from app.domain.entities.wallet import Wallet
+
         # 1) DB wallets
         wallets = await self._wallet_repo.get_by_user_id(UserId(user_id))
         if wallets:
@@ -112,7 +122,7 @@ class ReceiveHandler:
                 wallet = wallets[0]
             if wallet:
                 meta = wallet.metadata if hasattr(wallet, "metadata") else None
-                return wallet.address, meta
+                return wallet.address, meta, wallet
 
         # 2) Privy provider
         if (
@@ -145,7 +155,11 @@ class ReceiveHandler:
                                         "Failed to persist privy wallet %s...",
                                         pw.address[:10],
                                     )
-                        return evm[0].address, evm[0].metadata
+                        # Fetch the wallet entity from DB to get QR info
+                        db_wallet = await self._wallet_repo.get_by_user_and_address(
+                            UserId(user_id), evm[0].address
+                        )
+                        return evm[0].address, evm[0].metadata, db_wallet
             except WalletProviderError as e:
                 logger.warning("Privy wallet fetch failed for receive flow: %s", e)
             except Exception as e:
@@ -156,11 +170,11 @@ class ReceiveHandler:
             try:
                 user = await self._current_user_service.get_current_user()
                 if user.primary_wallet_address:
-                    return user.primary_wallet_address.value, None
+                    return user.primary_wallet_address.value, None, None
             except Exception:
-                return None, None
+                return None, None, None
 
-        return None, None
+        return None, None, None
 
     async def get_receive_info(
         self,
@@ -176,12 +190,14 @@ class ReceiveHandler:
             chain: Preferred chain (for display purposes)
 
         Returns:
-            ReceiveHandlerResult with wallet address and formatted content
+            ReceiveHandlerResult with wallet address, QR code info, and formatted content
         """
         start_time = time.time()
 
         try:
-            wallet_address, meta = await self._resolve_user_wallet_address(user_id)
+            wallet_address, meta, wallet = await self._resolve_user_wallet_address(
+                user_id
+            )
 
             latency_ms = int((time.time() - start_time) * 1000)
 
@@ -202,6 +218,16 @@ class ReceiveHandler:
             if isinstance(meta, dict):
                 ens_handle = meta.get("ens")
 
+            # Extract QR info from wallet entity (if available)
+            qr_image_url = None
+            qr_chain_id = 8453  # Default to Base
+            if wallet:
+                qr_image_url = wallet.qr_image_url
+                qr_chain_id = wallet.qr_chain_id or 8453
+
+            # Build QR data for client-side fallback
+            qr_data = f"ethereum:{qr_chain_id}:{wallet_address}"
+
             # Format response
             content = self._format_receive_response(
                 wallet_address=wallet_address,
@@ -218,6 +244,10 @@ class ReceiveHandler:
                 chain=chain,
                 latency_ms=latency_ms,
                 language=language,
+                # QR code fields
+                qr_image_url=qr_image_url,
+                qr_data=qr_data,
+                qr_chain_id=qr_chain_id,
             )
 
         except Exception as e:
