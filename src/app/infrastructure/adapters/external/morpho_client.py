@@ -76,7 +76,7 @@ class MorphoMarketData:
 
 @dataclass
 class MorphoPositionData:
-    """Raw position data from Morpho API."""
+    """Raw position data from Morpho API (v2 schema)."""
 
     vault_id: str
     vault_name: str
@@ -84,6 +84,9 @@ class MorphoPositionData:
     shares: str
     assets: str
     chain_id: int = 1
+    assets_usd: float = 0.0
+    net_apy: float = 0.0
+    decimals: int = 18
 
 
 class MorphoClient:
@@ -470,16 +473,16 @@ class MorphoClient:
         Returns:
             List of position data
         """
+        # Updated query for Morpho Blue API v2 schema
+        # Uses userAddress_in (array) and state nested object
         query = """
-        query GetPositions($user: String!, $chainId: Int!, $first: Int!) {
+        query GetPositions($user: [String!]!, $chainId: [Int!]!, $first: Int!) {
             vaultPositions(
                 where: {
-                    userAddress: $user,
-                    chainId_in: [$chainId]
+                    userAddress_in: $user,
+                    chainId_in: $chainId
                 },
-                first: $first,
-                orderBy: SupplyAssetsUsd,
-                orderDirection: Desc
+                first: $first
             ) {
                 items {
                     vault {
@@ -487,10 +490,17 @@ class MorphoClient:
                         name
                         asset {
                             symbol
+                            decimals
+                        }
+                        state {
+                            netApy
                         }
                     }
-                    supplyShares
-                    supplyAssets
+                    state {
+                        shares
+                        assets
+                        assetsUsd
+                    }
                 }
             }
         }
@@ -502,8 +512,8 @@ class MorphoClient:
                 json={
                     "query": query,
                     "variables": {
-                        "user": user_address.lower(),
-                        "chainId": chain_id,
+                        "user": [user_address.lower()],  # Array format required
+                        "chainId": [chain_id],  # Array format required
                         "first": first,
                     },
                 },
@@ -668,15 +678,20 @@ class MorphoClient:
         )
 
     def _parse_position(self, raw: dict, chain_id: int = 1) -> MorphoPositionData:
-        """Parse raw position data from Morpho API."""
+        """Parse raw position data from Morpho API (v2 schema)."""
         vault = raw.get("vault", {})
         asset = vault.get("asset", {})
+        state = raw.get("state", {})
+        vault_state = vault.get("state", {})
 
         return MorphoPositionData(
             vault_id=vault.get("address", ""),
             vault_name=vault.get("name", "Unknown"),
             asset_symbol=asset.get("symbol", ""),
-            shares=str(raw.get("supplyShares", "0")),
-            assets=str(raw.get("supplyAssets", "0")),
+            shares=str(state.get("shares", "0")),
+            assets=str(state.get("assets", "0")),
+            assets_usd=state.get("assetsUsd", 0.0),
+            net_apy=vault_state.get("netApy", 0.0),
+            decimals=asset.get("decimals", 18),
             chain_id=chain_id,
         )

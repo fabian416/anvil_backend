@@ -460,6 +460,8 @@ class MorphoAdapter(MorphoGateway):
         """Transform client position data to domain entity."""
         shares = Decimal(raw.shares)
         assets = Decimal(raw.assets)
+        # Use net_apy from API (as decimal, e.g., 0.0621 for 6.21%)
+        apy = Decimal(str(raw.net_apy)) if raw.net_apy else Decimal("0")
 
         return MorphoPosition(
             user_address=user_address.lower(),
@@ -469,7 +471,7 @@ class MorphoAdapter(MorphoGateway):
             shares=shares,
             assets=assets,
             deposited_assets=assets,  # Original deposit (approximation)
-            apy=Decimal("0"),  # Would need vault APY
+            apy=apy,
         )
 
     def _transform_apy(self, vault_address: str, raw: dict) -> VaultAPY:
