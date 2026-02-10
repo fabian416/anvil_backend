@@ -23,6 +23,7 @@ from typing import Any
 
 from app.domain.entities.base import Entity
 from app.domain.enums.chain_type import ChainType
+from app.domain.enums.qr_storage_type import QRStorageType
 from app.domain.enums.wallet_provider import WalletProvider
 from app.domain.enums.wallet_status import WalletStatus
 from app.domain.value_objects.base import ValueObject
@@ -78,6 +79,12 @@ class Wallet(Entity[WalletId]):
     exported_at: datetime | None = None
     imported_at: datetime | None = None
     last_privy_sync_at: datetime | None = None
+
+    # QR Code fields (for pre-generated QR codes)
+    qr_image_url: str | None = None
+    qr_storage_type: QRStorageType = QRStorageType.PENDING
+    qr_generated_at: datetime | None = None
+    qr_chain_id: int = 8453  # Default to Base chain
 
     @classmethod
     def create(
