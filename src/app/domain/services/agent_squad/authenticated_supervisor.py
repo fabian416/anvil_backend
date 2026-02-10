@@ -550,7 +550,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 "quero trocar",
             ],
             "lending": [
-                # English
+                # English - Deposit
                 "lend",
                 "deposit",
                 "supply",
@@ -562,14 +562,39 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 "deposit usdc",
                 "supply usdc",
                 "lend usdc",
-                # Spanish
+                # English - Withdraw
+                "withdraw from",
+                "withdraw my",
+                "remove from vault",
+                "take out from",
+                "i want to withdraw",
+                "withdraw usdc",
+                "withdraw eth",
+                "my lendings",
+                "my deposits",
+                "my lending positions",
+                # Spanish - Deposit
                 "depositar",
                 "prestar",
                 "quiero depositar",
-                # Portuguese
+                # Spanish - Withdraw
+                "retirar de",
+                "retirar mi",
+                "quiero retirar",
+                "sacar de",
+                "mis prestamos",
+                "mis depositos",
+                # Portuguese - Deposit
                 "depositar",
                 "emprestar",
                 "quero depositar",
+                # Portuguese - Withdraw
+                "retirar de",
+                "retirar meu",
+                "quero retirar",
+                "sacar de",
+                "meus emprestimos",
+                "meus depositos",
             ],
             "transfer": [
                 # English
@@ -608,24 +633,26 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 "melhores taxas",
             ],
             "cashout": [
-                # English
+                # English - NOTE: "withdraw" alone goes to lending, "withdraw to bank/fiat" goes to cashout
                 "cashout",
                 "cash out",
-                "withdraw",
                 "sell crypto",
                 "offramp",
                 "off-ramp",
                 "i want to cashout",
                 "i want to sell",
                 "convert to fiat",
+                "withdraw to bank",
+                "withdraw to fiat",
+                "sell to fiat",
                 # Spanish
-                "retirar",
                 "vender cripto",
                 "quiero vender",
+                "convertir a fiat",
                 # Portuguese
-                "sacar",
                 "vender cripto",
                 "quero vender",
+                "converter para fiat",
             ],
         }
 
@@ -1247,12 +1274,16 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
    - "price of ETH", "ETH price in USDC" → "hunter_ai"
    - Use hunter_ai only when user wants PRICE INFO without execution intent
    
-8. LENDING/DEPOSIT EXECUTION (CRITICAL - Multi-step workflow):
+8. LENDING/DEPOSIT/WITHDRAW EXECUTION (CRITICAL - Multi-step workflow):
    - "deposit X USDC", "lend X ETH", "earn yield on X USDC" (with specific amounts) → "lending_workflow" agent ONLY
-   - The lending_workflow agent handles the COMPLETE multi-step deposit process autonomously
-   - Use "lending_workflow" when user wants to EXECUTE a deposit (has specific amount like "1000 USDC")
-   - Examples: "deposit 1000 USDC", "lend 0.5 ETH", "deposit into morpho", "earn yield on 500 DAI"
+   - "withdraw my USDC", "withdraw from vault", "remove my deposit" → "lending_workflow" agent ONLY
+   - The lending_workflow agent handles BOTH deposit AND withdraw operations autonomously
+   - Use "lending_workflow" when user wants to EXECUTE a deposit OR withdraw from lending positions
+   - Deposit Examples: "deposit 1000 USDC", "lend 0.5 ETH", "deposit into morpho", "earn yield on 500 DAI"
+   - Withdraw Examples: "withdraw my USDC", "withdraw from morpho", "remove my lending", "my lendings"
+   - "my lendings", "my deposits", "my lending positions" → "lending_workflow" (shows positions for withdrawal)
    - DO NOT combine lending_workflow with other agents - it handles everything internally
+   - NOTE: "withdraw to bank/fiat" or "sell crypto" → use "buy_workflow" (cashout flow), NOT lending_workflow
    
 9. YIELD INFO (rates information only - no execution):
    - "best yield for USDC", "compare lending rates" (NO specific amount) → "defi_yield"
@@ -1354,6 +1385,14 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 "deposit 1000 USDC" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute deposit: 1000 USDC into vault","depends_on":[]}}]}}
 "lend 0.5 ETH" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute deposit: 0.5 ETH into vault","depends_on":[]}}]}}
 "earn yield on 500 DAI" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute deposit: 500 DAI into vault","depends_on":[]}}]}}
+"withdraw my USDC" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute withdraw: user USDC from lending position","depends_on":[]}}]}}
+"withdraw from morpho" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute withdraw: from Morpho vault","depends_on":[]}}]}}
+"remove my deposit" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute withdraw: remove user's lending deposit","depends_on":[]}}]}}
+"my lendings" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Show user's lending positions for potential withdrawal","depends_on":[]}}]}}
+"my deposits" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Show user's lending deposits","depends_on":[]}}]}}
+"retirar mi USDC" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute withdraw: user USDC from lending (Spanish)","depends_on":[]}}]}}
+"quiero retirar" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute withdraw: from lending position (Spanish)","depends_on":[]}}]}}
+"retirar meu deposito" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute withdraw: from lending position (Portuguese)","depends_on":[]}}]}}
 "best yield for USDC" → {{"tasks":[{{"agent_type":"defi_yield","task_description":"Find best yield opportunities for USDC","depends_on":[]}},{{"agent_type":"risk_analyzer","task_description":"Assess risk of top yield options","depends_on":["defi_yield"]}}]}}
 "send 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e" → {{"tasks":[{{"agent_type":"transfer_workflow","task_description":"Execute transfer: 100 USDC to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e","depends_on":[]}}]}}
 "transfer 0.5 ETH to my friend" → {{"tasks":[{{"agent_type":"transfer_workflow","task_description":"Execute transfer: 0.5 ETH - need recipient address","depends_on":[]}}]}}
