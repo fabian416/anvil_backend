@@ -3,11 +3,21 @@
 Supports local filesystem and Recallium CDN (DigitalOcean Spaces).
 """
 
-from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel, Field
 
 
-class StorageSettings(BaseSettings):
+class DigitalOceanSettings(BaseModel):
+    """DigitalOcean Spaces (Recallium CDN) configuration."""
+
+    enabled: bool = False
+    access_key: str = ""
+    secret_key: str = ""
+    region: str = "nyc3"
+    bucket: str = "anvil-assets"
+    cdn_enabled: bool = True
+
+
+class StorageSettings(BaseModel):
     """Storage configuration for QR codes and assets.
 
     Attributes:
@@ -16,12 +26,7 @@ class StorageSettings(BaseSettings):
         qr_local_path: Path for local file storage
         qr_local_base_url: Base URL for serving local files
 
-        do_enabled: Enable DigitalOcean Spaces (Recallium)
-        do_access_key: DO Spaces access key
-        do_secret_key: DO Spaces secret key
-        do_region: DO region (e.g., nyc3, sfo3)
-        do_bucket: Bucket name
-        do_cdn_enabled: Use CDN URLs
+        digitalocean: DigitalOcean Spaces (Recallium) settings
     """
 
     # QR Storage
@@ -30,22 +35,47 @@ class StorageSettings(BaseSettings):
     qr_local_path: str = Field(default="./static/qr")
     qr_local_base_url: str = Field(default="/static/qr")
 
-    # DigitalOcean Spaces (Recallium)
-    do_enabled: bool = Field(default=False, alias="STORAGE_DO_ENABLED")
-    do_access_key: str = Field(default="", alias="STORAGE_DO_ACCESS_KEY")
-    do_secret_key: str = Field(default="", alias="STORAGE_DO_SECRET_KEY")
-    do_region: str = Field(default="nyc3", alias="STORAGE_DO_REGION")
-    do_bucket: str = Field(default="anvil-assets", alias="STORAGE_DO_BUCKET")
-    do_cdn_enabled: bool = Field(default=True, alias="STORAGE_DO_CDN_ENABLED")
+    # DigitalOcean Spaces (Recallium CDN)
+    digitalocean: DigitalOceanSettings = Field(default_factory=DigitalOceanSettings)
 
     @property
     def is_cdn_enabled(self) -> bool:
         """Check if CDN storage is configured and enabled."""
         return (
-            self.do_enabled
-            and bool(self.do_access_key)
-            and bool(self.do_secret_key)
+            self.digitalocean.enabled
+            and bool(self.digitalocean.access_key)
+            and bool(self.digitalocean.secret_key)
         )
+
+    @property
+    def do_enabled(self) -> bool:
+        """Alias for CDN enabled check."""
+        return self.digitalocean.enabled
+
+    @property
+    def do_access_key(self) -> str:
+        """Alias for DO access key."""
+        return self.digitalocean.access_key
+
+    @property
+    def do_secret_key(self) -> str:
+        """Alias for DO secret key."""
+        return self.digitalocean.secret_key
+
+    @property
+    def do_region(self) -> str:
+        """Alias for DO region."""
+        return self.digitalocean.region
+
+    @property
+    def do_bucket(self) -> str:
+        """Alias for DO bucket."""
+        return self.digitalocean.bucket
+
+    @property
+    def do_cdn_enabled(self) -> bool:
+        """Alias for DO CDN enabled."""
+        return self.digitalocean.cdn_enabled
 
     @property
     def effective_storage_type(self) -> str:
@@ -56,7 +86,3 @@ class StorageSettings(BaseSettings):
         if self.qr_storage_type == "cdn" and self.is_cdn_enabled:
             return "cdn"
         return "local"
-
-    class Config:
-        env_prefix = "STORAGE_"
-        case_sensitive = False

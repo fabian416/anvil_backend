@@ -7,6 +7,7 @@ from app.setup.config.database import PostgresSettings, SqlaEngineSettings
 from app.setup.config.distillation import DistillationSettings
 from app.setup.config.etherscan import EtherscanSettings
 from app.setup.config.integrations import IntegrationSettings
+from app.setup.config.storage import StorageSettings
 from app.setup.config.loader import ValidEnvs, get_current_env, load_full_config
 from app.setup.config.logs import LoggingSettings
 from app.setup.config.mailgun import MailgunSettings
@@ -46,6 +47,7 @@ class AppSettings(BaseModel):
     rpc: RPCSettings = RPCSettings()
     wallet: WalletSettings = WalletSettings()
     etherscan: EtherscanSettings = EtherscanSettings()
+    storage: StorageSettings = StorageSettings()
 
 
 def load_settings(env: ValidEnvs | None = None) -> AppSettings:

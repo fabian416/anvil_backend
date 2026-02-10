@@ -16,6 +16,7 @@ from app.setup.config.admin import AdminSettings
 from app.setup.config.privy import PrivySettings
 from app.setup.config.moonpay import MoonPaySettings
 from app.setup.config.distillation import DistillationSettings
+from app.setup.config.storage import StorageSettings
 from app.setup.config.transaction_confirmation import TransactionConfirmationSettings
 from app.setup.config.agent_squad import AgentSquadSettings
 
@@ -153,3 +154,12 @@ class SettingsProvider(Provider):
         The MoonPaySwapClient will check is_configured before making calls.
         """
         return settings.moonpay
+
+    @provide
+    def provide_storage_settings(self, settings: AppSettings) -> StorageSettings:
+        """
+        Provide storage settings for file storage (QR codes, assets, etc.).
+
+        Returns default local storage settings if not configured.
+        """
+        return settings.storage

@@ -23,6 +23,7 @@ from app.setup.ioc.guest import GuestProvider
 from app.setup.ioc.chat import ChatProvider
 from app.setup.ioc.money_market import MoneyMarketProvider
 from app.setup.ioc.lending import LendingProvider
+from app.setup.ioc.storage import StorageProvider
 
 # TODO: These providers are pending implementation - uncomment when ready
 # from app.setup.ioc.curve import CurveProvider
@@ -55,6 +56,7 @@ def get_providers() -> Iterable[Provider]:
         ChatProvider(),  # Unified chat for guest and authenticated users
         MoneyMarketProvider(),  # Money market rate caching and analytics
         LendingProvider(),  # Lending use cases (supply, borrow, leverage loops, health checks)
+        StorageProvider(),  # Storage infrastructure (local, CDN) for QR codes and assets
         # TODO: Uncomment when implementations are ready
         # CurveProvider(),  # Curve Finance DeFi integration
         # HyperliquidProvider(),  # Hyperliquid perpetual futures integration
