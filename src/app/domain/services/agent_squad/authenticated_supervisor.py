@@ -1213,6 +1213,7 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 2. WALLET QUERIES (authenticated - REAL data):
    - "my wallets", "connected wallets", "wallet address" → "wallet" agent (REAL wallet data)
    - "wallet info", "list wallets", "show wallets" → "wallet" agent
+   - "receive crypto", "receive funds", "QR code", "my QR", "deposit address" → "wallet" agent (shows address + QR)
    
 3. TRANSACTION HISTORY (authenticated - REAL data):
    - "my transactions", "transaction history", "recent activity" → "transaction_history" agent
@@ -1334,6 +1335,9 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 "hola" → {{"tasks":[{{"agent_type":"chat","task_description":"Greet warmly in Spanish","depends_on":[]}}]}}
 "my wallets" → {{"tasks":[{{"agent_type":"wallet","task_description":"Show user's connected wallets","depends_on":[]}}]}}
 "show my wallet address" → {{"tasks":[{{"agent_type":"wallet","task_description":"Display user's wallet addresses","depends_on":[]}}]}}
+"receive crypto" → {{"tasks":[{{"agent_type":"wallet","task_description":"Show wallet address for receiving crypto with QR code","depends_on":[]}}]}}
+"give me my QR code" → {{"tasks":[{{"agent_type":"wallet","task_description":"Show wallet QR code for receiving funds","depends_on":[]}}]}}
+"QR code" → {{"tasks":[{{"agent_type":"wallet","task_description":"Show wallet QR code","depends_on":[]}}]}}
 "my transactions" → {{"tasks":[{{"agent_type":"transaction_history","task_description":"Show user's transaction history","depends_on":[]}}]}}
 "recent activity" → {{"tasks":[{{"agent_type":"transaction_history","task_description":"Show recent transaction activity","depends_on":[]}}]}}
 "my activity" → {{"tasks":[{{"agent_type":"transaction_history","task_description":"Show user's activity and transactions","depends_on":[]}}]}}
