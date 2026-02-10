@@ -672,7 +672,7 @@
   "lending": {
     "title": "💰 Lending & Yield",
     "description": "Supply assets to earn yield and borrow against collateral via Morpho and Aave protocols",
-    "intent_group": ["LENDING_HEALTH_CHECK", "LENDING_SUPPLY", "LENDING_BORROW", "LENDING_LOOP", "LENDING_COMPARE", "LENDING_POSITION"],
+    "intent_group": ["LENDING_HEALTH_CHECK", "LENDING_SUPPLY", "LENDING_WITHDRAW", "LENDING_BORROW", "LENDING_LOOP", "LENDING_COMPARE", "LENDING_POSITION"],
     "protocols_supported": ["Morpho", "Aave V3"],
     "chains_supported": ["Ethereum", "Base", "Arbitrum", "Optimism"],
     "commands": [
@@ -818,6 +818,115 @@
         "requires_auth": true,
         "requires_wallet": true,
         "response_type": "Multi-step: Vault selection -> Balance check -> Transaction preview -> Execution"
+      },
+      {
+        "intent": "LENDING_WITHDRAW",
+        "category": "lending",
+        "description": {
+          "en": "Withdraw your supplied assets from lending protocols",
+          "es": "Retira tus activos suministrados de los protocolos de préstamo",
+          "pt": "Retire seus ativos fornecidos dos protocolos de empréstimo",
+          "zh": "从借贷协议中提取您的供应资产"
+        },
+        "patterns": {
+          "en": [
+            "withdraw my {asset}",
+            "withdraw {amount} {asset}",
+            "remove my deposit",
+            "withdraw from {protocol}",
+            "take out my {asset}",
+            "my lendings",
+            "my deposits",
+            "my lending positions",
+            "withdraw from morpho",
+            "withdraw from aave",
+            "remove from vault",
+            "get my {asset} back"
+          ],
+          "es": [
+            "retirar mi {asset}",
+            "retirar {amount} {asset}",
+            "remover mi depósito",
+            "retirar de {protocol}",
+            "sacar mi {asset}",
+            "mis préstamos",
+            "mis depósitos",
+            "mis posiciones de préstamo",
+            "retirar de morpho",
+            "retirar de aave"
+          ],
+          "pt": [
+            "retirar meu {asset}",
+            "retirar {amount} {asset}",
+            "remover meu depósito",
+            "retirar de {protocol}",
+            "sacar meu {asset}",
+            "meus empréstimos",
+            "meus depósitos",
+            "minhas posições de empréstimo",
+            "retirar de morpho",
+            "retirar de aave"
+          ],
+          "zh": [
+            "提取我的 {asset}",
+            "提取 {amount} {asset}",
+            "移除我的存款",
+            "从 {protocol} 提取",
+            "取出我的 {asset}",
+            "我的贷款",
+            "我的存款",
+            "我的借贷仓位",
+            "从morpho提取",
+            "从aave提取"
+          ]
+        },
+        "agent": "LENDING_WORKFLOW",
+        "parameters": {
+          "action": "withdraw",
+          "protocol": "morpho"
+        },
+        "parameter_extraction": {
+          "amount": {
+            "regex": "\\b(\\d+\\.?\\d*|max|all|todo|tudo)\\b",
+            "type": "string",
+            "required": false,
+            "prompt_if_missing": {
+              "en": "How much would you like to withdraw? (or type 'max' for all)",
+              "es": "¿Cuánto te gustaría retirar? (o escribe 'max' para todo)",
+              "pt": "Quanto você gostaria de retirar? (ou digite 'max' para tudo)",
+              "zh": "您想提取多少？（或输入'max'表示全部）"
+            }
+          },
+          "asset": {
+            "regex": "\\b(ETH|WETH|USDC|USDT|DAI|WBTC|wstETH)\\b",
+            "type": "string",
+            "case_insensitive": true,
+            "required": false,
+            "valid_values": ["ETH", "WETH", "USDC", "USDT", "DAI", "WBTC", "wstETH"],
+            "prompt_if_missing": {
+              "en": "Which asset would you like to withdraw?",
+              "es": "¿Qué activo te gustaría retirar?",
+              "pt": "Qual ativo você gostaria de retirar?",
+              "zh": "您想提取哪种资产？"
+            }
+          },
+          "protocol": {
+            "regex": "\\b(aave|morpho)\\b",
+            "type": "string",
+            "case_insensitive": true,
+            "default": "morpho",
+            "valid_values": ["aave", "morpho"]
+          }
+        },
+        "validation": {
+          "position_check": true,
+          "minimum_gas": "0.01 ETH",
+          "health_factor_check": true,
+          "warn_if_hf_below_after": 1.5
+        },
+        "requires_auth": true,
+        "requires_wallet": true,
+        "response_type": "Multi-step: Position display -> Amount selection -> Transaction preview -> Execution"
       },
       {
         "intent": "LENDING_BORROW",
@@ -1165,6 +1274,12 @@
         "action": "supply",
         "mcp_tools": ["morpho_get_vaults", "morpho_compare_yields", "aave_get_market_data", "portfolio_get_balance"],
         "validation": ["balance_check", "gas_check"]
+      },
+      "LENDING_WITHDRAW": {
+        "agent": "LENDING_WORKFLOW",
+        "action": "withdraw",
+        "mcp_tools": ["morpho_get_positions", "morpho_withdraw", "aave_get_user_positions", "aave_withdraw_supply"],
+        "validation": ["position_check", "gas_check", "health_factor_check"]
       },
       "LENDING_BORROW": {
         "agent": "LENDING_BORROWING",
