@@ -344,9 +344,12 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                 rates[0] if rates else None,
             )
 
-            # Build response with funding recommendation if needed
+            # Build response showing user's balance so they know how much they can deposit
             response = self._format_protocol_selected(
-                selected_protocol, state.data, language
+                selected_protocol,
+                state.data,
+                language,
+                balance=user_context.total_balance_usd,
             )
 
             # Add funding recommendation if user has empty portfolio
@@ -1363,34 +1366,44 @@ Responda com o nome do protocolo (ex: "aave") ou "cancelar" para sair.""",
         protocol: str,
         data: dict[str, Any],
         language: str,
+        balance: float = 0.0,
     ) -> str:
-        """Format protocol selection confirmation."""
+        """Format protocol selection confirmation with user balance."""
 
         asset = data.get("asset", "USDC")
         rates = data.get("rates", [])
         selected_rate = next((r for r in rates if r["protocol"] == protocol), {})
         apy = selected_rate.get("supply_apy", 0)
         name = selected_rate.get("name", protocol.title())
+        balance_str = f"${balance:,.2f}" if balance > 0 else "$0.00"
 
         msgs = {
             "en": f"""✅ **{name} Selected**
 
 You've chosen to deposit **{asset}** in {name} at **{apy:.2f}% APY**.
 
+💰 **Your available balance:** {balance_str}
+
 Enter the amount you'd like to deposit, or say "cancel" to exit.""",
             "es": f"""✅ **{name} Seleccionado**
 
 Has elegido depositar **{asset}** en {name} al **{apy:.2f}% APY**.
+
+💰 **Tu saldo disponible:** {balance_str}
 
 Ingresa la cantidad que te gustaría depositar, o di "cancelar" para salir.""",
             "pt": f"""✅ **{name} Selecionado**
 
 Você escolheu depositar **{asset}** em {name} a **{apy:.2f}% APY**.
 
+💰 **Seu saldo disponível:** {balance_str}
+
 Digite a quantia que gostaria de depositar, ou diga "cancelar" para sair.""",
             "zh": f"""✅ **已选择 {name}**
 
 您已选择在 {name} 存入 **{asset}**，APY 为 **{apy:.2f}%**。
+
+💰 **您的可用余额：** {balance_str}
 
 输入您想存入的金额，或说"取消"退出。""",
         }
