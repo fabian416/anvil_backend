@@ -30,6 +30,7 @@ def create_celery() -> Celery:
             "app.infrastructure.celery.tasks.privy_balance_tasks",
             "app.infrastructure.celery.tasks.etherscan_balance_tasks",
             "app.infrastructure.celery.tasks.user_context_tasks",
+            "app.infrastructure.celery.tasks.wallet_qr_tasks",
         ],
     )
     app.conf.task_serializer = "json"
@@ -103,6 +104,8 @@ def create_celery() -> Celery:
         "etherscan.sync_balances": {"queue": "maintenance"},
         "etherscan.sync_single_wallet": {"queue": "maintenance"},
         "etherscan.verify_test_wallet": {"queue": "maintenance"},
+        # Wallet QR code generation
+        "generate_wallet_qr_codes": {"queue": "maintenance"},
     }
 
     # Configuración de colas con prioridades
@@ -188,6 +191,14 @@ def create_celery() -> Celery:
         "sync-all-tokens-etherscan": {
             "task": "etherscan.sync_all_tokens",
             "schedule": 30.0,  # Every 30 seconds (3-min freshness filter)
+            "options": {"queue": "maintenance"},
+        },
+        # =========================
+        # Wallet QR Code Generation
+        # =========================
+        "generate-wallet-qr-codes": {
+            "task": "generate_wallet_qr_codes",
+            "schedule": 180.0,  # Every 3 minutes
             "options": {"queue": "maintenance"},
         },
         # =========================
