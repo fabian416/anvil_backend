@@ -253,6 +253,13 @@ Include the balance and suggestions at the end."""
                 }
                 if wallet_address
                 else None,
+                # Pass through balance data for accurate display
+                "total_balance_usd": conversation_context.user_metadata.get(
+                    "total_balance_usd"
+                ),
+                "portfolio_summary": conversation_context.user_metadata.get(
+                    "portfolio_summary"
+                ),
             }
 
         return None
