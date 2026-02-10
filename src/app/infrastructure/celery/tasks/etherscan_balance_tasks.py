@@ -8,6 +8,8 @@ Design Decisions:
 - Etherscan V2 uses a single API key for 60+ EVM chains (chainid parameter)
 - Free tier: 3 calls/sec (NOT 5!), 100,000 calls/day
 - Free tier does NOT support: Base (8453), OP Mainnet (10), BNB, Avalanche
+- Set etherscan.include_paid_tier_chains=true in config to enable Base (and other
+  paid-tier chains) when using Etherscan Lite/Pro/Enterprise.
 - Supported on Free tier: Ethereum (1), Arbitrum (42161), Polygon (137)
 - Batched processing with priority queue (high-value wallets first)
 - Exponential backoff on rate limits (429) and transient failures
@@ -398,6 +400,47 @@ class EtherscanClient:
                 results.append(balance)
         return results
 
+    async def get_txlist(
+        self,
+        address: str,
+        chain_id: int,
+        page: int = 1,
+        offset: int = 20,
+        sort: str = "desc",
+    ) -> list[dict[str, Any]]:
+        """
+        Get recent normal transactions for an address (Etherscan txlist).
+
+        Args:
+            address: Wallet address (0x...)
+            chain_id: Etherscan chain ID (1=ETH, 8453=Base, etc.)
+            page: Page number
+            offset: Number of transactions per page
+            sort: "asc" or "desc"
+
+        Returns:
+            List of tx dicts (hash, blockNumber, timeStamp, from, to, value,
+            gasUsed, isError, etc.) or empty list on error.
+        """
+        params = {
+            "chainid": chain_id,
+            "module": "account",
+            "action": "txlist",
+            "address": address,
+            "startblock": 0,
+            "endblock": 99999999,
+            "page": page,
+            "offset": offset,
+            "sort": sort,
+        }
+        data = await self._request_with_retry(params)
+        if data is None:
+            return []
+        result = data.get("result")
+        if not result or not isinstance(result, list):
+            return []
+        return result
+
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -479,6 +522,201 @@ def _detect_anomaly(
 
 
 # ============================================================================
+# TASK 0: SYNC TRANSACTIONS (runs before balance and token sync)
+# ============================================================================
+
+
+@celery_app.task(
+    name="etherscan.sync_transactions",
+    bind=True,
+    max_retries=2,
+    default_retry_delay=60,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    acks_late=True,
+)
+def sync_etherscan_transactions(self) -> dict[str, Any]:
+    """
+    Fetch recent transactions from Etherscan and update pending transaction status.
+
+    Intended to run before sync_balances and sync_all_tokens so that pending
+    transactions are confirmed from chain before balance/token checks.
+
+    For each active wallet and each supported chain, fetches txlist from Etherscan
+    and updates any matching PENDING rows in transactions (status, block_number,
+    confirmed_at, gas_used).
+
+    Returns:
+        Dict with processed, updated, errors counts and duration.
+    """
+
+    async def runner(container):
+        from sqlalchemy import select, update, and_
+        from sqlalchemy.ext.asyncio import AsyncSession
+        from app.infrastructure.persistence_sqla.registry import mapping_registry
+        from app.infrastructure.persistence_sqla.mappings.wallet import (
+            map_wallet_tables,
+        )
+        from app.infrastructure.persistence_sqla.mappings.transaction import (
+            map_transaction_table,
+        )
+        from app.infrastructure.adapters.types import MainAsyncSession
+        from app.setup.config.settings import load_settings
+
+        start_time = datetime.now(UTC)
+        settings = load_settings()
+
+        etherscan_api_key = ""
+        etherscan_base_url = "https://api.etherscan.io/v2/api"
+        include_paid_tier_chains = False
+        try:
+            raw_config = settings.model_dump()
+            etherscan_cfg = raw_config.get("etherscan", {})
+            if isinstance(etherscan_cfg, dict):
+                etherscan_api_key = etherscan_cfg.get("api_key", "")
+                etherscan_base_url = etherscan_cfg.get("base_url", etherscan_base_url)
+                include_paid_tier_chains = etherscan_cfg.get(
+                    "include_paid_tier_chains", False
+                )
+        except Exception:
+            pass
+        if not etherscan_api_key:
+            try:
+                from app.setup.config.loader import load_full_config, get_current_env
+
+                raw = load_full_config(env=get_current_env())
+                etherscan_cfg = raw.get("etherscan", {})
+                etherscan_api_key = etherscan_cfg.get("api_key", "") or etherscan_cfg.get(
+                    "API_KEY", ""
+                )
+                include_paid_tier_chains = etherscan_cfg.get(
+                    "include_paid_tier_chains", include_paid_tier_chains
+                )
+            except Exception:
+                pass
+        if not etherscan_api_key:
+            logger.warning(
+                "Etherscan API key not configured, skipping transaction sync."
+            )
+            return {"status": "skipped", "reason": "no_api_key"}
+
+        chain_id_map = {
+            "ethereum": 1,
+            "arbitrum": 42161,
+            "polygon": 137,
+        }
+        if include_paid_tier_chains:
+            chain_id_map["base"] = 8453
+            chain_id_map["optimism"] = 10
+
+        processed = 0
+        updated = 0
+        errors = 0
+
+        try:
+            session: AsyncSession = await container.get(MainAsyncSession)
+            map_wallet_tables()
+            map_transaction_table()
+
+            wallets_table = mapping_registry.metadata.tables.get("wallets")
+            transactions_table = mapping_registry.metadata.tables.get("transactions")
+            if wallets_table is None or transactions_table is None:
+                return {"status": "skipped", "reason": "tables_not_found"}
+
+            stmt = select(
+                wallets_table.c.id,
+                wallets_table.c.address,
+            ).where(
+                and_(
+                    wallets_table.c.status == 1,
+                    wallets_table.c.address.isnot(None),
+                )
+            ).limit(50)
+            result = await session.execute(stmt)
+            wallets = result.fetchall()
+
+            if not wallets:
+                return {"status": "complete", "processed": 0, "updated": 0, "errors": 0}
+
+            async with EtherscanClient(
+                api_key=etherscan_api_key,
+                base_url=etherscan_base_url,
+                max_retries=3,
+                retry_backoff_base=2.0,
+            ) as client:
+                for wallet_id, wallet_address in wallets:
+                    for _chain_name, chain_id in chain_id_map.items():
+                        processed += 1
+                        try:
+                            tx_list = await client.get_txlist(
+                                address=wallet_address,
+                                chain_id=chain_id,
+                                offset=30,
+                            )
+                            for tx in tx_list:
+                                tx_hash = tx.get("hash")
+                                if not tx_hash:
+                                    continue
+                                block_num = tx.get("blockNumber")
+                                if not block_num:
+                                    continue
+                                is_error = tx.get("isError", "0") == "1"
+                                status_new = 2 if is_error else 1
+                                ts = tx.get("timeStamp")
+                                confirmed_at = (
+                                    datetime.fromtimestamp(int(ts), tz=UTC)
+                                    if ts
+                                    else None
+                                )
+                                gas_used_raw = tx.get("gasUsed")
+                                gas_used = int(gas_used_raw) if gas_used_raw else None
+
+                                update_stmt = (
+                                    update(transactions_table)
+                                    .where(
+                                        and_(
+                                            transactions_table.c.wallet_id == wallet_id,
+                                            transactions_table.c.tx_hash == tx_hash,
+                                            transactions_table.c.status == 0,
+                                        )
+                                    )
+                                    .values(
+                                        status=status_new,
+                                        block_number=int(block_num),
+                                        confirmed_at=confirmed_at,
+                                        gas_used=gas_used,
+                                    )
+                                )
+                                res = await session.execute(update_stmt)
+                                if res.rowcount and res.rowcount > 0:
+                                    updated += 1
+                        except Exception as e:
+                            errors += 1
+                            logger.debug(
+                                "Etherscan txlist failed for wallet %s chain %s: %s",
+                                wallet_id,
+                                chain_id,
+                                e,
+                            )
+
+            await session.commit()
+            duration = (datetime.now(UTC) - start_time).total_seconds()
+            return {
+                "status": "complete",
+                "processed": processed,
+                "updated": updated,
+                "errors": errors,
+                "duration_seconds": round(duration, 2),
+                "timestamp": datetime.now(UTC).isoformat(),
+            }
+        except Exception as e:
+            logger.error("Etherscan transaction sync failed: %s", e, exc_info=True)
+            raise
+
+    return asyncio.run(_run_task(runner))
+
+
+# ============================================================================
 # TASK 1: PERIODIC ETHERSCAN BALANCE SYNC
 # ============================================================================
 
@@ -540,6 +778,7 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
         anomaly_pct = 50.0
         anomaly_abs = 1000.0
 
+        include_paid_tier_chains = False
         # Try to load from secrets config
         try:
             raw_config = settings.model_dump()
@@ -557,6 +796,9 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                 hv_threshold = Decimal(
                     str(etherscan_cfg.get("high_value_threshold_usd", hv_threshold))
                 )
+                include_paid_tier_chains = etherscan_cfg.get(
+                    "include_paid_tier_chains", False
+                )
         except Exception:
             pass
 
@@ -571,6 +813,9 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                 etherscan_api_key = etherscan_cfg.get(
                     "api_key", ""
                 ) or etherscan_cfg.get("API_KEY", "")
+                include_paid_tier_chains = etherscan_cfg.get(
+                    "include_paid_tier_chains", include_paid_tier_chains
+                )
             except Exception:
                 pass
 
@@ -647,24 +892,31 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
 
             logger.info(f"Processing {len(wallets)} wallets via Etherscan")
 
-            # Chain ID mapping
-            # NOTE: Only chains supported on Etherscan V2 Free tier
-            # Base (8453) and Optimism (10) require PAID tier
+            # Chain ID mapping (Base/Optimism included when include_paid_tier_chains)
             chain_id_map = {
                 "ethereum": 1,
                 "arbitrum": 42161,
                 "polygon": 137,
-                # "base": 8453,  # PAID TIER ONLY
-                # "optimism": 10,  # PAID TIER ONLY
             }
+            if include_paid_tier_chains:
+                chain_id_map["base"] = 8453
+                chain_id_map["optimism"] = 10
 
-            # Default token to check: USDC per chain (FREE TIER ONLY)
+            # Default token to check: USDC per chain
             usdc_contracts = {
                 "ethereum": ("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", 6),
                 "arbitrum": ("0xaf88d065e77c8cC2239327C5EDb3A432268e5831", 6),
                 "polygon": ("0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", 6),
-                # Base and Optimism removed - PAID TIER ONLY
             }
+            if include_paid_tier_chains:
+                usdc_contracts["base"] = (
+                    "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                    6,
+                )
+                usdc_contracts["optimism"] = (
+                    "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+                    6,
+                )
 
             # USDT contracts for verification
             usdt_contracts = {
@@ -672,13 +924,21 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                 "arbitrum": ("0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", 6),
             }
 
-            # WETH contracts (Wrapped Ether) - FREE TIER ONLY
+            # WETH contracts (Wrapped Ether)
             weth_contracts = {
                 "ethereum": ("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", 18),
                 "arbitrum": ("0x82aF49447D8a07e3bd95BD0d56f35241523fBab1", 18),
                 "polygon": ("0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", 18),
-                # Base and Optimism removed - PAID TIER ONLY
             }
+            if include_paid_tier_chains:
+                weth_contracts["base"] = (
+                    "0x4200000000000000000000000000000000000006",
+                    18,
+                )
+                weth_contracts["optimism"] = (
+                    "0x4200000000000000000000000000000000000006",
+                    18,
+                )
 
             # All tokens to sync per chain
             # Format: {chain: [(symbol, name, contract, decimals, is_native, can_pay_gas, is_stablecoin), ...]}
@@ -869,10 +1129,9 @@ def sync_etherscan_balances(self) -> dict[str, Any]:
                     # ============================================================
                     # We need balances on all chains that LiFi can bridge from
                     # so the swap workflow can select the best chain for gas
-                    # NOTE: Base (8453) removed - NOT supported on Etherscan Free tier
-                    lifi_source_chains = [
-                        "arbitrum"
-                    ]  # ethereum already synced above; base=paid only
+                    lifi_source_chains = ["arbitrum"]
+                    if include_paid_tier_chains:
+                        lifi_source_chains.append("base")
 
                     for lifi_chain in lifi_source_chains:
                         try:
@@ -1099,9 +1358,10 @@ def sync_all_tokens_etherscan(
         session = await container.get(MainAsyncSession)
         settings = await container.get(AppSettings)
 
-        # Get Etherscan API key - try multiple sources
+        # Get Etherscan API key and paid-tier flag - try multiple sources
         etherscan_api_key = ""
         etherscan_base_url = "https://api.etherscan.io/v2/api"
+        include_paid_tier_chains = False
 
         # Method 1: Try from AppSettings
         etherscan_cfg = getattr(settings, "etherscan", None)
@@ -1114,6 +1374,12 @@ def sync_all_tokens_etherscan(
                 etherscan_api_key = (
                     etherscan_cfg.get("api_key") or etherscan_cfg.get("API_KEY") or ""
                 )
+            if hasattr(etherscan_cfg, "include_paid_tier_chains"):
+                include_paid_tier_chains = bool(etherscan_cfg.include_paid_tier_chains)
+            elif isinstance(etherscan_cfg, dict):
+                include_paid_tier_chains = etherscan_cfg.get(
+                    "include_paid_tier_chains", False
+                )
 
         # Method 2: Try direct config load
         if not etherscan_api_key:
@@ -1125,6 +1391,9 @@ def sync_all_tokens_etherscan(
                 etherscan_api_key = (
                     etherscan_dict.get("api_key") or etherscan_dict.get("API_KEY") or ""
                 )
+                include_paid_tier_chains = etherscan_dict.get(
+                    "include_paid_tier_chains", include_paid_tier_chains
+                )
             except Exception:
                 pass
 
@@ -1135,17 +1404,15 @@ def sync_all_tokens_etherscan(
         if not etherscan_api_key:
             return {"status": "error", "reason": "no_api_key"}
 
-        # Chain and token configuration
-        # NOTE: Base (8453) and OP (10) are NOT supported on Free tier
-        # Only sync chains available on Free tier to avoid API errors
+        # Chain and token configuration (Base included when include_paid_tier_chains)
         chain_id_map = {
             "ethereum": 1,
             "arbitrum": 42161,
-            # "base": 8453,  # PAID TIER ONLY - not supported on free tier
         }
+        if include_paid_tier_chains:
+            chain_id_map["base"] = 8453
 
         # Tokens to sync: (symbol, name, contract, decimals, is_native, can_pay_gas, is_stablecoin)
-        # NOTE: Base chain removed - NOT supported on Etherscan Free tier
         tokens_config = {
             "ethereum": [
                 ("ETH", "Ether", None, 18, True, True, False),
@@ -1168,7 +1435,6 @@ def sync_all_tokens_etherscan(
                     False,
                 ),
             ],
-            # "base" removed - PAID TIER ONLY on Etherscan V2
             "arbitrum": [
                 ("ETH", "Ether", None, 18, True, True, False),
                 (
@@ -1191,6 +1457,28 @@ def sync_all_tokens_etherscan(
                 ),
             ],
         }
+        if include_paid_tier_chains:
+            tokens_config["base"] = [
+                ("ETH", "Ether", None, 18, True, True, False),
+                (
+                    "USDC",
+                    "USD Coin",
+                    "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                    6,
+                    False,
+                    False,
+                    True,
+                ),
+                (
+                    "WETH",
+                    "Wrapped Ether",
+                    "0x4200000000000000000000000000000000000006",
+                    18,
+                    False,
+                    False,
+                    False,
+                ),
+            ]
 
         # Get table references
         wallets_table = mapping_registry.metadata.tables.get("wallets")
@@ -1421,15 +1709,27 @@ def sync_single_wallet_etherscan(
         if not etherscan_api_key:
             return {"status": "error", "reason": "no_api_key"}
 
-        # NOTE: Only FREE TIER chains supported
-        # Base (8453) and Optimism (10) require PAID tier
+        # Read paid-tier flag (Base/Optimism allowed when true)
+        include_paid_tier_chains = False
+        try:
+            from app.setup.config.loader import load_full_config, get_current_env
+
+            raw = load_full_config(env=get_current_env())
+            etherscan_cfg = raw.get("etherscan", {})
+            include_paid_tier_chains = etherscan_cfg.get(
+                "include_paid_tier_chains", False
+            )
+        except Exception:
+            pass
+
         chain_id_map = {
             "ethereum": 1,
             "arbitrum": 42161,
             "polygon": 137,
-            # "base": 8453,  # PAID TIER ONLY
-            # "optimism": 10,  # PAID TIER ONLY
         }
+        if include_paid_tier_chains:
+            chain_id_map["base"] = 8453
+            chain_id_map["optimism"] = 10
         chain_id = chain_id_map.get(_chain)
         if chain_id is None:
             return {"status": "error", "reason": f"unsupported_chain:{_chain}"}

@@ -483,6 +483,8 @@ MOONPAY_ENVIRONMENT = "sandbox"
 [etherscan]
 # Most settings use defaults from EtherscanSettings class
 # Only override if needed for local development
+# Paid tier: enables Base, Optimism, etc. for balance sync and on-demand checks
+include_paid_tier_chains = true
 
 # ========================================
 # Storage Configuration (QR Codes, Assets)
@@ -496,8 +498,8 @@ qr_local_base_url = "/static/qr"
 
 # DigitalOcean Spaces (Recallium CDN) - credentials in .secrets.toml
 [storage.digitalocean]
-enabled = false  # Set to true when CDN credentials are configured in .secrets.toml
-region = "nyc3"  # DigitalOcean datacenter region (nyc3, sfo3, ams3, sgp1, fra1)
-bucket = "anvil-assets"  # Your Spaces bucket name
+enabled = true  # Set to true when CDN credentials are configured in .secrets.toml
+region = "sfo3"  # DigitalOcean datacenter region (nyc3, sfo3, ams3, sgp1, fra1)
+bucket = "cdn-anvil"  # Your Spaces bucket name
 cdn_enabled = true  # Use CDN URLs (https://{bucket}.{region}.cdn.digitaloceanspaces.com)
 # access_key and secret_key must be set in .secrets.toml under [storage.digitalocean]

@@ -48,13 +48,15 @@ GET https://api.etherscan.io/v2/api
 
 ## Supported Chains
 
-| Chain | Chain ID | USDC Contract |
-|-------|----------|---------------|
-| Ethereum | 1 | `0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48` |
-| Base | 8453 | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
-| Arbitrum | 42161 | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` |
-| Optimism | 10 | `0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85` |
-| Polygon | 137 | `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` |
+| Chain | Chain ID | Free Tier | USDC Contract |
+|-------|----------|-----------|---------------|
+| Ethereum | 1 | Yes | `0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48` |
+| Arbitrum | 42161 | Yes | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` |
+| Polygon | 137 | Yes | `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` |
+| Base | 8453 | **Paid only** | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+| Optimism | 10 | **Paid only** | `0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85` |
+
+**Paid tier (Etherscan Lite/Pro/Enterprise):** Set `include_paid_tier_chains = true` under `[etherscan]` in config so balance sync and single-wallet checks include Base and Optimism.
 
 ## Configuration
 
@@ -70,7 +72,18 @@ GET https://api.etherscan.io/v2/api
 api_key = "YOUR_API_KEY_HERE"
 ```
 
-### 2. Optional: Customize Settings
+### 2. Paid tier: Enable Base and other chains
+
+If you have Etherscan Lite/Pro/Enterprise, add to `config/local/config.toml` or `.secrets.toml`:
+
+```toml
+[etherscan]
+include_paid_tier_chains = true
+```
+
+This enables Base (8453), Optimism (10), and other paid-tier chains for balance sync and on-demand checks.
+
+### 3. Optional: Other settings
 
 **File**: `config/local/config.toml`
 

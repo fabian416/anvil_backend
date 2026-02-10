@@ -21,6 +21,8 @@ from app.infrastructure.celery.tasks.privy_balance_tasks import (
 
 from app.infrastructure.celery.tasks.etherscan_balance_tasks import (
     sync_etherscan_balances,
+    sync_etherscan_transactions,
+    sync_all_tokens_etherscan,
     sync_single_wallet_etherscan,
     verify_test_wallet,
 )
@@ -38,8 +40,10 @@ __all__ = [
     # Privy balance tasks
     "sync_wallet_balances",
     "sync_single_wallet_balance",
-    # Etherscan balance tasks
+    # Etherscan tasks
+    "sync_etherscan_transactions",
     "sync_etherscan_balances",
+    "sync_all_tokens_etherscan",
     "sync_single_wallet_etherscan",
     "verify_test_wallet",
 ]

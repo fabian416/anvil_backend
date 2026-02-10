@@ -3,6 +3,7 @@ Aave Gateway Adapter.
 
 Implements the AaveGateway port with caching
 for market and position data.
+Uses AaveClient for real on-chain position when RPC is available.
 """
 
 import logging
@@ -26,9 +27,23 @@ from app.domain.exceptions.aave import (
 )
 from app.domain.ports.aave_gateway import AaveGateway
 from app.domain.value_objects.lending.health_factor import HealthFactor
+from app.infrastructure.adapters.external.aave_client import AaveClient
+from app.infrastructure.adapters.external.aave_contract_helper import (
+    generate_withdraw_transaction,
+)
 from app.infrastructure.cache.external_api_cache import ExternalAPICache
 
 logger = logging.getLogger(__name__)
+
+# Aave V3 pool addresses by chain (for withdraw tx building)
+AAVE_POOL_ADDRESSES = {
+    "ethereum": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+    "base": "0xA238Dd80C259a72e81d7e4664a9801593F98d1C5",
+    "polygon": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    "arbitrum": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    "optimism": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    "avalanche": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+}
 
 # Ethereum address pattern
 ETH_ADDRESS_PATTERN = re.compile(r"^0x[a-fA-F0-9]{40}$")
@@ -142,7 +157,7 @@ class AaveAdapter(AaveGateway):
         address: str,
         chain: str = "ethereum",
     ) -> AavePosition:
-        """Get user's complete Aave position."""
+        """Get user's complete Aave position from on-chain data when available."""
         self._validate_chain(chain)
         self._validate_address(address)
 
@@ -154,8 +169,10 @@ class AaveAdapter(AaveGateway):
             return AavePosition.from_dict(cached)
 
         try:
-            # Use fallback position for development
-            position = self._get_fallback_position(address, chain)
+            # Prefer real on-chain data via AaveClient
+            position = await self._get_position_via_client(address, chain)
+            if position is None:
+                raise PositionNotFoundError(address, chain)
 
             # Check if user has any position
             if (
@@ -181,6 +198,52 @@ class AaveAdapter(AaveGateway):
         except Exception as e:
             logger.error(f"Error fetching position for {address}: {e}")
             raise AaveAPIError(str(e)) from e
+
+    # Synthetic "USD" supply is used when position has only aggregate data; map to
+    # real market for withdraw (USDC is the main stablecoin on supported chains).
+    _WITHDRAW_SYMBOL_MAP = {"USD": "USDC"}
+
+    async def build_withdraw_supply_transaction(
+        self,
+        user_address: str,
+        asset_symbol: str,
+        amount: str,
+        chain: str = "base",
+    ) -> dict:
+        """Build Aave V3 withdraw supply transaction for frontend signing."""
+        try:
+            pool_address = AAVE_POOL_ADDRESSES.get(chain.lower())
+            if not pool_address:
+                return {
+                    "success": False,
+                    "error": f"Aave V3 pool not configured for chain {chain}",
+                    "chain": chain,
+                }
+            # Map synthetic aggregate symbol to real market for withdraw
+            lookup_symbol = self._WITHDRAW_SYMBOL_MAP.get(
+                asset_symbol.strip().upper(), asset_symbol
+            )
+            market = await self.get_market_details(asset=lookup_symbol, chain=chain)
+            tx = generate_withdraw_transaction(
+                pool_address=pool_address,
+                asset_address=market.asset_address,
+                amount=amount,
+                asset_decimals=market.decimals,
+                user_address=user_address,
+            )
+            return {
+                "success": True,
+                "to": tx["to"],
+                "data": tx["data"],
+                "value": tx.get("value", "0"),
+                "asset_address": market.asset_address,
+                "asset": lookup_symbol,
+                "amount": amount,
+                "chain": chain,
+            }
+        except Exception as e:
+            logger.error(f"Aave build_withdraw_supply error: {e}")
+            return {"success": False, "error": str(e), "chain": chain}
 
     async def get_health_factor(
         self,
@@ -315,6 +378,93 @@ class AaveAdapter(AaveGateway):
         if rate_type == "stable":
             return market.borrow_apy_stable
         return market.borrow_apy_variable
+
+    async def _get_position_via_client(
+        self, address: str, chain: str
+    ) -> AavePosition | None:
+        """
+        Fetch position from AaveClient (on-chain). Returns None if no position.
+        When client returns aggregates but no per-asset supplies, builds one
+        synthetic supply so 'my lendings' shows the correct total.
+        """
+        client = AaveClient(chain=chain, api_key=self._api_key)
+        try:
+            raw = await client.get_user_position(address)
+        except Exception as e:
+            logger.debug("AaveClient get_user_position failed: %s", e)
+            return None
+        finally:
+            await client.close()
+
+        if not raw:
+            return None
+
+        total_collateral_usd = Decimal(str(raw.get("total_collateral_usd", "0")))
+        total_debt_usd = Decimal(str(raw.get("total_debt_usd", "0")))
+        available_borrow_usd = Decimal(str(raw.get("available_borrow_usd", "0")))
+        net_worth_usd = Decimal(str(raw.get("net_worth_usd", "0")))
+        hf_str = raw.get("health_factor", "inf")
+        health_factor = (
+            Decimal("inf")
+            if str(hf_str).lower() in ("inf", "∞", "infinity")
+            else Decimal(str(hf_str))
+        )
+        current_ltv = Decimal(str(raw.get("current_ltv", "0")))
+        max_ltv = Decimal(str(raw.get("max_ltv", "0")))
+
+        supplies: list[AaveSupplyPosition] = []
+        for s in raw.get("supplies") or []:
+            supplies.append(
+                AaveSupplyPosition(
+                    asset_address=s.get("asset_address", ""),
+                    symbol=s.get("symbol", "?"),
+                    balance=Decimal(str(s.get("balance", "0"))),
+                    balance_usd=Decimal(str(s.get("balance_usd", "0"))),
+                    apy=Decimal(str(s.get("apy", "0"))),
+                    is_collateral=s.get("is_collateral", True),
+                )
+            )
+
+        # Client often returns supplies=[]; use aggregate so UI shows correct total
+        if not supplies and total_collateral_usd > 0:
+            supplies = [
+                AaveSupplyPosition(
+                    asset_address="",
+                    symbol="USD",
+                    balance=total_collateral_usd,
+                    balance_usd=total_collateral_usd,
+                    apy=Decimal("0"),
+                    is_collateral=True,
+                )
+            ]
+
+        borrows: list[AaveBorrowPosition] = []
+        for b in raw.get("borrows") or []:
+            borrows.append(
+                AaveBorrowPosition(
+                    asset_address=b.get("asset_address", ""),
+                    symbol=b.get("symbol", "?"),
+                    balance=Decimal(str(b.get("balance", "0"))),
+                    balance_usd=Decimal(str(b.get("balance_usd", "0"))),
+                    apy=Decimal(str(b.get("apy", "0"))),
+                    borrow_type=b.get("borrow_type", "variable"),
+                )
+            )
+
+        return AavePosition(
+            user_address=raw.get("user_address", address.lower()),
+            chain=raw.get("chain", chain),
+            total_collateral_usd=total_collateral_usd,
+            total_debt_usd=total_debt_usd,
+            available_borrow_usd=available_borrow_usd,
+            net_worth_usd=net_worth_usd,
+            health_factor=health_factor,
+            current_ltv=current_ltv,
+            max_ltv=max_ltv,
+            supplies=supplies,
+            borrows=borrows,
+            updated_at=datetime.now(timezone.utc),
+        )
 
     # =========================================================================
     # Fallback Data Methods (for development/testing)

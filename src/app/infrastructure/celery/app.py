@@ -100,7 +100,8 @@ def create_celery() -> Celery:
         # Privy wallet balance sync
         "privy.sync_wallet_balances": {"queue": "maintenance"},
         "privy.sync_single_wallet_balance": {"queue": "maintenance"},
-        # Etherscan balance sync (on-chain verification)
+        # Etherscan sync (transactions first, then balance/token)
+        "etherscan.sync_transactions": {"queue": "maintenance"},
         "etherscan.sync_balances": {"queue": "maintenance"},
         "etherscan.sync_single_wallet": {"queue": "maintenance"},
         "etherscan.verify_test_wallet": {"queue": "maintenance"},
@@ -181,6 +182,12 @@ def create_celery() -> Celery:
         "privy-sync-wallet-balances": {
             "task": "privy.sync_wallet_balances",
             "schedule": 30.0,  # Every 30 seconds
+            "options": {"queue": "maintenance"},
+        },
+        # Etherscan: sync transactions first, then balance, then tokens (same 5-min window; order in schedule)
+        "etherscan-sync-transactions": {
+            "task": "etherscan.sync_transactions",
+            "schedule": 300.0,  # Every 5 minutes (runs before balance/token in same cycle)
             "options": {"queue": "maintenance"},
         },
         "etherscan-sync-balances": {

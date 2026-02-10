@@ -18,6 +18,11 @@ class EtherscanSettings(BaseModel):
     # API Key - single key works for all supported chains
     api_key: str = ""
 
+    # When True, balance sync and single-wallet checks include paid-tier chains
+    # (Base 8453, Optimism 10, BNB 56, Avalanche 43114). Set True if you have
+    # Etherscan Lite/Pro/Enterprise.
+    include_paid_tier_chains: bool = False
+
     # Base URL for Etherscan V2 unified endpoint
     base_url: str = "https://api.etherscan.io/v2/api"
 
