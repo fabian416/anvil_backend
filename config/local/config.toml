@@ -483,3 +483,21 @@ MOONPAY_ENVIRONMENT = "sandbox"
 [etherscan]
 # Most settings use defaults from EtherscanSettings class
 # Only override if needed for local development
+
+# ========================================
+# Storage Configuration (QR Codes, Assets)
+# ========================================
+[storage]
+# QR code pre-generation settings
+qr_storage_enabled = true
+qr_storage_type = "local"  # "local" or "cdn"
+qr_local_path = "./static/qr"
+qr_local_base_url = "/static/qr"
+
+# DigitalOcean Spaces (Recallium CDN) - configure in .secrets.toml
+[storage.digitalocean]
+enabled = false  # Enable when CDN credentials are configured
+region = "nyc3"
+bucket = "anvil-assets"
+cdn_enabled = true
+# access_key and secret_key should be in .secrets.toml
