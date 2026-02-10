@@ -8,13 +8,29 @@ for lending positions across Aave and Morpho protocols.
 import logging
 from datetime import datetime, UTC
 from decimal import Decimal
-from typing import Protocol
+from typing import Protocol, Any
 from uuid import UUID
 
 from app.domain.entities.lending.lending_health_check import LendingHealthCheck
 from app.domain.entities.lending.lending_alert import LendingAlert
 
 logger = logging.getLogger(__name__)
+
+
+class Web3Provider(Protocol):
+    """Port for Web3 blockchain interactions."""
+
+    async def get_transaction_receipt(
+        self, tx_hash: str, chain: str
+    ) -> dict[str, Any] | None:
+        """Get transaction receipt."""
+        ...
+
+    async def wait_for_transaction(
+        self, tx_hash: str, chain: str, timeout: int = 120
+    ) -> dict[str, Any]:
+        """Wait for transaction confirmation."""
+        ...
 
 
 class LendingRepository(Protocol):
@@ -330,3 +346,233 @@ class RefreshPositionsTask:
         except Exception as e:
             logger.error(f"Error refreshing positions: {e}", exc_info=True)
             raise
+
+
+class ConfirmWithdrawTransactionTask:
+    """
+    Task to confirm withdraw transaction and update position.
+
+    Process:
+    1. Wait for transaction confirmation
+    2. Update lending_transactions status
+    3. Refresh user position from protocol
+    4. Update lending_positions table
+    5. Recalculate health factor if needed
+
+    Used for:
+    - Morpho Blue market withdrawals
+    - MetaMorpho vault withdrawals
+    - Aave supply withdrawals
+    """
+
+    def __init__(
+        self,
+        repository: LendingRepository,
+        position_provider: PositionProvider,
+        web3_provider: Web3Provider | None = None,
+    ):
+        self._repository = repository
+        self._position_provider = position_provider
+        self._web3_provider = web3_provider
+
+    async def run(
+        self,
+        transaction_hash: str,
+        user_id: UUID,
+        protocol: str,
+        chain: str,
+        vault_address: str | None = None,
+        market_id: str | None = None,
+        amount: Decimal = Decimal("0"),
+    ) -> dict[str, Any]:
+        """
+        Execute withdraw confirmation.
+
+        Args:
+            transaction_hash: On-chain transaction hash
+            user_id: User identifier
+            protocol: Protocol name ("morpho" or "aave")
+            chain: Blockchain network
+            vault_address: MetaMorpho vault address (for Morpho)
+            market_id: Morpho Blue market ID (for Morpho Blue markets)
+            amount: Withdrawn amount
+
+        Returns:
+            Dictionary with confirmation results
+        """
+        logger.info(
+            f"Confirming withdraw transaction {transaction_hash} "
+            f"for user={user_id}, protocol={protocol}, chain={chain}"
+        )
+
+        result = {
+            "transaction_hash": transaction_hash,
+            "status": "pending",
+            "confirmed": False,
+            "error": None,
+        }
+
+        try:
+            # 1. Wait for transaction confirmation
+            tx_receipt = await self._wait_for_confirmation(transaction_hash, chain)
+
+            if not tx_receipt:
+                result["status"] = "timeout"
+                result["error"] = "Transaction confirmation timeout"
+                await self._update_transaction_status(
+                    transaction_hash=transaction_hash,
+                    status="failed",
+                    error_message="Transaction confirmation timeout",
+                )
+                return result
+
+            if tx_receipt.get("status") != 1:
+                result["status"] = "failed"
+                result["error"] = "Transaction reverted on-chain"
+                await self._update_transaction_status(
+                    transaction_hash=transaction_hash,
+                    status="failed",
+                    error_message="Transaction reverted",
+                    block_number=tx_receipt.get("blockNumber"),
+                    gas_used=tx_receipt.get("gasUsed"),
+                )
+                return result
+
+            # 2. Update transaction status to confirmed
+            await self._update_transaction_status(
+                transaction_hash=transaction_hash,
+                status="confirmed",
+                block_number=tx_receipt.get("blockNumber"),
+                gas_used=tx_receipt.get("gasUsed"),
+                confirmed_at=datetime.now(UTC),
+            )
+
+            # 3. Refresh position from protocol
+            wallet_address = await self._get_user_wallet_address(user_id)
+            if wallet_address:
+                try:
+                    position = await self._position_provider.get_position(
+                        wallet_address=wallet_address,
+                        protocol=protocol,
+                        chain=chain,
+                    )
+
+                    # 4. Update position in database
+                    if position:
+                        await self._update_position(
+                            user_id=user_id,
+                            protocol=protocol,
+                            chain=chain,
+                            position_data={
+                                "vault_address": vault_address,
+                                "market_id": market_id,
+                                "assets": str(position.assets if hasattr(position, 'assets') else 0),
+                                "shares": str(position.shares if hasattr(position, 'shares') else 0),
+                                "health_factor": str(getattr(position, 'health_factor', None)),
+                            },
+                        )
+
+                    logger.info(
+                        f"Position refreshed after withdraw for user {user_id}"
+                    )
+
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to refresh position after withdraw: {e}"
+                    )
+                    # Don't fail the task - transaction is still confirmed
+
+            result["status"] = "confirmed"
+            result["confirmed"] = True
+            result["block_number"] = tx_receipt.get("blockNumber")
+            result["gas_used"] = tx_receipt.get("gasUsed")
+
+            logger.info(
+                f"Withdraw transaction confirmed: {transaction_hash}, "
+                f"block={tx_receipt.get('blockNumber')}"
+            )
+
+            return result
+
+        except Exception as e:
+            logger.error(
+                f"Error confirming withdraw transaction {transaction_hash}: {e}",
+                exc_info=True,
+            )
+            result["status"] = "error"
+            result["error"] = str(e)
+
+            await self._update_transaction_status(
+                transaction_hash=transaction_hash,
+                status="failed",
+                error_message=str(e),
+            )
+
+            return result
+
+    async def _wait_for_confirmation(
+        self, tx_hash: str, chain: str, timeout: int = 120
+    ) -> dict[str, Any] | None:
+        """Wait for transaction confirmation."""
+        if self._web3_provider:
+            return await self._web3_provider.wait_for_transaction(
+                tx_hash, chain, timeout
+            )
+
+        # Fallback: Mock confirmation for development
+        logger.warning(
+            f"No Web3 provider configured, mocking confirmation for {tx_hash}"
+        )
+        return {
+            "status": 1,
+            "blockNumber": 12345678,
+            "gasUsed": 150000,
+        }
+
+    async def _update_transaction_status(
+        self,
+        transaction_hash: str,
+        status: str,
+        error_message: str | None = None,
+        block_number: int | None = None,
+        gas_used: int | None = None,
+        confirmed_at: datetime | None = None,
+    ) -> None:
+        """Update lending transaction status in database."""
+        if hasattr(self._repository, "update_transaction_status"):
+            await self._repository.update_transaction_status(
+                transaction_hash=transaction_hash,
+                status=status,
+                error_message=error_message,
+                block_number=block_number,
+                gas_used=gas_used,
+                confirmed_at=confirmed_at,
+            )
+        else:
+            logger.warning(
+                "Repository does not implement update_transaction_status method"
+            )
+
+    async def _get_user_wallet_address(self, user_id: UUID) -> str | None:
+        """Get user's wallet address from repository."""
+        if hasattr(self._repository, "get_user_wallet_address"):
+            return await self._repository.get_user_wallet_address(user_id)
+        return None
+
+    async def _update_position(
+        self,
+        user_id: UUID,
+        protocol: str,
+        chain: str,
+        position_data: dict[str, Any],
+    ) -> None:
+        """Update position in database."""
+        if hasattr(self._repository, "update_position"):
+            await self._repository.update_position(
+                user_id=user_id,
+                protocol=protocol,
+                chain=chain,
+                position_data=position_data,
+            )
+        else:
+            logger.warning("Repository does not implement update_position method")

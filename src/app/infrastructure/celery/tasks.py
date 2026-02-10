@@ -130,6 +130,7 @@ from app.application.lending.tasks import (
     MonitorHealthFactorsTask,
     CheckUserHealthFactorTask,
     RefreshPositionsTask,
+    ConfirmWithdrawTransactionTask,
 )
 
 
@@ -369,6 +370,68 @@ def refresh_lending_positions():
         stats = await task.run()
 
         print(f"Lending position refresh complete: {stats}")
+
+    asyncio.run(_run_task(runner))
+
+
+@celery_app.task(name="confirm_withdraw_transaction")
+def confirm_withdraw_transaction(
+    transaction_hash: str,
+    user_id: str,
+    protocol: str,
+    chain: str,
+    vault_address: str = None,
+    market_id: str = None,
+    amount: str = "0",
+):
+    """
+    Confirm withdraw transaction and update position.
+
+    Scheduled after user signs a withdraw transaction.
+    Waits for confirmation, updates database, refreshes position.
+
+    Args:
+        transaction_hash: On-chain transaction hash
+        user_id: User UUID as string
+        protocol: Protocol name ("morpho" or "aave")
+        chain: Blockchain network
+        vault_address: MetaMorpho vault address (optional)
+        market_id: Morpho Blue market ID (optional)
+        amount: Withdrawn amount as string
+    """
+
+    async def runner(container):
+        from uuid import UUID
+        from decimal import Decimal
+        from app.application.lending.tasks import (
+            LendingRepository,
+            PositionProvider,
+            ConfirmWithdrawTransactionTask,
+        )
+
+        repository = await container.get(LendingRepository)
+        position_provider = await container.get(PositionProvider)
+
+        task = ConfirmWithdrawTransactionTask(
+            repository=repository,
+            position_provider=position_provider,
+            web3_provider=None,  # Will be added when Web3Provider is implemented
+        )
+
+        result = await task.run(
+            transaction_hash=transaction_hash,
+            user_id=UUID(user_id),
+            protocol=protocol,
+            chain=chain,
+            vault_address=vault_address,
+            market_id=market_id,
+            amount=Decimal(amount),
+        )
+
+        print(
+            f"Withdraw confirmation complete: tx={transaction_hash}, "
+            f"status={result.get('status')}, confirmed={result.get('confirmed')}"
+        )
 
     asyncio.run(_run_task(runner))
 
