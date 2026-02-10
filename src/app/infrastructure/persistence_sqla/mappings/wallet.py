@@ -120,6 +120,18 @@ def map_wallet_tables() -> None:
             DateTime(timezone=True), nullable=True, default=None, index=True
         )
 
+        # QR Code fields (for pre-generated QR codes stored in Recallium CDN)
+        qr_image_url = mapped_column(String(512), nullable=True, default=None)
+        qr_storage_type = mapped_column(
+            String(10), nullable=True, server_default="pending"
+        )  # pending | local | cdn
+        qr_generated_at = mapped_column(
+            DateTime(timezone=True), nullable=True, default=None
+        )
+        qr_chain_id = mapped_column(
+            Integer, nullable=True, server_default="8453"
+        )  # Default to Base chain
+
         # Timestamps
         created_at = mapped_column(
             DateTime(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP")
