@@ -1033,7 +1033,9 @@ def create_conversations_router() -> APIRouter:
                 }
 
                 # Extract QR data from supervisor result (for receive flows)
-                if supervisor_result.metadata and supervisor_result.metadata.get("qr_data"):
+                if supervisor_result.metadata and supervisor_result.metadata.get(
+                    "qr_data"
+                ):
                     enrichment["qr_data"] = supervisor_result.metadata["qr_data"]
 
                 # Extract execute_data from supervisor result (workflow agents like swap_workflow)
@@ -2442,6 +2444,44 @@ Response Guidelines:
                 message += f" Ready for step {step_completed + 1} of {total_steps}."
             elif total_steps > 1:
                 message = f"🎉 All {total_steps} steps completed! {message}"
+
+            # Trigger background task for withdraw confirmation
+            if action == "withdraw" and tx_hash:
+                try:
+                    from app.infrastructure.celery.tasks import (
+                        confirm_withdraw_transaction,
+                    )
+
+                    # Get user ID for task
+                    try:
+                        app_user = await current_user.get_current_user()
+                        user_id_str = str(app_user.id_.value)
+                    except (AuthenticationError, AuthorizationError):
+                        user_id_str = str(user.identifier)
+
+                    # Get vault/market info from metadata
+                    vault_address = request.metadata.get("vault_address")
+                    market_id = request.metadata.get("market_id")
+
+                    # Schedule the confirmation task
+                    confirm_withdraw_transaction.delay(
+                        transaction_hash=tx_hash,
+                        user_id=user_id_str,
+                        protocol=protocol,
+                        chain=chain,
+                        vault_address=vault_address,
+                        market_id=market_id,
+                        amount=str(amount) if amount else "0",
+                    )
+
+                    logger.info(
+                        f"📤 Withdraw confirmation task scheduled: "
+                        f"tx_hash={tx_hash[:10]}..., protocol={protocol}"
+                    )
+                except Exception as task_error:
+                    logger.warning(
+                        f"Failed to schedule withdraw confirmation task: {task_error}"
+                    )
 
             return ExecuteResponse(
                 message=message,
