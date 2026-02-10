@@ -352,7 +352,9 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             # Add funding recommendation if user has insufficient funds
             if user_context.needs_funding_recommendation:
                 funding_msg = self._get_funding_recommendation(
-                    state.data.get("asset", "USDC"), language
+                    state.data.get("asset", "USDC"),
+                    language,
+                    balance=user_context.total_balance_usd,
                 )
                 response = funding_msg + "\n" + response
                 # Don't set execute_data when user needs funding
@@ -443,7 +445,9 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             )
 
             # Build response with funding recommendation + quote info
-            funding_msg = self._get_funding_recommendation(asset, language)
+            funding_msg = self._get_funding_recommendation(
+                asset, language, balance=user_context.total_balance_usd
+            )
             quote_info = self._format_deposit_quote_info(state.data, language)
             response = funding_msg + "\n" + quote_info
 
@@ -515,10 +519,13 @@ Você não tem {asset} suficiente na sua carteira.
         }
         return messages.get(language, messages["en"])
 
-    def _get_funding_recommendation(self, asset: str, language: str) -> str:
-        """Build funding recommendation message (like swap_workflow)."""
+    def _get_funding_recommendation(
+        self, asset: str, language: str, balance: float = 0.0
+    ) -> str:
+        """Build funding recommendation message with balance display."""
+        balance_str = f"${balance:,.2f}" if balance > 0 else "$0.00"
         messages = {
-            "en": f"""💡 **Heads up:** Your portfolio appears to have limited funds.
+            "en": f"""💡 **Heads up:** Your current balance is **{balance_str}**.
 
 To complete this deposit, you'll need {asset} in your wallet.
 
@@ -527,7 +534,7 @@ To complete this deposit, you'll need {asset} in your wallet.
 • 📥 Or transfer {asset} from another wallet
 
 Here's the deposit quote you requested:""",
-            "es": f"""💡 **Aviso:** Tu portafolio parece tener fondos limitados.
+            "es": f"""💡 **Aviso:** Tu saldo actual es **{balance_str}**.
 
 Para completar este depósito, necesitas {asset} en tu billetera.
 
@@ -536,7 +543,7 @@ Para completar este depósito, necesitas {asset} en tu billetera.
 • 📥 O transfiere {asset} desde otra billetera
 
 Aquí está la cotización del depósito:""",
-            "pt": f"""💡 **Aviso:** Seu portfólio parece ter fundos limitados.
+            "pt": f"""💡 **Aviso:** Seu saldo atual é **{balance_str}**.
 
 Para completar este depósito, você precisa de {asset} na sua carteira.
 
@@ -545,7 +552,7 @@ Para completar este depósito, você precisa de {asset} na sua carteira.
 • 📥 Ou transfira {asset} de outra carteira
 
 Aqui está a cotação do depósito:""",
-            "zh": f"""💡 **提示：** 您的投资组合资金似乎有限。
+            "zh": f"""💡 **提示：** 您当前的余额是 **{balance_str}**。
 
 要完成此存款，您需要在钱包中有 {asset}。
 
