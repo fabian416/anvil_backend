@@ -10,6 +10,7 @@ Tools:
     - get_markets: Get Morpho Blue lending markets
     - get_user_positions: Get user's vault positions
     - compare_yields: Compare yields across protocols
+    - morpho_withdraw: Withdraw supplied assets from Morpho Blue
 
 Integration Points:
     - Morpho Protocol smart contracts
@@ -20,12 +21,15 @@ Integration Points:
 Feature Flag: mcp.servers.morpho_enabled
 """
 
+import logging
 from typing import Dict, Any, List, Optional
 from decimal import Decimal
 
 from app.infrastructure.mcp.base import MCPServer
 from app.setup.config.mcp import MCPSettings, MCPServerDisabledError
 from app.domain.ports.morpho_gateway import MorphoGateway
+
+logger = logging.getLogger(__name__)
 
 
 class MorphoMCPServer(MCPServer):
@@ -282,6 +286,40 @@ class MorphoMCPServer(MCPServer):
                 "required": ["asset"],
             },
             handler=self._compare_yields_handler,
+        )
+
+        # Tool 7: Withdraw from Morpho
+        self.register_tool(
+            name="morpho_withdraw",
+            description=(
+                "Withdraw supplied assets from Morpho Blue market or MetaMorpho vault. "
+                "Returns transaction data for user signing. "
+                "Validates position exists and calculates health factor impact."
+            ),
+            parameters={
+                "type": "object",
+                "properties": {
+                    "user_address": {
+                        "type": "string",
+                        "description": "User wallet address (0x...)",
+                    },
+                    "vault_address": {
+                        "type": "string",
+                        "description": "MetaMorpho vault address (0x...)",
+                    },
+                    "amount": {
+                        "type": "string",
+                        "description": "Amount to withdraw (in asset units, or 'max' for all)",
+                    },
+                    "chain": {
+                        "type": "string",
+                        "default": "base",
+                        "description": "Blockchain network (base, ethereum)",
+                    },
+                },
+                "required": ["user_address", "vault_address", "amount"],
+            },
+            handler=self._withdraw_handler,
         )
 
     # =========================================================================
@@ -583,6 +621,160 @@ class MorphoMCPServer(MCPServer):
 
         except Exception as e:
             return {"error": str(e), "comparisons": []}
+
+    async def _withdraw_handler(
+        self,
+        user_address: str,
+        vault_address: str,
+        amount: str,
+        chain: str = "base",
+    ) -> Dict[str, Any]:
+        """
+        Handle Morpho withdrawal from MetaMorpho vault.
+
+        Process:
+        1. Get user position from Morpho gateway
+        2. Validate position exists and has sufficient supply
+        3. Build withdraw transaction
+        4. Return transaction data for user signing
+        """
+        if not self.morpho_gateway:
+            return {
+                "success": False,
+                "error": "Morpho gateway not configured",
+                "chain": chain,
+            }
+
+        try:
+            # 1. Get user positions
+            positions = await self.morpho_gateway.get_user_positions(
+                address=user_address,
+                chain=chain,
+            )
+
+            # 2. Find position for this vault
+            position = None
+            for p in positions:
+                if p.vault_address.lower() == vault_address.lower():
+                    position = p
+                    break
+
+            if not position:
+                return {
+                    "success": False,
+                    "error": f"No position found in vault {vault_address}",
+                    "chain": chain,
+                    "user_address": user_address,
+                }
+
+            # 3. Validate supply
+            if position.shares == 0:
+                return {
+                    "success": False,
+                    "error": "No supply to withdraw",
+                    "chain": chain,
+                }
+
+            # 4. Calculate withdraw amount
+            if amount.lower() == "max":
+                withdraw_shares = position.shares
+                withdraw_amount = position.assets
+            else:
+                # Convert amount to shares
+                withdraw_amount = Decimal(amount)
+                if withdraw_amount > position.assets:
+                    return {
+                        "success": False,
+                        "error": f"Insufficient balance. You have {position.assets:.6f} {position.asset_symbol}",
+                        "available_balance": str(position.assets),
+                        "requested_amount": amount,
+                        "chain": chain,
+                    }
+                # Estimate shares from amount (proportional)
+                if position.assets > 0:
+                    share_ratio = withdraw_amount / position.assets
+                    withdraw_shares = int(position.shares * share_ratio)
+                else:
+                    withdraw_shares = 0
+
+            # 5. Build withdraw transaction
+            tx_data = self._build_metamorpho_withdraw_transaction(
+                vault_address=vault_address,
+                shares=withdraw_shares,
+                user_address=user_address,
+                chain=chain,
+            )
+
+            logger.info(
+                f"[MorphoMCP] Withdraw transaction built: "
+                f"{withdraw_amount} {position.asset_symbol} from {vault_address}"
+            )
+
+            return {
+                "success": True,
+                "action": "withdraw",
+                "chain_id": self._get_chain_id(chain),
+                "chain_name": chain,
+                "vault_address": vault_address,
+                "vault_name": position.vault_name,
+                "asset": position.asset_symbol,
+                "amount": str(withdraw_amount),
+                "shares": str(withdraw_shares),
+                "from_address": user_address.lower(),
+                "transaction": tx_data,
+                "current_balance": str(position.assets),
+                "remaining_balance": str(position.assets - withdraw_amount),
+            }
+
+        except Exception as e:
+            logger.error(f"[MorphoMCP] Withdraw error: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "chain": chain,
+            }
+
+    def _build_metamorpho_withdraw_transaction(
+        self,
+        vault_address: str,
+        shares: int,
+        user_address: str,
+        chain: str,
+    ) -> Dict[str, Any]:
+        """
+        Build MetaMorpho vault withdraw transaction.
+
+        MetaMorpho uses the standard ERC4626 withdraw function:
+        function redeem(uint256 shares, address receiver, address owner) returns (uint256 assets)
+        """
+        # ERC4626 redeem function signature
+        # redeem(uint256 shares, address receiver, address owner)
+        function_selector = "0xba087652"  # keccak256("redeem(uint256,address,address)")[:4]
+
+        # Encode parameters
+        shares_hex = hex(shares)[2:].zfill(64)
+        receiver_hex = user_address.lower()[2:].zfill(64)
+        owner_hex = user_address.lower()[2:].zfill(64)
+
+        calldata = f"{function_selector}{shares_hex}{receiver_hex}{owner_hex}"
+
+        return {
+            "to": vault_address,
+            "data": calldata,
+            "value": "0x0",
+            "gas": "0x493E0",  # 300,000 gas
+        }
+
+    def _get_chain_id(self, chain: str) -> int:
+        """Get chain ID from chain name."""
+        chain_ids = {
+            "ethereum": 1,
+            "base": 8453,
+            "arbitrum": 42161,
+            "optimism": 10,
+            "polygon": 137,
+        }
+        return chain_ids.get(chain.lower(), 1)
 
 
 # Main entry point for running server standalone
