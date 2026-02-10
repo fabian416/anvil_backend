@@ -1,9 +1,9 @@
 """
-Lending Workflow Agent - Multi-Step Deposit/Yield Operations.
+Lending Workflow Agent - Multi-Step Deposit/Withdraw Operations.
 
 Handles the complete lending workflow for authenticated users:
 1. Parse request: Extract asset and amount from user message
-2. Fetch vaults: Get best yield options from Morpho and Aave
+2. Fetch vaults/positions: Get yield options or user positions
 3. Confirm: Show quote and wait for user confirmation
 4. Execute: Generate execute_data for frontend execution
 
@@ -12,33 +12,41 @@ Integration:
 - Fallback: Aave V3 markets
 - Execution: Frontend uses Privy SDK with execute_data
 
-Example Conversation:
+Supported Actions:
+- Deposit: Supply assets to vaults for yield
+- Withdraw: Retrieve assets from vaults
+
+Example Conversation (Deposit):
     User: "deposit 1000 USDC"
     Agent: "📊 Best Vault: Steakhouse USDC (12.5% APY). Monthly: ~$10.42. Confirm?"
     User: "yes"
     Agent: "✅ Ready to deposit!" + execute_data for frontend modal
+
+Example Conversation (Withdraw):
+    User: "withdraw my USDC"
+    Agent: "📊 Your Position: 1000 USDC in Steakhouse. Confirm?"
+    User: "yes"
+    Agent: "✅ Ready to withdraw!" + execute_data for frontend modal
 """
 
 import logging
 import re
-from decimal import Decimal
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.domain.enums.agent_type import AgentType
 from app.domain.value_objects.message_content import MessageContent
-from app.domain.ports.agent_squad.agent_gateway import AgentResponse
 
 from .base_workflow_agent import (
     BaseWorkflowAgent,
+    UserContext,
     WorkflowState,
     WorkflowStep,
-    UserContext,
 )
 
 if TYPE_CHECKING:
-    from app.domain.ports.morpho_gateway import MorphoGateway
     from app.domain.ports.aave_gateway import AaveGateway
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
+    from app.domain.ports.morpho_gateway import MorphoGateway
     from app.infrastructure.adapters.external.coingecko_client import CoinGeckoClient
 
 logger = logging.getLogger(__name__)
@@ -134,7 +142,6 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         """Process lending workflow step."""
 
         step = state.step
-        language = user_context.language
         text_lower = message.value.lower().strip()
 
         logger.info(
@@ -142,14 +149,15 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         )
 
         # Check if user wants to start a NEW lending flow (restart detection)
-        # This resets state when user says "lend", "deposit", "supply", etc.
+        # This resets state when user says "lend", "deposit", "supply", "withdraw", etc.
         # while already in an ongoing flow (FETCH_DATA, CONFIRM, or EXECUTE step)
-        if step not in (
+        if step not in {
             WorkflowStep.PARSE_REQUEST.value,
             WorkflowStep.CANCELLED.value,
             WorkflowStep.COMPLETED.value,
-        ):
+        }:
             restart_keywords = [
+                # Deposit keywords
                 "lend",
                 "deposit",
                 "supply",
@@ -161,6 +169,14 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
                 "i want to supply",
                 "quiero depositar",
                 "quiero prestar",
+                # Withdraw keywords
+                "withdraw",
+                "remove",
+                "take out",
+                "retirar",
+                "sacar",
+                "i want to withdraw",
+                "quiero retirar",
             ]
             is_restart_request = any(
                 text_lower.startswith(kw) or f" {kw}" in f" {text_lower}"
@@ -168,9 +184,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             )
 
             if is_restart_request:
-                logger.info(
-                    f"[LendingWorkflow] Restart detected - user starting new lending flow, resetting state"
-                )
+                logger.info("[LendingWorkflow] Restart detected - resetting state")
                 state = WorkflowState()
                 state.step = WorkflowStep.PARSE_REQUEST.value
                 return await self._handle_parse_request(message, state, user_context)
@@ -206,10 +220,29 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         state: WorkflowState,
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
-        """Parse deposit request from user message."""
+        """Parse deposit or withdraw request from user message."""
 
-        language = user_context.language
         text = message.value.lower().strip()
+
+        # Detect if this is a withdraw request
+        withdraw_keywords = [
+            "withdraw",
+            "remove",
+            "take out",
+            "retirar",
+            "sacar",
+            "提款",
+            "取出",
+        ]
+        is_withdraw = any(kw in text for kw in withdraw_keywords)
+
+        if is_withdraw:
+            state.data["action"] = "withdraw"
+            logger.info("[LendingWorkflow] Detected withdraw action")
+            return await self._handle_withdraw_request(message, state, user_context)
+
+        # Default to deposit action
+        state.data["action"] = "deposit"
 
         # Check if we're awaiting asset selection from previous turn
         if state.data.get("awaiting_asset_selection"):
@@ -247,9 +280,396 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             state.step = WorkflowStep.PARSE_REQUEST.value
             return await self._ask_for_amount(asset.upper(), user_context), state
 
-        # No asset detected - show interactive asset selection with APY rates and user context
+        # No asset detected - show interactive asset selection with APY rates
         state.data["awaiting_asset_selection"] = True
         response = await self._get_asset_selection_prompt(user_context)
+        return response, state
+
+    async def _handle_withdraw_request(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """
+        Handle withdraw request - fetch user positions and prepare withdrawal.
+
+        Flow:
+        1. Fetch user's lending positions (Morpho + Aave)
+        2. If multiple positions, show selection
+        3. If specific asset mentioned, filter to that position
+        4. Show position details and confirm withdrawal
+        """
+        language = user_context.language
+        text = message.value.lower().strip()
+        wallet_address = user_context.wallet_address
+
+        # Check if user has connected wallet
+        if not wallet_address:
+            if language == "es":
+                return (
+                    "🔗 Para retirar tus fondos, necesitas conectar tu wallet primero.\n\n"
+                    "Por favor, conecta tu wallet y vuelve a intentarlo.",
+                    state,
+                )
+            if language == "pt":
+                return (
+                    "🔗 Para retirar seus fundos, você precisa conectar sua carteira primeiro.\n\n"
+                    "Por favor, conecte sua carteira e tente novamente.",
+                    state,
+                )
+            return (
+                "🔗 To withdraw your funds, you need to connect your wallet first.\n\n"
+                "Please connect your wallet and try again.",
+                state,
+            )
+
+        # Check if awaiting position selection
+        if state.data.get("awaiting_position_selection"):
+            return await self._handle_position_selection(message, state, user_context)
+
+        # Check if awaiting withdraw amount
+        if state.data.get("awaiting_withdraw_amount"):
+            return await self._handle_withdraw_amount_input(
+                message, state, user_context
+            )
+
+        # Try to extract asset from message
+        params = await self._extract_lending_params(text)
+        requested_asset = (
+            params.get("asset", "").upper() if params.get("asset") else None
+        )
+        requested_amount = params.get("amount")
+
+        # Fetch user positions from Morpho and Aave
+        positions = await self._fetch_user_positions(wallet_address, user_context)
+
+        if not positions:
+            if language == "es":
+                return (
+                    "📭 No encontré posiciones de préstamo activas en tu wallet.\n\n"
+                    "¿Te gustaría depositar fondos para ganar rendimiento?",
+                    state,
+                )
+            if language == "pt":
+                return (
+                    "📭 Não encontrei posições de empréstimo ativas na sua carteira.\n\n"
+                    "Gostaria de depositar fundos para ganhar rendimento?",
+                    state,
+                )
+            return (
+                "📭 I didn't find any active lending positions in your wallet.\n\n"
+                "Would you like to deposit funds to earn yield?",
+                state,
+            )
+
+        # Filter by requested asset if specified
+        if requested_asset:
+            matching_positions = [
+                p for p in positions if p.get("asset", "").upper() == requested_asset
+            ]
+            if matching_positions:
+                positions = matching_positions
+
+        # If single position or specific asset matched, proceed to confirm
+        if len(positions) == 1:
+            position = positions[0]
+            state.data["selected_position"] = position
+            state.data["withdraw_amount"] = requested_amount or "max"
+
+            # If amount specified, go to confirm
+            if requested_amount:
+                state.step = WorkflowStep.CONFIRM.value
+                return await self._show_withdraw_confirmation(
+                    position, requested_amount, user_context, state
+                )
+
+            # Ask for amount or offer max withdrawal
+            state.data["awaiting_withdraw_amount"] = True
+            return await self._ask_withdraw_amount(position, user_context), state
+
+        # Multiple positions - show selection
+        state.data["positions"] = positions
+        state.data["awaiting_position_selection"] = True
+        return await self._show_position_selection(positions, user_context), state
+
+    async def _fetch_user_positions(
+        self,
+        wallet_address: str,
+        user_context: UserContext,
+    ) -> list[dict]:
+        """Fetch user's lending positions from Morpho and Aave."""
+        positions = []
+
+        # Fetch Morpho positions
+        try:
+            morpho_result = await self._call_tool(
+                "morpho_get_positions",
+                {"user_address": wallet_address, "chain": "base"},
+            )
+            if morpho_result and morpho_result.get("positions"):
+                for pos in morpho_result["positions"]:
+                    positions.append({
+                        "protocol": "morpho",
+                        "vault_address": pos.get("vault_address"),
+                        "vault_name": pos.get("vault_name", "Morpho Vault"),
+                        "asset": pos.get("asset", "UNKNOWN"),
+                        "supplied_amount": pos.get("supplied_amount", "0"),
+                        "supplied_usd": pos.get("supplied_usd", 0),
+                        "apy": pos.get("apy", 0),
+                        "chain": "base",
+                    })
+        except Exception as e:
+            logger.warning(f"[LendingWorkflow] Failed to fetch Morpho positions: {e}")
+
+        # Fetch Aave positions
+        try:
+            aave_result = await self._call_tool(
+                "aave_get_user_positions",
+                {"user_address": wallet_address, "chain": "base"},
+            )
+            if aave_result and aave_result.get("supplies"):
+                for supply in aave_result["supplies"]:
+                    positions.append({
+                        "protocol": "aave",
+                        "asset": supply.get("symbol", "UNKNOWN"),
+                        "supplied_amount": supply.get("balance", "0"),
+                        "supplied_usd": supply.get("balance_usd", 0),
+                        "apy": supply.get("supply_apy", 0),
+                        "chain": "base",
+                    })
+        except Exception as e:
+            logger.warning(f"[LendingWorkflow] Failed to fetch Aave positions: {e}")
+
+        return positions
+
+    async def _show_position_selection(
+        self,
+        positions: list[dict],
+        user_context: UserContext,
+    ) -> str:
+        """Show user their positions for selection."""
+        language = user_context.language
+
+        if language == "es":
+            header = "📊 **Tus Posiciones de Préstamo**\n\n"
+            footer = "\n\n💡 Responde con el número para seleccionar una posición."
+        elif language == "pt":
+            header = "📊 **Suas Posições de Empréstimo**\n\n"
+            footer = "\n\n💡 Responda com o número para selecionar uma posição."
+        else:
+            header = "📊 **Your Lending Positions**\n\n"
+            footer = "\n\n💡 Reply with the number to select a position."
+
+        lines = []
+        for i, pos in enumerate(positions, 1):
+            protocol = pos.get("protocol", "").upper()
+            asset = pos.get("asset", "UNKNOWN")
+            amount = pos.get("supplied_amount", "0")
+            usd_value = pos.get("supplied_usd", 0)
+            apy = pos.get("apy", 0)
+            vault_name = pos.get("vault_name", "")
+
+            if vault_name:
+                lines.append(
+                    f"**{i}.** {vault_name} ({protocol})\n"
+                    f"   • {amount} {asset} (~${usd_value:,.2f})\n"
+                    f"   • APY: {apy:.2f}%"
+                )
+            else:
+                lines.append(
+                    f"**{i}.** {asset} on {protocol}\n"
+                    f"   • {amount} {asset} (~${usd_value:,.2f})\n"
+                    f"   • APY: {apy:.2f}%"
+                )
+
+        return header + "\n\n".join(lines) + footer
+
+    async def _handle_position_selection(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """Handle user's position selection."""
+        text = message.value.strip()
+        positions = state.data.get("positions", [])
+
+        # Try to parse as number
+        try:
+            selection = int(text)
+            if 1 <= selection <= len(positions):
+                position = positions[selection - 1]
+                state.data["selected_position"] = position
+                state.data["awaiting_position_selection"] = False
+                state.data["awaiting_withdraw_amount"] = True
+                return await self._ask_withdraw_amount(position, user_context), state
+        except ValueError:
+            pass
+
+        # Try to match by asset symbol
+        text_upper = text.upper()
+        for pos in positions:
+            if pos.get("asset", "").upper() == text_upper:
+                state.data["selected_position"] = pos
+                state.data["awaiting_position_selection"] = False
+                state.data["awaiting_withdraw_amount"] = True
+                return await self._ask_withdraw_amount(pos, user_context), state
+
+        # Invalid selection
+        language = user_context.language
+        if language == "es":
+            return (
+                f"❓ No entendí tu selección. Por favor, responde con un número (1-{len(positions)}).",
+                state,
+            )
+        if language == "pt":
+            return (
+                f"❓ Não entendi sua seleção. Por favor, responda com um número (1-{len(positions)}).",
+                state,
+            )
+        return (
+            f"❓ I didn't understand your selection. Please reply with a number (1-{len(positions)}).",
+            state,
+        )
+
+    async def _ask_withdraw_amount(
+        self,
+        position: dict,
+        user_context: UserContext,
+    ) -> str:
+        """Ask user how much they want to withdraw."""
+        language = user_context.language
+        asset = position.get("asset", "")
+        amount = position.get("supplied_amount", "0")
+        usd_value = position.get("supplied_usd", 0)
+
+        if language == "es":
+            return (
+                f"💰 **Retiro de {asset}**\n\n"
+                f"Tienes **{amount} {asset}** (~${usd_value:,.2f}) disponible.\n\n"
+                f"¿Cuánto quieres retirar?\n"
+                f"• Escribe un monto (ej: `500`)\n"
+                f"• O escribe `max` para retirar todo"
+            )
+        if language == "pt":
+            return (
+                f"💰 **Retirada de {asset}**\n\n"
+                f"Você tem **{amount} {asset}** (~${usd_value:,.2f}) disponível.\n\n"
+                f"Quanto você quer retirar?\n"
+                f"• Digite um valor (ex: `500`)\n"
+                f"• Ou digite `max` para retirar tudo"
+            )
+        return (
+            f"💰 **{asset} Withdrawal**\n\n"
+            f"You have **{amount} {asset}** (~${usd_value:,.2f}) available.\n\n"
+            f"How much would you like to withdraw?\n"
+            f"• Enter an amount (e.g., `500`)\n"
+            f"• Or type `max` to withdraw everything"
+        )
+
+    async def _handle_withdraw_amount_input(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """Handle user's withdraw amount input."""
+        text = message.value.strip().lower()
+        position = state.data.get("selected_position", {})
+        supplied_amount = position.get("supplied_amount", "0")
+
+        # Parse amount
+        if text == "max" or text == "all" or text == "todo" or text == "tudo":
+            withdraw_amount = supplied_amount
+        else:
+            # Try to extract numeric amount
+            import re
+
+            amount_match = re.search(r"[\d,]+\.?\d*", text.replace(",", ""))
+            if amount_match:
+                withdraw_amount = amount_match.group()
+            else:
+                language = user_context.language
+                if language == "es":
+                    return (
+                        "❓ No pude entender el monto. Por favor, escribe un número o 'max'.",
+                        state,
+                    )
+                if language == "pt":
+                    return (
+                        "❓ Não consegui entender o valor. Por favor, digite um número ou 'max'.",
+                        state,
+                    )
+                return (
+                    "❓ I couldn't understand the amount. Please enter a number or 'max'.",
+                    state,
+                )
+
+        state.data["withdraw_amount"] = withdraw_amount
+        state.data["awaiting_withdraw_amount"] = False
+        state.step = WorkflowStep.CONFIRM.value
+
+        return await self._show_withdraw_confirmation(
+            position, withdraw_amount, user_context, state
+        )
+
+    async def _show_withdraw_confirmation(
+        self,
+        position: dict,
+        amount: str,
+        user_context: UserContext,
+        state: WorkflowState,
+    ) -> tuple[str, WorkflowState]:
+        """Show withdrawal confirmation to user."""
+        language = user_context.language
+        asset = position.get("asset", "")
+        protocol = position.get("protocol", "").upper()
+        vault_name = position.get("vault_name", "")
+        supplied_amount = position.get("supplied_amount", "0")
+        supplied_usd = position.get("supplied_usd", 0)
+
+        # Calculate USD value of withdrawal
+        try:
+            withdraw_ratio = (
+                float(amount) / float(supplied_amount)
+                if float(supplied_amount) > 0
+                else 0
+            )
+            withdraw_usd = supplied_usd * withdraw_ratio
+        except (ValueError, ZeroDivisionError):
+            withdraw_usd = supplied_usd  # Assume max if parsing fails
+
+        display_name = vault_name if vault_name else f"{asset} on {protocol}"
+
+        if language == "es":
+            response = (
+                f"📤 **Confirmar Retiro**\n\n"
+                f"**De:** {display_name}\n"
+                f"**Monto:** {amount} {asset} (~${withdraw_usd:,.2f})\n\n"
+                f"¿Confirmas este retiro?\n"
+                f"• Escribe **sí** o **confirmar** para continuar\n"
+                f"• Escribe **no** o **cancelar** para cancelar"
+            )
+        elif language == "pt":
+            response = (
+                f"📤 **Confirmar Retirada**\n\n"
+                f"**De:** {display_name}\n"
+                f"**Valor:** {amount} {asset} (~${withdraw_usd:,.2f})\n\n"
+                f"Você confirma esta retirada?\n"
+                f"• Digite **sim** ou **confirmar** para continuar\n"
+                f"• Digite **não** ou **cancelar** para cancelar"
+            )
+        else:
+            response = (
+                f"📤 **Confirm Withdrawal**\n\n"
+                f"**From:** {display_name}\n"
+                f"**Amount:** {amount} {asset} (~${withdraw_usd:,.2f})\n\n"
+                f"Do you confirm this withdrawal?\n"
+                f"• Type **yes** or **confirm** to proceed\n"
+                f"• Type **no** or **cancel** to cancel"
+            )
+
         return response, state
 
     async def _handle_asset_selection(
@@ -282,12 +702,11 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
                 state.data["chain"] = params.get("chain", "base")
                 state.step = WorkflowStep.FETCH_DATA.value
                 return await self._handle_fetch_data(message, state, user_context)
-            else:
-                # Have asset but no amount - ask for amount with user context
-                state.data["awaiting_amount"] = True
-                return await self._ask_for_amount(
-                    params["asset"].upper(), user_context
-                ), state
+            # Have asset but no amount - ask for amount with user context
+            state.data["awaiting_amount"] = True
+            return await self._ask_for_amount(
+                params["asset"].upper(), user_context
+            ), state
 
         # Check if it's a number selection
         user_input = text.upper()
@@ -304,7 +723,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
 
         # Check if it's a valid asset symbol
         if (
-            user_input in [a.upper() for a in SUPPORTED_ASSETS.keys()]
+            user_input in [a.upper() for a in SUPPORTED_ASSETS]
             or user_input in asset_list
         ):
             state.data["asset"] = user_input
@@ -473,7 +892,7 @@ Por favor digite um número válido para seu depósito de **{asset}**:
                 amount = "0"
                 state.data["amount"] = amount
                 logger.info(
-                    f"[LendingWorkflow] User has no balance for 'all' conversion"
+                    "[LendingWorkflow] User has no balance for 'all' conversion"
                 )
 
         logger.info(
@@ -532,11 +951,16 @@ Por favor digite um número válido para seu depósito de **{asset}**:
 
         language = user_context.language
         text = message.value.lower().strip()
+        action = state.data.get("action", "deposit")
 
         # Check for confirmation
         if self._is_confirmation(text):
             state.confirmed = True
             state.step = WorkflowStep.EXECUTE.value
+
+            # Route to appropriate execute handler based on action
+            if action == "withdraw":
+                return await self._handle_withdraw_execute(message, state, user_context)
             # Call _handle_execute directly to check balance before showing "Ready to Execute"
             return await self._handle_execute(message, state, user_context)
 
@@ -550,13 +974,30 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         modification = await self._parse_modification(text)
         if modification:
             if modification.get("amount"):
-                state.data["amount"] = modification["amount"]
+                if action == "withdraw":
+                    state.data["withdraw_amount"] = modification["amount"]
+                else:
+                    state.data["amount"] = modification["amount"]
             if modification.get("asset"):
                 state.data["asset"] = modification["asset"].upper()
 
             # Re-fetch with new parameters
-            state.step = WorkflowStep.FETCH_DATA.value
-            return await self._handle_fetch_data(message, state, user_context)
+            if action == "withdraw":
+                # For withdraw, go back to position selection or amount input
+                position = state.data.get("selected_position")
+                if position:
+                    state.step = WorkflowStep.CONFIRM.value
+                    return await self._show_withdraw_confirmation(
+                        position,
+                        modification.get(
+                            "amount", state.data.get("withdraw_amount", "max")
+                        ),
+                        user_context,
+                        state,
+                    )
+            else:
+                state.step = WorkflowStep.FETCH_DATA.value
+                return await self._handle_fetch_data(message, state, user_context)
 
         # Unclear response - ask again
         return self._ask_for_confirmation(language), state
@@ -682,14 +1123,13 @@ Por favor digite um número válido para seu depósito de **{asset}**:
                     message, state, user_context
                 )
                 return f"{response}\n\n{new_quote_response}", state
-            else:
-                # User has no usable balance - show buy crypto message
-                response = self._get_zero_balance_message(
-                    asset=asset,
-                    language=language,
-                )
-                state.error = "insufficient_balance"
-                return response, state
+            # User has no usable balance - show buy crypto message
+            response = self._get_zero_balance_message(
+                asset=asset,
+                language=language,
+            )
+            state.error = "insufficient_balance"
+            return response, state
 
         # Build execute_data with all numeric fields as strings (for Pydantic validation)
         apy = vault_data.get("apy", 0)
@@ -722,6 +1162,202 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         # Format ready-to-execute response
         response = self._format_ready_to_execute(state.data, language)
         return response, state
+
+    async def _handle_withdraw_execute(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """Handle withdraw execute step - build transaction for frontend.
+
+        Uses morpho_withdraw MCP tool to build the withdrawal transaction.
+        Frontend will handle the actual transaction signing and submission.
+        """
+        language = user_context.language
+        position = state.data.get("selected_position", {})
+        withdraw_amount = state.data.get("withdraw_amount", "max")
+        wallet_address = user_context.wallet_address
+
+        if not wallet_address:
+            if language == "es":
+                return "❌ Wallet no conectada. Por favor, conecta tu wallet.", state
+            if language == "pt":
+                return (
+                    "❌ Carteira não conectada. Por favor, conecte sua carteira.",
+                    state,
+                )
+            return "❌ Wallet not connected. Please connect your wallet.", state
+
+        protocol = position.get("protocol", "morpho")
+        asset = position.get("asset", "UNKNOWN")
+        chain = position.get("chain", "base")
+        vault_address = position.get("vault_address")
+        vault_name = position.get("vault_name", f"{asset} Vault")
+
+        # Build withdrawal transaction based on protocol
+        if protocol == "morpho":
+            if not vault_address:
+                logger.error(
+                    "[LendingWorkflow] Missing vault_address for Morpho withdraw"
+                )
+                if language == "es":
+                    return "❌ Error: Falta la dirección del vault.", state
+                if language == "pt":
+                    return "❌ Erro: Endereço do vault ausente.", state
+                return "❌ Error: Missing vault address.", state
+
+            # Call morpho_withdraw MCP tool
+            try:
+                withdraw_result = await self._call_tool(
+                    "morpho_withdraw",
+                    {
+                        "user_address": wallet_address,
+                        "vault_address": vault_address,
+                        "amount": str(withdraw_amount),
+                        "chain": chain,
+                    },
+                )
+
+                if not withdraw_result or withdraw_result.get("error"):
+                    error_msg = (
+                        withdraw_result.get("error", "Unknown error")
+                        if withdraw_result
+                        else "No response"
+                    )
+                    logger.error(
+                        f"[LendingWorkflow] morpho_withdraw failed: {error_msg}"
+                    )
+                    if language == "es":
+                        return f"❌ Error al preparar el retiro: {error_msg}", state
+                    if language == "pt":
+                        return f"❌ Erro ao preparar a retirada: {error_msg}", state
+                    return f"❌ Error preparing withdrawal: {error_msg}", state
+
+                # Build execute_data for frontend
+                execute_data = self._build_execute_data(
+                    action_type="withdraw",
+                    provider="morpho",
+                    chain=chain,
+                    amount=str(withdraw_amount),
+                    asset_symbol=asset,
+                    asset_address=position.get("asset_address"),
+                    vault_address=vault_address,
+                    # Transaction data from MCP tool
+                    tx_to=withdraw_result.get("to"),
+                    tx_data=withdraw_result.get("data"),
+                    tx_value=withdraw_result.get("value", "0"),
+                )
+
+            except Exception as e:
+                logger.error(f"[LendingWorkflow] Error calling morpho_withdraw: {e}")
+                if language == "es":
+                    return f"❌ Error al preparar el retiro: {e!s}", state
+                if language == "pt":
+                    return f"❌ Erro ao preparar a retirada: {e!s}", state
+                return f"❌ Error preparing withdrawal: {e!s}", state
+
+        elif protocol == "aave":
+            # Call aave_withdraw_supply MCP tool
+            try:
+                withdraw_result = await self._call_tool(
+                    "aave_withdraw_supply",
+                    {
+                        "user_address": wallet_address,
+                        "asset_symbol": asset,
+                        "amount": str(withdraw_amount),
+                        "chain": chain,
+                    },
+                )
+
+                if not withdraw_result or withdraw_result.get("error"):
+                    error_msg = (
+                        withdraw_result.get("error", "Unknown error")
+                        if withdraw_result
+                        else "No response"
+                    )
+                    logger.error(
+                        f"[LendingWorkflow] aave_withdraw_supply failed: {error_msg}"
+                    )
+                    if language == "es":
+                        return f"❌ Error al preparar el retiro: {error_msg}", state
+                    if language == "pt":
+                        return f"❌ Erro ao preparar a retirada: {error_msg}", state
+                    return f"❌ Error preparing withdrawal: {error_msg}", state
+
+                # Build execute_data for frontend
+                execute_data = self._build_execute_data(
+                    action_type="withdraw",
+                    provider="aave",
+                    chain=chain,
+                    amount=str(withdraw_amount),
+                    asset_symbol=asset,
+                    asset_address=withdraw_result.get("asset_address"),
+                    pool_address=withdraw_result.get("to"),
+                    tx_to=withdraw_result.get("to"),
+                    tx_data=withdraw_result.get("data"),
+                    tx_value=withdraw_result.get("value", "0"),
+                )
+
+            except Exception as e:
+                logger.error(
+                    f"[LendingWorkflow] Error calling aave_withdraw_supply: {e}"
+                )
+                if language == "es":
+                    return f"❌ Error al preparar el retiro: {e!s}", state
+                if language == "pt":
+                    return f"❌ Erro ao preparar a retirada: {e!s}", state
+                return f"❌ Error preparing withdrawal: {e!s}", state
+        elif language == "es":
+            return f"❌ Protocolo no soportado: {protocol}", state
+        elif language == "pt":
+            return f"❌ Protocolo não suportado: {protocol}", state
+        else:
+            return f"❌ Unsupported protocol: {protocol}", state
+
+        # Store execute_data in state
+        state.execute_data = execute_data
+        state.step = WorkflowStep.COMPLETED.value
+
+        # Format ready-to-execute response for withdrawal
+        response = self._format_withdraw_ready_to_execute(
+            asset=asset,
+            amount=withdraw_amount,
+            vault_name=vault_name,
+            protocol=protocol,
+            language=language,
+        )
+        return response, state
+
+    def _format_withdraw_ready_to_execute(
+        self,
+        asset: str,
+        amount: str,
+        vault_name: str,
+        protocol: str,
+        language: str,
+    ) -> str:
+        """Format the ready-to-execute message for withdrawal."""
+        if language == "es":
+            return (
+                f"✅ **¡Listo para retirar!**\n\n"
+                f"📤 **Retirando:** {amount} {asset}\n"
+                f"🏦 **De:** {vault_name} ({protocol.upper()})\n\n"
+                f"Por favor, confirma la transacción en tu wallet."
+            )
+        if language == "pt":
+            return (
+                f"✅ **Pronto para retirar!**\n\n"
+                f"📤 **Retirando:** {amount} {asset}\n"
+                f"🏦 **De:** {vault_name} ({protocol.upper()})\n\n"
+                f"Por favor, confirme a transação na sua carteira."
+            )
+        return (
+            f"✅ **Ready to withdraw!**\n\n"
+            f"📤 **Withdrawing:** {amount} {asset}\n"
+            f"🏦 **From:** {vault_name} ({protocol.upper()})\n\n"
+            f"Please confirm the transaction in your wallet."
+        )
 
     def _get_funding_recommendation(self, asset: str, language: str) -> str:
         """
@@ -851,7 +1487,7 @@ Você não tem {asset} suficiente na sua carteira.
             lookup_asset = asset.upper()
             if lookup_asset == "ETH":
                 lookup_asset = "WETH"
-                logger.info(f"[LendingWorkflow] Mapped ETH → WETH for vault lookup")
+                logger.info("[LendingWorkflow] Mapped ETH → WETH for vault lookup")
 
             vaults = await self._morpho.get_vaults(asset=lookup_asset, chain=chain)
 
@@ -1249,7 +1885,7 @@ juros para você 24/7. Sem bloqueios - retire quando quiser.""",
                 "zh": f"📈 **推荐：** {best_asset} ({best_apy:.2f}% APY)\n💵 潜在月收益：~${monthly_earnings:.2f}",
             }
             return msgs.get(language, msgs["en"])
-        elif best_apy > 5:
+        if best_apy > 5:
             msgs = {
                 "en": f"📈 **Top Yield:** {best_asset} at {best_apy:.2f}% APY",
                 "es": f"📈 **Mayor Rendimiento:** {best_asset} al {best_apy:.2f}% APY",
@@ -1471,10 +2107,10 @@ Quanto **{asset}** você gostaria de depositar?
         if user_balance_usd < 1:
             # Very low balance - just show "all" option
             msgs = {
-                "en": f"💡 *Tip:* Even small deposits earn yield! Say `all` to deposit your entire balance.",
-                "es": f"💡 *Consejo:* ¡Incluso pequeños depósitos generan rendimiento! Di `all` para depositar todo tu saldo.",
-                "pt": f"💡 *Dica:* Mesmo pequenos depósitos geram rendimento! Diga `all` para depositar todo seu saldo.",
-                "zh": f"💡 *提示：* 即使小额存款也能赚取收益！说 `all` 存入您的全部余额。",
+                "en": "💡 *Tip:* Even small deposits earn yield! Say `all` to deposit your entire balance.",
+                "es": "💡 *Consejo:* ¡Incluso pequeños depósitos generan rendimiento! Di `all` para depositar todo tu saldo.",
+                "pt": "💡 *Dica:* Mesmo pequenos depósitos geram rendimento! Diga `all` para depositar todo seu saldo.",
+                "zh": "💡 *提示：* 即使小额存款也能赚取收益！说 `all` 存入您的全部余额。",
             }
         elif user_balance_usd < 10:
             # Small balance - show realistic small amounts
@@ -1507,56 +2143,55 @@ Quanto **{asset}** você gostaria de depositar?
 • `{example2}` (~90% 的余额)
 • `all` (存入全部 {asset} 余额)""",
             }
-        else:
-            # Reasonable balance - show meaningful amounts
-            if asset.upper() in ("USDC", "USDT", "DAI"):
-                # Stablecoins - show round numbers
-                example1 = min(10, user_balance_usd * 0.3)
-                example2 = min(50, user_balance_usd * 0.5)
-                example3 = user_balance_usd * 0.9
+        # Reasonable balance - show meaningful amounts
+        elif asset.upper() in ("USDC", "USDT", "DAI"):
+            # Stablecoins - show round numbers
+            example1 = min(10, user_balance_usd * 0.3)
+            example2 = min(50, user_balance_usd * 0.5)
+            example3 = user_balance_usd * 0.9
 
-                msgs = {
-                    "en": f"""💡 *Examples:*
+            msgs = {
+                "en": f"""💡 *Examples:*
 • `{example1:.0f}` (~${example1:.0f})
 • `{example2:.0f}` (~${example2:.0f})
 • `all` (deposit ~${example3:.0f} {asset})""",
-                    "es": f"""💡 *Ejemplos:*
+                "es": f"""💡 *Ejemplos:*
 • `{example1:.0f}` (~${example1:.0f})
 • `{example2:.0f}` (~${example2:.0f})
 • `all` (depositar ~${example3:.0f} {asset})""",
-                    "pt": f"""💡 *Exemplos:*
+                "pt": f"""💡 *Exemplos:*
 • `{example1:.0f}` (~${example1:.0f})
 • `{example2:.0f}` (~${example2:.0f})
 • `all` (depositar ~${example3:.0f} {asset})""",
-                    "zh": f"""💡 *示例：*
+                "zh": f"""💡 *示例：*
 • `{example1:.0f}` (~${example1:.0f})
 • `{example2:.0f}` (~${example2:.0f})
 • `all` (存入 ~${example3:.0f} {asset})""",
-                }
-            else:
-                # Crypto tokens - calculate token amounts
-                example1 = self._format_token_amount(max_token_amount * 0.3)
-                example2 = self._format_token_amount(max_token_amount * 0.5)
-                example3 = self._format_token_amount(max_token_amount * 0.9)
+            }
+        else:
+            # Crypto tokens - calculate token amounts
+            example1 = self._format_token_amount(max_token_amount * 0.3)
+            example2 = self._format_token_amount(max_token_amount * 0.5)
+            example3 = self._format_token_amount(max_token_amount * 0.9)
 
-                msgs = {
-                    "en": f"""💡 *Examples based on your balance:*
+            msgs = {
+                "en": f"""💡 *Examples based on your balance:*
 • `{example1}` (~30% of your balance)
 • `{example2}` (~50% of your balance)
 • `all` (deposit ~{example3} {asset})""",
-                    "es": f"""💡 *Ejemplos basados en tu saldo:*
+                "es": f"""💡 *Ejemplos basados en tu saldo:*
 • `{example1}` (~30% de tu saldo)
 • `{example2}` (~50% de tu saldo)
 • `all` (depositar ~{example3} {asset})""",
-                    "pt": f"""💡 *Exemplos baseados no seu saldo:*
+                "pt": f"""💡 *Exemplos baseados no seu saldo:*
 • `{example1}` (~30% do seu saldo)
 • `{example2}` (~50% do seu saldo)
 • `all` (depositar ~{example3} {asset})""",
-                    "zh": f"""💡 *基于您余额的示例：*
+                "zh": f"""💡 *基于您余额的示例：*
 • `{example1}` (~30% 的余额)
 • `{example2}` (~50% 的余额)
 • `all` (存入 ~{example3} {asset})""",
-                }
+            }
 
         return msgs.get(language, msgs["en"])
 
@@ -1564,16 +2199,15 @@ Quanto **{asset}** você gostaria de depositar?
         """Format token amount for display, avoiding scientific notation."""
         if amount == 0:
             return "0"
-        elif amount < 0.0001:
+        if amount < 0.0001:
             return f"{amount:.8f}".rstrip("0").rstrip(".")
-        elif amount < 0.01:
+        if amount < 0.01:
             return f"{amount:.6f}".rstrip("0").rstrip(".")
-        elif amount < 1:
+        if amount < 1:
             return f"{amount:.4f}".rstrip("0").rstrip(".")
-        elif amount < 100:
+        if amount < 100:
             return f"{amount:.2f}".rstrip("0").rstrip(".")
-        else:
-            return f"{amount:.0f}"
+        return f"{amount:.0f}"
 
     def _build_amount_balance_section(
         self,
@@ -1976,10 +2610,10 @@ Por favor confirme a transação na sua carteira.""",
         # Compare USD balance against USD value of deposit
         if portfolio_state == "empty" or balance < 1:
             msgs = {
-                "en": f"💰 **Your Balance:** $0.00\n\n⚠️ You don't have funds to complete this deposit.\n💡 Say `buy crypto` to get USDC first.",
-                "es": f"💰 **Tu Saldo:** $0.00\n\n⚠️ No tienes fondos para completar este depósito.\n💡 Di `comprar cripto` para obtener USDC primero.",
-                "pt": f"💰 **Seu Saldo:** $0.00\n\n⚠️ Você não tem fundos para completar este depósito.\n💡 Diga `comprar cripto` para obter USDC primeiro.",
-                "zh": f"💰 **您的余额：** $0.00\n\n⚠️ 您没有资金完成此存款。\n💡 先说 `买加密货币` 获取 USDC。",
+                "en": "💰 **Your Balance:** $0.00\n\n⚠️ You don't have funds to complete this deposit.\n💡 Say `buy crypto` to get USDC first.",
+                "es": "💰 **Tu Saldo:** $0.00\n\n⚠️ No tienes fondos para completar este depósito.\n💡 Di `comprar cripto` para obtener USDC primero.",
+                "pt": "💰 **Seu Saldo:** $0.00\n\n⚠️ Você não tem fundos para completar este depósito.\n💡 Diga `comprar cripto` para obter USDC primeiro.",
+                "zh": "💰 **您的余额：** $0.00\n\n⚠️ 您没有资金完成此存款。\n💡 先说 `买加密货币` 获取 USDC。",
             }
         elif balance < deposit_value_usd:
             # User doesn't have enough - show warning with USD values

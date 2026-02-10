@@ -340,7 +340,11 @@ class BaseWorkflowAgent(AgentGateway, ABC):
                 for word in ["to", "swap", "send", "buy", "deposit", "lend"]
             )
         )
-        if message_lower in skip_keywords or len(message_lower) < 3 or is_short_selection:
+        if (
+            message_lower in skip_keywords
+            or len(message_lower) < 3
+            or is_short_selection
+        ):
             return False, None
 
         # Check if message matches a DIFFERENT workflow
@@ -927,6 +931,10 @@ Return JSON with extracted parameters. Use null for missing values.
             "to_token_price_usd",
             "from_token_24h_change",
             "value_usd",
+            # Transaction data for withdraw/direct execution
+            "tx_to",
+            "tx_data",
+            "tx_value",
         ]
 
         for field in optional_fields:
