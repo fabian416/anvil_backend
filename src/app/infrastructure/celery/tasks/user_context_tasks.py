@@ -141,16 +141,28 @@ def update_user_context():
             logger.info("📝 Step 1: Creating missing user contexts...")
 
             # Use reflected tables to get actual DB schema (mapping may be outdated)
+            # NOTE: Table reflection with async sessions requires run_sync
             from sqlalchemy import MetaData, Table
 
             metadata = MetaData()
+            chat_users_table = None
+            context_table = None
+
             try:
-                chat_users_table = Table(
-                    "chat_users", metadata, autoload_with=session.get_bind()
-                )
-                context_table = Table(
-                    "user_context_aware", metadata, autoload_with=session.get_bind()
-                )
+                # Get the underlying sync connection for table reflection
+                conn = await session.connection()
+
+                def reflect_tables(sync_conn):
+                    """Reflect tables using sync connection."""
+                    nonlocal chat_users_table, context_table
+                    chat_users_table = Table(
+                        "chat_users", metadata, autoload_with=sync_conn
+                    )
+                    context_table = Table(
+                        "user_context_aware", metadata, autoload_with=sync_conn
+                    )
+
+                await conn.run_sync(reflect_tables)
             except Exception as e:
                 logger.warning(f"  Could not reflect tables: {e}")
                 chat_users_table = None
