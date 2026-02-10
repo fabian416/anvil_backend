@@ -436,11 +436,23 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         asset = (state.data.get("asset") or "USDC").upper()
         amount = state.data.get("amount") or "0"
 
+        # Parse amount for balance check
+        try:
+            amount_float = float(str(amount).replace(",", "").replace("$", ""))
+        except (ValueError, TypeError):
+            amount_float = 0.0
+
         # Check user balance before allowing execution
-        if user_context.needs_funding_recommendation:
+        # Use amount-based check if amount is specified, otherwise use general check
+        has_insufficient = (
+            user_context.has_insufficient_funds_for_amount(amount_float)
+            if amount_float > 0
+            else user_context.has_insufficient_funds
+        )
+
+        if has_insufficient and user_context.is_authenticated:
             logger.info(
-                f"[MoneyMarketWorkflow] Insufficient funds - showing funding recommendation: "
-                f"portfolio_state={user_context.portfolio_state}, "
+                f"[MoneyMarketWorkflow] Insufficient funds for ${amount_float:.2f} - "
                 f"balance=${user_context.total_balance_usd:.2f}"
             )
 

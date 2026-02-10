@@ -16,6 +16,10 @@
         "/home/ubuntu/anvil_backend"
       ]
     },
+    "recallium": {
+    	"url": "http://18.130.251.7:8001/mcp",
+        "transport": "http"
+    },
     "mcp-mermaid": {
       "command": "npx",
       "args": [

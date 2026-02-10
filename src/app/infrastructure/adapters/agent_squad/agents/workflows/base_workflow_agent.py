@@ -124,17 +124,21 @@ class UserContext:
     total_balance_usd: float = 0.0
     has_connected_wallet: bool = False
 
+    def has_insufficient_funds_for_amount(self, amount: float) -> bool:
+        """Check if user has insufficient funds for a specific amount."""
+        # Add small buffer (5%) for gas/fees
+        required = amount * 1.05
+        return self.total_balance_usd < required
+
     @property
     def has_insufficient_funds(self) -> bool:
-        """Check if user likely has insufficient funds for operations."""
-        return (
-            self.portfolio_state in ("empty", "starter")
-            or self.total_balance_usd < 10.0
-        )
+        """Check if user likely has insufficient funds (empty portfolio)."""
+        # Only flag as insufficient if truly empty or near-zero
+        return self.portfolio_state == "empty" or self.total_balance_usd < 1.0
 
     @property
     def needs_funding_recommendation(self) -> bool:
-        """Check if we should recommend buying crypto."""
+        """Check if we should recommend buying crypto (empty portfolio)."""
         return self.has_insufficient_funds and self.is_authenticated
 
 
