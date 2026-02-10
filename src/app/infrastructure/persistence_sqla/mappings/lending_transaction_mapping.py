@@ -37,6 +37,8 @@ def map_lending_transactions_table() -> None:
                 "protocol",
                 "action_type",
             ),
+            sa.Index("idx_lending_transactions_wallet", "wallet_address"),
+            sa.Index("idx_lending_transactions_market_id", "market_id"),
             {"extend_existing": True},
         )
 
@@ -97,3 +99,6 @@ def map_lending_transactions_table() -> None:
             server_default=sa.text("CURRENT_TIMESTAMP"),
         )
         confirmed_at = mapped_column(DateTime(timezone=True), nullable=True)
+        # Added for Morpho Blue withdraw support
+        wallet_address = mapped_column(String(42), nullable=True)
+        market_id = mapped_column(String(66), nullable=True)
