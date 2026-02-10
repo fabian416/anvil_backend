@@ -177,6 +177,17 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
                 "sacar",
                 "i want to withdraw",
                 "quiero retirar",
+                # Position viewing (triggers withdraw flow)
+                "my lendings",
+                "my lending",
+                "my deposits",
+                "my deposit",
+                "mis préstamos",
+                "mis depositos",
+                "meus empréstimos",
+                "meus depósitos",
+                "my positions",
+                "lending positions",
             ]
             is_restart_request = any(
                 text_lower.startswith(kw) or f" {kw}" in f" {text_lower}"
@@ -224,7 +235,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
 
         text = message.value.lower().strip()
 
-        # Detect if this is a withdraw request
+        # Detect if this is a withdraw request or position view
         withdraw_keywords = [
             "withdraw",
             "remove",
@@ -233,6 +244,21 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             "sacar",
             "提款",
             "取出",
+            # Position viewing patterns (trigger withdraw flow to show positions)
+            "my lendings",
+            "my lending",
+            "my deposits",
+            "my deposit",
+            "mis préstamos",
+            "mis depositos",
+            "meus empréstimos",
+            "meus depósitos",
+            "我的贷款",
+            "我的存款",
+            "my positions",
+            "lending positions",
+            "show my supply",
+            "show my lending",
         ]
         is_withdraw = any(kw in text for kw in withdraw_keywords)
 
