@@ -307,6 +307,7 @@ class BaseWorkflowAgent(AgentGateway, ABC):
         }
 
         # Don't detect different workflow for confirmation/cancellation messages
+        # or single-word protocol selections (aave, compound, morpho, etc.)
         skip_keywords = [
             "yes",
             "no",
@@ -320,8 +321,22 @@ class BaseWorkflowAgent(AgentGateway, ABC):
             "não",
             "cancelar",
             "confirmar",
+            # Protocol names (for selection, not redirect)
+            "aave",
+            "compound",
+            "morpho",
         ]
-        if message_lower in skip_keywords or len(message_lower) < 3:
+        # Skip if message is a skip keyword OR is very short (likely a selection response)
+        # Single words under 10 chars without "to" or action verbs are likely selections
+        is_short_selection = (
+            len(message_lower) < 10
+            and " " not in message_lower
+            and not any(
+                word in message_lower
+                for word in ["to", "swap", "send", "buy", "deposit", "lend"]
+            )
+        )
+        if message_lower in skip_keywords or len(message_lower) < 3 or is_short_selection:
             return False, None
 
         # Check if message matches a DIFFERENT workflow
