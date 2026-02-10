@@ -815,10 +815,12 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                         # Workflow is awaiting parameters if:
                         # 1. In parse_request step with some data (awaiting more input)
                         # 2. In fetch_data step (just fetched data, might need confirmation)
-                        # 3. Content asks for input (amount, selection, etc.)
+                        # 3. In confirm step (awaiting user confirmation/selection)
+                        # 4. Content asks for input (amount, selection, etc.)
                         is_awaiting = (
                             (step == "parse_request" and data)
                             or step == "fetch_data"
+                            or step == "confirm"
                             or any(
                                 phrase in content
                                 for phrase in [
@@ -829,6 +831,8 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                                     "enter",
                                     "💬",
                                     "examples:",
+                                    "reply",  # "Reply aave, compound, or morpho"
+                                    "respond",  # Spanish/Portuguese
                                 ]
                             )
                         )
