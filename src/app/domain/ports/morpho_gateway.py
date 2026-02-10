@@ -127,3 +127,25 @@ class MorphoGateway(Protocol):
         Alias for get_user_positions for API clarity.
         """
         ...
+
+    async def build_withdraw_transaction(
+        self,
+        user_address: str,
+        vault_address: str,
+        amount: str,
+        chain: str = "base",
+    ) -> dict:
+        """
+        Build MetaMorpho vault withdraw transaction for frontend signing.
+
+        Args:
+            user_address: Wallet address
+            vault_address: MetaMorpho vault contract address
+            amount: Human amount (e.g. "7.5") or "max"
+            chain: Chain name (e.g. "base")
+
+        Returns:
+            Dict with success, error (if failed), and on success: to, data, value,
+            amount, asset, vault_name, etc. for execute_data.
+        """
+        ...

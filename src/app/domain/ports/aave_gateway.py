@@ -82,6 +82,22 @@ class AaveGateway(Protocol):
         """
         ...
 
+    async def build_withdraw_supply_transaction(
+        self,
+        user_address: str,
+        asset_symbol: str,
+        amount: str,
+        chain: str = "base",
+    ) -> dict:
+        """
+        Build Aave V3 withdraw supply transaction for frontend signing.
+
+        Returns:
+            Dict with success, error (if failed), and on success: to, data, value,
+            asset_address, etc. for execute_data.
+        """
+        ...
+
     async def get_health_factor(
         self,
         address: str,

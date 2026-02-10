@@ -200,6 +200,14 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
                 state.step = WorkflowStep.PARSE_REQUEST.value
                 return await self._handle_parse_request(message, state, user_context)
 
+        # Withdraw sub-steps: when we're awaiting position selection or amount,
+        # route to withdraw handler so "1", "2", "max", etc. are handled correctly
+        # (state is restored from conversation history; without this, "1" would go to parse_request and start deposit)
+        if state.data.get("awaiting_position_selection") or state.data.get(
+            "awaiting_withdraw_amount"
+        ):
+            return await self._handle_withdraw_request(message, state, user_context)
+
         # Step 1: Parse request
         if step == WorkflowStep.PARSE_REQUEST.value:
             return await self._handle_parse_request(message, state, user_context)
@@ -436,13 +444,19 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
                     chain=chain,
                 )
                 for p in morpho_positions:
+                    # p.assets is human-readable (adapter applies decimals); use API USD when present
+                    supplied_usd = (
+                        p.assets_usd
+                        if getattr(p, "assets_usd", None) is not None
+                        else float(p.assets)
+                    )
                     positions.append({
                         "protocol": "morpho",
                         "vault_address": p.vault_address,
                         "vault_name": p.vault_name,
                         "asset": p.asset_symbol,
                         "supplied_amount": str(p.assets),
-                        "supplied_usd": float(p.assets),  # Stablecoin vaults: assets ≈ USD
+                        "supplied_usd": float(supplied_usd),
                         "apy": float(p.apy),
                         "chain": chain,
                     })
@@ -530,7 +544,21 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
     ) -> tuple[str, WorkflowState]:
         """Handle user's position selection."""
         text = message.value.strip()
+        text_lower = text.lower()
         positions = state.data.get("positions", [])
+
+        # If user said "withdraw lending", "withdraw", "my lendings" etc., re-show the list
+        withdraw_phrases = [
+            "withdraw",
+            "my lendings",
+            "my lending",
+            "my deposits",
+            "retirar",
+            "mis préstamos",
+            "meus empréstimos",
+        ]
+        if any(phrase in text_lower for phrase in withdraw_phrases):
+            return (await self._show_position_selection(positions, user_context)), state
 
         # Try to parse as number
         try:
@@ -1244,26 +1272,21 @@ Por favor digite um número válido para seu depósito de **{asset}**:
                     return "❌ Erro: Endereço do vault ausente.", state
                 return "❌ Error: Missing vault address.", state
 
-            # Call morpho_withdraw MCP tool
+            # Build Morpho withdraw tx via gateway (no MCP _call_tool)
             try:
-                withdraw_result = await self._call_tool(
-                    "morpho_withdraw",
-                    {
-                        "user_address": wallet_address,
-                        "vault_address": vault_address,
-                        "amount": str(withdraw_amount),
-                        "chain": chain,
-                    },
+                withdraw_result = await self._morpho.build_withdraw_transaction(
+                    user_address=wallet_address,
+                    vault_address=vault_address,
+                    amount=str(withdraw_amount),
+                    chain=chain,
                 )
 
-                if not withdraw_result or withdraw_result.get("error"):
-                    error_msg = (
-                        withdraw_result.get("error", "Unknown error")
-                        if withdraw_result
-                        else "No response"
+                if not withdraw_result.get("success") or withdraw_result.get("error"):
+                    error_msg = withdraw_result.get(
+                        "error", "Unknown error"
                     )
                     logger.error(
-                        f"[LendingWorkflow] morpho_withdraw failed: {error_msg}"
+                        f"[LendingWorkflow] morpho build_withdraw failed: {error_msg}"
                     )
                     if language == "es":
                         return f"❌ Error al preparar el retiro: {error_msg}", state
@@ -1271,23 +1294,23 @@ Por favor digite um número válido para seu depósito de **{asset}**:
                         return f"❌ Erro ao preparar a retirada: {error_msg}", state
                     return f"❌ Error preparing withdrawal: {error_msg}", state
 
-                # Build execute_data for frontend
                 execute_data = self._build_execute_data(
                     action_type="withdraw",
                     provider="morpho",
                     chain=chain,
-                    amount=str(withdraw_amount),
-                    asset_symbol=asset,
+                    amount=withdraw_result.get("amount", str(withdraw_amount)),
+                    asset_symbol=withdraw_result.get("asset", asset),
                     asset_address=position.get("asset_address"),
                     vault_address=vault_address,
-                    # Transaction data from MCP tool
                     tx_to=withdraw_result.get("to"),
                     tx_data=withdraw_result.get("data"),
                     tx_value=withdraw_result.get("value", "0"),
                 )
 
             except Exception as e:
-                logger.error(f"[LendingWorkflow] Error calling morpho_withdraw: {e}")
+                logger.error(
+                    f"[LendingWorkflow] Error building Morpho withdraw: {e}"
+                )
                 if language == "es":
                     return f"❌ Error al preparar el retiro: {e!s}", state
                 if language == "pt":
@@ -1295,26 +1318,21 @@ Por favor digite um número válido para seu depósito de **{asset}**:
                 return f"❌ Error preparing withdrawal: {e!s}", state
 
         elif protocol == "aave":
-            # Call aave_withdraw_supply MCP tool
+            # Build Aave withdraw tx via gateway (no MCP _call_tool)
             try:
-                withdraw_result = await self._call_tool(
-                    "aave_withdraw_supply",
-                    {
-                        "user_address": wallet_address,
-                        "asset_symbol": asset,
-                        "amount": str(withdraw_amount),
-                        "chain": chain,
-                    },
+                withdraw_result = await self._aave.build_withdraw_supply_transaction(
+                    user_address=wallet_address,
+                    asset_symbol=asset,
+                    amount=str(withdraw_amount),
+                    chain=chain,
                 )
 
-                if not withdraw_result or withdraw_result.get("error"):
-                    error_msg = (
-                        withdraw_result.get("error", "Unknown error")
-                        if withdraw_result
-                        else "No response"
+                if not withdraw_result.get("success") or withdraw_result.get("error"):
+                    error_msg = withdraw_result.get(
+                        "error", "Unknown error"
                     )
                     logger.error(
-                        f"[LendingWorkflow] aave_withdraw_supply failed: {error_msg}"
+                        f"[LendingWorkflow] Aave build_withdraw_supply failed: {error_msg}"
                     )
                     if language == "es":
                         return f"❌ Error al preparar el retiro: {error_msg}", state
@@ -1322,13 +1340,12 @@ Por favor digite um número válido para seu depósito de **{asset}**:
                         return f"❌ Erro ao preparar a retirada: {error_msg}", state
                     return f"❌ Error preparing withdrawal: {error_msg}", state
 
-                # Build execute_data for frontend
                 execute_data = self._build_execute_data(
                     action_type="withdraw",
                     provider="aave",
                     chain=chain,
-                    amount=str(withdraw_amount),
-                    asset_symbol=asset,
+                    amount=withdraw_result.get("amount", str(withdraw_amount)),
+                    asset_symbol=withdraw_result.get("asset", asset),
                     asset_address=withdraw_result.get("asset_address"),
                     pool_address=withdraw_result.get("to"),
                     tx_to=withdraw_result.get("to"),
@@ -1338,7 +1355,7 @@ Por favor digite um número válido para seu depósito de **{asset}**:
 
             except Exception as e:
                 logger.error(
-                    f"[LendingWorkflow] Error calling aave_withdraw_supply: {e}"
+                    f"[LendingWorkflow] Error building Aave withdraw: {e}"
                 )
                 if language == "es":
                     return f"❌ Error al preparar el retiro: {e!s}", state

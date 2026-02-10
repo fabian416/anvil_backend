@@ -296,6 +296,92 @@ class MorphoAdapter(MorphoGateway):
         """Alias for get_user_positions."""
         return await self.get_user_positions(address, chain)
 
+    async def build_withdraw_transaction(
+        self,
+        user_address: str,
+        vault_address: str,
+        amount: str,
+        chain: str = "base",
+    ) -> dict:
+        """Build MetaMorpho vault withdraw transaction for frontend signing."""
+        try:
+            positions = await self.get_user_positions(
+                address=user_address,
+                chain=chain,
+            )
+            position = None
+            for p in positions:
+                if p.vault_address.lower() == vault_address.lower():
+                    position = p
+                    break
+            if not position:
+                return {
+                    "success": False,
+                    "error": f"No position found in vault {vault_address}",
+                    "chain": chain,
+                }
+            if position.shares <= 0:
+                return {
+                    "success": False,
+                    "error": "No supply to withdraw",
+                    "chain": chain,
+                }
+            if amount.lower() == "max":
+                withdraw_shares = int(position.shares)
+                withdraw_amount = position.assets
+            else:
+                withdraw_amount = Decimal(amount)
+                if withdraw_amount > position.assets:
+                    return {
+                        "success": False,
+                        "error": (
+                            f"Insufficient balance. You have {position.assets:.6f} "
+                            f"{position.asset_symbol}"
+                        ),
+                        "chain": chain,
+                    }
+                if position.assets > 0:
+                    share_ratio = float(withdraw_amount / position.assets)
+                    withdraw_shares = int(float(position.shares) * share_ratio)
+                else:
+                    withdraw_shares = 0
+            tx_data = self._build_metamorpho_withdraw_calldata(
+                vault_address=vault_address,
+                shares=withdraw_shares,
+                user_address=user_address,
+            )
+            return {
+                "success": True,
+                "to": tx_data["to"],
+                "data": tx_data["data"],
+                "value": tx_data["value"],
+                "amount": str(withdraw_amount),
+                "asset": position.asset_symbol,
+                "vault_name": position.vault_name,
+                "chain": chain,
+            }
+        except Exception as e:
+            logger.error(f"Morpho build_withdraw_transaction error: {e}")
+            return {"success": False, "error": str(e), "chain": chain}
+
+    def _build_metamorpho_withdraw_calldata(
+        self,
+        vault_address: str,
+        shares: int,
+        user_address: str,
+    ) -> dict:
+        """Build ERC4626 redeem(uint256,address,address) calldata for MetaMorpho."""
+        function_selector = "0xba087652"
+        shares_hex = hex(shares)[2:].zfill(64)
+        receiver_hex = user_address.lower()[2:].zfill(64)
+        owner_hex = user_address.lower()[2:].zfill(64)
+        calldata = f"{function_selector}{shares_hex}{receiver_hex}{owner_hex}"
+        return {
+            "to": vault_address,
+            "data": calldata,
+            "value": "0x0",
+        }
+
     # =========================================================================
     # Risk Calculation
     # =========================================================================
@@ -457,11 +543,22 @@ class MorphoAdapter(MorphoGateway):
         raw: MorphoPositionData,
         user_address: str,
     ) -> MorphoPosition:
-        """Transform client position data to domain entity."""
+        """Transform client position data to domain entity.
+
+        API returns assets in smallest units (e.g. 7000285 for 7.000285 USDC).
+        Convert to human-readable using decimals; use assetsUsd from API when present.
+        """
         shares = Decimal(raw.shares)
-        assets = Decimal(raw.assets)
-        # Use net_apy from API (as decimal, e.g., 0.0621 for 6.21%)
+        decimals = raw.decimals or 18
+        assets_raw = Decimal(raw.assets)
+        assets_human = assets_raw / (Decimal(10) ** decimals)
         apy = Decimal(str(raw.net_apy)) if raw.net_apy else Decimal("0")
+        assets_usd = getattr(raw, "assets_usd", None)
+        if assets_usd is not None:
+            try:
+                assets_usd = float(assets_usd)
+            except (TypeError, ValueError):
+                assets_usd = None
 
         return MorphoPosition(
             user_address=user_address.lower(),
@@ -469,9 +566,10 @@ class MorphoAdapter(MorphoGateway):
             vault_name=raw.vault_name,
             asset_symbol=raw.asset_symbol,
             shares=shares,
-            assets=assets,
-            deposited_assets=assets,  # Original deposit (approximation)
+            assets=assets_human,
+            deposited_assets=assets_human,
             apy=apy,
+            assets_usd=assets_usd,
         )
 
     def _transform_apy(self, vault_address: str, raw: dict) -> VaultAPY:

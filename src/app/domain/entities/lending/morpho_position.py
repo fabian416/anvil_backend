@@ -24,9 +24,10 @@ class MorphoPosition:
     vault_name: str
     asset_symbol: str
     shares: Decimal = Decimal("0")
-    assets: Decimal = Decimal("0")  # Current value
+    assets: Decimal = Decimal("0")  # Current value (human-readable, e.g. 7.5 USDC)
     deposited_assets: Decimal = Decimal("0")  # Original deposit
     apy: Decimal = Decimal("0")  # Current vault APY
+    assets_usd: float | None = None  # USD value when provided by API
     deposited_at: datetime | None = None
 
     @property
@@ -57,6 +58,7 @@ class MorphoPosition:
             "assets": str(self.assets),
             "deposited_assets": str(self.deposited_assets),
             "apy": str(self.apy),
+            "assets_usd": self.assets_usd,
             "deposited_at": self.deposited_at.isoformat()
             if self.deposited_at
             else None,
@@ -80,5 +82,6 @@ class MorphoPosition:
             assets=Decimal(str(data.get("assets", "0"))),
             deposited_assets=Decimal(str(data.get("deposited_assets", "0"))),
             apy=Decimal(str(data.get("apy", "0"))),
+            assets_usd=data.get("assets_usd"),
             deposited_at=deposited_at,
         )
