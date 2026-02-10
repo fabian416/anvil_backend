@@ -1532,6 +1532,35 @@ Output ONLY valid JSON: {{"tasks":[{{"agent_type":"...","task_description":"..."
             original_message=original_message,
         )
 
+    async def _aggregate_results(
+        self,
+        workflow_plan: "WorkflowPlan",
+    ) -> str:
+        """
+        Override to filter out auth prompts for authenticated users.
+
+        When the user is logged in, never show "Account Required" or "Sign up"
+        from any single agent (e.g. transaction_history when context is missing).
+        """
+        content = await super()._aggregate_results(workflow_plan)
+        if not content:
+            return content
+        auth_keywords = [
+            "account required",
+            "wallet required",
+            "sign up",
+            "create an account",
+        ]
+        if any(kw in content.lower() for kw in auth_keywords):
+            logger.warning(
+                "Filtering auth prompt from agent response for authenticated user"
+            )
+            return (
+                "Your request was received. If you were asking about transaction "
+                "history or activity, try again in a moment—your data may still be syncing."
+            )
+        return content
+
     def _build_aggregation_message(
         self,
         workflow_plan: "WorkflowPlan",

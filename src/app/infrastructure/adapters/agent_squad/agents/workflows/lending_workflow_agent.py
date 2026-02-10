@@ -75,14 +75,14 @@ EXCLUDED_VAULTS = {
     "0x23479229e52Ab6aaD312D0B03DF9F33B46753B5e",  # Extrafi XLend USDC
 }
 
-# Aave V3 pool addresses by chain
+# Aave V3 pool addresses by chain (required for production execute payload)
 AAVE_POOL_ADDRESSES = {
     "ethereum": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+    "base": "0xA238Dd80C259a72e81d7e4664a9801593F98d1C5",
     "polygon": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
     "arbitrum": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
     "optimism": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
     "avalanche": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
-    "base": "0xA238Dd80C259a72e81d7e4664a9801593F98d1c5",
 }
 
 
@@ -424,52 +424,59 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         wallet_address: str,
         user_context: UserContext,
     ) -> list[dict]:
-        """Fetch user's lending positions from Morpho and Aave."""
+        """Fetch user's lending positions from Morpho and Aave via injected gateways."""
         positions = []
+        chain = "base"
 
-        # Fetch Morpho positions
-        try:
-            morpho_result = await self._call_tool(
-                "morpho_get_user_positions",
-                {"user_address": wallet_address, "chain": "base"},
-            )
-            if morpho_result and morpho_result.get("positions"):
-                for pos in morpho_result["positions"]:
-                    # MCP returns supplied_amount, supplied_usd, apy_numeric (and display apy string)
-                    apy_val = pos.get("apy_numeric")
-                    if apy_val is None and isinstance(pos.get("apy"), (int, float)):
-                        apy_val = pos.get("apy")
+        # Fetch Morpho positions via MorphoGateway (in-app DI)
+        if self._morpho:
+            try:
+                morpho_positions = await self._morpho.get_user_positions(
+                    address=wallet_address,
+                    chain=chain,
+                )
+                for p in morpho_positions:
                     positions.append({
                         "protocol": "morpho",
-                        "vault_address": pos.get("vault_address"),
-                        "vault_name": pos.get("vault_name", "Morpho Vault"),
-                        "asset": pos.get("asset", "UNKNOWN"),
-                        "supplied_amount": pos.get("supplied_amount", "0"),
-                        "supplied_usd": pos.get("supplied_usd", 0),
-                        "apy": apy_val if apy_val is not None else 0,
-                        "chain": "base",
+                        "vault_address": p.vault_address,
+                        "vault_name": p.vault_name,
+                        "asset": p.asset_symbol,
+                        "supplied_amount": str(p.assets),
+                        "supplied_usd": float(p.assets),  # Stablecoin vaults: assets ≈ USD
+                        "apy": float(p.apy),
+                        "chain": chain,
                     })
-        except Exception as e:
-            logger.warning(f"[LendingWorkflow] Failed to fetch Morpho positions: {e}")
+            except Exception as e:
+                logger.warning(
+                    "[LendingWorkflow] Failed to fetch Morpho positions: %s", e
+                )
+        else:
+            logger.warning("[LendingWorkflow] Morpho gateway not available")
 
-        # Fetch Aave positions
-        try:
-            aave_result = await self._call_tool(
-                "aave_get_user_positions",
-                {"user_address": wallet_address, "chain": "base"},
-            )
-            if aave_result and aave_result.get("supplies"):
-                for supply in aave_result["supplies"]:
-                    positions.append({
-                        "protocol": "aave",
-                        "asset": supply.get("symbol", "UNKNOWN"),
-                        "supplied_amount": supply.get("balance", "0"),
-                        "supplied_usd": supply.get("balance_usd", 0),
-                        "apy": supply.get("supply_apy", 0),
-                        "chain": "base",
-                    })
-        except Exception as e:
-            logger.warning(f"[LendingWorkflow] Failed to fetch Aave positions: {e}")
+        # Fetch Aave positions via AaveGateway (in-app DI)
+        if self._aave:
+            try:
+                aave_position = await self._aave.get_user_position(
+                    address=wallet_address,
+                    chain=chain,
+                )
+                if aave_position and aave_position.supplies:
+                    for supply in aave_position.supplies:
+                        positions.append({
+                            "protocol": "aave",
+                            "asset": supply.symbol,
+                            "supplied_amount": str(supply.balance),
+                            "supplied_usd": float(supply.balance_usd),
+                            "apy": float(supply.apy),
+                            "chain": chain,
+                        })
+            except Exception as e:
+                # No position or API error - user may have no Aave supplies
+                logger.debug(
+                    "[LendingWorkflow] Aave positions (none or error): %s", e
+                )
+        else:
+            logger.warning("[LendingWorkflow] Aave gateway not available")
 
         return positions
 

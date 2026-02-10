@@ -61,6 +61,16 @@ DEFILLAMA_CHAIN_MAP = {
     "avalanche": "Avalanche",
 }
 
+# Aave V3 pool addresses by chain (required for production execute payload)
+AAVE_POOL_ADDRESSES = {
+    "ethereum": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+    "base": "0xA238Dd80C259a72e81d7e4664a9801593F98d1C5",
+    "polygon": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    "arbitrum": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    "optimism": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    "avalanche": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+}
+
 
 # Supported assets for comparison
 SUPPORTED_ASSETS = {
@@ -71,6 +81,9 @@ SUPPORTED_ASSETS = {
     "weth": {"symbol": "WETH", "name": "Wrapped Ethereum", "emoji": "Ξ"},
     "wbtc": {"symbol": "WBTC", "name": "Wrapped Bitcoin", "emoji": "₿"},
 }
+
+# Assets that have lending rates on Base (used for default asset menu; USDT excluded)
+ASSETS_AVAILABLE_ON_BASE = ["USDC", "DAI", "ETH"]
 
 
 class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
@@ -212,10 +225,22 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         """Parse comparison request from user message."""
 
         language = user_context.language
-        text = message.value.lower()
+        text = message.value.strip()
+        text_lower = text.lower()
 
-        # Try to extract parameters from message
-        params = await self._extract_comparison_params(text)
+        # Number selection (e.g. "1", "2", "3") for default Base assets
+        if text.isdigit():
+            index = int(text) - 1
+            if 0 <= index < len(ASSETS_AVAILABLE_ON_BASE):
+                asset = ASSETS_AVAILABLE_ON_BASE[index]
+                state.data["asset"] = asset
+                state.data["comparison_type"] = "supply"
+                state.data["chain"] = "base"
+                state.step = WorkflowStep.FETCH_DATA.value
+                return await self._handle_fetch_data(message, state, user_context)
+
+        # Try to extract parameters from message (asset name, "USDT on Ethereum", etc.)
+        params = await self._extract_comparison_params(text_lower)
 
         asset = params.get("asset")
         comparison_type = params.get("type", "supply")  # supply or borrow
@@ -227,7 +252,7 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             state.step = WorkflowStep.FETCH_DATA.value
             return await self._handle_fetch_data(message, state, user_context)
 
-        # No asset detected - show asset selection
+        # No asset detected - show asset selection (numbered list, no USDT on Base)
         return self._ask_for_asset(language), state
 
     async def _handle_fetch_data(
@@ -658,12 +683,10 @@ Quando tiver fundos, diga **"depositar {amount or "100"} {asset}"** para continu
                     f"[MoneyMarketWorkflow] Mapped ETH → WETH for Morpho lookup"
                 )
 
-            # Get asset-specific address for Base
-            asset_address = None
-            if lookup_asset == "USDC" and chain.lower() == "base":
-                asset_address = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
-            elif lookup_asset == "WETH" and chain.lower() == "base":
-                asset_address = "0x4200000000000000000000000000000000000006"
+            # Use token address map so USDT, DAI, etc. get rates when vaults exist
+            asset_address = self._get_asset_address(lookup_asset, chain)
+            if not asset_address and lookup_asset == "WETH":
+                asset_address = self._get_asset_address("ETH", chain)
 
             # Fetch vaults
             if asset_address:
@@ -1112,74 +1135,80 @@ Quando tiver fundos, diga **"depositar {amount or "100"} {asset}"** para continu
     # Response Formatting
     # ========================================
 
-    def _ask_for_asset(self, language: str) -> str:
-        """Ask user which asset to compare."""
+    def _ask_for_asset(self, language: str, chain: str = "base") -> str:
+        """Ask user which asset to compare. Shows only assets with rates on the default chain (Base)."""
+        # Numbered list for assets that have rates on Base (no USDT)
+        assets = ASSETS_AVAILABLE_ON_BASE
+        lines = []
+        for i, symbol in enumerate(assets, 1):
+            info = SUPPORTED_ASSETS.get(symbol.lower(), {"name": symbol, "emoji": "💰"})
+            emoji = info.get("emoji", "💰")
+            name = info.get("name", symbol)
+            lines.append(f"{i}. {emoji} **{symbol}** ({name})")
+        asset_list = "\n".join(lines)
+        n = len(assets)
 
         msgs = {
-            "en": """📊 **Money Market Rate Comparison**
+            "en": f"""📊 **Money Market Rate Comparison**
 
 Compare lending rates across DeFi protocols to find the best yield.
 
-**Available Assets:**
-• 💵 **USDC** (USD Coin)
-• 💵 **USDT** (Tether)
-• 💰 **DAI** (Dai)
-• Ξ **ETH** (Ethereum)
+**Available Assets (on Base):**
+{asset_list}
 
 **Protocols Compared:**
 • Aave V3
 • Compound V3
 • Morpho Vaults
 
-💬 Which asset do you want to compare? (e.g., "USDC")""",
-            "es": """📊 **Comparación de Tasas del Mercado Monetario**
+💬 Which asset do you want to compare?
+• Reply with a **number (1-{n})** or asset name (e.g., USDC)
+• For USDT say **"USDT on Ethereum"**""",
+            "es": f"""📊 **Comparación de Tasas del Mercado Monetario**
 
 Compara tasas de préstamo entre protocolos DeFi para encontrar el mejor rendimiento.
 
-**Activos Disponibles:**
-• 💵 **USDC** (USD Coin)
-• 💵 **USDT** (Tether)
-• 💰 **DAI** (Dai)
-• Ξ **ETH** (Ethereum)
+**Activos Disponibles (en Base):**
+{asset_list}
 
 **Protocolos Comparados:**
 • Aave V3
 • Compound V3
 • Morpho Vaults
 
-💬 ¿Qué activo quieres comparar? (ej: "USDC")""",
-            "pt": """📊 **Comparação de Taxas do Mercado Monetário**
+💬 ¿Qué activo quieres comparar?
+• Responde con un **número (1-{n})** o el nombre (ej: USDC)
+• Para USDT di **"USDT en Ethereum"**""",
+            "pt": f"""📊 **Comparação de Taxas do Mercado Monetário**
 
 Compare taxas de empréstimo entre protocolos DeFi para encontrar o melhor rendimento.
 
-**Ativos Disponíveis:**
-• 💵 **USDC** (USD Coin)
-• 💵 **USDT** (Tether)
-• 💰 **DAI** (Dai)
-• Ξ **ETH** (Ethereum)
+**Ativos Disponíveis (na Base):**
+{asset_list}
 
 **Protocolos Comparados:**
 • Aave V3
 • Compound V3
 • Morpho Vaults
 
-💬 Qual ativo você quer comparar? (ex: "USDC")""",
-            "zh": """📊 **货币市场利率比较**
+💬 Qual ativo você quer comparar?
+• Responda com um **número (1-{n})** ou nome (ex: USDC)
+• Para USDT diga **"USDT na Ethereum"**""",
+            "zh": f"""📊 **货币市场利率比较**
 
 比较 DeFi 协议的借贷利率，找到最佳收益。
 
-**可用资产：**
-• 💵 **USDC** (USD Coin)
-• 💵 **USDT** (Tether)
-• 💰 **DAI** (Dai)
-• Ξ **ETH** (以太坊)
+**可用资产（Base 网络）：**
+{asset_list}
 
 **比较的协议：**
 • Aave V3
 • Compound V3
 • Morpho Vaults
 
-💬 您想比较哪种资产？（例如："USDC"）""",
+💬 您想比较哪种资产？
+• 回复 **数字 (1-{n})** 或资产名称（如 USDC）
+• 比较 USDT 请说 **「USDT on Ethereum」**""",
         }
 
         return msgs.get(language, msgs["en"])
@@ -1285,11 +1314,21 @@ Compare taxas de empréstimo entre protocolos DeFi para encontrar o melhor rendi
         language: str,
     ) -> str:
         """Format message when no rates are available."""
+        chain_lower = chain.lower()
+        asset_upper = asset.upper()
+        # Hint when USDT on Base (limited protocol support)
+        usdt_base_hint = ""
+        if asset_upper == "USDT" and chain_lower == "base":
+            usdt_base_hint = (
+                "\n\n💡 USDT has limited lending support on Base. "
+                "Try **USDC** or **DAI** on Base, or compare **USDT on Ethereum**."
+            )
+        hint = usdt_base_hint if usdt_base_hint else ""
 
         msgs = {
             "en": f"""❌ **No Rates Available**
 
-Sorry, I couldn't fetch rates for **{asset}** on {chain.title()}.
+Sorry, I couldn't fetch rates for **{asset}** on {chain.title()}.{hint}
 
 **Try:**
 • Using a different asset (USDC, DAI, ETH)
@@ -1298,7 +1337,7 @@ Sorry, I couldn't fetch rates for **{asset}** on {chain.title()}.
 Would you like to compare a different asset?""",
             "es": f"""❌ **Tasas No Disponibles**
 
-Lo siento, no pude obtener tasas para **{asset}** en {chain.title()}.
+Lo siento, no pude obtener tasas para **{asset}** en {chain.title()}.{hint}
 
 **Intenta:**
 • Usar un activo diferente (USDC, DAI, ETH)
@@ -1307,7 +1346,7 @@ Lo siento, no pude obtener tasas para **{asset}** en {chain.title()}.
 ¿Te gustaría comparar un activo diferente?""",
             "pt": f"""❌ **Taxas Não Disponíveis**
 
-Desculpe, não consegui obter taxas para **{asset}** em {chain.title()}.
+Desculpe, não consegui obter taxas para **{asset}** em {chain.title()}.{hint}
 
 **Tente:**
 • Usar um ativo diferente (USDC, DAI, ETH)
@@ -1316,7 +1355,7 @@ Desculpe, não consegui obter taxas para **{asset}** em {chain.title()}.
 Gostaria de comparar um ativo diferente?""",
             "zh": f"""❌ **无可用利率**
 
-抱歉，无法获取 {chain.title()} 上 **{asset}** 的利率。
+抱歉，无法获取 {chain.title()} 上 **{asset}** 的利率。{hint}
 
 **尝试：**
 • 使用其他资产（USDC、DAI、ETH）
@@ -1566,9 +1605,11 @@ Por favor confirme a transação na sua carteira.""",
         if protocol == "morpho":
             execute_data["vault_address"] = rate_data.get("vault_address")
 
-        # Add pool address for Aave (from rate data if available)
+        # Aave requires pool_address for production (direct pool call, reliable)
         if protocol == "aave":
-            execute_data["pool_address"] = rate_data.get("pool_address")
+            execute_data["pool_address"] = rate_data.get("pool_address") or (
+                AAVE_POOL_ADDRESSES.get(chain.lower()) if chain else None
+            )
 
         return execute_data
 
