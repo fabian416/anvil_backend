@@ -2,7 +2,7 @@
 
 **Version**: 1.0  
 **Date**: 2026-02-02  
-**Status**: 📋 SPEC (Not Implemented)  
+**Status**: ✅ Option A Implemented  
 **Methodology**: CTO Engineering Framework (First Principles + Design Thinking + Systems Thinking)  
 **Recallium**: Enabled. Memory #1856
 
@@ -15,7 +15,10 @@
 | Phase 1 | Problem decomposition & gap analysis | 📋 Spec complete |
 | Phase 2 | Solution options & trade-offs | 📋 Spec complete |
 | Phase 3 | Risk & validation design | 📋 Spec complete |
-| Phase 4 | Implementation (workflow, routing, execute) | ⏳ Pending |
+| Phase 4 | **Option A** Implementation | ✅ Complete |
+| 4.1 | MoneyMarketWorkflowAgent positions + withdraw flow | ✅ 310b03a4 |
+| 4.2 | Supervisor route to money_market_workflow | ✅ bad0d0a7 |
+| 4.3 | Shortcuts MONEY_MARKET_POSITIONS intent | ✅ d5513d7d |
 
 ---
 
@@ -183,10 +186,10 @@ This spec defines the **“see my positions in money market”** experience (lis
 
 - No change. Reuse existing withdraw `execute_data` shape produced by LendingWorkflowAgent (provider, protocol, chain, amount, market_id/asset_address, etc.) and existing execute endpoint behavior.
 
-### 4.5 Implementation Checklist
+### 4.5 Implementation Checklist (Option A implemented)
 
-- [ ] Add “money market positions” / “withdraw from money market” (and variants) to supervisor routing → lending_workflow.
-- [ ] Add or extend intents/patterns in knowledge/shortcuts for money market positions and withdraw; agent = LENDING_WORKFLOW.
+- [x] Add “money market positions” / “withdraw from money market” (and variants) to supervisor routing → money_market_workflow (done).
+- [x] Add MONEY_MARKET_POSITIONS intent in shortcuts; agent = MONEY_MARKET_WORKFLOW.
 - [ ] Optionally: add response copy in LendingWorkflowAgent when triggered by money-market intent (e.g. “Money market (lending) positions”) for UX.
 - [ ] Document “money market = supply positions on Aave/Morpho” in product/glossary if needed.
 - [ ] Acceptance test: “my money market positions” → list; select + withdraw → execute.
