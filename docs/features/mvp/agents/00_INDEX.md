@@ -2,7 +2,7 @@
 
 **Date**: 2026-02-02  
 **Context**: Chat Response Enrichments for `POST /conversations/{id}/messages`  
-**Total Specs**: 6
+**Total Specs**: 7
 
 ---
 
@@ -16,6 +16,8 @@
 | 04 | **Receive** | `04_receive_spec.md` | `RECEIVE` | QR code generation with EIP-681 URI, chain selector, fee estimates. Integrates existing GET /wallet/receive endpoint. |
 | 05 | **Swap (available_swaps)** | `05_swap_available_swaps_spec.md` | `SWAP` | Multi-provider quote aggregation (Hyperliquid, 1inch, 0x) in parallel. User selects provider → execute via provider_id. |
 | 06 | **Wallet QR Storage** | `06_wallet_qr_storage_spec.md` | `RECEIVE` | Pre-generated QR codes stored with wallet records. DigitalOcean Spaces CDN or local fallback. Celery task generates/migrates QRs every 3 min. |
+| 07 | **Morpho Withdraw** | `07_morpho_withdraw_implementation_spec.md` | `LENDING_WITHDRAW` | Morpho Blue withdraw: MCP tool, Celery confirm task, LendingWorkflowAgent withdraw flow, execute integration. |
+| 08 | **Money Market Positions** | `08_money_market_positions_spec.md` | Route to `LENDING_WORKFLOW` | “My money market positions” + withdraw: route to LendingWorkflow (Aave + Morpho supply positions), reuse existing execute flow. CTO methodology. |
 
 ---
 

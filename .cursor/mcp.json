@@ -17,7 +17,7 @@
       ]
     },
     "recallium": {
-    	"url": "http://18.130.251.7:8001/mcp",
+    	"url": "https://recallium.facta.dev/mcp",
         "transport": "http"
     },
     "mcp-mermaid": {
