@@ -152,6 +152,13 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             f"[MoneyMarketWorkflow] Processing step={step}, message={message.value[:50]}..."
         )
 
+        # Positions flow: handle position selection and withdraw amount sub-steps
+        if state.data.get("flow") == "positions" and (
+            state.data.get("awaiting_position_selection")
+            or state.data.get("awaiting_withdraw_amount")
+        ):
+            return await self._handle_positions_request(message, state, user_context)
+
         # Check if user wants to start a NEW money market flow (restart detection)
         # This resets state when user says "compare rates", "money market", etc.
         # while already in an ongoing flow (FETCH_DATA, CONFIRM, or EXECUTE step)
@@ -177,6 +184,11 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                 "mejores tasas",
                 "tasas de aave",
                 "tasas de compound",  # Spanish protocol queries
+                # Positions + withdraw (Option A: money market positions in this workflow)
+                "my money market positions",
+                "money market positions",
+                "withdraw from money market",
+                "what am I earning in money market",
             ]
             is_restart_request = any(
                 text_lower.startswith(kw) or f" {kw}" in f" {text_lower}"
@@ -222,11 +234,26 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         state: WorkflowState,
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
-        """Parse comparison request from user message."""
+        """Parse comparison request or positions/withdraw request from user message."""
 
         language = user_context.language
         text = message.value.strip()
         text_lower = text.lower()
+
+        # Positions / withdraw from money market (Option A)
+        positions_keywords = [
+            "my money market positions",
+            "money market positions",
+            "withdraw from money market",
+            "what am I earning in money market",
+            "show my money market",
+            "my positions money market",
+        ]
+        if any(kw in text_lower for kw in positions_keywords):
+            state.data["flow"] = "positions"
+            state.data["action"] = "withdraw"
+            state.data["chain"] = state.data.get("chain", "base")
+            return await self._handle_positions_request(message, state, user_context)
 
         # Number selection (e.g. "1", "2", "3") for default Base assets
         if text.isdigit():
@@ -344,11 +371,31 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         state: WorkflowState,
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
-        """Handle protocol selection or cancellation."""
+        """Handle protocol selection, cancellation, or positions withdraw confirmation."""
 
         language = user_context.language
         text = message.value.lower().strip()
         rates = state.data.get("rates", [])
+
+        # Positions flow: user confirming withdraw
+        if state.data.get("flow") == "positions":
+            if self._is_cancellation(text):
+                state.cancelled = True
+                state.step = WorkflowStep.CANCELLED.value
+                state.data["flow"] = None
+                return self._format_cancelled(language), state
+            if self._is_confirmation(text):
+                state.confirmed = True
+                state.step = WorkflowStep.EXECUTE.value
+                return await self._handle_positions_withdraw_execute(
+                    message, state, user_context
+                )
+            # Unclear - ask again
+            position = state.data.get("selected_position", {})
+            amount = state.data.get("withdraw_amount", "max")
+            return await self._show_withdraw_confirmation_mm(
+                position, amount, user_context, state
+            )
 
         # Check for cancellation
         if self._is_cancellation(text):
@@ -517,6 +564,441 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         state.step = WorkflowStep.COMPLETED.value
 
         return self._format_execution_info(state.data, language), state
+
+    # ========================================
+    # Money Market Positions + Withdraw (Option A)
+    # ========================================
+
+    async def _handle_positions_request(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """Handle money market positions list and withdraw flow."""
+        language = user_context.language
+        text = message.value.lower().strip()
+        wallet_address = user_context.wallet_address
+
+        if not wallet_address:
+            if language == "es":
+                return (
+                    "🔗 Para ver tus posiciones o retirar, conecta tu wallet primero.",
+                    state,
+                )
+            if language == "pt":
+                return (
+                    "🔗 Para ver suas posições ou retirar, conecte sua carteira primeiro.",
+                    state,
+                )
+            return (
+                "🔗 Connect your wallet to see your money market positions or withdraw.",
+                state,
+            )
+
+        if state.data.get("awaiting_position_selection"):
+            return await self._handle_position_selection_mm(
+                message, state, user_context
+            )
+        if state.data.get("awaiting_withdraw_amount"):
+            return await self._handle_withdraw_amount_input_mm(
+                message, state, user_context
+            )
+
+        positions = await self._fetch_user_positions_mm(wallet_address, user_context)
+        if not positions:
+            if language == "es":
+                return (
+                    "📭 No tienes posiciones en el mercado monetario (Aave/Morpho).\n\n"
+                    "¿Quieres comparar tasas para depositar?",
+                    state,
+                )
+            if language == "pt":
+                return (
+                    "📭 Você não tem posições no mercado monetário (Aave/Morpho).\n\n"
+                    "Quer comparar taxas para depositar?",
+                    state,
+                )
+            return (
+                "📭 You have no money market positions (Aave/Morpho).\n\n"
+                "Would you like to compare rates to deposit?",
+                state,
+            )
+
+        if len(positions) == 1:
+            position = positions[0]
+            state.data["selected_position"] = position
+            state.data["awaiting_withdraw_amount"] = True
+            return await self._ask_withdraw_amount_mm(position, user_context), state
+
+        state.data["positions"] = positions
+        state.data["awaiting_position_selection"] = True
+        return await self._show_position_selection_mm(positions, user_context), state
+
+    async def _fetch_user_positions_mm(
+        self,
+        wallet_address: str,
+        user_context: UserContext,
+    ) -> list[dict[str, Any]]:
+        """Fetch user supply positions from Morpho and Aave (Base)."""
+        positions: list[dict[str, Any]] = []
+        chain = "base"
+
+        if self._morpho:
+            try:
+                morpho_positions = await self._morpho.get_user_positions(
+                    address=wallet_address,
+                    chain=chain,
+                )
+                for p in morpho_positions:
+                    supplied_usd = (
+                        p.assets_usd
+                        if getattr(p, "assets_usd", None) is not None
+                        else float(p.assets)
+                    )
+                    positions.append({
+                        "protocol": "morpho",
+                        "vault_address": p.vault_address,
+                        "vault_name": p.vault_name,
+                        "asset": p.asset_symbol,
+                        "supplied_amount": str(p.assets),
+                        "supplied_usd": float(supplied_usd),
+                        "apy": float(p.apy),
+                        "chain": chain,
+                    })
+            except Exception as e:
+                logger.warning(
+                    "[MoneyMarketWorkflow] Failed to fetch Morpho positions: %s", e
+                )
+
+        if self._aave:
+            try:
+                aave_position = await self._aave.get_user_position(
+                    address=wallet_address,
+                    chain=chain,
+                )
+                if aave_position and aave_position.supplies:
+                    for supply in aave_position.supplies:
+                        positions.append({
+                            "protocol": "aave",
+                            "asset": supply.symbol,
+                            "supplied_amount": str(supply.balance),
+                            "supplied_usd": float(supply.balance_usd),
+                            "apy": float(supply.apy),
+                            "chain": chain,
+                        })
+            except Exception as e:
+                logger.debug(
+                    "[MoneyMarketWorkflow] Aave positions (none or error): %s", e
+                )
+
+        return positions
+
+    async def _show_position_selection_mm(
+        self,
+        positions: list[dict[str, Any]],
+        user_context: UserContext,
+    ) -> str:
+        """Show money market positions for selection."""
+        language = user_context.language
+        if language == "es":
+            header = "📊 **Tus posiciones en el mercado monetario**\n\n"
+            footer = "\n\n💡 Responde con el número para seleccionar y retirar."
+        elif language == "pt":
+            header = "📊 **Suas posições no mercado monetário**\n\n"
+            footer = "\n\n💡 Responda com o número para selecionar e retirar."
+        else:
+            header = "📊 **Your money market positions**\n\n"
+            footer = "\n\n💡 Reply with the number to select and withdraw."
+
+        lines = []
+        for i, pos in enumerate(positions, 1):
+            protocol = pos.get("protocol", "").upper()
+            asset = pos.get("asset", "UNKNOWN")
+            amount = pos.get("supplied_amount", "0")
+            usd_value = pos.get("supplied_usd", 0)
+            apy = pos.get("apy", 0)
+            vault_name = pos.get("vault_name", "")
+            if vault_name:
+                lines.append(
+                    f"**{i}.** {vault_name} ({protocol})\n"
+                    f"   • {amount} {asset} (~${usd_value:,.2f}) · APY: {apy:.2f}%"
+                )
+            else:
+                lines.append(
+                    f"**{i}.** {asset} on {protocol}\n"
+                    f"   • {amount} {asset} (~${usd_value:,.2f}) · APY: {apy:.2f}%"
+                )
+        return header + "\n\n".join(lines) + footer
+
+    async def _handle_position_selection_mm(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """Handle user position selection by number or asset."""
+        text = message.value.strip()
+        positions = state.data.get("positions", [])
+
+        try:
+            selection = int(text)
+            if 1 <= selection <= len(positions):
+                position = positions[selection - 1]
+                state.data["selected_position"] = position
+                state.data["awaiting_position_selection"] = False
+                state.data["awaiting_withdraw_amount"] = True
+                return await self._ask_withdraw_amount_mm(
+                    position, user_context
+                ), state
+        except ValueError:
+            pass
+
+        text_upper = text.upper()
+        for pos in positions:
+            if pos.get("asset", "").upper() == text_upper:
+                state.data["selected_position"] = pos
+                state.data["awaiting_position_selection"] = False
+                state.data["awaiting_withdraw_amount"] = True
+                return await self._ask_withdraw_amount_mm(pos, user_context), state
+
+        language = user_context.language
+        if language == "es":
+            return (f"❓ Responde con un número (1-{len(positions)}).", state)
+        if language == "pt":
+            return (f"❓ Responda com um número (1-{len(positions)}).", state)
+        return (f"❓ Please reply with a number (1-{len(positions)}).", state)
+
+    async def _ask_withdraw_amount_mm(
+        self,
+        position: dict[str, Any],
+        user_context: UserContext,
+    ) -> str:
+        """Ask user how much to withdraw."""
+        language = user_context.language
+        asset = position.get("asset", "")
+        amount = position.get("supplied_amount", "0")
+        usd_value = position.get("supplied_usd", 0)
+        if language == "es":
+            return (
+                f"💰 **Retiro de {asset}**\n\n"
+                f"Tienes **{amount} {asset}** (~${usd_value:,.2f}).\n\n"
+                f"¿Cuánto retirar? Escribe un monto o **max**."
+            )
+        if language == "pt":
+            return (
+                f"💰 **Retirada de {asset}**\n\n"
+                f"Você tem **{amount} {asset}** (~${usd_value:,.2f}).\n\n"
+                f"Quanto retirar? Digite um valor ou **max**."
+            )
+        return (
+            f"💰 **Withdraw {asset}**\n\n"
+            f"You have **{amount} {asset}** (~${usd_value:,.2f}).\n\n"
+            f"How much to withdraw? Enter an amount or **max**."
+        )
+
+    async def _handle_withdraw_amount_input_mm(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """Handle withdraw amount (number or max)."""
+        text = message.value.strip().lower()
+        position = state.data.get("selected_position", {})
+        supplied = position.get("supplied_amount", "0")
+
+        if text in ("max", "all", "todo", "tudo"):
+            withdraw_amount = supplied
+        else:
+            amount_match = re.search(r"[\d,]+\.?\d*", text.replace(",", ""))
+            if amount_match:
+                withdraw_amount = amount_match.group()
+            else:
+                language = user_context.language
+                if language == "es":
+                    return ("❓ Escribe un número o 'max'.", state)
+                if language == "pt":
+                    return ("❓ Digite um número ou 'max'.", state)
+                return ("❓ Please enter a number or 'max'.", state)
+
+        state.data["withdraw_amount"] = withdraw_amount
+        state.data["awaiting_withdraw_amount"] = False
+        state.step = WorkflowStep.CONFIRM.value
+        return await self._show_withdraw_confirmation_mm(
+            position, withdraw_amount, user_context, state
+        )
+
+    async def _show_withdraw_confirmation_mm(
+        self,
+        position: dict[str, Any],
+        amount: str,
+        user_context: UserContext,
+        state: WorkflowState,
+    ) -> tuple[str, WorkflowState]:
+        """Show withdraw confirmation."""
+        language = user_context.language
+        asset = position.get("asset", "")
+        protocol = position.get("protocol", "").upper()
+        vault_name = position.get("vault_name", "")
+        supplied_usd = position.get("supplied_usd", 0)
+        supplied_amount = position.get("supplied_amount", "0")
+        try:
+            ratio = (
+                float(amount) / float(supplied_amount)
+                if float(supplied_amount) > 0
+                else 0
+            )
+            withdraw_usd = supplied_usd * ratio
+        except (ValueError, ZeroDivisionError):
+            withdraw_usd = supplied_usd
+        display_name = vault_name or f"{asset} on {protocol}"
+        if language == "es":
+            response = (
+                f"📤 **Confirmar retiro**\n\n"
+                f"**De:** {display_name}\n"
+                f"**Monto:** {amount} {asset} (~${withdraw_usd:,.2f})\n\n"
+                f"¿Confirmar? Responde **sí** o **cancelar**."
+            )
+        elif language == "pt":
+            response = (
+                f"📤 **Confirmar retirada**\n\n"
+                f"**De:** {display_name}\n"
+                f"**Valor:** {amount} {asset} (~${withdraw_usd:,.2f})\n\n"
+                f"Confirmar? Responda **sim** ou **cancelar**."
+            )
+        else:
+            response = (
+                f"📤 **Confirm withdrawal**\n\n"
+                f"**From:** {display_name}\n"
+                f"**Amount:** {amount} {asset} (~${withdraw_usd:,.2f})\n\n"
+                f"Confirm? Reply **yes** or **cancel**."
+            )
+        return response, state
+
+    async def _handle_positions_withdraw_execute(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """Build withdraw execute_data for frontend (Morpho/Aave)."""
+        language = user_context.language
+        position = state.data.get("selected_position", {})
+        withdraw_amount = state.data.get("withdraw_amount", "max")
+        wallet_address = user_context.wallet_address
+
+        if not wallet_address:
+            msg = (
+                "❌ Conecta tu wallet."
+                if language == "es"
+                else "❌ Conecte sua carteira."
+                if language == "pt"
+                else "❌ Wallet not connected. Please connect your wallet."
+            )
+            return msg, state
+
+        protocol = position.get("protocol", "morpho")
+        asset = position.get("asset", "UNKNOWN")
+        chain = position.get("chain", "base")
+        vault_address = position.get("vault_address")
+        vault_name = position.get("vault_name", f"{asset}")
+
+        execute_data: dict[str, Any] | None = None
+
+        if protocol == "morpho" and self._morpho and vault_address:
+            try:
+                withdraw_result = await self._morpho.build_withdraw_transaction(
+                    user_address=wallet_address,
+                    vault_address=vault_address,
+                    amount=str(withdraw_amount),
+                    chain=chain,
+                )
+                if withdraw_result.get("success") and not withdraw_result.get("error"):
+                    execute_data = self._build_execute_data(
+                        action_type="withdraw",
+                        provider="morpho",
+                        chain=chain,
+                        amount=withdraw_result.get("amount", str(withdraw_amount)),
+                        asset_symbol=withdraw_result.get("asset", asset),
+                        asset_address=position.get("asset_address"),
+                        vault_address=vault_address,
+                        tx_to=withdraw_result.get("to"),
+                        tx_data=withdraw_result.get("data"),
+                        tx_value=withdraw_result.get("value", "0"),
+                    )
+                else:
+                    err = withdraw_result.get("error", "Unknown error")
+                    return f"❌ {err}", state
+            except Exception as e:
+                logger.error(
+                    "[MoneyMarketWorkflow] Morpho withdraw build error: %s", e
+                )
+                return f"❌ Error preparing withdrawal: {e!s}", state
+
+        elif protocol == "aave" and self._aave:
+            try:
+                withdraw_result = await self._aave.build_withdraw_supply_transaction(
+                    user_address=wallet_address,
+                    asset_symbol=asset,
+                    amount=str(withdraw_amount),
+                    chain=chain,
+                )
+                if withdraw_result.get("success") and not withdraw_result.get("error"):
+                    execute_data = self._build_execute_data(
+                        action_type="withdraw",
+                        provider="aave",
+                        chain=chain,
+                        amount=withdraw_result.get("amount", str(withdraw_amount)),
+                        asset_symbol=withdraw_result.get("asset", asset),
+                        asset_address=withdraw_result.get("asset_address"),
+                        pool_address=withdraw_result.get("to"),
+                        tx_to=withdraw_result.get("to"),
+                        tx_data=withdraw_result.get("data"),
+                        tx_value=withdraw_result.get("value", "0"),
+                    )
+                else:
+                    err = withdraw_result.get("error", "Unknown error")
+                    return f"❌ {err}", state
+            except Exception as e:
+                logger.error(
+                    "[MoneyMarketWorkflow] Aave withdraw build error: %s", e
+                )
+                return f"❌ Error preparing withdrawal: {e!s}", state
+        else:
+            msg = (
+                f"❌ Protocolo no soportado: {protocol}"
+                if language == "es"
+                else f"❌ Protocolo não suportado: {protocol}"
+                if language == "pt"
+                else f"❌ Unsupported protocol: {protocol}"
+            )
+            return msg, state
+
+        if execute_data:
+            state.execute_data = execute_data
+            state.step = WorkflowStep.COMPLETED.value
+            if language == "es":
+                response = (
+                    f"✅ **Listo para retirar**\n\n"
+                    f"📤 {withdraw_amount} {asset} desde {vault_name or protocol.upper()}\n\n"
+                    f"Confirma en tu wallet."
+                )
+            elif language == "pt":
+                response = (
+                    f"✅ **Pronto para retirar**\n\n"
+                    f"📤 {withdraw_amount} {asset} de {vault_name or protocol.upper()}\n\n"
+                    f"Confirme na sua carteira."
+                )
+            else:
+                response = (
+                    f"✅ **Ready to withdraw**\n\n"
+                    f"📤 {withdraw_amount} {asset} from {vault_name or protocol.upper()}\n\n"
+                    f"Please confirm in your wallet."
+                )
+            return response, state
+
+        return "❌ Could not build transaction.", state
 
     def _build_insufficient_balance_message(
         self,
@@ -1616,6 +2098,31 @@ Por favor confirme a transação na sua carteira.""",
     # ========================================
     # Helpers
     # ========================================
+
+    def _is_confirmation(self, text: str) -> bool:
+        """Check if text is a confirmation."""
+        confirm_words = [
+            "yes",
+            "y",
+            "confirm",
+            "ok",
+            "proceed",
+            "continue",
+            "do it",
+            "execute",
+            "sí",
+            "si",
+            "confirmar",
+            "vale",
+            "continuar",
+            "sim",
+            "prosseguir",
+            "是",
+            "确认",
+            "好",
+            "继续",
+        ]
+        return any(word in text for word in confirm_words)
 
     def _is_cancellation(self, text: str) -> bool:
         """Check if text is a cancellation."""
