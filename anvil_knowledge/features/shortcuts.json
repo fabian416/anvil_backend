@@ -672,7 +672,7 @@
   "lending": {
     "title": "💰 Lending & Yield",
     "description": "Supply assets to earn yield and borrow against collateral via Morpho and Aave protocols",
-    "intent_group": ["LENDING_HEALTH_CHECK", "LENDING_SUPPLY", "LENDING_WITHDRAW", "LENDING_BORROW", "LENDING_LOOP", "LENDING_COMPARE", "LENDING_POSITION"],
+    "intent_group": ["LENDING_HEALTH_CHECK", "LENDING_SUPPLY", "LENDING_WITHDRAW", "LENDING_BORROW", "LENDING_LOOP", "LENDING_COMPARE", "LENDING_POSITION", "MONEY_MARKET_POSITIONS"],
     "protocols_supported": ["Morpho", "Aave V3"],
     "chains_supported": ["Ethereum", "Base", "Arbitrum", "Optimism"],
     "commands": [
@@ -1260,6 +1260,48 @@
           "show_earnings_summary": true,
           "show_optimization_opportunities": true
         }
+      },
+      {
+        "intent": "MONEY_MARKET_POSITIONS",
+        "category": "lending",
+        "description": {
+          "en": "View money market positions and withdraw from Aave/Morpho (Option A: money_market_workflow)",
+          "es": "Ver posiciones del mercado monetario y retirar de Aave/Morpho",
+          "pt": "Ver posições do mercado monetário e retirar de Aave/Morpho",
+          "zh": "查看货币市场仓位并从 Aave/Morpho 提款"
+        },
+        "patterns": {
+          "en": [
+            "my money market positions",
+            "money market positions",
+            "withdraw from money market",
+            "what am I earning in money market",
+            "show my money market",
+            "my positions money market"
+          ],
+          "es": [
+            "mis posiciones mercado monetario",
+            "retirar del mercado monetario",
+            "qué estoy ganando en mercado monetario"
+          ],
+          "pt": [
+            "minhas posições mercado monetário",
+            "retirar do mercado monetário",
+            "o que estou ganhando no mercado monetário"
+          ],
+          "zh": [
+            "我的货币市场仓位",
+            "从货币市场提款",
+            "我在货币市场赚多少"
+          ]
+        },
+        "agent": "MONEY_MARKET_WORKFLOW",
+        "parameters": {
+          "action": "positions_withdraw"
+        },
+        "requires_auth": true,
+        "requires_wallet": true,
+        "response_type": "Numbered list of positions (Aave/Morpho), then withdraw amount and confirmation, execute_data for frontend"
       }
     ],
     "routing": {
@@ -1305,6 +1347,12 @@
         "action": "view_positions",
         "mcp_tools": ["aave_get_user_positions", "morpho_get_user_positions", "portfolio_get_balance"],
         "validation": []
+      },
+      "MONEY_MARKET_POSITIONS": {
+        "agent": "MONEY_MARKET_WORKFLOW",
+        "action": "positions_withdraw",
+        "mcp_tools": ["morpho_get_user_positions", "morpho_withdraw", "aave_get_user_position", "aave_withdraw_supply"],
+        "validation": ["position_check", "gas_check"]
       }
     },
     "implementation_notes": {
