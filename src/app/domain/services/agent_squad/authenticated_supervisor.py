@@ -617,20 +617,33 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 "quero enviar",
             ],
             "money_market": [
-                # English
+                # English - rate comparison
                 "compare rates",
                 "money market",
                 "best rates",
                 "yield comparison",
                 "check rates",
                 "show rates",
+                # English - positions + withdraw (Option A)
+                "my money market positions",
+                "money market positions",
+                "withdraw from money market",
+                "what am I earning in money market",
+                "show my money market",
+                "my positions money market",
                 # Spanish
                 "comparar tasas",
                 "mercado de dinero",
                 "mejores tasas",
+                "mis posiciones mercado monetario",
+                "retirar del mercado monetario",
+                "qué estoy ganando en mercado monetario",
                 # Portuguese
                 "comparar taxas",
                 "melhores taxas",
+                "minhas posições mercado monetário",
+                "retirar do mercado monetário",
+                "o que estou ganhando no mercado monetário",
             ],
             "cashout": [
                 # English - NOTE: "withdraw" alone goes to lending, "withdraw to bank/fiat" goes to cashout
@@ -1314,8 +1327,9 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 
 12. MONEY MARKET / LENDING PROTOCOL RATES (CRITICAL - Multi-step workflow):
     - "compare rates", "best APY for USDC", "where should I deposit" → "money_market_workflow" agent ONLY
-    - The money_market_workflow agent handles COMPLETE rate comparison across Aave, Compound, Morpho
-    - Use "money_market_workflow" when user wants to COMPARE rates OR asks about PROTOCOL RATES
+    - "my money market positions", "withdraw from money market", "what am I earning in money market" → "money_market_workflow" (positions + withdraw flow)
+    - The money_market_workflow agent handles COMPLETE rate comparison AND money market positions/withdraw
+    - Use "money_market_workflow" when user wants to COMPARE rates, VIEW positions, or WITHDRAW from money market
     - PROTOCOL-SPECIFIC QUERIES (IMPORTANT): When user mentions "Aave rates", "Compound rates", "Morpho rates", 
       "Aave APY", "lending rates on X protocol" → ALWAYS use "money_market_workflow" (NOT hunter_ai!)
     - NOTE: "Aave" as a PROTOCOL for lending rates → money_market_workflow
@@ -1422,6 +1436,9 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 "donde depositar" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Recommend best deposit protocol (Spanish)","depends_on":[]}}]}}
 "comparar taxas de USDC" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Compare USDC rates across protocols (Portuguese)","depends_on":[]}}]}}
 "melhores taxas" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Find best rates (Portuguese)","depends_on":[]}}]}}
+"my money market positions" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Show user's money market positions (Aave/Morpho) for withdrawal","depends_on":[]}}]}}
+"withdraw from money market" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Withdraw from money market position","depends_on":[]}}]}}
+"what am I earning in money market" → {{"tasks":[{{"agent_type":"money_market_workflow","task_description":"Show money market positions and earnings","depends_on":[]}}]}}
 "what's my health factor" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check user health factor on Aave","depends_on":[]}}]}}
 "check my health factor" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check user health factor on Aave","depends_on":[]}}]}}
 "my health factor" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check user health factor on Aave","depends_on":[]}}]}}
