@@ -636,10 +636,16 @@ We encountered an issue processing your request. Please try again.
         if hasattr(conversation_context, "metadata") and conversation_context.metadata:
             state_dict = conversation_context.metadata.get("workflow_state")
             if state_dict:
-                logger.debug(
-                    f"[{self.workflow_name}] Loaded state from context metadata"
-                )
-                return WorkflowState.from_dict(state_dict)
+                step = state_dict.get("step", "")
+                if step in ("completed", "cancelled"):
+                    logger.info(
+                        f"[{self.workflow_name}] Context metadata has {step} state — starting fresh"
+                    )
+                else:
+                    logger.debug(
+                        f"[{self.workflow_name}] Loaded state from context metadata"
+                    )
+                    return WorkflowState.from_dict(state_dict)
 
         # Check most recent messages for workflow state
         if (
@@ -655,10 +661,25 @@ We encountered an issue processing your request. Please try again.
                     ):
                         state_dict = msg_metadata.get("workflow_state")
                         if state_dict:
+                            # Don't resume completed or cancelled workflows — start fresh
+                            step = state_dict.get("step", "")
+                            if step in ("completed", "cancelled"):
+                                logger.info(
+                                    f"[{self.workflow_name}] Found {step} state in history — starting fresh"
+                                )
+                                return None
+
                             logger.debug(
                                 f"[{self.workflow_name}] Loaded state from message history"
                             )
                             return WorkflowState.from_dict(state_dict)
+
+                    # Also skip execution-complete messages (from /execute endpoint)
+                    if msg_metadata.get("execution_confirmed"):
+                        logger.info(
+                            f"[{self.workflow_name}] Found execution_confirmed marker — starting fresh"
+                        )
+                        return None
 
         logger.debug(f"[{self.workflow_name}] No existing state found, starting fresh")
         return None

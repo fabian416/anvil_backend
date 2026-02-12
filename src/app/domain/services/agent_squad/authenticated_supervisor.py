@@ -1237,6 +1237,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
 
 <rules>
 CRITICAL: Route based on the CURRENT <request> ONLY. Ignore conversation history for routing decisions.
+CRITICAL: "my transactions", "transaction history", "recent activity", "my activity" → ALWAYS route to "transaction_history" agent, NEVER to money_market_workflow or any workflow agent.
 
 ⚠️ AUTHENTICATED USER CAPABILITIES:
 - User has a connected wallet and can execute REAL transactions
