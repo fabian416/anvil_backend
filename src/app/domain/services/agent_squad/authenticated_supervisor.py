@@ -720,18 +720,32 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 if workflow_state:
                     step = workflow_state.get("step", "")
                     # Workflow is pending if it's in confirm, fetch_data, or execute step
+                    # NEVER treat "completed" workflows as pending
                     if step in ("confirm", "fetch_data", "execute"):
                         logger.info(
                             f"📋 Found pending workflow: {workflow_name}, step: {step}"
                         )
                         return True, workflow_name, workflow_state
+                    elif step == "completed":
+                        logger.info(
+                            f"✅ Workflow {workflow_name} already completed - not pending"
+                        )
+                        return False, None, None
 
                 # Also check for execute_data (transaction ready for execution)
+                # But NOT if the workflow is already completed
                 if metadata.get("execute_data"):
-                    logger.info(
-                        f"📋 Found pending execute_data in workflow: {workflow_name}"
-                    )
-                    return True, workflow_name, workflow_state
+                    ws = metadata.get("workflow_state", {})
+                    if ws.get("step") != "completed":
+                        logger.info(
+                            f"📋 Found pending execute_data in workflow: {workflow_name}"
+                        )
+                        return True, workflow_name, workflow_state
+                    else:
+                        logger.info(
+                            f"✅ Ignoring execute_data for completed workflow: {workflow_name}"
+                        )
+                        return False, None, None
 
         return False, None, None
 
@@ -859,6 +873,13 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                         # Check if this workflow is awaiting input (step is parse_request with data)
                         step = workflow_state.get("step", "")
                         data = workflow_state.get("data", {})
+
+                        # Skip completed workflows — they are done
+                        if step == "completed":
+                            logger.info(
+                                f"✅ Workflow {normalized_name} is completed - not continuing"
+                            )
+                            break
 
                         # Workflow is awaiting parameters if:
                         # 1. In parse_request step with some data (awaiting more input)

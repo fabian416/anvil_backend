@@ -2407,6 +2407,7 @@ Response Guidelines:
         http_request: Request,
         user_service: FromDishka[UserService],
         current_user: FromDishka[CurrentUserService],
+        message_repository: FromDishka[ChatMessageRepositorySqla] = None,
         transaction_repository: FromDishka["TransactionRepository"] = None,
         wallet_repository: FromDishka[WalletRepository] = None,
     ) -> ExecuteResponse:
@@ -2428,6 +2429,52 @@ Response Guidelines:
             user_service=user_service,
             current_user=current_user,
         )
+
+        # Helper: Save a "workflow completed" assistant message to conversation
+        # This clears the pending workflow state so the next user message
+        # is not mistakenly treated as a workflow continuation.
+        async def _save_execution_complete_message(
+            msg_text: str,
+            workflow_name: str | None = None,
+        ) -> None:
+            if not message_repository:
+                return
+            try:
+                from app.domain.chat.entities.chat_message import (
+                    ChatMessage as ChatMsg,
+                    MessageRole as MsgRole,
+                )
+
+                completed_metadata: dict[str, Any] = {
+                    "execution_confirmed": True,
+                    "transaction_hash": request.transaction_hash,
+                }
+                if workflow_name:
+                    completed_metadata["workflow_name"] = workflow_name
+                    completed_metadata["workflow_state"] = {
+                        "step": "completed",
+                        "data": {},
+                        "error": None,
+                        "cancelled": False,
+                        "confirmed": True,
+                        "execute_data": None,
+                    }
+
+                assistant_msg = ChatMsg(
+                    conversation_id=conversation_id,
+                    role=MsgRole.ASSISTANT,
+                    content=msg_text,
+                    handler="execute_transaction",
+                    metadata=completed_metadata,
+                )
+                await message_repository.save(assistant_msg)
+                logger.info(
+                    f"✅ Saved execution-complete message for conversation {conversation_id}"
+                )
+            except Exception as save_err:
+                logger.warning(
+                    f"Failed to save execution-complete message: {save_err}"
+                )
 
         # ============================================================
         # LENDING OPERATIONS (Leverage Loops, Supply, Borrow, etc.)
@@ -2662,6 +2709,15 @@ Response Guidelines:
                         f"Failed to schedule earn tx: {earn_err}"
                     )
 
+            # Save completion message to clear workflow state
+            if is_complete:
+                await _save_execution_complete_message(
+                    msg_text=message,
+                    workflow_name="MoneyMarketWorkflow"
+                    if protocol in ("aave", "compound")
+                    else "LendingWorkflow",
+                )
+
             return ExecuteResponse(
                 message=message,
                 execute_data=None,
@@ -2861,6 +2917,13 @@ Response Guidelines:
                         exc_info=True,
                     )
 
+            # Save completion message to clear workflow state
+            if is_workflow_complete:
+                await _save_execution_complete_message(
+                    msg_text=message,
+                    workflow_name="SwapWorkflow",
+                )
+
             return ExecuteResponse(
                 message=message,
                 execute_data=None,
@@ -3058,6 +3121,12 @@ Response Guidelines:
 
             message = action_messages.get(
                 action, f"Money market operation {action} completed."
+            )
+
+            # Save completion message to clear workflow state
+            await _save_execution_complete_message(
+                msg_text=message,
+                workflow_name="MoneyMarketWorkflow",
             )
 
             return ExecuteResponse(
