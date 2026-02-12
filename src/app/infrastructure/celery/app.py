@@ -35,6 +35,8 @@ def create_celery() -> Celery:
             "app.infrastructure.celery.tasks.recent_user_sync_tasks",
             "app.infrastructure.celery.tasks.swap_position_sync_tasks",
             "app.infrastructure.celery.tasks.hl_spot_token_tasks",
+            "app.infrastructure.celery.tasks.lending_and_guest_tasks",
+            "app.infrastructure.celery.tasks.earn_position_tasks",
         ],
     )
     app.conf.task_serializer = "json"
@@ -119,6 +121,11 @@ def create_celery() -> Celery:
         "swap_positions.sync_wallet": {"queue": "maintenance"},
         "hl_spot_tokens.seed": {"queue": "maintenance"},
         "hl_spot_tokens.enrich_sentiment": {"queue": "maintenance"},
+        # Earn position tasks (Aave V3 / Compound V3)
+        "earn_positions.refresh": {"queue": "maintenance"},
+        "earn_positions.recover": {"queue": "maintenance"},
+        "earn_transactions.confirm": {"queue": "transactions"},
+        "earn_transactions.reconcile": {"queue": "maintenance"},
     }
 
     # Configuración de colas con prioridades
@@ -250,6 +257,19 @@ def create_celery() -> Celery:
         "hl-spot-tokens-enrich-sentiment": {
             "task": "hl_spot_tokens.enrich_sentiment",
             "schedule": 60.0,  # Every 1 minute
+            "options": {"queue": "maintenance"},
+        },
+        # =========================
+        # Earn Position Tasks (Aave V3 / Compound V3)
+        # =========================
+        "refresh-earn-positions": {
+            "task": "earn_positions.refresh",
+            "schedule": crontab(minute=45),  # Every hour at :45
+            "options": {"queue": "maintenance"},
+        },
+        "reconcile-earn-transactions": {
+            "task": "earn_transactions.reconcile",
+            "schedule": crontab(hour="*/6", minute=15),  # Every 6h
             "options": {"queue": "maintenance"},
         },
         # =========================

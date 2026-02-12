@@ -27,6 +27,24 @@ from app.infrastructure.celery.tasks.etherscan_balance_tasks import (
     verify_test_wallet,
 )
 
+# Lending, guest archival, and withdraw confirmation tasks
+# These were previously in the shadowed tasks.py file and never loaded
+from app.infrastructure.celery.tasks.lending_and_guest_tasks import (
+    archive_guest_conversations,
+    monitor_lending_health_factors,
+    check_user_lending_health,
+    refresh_lending_positions,
+    confirm_withdraw_transaction,
+)
+
+# Earn position tasks (Aave V3 / Compound V3)
+from app.infrastructure.celery.tasks.earn_position_tasks import (
+    refresh_earn_positions,
+    confirm_earn_transaction,
+    reconcile_earn_transactions,
+    recover_earn_positions,
+)
+
 __all__ = [
     # Distillation tasks
     "aggregate_distillation_telemetry",
@@ -46,4 +64,15 @@ __all__ = [
     "sync_all_tokens_etherscan",
     "sync_single_wallet_etherscan",
     "verify_test_wallet",
+    # Lending, guest, and withdraw tasks
+    "archive_guest_conversations",
+    "monitor_lending_health_factors",
+    "check_user_lending_health",
+    "refresh_lending_positions",
+    "confirm_withdraw_transaction",
+    # Earn position tasks (Aave V3 / Compound V3)
+    "refresh_earn_positions",
+    "confirm_earn_transaction",
+    "reconcile_earn_transactions",
+    "recover_earn_positions",
 ]
