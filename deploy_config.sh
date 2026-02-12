@@ -5,7 +5,7 @@
 set -e
 
 REMOTE_USER="ec2-user"
-REMOTE_HOST="anvil.zk-access.xyz"
+REMOTE_HOST="getrampy.com"
 REMOTE_DIR="/opt/docker/anvil/config/prod"
 
 echo "📦 Deploying configuration to $REMOTE_HOST..."

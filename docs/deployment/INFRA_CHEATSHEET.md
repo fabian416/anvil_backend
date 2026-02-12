@@ -16,7 +16,7 @@ docker-compose ps | grep Up | wc -l  # Should show 28 (including Caddy)
 curl http://localhost:8080/health
 
 # Health check (production via Caddy)
-curl https://anvil.zk-access.xyz/health
+curl https://getrampy.com/health
 
 # Database working?
 psql -h localhost -U postgres -d anvil_db -c "SELECT 1"
@@ -31,7 +31,7 @@ redis-cli -h localhost ping
 |---------|---------|
 | `docker-compose ps` | All services status |
 | `curl http://localhost:5555` | Flower monitoring dashboard (local) |
-| `curl https://anvil.zk-access.xyz/flower/` | Flower via Caddy (production) |
+| `curl https://getrampy.com/flower/` | Flower via Caddy (production) |
 | `docker stats` | Resource usage |
 | `docker-compose logs -f fastapi` | API logs |
 | `docker-compose logs -f caddy` | Caddy reverse proxy logs |
@@ -53,15 +53,15 @@ redis-cli -h localhost ping
 
 | Service | URL |
 |---------|-----|
-| API | https://anvil.zk-access.xyz |
-| Docs | https://anvil.zk-access.xyz/docs |
-| Health | https://anvil.zk-access.xyz/health |
-| Guest Chat | https://anvil.zk-access.xyz/api/v1/guest/chat |
-| Flower | https://anvil.zk-access.xyz/flower/ |
-| MCP Aave | https://anvil.zk-access.xyz/mcp/aave/health |
-| MCP DeFiLlama | https://anvil.zk-access.xyz/mcp/defillama/health |
-| MCP CoinGecko | https://anvil.zk-access.xyz/mcp/coingecko/health |
-| All MCPs | https://anvil.zk-access.xyz/mcp/{service}/health |
+| API | https://getrampy.com.xyz |
+| Docs | https://getrampy.com/docs |
+| Health | https://getrampy.com/health |
+| Guest Chat | https://getrampy.com/api/v1/guest/chat |
+| Flower | https://getrampy.com/flower/ |
+| MCP Aave | https://getrampy.com/mcp/aave/health |
+| MCP DeFiLlama | https://getrampy.com/mcp/defillama/health |
+| MCP CoinGecko | https://getrampy.com/mcp/coingecko/health |
+| All MCPs | https://getrampy.com/mcp/{service}/health |
 
 ## 🔧 Common Troubleshooting
 

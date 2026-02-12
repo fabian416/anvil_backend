@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 
 # Variables
 SERVER_USER="${SERVER_USER:-ec2-user}"
-SERVER_HOST="${SERVER_HOST:-anvil.zk-access.xyz}"
+SERVER_HOST="${SERVER_HOST:-getrampy.com}"
 SERVER_PATH="${SERVER_PATH:-/opt/docker/anvil}"
 
 echo -e "${YELLOW}Servidor:${NC} ${SERVER_USER}@${SERVER_HOST}"
@@ -108,4 +108,4 @@ echo ""
 echo "Próximos pasos en el servidor:"
 echo "1. Verificar logs: docker logs anvil_fastapi --tail 50"
 echo "2. Test local: curl http://localhost:8080/health"
-echo "3. Test HTTPS: curl https://anvil.zk-access.xyz/health"
+echo "3. Test HTTPS: curl https://getrampy.com/health"

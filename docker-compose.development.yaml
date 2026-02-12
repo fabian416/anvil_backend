@@ -531,8 +531,8 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     environment:
-      - DOMAIN=${DOMAIN:-development.anvil.zk-access.xyz}
-      - API_DOMAIN=${API_DOMAIN:-development.api.anvil.zk-access.xyz}
+      - DOMAIN=${DOMAIN:-dev.getrampy.com}
+      - API_DOMAIN=${API_DOMAIN:-dev.getrampy.com}
       - FLOWER_DOMAIN=${FLOWER_DOMAIN}
       - FLOWER_USER=${FLOWER_USER}
       - FLOWER_HASH=${FLOWER_HASH}

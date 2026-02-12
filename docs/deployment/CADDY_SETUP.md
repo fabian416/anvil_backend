@@ -127,8 +127,8 @@ docker/Caddyfile
 
 Set in `.env` file:
 ```bash
-DOMAIN=anvil.zk-access.xyz  # Your production domain
-FLOWER_DOMAIN=flower.anvil.zk-access.xyz  # Optional: separate Flower domain
+DOMAIN=getrampy.com  # Your production domain
+FLOWER_DOMAIN=flower.getrampy.com  # Optional: separate Flower domain
 FLOWER_USER=admin  # Basic auth username
 FLOWER_HASH=<bcrypt_hash>  # Bcrypt hash of password
 ```
@@ -155,7 +155,7 @@ caddy:
     - caddy_data:/data
     - caddy_config:/config
   environment:
-    - DOMAIN=${DOMAIN:-anvil.zk-access.xyz}
+    - DOMAIN=${DOMAIN:-getrampy.com}
     - FLOWER_DOMAIN=${FLOWER_DOMAIN}
     - FLOWER_USER=${FLOWER_USER}
     - FLOWER_HASH=${FLOWER_HASH}
@@ -167,21 +167,21 @@ caddy:
 
 ```bash
 # Health check
-curl https://anvil.zk-access.xyz/health
+curl https://getrampy.com/health
 
 # Guest chat
-curl -X POST https://anvil.zk-access.xyz/api/v1/guest/chat \
+curl -X POST https://getrampy.com/api/v1/guest/chat \
   -H "Content-Type: application/json" \
   -d '{"content": "hello", "language": "en"}'
 
 # MCP Aave
-curl https://anvil.zk-access.xyz/mcp/aave/health
+curl https://getrampy.com/mcp/aave/health
 
 # MCP DeFiLlama
-curl https://anvil.zk-access.xyz/mcp/defillama/health
+curl https://getrampy.com/mcp/defillama/health
 
 # Flower (requires browser for auth)
-open https://anvil.zk-access.xyz/flower/
+open https://getrampy.com/flower/
 ```
 
 ### Check Caddy Status
@@ -317,7 +317,7 @@ Caddy automatically renews certificates 30 days before expiration. No manual act
 
 ## ✅ Current Status (Jan 2026)
 
-**Production Domain**: `https://anvil.zk-access.xyz`
+**Production Domain**: `https://getrampy.com`
 
 **Services Verified**:
 - ✅ FastAPI health endpoint
