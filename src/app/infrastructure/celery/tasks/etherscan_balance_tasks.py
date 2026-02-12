@@ -441,6 +441,44 @@ class EtherscanClient:
             return []
         return result
 
+    async def get_tokentx(
+        self,
+        address: str,
+        chain_id: int,
+        page: int = 1,
+        offset: int = 50,
+        sort: str = "desc",
+    ) -> list[dict[str, Any]]:
+        """
+        Get ERC-20 token transfer events for an address.
+
+        Returns token transfers including interactions with DeFi protocols
+        (Aave supply/withdraw, Morpho deposits, DEX swaps, etc.).
+
+        Returns:
+            List of token transfer dicts with: hash, blockNumber, timeStamp,
+            from, to, value, tokenName, tokenSymbol, tokenDecimal,
+            contractAddress, etc.
+        """
+        params = {
+            "chainid": chain_id,
+            "module": "account",
+            "action": "tokentx",
+            "address": address,
+            "startblock": 0,
+            "endblock": 99999999,
+            "page": page,
+            "offset": offset,
+            "sort": sort,
+        }
+        data = await self._request_with_retry(params)
+        if data is None:
+            return []
+        result = data.get("result")
+        if not result or not isinstance(result, list):
+            return []
+        return result
+
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -525,6 +563,125 @@ def _detect_anomaly(
 # TASK 0: SYNC TRANSACTIONS (runs before balance and token sync)
 # ============================================================================
 
+# Known DeFi protocol contract addresses for classification.
+# Keys are lowercased addresses, values are (protocol, action_hint).
+# Aave V3 Pool contracts per chain
+_AAVE_V3_POOLS: dict[int, str] = {
+    1: "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2",       # Ethereum
+    42161: "0x794a61358d6845594f94dc1db02a252b5b4814ad",    # Arbitrum
+    137: "0x794a61358d6845594f94dc1db02a252b5b4814ad",      # Polygon
+    10: "0x794a61358d6845594f94dc1db02a252b5b4814ad",       # Optimism
+    8453: "0xa238dd80c259a72e81d7e4664a9801593f98d1c5",     # Base
+}
+
+# Morpho Blue core contract
+_MORPHO_BLUE_CORE: str = "0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb"
+
+# Compound V3 Comet contracts per chain (USDC markets)
+_COMPOUND_V3_COMETS: dict[int, str] = {
+    1: "0xc3d688b66703497daa19211eedff47f25384cdc3",       # Ethereum USDC
+    8453: "0xb125e6687d4313864e53df431d5425969c15eb2f",     # Base USDC
+    42161: "0xa5edbdd9646f8dff606d7448e414884c7d905dca",    # Arbitrum USDC
+    137: "0xf25212e676d1f7f89cd72ffee66158f541246445",      # Polygon USDC
+    10: "0x2e44e174f7d53f0212823acc11c01a11d58c5bcb",       # Optimism USDC
+}
+
+# All known lending contract addresses (lowercased) for quick lookup
+_LENDING_CONTRACTS: set[str] = {
+    *_AAVE_V3_POOLS.values(),
+    _MORPHO_BLUE_CORE,
+    *_COMPOUND_V3_COMETS.values(),
+}
+
+
+def _classify_token_transfer(
+    token_tx: dict[str, Any],
+    wallet_address_lower: str,
+    chain_id: int,
+) -> dict[str, Any] | None:
+    """
+    Classify an ERC-20 token transfer event.
+
+    Returns a dict with classification info or None if it's a plain transfer.
+    Keys: protocol, action_type, asset_symbol, asset_address, amount, decimals
+    """
+    tx_from = (token_tx.get("from") or "").lower()
+    tx_to = (token_tx.get("to") or "").lower()
+    token_symbol = token_tx.get("tokenSymbol", "")
+    token_address = token_tx.get("contractAddress", "")
+    token_decimals = int(token_tx.get("tokenDecimal", "18") or "18")
+    raw_value = token_tx.get("value", "0")
+
+    try:
+        amount = Decimal(raw_value) / Decimal(10**token_decimals)
+    except Exception:
+        amount = Decimal("0")
+
+    aave_pool = _AAVE_V3_POOLS.get(chain_id, "").lower()
+
+    # --- Aave V3 classification ---
+    if aave_pool:
+        # User sends tokens TO Aave Pool → supply
+        if tx_from == wallet_address_lower and tx_to == aave_pool:
+            return {
+                "protocol": "aave",
+                "action_type": "supply",
+                "asset_symbol": token_symbol,
+                "asset_address": token_address,
+                "amount": amount,
+            }
+        # Aave Pool sends tokens TO user → withdraw
+        if tx_from == aave_pool and tx_to == wallet_address_lower:
+            return {
+                "protocol": "aave",
+                "action_type": "withdraw",
+                "asset_symbol": token_symbol,
+                "asset_address": token_address,
+                "amount": amount,
+            }
+
+    # --- Compound V3 classification ---
+    compound_comet = _COMPOUND_V3_COMETS.get(chain_id, "").lower()
+    if compound_comet:
+        # User sends tokens TO Comet → supply
+        if tx_from == wallet_address_lower and tx_to == compound_comet:
+            return {
+                "protocol": "compound",
+                "action_type": "supply",
+                "asset_symbol": token_symbol,
+                "asset_address": token_address,
+                "amount": amount,
+            }
+        # Comet sends tokens TO user → withdraw
+        if tx_from == compound_comet and tx_to == wallet_address_lower:
+            return {
+                "protocol": "compound",
+                "action_type": "withdraw",
+                "asset_symbol": token_symbol,
+                "asset_address": token_address,
+                "amount": amount,
+            }
+
+    # --- Morpho Blue classification ---
+    if tx_from == wallet_address_lower and tx_to == _MORPHO_BLUE_CORE:
+        return {
+            "protocol": "morpho",
+            "action_type": "supply",
+            "asset_symbol": token_symbol,
+            "asset_address": token_address,
+            "amount": amount,
+        }
+    if tx_from == _MORPHO_BLUE_CORE and tx_to == wallet_address_lower:
+        return {
+            "protocol": "morpho",
+            "action_type": "withdraw",
+            "asset_symbol": token_symbol,
+            "asset_address": token_address,
+            "amount": amount,
+        }
+
+    return None
+
 
 @celery_app.task(
     name="etherscan.sync_transactions",
@@ -537,22 +694,26 @@ def _detect_anomaly(
 )
 def sync_etherscan_transactions(self) -> dict[str, Any]:
     """
-    Fetch recent transactions from Etherscan and update pending transaction status.
+    Full blockchain-to-DB reconciliation for all active wallets.
 
-    Intended to run before sync_balances and sync_all_tokens so that pending
-    transactions are confirmed from chain before balance/token checks.
+    For each wallet and each supported chain:
+    1. Fetches normal transactions (txlist) → INSERTs missing into `transactions`
+    2. Fetches ERC-20 token transfers (tokentx) → INSERTs missing into `transactions`
+    3. Classifies lending interactions (Aave/Morpho) → upserts `lending_transactions`
+    4. Updates `lending_positions` for detected supply/withdraw actions
+    5. Updates `earn_positions` for money-market deposits
 
-    For each active wallet and each supported chain, fetches txlist from Etherscan
-    and updates any matching PENDING rows in transactions (status, block_number,
-    confirmed_at, gas_used).
+    Existing rows are updated (pending → confirmed); new rows are inserted.
 
     Returns:
-        Dict with processed, updated, errors counts and duration.
+        Dict with inserted, updated, lending_inserted, errors counts and duration.
     """
 
     async def runner(container):
-        from sqlalchemy import select, update, and_
+        import uuid as uuid_mod
+        from sqlalchemy import select, update, insert, and_
         from sqlalchemy.ext.asyncio import AsyncSession
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
         from app.infrastructure.persistence_sqla.registry import mapping_registry
         from app.infrastructure.persistence_sqla.mappings.wallet import (
             map_wallet_tables,
@@ -560,12 +721,22 @@ def sync_etherscan_transactions(self) -> dict[str, Any]:
         from app.infrastructure.persistence_sqla.mappings.transaction import (
             map_transaction_table,
         )
+        from app.infrastructure.persistence_sqla.mappings.lending_transaction_mapping import (
+            map_lending_transactions_table,
+        )
+        from app.infrastructure.persistence_sqla.mappings.lending_position_mapping import (
+            map_lending_positions_table,
+        )
+        from app.infrastructure.persistence_sqla.mappings.defi_operations import (
+            map_defi_operations_tables,
+        )
         from app.infrastructure.adapters.types import MainAsyncSession
         from app.setup.config.settings import load_settings
 
         start_time = datetime.now(UTC)
         settings = load_settings()
 
+        # ---- Load Etherscan config ----
         etherscan_api_key = ""
         etherscan_base_url = "https://api.etherscan.io/v2/api"
         include_paid_tier_chains = False
@@ -574,7 +745,9 @@ def sync_etherscan_transactions(self) -> dict[str, Any]:
             etherscan_cfg = raw_config.get("etherscan", {})
             if isinstance(etherscan_cfg, dict):
                 etherscan_api_key = etherscan_cfg.get("api_key", "")
-                etherscan_base_url = etherscan_cfg.get("base_url", etherscan_base_url)
+                etherscan_base_url = etherscan_cfg.get(
+                    "base_url", etherscan_base_url
+                )
                 include_paid_tier_chains = etherscan_cfg.get(
                     "include_paid_tier_chains", False
                 )
@@ -582,13 +755,16 @@ def sync_etherscan_transactions(self) -> dict[str, Any]:
             pass
         if not etherscan_api_key:
             try:
-                from app.setup.config.loader import load_full_config, get_current_env
+                from app.setup.config.loader import (
+                    load_full_config,
+                    get_current_env,
+                )
 
                 raw = load_full_config(env=get_current_env())
                 etherscan_cfg = raw.get("etherscan", {})
-                etherscan_api_key = etherscan_cfg.get("api_key", "") or etherscan_cfg.get(
-                    "API_KEY", ""
-                )
+                etherscan_api_key = etherscan_cfg.get(
+                    "api_key", ""
+                ) or etherscan_cfg.get("API_KEY", "")
                 include_paid_tier_chains = etherscan_cfg.get(
                     "include_paid_tier_chains", include_paid_tier_chains
                 )
@@ -600,68 +776,172 @@ def sync_etherscan_transactions(self) -> dict[str, Any]:
             )
             return {"status": "skipped", "reason": "no_api_key"}
 
-        chain_id_map = {
+        # Only chains present in the DB chaintype enum
+        # Current enum: {arbitrum, base, hyperliquid, ethereum}
+        # polygon and optimism are NOT in the enum yet
+        chain_id_map: dict[str, int] = {
             "ethereum": 1,
             "arbitrum": 42161,
-            "polygon": 137,
         }
         if include_paid_tier_chains:
             chain_id_map["base"] = 8453
-            chain_id_map["optimism"] = 10
 
-        processed = 0
-        updated = 0
-        errors = 0
+        stats = {
+            "wallets_processed": 0,
+            "chain_wallet_pairs": 0,
+            "tx_inserted": 0,
+            "tx_updated": 0,
+            "lending_tx_inserted": 0,
+            "lending_pos_upserted": 0,
+            "earn_pos_upserted": 0,
+            "errors": 0,
+        }
 
         try:
             session: AsyncSession = await container.get(MainAsyncSession)
+
+            # Ensure all table mappings are loaded
             map_wallet_tables()
             map_transaction_table()
+            map_lending_transactions_table()
+            map_lending_positions_table()
+            map_defi_operations_tables()  # maps earn_positions + hyperliquid_positions
 
             wallets_table = mapping_registry.metadata.tables.get("wallets")
-            transactions_table = mapping_registry.metadata.tables.get("transactions")
+            transactions_table = mapping_registry.metadata.tables.get(
+                "transactions"
+            )
+            lending_tx_table = mapping_registry.metadata.tables.get(
+                "lending_transactions"
+            )
+            lending_pos_table = mapping_registry.metadata.tables.get(
+                "lending_positions"
+            )
+            earn_pos_table = mapping_registry.metadata.tables.get(
+                "earn_positions"
+            )
+            earn_tx_table = mapping_registry.metadata.tables.get(
+                "earn_transactions"
+            )
+
             if wallets_table is None or transactions_table is None:
                 return {"status": "skipped", "reason": "tables_not_found"}
 
-            stmt = select(
-                wallets_table.c.id,
-                wallets_table.c.address,
-            ).where(
-                and_(
-                    wallets_table.c.status == 1,
-                    wallets_table.c.address.isnot(None),
+            # ---- Fetch all active wallets with user mapping ----
+            # We need user_id (int) for transactions table and
+            # chat_user_id (uuid) for lending tables.
+            users_table = mapping_registry.metadata.tables.get("users")
+            chat_users_table = mapping_registry.metadata.tables.get(
+                "chat_users"
+            )
+
+            wallet_query = (
+                select(
+                    wallets_table.c.id,
+                    wallets_table.c.address,
+                    wallets_table.c.user_id,
                 )
-            ).limit(50)
-            result = await session.execute(stmt)
+                .where(
+                    and_(
+                        wallets_table.c.status == 1,
+                        wallets_table.c.address.isnot(None),
+                    )
+                )
+                .limit(200)
+            )
+            result = await session.execute(wallet_query)
             wallets = result.fetchall()
 
             if not wallets:
-                return {"status": "complete", "processed": 0, "updated": 0, "errors": 0}
+                return {
+                    "status": "complete",
+                    **stats,
+                }
 
+            # Build user_id → chat_user_id mapping for lending tables
+            user_ids = list({w.user_id for w in wallets})
+            chat_user_map: dict[int, str] = {}  # user_id(int) → chat_user_id(uuid str)
+            if (
+                users_table is not None
+                and chat_users_table is not None
+                and lending_tx_table is not None
+            ):
+                try:
+                    mapping_query = (
+                        select(
+                            users_table.c.id,
+                            chat_users_table.c.id.label("chat_user_id"),
+                        )
+                        .join(
+                            chat_users_table,
+                            users_table.c.email == chat_users_table.c.email,
+                        )
+                        .where(users_table.c.id.in_(user_ids))
+                    )
+                    map_result = await session.execute(mapping_query)
+                    for row in map_result.fetchall():
+                        chat_user_map[row.id] = str(row.chat_user_id)
+                except Exception as e:
+                    logger.debug("Could not build chat_user mapping: %s", e)
+
+            # ---- Collect existing tx hashes to avoid duplicate inserts ----
+            existing_hashes_query = select(
+                transactions_table.c.tx_hash
+            ).where(
+                transactions_table.c.tx_hash.isnot(None)
+            )
+            existing_result = await session.execute(existing_hashes_query)
+            existing_tx_hashes: set[str] = {
+                row.tx_hash for row in existing_result.fetchall()
+            }
+
+            # Existing lending tx hashes
+            existing_lending_hashes: set[str] = set()
+            if lending_tx_table is not None:
+                try:
+                    lt_query = select(
+                        lending_tx_table.c.transaction_hash
+                    )
+                    lt_result = await session.execute(lt_query)
+                    existing_lending_hashes = {
+                        row.transaction_hash for row in lt_result.fetchall()
+                    }
+                except Exception:
+                    pass
+
+            # ---- Process each wallet ----
             async with EtherscanClient(
                 api_key=etherscan_api_key,
                 base_url=etherscan_base_url,
                 max_retries=3,
                 retry_backoff_base=2.0,
             ) as client:
-                for wallet_id, wallet_address in wallets:
-                    for _chain_name, chain_id in chain_id_map.items():
-                        processed += 1
+                for wallet_row in wallets:
+                    wallet_id = wallet_row.id
+                    wallet_address = wallet_row.address
+                    user_id = wallet_row.user_id
+                    wallet_lower = wallet_address.lower()
+                    chat_user_id = chat_user_map.get(user_id)
+                    stats["wallets_processed"] += 1
+
+                    for chain_name, chain_id in chain_id_map.items():
+                        stats["chain_wallet_pairs"] += 1
+                        # ================================================
+                        # STEP 1: Normal transactions (txlist)
+                        # ================================================
                         try:
                             tx_list = await client.get_txlist(
                                 address=wallet_address,
                                 chain_id=chain_id,
-                                offset=30,
+                                offset=50,
                             )
                             for tx in tx_list:
                                 tx_hash = tx.get("hash")
                                 if not tx_hash:
                                     continue
                                 block_num = tx.get("blockNumber")
-                                if not block_num:
-                                    continue
                                 is_error = tx.get("isError", "0") == "1"
-                                status_new = 2 if is_error else 1
+                                tx_status = 2 if is_error else 1
                                 ts = tx.get("timeStamp")
                                 confirmed_at = (
                                     datetime.fromtimestamp(int(ts), tz=UTC)
@@ -669,48 +949,698 @@ def sync_etherscan_transactions(self) -> dict[str, Any]:
                                     else None
                                 )
                                 gas_used_raw = tx.get("gasUsed")
-                                gas_used = int(gas_used_raw) if gas_used_raw else None
+                                gas_used = (
+                                    int(gas_used_raw) if gas_used_raw else None
+                                )
+                                gas_price_raw = tx.get("gasPrice")
+                                gas_price = (
+                                    int(gas_price_raw) if gas_price_raw else None
+                                )
 
-                                update_stmt = (
-                                    update(transactions_table)
-                                    .where(
-                                        and_(
-                                            transactions_table.c.wallet_id == wallet_id,
-                                            transactions_table.c.tx_hash == tx_hash,
-                                            transactions_table.c.status == 0,
+                                if tx_hash in existing_tx_hashes:
+                                    # Update pending → confirmed
+                                    upd = (
+                                        update(transactions_table)
+                                        .where(
+                                            and_(
+                                                transactions_table.c.tx_hash
+                                                == tx_hash,
+                                                transactions_table.c.status == 0,
+                                            )
+                                        )
+                                        .values(
+                                            status=tx_status,
+                                            block_number=(
+                                                int(block_num)
+                                                if block_num
+                                                else None
+                                            ),
+                                            confirmed_at=confirmed_at,
+                                            gas_used=gas_used,
+                                            gas_price=gas_price,
                                         )
                                     )
+                                    res = await session.execute(upd)
+                                    if res.rowcount and res.rowcount > 0:
+                                        stats["tx_updated"] += 1
+                                    continue
+
+                                # INSERT new transaction
+                                tx_from = (tx.get("from") or "").lower()
+                                tx_to = tx.get("to") or ""
+                                value_wei = tx.get("value", "0")
+                                try:
+                                    value_eth = Decimal(value_wei) / Decimal(
+                                        10**18
+                                    )
+                                except Exception:
+                                    value_eth = Decimal("0")
+
+                                # Determine type: 5=SEND if from us, 6=RECEIVE
+                                is_outgoing = tx_from == wallet_lower
+                                tx_type = 5 if is_outgoing else 6
+
+                                ins_stmt = (
+                                    pg_insert(transactions_table)
                                     .values(
-                                        status=status_new,
-                                        block_number=int(block_num),
+                                        user_id=user_id,
+                                        wallet_id=wallet_id,
+                                        to_address=tx_to[:42] if tx_to else None,
+                                        type=tx_type,
+                                        chain=chain_name,
+                                        asset_in="ETH" if is_outgoing else None,
+                                        amount_in=(
+                                            value_eth if is_outgoing else None
+                                        ),
+                                        asset_out=(
+                                            "ETH" if not is_outgoing else None
+                                        ),
+                                        amount_out=(
+                                            value_eth
+                                            if not is_outgoing
+                                            else None
+                                        ),
+                                        tx_hash=tx_hash,
+                                        status=tx_status,
+                                        block_number=(
+                                            int(block_num)
+                                            if block_num
+                                            else None
+                                        ),
                                         confirmed_at=confirmed_at,
+                                        created_at=confirmed_at or datetime.now(UTC),
                                         gas_used=gas_used,
+                                        gas_price=gas_price,
+                                        tx_metadata={
+                                            "source": "etherscan_sync",
+                                            "function": tx.get(
+                                                "functionName", ""
+                                            )[:100],
+                                        },
+                                    )
+                                    .on_conflict_do_nothing(
+                                        index_elements=["tx_hash"]
                                     )
                                 )
-                                res = await session.execute(update_stmt)
+                                res = await session.execute(ins_stmt)
                                 if res.rowcount and res.rowcount > 0:
-                                    updated += 1
+                                    stats["tx_inserted"] += 1
+                                existing_tx_hashes.add(tx_hash)
                         except Exception as e:
-                            errors += 1
-                            logger.debug(
-                                "Etherscan txlist failed for wallet %s chain %s: %s",
+                            stats["errors"] += 1
+                            logger.warning(
+                                "txlist failed wallet=%s chain=%s: %s",
                                 wallet_id,
                                 chain_id,
                                 e,
                             )
 
-            await session.commit()
+                        # ================================================
+                        # STEP 2: ERC-20 token transfers (tokentx)
+                        # ================================================
+                        try:
+                            token_txs = await client.get_tokentx(
+                                address=wallet_address,
+                                chain_id=chain_id,
+                                offset=50,
+                            )
+                            for ttx in token_txs:
+                                tx_hash = ttx.get("hash")
+                                if not tx_hash:
+                                    continue
+
+                                token_symbol = ttx.get("tokenSymbol", "?")
+                                token_decimals = int(
+                                    ttx.get("tokenDecimal", "18") or "18"
+                                )
+                                raw_value = ttx.get("value", "0")
+                                try:
+                                    token_amount = Decimal(raw_value) / Decimal(
+                                        10**token_decimals
+                                    )
+                                except Exception:
+                                    token_amount = Decimal("0")
+
+                                ts = ttx.get("timeStamp")
+                                confirmed_at = (
+                                    datetime.fromtimestamp(int(ts), tz=UTC)
+                                    if ts
+                                    else None
+                                )
+                                block_num = ttx.get("blockNumber")
+                                gas_used_raw = ttx.get("gasUsed")
+                                gas_used = (
+                                    int(gas_used_raw) if gas_used_raw else None
+                                )
+                                gas_price_raw = ttx.get("gasPrice")
+                                gas_price = (
+                                    int(gas_price_raw) if gas_price_raw else None
+                                )
+
+                                ttx_from = (ttx.get("from") or "").lower()
+                                is_outgoing = ttx_from == wallet_lower
+
+                                # Classify lending interaction
+                                classification = _classify_token_transfer(
+                                    ttx, wallet_lower, chain_id
+                                )
+
+                                # Determine tx type for transactions table
+                                if classification:
+                                    tx_type = 1  # FUND (lending interaction)
+                                else:
+                                    tx_type = 0 if is_outgoing else 6  # SWAP or RECEIVE
+
+                                # --- Insert into transactions table ---
+                                if tx_hash not in existing_tx_hashes:
+                                    token_ins = (
+                                        pg_insert(transactions_table)
+                                        .values(
+                                            user_id=user_id,
+                                            wallet_id=wallet_id,
+                                            to_address=(
+                                                ttx.get("to", "")[:42]
+                                                or None
+                                            ),
+                                            type=tx_type,
+                                            chain=chain_name,
+                                            asset_in=(
+                                                token_symbol[:20]
+                                                if is_outgoing
+                                                else None
+                                            ),
+                                            amount_in=(
+                                                token_amount
+                                                if is_outgoing
+                                                else None
+                                            ),
+                                            asset_out=(
+                                                token_symbol[:20]
+                                                if not is_outgoing
+                                                else None
+                                            ),
+                                            amount_out=(
+                                                token_amount
+                                                if not is_outgoing
+                                                else None
+                                            ),
+                                            tx_hash=tx_hash,
+                                            status=1,  # confirmed on-chain
+                                            block_number=(
+                                                int(block_num)
+                                                if block_num
+                                                else None
+                                            ),
+                                            confirmed_at=confirmed_at,
+                                            created_at=(
+                                                confirmed_at
+                                                or datetime.now(UTC)
+                                            ),
+                                            gas_used=gas_used,
+                                            gas_price=gas_price,
+                                            dex_aggregator=(
+                                                classification["protocol"]
+                                                if classification
+                                                else None
+                                            ),
+                                            tx_metadata={
+                                                "source": "etherscan_sync",
+                                                "token_transfer": True,
+                                                "token_address": ttx.get(
+                                                    "contractAddress", ""
+                                                ),
+                                                "protocol": (
+                                                    classification["protocol"]
+                                                    if classification
+                                                    else None
+                                                ),
+                                                "action": (
+                                                    classification["action_type"]
+                                                    if classification
+                                                    else None
+                                                ),
+                                            },
+                                        )
+                                        .on_conflict_do_nothing(
+                                            index_elements=["tx_hash"]
+                                        )
+                                    )
+                                    res = await session.execute(token_ins)
+                                    if res.rowcount and res.rowcount > 0:
+                                        stats["tx_inserted"] += 1
+                                    existing_tx_hashes.add(tx_hash)
+
+                                # --- Insert lending_transaction if classified ---
+                                if (
+                                    classification
+                                    and lending_tx_table is not None
+                                    and chat_user_id
+                                    and tx_hash not in existing_lending_hashes
+                                ):
+                                    lending_ins = (
+                                        pg_insert(lending_tx_table)
+                                        .values(
+                                            id=uuid_mod.uuid4(),
+                                            user_id=chat_user_id,
+                                            protocol=classification[
+                                                "protocol"
+                                            ],
+                                            chain=chain_name,
+                                            action_type=classification[
+                                                "action_type"
+                                            ],
+                                            asset_address=classification[
+                                                "asset_address"
+                                            ][:42],
+                                            asset_symbol=classification[
+                                                "asset_symbol"
+                                            ][:20],
+                                            amount=classification["amount"],
+                                            transaction_hash=tx_hash,
+                                            status="confirmed",
+                                            confirmed_at=confirmed_at,
+                                            wallet_address=wallet_address[:42],
+                                            metadata={
+                                                "source": "etherscan_sync",
+                                                "block_number": (
+                                                    int(block_num)
+                                                    if block_num
+                                                    else None
+                                                ),
+                                            },
+                                        )
+                                        .on_conflict_do_nothing(
+                                            index_elements=[
+                                                "transaction_hash"
+                                            ]
+                                        )
+                                    )
+                                    res = await session.execute(lending_ins)
+                                    if res.rowcount and res.rowcount > 0:
+                                        stats["lending_tx_inserted"] += 1
+                                    existing_lending_hashes.add(tx_hash)
+
+                                # --- Upsert lending_position for supply ---
+                                if (
+                                    classification
+                                    and classification["action_type"] == "supply"
+                                    and lending_pos_table is not None
+                                    and chat_user_id
+                                ):
+                                    try:
+                                        # Check if position exists
+                                        pos_query = select(
+                                            lending_pos_table.c.id,
+                                            lending_pos_table.c.amount,
+                                        ).where(
+                                            and_(
+                                                lending_pos_table.c.user_id
+                                                == chat_user_id,
+                                                lending_pos_table.c.protocol
+                                                == classification["protocol"],
+                                                lending_pos_table.c.chain
+                                                == chain_name,
+                                                lending_pos_table.c.asset_symbol
+                                                == classification[
+                                                    "asset_symbol"
+                                                ][:20],
+                                                lending_pos_table.c.position_type
+                                                == "supply",
+                                                lending_pos_table.c.status
+                                                == "active",
+                                            )
+                                        )
+                                        pos_result = await session.execute(
+                                            pos_query
+                                        )
+                                        existing_pos = pos_result.fetchone()
+
+                                        if existing_pos:
+                                            new_amount = (
+                                                existing_pos.amount
+                                                + classification["amount"]
+                                            )
+                                            await session.execute(
+                                                update(lending_pos_table)
+                                                .where(
+                                                    lending_pos_table.c.id
+                                                    == existing_pos.id
+                                                )
+                                                .values(
+                                                    amount=new_amount,
+                                                    updated_at=datetime.now(UTC),
+                                                )
+                                            )
+                                        else:
+                                            await session.execute(
+                                                insert(lending_pos_table).values(
+                                                    id=uuid_mod.uuid4(),
+                                                    user_id=chat_user_id,
+                                                    protocol=classification[
+                                                        "protocol"
+                                                    ],
+                                                    chain=chain_name,
+                                                    position_type="supply",
+                                                    asset_address=classification[
+                                                        "asset_address"
+                                                    ][:42],
+                                                    asset_symbol=classification[
+                                                        "asset_symbol"
+                                                    ][:20],
+                                                    amount=classification[
+                                                        "amount"
+                                                    ],
+                                                    amount_usd=Decimal("0"),
+                                                    apy=Decimal("0"),
+                                                    status="active",
+                                                    created_at=datetime.now(UTC),
+                                                    updated_at=datetime.now(UTC),
+                                                )
+                                            )
+                                        stats["lending_pos_upserted"] += 1
+                                    except Exception as e:
+                                        logger.debug(
+                                            "Lending pos upsert failed: %s", e
+                                        )
+
+                                # --- Upsert earn_position for money market ---
+                                # Handles morpho, aave, and compound
+                                if (
+                                    classification
+                                    and classification["action_type"] == "supply"
+                                    and earn_pos_table is not None
+                                ):
+                                    cls_proto = classification["protocol"]
+                                    try:
+                                        ep_query = select(
+                                            earn_pos_table.c.id,
+                                            earn_pos_table.c.amount_deposited,
+                                        ).where(
+                                            and_(
+                                                earn_pos_table.c.user_id
+                                                == user_id,
+                                                earn_pos_table.c.wallet_id
+                                                == wallet_id,
+                                                earn_pos_table.c.protocol
+                                                == cls_proto,
+                                                earn_pos_table.c.asset
+                                                == classification[
+                                                    "asset_symbol"
+                                                ][:20],
+                                                earn_pos_table.c.status
+                                                == "active",
+                                            )
+                                        )
+                                        ep_result = await session.execute(
+                                            ep_query
+                                        )
+                                        existing_ep = ep_result.fetchone()
+
+                                        if existing_ep:
+                                            new_deposited = (
+                                                existing_ep.amount_deposited
+                                                + classification["amount"]
+                                            )
+                                            await session.execute(
+                                                update(earn_pos_table)
+                                                .where(
+                                                    earn_pos_table.c.id
+                                                    == existing_ep.id
+                                                )
+                                                .values(
+                                                    amount_deposited=new_deposited,
+                                                    current_value=new_deposited,
+                                                )
+                                            )
+                                        else:
+                                            await session.execute(
+                                                insert(earn_pos_table).values(
+                                                    user_id=user_id,
+                                                    wallet_id=wallet_id,
+                                                    chain=chain_name,
+                                                    protocol=cls_proto,
+                                                    asset=classification[
+                                                        "asset_symbol"
+                                                    ][:20],
+                                                    amount_deposited=classification[
+                                                        "amount"
+                                                    ],
+                                                    current_value=classification[
+                                                        "amount"
+                                                    ],
+                                                    status="active",
+                                                    deposit_tx_hash=tx_hash,
+                                                    deposited_at=confirmed_at,
+                                                    wallet_address=wallet_address[:42],
+                                                )
+                                            )
+                                        stats["earn_pos_upserted"] += 1
+                                    except Exception as e:
+                                        logger.debug(
+                                            "Earn pos upsert failed: %s", e
+                                        )
+
+                                # --- Insert earn_transaction for aave/compound ---
+                                if (
+                                    classification
+                                    and classification["protocol"]
+                                    in ("aave", "compound")
+                                    and earn_tx_table is not None
+                                ):
+                                    try:
+                                        import uuid as _uuid
+
+                                        await session.execute(
+                                            pg_insert(earn_tx_table)
+                                            .values(
+                                                id=_uuid.uuid4(),
+                                                user_id=(
+                                                    chat_user_id
+                                                    or str(user_id)
+                                                ),
+                                                protocol=classification[
+                                                    "protocol"
+                                                ],
+                                                chain=chain_name,
+                                                action_type=classification[
+                                                    "action_type"
+                                                ],
+                                                asset_address=classification[
+                                                    "asset_address"
+                                                ][:42],
+                                                asset_symbol=classification[
+                                                    "asset_symbol"
+                                                ][:20],
+                                                amount=classification[
+                                                    "amount"
+                                                ],
+                                                transaction_hash=tx_hash,
+                                                status="confirmed",
+                                                wallet_address=wallet_address[:42],
+                                                confirmed_at=confirmed_at,
+                                            )
+                                            .on_conflict_do_nothing(
+                                                index_elements=[
+                                                    "transaction_hash"
+                                                ]
+                                            )
+                                        )
+                                        stats.setdefault(
+                                            "earn_tx_inserted", 0
+                                        )
+                                        stats["earn_tx_inserted"] += 1
+                                    except Exception as e:
+                                        logger.debug(
+                                            "Earn tx insert failed: %s",
+                                            e,
+                                        )
+
+                                # --- Handle withdraw: reduce positions ---
+                                if (
+                                    classification
+                                    and classification["action_type"]
+                                    == "withdraw"
+                                ):
+                                    # Reduce lending_position
+                                    if (
+                                        lending_pos_table is not None
+                                        and chat_user_id
+                                    ):
+                                        try:
+                                            pos_query = select(
+                                                lending_pos_table.c.id,
+                                                lending_pos_table.c.amount,
+                                            ).where(
+                                                and_(
+                                                    lending_pos_table.c.user_id
+                                                    == chat_user_id,
+                                                    lending_pos_table.c.protocol
+                                                    == classification[
+                                                        "protocol"
+                                                    ],
+                                                    lending_pos_table.c.chain
+                                                    == chain_name,
+                                                    lending_pos_table.c.asset_symbol
+                                                    == classification[
+                                                        "asset_symbol"
+                                                    ][:20],
+                                                    lending_pos_table.c.position_type
+                                                    == "supply",
+                                                    lending_pos_table.c.status
+                                                    == "active",
+                                                )
+                                            )
+                                            pos_result = (
+                                                await session.execute(
+                                                    pos_query
+                                                )
+                                            )
+                                            existing_pos = (
+                                                pos_result.fetchone()
+                                            )
+                                            if existing_pos:
+                                                new_amount = max(
+                                                    Decimal("0"),
+                                                    existing_pos.amount
+                                                    - classification["amount"],
+                                                )
+                                                new_status = (
+                                                    "closed"
+                                                    if new_amount == 0
+                                                    else "active"
+                                                )
+                                                await session.execute(
+                                                    update(lending_pos_table)
+                                                    .where(
+                                                        lending_pos_table.c.id
+                                                        == existing_pos.id
+                                                    )
+                                                    .values(
+                                                        amount=new_amount,
+                                                        status=new_status,
+                                                        updated_at=datetime.now(
+                                                            UTC
+                                                        ),
+                                                    )
+                                                )
+                                                stats[
+                                                    "lending_pos_upserted"
+                                                ] += 1
+                                        except Exception as e:
+                                            logger.debug(
+                                                "Withdraw pos update: %s", e
+                                            )
+
+                                    # Reduce earn_position (all protocols)
+                                    if earn_pos_table is not None:
+                                        try:
+                                            ep_query = select(
+                                                earn_pos_table.c.id,
+                                                earn_pos_table.c.amount_deposited,
+                                            ).where(
+                                                and_(
+                                                    earn_pos_table.c.user_id
+                                                    == user_id,
+                                                    earn_pos_table.c.wallet_id
+                                                    == wallet_id,
+                                                    earn_pos_table.c.protocol
+                                                    == classification[
+                                                        "protocol"
+                                                    ],
+                                                    earn_pos_table.c.asset
+                                                    == classification[
+                                                        "asset_symbol"
+                                                    ][:20],
+                                                    earn_pos_table.c.status
+                                                    == "active",
+                                                )
+                                            )
+                                            ep_result = (
+                                                await session.execute(
+                                                    ep_query
+                                                )
+                                            )
+                                            existing_ep = (
+                                                ep_result.fetchone()
+                                            )
+                                            if existing_ep:
+                                                new_dep = max(
+                                                    Decimal("0"),
+                                                    existing_ep.amount_deposited
+                                                    - classification["amount"],
+                                                )
+                                                new_status = (
+                                                    "withdrawn"
+                                                    if new_dep == 0
+                                                    else "active"
+                                                )
+                                                await session.execute(
+                                                    update(earn_pos_table)
+                                                    .where(
+                                                        earn_pos_table.c.id
+                                                        == existing_ep.id
+                                                    )
+                                                    .values(
+                                                        amount_deposited=new_dep,
+                                                        current_value=new_dep,
+                                                        status=new_status,
+                                                        withdrawn_at=(
+                                                            confirmed_at
+                                                            if new_dep == 0
+                                                            else None
+                                                        ),
+                                                        withdraw_tx_hash=(
+                                                            tx_hash
+                                                            if new_dep == 0
+                                                            else None
+                                                        ),
+                                                    )
+                                                )
+                                                stats[
+                                                    "earn_pos_upserted"
+                                                ] += 1
+                                        except Exception as e:
+                                            logger.debug(
+                                                "Withdraw earn update: %s",
+                                                e,
+                                            )
+
+                        except Exception as e:
+                            stats["errors"] += 1
+                            logger.warning(
+                                "tokentx failed wallet=%s chain=%s: %s",
+                                wallet_id,
+                                chain_id,
+                                e,
+                            )
+
+                    # Commit after each wallet to avoid cascading failures
+                    try:
+                        await session.commit()
+                    except Exception as commit_err:
+                        logger.warning(
+                            "Commit failed for wallet %s, rolling back: %s",
+                            wallet_id,
+                            commit_err,
+                        )
+                        await session.rollback()
+                        stats["errors"] += 1
             duration = (datetime.now(UTC) - start_time).total_seconds()
+            logger.info(
+                "Transaction sync complete: %s (%.1fs)",
+                stats,
+                duration,
+            )
             return {
                 "status": "complete",
-                "processed": processed,
-                "updated": updated,
-                "errors": errors,
+                **stats,
                 "duration_seconds": round(duration, 2),
                 "timestamp": datetime.now(UTC).isoformat(),
             }
         except Exception as e:
-            logger.error("Etherscan transaction sync failed: %s", e, exc_info=True)
+            logger.error(
+                "Etherscan transaction sync failed: %s", e, exc_info=True
+            )
             raise
 
     return asyncio.run(_run_task(runner))
