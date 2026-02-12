@@ -405,6 +405,28 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
         # Store network info
         state.data["network"] = validation["network"]
 
+        # Query token-specific balance for accurate display
+        token = state.data.get("token", "ETH")
+        if user_context and user_context.wallet_address:
+            try:
+                from .swap_workflow_agent import _get_token_balances_for_wallet
+
+                chain_balances = await _get_token_balances_for_wallet(
+                    user_context.wallet_address
+                )
+                token_balance = 0.0
+                token_usd = 0.0
+                for _chain, chain_data in chain_balances.items():
+                    tokens = chain_data.get("tokens", {})
+                    if token.upper() in tokens:
+                        t_info = tokens[token.upper()]
+                        token_balance += t_info.get("balance", 0.0)
+                        token_usd += t_info.get("usd", 0.0)
+                state.data["token_balance"] = token_balance
+                state.data["token_balance_usd"] = token_usd
+            except Exception as e:
+                logger.warning(f"[TransferWorkflow] Failed to query token balance: {e}")
+
         # Check user balance and prepare recommendation if insufficient
         funding_recommendation = ""
         if user_context.needs_funding_recommendation:
@@ -1214,12 +1236,14 @@ Por favor cole um endereço de carteira válido.""",
         # Build safety section
         safety_section = self._format_safety_section(safety, language)
 
-        # Build user balance section
+        # Build user balance section (use token-specific balance if available)
         user_balance_section = self._build_transfer_user_balance_section(
             user_context=user_context,
             token=token,
             amount=amount,
             language=language,
+            token_balance=data.get("token_balance"),
+            token_balance_usd=data.get("token_balance_usd"),
         )
 
         msgs = {
@@ -1303,12 +1327,25 @@ Por favor cole um endereço de carteira válido.""",
         token: str,
         amount: str,
         language: str,
+        token_balance: float | None = None,
+        token_balance_usd: float | None = None,
     ) -> str:
-        """Build user balance context section for transfer."""
+        """Build user balance context section for transfer.
+
+        Uses token-specific balance (from state.data) when available,
+        falls back to total_balance_usd from user_context.
+        """
         if not user_context or not user_context.is_authenticated:
             return ""
 
-        balance = user_context.total_balance_usd
+        # Prefer token-specific balance over total portfolio
+        if token_balance_usd is not None:
+            balance = token_balance_usd
+            balance_label = f"{token_balance:,.6g} {token} (~${token_balance_usd:,.2f})"
+        else:
+            balance = user_context.total_balance_usd
+            balance_label = f"~${balance:,.2f}"
+
         portfolio_state = user_context.portfolio_state
 
         try:
@@ -1319,24 +1356,24 @@ Por favor cole um endereço de carteira válido.""",
         # Check if user has enough balance
         if portfolio_state == "empty" or balance < 1:
             msgs = {
-                "en": f"💰 **Your Balance:** $0.00\n\n⚠️ You'll need {token} first:\n• Say `buy crypto` to purchase USDC with card\n• Or transfer {token} from another wallet",
-                "es": f"💰 **Tu Saldo:** $0.00\n\n⚠️ Necesitas {token} primero:\n• Di `comprar cripto` para comprar USDC\n• O transfiere {token} desde otra billetera",
-                "pt": f"💰 **Seu Saldo:** $0.00\n\n⚠️ Você precisa de {token} primeiro:\n• Diga `comprar cripto` para comprar USDC\n• Ou transfira {token} de outra carteira",
-                "zh": f"💰 **您的余额：** $0.00\n\n⚠️ 您需要先获取 {token}：\n• 说 `买加密货币` 购买 USDC\n• 或从其他钱包转入 {token}",
+                "en": f"💰 **Your {token} Balance:** $0.00\n\n⚠️ You'll need {token} first:\n• Say `buy crypto` to purchase USDC with card\n• Or transfer {token} from another wallet",
+                "es": f"💰 **Tu Saldo de {token}:** $0.00\n\n⚠️ Necesitas {token} primero:\n• Di `comprar cripto` para comprar USDC\n• O transfiere {token} desde otra billetera",
+                "pt": f"💰 **Seu Saldo de {token}:** $0.00\n\n⚠️ Você precisa de {token} primeiro:\n• Diga `comprar cripto` para comprar USDC\n• Ou transfira {token} de outra carteira",
+                "zh": f"💰 **您的 {token} 余额：** $0.00\n\n⚠️ 您需要先获取 {token}：\n• 说 `买加密货币` 购买 USDC\n• 或从其他钱包转入 {token}",
             }
         elif balance < transfer_amount:
             msgs = {
-                "en": f"💰 **Your Balance:** ~${balance:,.2f}\n\n⚠️ Transfer amount exceeds your balance.\n💡 Consider a smaller amount or say `buy crypto` to get more funds.",
-                "es": f"💰 **Tu Saldo:** ~${balance:,.2f}\n\n⚠️ El monto de la transferencia excede tu saldo.\n💡 Considera un monto menor o di `comprar cripto` para obtener más fondos.",
-                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f}\n\n⚠️ O valor da transferência excede seu saldo.\n💡 Considere um valor menor ou diga `comprar cripto` para obter mais fundos.",
-                "zh": f"💰 **您的余额：** ~${balance:,.2f}\n\n⚠️ 转账金额超过您的余额。\n💡 考虑较小的金额或说 `买加密货币` 获取更多资金。",
+                "en": f"💰 **Your {token} Balance:** {balance_label}\n\n⚠️ Transfer amount exceeds your {token} balance.\n💡 Consider a smaller amount or say `buy crypto` to get more funds.",
+                "es": f"💰 **Tu Saldo de {token}:** {balance_label}\n\n⚠️ El monto excede tu saldo de {token}.\n💡 Considera un monto menor o di `comprar cripto`.",
+                "pt": f"💰 **Seu Saldo de {token}:** {balance_label}\n\n⚠️ O valor excede seu saldo de {token}.\n💡 Considere um valor menor ou diga `comprar cripto`.",
+                "zh": f"💰 **您的 {token} 余额：** {balance_label}\n\n⚠️ 转账金额超过您的 {token} 余额。\n💡 考虑较小的金额或说 `买加密货币`。",
             }
         else:
             msgs = {
-                "en": f"💰 **Your Balance:** ~${balance:,.2f} ✅",
-                "es": f"💰 **Tu Saldo:** ~${balance:,.2f} ✅",
-                "pt": f"💰 **Seu Saldo:** ~${balance:,.2f} ✅",
-                "zh": f"💰 **您的余额：** ~${balance:,.2f} ✅",
+                "en": f"💰 **Your {token} Balance:** {balance_label} ✅",
+                "es": f"💰 **Tu Saldo de {token}:** {balance_label} ✅",
+                "pt": f"💰 **Seu Saldo de {token}:** {balance_label} ✅",
+                "zh": f"💰 **您的 {token} 余额：** {balance_label} ✅",
             }
 
         return msgs.get(language, msgs["en"])
