@@ -275,6 +275,14 @@ class ExecuteActionData(BaseModel):
         default=None, description="Destination token contract address"
     )
 
+    # Hyperliquid spot market indices (so frontend doesn't need hardcoded SPOT_ASSET_IDS)
+    from_token_index: Optional[int] = Field(
+        default=None, description="Hyperliquid spot market index for source token"
+    )
+    to_token_index: Optional[int] = Field(
+        default=None, description="Hyperliquid spot market index for destination token"
+    )
+
     # Market data fields
     from_token_price_usd: Optional[str] = Field(
         default=None, description="Source token price in USD"

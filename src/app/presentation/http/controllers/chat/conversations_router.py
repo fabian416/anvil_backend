@@ -248,6 +248,14 @@ class ExecuteActionData(BaseModel):
     )
     total_steps: int | None = Field(default=None, description="Total number of steps")
 
+    # Hyperliquid spot market indices (so frontend doesn't need hardcoded SPOT_ASSET_IDS)
+    from_token_index: int | None = Field(
+        default=None, description="Hyperliquid spot market index for source token"
+    )
+    to_token_index: int | None = Field(
+        default=None, description="Hyperliquid spot market index for destination token"
+    )
+
     # Hyperliquid balance info
     hyperliquid_balances: dict[str, Any] | None = Field(
         default=None, description="User's Hyperliquid Perps/Spot balances"

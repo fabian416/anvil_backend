@@ -480,6 +480,8 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         # _is_hyperliquid_swap() so routing covers all 263+ tokens,
         # not just the hardcoded HYPERLIQUID_SPOT_TOKENS subset.
         self._cached_tradeable_spot: set[str] | None = None
+        # Full SpotMeta list — populated alongside _cached_tradeable_spot.
+        self._cached_spot_meta: list | None = None
 
     @property
     def agent_type(self) -> AgentType:
@@ -1945,9 +1947,14 @@ Aqui está a cotação do swap:
             if not needs_deposit:
                 current_step = 1
 
+        # Resolve Hyperliquid spot market indices for from/to tokens.
+        # The frontend SDK needs these to place spot orders.
+        from_token_index = await self._get_spot_token_index(from_token)
+        to_token_index = await self._get_spot_token_index(to_token)
+
         # Step 3: Execute Swap (always needed)
         swap_step_num = len(steps) + 1
-        steps.append({
+        swap_step: dict[str, Any] = {
             "step": swap_step_num,
             "action": "spot_swap",
             "status": "pending",
@@ -1958,7 +1965,14 @@ Aqui está a cotação do swap:
             "expected_output": output_amount,
             "min_output": min_amount_out,
             "estimated_time": "instant",
-        })
+        }
+        # Include spot token indices so the frontend doesn't need a
+        # hardcoded SPOT_ASSET_IDS mapping — works for any new token.
+        if from_token_index is not None:
+            swap_step["from_token_index"] = from_token_index
+        if to_token_index is not None:
+            swap_step["to_token_index"] = to_token_index
+        steps.append(swap_step)
 
         # If no deposit/transfer needed, start at swap step
         if not needs_deposit and not needs_transfer:
@@ -1984,6 +1998,10 @@ Aqui está a cotação do swap:
             # Token addresses are null for Hyperliquid (not EVM)
             "from_token_address": None,
             "to_token_address": None,
+            # Hyperliquid spot market indices — frontend uses these to
+            # place orders without needing a hardcoded SPOT_ASSET_IDS map.
+            "from_token_index": from_token_index,
+            "to_token_index": to_token_index,
             # Multi-step execution data
             "steps": steps,
             "current_step": current_step,
@@ -4315,6 +4333,7 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
             return set()
         try:
             meta = await self._hyperliquid.get_spot_meta()
+            self._cached_spot_meta = meta
             self._cached_tradeable_spot = {m.base_token.upper() for m in meta}
             return self._cached_tradeable_spot
         except Exception as e:
@@ -4322,6 +4341,24 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
                 "[SwapWorkflow] Failed to fetch tradeable spot tokens: %s", e
             )
             return set()
+
+    async def _get_spot_token_index(self, token: str) -> int | None:
+        """
+        Return the Hyperliquid spot market index for a given base token.
+
+        The index is required by the Hyperliquid SDK to place spot orders.
+        Returns None if the token has no active spot market.
+        """
+        # Ensure cache is populated
+        if self._cached_spot_meta is None:
+            await self._get_tradeable_spot_tokens()
+        if not self._cached_spot_meta:
+            return None
+        token_upper = token.upper()
+        for m in self._cached_spot_meta:
+            if m.base_token.upper() == token_upper:
+                return m.index
+        return None
 
     async def _fetch_top_sentiment_tokens(
         self,
