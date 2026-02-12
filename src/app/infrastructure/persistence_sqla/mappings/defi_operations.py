@@ -144,6 +144,23 @@ def map_defi_operations_tables() -> None:
             deposit_tx_hash = mapped_column(String(66), nullable=True)
             withdraw_tx_hash = mapped_column(String(66), nullable=True)
 
+            # Money Market additions (Aave V3 / Compound V3)
+            pool_address = mapped_column(
+                String(42),
+                nullable=True,
+                comment="Aave pool or Compound comet address",
+            )
+            wallet_address = mapped_column(
+                String(42),
+                nullable=True,
+                comment="User wallet address",
+            )
+            last_synced_at = mapped_column(
+                DateTime(timezone=True),
+                nullable=True,
+                comment="Last on-chain position sync",
+            )
+
             deposited_at = mapped_column(
                 DateTime(timezone=True),
                 server_default=sa.text("CURRENT_TIMESTAMP"),

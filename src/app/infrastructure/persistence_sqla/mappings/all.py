@@ -148,6 +148,9 @@ from app.infrastructure.persistence_sqla.mappings.swap_position_mapping import (
 from app.infrastructure.persistence_sqla.mappings.hl_spot_token_mapping import (
     map_hl_spot_tokens_table,
 )
+from app.infrastructure.persistence_sqla.mappings.earn_transaction_mapping import (
+    map_earn_transactions_table,
+)
 
 
 def map_tables() -> None:
@@ -210,3 +213,5 @@ def map_tables() -> None:
     map_user_sync_schedule_table()
     map_swap_positions_table()
     map_hl_spot_tokens_table()
+    # Earn Transactions (Aave V3 / Compound V3)
+    map_earn_transactions_table()

@@ -41,6 +41,28 @@ class EarnPositionStatus(str, enum.Enum):
     FAILED = "failed"
 
 
+class EarnTransactionProtocol(str, enum.Enum):
+    """Earn transaction protocol"""
+
+    AAVE = "aave"
+    COMPOUND = "compound"
+
+
+class EarnTransactionAction(str, enum.Enum):
+    """Earn transaction action type"""
+
+    SUPPLY = "supply"
+    WITHDRAW = "withdraw"
+
+
+class EarnTransactionStatus(str, enum.Enum):
+    """Earn transaction status"""
+
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    FAILED = "failed"
+
+
 class SaveScheduleStatus(str, enum.Enum):
     """Save schedule status"""
 
@@ -180,6 +202,23 @@ class EarnPosition(Base):
         String(255), nullable=True, index=True, comment="Withdrawal transaction hash"
     )
 
+    # Money Market additions (Aave V3 / Compound V3)
+    pool_address: Mapped[Optional[str]] = mapped_column(
+        String(42),
+        nullable=True,
+        comment="Aave pool or Compound comet address",
+    )
+    wallet_address: Mapped[Optional[str]] = mapped_column(
+        String(42),
+        nullable=True,
+        comment="User wallet address",
+    )
+    last_synced_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True,
+        comment="Last time position was synced from on-chain",
+    )
+
     # Protocol-Specific Data
     receipt_token_address: Mapped[Optional[str]] = mapped_column(
         String(255),
@@ -263,6 +302,160 @@ class EarnPosition(Base):
         if self.current_apy == 0:
             return Decimal("0")
         return (self.current_value * self.current_apy / Decimal("100")) / Decimal("365")
+
+
+# ============================================================================
+# Earn Transaction Models (Aave V3 / Compound V3)
+# ============================================================================
+
+
+class EarnTransaction(Base):
+    """
+    Earn transactions (Aave V3 / Compound V3 supply/withdraw)
+
+    Tracks all supply and withdraw operations for money market protocols.
+    Mirrors the lending_transactions pattern but for earn operations.
+    """
+
+    __tablename__ = "earn_transactions"
+
+    # Primary Key (UUID)
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, comment="UUID primary key"
+    )
+
+    # Foreign Keys
+    user_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment="References chat_users.id in production",
+    )
+
+    # Protocol Information
+    protocol: Mapped[str] = mapped_column(
+        SQLEnum(EarnTransactionProtocol),
+        nullable=False,
+        comment="Protocol: aave or compound",
+    )
+    chain: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        comment="Blockchain network (e.g., base, ethereum)",
+    )
+    action_type: Mapped[str] = mapped_column(
+        SQLEnum(EarnTransactionAction),
+        nullable=False,
+        comment="Action: supply or withdraw",
+    )
+
+    # Asset Information
+    asset_address: Mapped[str] = mapped_column(
+        String(42),
+        nullable=False,
+        comment="Token contract address",
+    )
+    asset_symbol: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        comment="Token symbol (e.g., USDC, ETH)",
+    )
+    amount: Mapped[Decimal] = mapped_column(
+        Numeric(78, 18),
+        nullable=False,
+        comment="Amount in token units",
+    )
+    amount_usd: Mapped[Optional[Decimal]] = mapped_column(
+        Numeric(18, 2),
+        nullable=True,
+        comment="USD value at time of transaction",
+    )
+    apy_at_time: Mapped[Optional[Decimal]] = mapped_column(
+        Numeric(6, 2),
+        nullable=True,
+        comment="APY when transaction was made",
+    )
+
+    # Transaction Details
+    transaction_hash: Mapped[str] = mapped_column(
+        String(66),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="On-chain transaction hash",
+    )
+    status: Mapped[str] = mapped_column(
+        SQLEnum(EarnTransactionStatus),
+        nullable=False,
+        default=EarnTransactionStatus.PENDING,
+        index=True,
+    )
+    wallet_address: Mapped[Optional[str]] = mapped_column(
+        String(42),
+        nullable=True,
+        index=True,
+        comment="User wallet address",
+    )
+    pool_address: Mapped[Optional[str]] = mapped_column(
+        String(42),
+        nullable=True,
+        comment="Aave pool or Compound comet address",
+    )
+
+    # Metadata
+    metadata_json: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="JSON: Additional protocol-specific data",
+    )
+
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    confirmed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True, comment="When tx confirmed on-chain"
+    )
+
+    # Relationships
+    user = relationship("User", back_populates="earn_transactions")
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_earn_transactions_user_id", "user_id"),
+        Index("idx_earn_transactions_tx_hash", "transaction_hash"),
+        Index("idx_earn_transactions_status", "status"),
+        Index(
+            "idx_earn_transactions_user_protocol_action",
+            "user_id",
+            "protocol",
+            "action_type",
+        ),
+        Index("idx_earn_transactions_wallet", "wallet_address"),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<EarnTransaction(id={self.id}, protocol='{self.protocol}', "
+            f"action='{self.action_type}', asset='{self.asset_symbol}', "
+            f"amount={self.amount}, status='{self.status}')>"
+        )
+
+    @property
+    def is_confirmed(self) -> bool:
+        """Check if transaction is confirmed"""
+        return self.status == EarnTransactionStatus.CONFIRMED
+
+    @property
+    def is_supply(self) -> bool:
+        """Check if this is a supply transaction"""
+        return self.action_type == EarnTransactionAction.SUPPLY
+
+    @property
+    def is_withdraw(self) -> bool:
+        """Check if this is a withdraw transaction"""
+        return self.action_type == EarnTransactionAction.WITHDRAW
 
 
 # ============================================================================
@@ -477,4 +670,5 @@ if __name__ == "__main__":
     print("✅ Earn and Save tables created successfully!")
     print("\nTables created:")
     print("- earn_positions")
+    print("- earn_transactions")
     print("- save_schedules")
