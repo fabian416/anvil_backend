@@ -727,6 +727,14 @@ We encountered an issue processing your request. Please try again.
         1. conversation_context.metadata.workflow_state
         2. Most recent assistant message metadata
         """
+        # If supervisor flagged this as a fresh workflow start, skip all old state
+        if hasattr(conversation_context, "metadata") and conversation_context.metadata:
+            if conversation_context.metadata.get("fresh_workflow_start"):
+                logger.info(
+                    f"[{self.workflow_name}] Fresh workflow start flagged by supervisor — ignoring old state"
+                )
+                return None
+
         # Check context metadata
         if hasattr(conversation_context, "metadata") and conversation_context.metadata:
             state_dict = conversation_context.metadata.get("workflow_state")

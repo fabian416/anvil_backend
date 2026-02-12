@@ -818,6 +818,13 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             else:
                 logger.info(f"🆕 Fresh workflow detected - routing to {workflow_name}")
 
+            # Mark as fresh start so _load_state ignores old state
+            if hasattr(conversation_context, "metadata"):
+                if conversation_context.metadata is None:
+                    conversation_context.metadata = {}
+                conversation_context.metadata["fresh_workflow_start"] = True
+                conversation_context.metadata["fresh_workflow_type"] = fresh_workflow_type
+
             # Route directly to the detected workflow (bypasses LLM)
             return True, workflow_name
 
