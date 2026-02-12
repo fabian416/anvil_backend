@@ -82,7 +82,7 @@ SHORTCUTS_DATA = {
             {
                 "intent": "swap",
                 "command": "Swap",
-                "description": "Swap meme tokens via Hyperliquid Spot (PURR, TRUMP, PEPE + USDC pairs only)",
+                "description": "Swap 440+ tokens via Hyperliquid Spot (PURR, TRUMP, PEPE + USDC pairs)",
                 "examples": [
                     "Swap 100 USDC to PURR",
                     "Swap 50 USDC to TRUMP",
@@ -227,7 +227,7 @@ SHORTCUTS_DATA = {
             {
                 "intent": "swap",
                 "command": "Intercambiar",
-                "description": "Intercambiar meme tokens vía Hyperliquid Spot (PURR, TRUMP, PEPE + pares USDC)",
+                "description": "Intercambiar 440+ tokens vía Hyperliquid Spot (PURR, TRUMP, PEPE + pares USDC)",
                 "examples": [
                     "Cambiar 100 USDC a PURR",
                     "Cambiar 50 USDC a TRUMP",
@@ -365,7 +365,7 @@ SHORTCUTS_DATA = {
             {
                 "intent": "swap",
                 "command": "Échanger",
-                "description": "Échanger des meme tokens via Hyperliquid Spot (PURR, TRUMP, PEPE + paires USDC)",
+                "description": "Échanger 440+ tokens via Hyperliquid Spot (PURR, TRUMP, PEPE + paires USDC)",
                 "examples": [
                     "Échanger 100 USDC contre PURR",
                     "Échanger 50 USDC contre TRUMP",
@@ -641,7 +641,7 @@ SHORTCUTS_DATA = {
             {
                 "intent": "swap",
                 "command": "Trocar",
-                "description": "Trocar meme tokens via Hyperliquid Spot (PURR, TRUMP, PEPE + pares USDC)",
+                "description": "Trocar 440+ tokens via Hyperliquid Spot (PURR, TRUMP, PEPE + pares USDC)",
                 "examples": [
                     "Trocar 100 USDC por PURR",
                     "Trocar 50 USDC por TRUMP",

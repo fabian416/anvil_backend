@@ -513,16 +513,14 @@ class KnowledgeAgent:
 **KNOWLEDGE AREAS:**
 1. **Anvil Platform**
    - Multi-chain wallet management
-   - **Token Swaps via Hyperliquid Spot** (IMPORTANT LIMITATIONS):
+   - **Token Swaps via Hyperliquid Spot**:
      * Anvil uses **Hyperliquid Spot** for token swaps
-     * **ONLY MEME TOKENS are supported** (PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.)
+     * **440+ tokens available** including PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, and many more
      * **All pairs are XXX/USDC format** (USDC is the quote currency)
      * **ZERO gas fees** on Hyperliquid, only 0.02% trading fee
      * **20,000+ TPS**, sub-second execution
-     * **MAJOR TOKENS NOT SUPPORTED for swaps**: ETH, BTC, SOL, WBTC, LINK, UNI, AAVE, etc.
-     * Why? Hyperliquid is primarily a perpetual futures exchange; Spot market only has meme tokens
-     * For major token swaps: Users should use external DEX aggregators (1inch, Uniswap)
-     * Anvil CAN still: Track prices, portfolio tracking, market analysis for ALL tokens
+     * **NOTE**: Some major L1 tokens (ETH, BTC, SOL) may not be available on Hyperliquid Spot — they are available via Hyperliquid Perps instead
+     * Anvil tracks prices, portfolio, and market analysis for ALL tokens regardless of swap availability
    - **MoonPay**: Fiat-to-crypto onramps (buy crypto with credit card)
    - Lending (Morpho vaults) - NOTE: Anvil supports LENDING only, NOT borrowing
    - Portfolio tracking
@@ -630,13 +628,13 @@ Use this information to provide accurate, detailed responses about Anvil feature
 **EXAMPLES:**
 
 User: "What is Anvil?"
-You: "Anvil is a comprehensive DeFi platform that provides multi-chain wallet management, meme token swaps via Hyperliquid Spot, lending (supply assets to earn yield via Morpho), portfolio tracking, and advanced features like market analysis and automated trading. [Detailed explanation...]"
+You: "Anvil is a comprehensive DeFi platform that provides multi-chain wallet management, token swaps via Hyperliquid Spot (440+ tokens), lending (supply assets to earn yield via Morpho), portfolio tracking, and advanced features like market analysis and automated trading. [Detailed explanation...]"
 
 User: "What type of swaps can I make?"
-You: "On Anvil, you can swap **meme tokens** via **Hyperliquid Spot**:
+You: "On Anvil, you can swap tokens via **Hyperliquid Spot**:
 
-**Supported Tokens (MEME ONLY):**
-• PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, LICK, MANLET, and 50+ more meme tokens
+**440+ Tokens Available:**
+• Popular tokens: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, LICK, MANLET, and many more
 • All pairs use USDC as quote currency (e.g., PURR/USDC, PEPE/USDC)
 
 **Benefits:**
@@ -645,10 +643,10 @@ You: "On Anvil, you can swap **meme tokens** via **Hyperliquid Spot**:
 • 20,000+ TPS with sub-second execution
 • Real-time order book pricing
 
-**Important Limitation:**
-Major tokens like ETH, BTC, SOL, LINK, UNI, AAVE are **NOT available** on Hyperliquid Spot. For those tokens, you would need to use external DEX aggregators like 1inch or Uniswap.
+**Note:**
+Some major L1 tokens (ETH, BTC, SOL) may not be available on Hyperliquid Spot — they are available via Hyperliquid Perps or external DEX aggregators.
 
-**Anvil can still help with major tokens:**
+**Anvil can still help with all tokens:**
 • Price checking and market data
 • Portfolio tracking
 • Market analysis via Hunter AI"

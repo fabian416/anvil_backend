@@ -9,6 +9,10 @@ Runs every 60 seconds. For each wallet with recent activity:
 
 This decouples user "my swaps" requests from Hyperliquid API rate limits.
 Budget: 100 wallets × 2 API calls = 200 req/min (well within 1200 limit).
+
+Note: We use `swap_positions` (not `hyperliquid_positions`). The table
+`hyperliquid_positions` exists in the schema but is not populated or read
+by any code; "my swaps" and this sync use only `swap_positions`.
 """
 
 import asyncio

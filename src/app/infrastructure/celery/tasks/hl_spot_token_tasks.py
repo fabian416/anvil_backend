@@ -69,6 +69,18 @@ def seed_hl_spot_tokens(self) -> dict[str, Any]:
                 "[HlSpotTokens] Fetched %d tokens from spotMeta", len(tokens)
             )
 
+            # Build set of base-token names that have an active Core spot
+            # market (present in spotMeta.universe).  EVM-only tokens are
+            # excluded — they cannot be traded via the API.
+            spot_meta = await hl_client.get_spot_meta()
+            tradeable_names: set[str] = {
+                m.base_token.upper() for m in spot_meta
+            }
+            logger.info(
+                "[HlSpotTokens] %d tokens have active spot markets",
+                len(tradeable_names),
+            )
+
             for token in tokens:
                 try:
                     # Check if token already exists
@@ -80,18 +92,20 @@ def seed_hl_spot_tokens(self) -> dict[str, Any]:
                     )
                     row = existing.first()
 
+                    has_market = token.name.upper() in tradeable_names
+
                     if row is None:
                         # New token → insert with status='pending'
                         await session.execute(
                             sa_text("""
                                 INSERT INTO hl_spot_tokens
                                     (name, token_id, token_index, sz_decimals,
-                                     wei_decimals, is_canonical, status,
-                                     created_at, updated_at)
+                                     wei_decimals, is_canonical, has_spot_market,
+                                     status, created_at, updated_at)
                                 VALUES
                                     (:name, :token_id, :idx, :sz_dec,
-                                     :wei_dec, :is_canon, 'pending',
-                                     :now, :now)
+                                     :wei_dec, :is_canon, :has_market,
+                                     'pending', :now, :now)
                             """),
                             {
                                 "name": token.name,
@@ -100,6 +114,7 @@ def seed_hl_spot_tokens(self) -> dict[str, Any]:
                                 "sz_dec": token.sz_decimals,
                                 "wei_dec": token.wei_decimals,
                                 "is_canon": token.is_canonical,
+                                "has_market": has_market,
                                 "now": now,
                             },
                         )
@@ -114,6 +129,7 @@ def seed_hl_spot_tokens(self) -> dict[str, Any]:
                                     sz_decimals = :sz_dec,
                                     wei_decimals = :wei_dec,
                                     is_canonical = :is_canon,
+                                    has_spot_market = :has_market,
                                     updated_at = :now
                                 WHERE name = :name
                             """),
@@ -124,6 +140,7 @@ def seed_hl_spot_tokens(self) -> dict[str, Any]:
                                 "sz_dec": token.sz_decimals,
                                 "wei_dec": token.wei_decimals,
                                 "is_canon": token.is_canonical,
+                                "has_market": has_market,
                                 "now": now,
                             },
                         )
@@ -201,12 +218,15 @@ def enrich_hl_spot_token_sentiment(self) -> dict[str, Any]:
         }
 
         # ── Pick the next token to enrich ──
+        # Only enrich tokens with an active Core spot market (tradeable).
+        # EVM-only tokens are skipped to avoid wasting API calls.
         # Priority: pending first (NULLS FIRST), then oldest sentiment_updated_at
         result = await session.execute(
             sa_text("""
                 SELECT id, name, status
                 FROM hl_spot_tokens
-                WHERE status IN ('pending', 'enriched', 'error')
+                WHERE has_spot_market = true
+                AND status IN ('pending', 'enriched', 'error')
                 AND (
                     status = 'pending'
                     OR sentiment_updated_at IS NULL

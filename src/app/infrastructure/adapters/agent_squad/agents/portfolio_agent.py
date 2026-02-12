@@ -328,7 +328,7 @@ Analyze and respond using the portfolio data provided above."""
 
         Provides tiered, actionable DeFi suggestions based on portfolio size:
         - Empty ($0): Get started with buying/receiving crypto
-        - Starter ($0.01 - $50): Small swaps, meme tokens, start building
+        - Starter ($0.01 - $50): Small swaps, explore tokens, start building
         - Active ($50 - $1000): Lending, yield farming, diversification
         - Whale ($1000+): Advanced strategies, money markets, portfolio optimization
         """
@@ -363,7 +363,7 @@ Analyze and respond using the portfolio data provided above."""
             lines.append("**Once you have funds, you can:**")
             lines.append("• 🔄 Swap between tokens")
             lines.append("• 💰 Earn yield on stablecoins (up to 12% APY)")
-            lines.append("• 🎯 Explore meme tokens on Hyperliquid")
+            lines.append("• 🎯 Explore 440+ tokens on Hyperliquid Spot")
             return "\n".join(lines)
 
         # Parse holdings data
@@ -407,7 +407,7 @@ Analyze and respond using the portfolio data provided above."""
             lines.append("**🎯 Your Options:**")
             lines.append("")
             lines.append(
-                "• 🔄 **Swap tokens** - Trade USDC for meme coins like PURR, TRUMP, or other trending tokens"
+                "• 🔄 **Swap tokens** - Trade USDC for tokens like PURR, TRUMP, or other trending tokens on Hyperliquid Spot"
             )
 
             if has_stablecoins:
@@ -416,13 +416,13 @@ Analyze and respond using the portfolio data provided above."""
                 )
 
             lines.append(
-                '• 🎰 **Explore meme tokens** - Say "swap 1 USDC to PURR" for micro trades'
+                '• 🎰 **Explore tokens** - Say "swap 1 USDC to PURR" for micro trades on Hyperliquid Spot'
             )
             lines.append('• 💳 **Add funds** - Say "buy crypto" to grow your portfolio')
 
             lines.append("")
             lines.append(
-                "💡 *Tip: With small amounts, meme token swaps and yield farming are great ways to learn DeFi!*"
+                "💡 *Tip: With small amounts, token swaps on Hyperliquid Spot and yield farming are great ways to learn DeFi!*"
             )
             return "\n".join(lines)
 
@@ -552,7 +552,7 @@ Analyze and respond using the portfolio data provided above."""
 
 **BALANCE-TIER BEHAVIOR:**
 - Empty ($0): Focus on getting started - buy crypto, receive crypto
-- Starter (<$50): Micro swaps, meme tokens, learning DeFi
+- Starter (<$50): Micro swaps, explore tokens, learning DeFi
 - Active ($50-1000): Lending, yield farming, diversification
 - Whale ($1000+): Advanced strategies, money markets, risk analysis
 

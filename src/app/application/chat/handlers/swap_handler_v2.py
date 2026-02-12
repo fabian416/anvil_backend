@@ -23,13 +23,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-# Supported tokens on Hyperliquid Spot (MEME TOKENS + USDC only)
-# ⚠️ IMPORTANT: Hyperliquid Spot does NOT support major tokens like ETH, BTC, SOL
-# Major tokens are only available on Hyperliquid Perps (perpetual futures)
+# Supported tokens on Hyperliquid Spot (440+ tokens + USDC)
+# NOTE: Some major L1 tokens (ETH, BTC, SOL) may not be on HL Spot
+# Those are available on Hyperliquid Perps (perpetual futures)
 SUPPORTED_TOKENS = [
     # Quote currency (required for all swaps)
     "USDC",
-    # Popular meme tokens on Hyperliquid Spot
+    # Popular tokens on Hyperliquid Spot (440+ available)
     "PURR",
     "HFUN",
     "TRUMP",
@@ -164,30 +164,29 @@ class SwapHandlerV2:
     """
     Multi-turn conversational swap handler powered by Hyperliquid Spot.
 
-    ⚠️ IMPORTANT: Hyperliquid Spot ONLY supports meme tokens paired with USDC.
-    Major tokens (ETH, BTC, SOL, etc.) are NOT available on Hyperliquid Spot.
-    Hyperliquid is primarily a perpetual futures exchange.
+    Hyperliquid Spot has 440+ tokens paired with USDC.
+    Some major L1 tokens (ETH, BTC, SOL) may not be on HL Spot — available via Perps.
 
     Supports:
     - Single message complete swaps: "swap 100 USDC to PURR"
     - Multi-turn flows: conversational swap building
-    - Real-time Hyperliquid spot quotes (ONLY provider)
+    - Real-time Hyperliquid spot quotes (primary provider)
 
-    Hyperliquid Spot Coverage (Meme Tokens Only):
+    Hyperliquid Spot Coverage (440+ Tokens):
     ✅ USDC (quote currency - required for all swaps)
     ✅ PURR, HFUN, TRUMP, PEPE, MOG, POINTS, JEFF, GMEOW
-    ✅ Other meme tokens available on Hyperliquid Spot
+    ✅ 440+ tokens available on Hyperliquid Spot
 
-    ❌ NOT SUPPORTED (Major Tokens):
-    ETH, BTC, SOL, WBTC, LINK, UNI, AAVE, etc.
-    These are only available on Hyperliquid Perps (perpetual futures).
+    ⚠️ NOTE (Some Major L1 Tokens):
+    ETH, BTC, SOL may not be on HL Spot.
+    These are available on Hyperliquid Perps (perpetual futures).
     """
 
-    # Tokens actually supported by Hyperliquid Spot (meme tokens + USDC)
+    # Tokens supported by Hyperliquid Spot (440+ tokens + USDC)
     # All pairs are XXX/USDC - USDC is the only quote currency
     HYPERLIQUID_SPOT_TOKENS = {
         "USDC",  # Quote currency (required for all swaps)
-        # Popular meme tokens on Hyperliquid Spot
+        # Popular tokens on Hyperliquid Spot (440+ available)
         "PURR",
         "HFUN",
         "TRUMP",
@@ -528,13 +527,13 @@ Pronto para executar? Digite **1** para confirmar e prosseguir com o swap.""",
             error_messages = {
                 "en": f"""⚠️ **{swap_info.from_token} → {swap_info.to_token} Swap Not Available**
 
-**Both {swap_info.from_token} and {swap_info.to_token}** are major tokens that are **NOT available on Hyperliquid Spot**.
+**Both {swap_info.from_token} and {swap_info.to_token}** are not currently available on Hyperliquid Spot.
 
-Hyperliquid Spot only supports **meme tokens** paired with USDC.
+Hyperliquid Spot has **440+ tokens** paired with USDC.
 
 **✅ Swaps you CAN do on Anvil:**
-• Swap USDC to meme tokens: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.
-• Swap meme tokens back to USDC
+• Swap USDC to tokens: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, and 440+ more
+• Swap tokens back to USDC
 • Example: "swap 100 USDC to PURR" or "swap 500 PEPE to USDC"
 
 **For {swap_info.from_token}/{swap_info.to_token} trading:**
@@ -550,11 +549,11 @@ Hyperliquid Spot only supports **meme tokens** paired with USDC.
 
 **Tanto {swap_info.from_token} como {swap_info.to_token}** son tokens principales que **NO están disponibles en Hyperliquid Spot**.
 
-Hyperliquid Spot solo soporta **meme tokens** pareados con USDC.
+Hyperliquid Spot tiene **440+ tokens** pareados con USDC.
 
 **✅ Swaps que SÍ puedes hacer en Anvil:**
-• Cambiar USDC a meme tokens: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.
-• Cambiar meme tokens a USDC
+• Cambiar USDC a tokens: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, y 440+ más
+• Cambiar tokens a USDC
 • Ejemplo: "cambiar 100 USDC a PURR" o "cambiar 500 PEPE a USDC"
 
 **Para trading de {swap_info.from_token}/{swap_info.to_token}:**
@@ -570,11 +569,11 @@ Hyperliquid Spot solo soporta **meme tokens** pareados con USDC.
 
 **Tanto {swap_info.from_token} quanto {swap_info.to_token}** são tokens principais que **NÃO estão disponíveis no Hyperliquid Spot**.
 
-Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC.
+Hyperliquid Spot tem **440+ tokens** pareados com USDC.
 
 **✅ Swaps que você PODE fazer no Anvil:**
-• Trocar USDC por meme tokens: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.
-• Trocar meme tokens de volta para USDC
+• Trocar USDC por tokens: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, e 440+ mais
+• Trocar tokens de volta para USDC
 • Exemplo: "trocar 100 USDC para PURR" ou "trocar 500 PEPE para USDC"
 
 **Para trading de {swap_info.from_token}/{swap_info.to_token}:**
@@ -618,12 +617,11 @@ Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC.
 
 **{unsupported_token}** is a major token that is **NOT available on Hyperliquid Spot**.
 
-Hyperliquid Spot only supports **meme tokens** paired with USDC:
-• PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.
+Hyperliquid Spot has **440+ tokens** paired with USDC, but {unsupported_token} is not among them.
 
 **For {unsupported_token} trading:**
 • Hyperliquid offers **perpetual futures** (perps) for {unsupported_token}
-• For spot swaps of major tokens, use DEX aggregators like 1inch, Uniswap, or 0x
+• For spot swaps, use DEX aggregators like 1inch, Uniswap, or 0x
 
 **Available on Anvil for {unsupported_token}:**
 • 📈 Check price and market data
@@ -631,14 +629,13 @@ Hyperliquid Spot only supports **meme tokens** paired with USDC:
 • 🔮 Price predictions via Hunter AI""",
                     "es": f"""⚠️ **{unsupported_token} No Disponible para Swap Spot**
 
-**{unsupported_token}** es un token principal que **NO está disponible en Hyperliquid Spot**.
+**{unsupported_token}** no está disponible en Hyperliquid Spot actualmente.
 
-Hyperliquid Spot solo soporta **meme tokens** pareados con USDC:
-• PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.
+Hyperliquid Spot tiene **440+ tokens** pareados con USDC, pero {unsupported_token} no está entre ellos.
 
 **Para trading de {unsupported_token}:**
 • Hyperliquid ofrece **futuros perpetuos** (perps) para {unsupported_token}
-• Para swaps spot de tokens principales, usa agregadores DEX como 1inch, Uniswap o 0x
+• Para swaps spot, usa agregadores DEX como 1inch, Uniswap o 0x
 
 **Disponible en Anvil para {unsupported_token}:**
 • 📈 Consultar precio y datos de mercado
@@ -646,14 +643,13 @@ Hyperliquid Spot solo soporta **meme tokens** pareados con USDC:
 • 🔮 Predicciones de precio via Hunter AI""",
                     "pt": f"""⚠️ **{unsupported_token} Não Disponível para Swap Spot**
 
-**{unsupported_token}** é um token principal que **NÃO está disponível no Hyperliquid Spot**.
+**{unsupported_token}** não está disponível no Hyperliquid Spot atualmente.
 
-Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC:
-• PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc.
+Hyperliquid Spot tem **440+ tokens** pareados com USDC, mas {unsupported_token} não está entre eles.
 
 **Para trading de {unsupported_token}:**
 • Hyperliquid oferece **futuros perpétuos** (perps) para {unsupported_token}
-• Para swaps spot de tokens principais, use agregadores DEX como 1inch, Uniswap ou 0x
+• Para swaps spot, use agregadores DEX como 1inch, Uniswap ou 0x
 
 **Disponível no Anvil para {unsupported_token}:**
 • 📈 Verificar preço e dados de mercado
@@ -670,24 +666,24 @@ Hyperliquid Spot suporta apenas **meme tokens** pareados com USDC:
 
 **{unsupported_token}** is not available on Hyperliquid Spot.
 
-**Supported tokens (meme tokens + USDC):**
-{popular_tokens}... and more meme tokens.
+**Popular tokens (440+ available):**
+{popular_tokens}... and many more.
 
 💡 All swaps on Hyperliquid Spot are paired with USDC.""",
                     "es": f"""⚠️ **Token No Soportado**
 
 **{unsupported_token}** no está disponible en Hyperliquid Spot.
 
-**Tokens soportados (meme tokens + USDC):**
-{popular_tokens}... y más meme tokens.
+**Tokens populares (440+ disponibles):**
+{popular_tokens}... y muchos más.
 
 💡 Todos los swaps en Hyperliquid Spot están pareados con USDC.""",
                     "pt": f"""⚠️ **Token Não Suportado**
 
 **{unsupported_token}** não está disponível no Hyperliquid Spot.
 
-**Tokens suportados (meme tokens + USDC):**
-{popular_tokens}... e mais meme tokens.
+**Tokens populares (440+ disponíveis):**
+{popular_tokens}... e muitos mais.
 
 💡 Todas as trocas no Hyperliquid Spot são pareadas com USDC.""",
                 }
@@ -882,7 +878,7 @@ Para completar esta troca, você precisará de **{swap_info.from_token}** na sua
         if context and context.summary:
             combined = f"{context.summary.lower()}\n{message_lower}"
 
-        # ALL tokens to look for - includes both supported meme tokens AND major tokens
+        # ALL tokens to look for - includes both supported HL Spot tokens AND major tokens
         # We extract major tokens too so we can show proper error messages
         ALL_TOKENS_TO_EXTRACT = set(SUPPORTED_TOKENS) | set(MAJOR_TOKENS_NOT_SUPPORTED)
 
@@ -949,7 +945,7 @@ Para completar esta troca, você precisará de **{swap_info.from_token}** na sua
             excluded_words.add(chain_alias)
 
         # Find all tokens mentioned in the message
-        # Include BOTH supported meme tokens AND major tokens (for error messaging)
+        # Include BOTH supported HL Spot tokens AND major tokens (for error messaging)
         found_tokens = []
         for token in ALL_TOKENS_TO_EXTRACT:
             if token.lower() in combined and token.lower() not in excluded_words:

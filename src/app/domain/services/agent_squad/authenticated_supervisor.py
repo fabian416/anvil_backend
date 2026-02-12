@@ -239,6 +239,11 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                     self._user_context["volume_30d"] = (
                         self._user_data_context.transactions.volume_last_30_days
                     )
+                    # Pass full transactions object so TransactionHistoryAgent
+                    # can display recent_transactions, volume, chain data
+                    self._user_context["transactions"] = (
+                        self._user_data_context.transactions
+                    )
 
             logger.info(
                 f"✅ Loaded user data for authenticated supervisor",
@@ -1289,8 +1294,8 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 6. SWAP INFORMATION (what swaps are available - educational):
    - "what type of swaps can I do", "what swaps can I make", "what tokens can I swap" → "knowledge" agent
    - "can I swap ETH", "can I swap BTC", "how do swaps work on Anvil" → "knowledge" agent
-   - CRITICAL: Anvil uses Hyperliquid Spot which ONLY supports MEME TOKENS (PURR, TRUMP, PEPE, etc.) paired with USDC
-   - Major tokens like ETH, BTC, SOL are NOT supported for swaps
+   - Anvil uses Hyperliquid Spot with 440+ tokens (PURR, TRUMP, PEPE, etc.) paired with USDC
+   - Some major L1 tokens (ETH, BTC, SOL) may not be available on Hyperliquid Spot
    - Use "knowledge" when user asks ABOUT swap capabilities (informational), not executing a swap
    
 7. SWAP RATE INFO (price information only - no execution):
@@ -1463,12 +1468,12 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 "am I at risk of liquidation" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check liquidation risk for user positions","depends_on":[]}}]}}
 "liquidation risk" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check user liquidation risk on Aave","depends_on":[]}}]}}
 "my Aave position" → {{"tasks":[{{"agent_type":"lending_borrowing","task_description":"Check user Aave lending position","depends_on":[]}}]}}
-"what type of swaps can I do" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain Anvil swap capabilities: Hyperliquid Spot for meme tokens only, USDC pairs, NOT ETH/BTC/SOL","depends_on":[]}}]}}
-"what swaps can I make" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain Anvil swap capabilities: Hyperliquid Spot meme tokens only","depends_on":[]}}]}}
-"what tokens can I swap" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain supported swap tokens: meme tokens on Hyperliquid Spot (PURR, TRUMP, PEPE, etc.) paired with USDC","depends_on":[]}}]}}
-"can I swap ETH" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain ETH is NOT supported for swaps on Anvil - only meme tokens via Hyperliquid Spot","depends_on":[]}}]}}
-"can I swap BTC" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain BTC is NOT supported for swaps on Anvil - only meme tokens via Hyperliquid Spot","depends_on":[]}}]}}
-"how do swaps work" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain how swaps work on Anvil via Hyperliquid Spot for meme tokens","depends_on":[]}}]}}
+"what type of swaps can I do" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain Anvil swap capabilities: Hyperliquid Spot with 440+ tokens, USDC pairs","depends_on":[]}}]}}
+"what swaps can I make" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain Anvil swap capabilities: Hyperliquid Spot with 440+ tokens","depends_on":[]}}]}}
+"what tokens can I swap" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain supported swap tokens: 440+ tokens on Hyperliquid Spot (PURR, TRUMP, PEPE, etc.) paired with USDC","depends_on":[]}}]}}
+"can I swap ETH" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain ETH may not be on Hyperliquid Spot - 440+ other tokens available via HL Spot, ETH available via Perps","depends_on":[]}}]}}
+"can I swap BTC" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain BTC may not be on Hyperliquid Spot - 440+ other tokens available via HL Spot, BTC available via Perps","depends_on":[]}}]}}
+"how do swaps work" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain how swaps work on Anvil via Hyperliquid Spot with 440+ tokens","depends_on":[]}}]}}
 "write a poem about gas fees" → {{"tasks":[{{"agent_type":"chat","task_description":"Write a creative poem about Ethereum gas fees","depends_on":[]}}]}}
 "btc price" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get BTC price","depends_on":[]}}]}}
 "what is defi" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain DeFi concepts","depends_on":[]}}]}}
@@ -1488,7 +1493,7 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 "token unlocks this week" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get upcoming token unlock schedules","depends_on":[]}}]}}
 "DeFi protocols by market cap" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"List DeFi protocols ranked by market capitalization","depends_on":[]}}]}}
 "ETH staking yield" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get current ETH staking yields across validators","depends_on":[]}}]}}
-"what type of swaps can I do? tell me the price of PEPE and TRUMP" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain Anvil swap capabilities: Hyperliquid Spot meme tokens only","depends_on":[]}},{{"agent_type":"hunter_ai","task_description":"Get current prices for PEPE and TRUMP","depends_on":[]}}]}}
+"what type of swaps can I do? tell me the price of PEPE and TRUMP" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain Anvil swap capabilities: Hyperliquid Spot with 440+ tokens","depends_on":[]}},{{"agent_type":"hunter_ai","task_description":"Get current prices for PEPE and TRUMP","depends_on":[]}}]}}
 "my portfolio and price of BTC" → {{"tasks":[{{"agent_type":"portfolio","task_description":"Get user's real portfolio data","depends_on":[]}},{{"agent_type":"hunter_ai","task_description":"Get current BTC price","depends_on":[]}}]}}
 "what is defi? also check gas prices" → {{"tasks":[{{"agent_type":"knowledge","task_description":"Explain DeFi concepts","depends_on":[]}},{{"agent_type":"gas_optimizer","task_description":"Get current gas prices","depends_on":[]}}]}}
 "best yields and my balance" → {{"tasks":[{{"agent_type":"defi_yield","task_description":"Find best yield opportunities","depends_on":[]}},{{"agent_type":"portfolio","task_description":"Get user's wallet balance","depends_on":[]}}]}}

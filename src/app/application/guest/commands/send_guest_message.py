@@ -4122,10 +4122,10 @@ class SendGuestMessage:
             # Hunter AI Intents (Market Intelligence)
             # ========================================
             ChatIntent.HUNTER_SENTIMENT: {
-                "en": "🎯 Hunter AI can analyze market sentiment from Twitter, Reddit, Discord, and news sources in real-time! Currently tracking 50+ tokens with sentiment scores. Sign up to get live sentiment alerts and trading signals.",
-                "es": "🎯 ¡Hunter AI puede analizar el sentimiento del mercado de Twitter, Reddit, Discord y noticias en tiempo real! Actualmente rastreando 50+ tokens con puntuaciones de sentimiento. Regístrate para recibir alertas de sentimiento en vivo.",
-                "pt": "🎯 Hunter AI pode analisar o sentimento do mercado do Twitter, Reddit, Discord e notícias em tempo real! Atualmente rastreando 50+ tokens com pontuações de sentimento. Cadastre-se para receber alertas de sentimento ao vivo.",
-                "zh": "🎯 Hunter AI 可以实时分析来自 Twitter、Reddit、Discord 和新闻来源的市场情绪！目前正在跟踪 50+ 代币的情绪评分。注册以获取实时情绪警报。",
+                "en": "🎯 Hunter AI can analyze market sentiment from Twitter, Reddit, Discord, and news sources in real-time! Currently tracking 440+ tokens with sentiment scores. Sign up to get live sentiment alerts and trading signals.",
+                "es": "🎯 ¡Hunter AI puede analizar el sentimiento del mercado de Twitter, Reddit, Discord y noticias en tiempo real! Actualmente rastreando 440+ tokens con puntuaciones de sentimiento. Regístrate para recibir alertas de sentimiento en vivo.",
+                "pt": "🎯 Hunter AI pode analisar o sentimento do mercado do Twitter, Reddit, Discord e notícias em tempo real! Atualmente rastreando 440+ tokens com pontuações de sentimento. Cadastre-se para receber alertas de sentimento ao vivo.",
+                "zh": "🎯 Hunter AI 可以实时分析来自 Twitter、Reddit、Discord 和新闻来源的市场情绪！目前正在跟踪 440+ 代币的情绪评分。注册以获取实时情绪警报。",
             },
             ChatIntent.HUNTER_PRICE_PREDICTION: {
                 "en": "📈 Hunter AI uses ML models for price predictions! Our models analyze on-chain data, social sentiment, and technical indicators. Current accuracy: 72% on 24h predictions. Sign up for personalized price forecasts.",

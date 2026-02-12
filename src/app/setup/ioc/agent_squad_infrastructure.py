@@ -876,12 +876,12 @@ class AgentSquadInfrastructureProvider(Provider):
         5. Generate execute_data for frontend
 
         Provider Routing:
-        - Hyperliquid Spot: Meme tokens (PURR, TRUMP, PEPE, etc.) paired with USDC
+        - Hyperliquid Spot: 440+ tokens (PURR, TRUMP, PEPE, etc.) paired with USDC
         - 1inch: Major tokens same-chain swaps (ETH, BTC, USDC, etc.)
         - LiFi: Cross-chain swaps
 
         Integrations:
-        - Hyperliquid: Meme token swaps (zero gas fees)
+        - Hyperliquid: Token swaps (440+ tokens, zero gas fees)
         - 1inch: Same-chain major token swaps
         - LiFi: Cross-chain swaps
         - CoinGecko: Market prices for enrichment
@@ -890,7 +890,7 @@ class AgentSquadInfrastructureProvider(Provider):
 
         logger = logging.getLogger(__name__)
 
-        # Create Hyperliquid client for meme token swaps
+        # Create Hyperliquid client for spot token swaps
         hyperliquid_client = None
         if settings.external_apis.enable_hyperliquid:
             try:
@@ -900,7 +900,7 @@ class AgentSquadInfrastructureProvider(Provider):
 
                 hyperliquid_client = HyperliquidClient(testnet=False)
                 logger.info(
-                    "✅ Hyperliquid enabled for SwapWorkflowAgent (meme token swaps)"
+                    "✅ Hyperliquid enabled for SwapWorkflowAgent (440+ spot tokens)"
                 )
             except Exception as e:
                 logger.warning(

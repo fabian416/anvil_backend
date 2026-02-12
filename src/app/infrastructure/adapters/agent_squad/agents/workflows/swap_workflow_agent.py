@@ -4,20 +4,20 @@ Swap Workflow Agent - Multi-Step Token Swap Operations.
 Handles the complete swap workflow for authenticated users:
 1. Parse request: Extract tokens and amount from user message
 2. Fetch quote: Get best quote from appropriate provider:
-   - Hyperliquid Spot: For meme tokens (PURR, TRUMP, PEPE, etc.) paired with USDC
+   - Hyperliquid Spot: For 440+ tokens (PURR, TRUMP, PEPE, etc.) paired with USDC
    - 1inch: For major tokens same-chain swaps (ETH, BTC, USDC, etc.)
    - LiFi: For cross-chain swaps
 3. Confirm: Show quote and wait for user confirmation
 4. Execute: Generate execute_data for frontend execution
 
 Integration:
-- Meme token swaps: Uses Hyperliquid Spot API (zero gas fees, high performance)
+- Token swaps: Uses Hyperliquid Spot API (440+ tokens, zero gas fees, high performance)
 - Same-chain major tokens: Uses 1inch API
 - Cross-chain swaps: Uses LiFi API
 - Execution: Frontend uses Privy SDK with execute_data
 
-⚠️ IMPORTANT: Hyperliquid Spot only supports meme tokens paired with USDC.
-Major tokens (ETH, BTC, SOL) require 1inch or LiFi.
+Hyperliquid Spot has 440+ tokens paired with USDC.
+Some major L1 tokens (ETH, BTC, SOL) may not be on HL Spot — use 1inch or LiFi for those.
 
 Example Conversation:
     User: "swap 100 USDC to PURR"
@@ -204,16 +204,16 @@ def _find_best_chain_for_gas(
 
 
 # =============================================================================
-# HYPERLIQUID SPOT TOKENS - THE ONLY SUPPORTED SWAP PROVIDER
+# HYPERLIQUID SPOT TOKENS - PRIMARY SWAP PROVIDER
 # =============================================================================
-# Anvil ONLY supports swaps via Hyperliquid Spot.
-# Hyperliquid Spot supports meme tokens paired with USDC.
-# Major tokens (ETH, BTC, etc.) are NOT supported for swaps.
+# Anvil uses Hyperliquid Spot as the primary swap provider.
+# Hyperliquid Spot has 440+ tokens paired with USDC.
+# Some major L1 tokens (ETH, BTC, etc.) may not be on HL Spot.
 # =============================================================================
 
 HYPERLIQUID_SPOT_TOKENS = {
     "USDC",  # Quote currency (required for all Hyperliquid spot swaps)
-    # Popular meme tokens on Hyperliquid Spot
+    # Popular tokens on Hyperliquid Spot (440+ available)
     "PURR",
     "HFUN",
     "TRUMP",
@@ -261,19 +261,47 @@ HYPERLIQUID_SPOT_TOKENS = {
     "MEOW",
     "ANT",
     "NEIRO",
+    # Bridged/wrapped major tokens on Hyperliquid Spot
+    "UBTC",
+    "UETH",
+    "USOL",
+    "LINK0",
+    "AAVE0",
+    "AVAX0",
+    "FXRP",
+    "HSEI",
+}
+
+# ---------------------------------------------------------------------------
+# Major-token → Hyperliquid wrapper mapping
+# ---------------------------------------------------------------------------
+# Hyperliquid uses bridged/wrapped versions of major L1 tokens.
+# When a user says "swap BTC" we transparently route to "UBTC" on HL Spot.
+# The mapping is {GENERIC_SYMBOL: HL_WRAPPER_SYMBOL}.
+MAJOR_TOKEN_TO_HL_WRAPPER: dict[str, str] = {
+    "BTC": "UBTC",
+    "ETH": "UETH",
+    "SOL": "USOL",
+    "LINK": "LINK0",
+    "AAVE": "AAVE0",
+    "AVAX": "AVAX0",
+    "XRP": "FXRP",
+    "SEI": "HSEI",
+}
+
+# Reverse lookup: wrapper → generic name (for display purposes)
+HL_WRAPPER_TO_MAJOR: dict[str, str] = {
+    v: k for k, v in MAJOR_TOKEN_TO_HL_WRAPPER.items()
 }
 
 # Major tokens that are NOT supported for swaps on Anvil
 # Users should use external DEXs for these tokens
+# NOTE: tokens present in MAJOR_TOKEN_TO_HL_WRAPPER are handled via
+# wrapper mapping and should NOT appear here.
 UNSUPPORTED_SWAP_TOKENS = {
-    "ETH",
-    "BTC",
-    "SOL",
     "WBTC",
     "WETH",
-    "LINK",
     "UNI",
-    "AAVE",
     "CRV",
     "MKR",
     "DAI",
@@ -281,36 +309,33 @@ UNSUPPORTED_SWAP_TOKENS = {
     "MATIC",
     "ARB",
     "OP",
-    "AVAX",
     "DOT",
     "ATOM",
     "APT",
     "SUI",
-    "SEI",
     "TIA",
     "INJ",
     "FTM",
-    "XRP",
     "ADA",
     "DOGE",
     "LTC",
     "SHIB",
-    "AVAX",
 }
 
 
-# Popular meme tokens for selection menu (ordered by popularity/volume)
-POPULAR_MEME_TOKENS = [
-    ("PURR", "Hyperliquid's native meme token"),
-    ("TRUMP", "Political meme token"),
-    ("PEPE", "Classic frog meme"),
+# Popular tokens for selection menu (ordered by trading volume)
+# Major tokens first (auto-mapped to HL wrappers), then popular meme tokens
+POPULAR_TOKENS = [
+    ("BTC", "Bitcoin (via UBTC)"),
+    ("ETH", "Ethereum (via UETH)"),
+    ("SOL", "Solana (via USOL)"),
+    ("XRP", "Ripple (via FXRP)"),
+    ("LINK", "Chainlink (via LINK0)"),
+    ("AAVE", "Aave (via AAVE0)"),
+    ("AVAX", "Avalanche (via AVAX0)"),
+    ("PURR", "Hyperliquid's native token"),
     ("HFUN", "Hyperliquid Fun token"),
-    ("MOG", "Mog Coin"),
-    ("JEFF", "Jeff token"),
-    ("WAGMI", "We're All Gonna Make It"),
-    ("GMEOW", "Cat meme token"),
-    ("CAPPY", "Cappy token"),
-    ("MANLET", "Manlet meme"),
+    ("TRUMP", "Political token"),
 ]
 
 # Common token addresses by chain
@@ -341,7 +366,7 @@ TOKEN_ADDRESSES = {
         "ETH": NATIVE_ETH_ADDRESS,
         "WETH": "0x4200000000000000000000000000000000000006",
         "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-        # Meme tokens on Base (Hyperliquid Spot uses these for swaps)
+        # Tokens on Base (Hyperliquid Spot uses these for swaps)
         "PURR": "0x9b4e2579374e1b3ce1b31e0c55e8e7c3e2d5b0e1",  # Placeholder - will be updated from API
         "TRUMP": "0xCf20a0a767f4513C1c3C8B1c1e0e4F3E7c8b0F9A",  # Placeholder - will be updated from API
     },
@@ -350,7 +375,7 @@ TOKEN_ADDRESSES = {
 # =============================================================================
 # HYPERLIQUID BRIDGE CONTRACTS
 # =============================================================================
-# Users must bridge USDC to Hyperliquid before swapping meme tokens.
+# Users must bridge USDC to Hyperliquid before swapping tokens.
 # The bridge deposits to Hyperliquid Perps account, then user transfers to Spot.
 # Flow: EVM USDC → Bridge → Hyperliquid Perps → Transfer → Hyperliquid Spot → Swap
 # =============================================================================
@@ -370,7 +395,7 @@ HYPERLIQUID_BRIDGE_CONTRACTS = {
     },
 }
 
-# Hyperliquid token identifiers (meme tokens on Hyperliquid L1)
+# Hyperliquid token identifiers (tokens on Hyperliquid L1)
 # NOTE: Hyperliquid uses its own internal token system, NOT EVM contract addresses.
 # These tokens are traded via Hyperliquid's Spot API, not via on-chain ERC-20 transfers.
 # We use None/null for token addresses since balanceOf won't work on these.
@@ -412,7 +437,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
     Steps:
     1. parse_request: Extract from_token, to_token, amount, chain
     2. fetch_data: Get quotes from appropriate provider:
-       - Hyperliquid Spot for meme tokens (PURR, TRUMP, etc.)
+       - Hyperliquid Spot for 440+ tokens (PURR, TRUMP, etc.)
        - 1inch for major tokens same-chain
        - LiFi for cross-chain
     3. confirm: Show quote, wait for user confirmation
@@ -420,7 +445,7 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
 
     Features:
     - Intelligent provider routing based on token type
-    - Meme token swaps via Hyperliquid Spot (zero gas fees)
+    - Token swaps via Hyperliquid Spot (440+ tokens, zero gas fees)
     - Same-chain major token swaps via 1inch
     - Cross-chain swaps via LiFi
     - User modification support ("change to 1 ETH instead")
@@ -443,13 +468,18 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             oneinch_client: 1inch API client for same-chain major token swaps
             lifi_client: LiFi API client for cross-chain swaps
             coingecko_client: CoinGecko client for market data enrichment
-            hyperliquid_client: Hyperliquid client for meme token spot swaps
+            hyperliquid_client: Hyperliquid client for spot token swaps
         """
         super().__init__(llm_client=llm_client)
         self._oneinch = oneinch_client
         self._lifi = lifi_client
         self._coingecko = coingecko_client
         self._hyperliquid = hyperliquid_client
+        # Cached set of base-token names with active HL spot markets.
+        # Populated lazily by _get_tradeable_spot_tokens(); used by
+        # _is_hyperliquid_swap() so routing covers all 263+ tokens,
+        # not just the hardcoded HYPERLIQUID_SPOT_TOKENS subset.
+        self._cached_tradeable_spot: set[str] | None = None
 
     @property
     def agent_type(self) -> AgentType:
@@ -726,9 +756,9 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         - If only from_token + amount provided, show numbered token list
         - User can respond with "1" or "PURR" to select destination token
 
-        IMPORTANT: Anvil only supports swaps via Hyperliquid Spot.
-        Hyperliquid Spot only supports meme tokens paired with USDC.
-        Major tokens (ETH, BTC, etc.) are NOT supported for swaps.
+        Anvil uses Hyperliquid Spot as the primary swap provider.
+        Hyperliquid Spot has 440+ tokens paired with USDC.
+        Some major L1 tokens (ETH, BTC, etc.) may not be on HL Spot.
         """
         # Check if we're awaiting token selection from a previous turn
         if state.data.get("awaiting_token_selection"):
@@ -787,6 +817,18 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             response = await self._get_missing_params_response(params, user_context)
             return response, state
 
+        # ── Map major tokens to their Hyperliquid wrappers ──────────
+        # e.g. "BTC" → "UBTC", "ETH" → "UETH"
+        from_token, to_token, wrapper_note = self._resolve_hl_wrapper(
+            from_token, to_token
+        )
+        if wrapper_note:
+            logger.info(
+                "[SwapWorkflow] Wrapper mapping applied: %s",
+                wrapper_note,
+            )
+            state.data["wrapper_note"] = wrapper_note
+
         # Check if tokens are supported on Hyperliquid Spot
         unsupported_error = self._check_unsupported_tokens(
             from_token, to_token, user_context.language
@@ -835,8 +877,8 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         # Check if it's a number selection
         if user_input.isdigit():
             index = int(user_input) - 1  # 1-based to 0-based
-            if 0 <= index < len(POPULAR_MEME_TOKENS):
-                selected_token = POPULAR_MEME_TOKENS[index][0]
+            if 0 <= index < len(POPULAR_TOKENS):
+                selected_token = POPULAR_TOKENS[index][0]
 
         # Check if it's a token symbol
         if not selected_token:
@@ -844,6 +886,13 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             clean_input = user_input.replace(".", "").strip()
             if clean_input in HYPERLIQUID_SPOT_TOKENS:
                 selected_token = clean_input
+            elif clean_input in MAJOR_TOKEN_TO_HL_WRAPPER:
+                # Map major token to HL wrapper (e.g. BTC → UBTC)
+                selected_token = MAJOR_TOKEN_TO_HL_WRAPPER[clean_input]
+                state.data["wrapper_note"] = (
+                    f"{clean_input} → {selected_token}"
+                    " (Hyperliquid wrapped)"
+                )
 
         if not selected_token:
             # Invalid selection - show menu again
@@ -855,6 +904,17 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             )
             return response, state
 
+        # ── Apply wrapper mapping (e.g. BTC → UBTC) ──────────
+        hl_wrapper = MAJOR_TOKEN_TO_HL_WRAPPER.get(
+            selected_token.upper()
+        )
+        if hl_wrapper:
+            state.data["wrapper_note"] = (
+                f"{selected_token} → {hl_wrapper}"
+                " (Hyperliquid wrapped)"
+            )
+            selected_token = hl_wrapper
+
         # Update state with selected token
         state.data["to_token"] = selected_token
 
@@ -863,6 +923,39 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
 
         # Create a dummy message to pass to fetch_quote
         return await self._handle_fetch_quote(message, state, user_context)
+
+    @staticmethod
+    def _resolve_hl_wrapper(
+        from_token: str,
+        to_token: str,
+    ) -> tuple[str, str, str | None]:
+        """Map generic major-token names to their HL wrapper equivalents.
+
+        Returns ``(resolved_from, resolved_to, wrapper_note)`` where
+        *wrapper_note* is a human-readable hint like
+        ``"BTC → UBTC (Hyperliquid wrapped)"`` when a mapping was applied,
+        or ``None`` if no mapping was needed.
+        """
+        notes: list[str] = []
+        resolved_from = from_token
+        resolved_to = to_token
+
+        hl_from = MAJOR_TOKEN_TO_HL_WRAPPER.get(from_token.upper())
+        if hl_from:
+            resolved_from = hl_from
+            notes.append(
+                f"{from_token} → {hl_from} (Hyperliquid wrapped)"
+            )
+
+        hl_to = MAJOR_TOKEN_TO_HL_WRAPPER.get(to_token.upper())
+        if hl_to:
+            resolved_to = hl_to
+            notes.append(
+                f"{to_token} → {hl_to} (Hyperliquid wrapped)"
+            )
+
+        wrapper_note = ", ".join(notes) if notes else None
+        return resolved_from, resolved_to, wrapper_note
 
     def _check_unsupported_tokens(
         self,
@@ -873,14 +966,27 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         """
         Check if tokens are supported on Hyperliquid Spot.
 
-        Anvil ONLY supports swaps via Hyperliquid Spot, which means:
-        - Only meme tokens + USDC are supported
-        - Major tokens (ETH, BTC, etc.) are NOT supported
+        Anvil uses Hyperliquid Spot as the primary swap provider:
+        - 440+ tokens paired with USDC are supported
+        - Major L1 tokens (BTC, ETH, …) are auto-mapped to their
+          Hyperliquid wrappers (UBTC, UETH, …) before this check.
 
-        Returns an error message if tokens are not supported, or None if valid.
+        Returns an error message if tokens are not supported, or None
+        if valid.
         """
-        from_supported = from_token in HYPERLIQUID_SPOT_TOKENS
-        to_supported = to_token in HYPERLIQUID_SPOT_TOKENS
+        # Combine hardcoded set with live cached set for full coverage
+        known = HYPERLIQUID_SPOT_TOKENS
+        if self._cached_tradeable_spot:
+            known = known | self._cached_tradeable_spot
+
+        from_supported = (
+            from_token.upper() in known
+            or from_token.upper() == "USDC"
+        )
+        to_supported = (
+            to_token.upper() in known
+            or to_token.upper() == "USDC"
+        )
 
         # Both tokens must be in Hyperliquid Spot supported list
         if not from_supported or not to_supported:
@@ -899,8 +1005,11 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             )
 
         # One token must be USDC (Hyperliquid Spot requirement)
+        # (two-hop via USDC is handled transparently in _fetch_quote)
         if from_token != "USDC" and to_token != "USDC":
-            return self._build_usdc_required_message(from_token, to_token, language)
+            return self._build_usdc_required_message(
+                from_token, to_token, language
+            )
 
         return None
 
@@ -915,24 +1024,24 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
         messages = {
             "en": f"""❌ **Swap not supported: {from_token} → {to_token}**
 
-Anvil uses **Hyperliquid Spot** for swaps, which only supports **meme tokens paired with USDC**.
+Anvil uses **Hyperliquid Spot** for swaps with **440+ tokens paired with USDC**.
 
-**Tokens like {", ".join(unsupported_tokens)} are not available for swaps.**
+**Tokens like {", ".join(unsupported_tokens)} are not currently available on Hyperliquid Spot.**
 
 ---
 
 **✅ What you CAN do on Anvil:**
 
-**Meme Token Swaps** (via Hyperliquid Spot):
+**Token Swaps** (via Hyperliquid Spot):
 • `swap 100 USDC to PURR`
 • `swap 50 USDC to TRUMP`
 • `swap 1000 USDC to PEPE`
 
-**Supported meme tokens:** PURR, TRUMP, PEPE, MOG, HFUN, JEFF, WAGMI, and 40+ more
+**440+ tokens available:** PURR, TRUMP, PEPE, MOG, HFUN, JEFF, WAGMI, and many more
 
 ---
 
-**💡 For major tokens ({", ".join(unsupported_tokens)}), you can:**
+**💡 For tokens not on Hyperliquid Spot ({", ".join(unsupported_tokens)}), you can:**
 
 • **Check prices:** "what's the price of ETH?"
 • **Track portfolio:** "show my portfolio"
@@ -941,25 +1050,25 @@ Anvil uses **Hyperliquid Spot** for swaps, which only supports **meme tokens pai
 """,
             "es": f"""❌ **Swap no soportado: {from_token} → {to_token}**
 
-Anvil usa **Hyperliquid Spot** para swaps, que solo soporta **meme tokens con USDC**.
+Anvil usa **Hyperliquid Spot** para swaps con **440+ tokens con USDC**.
 
-**Tokens como {", ".join(unsupported_tokens)} no están disponibles para swaps.**
+**Tokens como {", ".join(unsupported_tokens)} no están disponibles en Hyperliquid Spot actualmente.**
 
 **✅ Qué PUEDES hacer en Anvil:**
 
-• Swaps de meme tokens: `swap 100 USDC to PURR`
+• Swaps de tokens: `swap 100 USDC to PURR`
 • Ver precios: "precio de ETH"
 • Comprar cripto: "comprar ETH"
 """,
             "pt": f"""❌ **Swap não suportado: {from_token} → {to_token}**
 
-Anvil usa **Hyperliquid Spot** para swaps, que só suporta **meme tokens com USDC**.
+Anvil usa **Hyperliquid Spot** para swaps com **440+ tokens com USDC**.
 
-**Tokens como {", ".join(unsupported_tokens)} não estão disponíveis para swaps.**
+**Tokens como {", ".join(unsupported_tokens)} não estão disponíveis no Hyperliquid Spot atualmente.**
 
 **✅ O que você PODE fazer no Anvil:**
 
-• Swaps de meme tokens: `swap 100 USDC to PURR`
+• Swaps de tokens: `swap 100 USDC to PURR`
 • Ver preços: "preço do ETH"
 • Comprar cripto: "comprar ETH"
 """,
@@ -1028,6 +1137,15 @@ Hyperliquid Spot só suporta swaps **com USDC**.
         amount = state.data.get("amount") or "0"
         chain = state.data.get("chain") or "base"
         to_chain = state.data.get("to_chain")
+
+        # Safety: apply wrapper mapping if not already resolved
+        from_token, to_token, note = self._resolve_hl_wrapper(
+            from_token, to_token
+        )
+        if note and not state.data.get("wrapper_note"):
+            state.data["wrapper_note"] = note
+            state.data["from_token"] = from_token
+            state.data["to_token"] = to_token
 
         is_cross_chain = to_chain and to_chain.lower() != chain.lower()
 
@@ -1631,7 +1749,7 @@ Aqui está a cotação do swap:
            - LiFi handles cross-chain bridging (Base/Arbitrum → Hyperliquid)
            - Gas is paid on source chain (no need for ETH on Arbitrum)
         2. Transfer: Move from Perps to Spot account (if balance in Perps)
-        3. Swap: Execute spot swap USDC → meme token
+        3. Swap: Execute spot swap USDC → token
 
         Returns execute_data with steps[] array for frontend to process.
         """
@@ -1665,17 +1783,17 @@ Aqui está a cotação do swap:
 
         # Determine which steps are needed
         # If swapping FROM USDC, check USDC balance
-        # If swapping FROM meme token (e.g., PURR → USDC), check meme token balance
+        # If swapping FROM token (e.g., PURR → USDC), check token balance
         is_selling_usdc = from_token.upper() == "USDC"
 
         if is_selling_usdc:
-            # User wants to swap USDC → meme token
+            # User wants to swap USDC → token
             available_on_spot = hl_spot_usdc
             available_on_perps = hl_perps_usdc
         else:
-            # User wants to swap meme token → USDC
+            # User wants to swap token → USDC
             available_on_spot = hl_spot_from_token
-            available_on_perps = 0  # Meme tokens are only on Spot
+            available_on_perps = 0  # Spot tokens are only on Spot
 
         # Build steps based on what's needed
         steps = []
@@ -2096,8 +2214,9 @@ Você precisa de {from_token} na sua carteira.
         """
         Check if this swap should use Hyperliquid Spot.
 
-        Hyperliquid Spot only supports meme tokens paired with USDC.
-        One of the tokens MUST be USDC, and the other must be a supported meme token.
+        Uses both the hardcoded ``HYPERLIQUID_SPOT_TOKENS`` (fast path) and
+        the cached live set from ``_get_tradeable_spot_tokens()`` so that all
+        263+ tokens with an active Core spot market are routed correctly.
         """
         # Safety check for None values
         if not from_token or not to_token:
@@ -2110,25 +2229,23 @@ Você precisa de {from_token} na sua carteira.
         if from_upper == to_upper:
             return False
 
-        # Check if one is USDC and the other is a Hyperliquid meme token (not USDC itself)
-        if (
-            from_upper == "USDC"
-            and to_upper in HYPERLIQUID_SPOT_TOKENS
-            and to_upper != "USDC"
-        ):
-            return True
-        if (
-            to_upper == "USDC"
-            and from_upper in HYPERLIQUID_SPOT_TOKENS
-            and from_upper != "USDC"
-        ):
-            return True
+        # Combine hardcoded set with live cached set for full coverage
+        known = HYPERLIQUID_SPOT_TOKENS
+        if self._cached_tradeable_spot:
+            known = known | self._cached_tradeable_spot
 
-        # Both are meme tokens (rare but possible) - requires USDC as intermediary
-        # This case would need two swaps, so we don't route it to Hyperliquid directly
-        # Example: PURR → TRUMP would need PURR → USDC → TRUMP
+        from_supported = from_upper in known or from_upper == "USDC"
+        to_supported = to_upper in known or to_upper == "USDC"
 
-        return False
+        # Both tokens must be known HL Spot tokens (including USDC)
+        if not (from_supported and to_supported):
+            return False
+
+        # At least one side must be non-USDC
+        if from_upper == "USDC" and to_upper == "USDC":
+            return False
+
+        return True
 
     async def _fetch_quote(
         self,
@@ -2143,58 +2260,114 @@ Você precisa de {from_token} na sua carteira.
         Fetch swap quote from the appropriate provider.
 
         Provider Selection:
-        1. Hyperliquid Spot: For meme tokens (PURR, TRUMP, etc.) paired with USDC
+        1. Hyperliquid Spot: For 440+ tokens (PURR, TRUMP, etc.) paired with USDC
         2. 1inch: For major tokens same-chain swaps
         3. LiFi: For cross-chain swaps
         """
         is_cross_chain = to_chain and to_chain.lower() != chain.lower()
 
         try:
+            # Warm the tradeable-token cache so _is_hyperliquid_swap covers
+            # all 263+ tokens, not just the hardcoded subset.
+            if self._cached_tradeable_spot is None and self._hyperliquid:
+                await self._get_tradeable_spot_tokens()
+
             # ============================================================
-            # HYPERLIQUID SPOT: Meme tokens paired with USDC
+            # HYPERLIQUID SPOT: 263+ tokens with active Core spot markets
             # ============================================================
             if self._is_hyperliquid_swap(from_token, to_token) and not is_cross_chain:
                 if self._hyperliquid:
                     logger.info(
-                        f"[SwapWorkflow] Using Hyperliquid Spot for meme token swap: "
+                        f"[SwapWorkflow] Using Hyperliquid Spot for token swap: "
                         f"{amount} {from_token} → {to_token}"
                     )
-                    try:
-                        # Hyperliquid uses human-readable amounts, not wei
-                        amount_float = float(amount)
+                    amount_float = float(amount)
+                    from_upper = from_token.upper()
+                    to_upper = to_token.upper()
 
+                    # 1) Try direct market (e.g. PURR/USDC or PURR/FUN if it exists)
+                    try:
                         quote = await self._hyperliquid.get_spot_quote(
-                            from_token=from_token.upper(),
-                            to_token=to_token.upper(),
+                            from_token=from_upper,
+                            to_token=to_upper,
                             amount=amount_float,
                         )
-
-                        # Hyperliquid uses its own API, NOT EVM contract addresses
-                        # Don't provide fake addresses that will fail balanceOf calls
-                        # Frontend should detect provider="hyperliquid" and use Hyperliquid SDK
-
                         return {
                             "output_amount": f"{quote.to_amount:.6f}".rstrip(
                                 "0"
                             ).rstrip("."),
-                            "price_impact": quote.spread_bps / 100,  # Convert bps to %
-                            "gas_estimate": 0,  # Hyperliquid = zero gas fees
+                            "price_impact": quote.spread_bps / 100,
+                            "gas_estimate": 0,
                             "aggregator": "hyperliquid",
                             "mid_price": quote.mid_price,
                             "effective_price": quote.price,
-                            # NOTE: No token addresses for Hyperliquid - it's not EVM-based
                             "from_token_address": None,
                             "to_token_address": None,
                         }
-                    except Exception as hl_err:
-                        logger.warning(
-                            f"[SwapWorkflow] Hyperliquid quote failed for {from_token}/{to_token}: {hl_err}"
+                    except Exception as direct_err:
+                        logger.info(
+                            "[SwapWorkflow] Direct HL quote failed %s/%s: %s",
+                            from_upper,
+                            to_upper,
+                            direct_err,
                         )
-                        # Fall through to 1inch/LiFi if Hyperliquid fails
+
+                    # 2) Token-to-token with no direct market: two-hop via USDC
+                    #    HL Spot typically has only X/USDC markets
+                    if from_upper != "USDC" and to_upper != "USDC":
+                        try:
+                            quote1 = await self._hyperliquid.get_spot_quote(
+                                from_token=from_upper,
+                                to_token="USDC",
+                                amount=amount_float,
+                            )
+                            quote2 = await self._hyperliquid.get_spot_quote(
+                                from_token="USDC",
+                                to_token=to_upper,
+                                amount=quote1.to_amount,
+                            )
+                            effective_price = (
+                                amount_float / quote2.to_amount
+                                if quote2.to_amount > 0
+                                else 0
+                            )
+                            return {
+                                "output_amount": f"{quote2.to_amount:.6f}".rstrip(
+                                    "0"
+                                ).rstrip("."),
+                                "price_impact": (quote1.spread_bps + quote2.spread_bps)
+                                / 100,
+                                "gas_estimate": 0,
+                                "aggregator": "hyperliquid",
+                                "mid_price": effective_price,
+                                "effective_price": effective_price,
+                                "from_token_address": None,
+                                "to_token_address": None,
+                                "via_usdc": True,
+                            }
+                        except Exception as two_hop_err:
+                            logger.warning(
+                                "[SwapWorkflow] Hyperliquid two-hop quote failed "
+                                "%s → USDC → %s: %s",
+                                from_upper,
+                                to_upper,
+                                two_hop_err,
+                            )
+
+                    # This pair is Hyperliquid-only; do not fall through to 1inch/LiFi
+                    if self._hyperliquid:
+                        return {
+                            "error": (
+                                "This token pair is on Hyperliquid but we couldn't get a quote "
+                                "(e.g. low liquidity or temporary issue). Try again in a moment, "
+                                "or try swapping to USDC first."
+                            )
+                        }
+                    # Fall through only when HL client was not configured
                 else:
                     logger.warning(
                         f"[SwapWorkflow] Hyperliquid client not configured, "
-                        f"cannot swap meme tokens: {from_token}/{to_token}"
+                        f"cannot swap tokens via HL Spot: {from_token}/{to_token}"
                     )
 
             amount_wei = self._to_wei(amount, from_token)
@@ -2333,7 +2506,7 @@ Você precisa de {from_token} na sua carteira.
         if token.upper() in chain_tokens:
             return chain_tokens[token.upper()]
 
-        # Then check Hyperliquid token addresses (for meme tokens)
+        # Then check Hyperliquid token addresses (for HL Spot tokens)
         if token.upper() in HYPERLIQUID_TOKEN_ADDRESSES:
             return HYPERLIQUID_TOKEN_ADDRESSES[token.upper()]
 
@@ -2352,7 +2525,7 @@ Você precisa de {from_token} na sua carteira.
         Build token selection prompt with numbered list, prices, and user context.
 
         Includes:
-        - Knowledge about Hyperliquid Spot and meme tokens
+        - Knowledge about Hyperliquid Spot tokens
         - User's current balance (if available)
         - Real-time prices from CoinGecko
         """
@@ -2363,7 +2536,7 @@ Você precisa de {from_token} na sua carteira.
 
         # Build token list with prices
         token_lines = []
-        for i, (symbol, description) in enumerate(POPULAR_MEME_TOKENS, 1):
+        for i, (symbol, description) in enumerate(POPULAR_TOKENS, 1):
             price_info = ""
             if prices.get(symbol.lower()):
                 price = prices[symbol.lower()]
@@ -2390,7 +2563,7 @@ Você precisa de {from_token} na sua carteira.
 
 {user_balance_section}
 
-**Select a meme token to receive:**
+**Select a token to receive:**
 
 {token_list}
 
@@ -2407,7 +2580,7 @@ Você precisa de {from_token} na sua carteira.
 
 {user_balance_section}
 
-**Selecciona un meme token para recibir:**
+**Selecciona un token para recibir:**
 
 {token_list}
 
@@ -2424,7 +2597,7 @@ Você precisa de {from_token} na sua carteira.
 
 {user_balance_section}
 
-**Selecione um meme token para receber:**
+**Selecione um token para receber:**
 
 {token_list}
 
@@ -2441,7 +2614,7 @@ Você precisa de {from_token} na sua carteira.
 
 {user_balance_section}
 
-**选择要接收的meme代币：**
+**选择要接收的代币：**
 
 {token_list}
 
@@ -2457,7 +2630,7 @@ Você precisa de {from_token} na sua carteira.
 
     async def _fetch_token_prices(self) -> dict[str, float]:
         """
-        Fetch current prices for popular meme tokens.
+        Fetch current prices for popular tokens.
 
         Uses CoinGecko API if available, returns empty dict on error.
         """
@@ -2503,19 +2676,19 @@ Você precisa de {from_token} na sua carteira.
         """Get knowledge paragraph about Hyperliquid Spot swaps."""
         msgs = {
             "en": """**What is Hyperliquid Spot?**
-Trade meme tokens with zero gas fees and 0.02% trading fee.
+Trade 440+ tokens with zero gas fees and 0.02% trading fee.
 High-speed execution (20,000+ TPS) on Hyperliquid L1.
 Real-time order book pricing - no slippage surprises.""",
             "es": """**¿Qué es Hyperliquid Spot?**
-Opera meme tokens con cero gas y 0.02% comisión.
+Opera 440+ tokens con cero gas y 0.02% comisión.
 Ejecución de alta velocidad (20,000+ TPS) en Hyperliquid L1.
 Precios en tiempo real - sin sorpresas de slippage.""",
             "pt": """**O que é Hyperliquid Spot?**
-Negocie meme tokens com zero gas e 0.02% de taxa.
+Negocie 440+ tokens com zero gas e 0.02% de taxa.
 Execução de alta velocidade (20,000+ TPS) no Hyperliquid L1.
 Preços em tempo real - sem surpresas de slippage.""",
             "zh": """**什么是 Hyperliquid Spot？**
-零 gas 费交易 meme 代币，仅 0.02% 交易费。
+零 gas 费交易 440+ 代币，仅 0.02% 交易费。
 Hyperliquid L1 上的高速执行（20,000+ TPS）。
 实时订单簿定价 - 无滑点意外。""",
         }
@@ -2568,7 +2741,7 @@ Hyperliquid L1 上的高速执行（20,000+ TPS）。
 
     def _get_invalid_selection_response(self, user_input: str, language: str) -> str:
         """Response when user enters invalid token selection."""
-        token_names = ", ".join([t[0] for t in POPULAR_MEME_TOKENS])
+        token_names = ", ".join([t[0] for t in POPULAR_TOKENS])
 
         msgs = {
             "en": f"""❌ **Invalid selection:** "{user_input}"
@@ -2636,42 +2809,42 @@ Por favor insira:
 
 {balance_section}
 
-What meme token would you like to swap?
+What token would you like to swap?
 
 {examples_section}
 
-**Supported:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 more meme tokens
-**Note:** All swaps use USDC pairs. Major tokens (ETH, BTC, SOL) are NOT supported.""",
+**440+ tokens available:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW and many more
+**Note:** All swaps use USDC pairs. Some major L1 tokens (ETH, BTC, SOL) may not be on HL Spot.""",
             "es": f"""🔄 **Swaps en Hyperliquid Spot**
 
 {balance_section}
 
-¿Qué meme token te gustaría intercambiar?
+¿Qué token te gustaría intercambiar?
 
 {examples_section}
 
-**Soportados:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 más
-**Nota:** Todos los swaps usan pares USDC. Tokens mayores (ETH, BTC, SOL) NO están soportados.""",
+**440+ tokens disponibles:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW y muchos más
+**Nota:** Todos los swaps usan pares USDC. Algunos tokens L1 (ETH, BTC, SOL) pueden no estar en HL Spot.""",
             "pt": f"""🔄 **Swaps no Hyperliquid Spot**
 
 {balance_section}
 
-Qual meme token você gostaria de trocar?
+Qual token você gostaria de trocar?
 
 {examples_section}
 
-**Suportados:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50 mais
-**Nota:** Todas as trocas usam pares USDC. Tokens maiores (ETH, BTC, SOL) NÃO são suportados.""",
+**440+ tokens disponíveis:** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW e muitos mais
+**Nota:** Todas as trocas usam pares USDC. Alguns tokens L1 (ETH, BTC, SOL) podem não estar no HL Spot.""",
             "zh": f"""🔄 **Hyperliquid Spot 交易**
 
 {balance_section}
 
-您想交换哪个meme代币？
+您想交换哪个代币？
 
 {examples_section}
 
-**支持：** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW + 50多个meme代币
-**注意：** 所有交易使用USDC交易对。主流代币（ETH, BTC, SOL）不支持。""",
+**440+代币可用：** PURR, TRUMP, PEPE, HFUN, MOG, GMEOW 等更多
+**注意：** 所有交易使用USDC交易对。部分L1代币（ETH, BTC, SOL）可能不在HL Spot上。""",
         }
         return msgs.get(language, msgs["en"])
 
@@ -2860,6 +3033,9 @@ Qual meme token você gostaria de trocar?
         aggregator = data.get("aggregator", "DEX")
         chain = data.get("chain", "base")
 
+        # Wrapper mapping note (e.g. "BTC → UBTC (Hyperliquid wrapped)")
+        wrapper_note = data.get("wrapper_note")
+
         # Market enrichment data
         market = data.get("market_data", {})
         from_price = market.get("from_token_price")
@@ -2895,10 +3071,16 @@ Qual meme token você gostaria de trocar?
             if gas_timing:
                 gas_info += f"\n💡 {gas_timing}"
 
+        # Wrapper mapping info (shown when BTC→UBTC etc.)
+        wrapper_info = ""
+        if wrapper_note:
+            wrapper_info = f"🔄 **Auto-mapped:** {wrapper_note}\n"
+
         msgs = {
             "en": f"""📊 **Swap Quote**
 
 **{amount} {from_token}** → **{output} {to_token}**
+{wrapper_info}
 
 {market_context}
 • Price Impact: {impact:.2f}%
@@ -2913,7 +3095,7 @@ Qual meme token você gostaria de trocar?
             "es": f"""📊 **Cotización de Swap**
 
 **{amount} {from_token}** → **{output} {to_token}**
-
+{wrapper_info}
 {market_context}
 • Impacto en precio: {impact:.2f}%
 • Red: {chain.upper()}
@@ -2927,7 +3109,7 @@ Qual meme token você gostaria de trocar?
             "pt": f"""📊 **Cotação de Swap**
 
 **{amount} {from_token}** → **{output} {to_token}**
-
+{wrapper_info}
 {market_context}
 • Impacto no preço: {impact:.2f}%
 • Rede: {chain.upper()}
@@ -3230,6 +3412,10 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
         Data sources:
         1. swap_positions table (spot balances + perps positions, cached)
         2. transactions table (recent swap history)
+
+        Note: We do not use the `hyperliquid_positions` table. That table
+        exists in the schema but is unused; all HL position data for "my swaps"
+        comes from `swap_positions`, populated by swap_position_sync_tasks.
         """
         language = user_context.language
         wallet_address = user_context.wallet_address
@@ -3310,9 +3496,16 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
             }
             return empty_msg.get(language, empty_msg["en"]), state
 
-        response = self._render_swap_positions(positions, recent_swaps, language)
+        # ── Fetch top sentiment tokens for recommendations ──
+        top_sentiment_tokens = await self._fetch_top_sentiment_tokens()
 
-        # Set state for position selection
+        response, numbered_actions = self._render_swap_positions(
+            positions, recent_swaps, language, top_sentiment_tokens
+        )
+
+        # Store numbered actions so selection handler can dispatch correctly
+        state.data["numbered_actions"] = numbered_actions
+        # Set state for action selection
         state.data["awaiting_swap_position_selection"] = True
 
         return response, state
@@ -3322,8 +3515,16 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
         positions: list[dict],
         recent_swaps: list[dict],
         language: str,
-    ) -> str:
-        """Render the swap positions table with action options."""
+        top_sentiment_tokens: list[dict] | None = None,
+    ) -> tuple[str, list[dict]]:
+        """
+        Render swap positions with numbered actions and smart recommendations.
+
+        Returns:
+            Tuple of (rendered text, list of action dicts).
+            Each action dict has keys: action_type, from_token, to_token, amount.
+            action_type is one of: swap, swap_all, custom, refresh.
+        """
 
         headers = {
             "en": "📊 **Your Swap Positions (Hyperliquid)**\n\n",
@@ -3334,26 +3535,25 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
 
         lines: list[str] = []
 
-        # ── Spot Holdings ──
+        # ── Spot Holdings (unnumbered – display only) ──
         spot_positions = [p for p in positions if p["source"] == "spot"]
         if spot_positions:
             lines.append("**🪙 Spot Holdings**\n")
-            for i, pos in enumerate(spot_positions, 1):
+            for pos in spot_positions:
                 token = pos["token"]
                 balance = pos["balance"]
                 usd = pos["usd_value"]
                 usd_str = f" (~${usd:,.2f})" if usd > 0 else ""
                 lines.append(
-                    f"**{i}.** {token}: {balance:,.4f}{usd_str}"
+                    f"• **{token}**: {balance:,.4f}{usd_str}"
                 )
             lines.append("")
 
-        # ── Perps Positions ──
+        # ── Perps Positions (unnumbered – display only) ──
         perps_positions = [p for p in positions if p["source"] == "perps"]
         if perps_positions:
-            offset = len(spot_positions)
             lines.append("**📈 Perpetual Positions**\n")
-            for i, pos in enumerate(perps_positions, offset + 1):
+            for pos in perps_positions:
                 token = pos["token"]
                 size = pos["balance"]
                 side = pos["side"].upper()
@@ -3364,9 +3564,9 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
                 pnl_emoji = "🟢" if pnl >= 0 else "🔴"
 
                 lines.append(
-                    f"**{i}.** {token} {side} {leverage:.0f}x\n"
-                    f"   • Size: {size:,.4f} | Entry: ${entry:,.2f} | Mark: ${mark:,.2f}\n"
-                    f"   • PnL: {pnl_emoji} ${pnl:,.2f}"
+                    f"• **{token}** {side} {leverage:.0f}x\n"
+                    f"   Size: {size:,.4f} | Entry: ${entry:,.2f} | Mark: ${mark:,.2f}\n"
+                    f"   PnL: {pnl_emoji} ${pnl:,.2f}"
                 )
             lines.append("")
 
@@ -3389,35 +3589,163 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
                     lines.append(f"• {amount_in:,.2f} {asset_in}  _{date_str}_")
             lines.append("")
 
-        # ── Action prompt ──
-        actions = {
-            "en": (
-                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                "**What would you like to do?**\n"
-                "• Reply with a **number** to swap that token to another\n"
-                "• Say **\"swap 100 USDC to PURR\"** to start a new swap\n"
-                "• Say **\"swap all PURR to USDC\"** to sell a position\n"
-                "• Say **\"refresh\"** to update positions now"
-            ),
-            "es": (
-                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                "**¿Qué te gustaría hacer?**\n"
-                "• Responde con un **número** para intercambiar ese token\n"
-                "• Di **\"swap 100 USDC a PURR\"** para un nuevo swap\n"
-                "• Di **\"swap todo PURR a USDC\"** para vender una posición\n"
-                "• Di **\"refresh\"** para actualizar posiciones"
-            ),
-            "pt": (
-                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                "**O que você gostaria de fazer?**\n"
-                "• Responda com um **número** para trocar esse token\n"
-                "• Diga **\"swap 100 USDC para PURR\"** para um novo swap\n"
-                "• Diga **\"swap tudo PURR para USDC\"** para vender uma posição\n"
-                "• Diga **\"refresh\"** para atualizar posições"
-            ),
-        }
+        # ── Build numbered smart actions based on actual holdings ──
+        lines.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
 
-        return header + "\n".join(lines) + "\n" + actions.get(language, actions["en"])
+        what_to_do = {
+            "en": "**What would you like to do?**\n",
+            "es": "**¿Qué te gustaría hacer?**\n",
+            "pt": "**O que você gostaria de fazer?**\n",
+        }
+        lines.append(what_to_do.get(language, what_to_do["en"]))
+
+        action_num = 1
+        # Actions list – each entry maps a number to a swap command
+        actions: list[dict] = []
+        # Exclude stablecoins from "sell" recommendations
+        stables = {"USDC", "USDT", "DAI", "USDbC"}
+
+        # Find the best sentiment token for buy recommendations
+        # Exclude tokens the user already holds and stablecoins
+        held_tokens = {p["token"].upper() for p in spot_positions}
+        best_sentiment_token = None
+        best_sentiment_label = ""
+        if top_sentiment_tokens:
+            for st in top_sentiment_tokens:
+                name = st.get("name", "").upper()
+                if name not in held_tokens and name not in stables:
+                    best_sentiment_token = name
+                    best_sentiment_label = st.get(
+                        "sentiment_interpretation", ""
+                    )
+                    break
+
+        # For each holding, generate contextual swap suggestions
+        for pos in spot_positions:
+            token = pos["token"].upper()
+            balance = pos["balance"]
+            usd = pos["usd_value"]
+
+            if token in stables:
+                # Stablecoin → suggest buying the best sentiment token
+                if usd >= 1.0 and best_sentiment_token:
+                    suggest_amount = round(balance * 0.8, 2)
+                    sentiment_hint = (
+                        f" ({best_sentiment_label})"
+                        if best_sentiment_label
+                        else ""
+                    )
+                    lines.append(
+                        f"**{action_num}.** 🟢 Buy: "
+                        f"*\"swap {suggest_amount} {token} to {best_sentiment_token}\"*"
+                        f"{sentiment_hint}"
+                    )
+                    actions.append({
+                        "action_type": "swap",
+                        "from_token": token,
+                        "to_token": best_sentiment_token,
+                        "amount": suggest_amount,
+                    })
+                    action_num += 1
+            else:
+                # Non-stablecoin → suggest selling to USDC or swapping
+                if usd >= 1.0:
+                    # Suggest selling ~80% to USDC
+                    suggest_sell = round(balance * 0.8, 2)
+                    lines.append(
+                        f"**{action_num}.** 💰 Sell: "
+                        f"*\"swap {suggest_sell} {token} to USDC\"*"
+                    )
+                    actions.append({
+                        "action_type": "swap",
+                        "from_token": token,
+                        "to_token": "USDC",
+                        "amount": suggest_sell,
+                    })
+                    action_num += 1
+
+                    # If there's a good sentiment token, suggest rotating
+                    if best_sentiment_token and best_sentiment_token != token:
+                        suggest_rotate = round(balance * 0.5, 2)
+                        sentiment_hint = (
+                            f" ({best_sentiment_label})"
+                            if best_sentiment_label
+                            else ""
+                        )
+                        lines.append(
+                            f"**{action_num}.** 🔄 Rotate: "
+                            f"*\"swap {suggest_rotate} {token} to "
+                            f"{best_sentiment_token}\"*{sentiment_hint}"
+                        )
+                        actions.append({
+                            "action_type": "swap",
+                            "from_token": token,
+                            "to_token": best_sentiment_token,
+                            "amount": suggest_rotate,
+                        })
+                        action_num += 1
+
+        # Always add a "sell all" option for the largest non-stable holding
+        largest_non_stable = None
+        for pos in spot_positions:
+            if pos["token"].upper() not in stables and pos["usd_value"] >= 1.0:
+                if (
+                    largest_non_stable is None
+                    or pos["usd_value"] > largest_non_stable["usd_value"]
+                ):
+                    largest_non_stable = pos
+        if largest_non_stable:
+            token = largest_non_stable["token"].upper()
+            lines.append(
+                f"**{action_num}.** 🔻 Sell all: "
+                f"*\"swap all {token} to USDC\"*"
+            )
+            actions.append({
+                "action_type": "swap_all",
+                "from_token": token,
+                "to_token": "USDC",
+                "amount": largest_non_stable["balance"],
+            })
+            action_num += 1
+
+        # Custom swap option
+        custom_label = {
+            "en": "Custom swap",
+            "es": "Swap personalizado",
+            "pt": "Swap personalizado",
+        }
+        lines.append(
+            f"**{action_num}.** ✏️ {custom_label.get(language, custom_label['en'])}: "
+            f"*\"swap [amount] [TOKEN] to [TOKEN]\"*"
+        )
+        actions.append({"action_type": "custom"})
+        action_num += 1
+
+        # Refresh option
+        lines.append(
+            f"**{action_num}.** 🔃 Refresh: *\"refresh\"*"
+        )
+        actions.append({"action_type": "refresh"})
+
+        # Sentiment footnote
+        if top_sentiment_tokens:
+            trending = [
+                f"{t['name']} ({t.get('sentiment_interpretation', '?')})"
+                for t in top_sentiment_tokens[:3]
+                if t["name"].upper() not in stables
+            ]
+            if trending:
+                trending_label = {
+                    "en": "Trending",
+                    "es": "Tendencia",
+                    "pt": "Tendência",
+                }
+                lines.append(
+                    f"\n📈 {trending_label.get(language, trending_label['en'])}: "
+                    f"{', '.join(trending)}"
+                )
+
+        return header + "\n".join(lines), actions
 
     async def _handle_swap_position_selection(
         self,
@@ -3465,10 +3793,86 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
                 state,
             )
 
-        # Try to parse a number selection
+        # Try to parse a number as an action selection (numbered recommendations)
+        numbered_actions = state.data.get("numbered_actions", [])
         try:
             selection = int(text)
-            if 1 <= selection <= len(positions):
+
+            # Dispatch by numbered action if we have actions from "my swaps"
+            if numbered_actions and 1 <= selection <= len(numbered_actions):
+                action = numbered_actions[selection - 1]
+                action_type = action.get("action_type", "")
+
+                state.data.pop("awaiting_swap_position_selection", None)
+                state.data.pop("numbered_actions", None)
+
+                if action_type == "swap":
+                    from_token = action.get("from_token", "")
+                    to_token = action.get("to_token", "")
+                    amount = action.get("amount", 0)
+                    state.data["from_token"] = from_token
+                    state.data["to_token"] = to_token
+                    state.data["amount"] = amount
+                    state.data["provider"] = "hyperliquid"
+                    state.data["chain"] = "hyperliquid"  # My-swaps actions are HL Spot
+                    state.step = WorkflowStep.FETCH_DATA.value
+                    return await self._handle_fetch_quote(
+                        message, state, user_context
+                    )
+
+                if action_type == "swap_all":
+                    from_token = action.get("from_token", "")
+                    to_token = action.get("to_token", "")
+                    amount = action.get("amount", 0)
+                    state.data["from_token"] = from_token
+                    state.data["to_token"] = to_token
+                    state.data["amount"] = amount
+                    state.data["provider"] = "hyperliquid"
+                    state.data["chain"] = "hyperliquid"  # My-swaps actions are HL Spot
+                    state.step = WorkflowStep.FETCH_DATA.value
+                    return await self._handle_fetch_quote(
+                        message, state, user_context
+                    )
+
+                if action_type == "custom":
+                    custom_prompt = {
+                        "en": (
+                            "✏️ **Custom swap**\n\n"
+                            "Type your swap command, for example:\n"
+                            "• **swap 50 USDC to PURR**\n"
+                            "• **swap all PURR to USDC**"
+                        ),
+                        "es": (
+                            "✏️ **Swap personalizado**\n\n"
+                            "Escribe tu comando, por ejemplo:\n"
+                            "• **swap 50 USDC a PURR**\n"
+                            "• **swap todo PURR a USDC**"
+                        ),
+                        "pt": (
+                            "✏️ **Swap personalizado**\n\n"
+                            "Digite seu comando, por exemplo:\n"
+                            "• **swap 50 USDC para PURR**\n"
+                            "• **swap tudo PURR para USDC**"
+                        ),
+                    }
+                    return (
+                        custom_prompt.get(
+                            user_context.language, custom_prompt["en"]
+                        ),
+                        state,
+                    )
+
+                if action_type == "refresh":
+                    await self._trigger_on_demand_sync(user_context)
+                    state = WorkflowState()
+                    state.step = WorkflowStep.PARSE_REQUEST.value
+                    state.data["action"] = "view_positions"
+                    return await self._handle_my_swaps_request(
+                        message, state, user_context
+                    )
+
+            # Legacy: number as position index (when no numbered_actions)
+            if positions and 1 <= selection <= len(positions):
                 selected = positions[selection - 1]
                 token = selected["token"]
                 balance = selected["balance"]
@@ -3477,7 +3881,6 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
                 state.data.pop("awaiting_swap_position_selection", None)
 
                 if source == "spot":
-                    # Pre-fill from_token and ask what to swap to
                     state.data["from_token"] = token.upper()
                     state.data["available_balance"] = balance
 
@@ -3516,8 +3919,7 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
                     state.step = WorkflowStep.PARSE_REQUEST.value
                     return prompt.get(language, prompt["en"]), state
 
-                elif source == "perps":
-                    # Perps position – inform user this is view-only for now
+                if source == "perps":
                     language = user_context.language
                     perps_msg = {
                         "en": (
@@ -3547,11 +3949,12 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
                     }
                     return perps_msg.get(language, perps_msg["en"]), state
 
-            else:
-                return (
-                    f"❌ Please select a number between 1 and {len(positions)}.",
-                    state,
-                )
+            # Selection out of range
+            max_num = len(numbered_actions) if numbered_actions else len(positions)
+            return (
+                f"❌ Please select a number between 1 and {max_num}.",
+                state,
+            )
         except ValueError:
             pass
 
@@ -3892,6 +4295,118 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
         except Exception as e:
             logger.warning(
                 "[SwapWorkflow] Failed to fetch cached positions: %s", e
+            )
+            return []
+
+    async def _get_tradeable_spot_tokens(self) -> set[str]:
+        """
+        Return the set of base-token names that have an active spot market
+        on Hyperliquid (i.e. appear in ``spotMeta.universe``).
+
+        Tokens that exist only as EVM tokens without a Core spot market
+        (e.g. MOON, EUR) are excluded — they cannot be traded via the API.
+
+        The result is cached on the instance for the lifetime of the agent
+        so subsequent calls (routing, recommendations) don't re-fetch.
+        """
+        if self._cached_tradeable_spot is not None:
+            return self._cached_tradeable_spot
+        if not self._hyperliquid:
+            return set()
+        try:
+            meta = await self._hyperliquid.get_spot_meta()
+            self._cached_tradeable_spot = {m.base_token.upper() for m in meta}
+            return self._cached_tradeable_spot
+        except Exception as e:
+            logger.warning(
+                "[SwapWorkflow] Failed to fetch tradeable spot tokens: %s", e
+            )
+            return set()
+
+    async def _fetch_top_sentiment_tokens(
+        self,
+        limit: int = 10,
+    ) -> list[dict]:
+        """
+        Fetch top-ranked tokens by sentiment score from hl_spot_tokens.
+
+        Only returns tokens that have an **active Core spot market** on
+        Hyperliquid (``has_spot_market = true``).  EVM-only tokens that
+        cannot be traded via the API are excluded at the SQL level.
+
+        Returns list of dicts with name, sentiment_score,
+        sentiment_classification, sentiment_interpretation.
+        Ordered by sentiment_score DESC, only enriched tokens.
+        """
+        try:
+            import os
+
+            from sqlalchemy import text as sa_text
+            from sqlalchemy.ext.asyncio import (
+                create_async_engine,
+                AsyncSession as _AsyncSession,
+            )
+            from sqlalchemy.orm import sessionmaker as _sessionmaker
+
+            db_url = os.environ.get("DATABASE_URL")
+            if not db_url:
+                db_host = os.environ.get("POSTGRES_HOST", "localhost")
+                db_port = os.environ.get("POSTGRES_PORT", "5432")
+                db_user = os.environ.get("POSTGRES_USER", "postgres")
+                db_pass = os.environ.get("POSTGRES_PASSWORD", "changethis")
+                db_name = os.environ.get("POSTGRES_DB", "anvil_db")
+                db_url = (
+                    f"postgresql+psycopg://{db_user}:{db_pass}"
+                    f"@{db_host}:{db_port}/{db_name}"
+                )
+
+            engine = create_async_engine(db_url, pool_pre_ping=True)
+            async_session = _sessionmaker(
+                engine, class_=_AsyncSession, expire_on_commit=False
+            )
+
+            tokens: list[dict] = []
+            async with async_session() as session:
+                result = await session.execute(
+                    sa_text("""
+                        SELECT name,
+                               sentiment_score::text,
+                               sentiment_classification,
+                               sentiment_interpretation
+                        FROM hl_spot_tokens
+                        WHERE status = 'enriched'
+                          AND has_spot_market = true
+                          AND sentiment_score IS NOT NULL
+                          AND name NOT IN ('USDC', 'USDT', 'DAI')
+                        ORDER BY sentiment_score DESC
+                        LIMIT :lim
+                    """),
+                    {"lim": limit},
+                )
+                for row in result.mappings().all():
+                    tokens.append({
+                        "name": row.get("name", ""),
+                        "sentiment_score": float(
+                            row.get("sentiment_score", "0") or "0"
+                        ),
+                        "sentiment_classification": row.get(
+                            "sentiment_classification", ""
+                        ),
+                        "sentiment_interpretation": row.get(
+                            "sentiment_interpretation", ""
+                        ),
+                    })
+
+            await engine.dispose()
+            logger.info(
+                "[SwapWorkflow] Fetched %d tradeable sentiment tokens",
+                len(tokens),
+            )
+            return tokens
+
+        except Exception as e:
+            logger.warning(
+                "[SwapWorkflow] Failed to fetch sentiment tokens: %s", e
             )
             return []
 

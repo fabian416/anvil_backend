@@ -46,6 +46,11 @@ def map_hl_spot_tokens_table() -> None:
         is_canonical = mapped_column(
             Boolean, nullable=False, server_default="false"
         )
+        # True when token has an active Core spot order book (in spotMeta.universe).
+        # EVM-only tokens without a Core market get False.
+        has_spot_market = mapped_column(
+            Boolean, nullable=False, server_default="false"
+        )
         status = mapped_column(
             String(20), nullable=False, server_default="pending", index=True
         )

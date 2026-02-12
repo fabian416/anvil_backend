@@ -462,7 +462,7 @@ On Anvil, you can execute swaps through multiple DEX aggregators including 1inch
             "usdt": "tether",
             "dai": "dai",
             "wbtc": "wrapped-bitcoin",
-            # Meme tokens (Hyperliquid Spot supported)
+            # Tokens on Hyperliquid Spot
             "pepe": "pepe",
             "trump": "official-trump",
             "maga": "maga",

@@ -43,7 +43,7 @@ class KnowledgeCompressor:
         if level == CompressionLevel.AGGRESSIVE:
             # Ultra-compact format
             return f"""ANVIL FEATURES:
-• Trading: Swap MEME TOKENS ONLY via Hyperliquid Spot (PURR, TRUMP, PEPE, etc.) - Major tokens NOT supported
+• Trading: Swap 440+ tokens via Hyperliquid Spot (PURR, TRUMP, PEPE, etc.) - USDC pairs
 • Hunter AI: Sentiment (82% acc), predictions (73% acc), risk signals, trading signals
 • ULTRA: Arbitrage (92% acc), flash loans (0% fee), MEV protection (free), auto trading
 • Portfolio: Multi-chain tracking, real-time updates
@@ -57,12 +57,11 @@ class KnowledgeCompressor:
 
             return f"""ANVIL CAPABILITIES:
 
-TRADING & SWAPS (⚠️ MEME TOKENS ONLY):
+TRADING & SWAPS (HYPERLIQUID SPOT):
 • Provider: Hyperliquid Spot (zero gas fees, 0.02% trading fee)
-• Supported: MEME TOKENS ONLY - PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc. (50+ tokens)
+• 440+ tokens available: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, and many more
 • All pairs: XXX/USDC format (USDC is quote currency)
-• ⚠️ NOT SUPPORTED: ETH, BTC, SOL, LINK, UNI, AAVE and other major tokens
-• For major tokens: Use external DEX (1inch, Uniswap)
+• Some major L1 tokens (ETH, BTC, SOL) may not be on HL Spot — available via Perps
 • Anvil CAN: Track prices, portfolio tracking, market analysis for ALL tokens
 
 HUNTER AI - MARKET INTELLIGENCE:
@@ -270,35 +269,30 @@ UNIQUE FEATURES:
     def compress_swap(
         swap_data: Dict[str, Any], level: CompressionLevel = CompressionLevel.MEDIUM
     ) -> str:
-        """Compress swap knowledge - Hyperliquid Spot only (meme tokens)"""
+        """Compress swap knowledge - Hyperliquid Spot (440+ tokens)"""
 
         if level == CompressionLevel.AGGRESSIVE:
             return """SWAP TOKENS (HYPERLIQUID SPOT):
-⚠️ IMPORTANT: Anvil uses Hyperliquid Spot which ONLY supports MEME TOKENS
 • Provider: Hyperliquid Spot (0 gas fees, 0.02% trading fee)
-• Supported: MEME TOKENS ONLY - PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, etc. (50+ meme tokens)
+• 440+ tokens available: PURR, TRUMP, PEPE, HFUN, MOG, GMEOW, and many more
 • Quote currency: USDC (all pairs are XXX/USDC)
-• NOT SUPPORTED: ETH, BTC, SOL, WBTC, LINK, UNI, AAVE and other major tokens
-• For major tokens: Use external DEX aggregators (1inch, Uniswap)
+• Some major L1 tokens (ETH, BTC, SOL) may not be on HL Spot — available via Perps
 • Commands: "swap 100 USDC to PURR" (en/es/pt/zh)"""
 
         if level == CompressionLevel.MEDIUM:
             return """TOKEN SWAP - HYPERLIQUID SPOT:
 
-⚠️ CRITICAL LIMITATION:
-Anvil uses Hyperliquid Spot for swaps. Hyperliquid is primarily a PERPETUAL FUTURES exchange.
-The Spot market ONLY supports MEME TOKENS paired with USDC.
+Anvil uses Hyperliquid Spot for swaps with 440+ tokens paired with USDC.
 
-SUPPORTED TOKENS (MEME ONLY):
+AVAILABLE TOKENS (440+):
 • PURR, HFUN, TRUMP, PEPE, MOG, POINTS, JEFF, GMEOW, LICK, MANLET
 • SIX, WAGMI, CAPPY, RUG, CZ, BAGS, ANSEM, TATE, FUN, PUMP, SCHIZO
-• 50+ meme tokens total
+• 440+ tokens total
 • All pairs are XXX/USDC format
 
-NOT SUPPORTED (MAJOR TOKENS):
-• ETH, BTC, SOL, WBTC, WETH, LINK, UNI, AAVE, CRV, MKR
-• DAI, USDT, MATIC, ARB, OP, AVAX, DOT, ATOM, APT, SUI
-• For major tokens: Use external DEX aggregators (1inch, Uniswap, etc.)
+NOTE ON MAJOR L1 TOKENS:
+• Some tokens like ETH, BTC, SOL may not be on Hyperliquid Spot
+• These are available via Hyperliquid Perps or external DEX aggregators (1inch, Uniswap)
 
 HOW IT WORKS:
 1. User: "swap 100 USDC to PURR"
@@ -315,7 +309,7 @@ FEATURES:
 FOR ETH/BTC TRADING:
 • Anvil can track prices and portfolio
 • Market analysis via Hunter AI
-• For actual swaps: Use 1inch, Uniswap, or Hyperliquid Perps"""
+• For actual swaps: Use Hyperliquid Perps, 1inch, or Uniswap"""
 
         return KnowledgeCompressor._format_light(swap_data)
 

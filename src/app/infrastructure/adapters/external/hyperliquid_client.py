@@ -578,7 +578,7 @@ class HyperliquidClient:
         """
         Get user's Spot account balance on Hyperliquid.
 
-        This is where funds must be to execute spot swaps (meme tokens).
+        This is where funds must be to execute spot swaps (440+ tokens).
         User must transfer from Perps → Spot before swapping.
 
         Args:
@@ -689,12 +689,15 @@ class HyperliquidClient:
                 else f"TOKEN{quote_idx}"
             )
 
+            # Use API's index when present (required for l2Book coin format @index)
+            market_index = market.get("index", i)
+
             markets.append(
                 SpotMeta(
                     name=market.get("name", f"{base_token}/{quote_token}"),
                     base_token=base_token,
                     quote_token=quote_token,
-                    index=i,
+                    index=market_index,
                     min_size=float(market.get("minSz", 0.001)),
                     price_decimals=int(market.get("priceSzDecimals", 2)),
                     size_decimals=int(market.get("szDecimals", 4)),
@@ -734,12 +737,35 @@ class HyperliquidClient:
 
         return result
 
+    async def _resolve_spot_coin(self, symbol: str) -> str:
+        """
+        Resolve a spot pair symbol (e.g. 'PURR/USDC') to the HL API coin for l2Book.
+
+        The correct coin value is the ``name`` field from ``spotMeta.universe``.
+        For market 0 this is ``"PURR/USDC"``; for all others it is ``"@{index}"``
+        (e.g. ``"@41"`` for FUN/USDC).  Using ``"@0"`` returns null from the API,
+        so we must not construct the coin ourselves — always use the API name.
+        """
+        if symbol.startswith("@"):
+            return symbol
+        if "/" not in symbol:
+            raise ValueError(f"Spot symbol must be like BASE/QUOTE or @index: {symbol}")
+        meta = await self.get_spot_meta()
+        key = symbol.upper()
+        for m in meta:
+            pair = f"{m.base_token}/{m.quote_token}"
+            if pair == key:
+                # Use the API's own name — it is the correct coin for l2Book
+                return m.name
+        raise ValueError(f"No spot market found for {symbol}")
+
     async def get_spot_order_book(self, symbol: str, depth: int = 20) -> OrderBook:
         """
         Get order book for a spot market.
 
         Args:
-            symbol: Spot pair (e.g., "ETH/USDC" or "@1" for index 1)
+            symbol: Spot pair (e.g., "ETH/USDC" or "PURR/USDC") or "@1" for index 1.
+                    For spot, the API expects @index; we resolve X/Y via spotMeta.
             depth: Order book depth (default: 20)
 
         Returns:
@@ -750,8 +776,9 @@ class HyperliquidClient:
             >>> print(f"Best bid: ${order_book.bids[0][0]}")
             >>> print(f"Best ask: ${order_book.asks[0][0]}")
         """
-        # Convert symbol name to spot format if needed
-        coin = symbol if symbol.startswith("@") else symbol
+        coin = symbol
+        if not symbol.startswith("@"):
+            coin = await self._resolve_spot_coin(symbol)
 
         response = await self._client.post(
             "/info",
@@ -763,18 +790,15 @@ class HyperliquidClient:
         response.raise_for_status()
         data = response.json()
 
-        # Parse order book
-        levels = data.get("levels", [])
-        bids = (
-            [(float(level["px"]), float(level["sz"])) for level in levels[0]]
-            if levels
-            else []
-        )
-        asks = (
-            [(float(level["px"]), float(level["sz"])) for level in levels[1]]
-            if len(levels) > 1
-            else []
-        )
+        # API can return null for some spot coins (e.g. '@0'); avoid .get on None
+        levels = (data or {}).get("levels", [])
+        if not levels or len(levels) < 2:
+            raise ValueError(
+                f"No order book data for spot {symbol} (coin={coin}). "
+                "Pair may be unsupported or temporarily unavailable."
+            )
+        bids = [(float(level["px"]), float(level["sz"])) for level in levels[0]]
+        asks = [(float(level["px"]), float(level["sz"])) for level in levels[1]]
 
         return OrderBook(
             symbol=symbol,
