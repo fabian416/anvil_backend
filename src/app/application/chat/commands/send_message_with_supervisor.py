@@ -319,6 +319,7 @@ class SendMessageWithSupervisor:
             workflow_state = None
             workflow_name = None
             qr_data = None  # QR code data from wallet agent
+            sentiment_analysis = None  # Hunter sentiment from money market / workflow agents
             from app.domain.ports.agent_squad.agent_gateway import AgentResponse
 
             for task in workflow_plan.tasks:
@@ -356,6 +357,10 @@ class SendMessageWithSupervisor:
                                 extra={"qr_data": qr_data},
                             )
 
+                        # Enrichment: Hunter sentiment (e.g. from money market workflow)
+                        if result.metadata.get("sentiment_analysis") is not None:
+                            sentiment_analysis = result.metadata.get("sentiment_analysis")
+
             # Calculate total time
             total_time_ms = int((time.time() - start_time) * 1000)
 
@@ -375,6 +380,10 @@ class SendMessageWithSupervisor:
             # Include QR code data if present (for receive flows)
             if qr_data:
                 result_metadata["qr_data"] = qr_data
+
+            # Include sentiment enrichment if present (from money market / workflow agents)
+            if sentiment_analysis is not None:
+                result_metadata["sentiment_analysis"] = sentiment_analysis
 
             # Build result
             return SupervisorMessageResult(

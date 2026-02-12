@@ -83,6 +83,18 @@ class Order:
 
 
 @dataclass
+class SpotToken:
+    """Raw Hyperliquid spot token metadata from spotMeta endpoint."""
+
+    name: str  # e.g., "PURR"
+    token_id: str  # e.g., "0xeb62eee3685fc4c43992febcd9e75443"
+    index: int  # Token index in the array
+    sz_decimals: int  # Size decimals
+    wei_decimals: int  # Wei decimals
+    is_canonical: bool  # Whether this is the canonical token
+
+
+@dataclass
 class SpotMeta:
     """Spot market metadata."""
 
@@ -107,6 +119,23 @@ class SpotQuote:
     mid_price: float  # Mid market price
     spread_bps: float  # Spread in basis points
     timestamp: int
+
+
+@dataclass
+class UserFill:
+    """User fill (executed trade) from Hyperliquid userFills / userFillsByTime."""
+
+    coin: str  # Asset: "ETH", "BTC" for perps; "@1" for spot
+    px: str  # Fill price (string for precision)
+    sz: float  # Fill size
+    side: str  # "A" = Ask/Sell, "B" = Bid/Buy
+    time: int  # Fill timestamp (ms)
+    hash: str | None  # Transaction hash
+    oid: int  # Order ID
+    tid: int  # Trade ID
+    dir: str  # e.g. "Buy", "Sell", "Open Long"
+    fee: str | None
+    fee_token: str | None
 
 
 class HyperliquidClient:
@@ -674,6 +703,37 @@ class HyperliquidClient:
 
         return markets
 
+    async def get_spot_tokens(self) -> list[SpotToken]:
+        """
+        Get ALL available spot tokens from Hyperliquid.
+
+        Returns raw token metadata including name, tokenId, decimals.
+        FREE — no API key required.
+
+        Returns:
+            List of SpotToken with name, token_id, index, decimals, etc.
+        """
+        response = await self._client.post("/info", json={"type": "spotMeta"})
+        response.raise_for_status()
+        data = response.json()
+
+        tokens_raw = data.get("tokens", [])
+        result: list[SpotToken] = []
+
+        for i, t in enumerate(tokens_raw):
+            result.append(
+                SpotToken(
+                    name=t.get("name", f"TOKEN{i}"),
+                    token_id=t.get("tokenId", ""),
+                    index=t.get("index", i),
+                    sz_decimals=int(t.get("szDecimals", 0)),
+                    wei_decimals=int(t.get("weiDecimals", 18)),
+                    is_canonical=bool(t.get("isCanonical", False)),
+                )
+            )
+
+        return result
+
     async def get_spot_order_book(self, symbol: str, depth: int = 20) -> OrderBook:
         """
         Get order book for a spot market.
@@ -881,3 +941,64 @@ class HyperliquidClient:
                 spread_bps=spread_bps,
                 timestamp=int(time.time() * 1000),
             )
+
+    async def get_user_fills_by_time(
+        self,
+        user_address: str,
+        start_time_ms: int,
+        end_time_ms: int | None = None,
+    ) -> list[UserFill]:
+        """
+        Get user's trading fills within a time range (perps + spot).
+
+        Uses Hyperliquid info endpoint type "userFillsByTime".
+        Essential for matching swap intents to on-chain fills.
+
+        Args:
+            user_address: Wallet address (0x...)
+            start_time_ms: Start time in milliseconds (inclusive)
+            end_time_ms: End time in milliseconds (inclusive); defaults to now
+
+        Returns:
+            List of UserFill (price/size/side/time/hash)
+
+        Example:
+            >>> fills = await client.get_user_fills_by_time(
+            ...     "0x123...", start_time_ms=now_ms - 900_000, end_time_ms=now_ms
+            ... )
+        """
+        payload: dict[str, Any] = {
+            "type": "userFillsByTime",
+            "user": user_address,
+            "startTime": start_time_ms,
+        }
+        if end_time_ms is not None:
+            payload["endTime"] = end_time_ms
+        response = await self._client.post("/info", json=payload)
+        response.raise_for_status()
+        data = response.json()
+        if not isinstance(data, list):
+            return []
+        out: list[UserFill] = []
+        for row in data:
+            if not isinstance(row, dict):
+                continue
+            try:
+                out.append(
+                    UserFill(
+                        coin=str(row.get("coin", "")),
+                        px=str(row.get("px", "0")),
+                        sz=float(row.get("sz", 0)),
+                        side=str(row.get("side", "")),
+                        time=int(row.get("time", 0)),
+                        hash=row.get("hash"),
+                        oid=int(row.get("oid", 0)),
+                        tid=int(row.get("tid", 0)),
+                        dir=str(row.get("dir", "")),
+                        fee=row.get("fee"),
+                        fee_token=row.get("feeToken"),
+                    )
+                )
+            except (TypeError, ValueError):
+                continue
+        return out

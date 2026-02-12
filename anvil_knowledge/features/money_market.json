@@ -1,7 +1,7 @@
 {
   "feature_name": "Money Market Rate Comparison",
   "category": "defi_analytics",
-  "description": "Real-time lending and borrowing rate comparison across DeFi money market protocols (Aave V3 and Compound V3) with intelligent caching, automated alerts, and comprehensive analytics. Provides 10-20x faster rate comparisons with 60-second TTL caching system.",
+  "description": "Real-time lending and borrowing rate comparison across DeFi money market protocols (Aave V3 and Compound V3) with intelligent caching, automated alerts, and comprehensive analytics. Money market is where users see and manage Aave/Compound positions and withdraw; Lending (Morpho vaults) is a separate feature. Provides 10-20x faster rate comparisons with 60-second TTL caching system.",
 
   "supported_protocols": [
     {
@@ -474,6 +474,24 @@
       "tests": "1,800 lines",
       "migrations": "1,073 lines",
       "total": "8,459 lines"
+    }
+  },
+
+  "workflow_snippets": {
+    "positions_intro": {
+      "en": "Your positions earn variable APY from Aave and Compound. Withdrawals are on-chain and typically confirm within a few seconds.",
+      "es": "Tus posiciones generan APY variable en Aave y Compound. Los retiros son on-chain y suelen confirmarse en pocos segundos.",
+      "pt": "Suas posições geram APY variável na Aave e na Compound. Saques são on-chain e costumam confirmar em poucos segundos."
+    },
+    "withdraw_confirm": {
+      "en": "Confirming will prepare the transaction for your wallet. You'll sign in your wallet to complete the withdrawal.",
+      "es": "Al confirmar se preparará la transacción para tu wallet. Firmarás en tu wallet para completar el retiro.",
+      "pt": "Ao confirmar, a transação será preparada para sua carteira. Você assinará na carteira para concluir a retirada."
+    },
+    "ready": {
+      "en": "After you sign in your wallet, funds will move from the protocol to your wallet. You can check your balance once the transaction confirms.",
+      "es": "Después de firmar en tu wallet, los fondos pasarán del protocolo a tu wallet. Puedes revisar tu saldo cuando la transacción confirme.",
+      "pt": "Após assinar na carteira, os fundos serão transferidos do protocolo para sua carteira. Você pode conferir o saldo quando a transação for confirmada."
     }
   },
 

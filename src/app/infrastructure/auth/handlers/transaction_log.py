@@ -440,6 +440,8 @@ EXPLORER_URLS: dict[ChainType, str] = {
     # Bitcoin explorers
     ChainType.BITCOIN: "https://mempool.space/tx/{tx_hash}",
     ChainType.BITCOIN_TESTNET: "https://mempool.space/testnet/tx/{tx_hash}",
+    # Hyperliquid explorer
+    ChainType.HYPERLIQUID: "https://app.hyperliquid.xyz/explorer/tx/{tx_hash}",
 }
 
 

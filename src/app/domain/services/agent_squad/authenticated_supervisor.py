@@ -631,6 +631,9 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 "what am I earning in money market",
                 "show my money market",
                 "my positions money market",
+                # Typo-tolerant
+                "my money market possitions",
+                "money market possitions",
                 # Spanish
                 "comparar tasas",
                 "mercado de dinero",
@@ -1274,6 +1277,14 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
    - Use "swap_workflow" when user wants to EXECUTE a swap (has specific amount like "0.5 ETH")
    - Examples: "swap 1 ETH to USDC", "exchange 100 USDC for ETH", "convert 0.5 ETH to DAI"
    - DO NOT combine swap_workflow with other agents - it handles everything internally
+
+5b. SWAP POSITIONS / MY SWAPS (CRITICAL - shows Hyperliquid positions):
+   - "my swaps", "my swap positions", "show my swaps", "my trades" → "swap_workflow" agent ONLY
+   - "mis swaps", "mis intercambios", "meus swaps", "meus trades" → "swap_workflow" agent ONLY
+   - The swap_workflow agent shows Hyperliquid spot balances, perps positions, and recent swap history
+   - Users can then select a position to swap from, or start a new swap
+   - This is analogous to "my lendings" → lending_workflow
+   - DO NOT route "my swaps" to transaction_history – it MUST go to swap_workflow
    
 6. SWAP INFORMATION (what swaps are available - educational):
    - "what type of swaps can I do", "what swaps can I make", "what tokens can I swap" → "knowledge" agent
@@ -1395,6 +1406,11 @@ DO NOT merge unrelated requests into single task - split them for parallel execu
 "swap 1 ETH to USDC" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Execute swap: 1 ETH to USDC","depends_on":[]}}]}}
 "exchange 100 USDC for ETH" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Execute swap: 100 USDC to ETH","depends_on":[]}}]}}
 "convert 0.5 ETH to DAI" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Execute swap: 0.5 ETH to DAI","depends_on":[]}}]}}
+"my swaps" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Show user's Hyperliquid swap positions and recent swap history","depends_on":[]}}]}}
+"my swap positions" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Show user's swap positions on Hyperliquid","depends_on":[]}}]}}
+"show my swaps" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Show user's swap positions and trade history","depends_on":[]}}]}}
+"mis swaps" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Show user's swap positions (Spanish)","depends_on":[]}}]}}
+"meus swaps" → {{"tasks":[{{"agent_type":"swap_workflow","task_description":"Show user's swap positions (Portuguese)","depends_on":[]}}]}}
 "best swap rate ETH to USDC" → {{"tasks":[{{"agent_type":"hunter_ai","task_description":"Get swap rate for ETH to USDC","depends_on":[]}}]}}
 "deposit 1000 USDC" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute deposit: 1000 USDC into vault","depends_on":[]}}]}}
 "lend 0.5 ETH" → {{"tasks":[{{"agent_type":"lending_workflow","task_description":"Execute deposit: 0.5 ETH into vault","depends_on":[]}}]}}

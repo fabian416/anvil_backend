@@ -8,8 +8,7 @@ Handles the complete lending workflow for authenticated users:
 4. Execute: Generate execute_data for frontend execution
 
 Integration:
-- Primary: Morpho MetaMorpho vaults (Base chain)
-- Fallback: Aave V3 markets
+- Morpho MetaMorpho vaults only (Base chain). Aave is used in Money Market, not Lending.
 - Execution: Frontend uses Privy SDK with execute_data
 
 Supported Actions:
@@ -92,14 +91,13 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
 
     Steps:
     1. parse_request: Extract asset, amount, and optional protocol preference
-    2. fetch_data: Get vault options from Morpho, fallback to Aave
+    2. fetch_data: Get vault options from Morpho only (Aave is in Money Market)
     3. confirm: Show best vault with APY, wait for user confirmation
     4. execute: Generate execute_data for frontend
 
     Features:
     - Natural language parameter extraction
     - Morpho vault selection with APY optimization
-    - Aave V3 fallback for unsupported assets
     - User modification support ("change to 500 USDC")
     - Multi-language support
     """
@@ -117,7 +115,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         Args:
             llm_client: LLM client for parameter extraction
             morpho_gateway: Morpho gateway for vault data
-            aave_gateway: Aave gateway for fallback markets
+            aave_gateway: Unused in lending (Aave is used in Money Market workflow)
             coingecko_client: CoinGecko client for token price lookups
         """
         super().__init__(llm_client=llm_client)
@@ -329,7 +327,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         Handle withdraw request - fetch user positions and prepare withdrawal.
 
         Flow:
-        1. Fetch user's lending positions (Morpho + Aave)
+        1. Fetch user's lending positions (Morpho only; Aave is in Money Market)
         2. If multiple positions, show selection
         3. If specific asset mentioned, filter to that position
         4. Show position details and confirm withdrawal
@@ -375,7 +373,7 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         )
         requested_amount = params.get("amount")
 
-        # Fetch user positions from Morpho and Aave
+        # Fetch user positions from Morpho only (Aave positions are in Money Market)
         positions = await self._fetch_user_positions(wallet_address, user_context)
 
         if not positions:
@@ -432,11 +430,10 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         wallet_address: str,
         user_context: UserContext,
     ) -> list[dict]:
-        """Fetch user's lending positions from Morpho and Aave via injected gateways."""
+        """Fetch user's lending positions from Morpho only. Aave positions are in Money Market."""
         positions = []
         chain = "base"
 
-        # Fetch Morpho positions via MorphoGateway (in-app DI)
         if self._morpho:
             try:
                 morpho_positions = await self._morpho.get_user_positions(
@@ -444,7 +441,6 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
                     chain=chain,
                 )
                 for p in morpho_positions:
-                    # p.assets is human-readable (adapter applies decimals); use API USD when present
                     supplied_usd = (
                         p.assets_usd
                         if getattr(p, "assets_usd", None) is not None
@@ -466,31 +462,6 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
                 )
         else:
             logger.warning("[LendingWorkflow] Morpho gateway not available")
-
-        # Fetch Aave positions via AaveGateway (in-app DI)
-        if self._aave:
-            try:
-                aave_position = await self._aave.get_user_position(
-                    address=wallet_address,
-                    chain=chain,
-                )
-                if aave_position and aave_position.supplies:
-                    for supply in aave_position.supplies:
-                        positions.append({
-                            "protocol": "aave",
-                            "asset": supply.symbol,
-                            "supplied_amount": str(supply.balance),
-                            "supplied_usd": float(supply.balance_usd),
-                            "apy": float(supply.apy),
-                            "chain": chain,
-                        })
-            except Exception as e:
-                # No position or API error - user may have no Aave supplies
-                logger.debug(
-                    "[LendingWorkflow] Aave positions (none or error): %s", e
-                )
-        else:
-            logger.warning("[LendingWorkflow] Aave gateway not available")
 
         return positions
 
@@ -598,6 +569,34 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
             state,
         )
 
+    def _suggest_withdraw_example_amount(self, available_amount: float) -> str:
+        """Suggest a balance-appropriate example amount for withdraw (like swap workflow)."""
+        try:
+            amt = float(available_amount)
+        except (ValueError, TypeError):
+            return "1"
+        if amt <= 0:
+            return "1"
+        if amt < 0.01:
+            return f"{amt:.6f}".rstrip("0").rstrip(".")
+        if amt < 1:
+            half = amt * 0.5
+            return f"{half:.4f}".rstrip("0").rstrip(".")
+        if amt < 10:
+            # e.g. 4.0 -> 2, 2.5 -> 1
+            suggested = max(0.5, amt * 0.5)
+            if suggested >= 1:
+                return str(int(round(suggested)))
+            return f"{suggested:.2f}".rstrip("0").rstrip(".")
+        if amt < 100:
+            suggested = max(1, round(amt * 0.5))
+            return str(int(suggested))
+        if amt < 1000:
+            suggested = round(amt * 0.25 / 50) * 50 or 50
+            return str(int(suggested))
+        suggested = round(amt * 0.2 / 100) * 100 or 100
+        return str(int(suggested))
+
     async def _ask_withdraw_amount(
         self,
         position: dict,
@@ -608,13 +607,18 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
         asset = position.get("asset", "")
         amount = position.get("supplied_amount", "0")
         usd_value = position.get("supplied_usd", 0)
+        try:
+            amount_float = float(str(amount).replace(",", ""))
+        except (ValueError, TypeError):
+            amount_float = 0
+        example = self._suggest_withdraw_example_amount(amount_float)
 
         if language == "es":
             return (
                 f"💰 **Retiro de {asset}**\n\n"
                 f"Tienes **{amount} {asset}** (~${usd_value:,.2f}) disponible.\n\n"
                 f"¿Cuánto quieres retirar?\n"
-                f"• Escribe un monto (ej: `500`)\n"
+                f"• Escribe un monto (ej: `{example}`)\n"
                 f"• O escribe `max` para retirar todo"
             )
         if language == "pt":
@@ -622,14 +626,14 @@ class LendingWorkflowAgent(BaseWorkflowAgent):
                 f"💰 **Retirada de {asset}**\n\n"
                 f"Você tem **{amount} {asset}** (~${usd_value:,.2f}) disponível.\n\n"
                 f"Quanto você quer retirar?\n"
-                f"• Digite um valor (ex: `500`)\n"
+                f"• Digite um valor (ex: `{example}`)\n"
                 f"• Ou digite `max` para retirar tudo"
             )
         return (
             f"💰 **{asset} Withdrawal**\n\n"
             f"You have **{amount} {asset}** (~${usd_value:,.2f}) available.\n\n"
             f"How much would you like to withdraw?\n"
-            f"• Enter an amount (e.g., `500`)\n"
+            f"• Enter an amount (e.g., `{example}`)\n"
             f"• Or type `max` to withdraw everything"
         )
 
@@ -919,7 +923,7 @@ Por favor digite um número válido para seu depósito de **{asset}**:
         state: WorkflowState,
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
-        """Fetch vault data from Morpho/Aave.
+        """Fetch vault data from Morpho only (Aave is in Money Market).
 
         Like swap workflow:
         - Always show quote regardless of balance
@@ -969,18 +973,8 @@ Por favor digite um número válido para seu depósito de **{asset}**:
 
         vault_data = None
 
-        # Respect user's protocol preference if specified
-        if protocol_preference == "aave" and self._aave:
-            # User explicitly wants Aave
-            vault_data = await self._fetch_aave_market(asset, chain)
-        elif protocol_preference == "morpho":
-            # User explicitly wants Morpho
-            vault_data = await self._fetch_morpho_vault(asset, chain)
-        else:
-            # No preference - try Morpho first, then Aave
-            vault_data = await self._fetch_morpho_vault(asset, chain)
-            if not vault_data and self._aave:
-                vault_data = await self._fetch_aave_market(asset, chain)
+        # Lending uses Morpho only; Aave is in Money Market workflow
+        vault_data = await self._fetch_morpho_vault(asset, chain)
 
         if not vault_data:
             # No vault available
@@ -1306,6 +1300,16 @@ Por favor digite um número válido para seu depósito de **{asset}**:
                     tx_data=withdraw_result.get("data"),
                     tx_value=withdraw_result.get("value", "0"),
                 )
+                state.execute_data = execute_data
+                state.step = WorkflowStep.COMPLETED.value
+                response = self._format_withdraw_ready_to_execute(
+                    asset=asset,
+                    amount=withdraw_amount,
+                    vault_name=vault_name,
+                    protocol=protocol,
+                    language=language,
+                )
+                return response, state
 
             except Exception as e:
                 logger.error(
@@ -1317,71 +1321,13 @@ Por favor digite um número válido para seu depósito de **{asset}**:
                     return f"❌ Erro ao preparar a retirada: {e!s}", state
                 return f"❌ Error preparing withdrawal: {e!s}", state
 
-        elif protocol == "aave":
-            # Build Aave withdraw tx via gateway (no MCP _call_tool)
-            try:
-                withdraw_result = await self._aave.build_withdraw_supply_transaction(
-                    user_address=wallet_address,
-                    asset_symbol=asset,
-                    amount=str(withdraw_amount),
-                    chain=chain,
-                )
-
-                if not withdraw_result.get("success") or withdraw_result.get("error"):
-                    error_msg = withdraw_result.get(
-                        "error", "Unknown error"
-                    )
-                    logger.error(
-                        f"[LendingWorkflow] Aave build_withdraw_supply failed: {error_msg}"
-                    )
-                    if language == "es":
-                        return f"❌ Error al preparar el retiro: {error_msg}", state
-                    if language == "pt":
-                        return f"❌ Erro ao preparar a retirada: {error_msg}", state
-                    return f"❌ Error preparing withdrawal: {error_msg}", state
-
-                execute_data = self._build_execute_data(
-                    action_type="withdraw",
-                    provider="aave",
-                    chain=chain,
-                    amount=withdraw_result.get("amount", str(withdraw_amount)),
-                    asset_symbol=withdraw_result.get("asset", asset),
-                    asset_address=withdraw_result.get("asset_address"),
-                    pool_address=withdraw_result.get("to"),
-                    tx_to=withdraw_result.get("to"),
-                    tx_data=withdraw_result.get("data"),
-                    tx_value=withdraw_result.get("value", "0"),
-                )
-
-            except Exception as e:
-                logger.error(
-                    f"[LendingWorkflow] Error building Aave withdraw: {e}"
-                )
-                if language == "es":
-                    return f"❌ Error al preparar el retiro: {e!s}", state
-                if language == "pt":
-                    return f"❌ Erro ao preparar a retirada: {e!s}", state
-                return f"❌ Error preparing withdrawal: {e!s}", state
-        elif language == "es":
+        # Lending supports Morpho only; Aave withdraw is in Money Market workflow
+        if language == "es":
             return f"❌ Protocolo no soportado: {protocol}", state
         elif language == "pt":
             return f"❌ Protocolo não suportado: {protocol}", state
         else:
             return f"❌ Unsupported protocol: {protocol}", state
-
-        # Store execute_data in state
-        state.execute_data = execute_data
-        state.step = WorkflowStep.COMPLETED.value
-
-        # Format ready-to-execute response for withdrawal
-        response = self._format_withdraw_ready_to_execute(
-            asset=asset,
-            amount=withdraw_amount,
-            vault_name=vault_name,
-            protocol=protocol,
-            language=language,
-        )
-        return response, state
 
     def _format_withdraw_ready_to_execute(
         self,
@@ -1734,7 +1680,7 @@ Você não tem {asset} suficiente na sua carteira.
         Includes:
         - Knowledge paragraph explaining DeFi lending benefits
         - User's current balance (if available)
-        - Live APY rates from Morpho/Aave
+        - Live APY rates from Morpho
         - Personalized recommendations based on portfolio state
         """
         language = user_context.language
@@ -1791,7 +1737,7 @@ Você não tem {asset} suficiente na sua carteira.
 • A number (1-5) to select an asset
 • Or type the asset name with amount (e.g., `1000 USDC`)
 
-💡 Powered by **Morpho** and **Aave V3** on Base""",
+💡 Powered by **Morpho** on Base""",
             "es": f"""🏦 **Préstamos DeFi - Gana Ingresos Pasivos**
 
 {knowledge_section}
@@ -1810,7 +1756,7 @@ Você não tem {asset} suficiente na sua carteira.
 • Un número (1-5) para seleccionar
 • O escribe el activo con cantidad (ej: `1000 USDC`)
 
-💡 Potenciado por **Morpho** y **Aave V3** en Base""",
+💡 Potenciado por **Morpho** en Base""",
             "pt": f"""🏦 **Empréstimos DeFi - Ganhe Renda Passiva**
 
 {knowledge_section}
@@ -1829,7 +1775,7 @@ Você não tem {asset} suficiente na sua carteira.
 • Um número (1-5) para selecionar
 • Ou digite o ativo com quantidade (ex: `1000 USDC`)
 
-💡 Powered by **Morpho** e **Aave V3** na Base""",
+💡 Powered by **Morpho** na Base""",
             "zh": f"""🏦 **DeFi 借贷 - 赚取被动收入**
 
 {knowledge_section}
@@ -1848,7 +1794,7 @@ Você não tem {asset} suficiente na sua carteira.
 • 数字 (1-5) 选择资产
 • 或输入资产和金额（如：`1000 USDC`）
 
-💡 由 **Morpho** 和 **Aave V3** 在 Base 上提供支持""",
+💡 由 **Morpho** 在 Base 上提供支持""",
         }
         return msgs.get(language, msgs["en"])
 
@@ -1954,7 +1900,7 @@ juros para você 24/7. Sem bloqueios - retire quando quiser.""",
         """
         Fetch current APY rates for supported assets.
 
-        Tries Morpho first, then Aave as fallback.
+        Uses Morpho vaults only (Aave is in Money Market).
         Returns dict mapping asset symbol (lowercase) to APY percentage.
         """
         rates = {}

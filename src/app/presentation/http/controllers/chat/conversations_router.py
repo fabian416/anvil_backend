@@ -42,6 +42,7 @@ from app.infrastructure.auth.exceptions import AuthenticationError
 from app.domain.transactions.ports.transaction.transaction_repository import (
     TransactionRepository,
 )
+from app.domain.ports.wallet.wallet_repository import WalletRepository
 from app.domain.transactions.entities.transaction import Transaction, TransactionId
 from app.domain.entities.wallet import WalletId
 from app.domain.enums.chain_type import ChainType
@@ -49,6 +50,7 @@ from app.domain.enums.transaction_status import TransactionStatus
 from app.domain.enums.transaction_type import TransactionType
 from app.domain.value_objects.user_id import UserId
 from app.domain.value_objects.created_at import CreatedAt
+from app.infrastructure.adapters.types import MainAsyncSession
 from decimal import Decimal
 
 
@@ -768,6 +770,8 @@ def create_conversations_router() -> APIRouter:
         user_context_service: FromDishka[
             UserContextService
         ] = None,  # Context-aware agents
+        wallet_repository: FromDishka[WalletRepository] = None,
+        session: FromDishka[MainAsyncSession] = None,
     ) -> ChatResponse:
         """Send a message to a conversation."""
         from app.domain.chat.entities.chat_message import ChatMessage, MessageRole
@@ -881,12 +885,24 @@ def create_conversations_router() -> APIRouter:
                             msg_dict["metadata"] = msg.metadata
                         conversation_history.append(msg_dict)
 
-                # Build user context for supervisor
+                # Build user context for supervisor (include display_name for personalization)
                 user_context = {
                     "user_id": user.identifier,
                     "wallet_address": wallet_address,
                     "is_authenticated": True,
                 }
+                try:
+                    app_user = await current_user.get_current_user()
+                    if app_user and getattr(app_user, "first_name", None):
+                        first_name_val = getattr(
+                            app_user.first_name, "value", None
+                        ) or str(app_user.first_name)
+                        if first_name_val and str(first_name_val).strip():
+                            user_context["display_name"] = str(
+                                first_name_val
+                            ).strip()
+                except (AuthenticationError, AuthorizationError, Exception):
+                    pass
 
                 # Load context-aware data for personalized responses
                 if user_context_service and not user.is_guest:
@@ -1037,6 +1053,12 @@ def create_conversations_router() -> APIRouter:
                     "qr_data"
                 ):
                     enrichment["qr_data"] = supervisor_result.metadata["qr_data"]
+                if supervisor_result.metadata and supervisor_result.metadata.get(
+                    "sentiment_analysis"
+                ):
+                    enrichment["sentiment_analysis"] = supervisor_result.metadata[
+                        "sentiment_analysis"
+                    ]
 
                 # Extract execute_data from supervisor result (workflow agents like swap_workflow)
                 execute_action_data = None
@@ -1047,6 +1069,62 @@ def create_conversations_router() -> APIRouter:
                         )
                     except Exception as ed_err:
                         logger.warning(f"Failed to parse execute_data: {ed_err}")
+
+                # Record swap intent for 15-min watcher (tx history backfill)
+                if (
+                    execute_action_data
+                    and session
+                    and wallet_repository
+                    and (
+                        execute_action_data.action_type in ("swap", "spot_swap")
+                        or (
+                            execute_action_data.provider
+                            and "hyperliquid"
+                            in (execute_action_data.provider or "").lower()
+                        )
+                    )
+                ):
+                    try:
+                        from sqlalchemy import insert
+                        from app.infrastructure.persistence_sqla.registry import (
+                            mapping_registry,
+                        )
+                        from app.infrastructure.persistence_sqla.mappings.swap_intent_mapping import (
+                            map_swap_intents_table,
+                        )
+                        app_user = await current_user.get_current_user()
+                        user_id_val = app_user.id_.value
+                        wallets = await wallet_repository.get_by_user_id(
+                            UserId(user_id_val)
+                        )
+                        primary = next(
+                            (w for w in wallets if getattr(w, "is_primary", False)),
+                            None,
+                        )
+                        wallet = primary or (wallets[0] if wallets else None)
+                        if wallet and execute_action_data.from_token and execute_action_data.to_token and execute_action_data.amount:
+                            map_swap_intents_table()
+                            tbl = mapping_registry.metadata.tables.get("swap_intents")
+                            if tbl:
+                                amount_val = float(execute_action_data.amount) if execute_action_data.amount else 0
+                                await session.execute(
+                                    insert(tbl).values(
+                                        user_id=user_id_val,
+                                        wallet_id=wallet.id_.value,
+                                        wallet_address=wallet.address or "",
+                                        conversation_id=conversation_id,
+                                        from_token=execute_action_data.from_token or "",
+                                        to_token=execute_action_data.to_token or "",
+                                        amount=amount_val,
+                                        source="hyperliquid_swap",
+                                        status="pending",
+                                    )
+                                )
+                    except Exception as swap_intent_err:
+                        logger.debug(
+                            "Swap intent record skipped: %s",
+                            swap_intent_err,
+                        )
 
                 return ChatResponse(
                     conversation_id=str(conversation_id),
@@ -1976,6 +2054,62 @@ Response Guidelines:
             "sources": enrichment.get("sources", []),
         }
 
+        # Record swap intent for 15-min watcher (legacy path)
+        if (
+            execute_data
+            and session
+            and wallet_repository
+            and (
+                execute_data.action_type in ("swap", "spot_swap")
+                or (
+                    execute_data.provider
+                    and "hyperliquid"
+                    in (execute_data.provider or "").lower()
+                )
+            )
+        ):
+            try:
+                from sqlalchemy import insert
+                from app.infrastructure.persistence_sqla.registry import (
+                    mapping_registry,
+                )
+                from app.infrastructure.persistence_sqla.mappings.swap_intent_mapping import (
+                    map_swap_intents_table,
+                )
+                app_user = await current_user.get_current_user()
+                user_id_val = app_user.id_.value
+                wallets = await wallet_repository.get_by_user_id(
+                    UserId(user_id_val)
+                )
+                primary = next(
+                    (w for w in wallets if getattr(w, "is_primary", False)),
+                    None,
+                )
+                wallet = primary or (wallets[0] if wallets else None)
+                if wallet and execute_data.from_token and execute_data.to_token and execute_data.amount:
+                    map_swap_intents_table()
+                    tbl = mapping_registry.metadata.tables.get("swap_intents")
+                    if tbl:
+                        amount_val = float(execute_data.amount) if execute_data.amount else 0
+                        await session.execute(
+                            insert(tbl).values(
+                                user_id=user_id_val,
+                                wallet_id=wallet.id_.value,
+                                wallet_address=wallet.address or "",
+                                conversation_id=conversation_id,
+                                from_token=execute_data.from_token or "",
+                                to_token=execute_data.to_token or "",
+                                amount=amount_val,
+                                source="hyperliquid_swap",
+                                status="pending",
+                            )
+                        )
+            except Exception as swap_intent_err:
+                logger.debug(
+                    "Swap intent record skipped: %s",
+                    swap_intent_err,
+                )
+
         return ChatResponse(
             conversation_id=str(conversation_id),
             message_id=str(assistant_message.id),
@@ -2274,6 +2408,7 @@ Response Guidelines:
         user_service: FromDishka[UserService],
         current_user: FromDishka[CurrentUserService],
         transaction_repository: FromDishka["TransactionRepository"] = None,
+        wallet_repository: FromDishka[WalletRepository] = None,
     ) -> ExecuteResponse:
         """Execute approved transaction and continue multi-step workflows."""
         import logging
@@ -2567,97 +2702,113 @@ Response Guidelines:
 
             # Persist swap transaction to database for history/analytics
             transaction_id = None
-            if transaction_repository:
+            if transaction_repository and wallet_repository and tx_hash:
                 try:
                     # Get authenticated user for user_id
-                    app_user = None
-                    wallet_id_value = 0  # Default, will be resolved by repository
-
                     try:
                         app_user = await current_user.get_current_user()
                         user_id_value = app_user.id_.value
                     except (AuthenticationError, AuthorizationError):
-                        # For guest users or auth failures, use identifier from chat_user
-                        # Note: This is a fallback - ideally we should have user_id
                         user_id_value = (
                             int(user.identifier) if user.identifier.isdigit() else 0
                         )
 
-                    # Parse chain
-                    try:
-                        chain_enum = (
-                            ChainType[chain.upper()] if chain else ChainType.BASE
+                    # Resolve wallet_id (required by transactions FK); skip if no wallet
+                    wallet_id_value = None
+                    if user_id_value:
+                        wallets = await wallet_repository.get_by_user_id(
+                            UserId(user_id_value)
                         )
-                    except (KeyError, AttributeError):
-                        chain_mapping = {
-                            "ethereum": ChainType.ETHEREUM,
-                            "base": ChainType.BASE,
-                            "polygon": ChainType.POLYGON,
-                            "arbitrum": ChainType.ARBITRUM,
-                            "optimism": ChainType.OPTIMISM,
-                        }
-                        chain_enum = chain_mapping.get(
-                            chain.lower() if chain else "base", ChainType.BASE
-                        )
+                        if wallets:
+                            primary = next(
+                                (w for w in wallets if getattr(w, "is_primary", False)),
+                                None,
+                            )
+                            wallet_id_value = (primary or wallets[0]).id_.value
 
-                    # Parse amounts (if available)
-                    amount_in = None
-                    amount_out = None
-                    if amount:
+                    if wallet_id_value is None:
+                        logger.debug(
+                            "Skipping swap transaction persist: no wallet for user_id=%s",
+                            user_id_value,
+                        )
+                    else:
+                        # Parse chain
                         try:
-                            amount_in = Decimal(str(amount))
-                        except (ValueError, TypeError):
-                            pass
+                            chain_enum = (
+                                ChainType[chain.upper()] if chain else ChainType.BASE
+                            )
+                        except (KeyError, AttributeError):
+                            chain_mapping = {
+                                "ethereum": ChainType.ETHEREUM,
+                                "base": ChainType.BASE,
+                                "polygon": ChainType.POLYGON,
+                                "arbitrum": ChainType.ARBITRUM,
+                                "optimism": ChainType.OPTIMISM,
+                            }
+                            chain_enum = chain_mapping.get(
+                                chain.lower() if chain else "base", ChainType.BASE
+                            )
 
-                    # Build comprehensive metadata
-                    tx_metadata = {
-                        "conversation_id": str(conversation_id),
-                        "action": action,
-                        "step_completed": step_completed,
-                        "total_steps": total_steps,
-                        "source_chain": source_chain,
-                        "destination_chain": destination_chain,
-                        "workflow_type": "multi_step"
-                        if total_steps > 1
-                        else "single_step",
-                    }
+                        # Parse amounts (if available)
+                        amount_in = None
+                        amount_out = None
+                        if amount:
+                            try:
+                                amount_in = Decimal(str(amount))
+                            except (ValueError, TypeError):
+                                pass
 
-                    # Create transaction entity
-                    transaction = Transaction(
-                        id_=TransactionId(0),  # Will be auto-generated
-                        user_id=UserId(user_id_value),
-                        wallet_id=WalletId(wallet_id_value),
-                        to_address=None,  # Not applicable for swaps
-                        type=TransactionType.SWAP,
-                        chain=chain_enum,
-                        asset_in=from_token or "UNKNOWN",
-                        amount_in=amount_in,
-                        asset_out=to_token or "UNKNOWN",
-                        amount_out=amount_out,
-                        fee=None,
-                        fee_usd=None,
-                        tx_hash=tx_hash,
-                        status=TransactionStatus.SUCCESS,  # Already confirmed by user
-                        dex_aggregator=action,  # e.g., "lifi_bridge", "1inch_swap"
-                        dex_route=None,
-                        slippage=None,
-                        error_message=None,
-                        block_number=None,
-                        confirmed_at=None,
-                        created_at=CreatedAt.now(),
-                        gas_used=None,
-                        gas_price=None,
-                        tx_metadata=tx_metadata,
-                    )
+                        # Build comprehensive metadata
+                        tx_metadata = {
+                            "conversation_id": str(conversation_id),
+                            "action": action,
+                            "step_completed": step_completed,
+                            "total_steps": total_steps,
+                            "source_chain": source_chain,
+                            "destination_chain": destination_chain,
+                            "workflow_type": "multi_step"
+                            if total_steps > 1
+                            else "single_step",
+                        }
 
-                    # Save to database
-                    saved_transaction = await transaction_repository.save(transaction)
-                    transaction_id = saved_transaction.id_.value
+                        # Create transaction entity
+                        transaction = Transaction(
+                            id_=TransactionId(0),  # Will be auto-generated
+                            user_id=UserId(user_id_value),
+                            wallet_id=WalletId(wallet_id_value),
+                            to_address=None,  # Not applicable for swaps
+                            type=TransactionType.SWAP,
+                            chain=chain_enum,
+                            asset_in=from_token or "UNKNOWN",
+                            amount_in=amount_in,
+                            asset_out=to_token or "UNKNOWN",
+                            amount_out=amount_out,
+                            fee=None,
+                            fee_usd=None,
+                            tx_hash=tx_hash,
+                            status=TransactionStatus.SUCCESS,  # Already confirmed by user
+                            dex_aggregator=action,  # e.g. "hyperliquid_swap"
+                            dex_route=None,
+                            slippage=None,
+                            error_message=None,
+                            block_number=None,
+                            confirmed_at=None,
+                            created_at=CreatedAt.now(),
+                            gas_used=None,
+                            gas_price=None,
+                            tx_metadata=tx_metadata,
+                        )
 
-                    logger.info(
-                        f"✅ Transaction persisted: id={transaction_id}, "
-                        f"tx_hash={tx_hash[:10]}..., action={action}, user_id={user_id_value}"
-                    )
+                        # Save to database
+                        saved_transaction = await transaction_repository.save(
+                            transaction
+                        )
+                        transaction_id = saved_transaction.id_.value
+
+                        logger.info(
+                            f"✅ Transaction persisted: id={transaction_id}, "
+                            f"tx_hash={tx_hash[:10]}..., action={action}, user_id={user_id_value}"
+                        )
 
                 except Exception as save_error:
                     # Log error but don't fail the request

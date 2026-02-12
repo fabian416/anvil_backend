@@ -1,8 +1,8 @@
 # Money Market “My Positions” + Withdraw Specification
 
-**Version**: 1.0  
+**Version**: 1.2  
 **Date**: 2026-02-02  
-**Status**: ✅ Option A Implemented  
+**Status**: ✅ Option A Implemented (Aave + Compound only; Compound withdraw + Hunter sentiment enrichment)  
 **Methodology**: CTO Engineering Framework (First Principles + Design Thinking + Systems Thinking)  
 **Recallium**: Enabled. Memory #1856
 
@@ -19,6 +19,9 @@
 | 4.1 | MoneyMarketWorkflowAgent positions + withdraw flow | ✅ 310b03a4 |
 | 4.2 | Supervisor route to money_market_workflow | ✅ bad0d0a7 |
 | 4.3 | Shortcuts MONEY_MARKET_POSITIONS intent | ✅ d5513d7d |
+| 4.4 | Money market = **Aave + Compound only** (Morpho removed) | ✅ |
+| 4.5 | **Compound withdraw** (gateway + client + workflow) | ✅ |
+| 4.6 | **Enrichment**: Hunter sentiment on positions list, withdraw confirm, ready-to-withdraw | ✅ |
 
 ---
 
@@ -26,7 +29,7 @@
 
 This spec defines the **“see my positions in money market”** experience (list supply positions + withdraw) for the unified chat flow. It applies CTO methodology to choose where this flow lives (extend MoneyMarketWorkflow vs reuse LendingWorkflow) and how it integrates with existing execute and gateway infrastructure.
 
-**Scope**: Supply positions on **Aave** and **Morpho** (and Compound only if a position API exists). Flow: list positions (numbered) → user selects by number → amount or max → confirm → build tx via existing gateways → `execute_data` / execute endpoint.
+**Scope**: Supply positions on **Aave** and **Compound** only (no Morpho). Flow: list positions (numbered) → user selects by number → amount or max → confirm → build tx via AaveGateway or CompoundGateway → `execute_data` / execute endpoint. **Compound withdraw** is implemented (Comet `withdraw(address,uint256)`).
 
 ---
 
@@ -41,14 +44,14 @@ This spec defines the **“see my positions in money market”** experience (lis
 
 | Component | Current behavior |
 |-----------|------------------|
-| **LendingWorkflowAgent** | Implements “my lendings” + withdraw: `_handle_withdraw_request` → `_fetch_user_positions` (Morpho + Aave) → `_show_position_selection` (numbered) → `_ask_withdraw_amount` → `_show_withdraw_confirmation` → `_handle_withdraw_execute` (MorphoGateway / AaveGateway → `execute_data`). No “money market” branding or routing. |
-| **MoneyMarketWorkflowAgent** | Only **rate comparison**: parse request → fetch data → compare → select protocol for **deposit**. No “my positions” or withdraw. |
-| **AuthenticatedSupervisor** | “Compare rates” / “money market” → **money_market_workflow**. Lending deposit/withdraw (including “my lendings”) → **lending_workflow**. No routing for “my money market positions” or “withdraw from money market”. |
+| **LendingWorkflowAgent** | Implements “my lendings” + withdraw (Morpho + Aave). Separate flow from money market. |
+| **MoneyMarketWorkflowAgent** | **Rate comparison** (Aave + Compound) + **positions + withdraw** (Aave + Compound): `_fetch_user_positions_mm`, `_handle_positions_withdraw_execute` using AaveGateway and CompoundGateway. |
+| **AuthenticatedSupervisor** | “Money market positions” / “withdraw from money market” → **money_market_workflow**. “Compare rates” / “money market” → **money_market_workflow**. |
 
 ### 1.3 Gap vs “My Lendings”
 
-- **Semantic**: “Money market” and “lending” are the same underlying supply positions (Aave + Morpho). “My money market positions” is a naming/UX variant of “my lendings”.
-- **Functional**: LendingWorkflow already has positions + withdraw; MoneyMarketWorkflow has neither.
+- **Semantic**: “Money market” is supply positions on Aave + Compound (distinct from LendingWorkflow which uses Morpho + Aave for “my lendings”).
+- **Functional**: MoneyMarketWorkflow now has positions + withdraw for Aave + Compound only.
 - **Routing**: No intent/phrases that send “money market positions” or “withdraw from money market” to the right workflow.
 
 ### 1.4 Root Cause
@@ -61,7 +64,7 @@ This spec defines the **“see my positions in money market”** experience (lis
 **Invariants:**
 
 - Reuse existing execute flow: `execute_data` → user sign → POST `/execute` (no new execution path).
-- Reuse existing gateways: MorphoGateway, AaveGateway (and Compound only if position API exists).
+- Reuse existing gateways: AaveGateway, CompoundGateway (money market uses Aave + Compound only).
 - Conversation → message → agent response → execute data flow must be preserved.
 
 **Degrees of freedom:**
@@ -72,7 +75,7 @@ This spec defines the **“see my positions in money market”** experience (lis
 **Hard constraints:**
 
 - Must not duplicate position-fetch or tx-building logic; must use existing MCP/gateways and execute endpoint.
-- Must support at least Aave + Morpho supply positions; Compound only if a position API is available.
+- Money market supports **Aave + Compound** supply positions and withdraw (both gateways implement build_withdraw).
 
 ---
 
@@ -127,7 +130,7 @@ This spec defines the **“see my positions in money market”** experience (lis
 
 ### 3.1 Assumptions
 
-- “Money market positions” is defined as **supply positions** on Aave and Morpho (and Compound only if position API exists). No separate “money market” table; same as lending supplies.
+- “Money market positions” is defined as **supply positions** on Aave and Compound only (no Morpho in this flow). Compound supports list + withdraw via Comet `withdraw(address,uint256)`.
 - Execute payload and gateway contracts stay as today; this spec only adds routing and intent coverage.
 
 ### 3.2 Risks
@@ -136,12 +139,12 @@ This spec defines the **“see my positions in money market”** experience (lis
 |------|-------------|
 | Users expect “money market” to be a different product | Document that money market = lending supply positions; optional: add response copy that says “Money market (lending) positions” in the agent reply. |
 | Phrases not covered | Add patterns in knowledge/shortcuts for “money market positions”, “withdraw from money market”, “what am I earning in money market”, multi-language. |
-| Compound | Include only when a position API is available; otherwise Aave + Morpho only. |
+| Compound | Implemented: position API + withdraw (CompoundGateway.build_withdraw_supply_transaction, Comet withdraw). |
 
 ### 3.3 Success Criteria
 
-- User says “show my money market positions” or equivalent → routed to lending_workflow → sees numbered list of supply positions (Aave + Morpho).
-- User selects position and requests withdraw (amount or max) → same confirm → execute_data → execute endpoint as current “my lendings” withdraw.
+- User says “show my money market positions” or equivalent → routed to money_market_workflow → sees numbered list of supply positions (Aave + Compound).
+- User selects position and requests withdraw (amount or max) → confirm → execute_data (Aave or Compound tx) → execute endpoint.
 - No new execute endpoint or new gateway; only routing and intent changes.
 
 ### 3.4 Validation
@@ -155,53 +158,59 @@ This spec defines the **“see my positions in money market”** experience (lis
 
 ### 4.1 Definition of “Money Market Positions”
 
-- **In scope**: Supply (lend) positions on **Aave** and **Morpho**. Optional: **Compound** if a position API exists.
-- **Out of scope (for this spec)**: Borrow positions, collateral positions, or protocols without a position API in the stack.
+- **In scope**: Supply (lend) positions on **Aave** and **Compound** only. Both support list + withdraw (AaveGateway, CompoundGateway `build_withdraw_supply_transaction`; Compound uses Comet `withdraw(address,uint256)`).
+- **Out of scope (for this spec)**: Morpho (not used in money market flow), borrow positions, or protocols without position + withdraw in the stack.
 
-### 4.2 Flow (Reuse LendingWorkflow)
+### 4.2 Flow (Option A: MoneyMarketWorkflow)
 
 1. User sends message like “my money market positions” or “withdraw from money market”.
-2. Supervisor routes to **lending_workflow** (new intent/phrase mapping).
-3. LendingWorkflowAgent:
-   - Fetches user positions via existing `_fetch_user_positions` (Morpho + Aave).
-   - Shows numbered list (`_show_position_selection`).
-   - If user intent is withdraw: `_ask_withdraw_amount` → `_show_withdraw_confirmation` → `_handle_withdraw_execute` (build tx via MorphoGateway or AaveGateway, then `execute_data`).
-4. Frontend/execute: unchanged; same POST `/execute` and execute payload as current lending withdraw.
+2. Supervisor routes to **money_market_workflow** (intent MONEY_MARKET_POSITIONS).
+3. MoneyMarketWorkflowAgent:
+   - Fetches user positions via `_fetch_user_positions_mm` (Aave + Compound only, Base).
+   - Shows numbered list (`_show_position_selection_mm`).
+   - If user selects and requests withdraw: `_ask_withdraw_amount_mm` → `_show_withdraw_confirmation_mm` → `_handle_positions_withdraw_execute` (build tx via AaveGateway or CompoundGateway, then `execute_data`).
+4. Frontend/execute: unchanged; same execute payload and POST `/execute` as lending withdraw.
 
 ### 4.3 Routing Changes
 
-**AuthenticatedSupervisor** (or equivalent routing layer):
+**AuthenticatedSupervisor**:
 
-- Add detection for “money market positions”, “withdraw from money market”, “what am I earning in money market” (and localized variants).
-- Route these to **lending_workflow** (same as “my lendings” / “withdraw from lending”).
+- Detection for “money market positions”, “withdraw from money market”, “what am I earning in money market” (and localized variants, including typo-tolerant “possitions”).
+- Route these to **money_market_workflow**.
 
-**Knowledge / Shortcuts** (e.g. `shortcuts.json` or intent config):
+**Knowledge / Shortcuts** (`shortcuts.json`):
 
-- Add intent(s) or patterns, e.g. `MONEY_MARKET_POSITIONS` and/or extend `LENDING_POSITION` / `LENDING_WITHDRAW` with money-market phrases:
-  - EN: “my money market positions”, “money market positions”, “withdraw from money market”, “what am I earning in money market”
-  - ES/PT/ZH: equivalent phrases as per product.
-- Set agent to `LENDING_WORKFLOW` and reuse existing action (e.g. position list + withdraw).
+- Intent `MONEY_MARKET_POSITIONS`, agent `MONEY_MARKET_WORKFLOW`.
+- Patterns for “my money market positions”, “money market positions”, “withdraw from money market”, etc. (EN/ES/PT).
 
 ### 4.4 Execute Payload
 
-- No change. Reuse existing withdraw `execute_data` shape produced by LendingWorkflowAgent (provider, protocol, chain, amount, market_id/asset_address, etc.) and existing execute endpoint behavior.
+- Reuse existing withdraw `execute_data` shape (action_type=withdraw, provider=aave|compound, chain, amount, asset_symbol, asset_address, tx_to, tx_data, tx_value) and existing execute endpoint behavior.
 
 ### 4.5 Implementation Checklist (Option A implemented)
 
-- [x] Add “money market positions” / “withdraw from money market” (and variants) to supervisor routing → money_market_workflow (done).
+- [x] Add “money market positions” / “withdraw from money market” (and variants) to supervisor routing → money_market_workflow.
 - [x] Add MONEY_MARKET_POSITIONS intent in shortcuts; agent = MONEY_MARKET_WORKFLOW.
-- [ ] Optionally: add response copy in LendingWorkflowAgent when triggered by money-market intent (e.g. “Money market (lending) positions”) for UX.
-- [ ] Document “money market = supply positions on Aave/Morpho” in product/glossary if needed.
-- [ ] Acceptance test: “my money market positions” → list; select + withdraw → execute.
+- [x] Money market = **Aave + Compound only** (Morpho removed from positions and rate comparison).
+- [x] **Compound withdraw**: CompoundGateway `build_withdraw_supply_transaction`, CompoundClient `build_withdraw_transaction` (Comet `withdraw(address,uint256)`), workflow branch in `_handle_positions_withdraw_execute`.
+- [ ] Acceptance test: “my money market positions” → list (Aave + Compound); select + withdraw → execute (Aave or Compound).
+
+### 4.6 Enrichment (Hunter sentiment + more data)
+
+- **Optional, best-effort**: Money market responses can be enriched with Hunter sentiment for the position asset (e.g. USDC, USD).
+- **Port**: `AssetSentimentProvider` (`get_sentiment(asset_symbol) → dict | None`); implementation: `AssetSentimentService` (news sentiment, 5s timeout).
+- **Flow**: MoneyMarketWorkflowAgent accepts optional `sentiment_provider`; at three response points (positions list, withdraw confirm, “ready to withdraw”) it calls `_enrich_with_sentiment`: appends a short line (e.g. “📊 **Sentiment:** bullish (score 72)”) and sets `state.data["sentiment_analysis"]`. Base workflow passes this into response `metadata["sentiment_analysis"]`; supervisor and conversations router expose it in `enrichment.sentiment_analysis` for the client.
+- **Shape of sentiment_analysis**: `{ "score": 0–100, "classification": "bullish"|"bearish"|"neutral", "token_symbol": "USDC" }` (or `None` if unavailable).
+- **DI**: `AssetSentimentService` provided in `AgentSquadInfrastructureProvider`; injected into `MoneyMarketWorkflowAgent` as `sentiment_provider`. If sentiment fetch fails or times out, the workflow response is unchanged (no blocking).
 
 ---
 
 ## Recallium Summary (store this for recall)
 
 **Feature**: Money market “my positions” + withdraw.  
-**Decision**: Route “my money market positions” and “withdraw from money market” to **LendingWorkflow** (no new workflow; reuse existing positions + withdraw and execute flow).  
-**Scope**: Aave + Morpho supply positions; Compound only if position API exists.  
-**Implementation**: Supervisor + knowledge/shortcuts add money-market phrases → LENDING_WORKFLOW; no new execute path or gateways.  
+**Decision**: Option A implemented — extend **MoneyMarketWorkflow** with positions + withdraw; route “my money market positions” and “withdraw from money market” to **money_market_workflow**.  
+**Scope**: **Aave + Compound only** (no Morpho). Both protocols: list positions and withdraw (AaveGateway, CompoundGateway `build_withdraw_supply_transaction`; Compound uses Comet `withdraw(address,uint256)`).  
+**Implementation**: Supervisor + shortcuts MONEY_MARKET_POSITIONS → MONEY_MARKET_WORKFLOW; `_fetch_user_positions_mm` (Aave + Compound); `_handle_positions_withdraw_execute` (Aave + Compound build tx → execute_data).  
 **Spec**: `docs/features/mvp/agents/08_money_market_positions_spec.md`
 
 ---
@@ -209,7 +218,9 @@ This spec defines the **“see my positions in money market”** experience (lis
 ## References
 
 - CTO methodology: `cto.md`
-- Lending positions + withdraw: `src/app/infrastructure/adapters/agent_squad/agents/workflows/lending_workflow_agent.py`
-- Money market (rates only): `src/app/infrastructure/adapters/agent_squad/agents/workflows/money_market_workflow_agent.py`
+- Money market (positions + withdraw, Aave + Compound): `src/app/infrastructure/adapters/agent_squad/agents/workflows/money_market_workflow_agent.py`
+- Compound gateway (build_withdraw_supply_transaction): `src/app/domain/ports/compound_gateway.py`
+- Compound client (build_withdraw_transaction, Comet withdraw): `src/app/infrastructure/adapters/external/compound_client.py`
+- Compound adapter: `src/app/infrastructure/adapters/external/compound_adapter.py`
 - Supervisor routing: `src/app/domain/services/agent_squad/authenticated_supervisor.py`
-- Morpho withdraw spec: `07_morpho_withdraw_implementation_spec.md`
+- Lending workflow (separate flow): `src/app/infrastructure/adapters/agent_squad/agents/workflows/lending_workflow_agent.py`

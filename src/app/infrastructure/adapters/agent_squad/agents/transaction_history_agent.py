@@ -204,6 +204,9 @@ If the user asks about something not in their data, explain what data is availab
                     "wallet_address"
                 ),
                 "transactions": conversation_context.user_metadata.get("transactions"),
+                "portfolio_summary": conversation_context.user_metadata.get(
+                    "portfolio_summary", {}
+                ),
                 "primary_wallet": {
                     "address": conversation_context.user_metadata.get("wallet_address"),
                     "chain_type": conversation_context.user_metadata.get(
@@ -259,6 +262,17 @@ Your transactions will appear here automatically! 🚀"""
             volume_30d = tx_data.get("volume_last_30_days", 0)
             most_active = tx_data.get("most_active_chain")
 
+        # Current balance context (wallet only; lending is separate)
+        portfolio_summary = user_context.get("portfolio_summary", {})
+        total_value_usd = float(portfolio_summary.get("total_value_usd", 0) or 0)
+        lines.append("**Current context:**")
+        lines.append(
+            f"- Wallet portfolio value: ${total_value_usd:,.2f} (this does NOT include lending positions)"
+        )
+        lines.append(
+            "- Lending positions (Morpho) are separate. User can say 'my lendings' to see remaining balance there.")
+        lines.append("")
+
         lines.append(f"**Transaction Summary:**")
         lines.append(f"- Total Transactions: {total_count}")
         lines.append(f"- 30-Day Volume: ${volume_30d:,.2f}")
@@ -275,7 +289,11 @@ Your transactions will appear here automatically! 🚀"""
                 status = tx.get("status", "Unknown")
                 chain = tx.get("chain", "Unknown")
                 amount = tx.get("amount", 0)
+                asset_in = tx.get("asset_in", "")
+                asset_out = tx.get("asset_out", "")
+                amount_out = tx.get("amount_out", 0)
                 created = tx.get("created_at", "Unknown")
+                explorer_url = tx.get("explorer_url")
 
                 # Status emoji
                 status_emoji = {
@@ -288,13 +306,20 @@ Your transactions will appear here automatically! 🚀"""
                 if tx_hash and tx_hash != "Unknown":
                     lines.append(f"   - Hash: `{tx_hash}`")
                 lines.append(f"   - Chain: {chain}")
-                if amount:
+                # Show swap details with asset names
+                if asset_in and amount:
+                    lines.append(f"   - Sold: {amount} {asset_in}")
+                elif amount:
                     lines.append(f"   - Amount: {amount}")
+                if asset_out and amount_out:
+                    lines.append(f"   - Received: {amount_out} {asset_out}")
                 lines.append(f"   - Status: {status}")
                 if created and created != "Unknown":
                     lines.append(
                         f"   - Date: {created[:19] if len(created) > 19 else created}"
                     )
+                if explorer_url:
+                    lines.append(f"   - Explorer (use this link only once): {explorer_url}")
                 lines.append("")
         else:
             lines.append("**Recent Transactions:** None available")
@@ -355,6 +380,16 @@ You help authenticated users understand their transaction history and activity.
 3. If data is missing, explain what data IS available
 4. Be accurate - transactions involve real money
 
+**BALANCE AND WITHDRAWALS:**
+- "Wallet portfolio value" in the context is WALLET ONLY. It does NOT include lending positions (Morpho).
+- After a withdrawal (e.g. from lending), do NOT say "your balance is $0" as if that were the user's total balance.
+- If wallet portfolio value is 0, say e.g.: "Your wallet balance is $0. Lending positions (Morpho) are separate — say 'my lendings' to see your remaining position there."
+- Never imply total balance is $0 without clarifying that lending positions are separate and suggesting "my lendings" or "my portfolio".
+
+**EXPLORER LINKS:**
+- Each transaction has exactly one "Explorer (use this link only once)" URL in the context.
+- Include each transaction's block explorer link ONLY ONCE in your response (e.g. one line per transaction, or one link in that transaction's details). Do not repeat the same link.
+
 **CAPABILITIES:**
 - Show recent transactions with details
 - Summarize transaction activity
@@ -378,6 +413,7 @@ You help authenticated users understand their transaction history and activity.
 **RESPONSE FORMAT:**
 - Use markdown formatting
 - Show transaction hashes (truncated for readability)
+- Include each transaction's explorer link exactly once (use the URL from context)
 - Include relevant chain and timing info
 - Provide actionable insights when possible
 

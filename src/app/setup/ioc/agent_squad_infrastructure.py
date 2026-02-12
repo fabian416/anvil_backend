@@ -64,6 +64,7 @@ from app.domain.ports.agent_squad.feature_flags_gateway import FeatureFlagsGatew
 from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
 from app.domain.ports.ai.llm_gateway import LLMGateway
 from app.domain.ports.morpho_gateway import MorphoGateway
+from app.application.hunter.asset_sentiment_service import AssetSentimentService
 from app.domain.ports.aave_gateway import AaveGateway
 from app.domain.ports.compound_gateway import CompoundGateway
 from app.infrastructure.adapters.agent_squad.agent_llm_gateway import AgentLLMGateway
@@ -999,6 +1000,11 @@ class AgentSquadInfrastructureProvider(Provider):
         return BuyWorkflowAgent(llm_client=llm_client)
 
     @provide
+    def provide_asset_sentiment_service(self) -> AssetSentimentService:
+        """Provide Hunter-based sentiment service for workflow enrichment (best-effort)."""
+        return AssetSentimentService(timeout_seconds=5.0)
+
+    @provide
     def provide_money_market_workflow_agent(
         self,
         llm_client: LLMClientGateway,
@@ -1006,6 +1012,7 @@ class AgentSquadInfrastructureProvider(Provider):
         compound_gateway: CompoundGateway,
         morpho_gateway: MorphoGateway,
         defillama_client: DefiLlamaClientProtocol | None,
+        sentiment_provider: AssetSentimentService,
     ) -> MoneyMarketWorkflowAgent:
         """
         Provide Money Market Workflow Agent for authenticated users.
@@ -1015,12 +1022,14 @@ class AgentSquadInfrastructureProvider(Provider):
         2. Fetch rates from Aave, Compound, Morpho
         3. Show comparison with best recommendation
         4. Allow user to select protocol for deposit
+        5. Positions list and withdraw with optional Hunter sentiment enrichment
 
         Integrations:
         - Aave V3 for lending markets
         - Compound V3 for lending markets
         - Morpho for vault rates
         - DeFiLlama for fallback APY data
+        - AssetSentimentService for optional sentiment on positions/withdraw
         """
         return MoneyMarketWorkflowAgent(
             llm_client=llm_client,
@@ -1028,6 +1037,7 @@ class AgentSquadInfrastructureProvider(Provider):
             compound_gateway=compound_gateway,
             morpho_gateway=morpho_gateway,
             defillama_client=defillama_client,
+            sentiment_provider=sentiment_provider,
         )
 
     # ========================================

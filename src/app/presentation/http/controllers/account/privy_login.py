@@ -1,5 +1,10 @@
 """
 Privy Login endpoint controller.
+
+On successful login/register we:
+- Upsert user_sync_schedule so the user is eligible for recent-user incremental sync
+  (Celery task runs every 1 min with 1→3→6→12 min backoff).
+- Enqueue recent_user_sync.sync_user so tx history sync runs immediately in Celery.
 """
 
 from typing import Optional
@@ -17,6 +22,7 @@ from app.application.commands.auth.privy_login import (
 )
 from app.domain.exceptions.base import DomainFieldError
 from app.domain.exceptions.user import EmailAlreadyExistsError
+from app.infrastructure.adapters.types import MainAsyncSession
 from app.infrastructure.auth.exceptions import AuthenticationError
 from app.infrastructure.exceptions.gateway import DataMapperError
 from app.presentation.http.errors.callbacks import log_error, log_info
@@ -144,11 +150,14 @@ def create_privy_login_router() -> APIRouter:
         request_body: PrivyLoginRequestSchema,
         http_request: Request,
         interactor: FromDishka[PrivyLogin],
+        session: FromDishka[MainAsyncSession] = None,
     ) -> PrivyLoginResponseSchema:
         """
         Authenticate user via Privy.
 
         This is the main entry point for Privy-based authentication.
+        On success we upsert user_sync_schedule so the user is eligible for
+        recent-user incremental sync (tx history backfill).
         """
         # Extract client info for session tracking
         ip_address = http_request.client.host if http_request.client else None
@@ -166,6 +175,51 @@ def create_privy_login_router() -> APIRouter:
         )
 
         response = await interactor.execute(login_request)
+
+        # Make user eligible for recent-user incremental sync (1→3→6→12 min backoff)
+        if session and response.user_id:
+            try:
+                from datetime import datetime, UTC, timedelta
+                from sqlalchemy import insert
+                from app.infrastructure.persistence_sqla.registry import mapping_registry
+                from app.infrastructure.persistence_sqla.mappings.user_sync_schedule_mapping import (
+                    map_user_sync_schedule_table,
+                )
+                map_user_sync_schedule_table()
+                schedule_table = mapping_registry.metadata.tables.get("user_sync_schedule")
+                if schedule_table:
+                    now_utc = datetime.now(UTC)
+                    # First sync in 1 minute so Celery picks them up soon
+                    next_sync = now_utc + timedelta(minutes=1)
+                    stmt = insert(schedule_table).values(
+                        user_id=response.user_id,
+                        next_sync_at=next_sync,
+                        interval_index=0,
+                        last_synced_at=None,
+                        created_at=now_utc,
+                        updated_at=now_utc,
+                    ).on_conflict_do_update(
+                        index_elements=["user_id"],
+                        set_={
+                            "next_sync_at": next_sync,
+                            "interval_index": 0,
+                            "updated_at": now_utc,
+                        },
+                    )
+                    await session.execute(stmt)
+            except Exception:
+                pass  # Non-critical: sync will still seed from auth_sessions
+
+        # Trigger sync now in Celery so tx history updates without waiting for beat
+        if response.user_id:
+            try:
+                from app.infrastructure.celery.tasks.recent_user_sync_tasks import (
+                    sync_single_user,
+                )
+                sync_single_user.delay(response.user_id)
+            except Exception:
+                pass  # Non-critical: login succeeds; incremental will run later
+
         return PrivyLoginResponseSchema.from_response(response)
 
     return router

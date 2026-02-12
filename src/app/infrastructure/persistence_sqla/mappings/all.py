@@ -136,6 +136,18 @@ from app.infrastructure.persistence_sqla.mappings.money_market_alert_history_map
 from app.infrastructure.persistence_sqla.mappings.money_market_user_preference_mapping import (
     map_money_market_user_preferences_table,
 )
+from app.infrastructure.persistence_sqla.mappings.swap_intent_mapping import (
+    map_swap_intents_table,
+)
+from app.infrastructure.persistence_sqla.mappings.user_sync_schedule_mapping import (
+    map_user_sync_schedule_table,
+)
+from app.infrastructure.persistence_sqla.mappings.swap_position_mapping import (
+    map_swap_positions_table,
+)
+from app.infrastructure.persistence_sqla.mappings.hl_spot_token_mapping import (
+    map_hl_spot_tokens_table,
+)
 
 
 def map_tables() -> None:
@@ -194,3 +206,7 @@ def map_tables() -> None:
     map_money_market_comparisons_table()
     map_money_market_alert_history_table()
     map_money_market_user_preferences_table()
+    map_swap_intents_table()
+    map_user_sync_schedule_table()
+    map_swap_positions_table()
+    map_hl_spot_tokens_table()

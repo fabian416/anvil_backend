@@ -1,8 +1,8 @@
 {
   "feature_name": "Lending Protocol Comparison",
   "version": "1.0",
-  "last_updated": "2026-01-27",
-  "description": "Comprehensive comparison of lending protocols supported by Anvil (Aave V3 and Morpho)",
+  "last_updated": "2026-02-02",
+  "description": "Comprehensive comparison of lending protocols. In Anvil: Lending workflow (my lendings, deposit/withdraw from vaults) uses Morpho only. Money market workflow (positions, withdraw) uses Aave V3 and Compound V3.",
 
   "protocols": {
     "aave": {

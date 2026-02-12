@@ -31,8 +31,9 @@ from app.application.chat.commands.send_message_with_supervisor import (
 from app.application.chat.services.user_data_service import UserDataService
 from app.domain.ports.wallet.wallet_repository import WalletRepository
 
-# NOTE: TransactionRepository import removed - causes session corruption
-# from app.domain.transactions.ports.transaction.transaction_repository import TransactionRepository
+from app.domain.transactions.ports.transaction.transaction_repository import (
+    TransactionRepository,
+)
 from app.domain.portfolio.ports.portfolio.portfolio_repository import (
     PortfolioRepository,
 )
@@ -109,29 +110,20 @@ class AgentSquadApplicationProvider(Provider):
     def provide_user_data_service(
         self,
         wallet_repository: WalletRepository = None,  # type: ignore
-        # NOTE: TransactionRepository is DISABLED - it causes session corruption
-        # when queries fail due to schema mismatches or missing data.
-        # transaction_repository: TransactionRepository = None,
+        transaction_repository: TransactionRepository = None,  # type: ignore
         portfolio_repository: PortfolioRepository = None,  # type: ignore
     ) -> UserDataService:
         """
-        Provide UserDataService for accessing user wallet/portfolio data.
+        Provide UserDataService for accessing user wallet/portfolio/transaction data.
 
-        This service aggregates data from multiple repositories for use
-        in authenticated chat workflows.
-
-        IMPORTANT: TransactionRepository is intentionally NOT injected here.
-        When transaction queries fail, they leave the PostgreSQL transaction
-        in an "aborted" state, which corrupts the shared session and causes
-        all subsequent database operations to fail.
-
-        The authenticated supervisor works fine without transaction history -
-        it just won't have that context in the LLM prompt.
+        TransactionRepository is now enabled. The _get_transaction_summary method
+        has comprehensive per-operation try/except blocks that return empty
+        TransactionSummary on any failure, preventing session corruption.
         """
         return UserDataService(
             wallet_repository=wallet_repository,
             portfolio_repository=portfolio_repository,
-            transaction_repository=None,  # Disabled to prevent session corruption
+            transaction_repository=transaction_repository,
         )
 
     @provide

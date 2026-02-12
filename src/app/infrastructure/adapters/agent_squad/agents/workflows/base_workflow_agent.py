@@ -117,6 +117,7 @@ class UserContext:
     language: str = "en"
     is_authenticated: bool = False
     preferences: dict[str, Any] = field(default_factory=dict)
+    display_name: str | None = None  # First name or display name for personalization
 
     # Portfolio/balance context for workflow agents
     # Agents use this to show helpful recommendations when user has insufficient funds
@@ -499,6 +500,9 @@ class BaseWorkflowAgent(AgentGateway, ABC):
             # Add execute_data to metadata if available
             if new_state.execute_data:
                 metadata["execute_data"] = new_state.execute_data
+            # Pass through enrichment (e.g. sentiment_analysis from money market)
+            if new_state.data.get("sentiment_analysis") is not None:
+                metadata["sentiment_analysis"] = new_state.data["sentiment_analysis"]
 
             logger.info(
                 f"[{self.workflow_name}] Completed step={new_state.step}, "
@@ -696,6 +700,10 @@ We encountered an issue processing your request. Please try again.
                 user_context.language = metadata.get("language", "en")
             if metadata.get("is_authenticated"):
                 user_context.is_authenticated = metadata.get("is_authenticated", False)
+            if metadata.get("display_name"):
+                user_context.display_name = (
+                    str(metadata.get("display_name")).strip() or None
+                )
 
             # Extract portfolio/balance context for workflow agents
             # The supervisor injects balance data in multiple formats:

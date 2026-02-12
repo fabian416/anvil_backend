@@ -31,6 +31,10 @@ def create_celery() -> Celery:
             "app.infrastructure.celery.tasks.etherscan_balance_tasks",
             "app.infrastructure.celery.tasks.user_context_tasks",
             "app.infrastructure.celery.tasks.wallet_qr_tasks",
+            "app.infrastructure.celery.tasks.swap_intent_tasks",
+            "app.infrastructure.celery.tasks.recent_user_sync_tasks",
+            "app.infrastructure.celery.tasks.swap_position_sync_tasks",
+            "app.infrastructure.celery.tasks.hl_spot_token_tasks",
         ],
     )
     app.conf.task_serializer = "json"
@@ -107,6 +111,14 @@ def create_celery() -> Celery:
         "etherscan.verify_test_wallet": {"queue": "maintenance"},
         # Wallet QR code generation
         "generate_wallet_qr_codes": {"queue": "maintenance"},
+        # Swap intent watcher (15 min) + recent-user incremental sync
+        "swap_intent.check_pending": {"queue": "maintenance"},
+        "recent_user_sync.incremental": {"queue": "maintenance"},
+        "recent_user_sync.sync_user": {"queue": "maintenance"},
+        "swap_positions.sync": {"queue": "maintenance"},
+        "swap_positions.sync_wallet": {"queue": "maintenance"},
+        "hl_spot_tokens.seed": {"queue": "maintenance"},
+        "hl_spot_tokens.enrich_sentiment": {"queue": "maintenance"},
     }
 
     # Configuración de colas con prioridades
@@ -206,6 +218,38 @@ def create_celery() -> Celery:
         "generate-wallet-qr-codes": {
             "task": "generate_wallet_qr_codes",
             "schedule": 180.0,  # Every 3 minutes
+            "options": {"queue": "maintenance"},
+        },
+        # Swap intent watcher: pending intents from last 15 min, match Hyperliquid fills
+        "swap-intent-check-pending": {
+            "task": "swap_intent.check_pending",
+            "schedule": 120.0,  # Every 2 minutes
+            "options": {"queue": "maintenance"},
+        },
+        # Recent-user incremental sync: 1 -> 3 -> 6 -> 12 min backoff for users active in 24h
+        "recent-user-sync-incremental": {
+            "task": "recent_user_sync.incremental",
+            "schedule": 60.0,  # Every 1 minute
+            "options": {"queue": "maintenance"},
+        },
+        # Swap positions sync: cache Hyperliquid spot + perps every 60s
+        # Budget: 200 wallets × 2 calls = 400 req/min (within 1200 limit)
+        "swap-positions-sync": {
+            "task": "swap_positions.sync",
+            "schedule": 60.0,  # Every 60 seconds
+            "options": {"queue": "maintenance"},
+        },
+        # HL Spot Token catalog: seed all tokens from spotMeta every 24h
+        "hl-spot-tokens-seed": {
+            "task": "hl_spot_tokens.seed",
+            "schedule": 86400.0,  # Every 24 hours
+            "options": {"queue": "maintenance"},
+        },
+        # HL Spot Token sentiment enrichment: 1 token per minute, rotating
+        # ~60 tokens/hour = full rotation every hour
+        "hl-spot-tokens-enrich-sentiment": {
+            "task": "hl_spot_tokens.enrich_sentiment",
+            "schedule": 60.0,  # Every 1 minute
             "options": {"queue": "maintenance"},
         },
         # =========================

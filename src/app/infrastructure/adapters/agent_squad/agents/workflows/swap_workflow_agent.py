@@ -475,6 +475,57 @@ class SwapWorkflowAgent(BaseWorkflowAgent):
             f"[SwapWorkflow] Processing step={step}, message={message.value[:50]}..."
         )
 
+        # ── "My swaps" position viewing ──────────────────────────────
+        # Detect position-viewing keywords and route to positions handler.
+        # This must be checked BEFORE normal swap flow so "my swaps" is
+        # handled even when the user is mid-workflow.
+        my_swaps_keywords = [
+            "my swaps",
+            "my swap",
+            "my trades",
+            "my positions",
+            "swap positions",
+            "show my swaps",
+            "show swaps",
+            "mis swaps",
+            "mis intercambios",
+            "mis trades",
+            "meus swaps",
+            "meus trades",
+            "我的交换",
+        ]
+        if any(kw in text_lower for kw in my_swaps_keywords):
+            logger.info("[SwapWorkflow] 'my swaps' detected → showing positions")
+            state = WorkflowState()
+            state.step = WorkflowStep.PARSE_REQUEST.value
+            state.data["action"] = "view_positions"
+            return await self._handle_my_swaps_request(message, state, user_context)
+
+        # Handle "refresh" – trigger on-demand sync then re-show positions
+        if text_lower in ("refresh", "actualizar", "atualizar", "refrescar"):
+            logger.info("[SwapWorkflow] 'refresh' detected → on-demand sync")
+            await self._trigger_on_demand_sync(user_context)
+            state = WorkflowState()
+            state.step = WorkflowStep.PARSE_REQUEST.value
+            state.data["action"] = "view_positions"
+            return await self._handle_my_swaps_request(message, state, user_context)
+
+        # If awaiting swap-from-position selection, route there
+        if state.data.get("awaiting_swap_position_selection"):
+            return await self._handle_swap_position_selection(
+                message, state, user_context
+            )
+
+        # If awaiting destination token after position selection, route there
+        if state.data.get("awaiting_swap_destination"):
+            return await self._handle_swap_destination(message, state, user_context)
+
+        # If awaiting amount after destination was chosen, handle it
+        if state.data.get("awaiting_swap_amount_from_position"):
+            return await self._handle_swap_amount_from_position(
+                message, state, user_context
+            )
+
         # Check if user wants to continue or start new after EXECUTE/COMPLETED
         # If user just says "swap" without full params after an executed swap,
         # ask if they want to repeat the last swap or start fresh
@@ -3159,3 +3210,755 @@ Quando tiver fundos, volte e tente sua troca novamente!""",
         }
 
         return msgs.get(language, msgs["en"])
+
+    # ================================================================
+    # "My Swaps" – Position Viewing & Swap-from-Position
+    # ================================================================
+
+    async def _handle_my_swaps_request(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """
+        Handle "my swaps" – show cached Hyperliquid positions + recent swap history.
+
+        Reads from the `swap_positions` table (synced every 60s by Celery)
+        instead of making live API calls. This scales to 1000+ users.
+
+        Data sources:
+        1. swap_positions table (spot balances + perps positions, cached)
+        2. transactions table (recent swap history)
+        """
+        language = user_context.language
+        wallet_address = user_context.wallet_address
+
+        if not wallet_address:
+            no_wallet = {
+                "en": (
+                    "🔗 To view your swap positions, you need to connect your wallet first.\n\n"
+                    "Please connect your wallet and try again."
+                ),
+                "es": (
+                    "🔗 Para ver tus posiciones de swap, necesitas conectar tu wallet primero.\n\n"
+                    "Por favor, conecta tu wallet y vuelve a intentarlo."
+                ),
+                "pt": (
+                    "🔗 Para ver suas posições de swap, você precisa conectar sua carteira primeiro.\n\n"
+                    "Por favor, conecte sua carteira e tente novamente."
+                ),
+            }
+            return no_wallet.get(language, no_wallet["en"]), state
+
+        # ── Read cached positions from swap_positions table ──
+        cached_rows = await self._fetch_cached_positions(wallet_address)
+
+        # ── Fetch recent swap history from DB ──
+        recent_swaps = await self._fetch_recent_swaps_from_db(
+            user_context.user_id, wallet_address
+        )
+
+        # ── Build positions list from cached data ──
+        positions: list[dict] = []
+
+        for row in cached_rows:
+            source = row.get("source", "spot")
+            pos_dict: dict = {
+                "source": source,
+                "token": row.get("token", ""),
+                "balance": float(row.get("balance", 0)),
+                "usd_value": float(row.get("usd_value", 0)),
+                "side": row.get("side", "hold"),
+            }
+            if source == "perps":
+                pos_dict["entry_price"] = float(row.get("entry_price", 0) or 0)
+                pos_dict["mark_price"] = float(row.get("mark_price", 0) or 0)
+                pos_dict["pnl"] = float(row.get("unrealized_pnl", 0) or 0)
+                pos_dict["leverage"] = float(row.get("leverage", 1) or 1)
+            positions.append(pos_dict)
+
+        # Sort by USD value descending
+        positions.sort(key=lambda p: -p.get("usd_value", 0))
+
+        # Store in state for later selection
+        state.data["positions"] = positions
+        state.data["recent_swaps"] = recent_swaps
+
+        # ── Render response ──
+        if not positions and not recent_swaps:
+            empty_msg = {
+                "en": (
+                    "📭 **No swap positions found** on Hyperliquid for your wallet.\n\n"
+                    "You can get started by:\n"
+                    "• 🔄 **Swap USDC to a token** – e.g. *\"swap 100 USDC to PURR\"*\n"
+                    "• 💰 **Buy crypto first** – e.g. *\"buy $50 of USDC\"*\n\n"
+                    "Once you make swaps on Hyperliquid, your positions will appear here!"
+                ),
+                "es": (
+                    "📭 **No se encontraron posiciones de swap** en Hyperliquid para tu wallet.\n\n"
+                    "Puedes empezar:\n"
+                    "• 🔄 **Swap USDC a un token** – ej. *\"swap 100 USDC a PURR\"*\n"
+                    "• 💰 **Compra crypto primero** – ej. *\"comprar $50 de USDC\"*"
+                ),
+                "pt": (
+                    "📭 **Nenhuma posição de swap encontrada** no Hyperliquid para sua carteira.\n\n"
+                    "Você pode começar:\n"
+                    "• 🔄 **Swap USDC para um token** – ex. *\"swap 100 USDC para PURR\"*\n"
+                    "• 💰 **Compre crypto primeiro** – ex. *\"comprar $50 de USDC\"*"
+                ),
+            }
+            return empty_msg.get(language, empty_msg["en"]), state
+
+        response = self._render_swap_positions(positions, recent_swaps, language)
+
+        # Set state for position selection
+        state.data["awaiting_swap_position_selection"] = True
+
+        return response, state
+
+    def _render_swap_positions(
+        self,
+        positions: list[dict],
+        recent_swaps: list[dict],
+        language: str,
+    ) -> str:
+        """Render the swap positions table with action options."""
+
+        headers = {
+            "en": "📊 **Your Swap Positions (Hyperliquid)**\n\n",
+            "es": "📊 **Tus Posiciones de Swap (Hyperliquid)**\n\n",
+            "pt": "📊 **Suas Posições de Swap (Hyperliquid)**\n\n",
+        }
+        header = headers.get(language, headers["en"])
+
+        lines: list[str] = []
+
+        # ── Spot Holdings ──
+        spot_positions = [p for p in positions if p["source"] == "spot"]
+        if spot_positions:
+            lines.append("**🪙 Spot Holdings**\n")
+            for i, pos in enumerate(spot_positions, 1):
+                token = pos["token"]
+                balance = pos["balance"]
+                usd = pos["usd_value"]
+                usd_str = f" (~${usd:,.2f})" if usd > 0 else ""
+                lines.append(
+                    f"**{i}.** {token}: {balance:,.4f}{usd_str}"
+                )
+            lines.append("")
+
+        # ── Perps Positions ──
+        perps_positions = [p for p in positions if p["source"] == "perps"]
+        if perps_positions:
+            offset = len(spot_positions)
+            lines.append("**📈 Perpetual Positions**\n")
+            for i, pos in enumerate(perps_positions, offset + 1):
+                token = pos["token"]
+                size = pos["balance"]
+                side = pos["side"].upper()
+                entry = pos.get("entry_price", 0)
+                mark = pos.get("mark_price", 0)
+                pnl = pos.get("pnl", 0)
+                leverage = pos.get("leverage", 1)
+                pnl_emoji = "🟢" if pnl >= 0 else "🔴"
+
+                lines.append(
+                    f"**{i}.** {token} {side} {leverage:.0f}x\n"
+                    f"   • Size: {size:,.4f} | Entry: ${entry:,.2f} | Mark: ${mark:,.2f}\n"
+                    f"   • PnL: {pnl_emoji} ${pnl:,.2f}"
+                )
+            lines.append("")
+
+        # ── Recent Swap History ──
+        if recent_swaps:
+            lines.append("**🔄 Recent Swaps**\n")
+            for swap in recent_swaps[:5]:
+                asset_in = swap.get("asset_in", "?")
+                amount_in = swap.get("amount_in", 0)
+                asset_out = swap.get("asset_out", "")
+                amount_out = swap.get("amount_out", 0)
+                ts = swap.get("confirmed_at", "")
+                date_str = ts[:10] if ts else ""
+
+                if asset_out and amount_out:
+                    lines.append(
+                        f"• {amount_in:,.2f} {asset_in} → {amount_out:,.2f} {asset_out}  _{date_str}_"
+                    )
+                else:
+                    lines.append(f"• {amount_in:,.2f} {asset_in}  _{date_str}_")
+            lines.append("")
+
+        # ── Action prompt ──
+        actions = {
+            "en": (
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                "**What would you like to do?**\n"
+                "• Reply with a **number** to swap that token to another\n"
+                "• Say **\"swap 100 USDC to PURR\"** to start a new swap\n"
+                "• Say **\"swap all PURR to USDC\"** to sell a position\n"
+                "• Say **\"refresh\"** to update positions now"
+            ),
+            "es": (
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                "**¿Qué te gustaría hacer?**\n"
+                "• Responde con un **número** para intercambiar ese token\n"
+                "• Di **\"swap 100 USDC a PURR\"** para un nuevo swap\n"
+                "• Di **\"swap todo PURR a USDC\"** para vender una posición\n"
+                "• Di **\"refresh\"** para actualizar posiciones"
+            ),
+            "pt": (
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                "**O que você gostaria de fazer?**\n"
+                "• Responda com um **número** para trocar esse token\n"
+                "• Diga **\"swap 100 USDC para PURR\"** para um novo swap\n"
+                "• Diga **\"swap tudo PURR para USDC\"** para vender uma posição\n"
+                "• Diga **\"refresh\"** para atualizar posições"
+            ),
+        }
+
+        return header + "\n".join(lines) + "\n" + actions.get(language, actions["en"])
+
+    async def _handle_swap_position_selection(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """Handle user selecting a position number to swap from."""
+        text = message.value.strip()
+        text_lower = text.lower()
+        positions = state.data.get("positions", [])
+
+        # Check if user typed a new swap command instead of a number
+        new_params = await self._extract_swap_params(text)
+        if new_params.get("from_token") and new_params.get("to_token"):
+            state.data.pop("awaiting_swap_position_selection", None)
+            state.data.pop("positions", None)
+            state = WorkflowState()
+            state.step = WorkflowStep.PARSE_REQUEST.value
+            return await self._handle_parse_request(message, state, user_context)
+
+        # Check if user typed "swap all <TOKEN> to <TOKEN>"
+        all_match = re.match(
+            r"swap\s+(?:all|todo|tudo)\s+(\w+)\s+(?:to|a|para)\s+(\w+)",
+            text_lower,
+        )
+        if all_match:
+            from_token = all_match.group(1).upper()
+            to_token = all_match.group(2).upper()
+            # Find the position to get balance
+            for pos in positions:
+                if pos["token"].upper() == from_token and pos["source"] == "spot":
+                    amount = pos["balance"]
+                    state.data.pop("awaiting_swap_position_selection", None)
+                    state.data["from_token"] = from_token
+                    state.data["to_token"] = to_token
+                    state.data["amount"] = amount
+                    state.data["provider"] = "hyperliquid"
+                    state.step = WorkflowStep.FETCH_DATA.value
+                    return await self._handle_fetch_quote(message, state, user_context)
+            # Token not found in positions
+            return (
+                f"❌ Token **{from_token}** not found in your spot positions. "
+                f"Please select a number from the list above.",
+                state,
+            )
+
+        # Try to parse a number selection
+        try:
+            selection = int(text)
+            if 1 <= selection <= len(positions):
+                selected = positions[selection - 1]
+                token = selected["token"]
+                balance = selected["balance"]
+                source = selected["source"]
+
+                state.data.pop("awaiting_swap_position_selection", None)
+
+                if source == "spot":
+                    # Pre-fill from_token and ask what to swap to
+                    state.data["from_token"] = token.upper()
+                    state.data["available_balance"] = balance
+
+                    language = user_context.language
+                    usd_str = (
+                        f" (~${selected['usd_value']:,.2f})"
+                        if selected.get("usd_value", 0) > 0
+                        else ""
+                    )
+                    prompt = {
+                        "en": (
+                            f"🔄 **Swap {token}**\n\n"
+                            f"Available: **{balance:,.4f} {token}**{usd_str}\n\n"
+                            f"What would you like to swap it to?\n"
+                            f"• Say **\"USDC\"** to sell to USDC\n"
+                            f"• Say **\"PURR\"**, **\"TRUMP\"**, etc. to swap to another token\n"
+                            f"• Say **\"all to USDC\"** to swap the full balance\n"
+                            f"• Or specify an amount: **\"50 to USDC\"**"
+                        ),
+                        "es": (
+                            f"🔄 **Swap {token}**\n\n"
+                            f"Disponible: **{balance:,.4f} {token}**{usd_str}\n\n"
+                            f"¿A qué token quieres cambiarlo?\n"
+                            f"• Di **\"USDC\"** para vender a USDC\n"
+                            f"• Di **\"todo a USDC\"** para cambiar todo el saldo"
+                        ),
+                        "pt": (
+                            f"🔄 **Swap {token}**\n\n"
+                            f"Disponível: **{balance:,.4f} {token}**{usd_str}\n\n"
+                            f"Para qual token você quer trocar?\n"
+                            f"• Diga **\"USDC\"** para vender para USDC\n"
+                            f"• Diga **\"tudo para USDC\"** para trocar todo o saldo"
+                        ),
+                    }
+                    state.data["awaiting_swap_destination"] = True
+                    state.step = WorkflowStep.PARSE_REQUEST.value
+                    return prompt.get(language, prompt["en"]), state
+
+                elif source == "perps":
+                    # Perps position – inform user this is view-only for now
+                    language = user_context.language
+                    perps_msg = {
+                        "en": (
+                            f"📈 **{token} {selected['side'].upper()} Position**\n\n"
+                            f"• Size: {balance:,.4f}\n"
+                            f"• Entry: ${selected.get('entry_price', 0):,.2f}\n"
+                            f"• Mark: ${selected.get('mark_price', 0):,.2f}\n"
+                            f"• PnL: ${selected.get('pnl', 0):,.2f}\n\n"
+                            f"⚠️ Perpetual position management (close/modify) is coming soon.\n"
+                            f"For now, you can manage perps positions directly on "
+                            f"[Hyperliquid](https://app.hyperliquid.xyz)."
+                        ),
+                        "es": (
+                            f"📈 **Posición {token} {selected['side'].upper()}**\n\n"
+                            f"• Tamaño: {balance:,.4f}\n"
+                            f"• Entrada: ${selected.get('entry_price', 0):,.2f}\n"
+                            f"• PnL: ${selected.get('pnl', 0):,.2f}\n\n"
+                            f"⚠️ La gestión de posiciones perpetuas estará disponible pronto."
+                        ),
+                        "pt": (
+                            f"📈 **Posição {token} {selected['side'].upper()}**\n\n"
+                            f"• Tamanho: {balance:,.4f}\n"
+                            f"• Entrada: ${selected.get('entry_price', 0):,.2f}\n"
+                            f"• PnL: ${selected.get('pnl', 0):,.2f}\n\n"
+                            f"⚠️ O gerenciamento de posições perpétuas estará disponível em breve."
+                        ),
+                    }
+                    return perps_msg.get(language, perps_msg["en"]), state
+
+            else:
+                return (
+                    f"❌ Please select a number between 1 and {len(positions)}.",
+                    state,
+                )
+        except ValueError:
+            pass
+
+        # Check if user is providing a destination token after selecting a position
+        if state.data.get("awaiting_swap_destination"):
+            return await self._handle_swap_destination(message, state, user_context)
+
+        # Unrecognized input – re-show positions
+        return await self._handle_my_swaps_request(message, state, user_context)
+
+    async def _handle_swap_destination(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """Handle destination token selection after user picked a position."""
+        text = message.value.strip()
+        text_lower = text.lower()
+        from_token = state.data.get("from_token", "")
+        available_balance = state.data.get("available_balance", 0)
+
+        state.data.pop("awaiting_swap_destination", None)
+
+        # Parse "all to USDC" / "todo a USDC" / "tudo para USDC"
+        all_match = re.match(
+            r"(?:all|todo|tudo|max)\s+(?:to|a|para)\s+(\w+)", text_lower
+        )
+        if all_match:
+            to_token = all_match.group(1).upper()
+            state.data["to_token"] = to_token
+            state.data["amount"] = available_balance
+            state.data["provider"] = "hyperliquid"
+            state.step = WorkflowStep.FETCH_DATA.value
+            return await self._handle_fetch_quote(message, state, user_context)
+
+        # Parse "<amount> to <TOKEN>" / "<amount> a <TOKEN>"
+        amount_to_match = re.match(
+            r"([\d.,]+)\s+(?:to|a|para)\s+(\w+)", text_lower
+        )
+        if amount_to_match:
+            try:
+                amount = float(amount_to_match.group(1).replace(",", ""))
+            except ValueError:
+                amount = available_balance
+            to_token = amount_to_match.group(2).upper()
+            state.data["to_token"] = to_token
+            state.data["amount"] = min(amount, available_balance)
+            state.data["provider"] = "hyperliquid"
+            state.step = WorkflowStep.FETCH_DATA.value
+            return await self._handle_fetch_quote(message, state, user_context)
+
+        # Just a token name (e.g. "USDC", "PURR")
+        token_match = re.match(r"^([A-Za-z]{2,10})$", text.strip())
+        if token_match:
+            to_token = token_match.group(1).upper()
+            # Ask for amount
+            state.data["to_token"] = to_token
+            language = user_context.language
+            prompt = {
+                "en": (
+                    f"How much **{from_token}** do you want to swap to **{to_token}**?\n\n"
+                    f"Available: **{available_balance:,.4f} {from_token}**\n\n"
+                    f"• Enter an amount (e.g. **100**)\n"
+                    f"• Or say **\"all\"** / **\"max\"** for the full balance"
+                ),
+                "es": (
+                    f"¿Cuánto **{from_token}** quieres cambiar a **{to_token}**?\n\n"
+                    f"Disponible: **{available_balance:,.4f} {from_token}**\n\n"
+                    f"• Ingresa una cantidad (ej. **100**)\n"
+                    f"• O di **\"todo\"** / **\"max\"** para el saldo completo"
+                ),
+                "pt": (
+                    f"Quanto **{from_token}** você quer trocar para **{to_token}**?\n\n"
+                    f"Disponível: **{available_balance:,.4f} {from_token}**\n\n"
+                    f"• Digite uma quantidade (ex. **100**)\n"
+                    f"• Ou diga **\"tudo\"** / **\"max\"** para o saldo completo"
+                ),
+            }
+            state.data["awaiting_swap_amount_from_position"] = True
+            state.step = WorkflowStep.PARSE_REQUEST.value
+            return prompt.get(language, prompt["en"]), state
+
+        # Try to parse as a full swap command
+        new_params = await self._extract_swap_params(text)
+        if new_params.get("to_token"):
+            to_token = new_params["to_token"].upper()
+            amount = new_params.get("amount", available_balance)
+            state.data["to_token"] = to_token
+            state.data["amount"] = (
+                min(float(amount), available_balance) if amount else available_balance
+            )
+            state.data["provider"] = "hyperliquid"
+            state.step = WorkflowStep.FETCH_DATA.value
+            return await self._handle_fetch_quote(message, state, user_context)
+
+        # Fallback
+        return (
+            "Please specify the destination token. "
+            "For example: **USDC**, **PURR**, or **\"all to USDC\"**",
+            state,
+        )
+
+    async def _handle_swap_amount_from_position(
+        self,
+        message: MessageContent,
+        state: WorkflowState,
+        user_context: UserContext,
+    ) -> tuple[str, WorkflowState]:
+        """Handle amount input after from_token and to_token are set from position selection."""
+        text = message.value.strip().lower()
+        from_token = state.data.get("from_token", "")
+        to_token = state.data.get("to_token", "")
+        available_balance = state.data.get("available_balance", 0)
+
+        state.data.pop("awaiting_swap_amount_from_position", None)
+
+        # "all" / "max" / "todo" / "tudo"
+        if text in ("all", "max", "todo", "tudo", "todo el saldo", "tudo o saldo"):
+            state.data["amount"] = available_balance
+            state.data["provider"] = "hyperliquid"
+            state.step = WorkflowStep.FETCH_DATA.value
+            return await self._handle_fetch_quote(message, state, user_context)
+
+        # Try to parse a number
+        try:
+            clean = text.replace("$", "").replace(",", "").strip()
+            amount = float(clean)
+            if amount <= 0:
+                return ("❌ Amount must be greater than 0.", state)
+            state.data["amount"] = min(amount, available_balance)
+            state.data["provider"] = "hyperliquid"
+            state.step = WorkflowStep.FETCH_DATA.value
+            return await self._handle_fetch_quote(message, state, user_context)
+        except ValueError:
+            pass
+
+        # Unrecognized – re-prompt
+        language = user_context.language
+        return (
+            f"Please enter an amount of **{from_token}** to swap to **{to_token}**, "
+            f"or say **\"all\"** for the full balance ({available_balance:,.4f} {from_token}).",
+            state,
+        )
+
+    async def _trigger_on_demand_sync(
+        self,
+        user_context: UserContext,
+    ) -> None:
+        """
+        Trigger on-demand Celery sync for this user's wallet.
+
+        Falls back to direct API sync if Celery is unavailable.
+        """
+        wallet_address = user_context.wallet_address
+        user_id = user_context.user_id
+
+        if not wallet_address or not user_id:
+            return
+
+        try:
+            # Try Celery task first (non-blocking, runs in background)
+            from app.infrastructure.celery.tasks.swap_position_sync_tasks import (
+                sync_swap_positions_for_wallet,
+            )
+
+            sync_swap_positions_for_wallet.delay(int(user_id), wallet_address)
+            logger.info(
+                "[SwapWorkflow] On-demand sync triggered for %s",
+                wallet_address[:10],
+            )
+            # Give the task a moment to complete
+            import asyncio
+            await asyncio.sleep(2)
+        except Exception as e:
+            logger.warning(
+                "[SwapWorkflow] Celery on-demand sync failed, using direct API: %s", e
+            )
+            # Fallback: direct API sync (same as before, but writes to DB)
+            if self._hyperliquid:
+                try:
+                    from datetime import datetime, UTC
+                    import os
+
+                    from sqlalchemy import text as sa_text
+                    from sqlalchemy.dialects.postgresql import insert as pg_insert
+                    from sqlalchemy.ext.asyncio import (
+                        create_async_engine,
+                        AsyncSession as _AsyncSession,
+                    )
+                    from sqlalchemy.orm import sessionmaker as _sessionmaker
+
+                    db_url = os.environ.get("DATABASE_URL")
+                    if not db_url:
+                        db_host = os.environ.get("POSTGRES_HOST", "localhost")
+                        db_port = os.environ.get("POSTGRES_PORT", "5432")
+                        db_user_env = os.environ.get("POSTGRES_USER", "postgres")
+                        db_pass = os.environ.get("POSTGRES_PASSWORD", "changethis")
+                        db_name = os.environ.get("POSTGRES_DB", "anvil_db")
+                        db_url = (
+                            f"postgresql+psycopg://{db_user_env}:{db_pass}"
+                            f"@{db_host}:{db_port}/{db_name}"
+                        )
+
+                    engine = create_async_engine(db_url, pool_pre_ping=True)
+                    async_session = _sessionmaker(
+                        engine, class_=_AsyncSession, expire_on_commit=False
+                    )
+                    now = datetime.now(UTC)
+
+                    spot_balances = await self._hyperliquid.get_spot_balance(
+                        wallet_address
+                    )
+
+                    async with async_session() as session:
+                        for token, balance in spot_balances.items():
+                            if balance <= 0:
+                                continue
+                            usd_value = 0.0
+                            if token.upper() in ("USDC", "USDT"):
+                                usd_value = balance
+                            else:
+                                try:
+                                    price = await self._hyperliquid.get_spot_price(
+                                        token, "USDC"
+                                    )
+                                    usd_value = balance * price
+                                except Exception:
+                                    pass
+                            await session.execute(
+                                sa_text("""
+                                    INSERT INTO swap_positions
+                                        (user_id, wallet_address, source, token,
+                                         balance, usd_value, side, synced_at)
+                                    VALUES (:uid, LOWER(:addr), 'spot', :token,
+                                            :balance, :usd_val, 'hold', :now)
+                                    ON CONFLICT (wallet_address, source, token)
+                                    DO UPDATE SET
+                                        balance = :balance,
+                                        usd_value = :usd_val,
+                                        synced_at = :now
+                                """),
+                                {
+                                    "uid": int(user_id),
+                                    "addr": wallet_address,
+                                    "token": token,
+                                    "balance": balance,
+                                    "usd_val": round(usd_value, 2),
+                                    "now": now,
+                                },
+                            )
+                        await session.commit()
+                    await engine.dispose()
+                    logger.info(
+                        "[SwapWorkflow] Direct API sync done for %s",
+                        wallet_address[:10],
+                    )
+                except Exception as ex:
+                    logger.warning(
+                        "[SwapWorkflow] Direct API fallback sync failed: %s", ex
+                    )
+
+    async def _fetch_cached_positions(
+        self,
+        wallet_address: str,
+    ) -> list[dict]:
+        """
+        Read cached Hyperliquid positions from swap_positions table.
+
+        Returns list of dicts with source, token, balance, usd_value, side,
+        and perps-specific fields (entry_price, mark_price, etc.).
+        Data is synced every 60s by the swap_positions.sync Celery task.
+        """
+        try:
+            import os
+
+            from sqlalchemy import text as sa_text
+            from sqlalchemy.ext.asyncio import (
+                create_async_engine,
+                AsyncSession as _AsyncSession,
+            )
+            from sqlalchemy.orm import sessionmaker as _sessionmaker
+
+            db_url = os.environ.get("DATABASE_URL")
+            if not db_url:
+                db_host = os.environ.get("POSTGRES_HOST", "localhost")
+                db_port = os.environ.get("POSTGRES_PORT", "5432")
+                db_user = os.environ.get("POSTGRES_USER", "postgres")
+                db_pass = os.environ.get("POSTGRES_PASSWORD", "changethis")
+                db_name = os.environ.get("POSTGRES_DB", "anvil_db")
+                db_url = (
+                    f"postgresql+psycopg://{db_user}:{db_pass}"
+                    f"@{db_host}:{db_port}/{db_name}"
+                )
+
+            engine = create_async_engine(db_url, pool_pre_ping=True)
+            async_session = _sessionmaker(
+                engine, class_=_AsyncSession, expire_on_commit=False
+            )
+
+            rows: list[dict] = []
+            async with async_session() as session:
+                result = await session.execute(
+                    sa_text("""
+                        SELECT source, token, balance::text, usd_value::text,
+                               side, entry_price::text, mark_price::text,
+                               unrealized_pnl::text, leverage::text,
+                               liquidation_price::text, synced_at::text
+                        FROM swap_positions
+                        WHERE LOWER(wallet_address) = LOWER(:addr)
+                        AND balance > 0
+                        ORDER BY usd_value DESC
+                    """),
+                    {"addr": wallet_address},
+                )
+                for row in result.mappings().all():
+                    rows.append({
+                        "source": row.get("source", "spot"),
+                        "token": row.get("token", ""),
+                        "balance": row.get("balance", "0"),
+                        "usd_value": row.get("usd_value", "0"),
+                        "side": row.get("side", "hold"),
+                        "entry_price": row.get("entry_price"),
+                        "mark_price": row.get("mark_price"),
+                        "unrealized_pnl": row.get("unrealized_pnl"),
+                        "leverage": row.get("leverage"),
+                        "synced_at": row.get("synced_at", ""),
+                    })
+
+            await engine.dispose()
+            logger.info(
+                "[SwapWorkflow] Fetched %d cached positions for %s",
+                len(rows),
+                wallet_address[:10],
+            )
+            return rows
+
+        except Exception as e:
+            logger.warning(
+                "[SwapWorkflow] Failed to fetch cached positions: %s", e
+            )
+            return []
+
+    async def _fetch_recent_swaps_from_db(
+        self,
+        user_id: str | None,
+        wallet_address: str,
+    ) -> list[dict]:
+        """Fetch recent swap transactions from the transactions table."""
+        if not user_id:
+            return []
+        try:
+            import os
+
+            from sqlalchemy import text as sa_text
+            from sqlalchemy.ext.asyncio import (
+                create_async_engine,
+                AsyncSession as _AsyncSession,
+            )
+            from sqlalchemy.orm import sessionmaker as _sessionmaker
+
+            # Build DB URL from environment/config
+            db_url = os.environ.get("DATABASE_URL")
+            if not db_url:
+                db_host = os.environ.get("POSTGRES_HOST", "localhost")
+                db_port = os.environ.get("POSTGRES_PORT", "5432")
+                db_user = os.environ.get("POSTGRES_USER", "postgres")
+                db_pass = os.environ.get("POSTGRES_PASSWORD", "changethis")
+                db_name = os.environ.get("POSTGRES_DB", "anvil_db")
+                db_url = (
+                    f"postgresql+psycopg://{db_user}:{db_pass}"
+                    f"@{db_host}:{db_port}/{db_name}"
+                )
+
+            engine = create_async_engine(db_url, pool_pre_ping=True)
+            async_session = _sessionmaker(
+                engine, class_=_AsyncSession, expire_on_commit=False
+            )
+
+            swaps: list[dict] = []
+            async with async_session() as session:
+                result = await session.execute(
+                    sa_text("""
+                        SELECT asset_in, amount_in::text, asset_out, amount_out::text,
+                               chain, dex_aggregator, confirmed_at::text, tx_hash
+                        FROM transactions
+                        WHERE user_id = :uid AND type = 2
+                        ORDER BY confirmed_at DESC NULLS LAST
+                        LIMIT 10
+                    """),
+                    {"uid": int(user_id)},
+                )
+                for row in result.mappings().all():
+                    swaps.append({
+                        "asset_in": row.get("asset_in", ""),
+                        "amount_in": float(row.get("amount_in", 0) or 0),
+                        "asset_out": row.get("asset_out", ""),
+                        "amount_out": float(row.get("amount_out", 0) or 0),
+                        "chain": row.get("chain", ""),
+                        "dex_aggregator": row.get("dex_aggregator", ""),
+                        "confirmed_at": row.get("confirmed_at", ""),
+                        "tx_hash": row.get("tx_hash", ""),
+                    })
+
+            await engine.dispose()
+            return swaps
+
+        except Exception as e:
+            logger.warning("[SwapWorkflow] Failed to fetch recent swaps from DB: %s", e)
+            return []

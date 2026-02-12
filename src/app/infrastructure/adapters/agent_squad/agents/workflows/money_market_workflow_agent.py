@@ -1,16 +1,16 @@
 """
 Money Market Workflow Agent - Multi-Step Protocol Rate Comparison.
 
-Handles the complete money market comparison workflow for authenticated users:
+Handles the complete money market workflow for authenticated users (Aave and Compound only):
 1. Parse request: Extract asset and comparison type
 2. Fetch data: Get rates from Aave and Compound
 3. Compare: Show side-by-side comparison with recommendations
 4. Select: Allow user to proceed with best option
+5. Positions: List supply positions on Aave and Compound; withdraw supported for Aave
 
 Integration:
 - Aave V3 via AaveGateway
 - Compound V3 via CompoundGateway
-- Morpho MetaMorpho vaults (via MorphoGateway)
 
 Example Conversation:
     User: "compare USDC rates"
@@ -38,6 +38,7 @@ from .base_workflow_agent import (
 if TYPE_CHECKING:
     from app.domain.ports.agent_squad.llm_client_gateway import LLMClientGateway
     from app.domain.ports.aave_gateway import AaveGateway
+    from app.domain.ports.asset_sentiment_provider import AssetSentimentProvider
     from app.domain.ports.compound_gateway import CompoundGateway
     from app.domain.ports.morpho_gateway import MorphoGateway
     from app.infrastructure.adapters.external.defillama_client import DefiLlamaClient
@@ -85,6 +86,25 @@ SUPPORTED_ASSETS = {
 # Assets that have lending rates on Base (used for default asset menu; USDT excluded)
 ASSETS_AVAILABLE_ON_BASE = ["USDC", "DAI", "ETH"]
 
+# Knowledge snippets for enterprise-grade responses (mirrors anvil_knowledge/features/money_market.json workflow_snippets)
+WORKFLOW_SNIPPETS: dict[str, dict[str, str]] = {
+    "positions_intro": {
+        "en": "\n\n💡 Your positions earn variable APY from Aave and Compound. Withdrawals are on-chain and typically confirm within a few seconds.",
+        "es": "\n\n💡 Tus posiciones generan APY variable en Aave y Compound. Los retiros son on-chain y suelen confirmarse en pocos segundos.",
+        "pt": "\n\n💡 Suas posições geram APY variável na Aave e na Compound. Saques são on-chain e costumam confirmar em poucos segundos.",
+    },
+    "withdraw_confirm": {
+        "en": "\n\n💡 Confirming will prepare the transaction for your wallet. You'll sign in your wallet to complete the withdrawal.",
+        "es": "\n\n💡 Al confirmar se preparará la transacción para tu wallet. Firmarás en tu wallet para completar el retiro.",
+        "pt": "\n\n💡 Ao confirmar, a transação será preparada para sua carteira. Você assinará na carteira para concluir a retirada.",
+    },
+    "ready": {
+        "en": "\n\n💡 After you sign in your wallet, funds will move from the protocol to your wallet. You can check your balance once the transaction confirms.",
+        "es": "\n\n💡 Después de firmar en tu wallet, los fondos pasarán del protocolo a tu wallet. Puedes revisar tu saldo cuando la transacción confirme.",
+        "pt": "\n\n💡 Após assinar na carteira, os fundos serão transferidos do protocolo para sua carteira. Você pode conferir o saldo quando a transação for confirmada.",
+    },
+}
+
 
 class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
     """
@@ -92,13 +112,14 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
 
     Steps:
     1. parse_request: Extract asset for comparison
-    2. fetch_data: Get rates from Aave, Compound, Morpho
+    2. fetch_data: Get rates from Aave and Compound
     3. compare: Show comparison with best recommendation
     4. select: Allow user to select protocol for deposit
+    5. positions: List positions and withdraw (Aave withdraw; Compound list-only)
 
     Features:
-    - Real-time rate comparison
-    - Multi-protocol support (Aave, Compound, Morpho)
+    - Real-time rate comparison (Aave and Compound only)
+    - Positions and withdraw (Aave and Compound; withdraw Aave only)
     - Supply and borrow APY comparison
     - Direct deposit integration via lending_workflow
     - Multi-language support
@@ -111,6 +132,7 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         compound_gateway: "CompoundGateway | None" = None,
         morpho_gateway: "MorphoGateway | None" = None,
         defillama_client: "DefiLlamaClient | None" = None,
+        sentiment_provider: "AssetSentimentProvider | None" = None,
     ):
         """
         Initialize money market workflow agent.
@@ -121,12 +143,14 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             compound_gateway: Gateway for Compound V3 data
             morpho_gateway: Gateway for Morpho vault data
             defillama_client: DeFiLlama client for fallback rate data
+            sentiment_provider: Optional Hunter sentiment for response enrichment
         """
         super().__init__(llm_client=llm_client)
         self._aave = aave_gateway
         self._compound = compound_gateway
         self._morpho = morpho_gateway
         self._defillama = defillama_client
+        self._sentiment = sentiment_provider
 
     @property
     def agent_type(self) -> AgentType:
@@ -248,8 +272,30 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             "what am I earning in money market",
             "show my money market",
             "my positions money market",
+            # Common typos so "my money market possitions" still works
+            "my money market possitions",
+            "money market possitions",
+            "my money market positons",
+            "money market positons",
         ]
         if any(kw in text_lower for kw in positions_keywords):
+            state.data["flow"] = "positions"
+            state.data["action"] = "withdraw"
+            state.data["chain"] = state.data.get("chain", "base")
+            return await self._handle_positions_request(message, state, user_context)
+
+        # Typo-tolerant: "money market" + position/earning/withdraw (e.g. "my money market possitions")
+        if "money market" in text_lower and any(
+            p in text_lower
+            for p in (
+                "position",
+                "possition",
+                "positon",
+                "positons",
+                "earning",
+                "withdraw",
+            )
+        ):
             state.data["flow"] = "positions"
             state.data["action"] = "withdraw"
             state.data["chain"] = state.data.get("chain", "base")
@@ -301,15 +347,7 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
 
         rates = []
 
-        # 1. Fetch Morpho rates directly (REAL API - works great)
-        morpho_rate = await self._fetch_morpho_rate_direct(asset, chain)
-        if morpho_rate:
-            rates.append(morpho_rate)
-            logger.info(
-                f"[MoneyMarketWorkflow] Morpho rate: {morpho_rate.get('supply_apy', 0):.2f}%"
-            )
-
-        # 2. Fetch Compound rates directly (REAL RPC - works great)
+        # 1. Fetch Compound rates directly (REAL RPC - works great)
         compound_rate = await self._fetch_compound_rate_direct(asset, chain)
         if compound_rate:
             rates.append(compound_rate)
@@ -317,7 +355,7 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                 f"[MoneyMarketWorkflow] Compound rate: {compound_rate.get('supply_apy', 0):.2f}%"
             )
 
-        # 3. Fetch Aave rates from DeFiLlama (aggregated, reliable)
+        # 2. Fetch Aave rates from DeFiLlama (aggregated, reliable)
         aave_rate = await self._fetch_aave_rate_defillama(asset, chain)
         if aave_rate:
             rates.append(aave_rate)
@@ -336,10 +374,6 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             compound_rate = await self._fetch_compound_rate(asset, chain)
             if compound_rate:
                 rates.append(compound_rate)
-
-            morpho_rate = await self._fetch_morpho_rate(asset, chain)
-            if morpho_rate:
-                rates.append(morpho_rate)
 
         if not rates:
             response = self._format_no_rates_available(asset, chain, language)
@@ -390,12 +424,17 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                 return await self._handle_positions_withdraw_execute(
                     message, state, user_context
                 )
-            # Unclear - ask again
+            # Unclear - ask again (step 2: no sentiment, contextual copy only)
             position = state.data.get("selected_position", {})
             amount = state.data.get("withdraw_amount", "max")
-            return await self._show_withdraw_confirmation_mm(
+            reply, state = await self._show_withdraw_confirmation_mm(
                 position, amount, user_context, state
             )
+            content = self._greeting(user_context) + reply
+            content += self._get_confirm_step_snippet(
+                amount, position.get("asset", ""), position.get("protocol", ""), user_context.language
+            )
+            return content, state
 
         # Check for cancellation
         if self._is_cancellation(text):
@@ -608,68 +647,62 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         positions = await self._fetch_user_positions_mm(wallet_address, user_context)
         if not positions:
             if language == "es":
-                return (
-                    "📭 No tienes posiciones en el mercado monetario (Aave/Morpho).\n\n"
-                    "¿Quieres comparar tasas para depositar?",
-                    state,
+                base_msg = (
+                    "📭 No tienes posiciones en el mercado monetario (Aave/Compound).\n\n"
+                    "¿Quieres comparar tasas para depositar?"
                 )
-            if language == "pt":
-                return (
-                    "📭 Você não tem posições no mercado monetário (Aave/Morpho).\n\n"
-                    "Quer comparar taxas para depositar?",
-                    state,
+            elif language == "pt":
+                base_msg = (
+                    "📭 Você não tem posições no mercado monetário (Aave/Compound).\n\n"
+                    "Quer comparar taxas para depositar?"
                 )
-            return (
-                "📭 You have no money market positions (Aave/Morpho).\n\n"
-                "Would you like to compare rates to deposit?",
-                state,
+            else:
+                base_msg = (
+                    "📭 You have no money market positions (Aave/Compound).\n\n"
+                    "Would you like to compare rates to deposit?"
+                )
+            msg = (
+                self._greeting(user_context)
+                + base_msg
+                + self._get_knowledge_snippet("positions_intro", language)
             )
+            return msg, state
 
         if len(positions) == 1:
             position = positions[0]
             state.data["selected_position"] = position
             state.data["awaiting_withdraw_amount"] = True
-            return await self._ask_withdraw_amount_mm(position, user_context), state
+            reply = await self._ask_withdraw_amount_mm(position, user_context)
+            content = self._greeting(user_context) + reply
+            content, state = await self._enrich_with_sentiment(
+                content, state, position.get("asset", "USDC"), user_context.language
+            )
+            content += self._get_knowledge_snippet(
+                "positions_intro", user_context.language
+            )
+            return content, state
 
         state.data["positions"] = positions
         state.data["awaiting_position_selection"] = True
-        return await self._show_position_selection_mm(positions, user_context), state
+        reply = await self._show_position_selection_mm(positions, user_context)
+        asset = positions[0].get("asset", "USDC") if positions else "USDC"
+        content = self._greeting(user_context) + reply
+        content, state = await self._enrich_with_sentiment(
+            content, state, asset, user_context.language
+        )
+        content += self._get_knowledge_snippet(
+            "positions_intro", user_context.language
+        )
+        return content, state
 
     async def _fetch_user_positions_mm(
         self,
         wallet_address: str,
         user_context: UserContext,
     ) -> list[dict[str, Any]]:
-        """Fetch user supply positions from Morpho and Aave (Base)."""
+        """Fetch user supply positions from Aave and Compound only (Base)."""
         positions: list[dict[str, Any]] = []
         chain = "base"
-
-        if self._morpho:
-            try:
-                morpho_positions = await self._morpho.get_user_positions(
-                    address=wallet_address,
-                    chain=chain,
-                )
-                for p in morpho_positions:
-                    supplied_usd = (
-                        p.assets_usd
-                        if getattr(p, "assets_usd", None) is not None
-                        else float(p.assets)
-                    )
-                    positions.append({
-                        "protocol": "morpho",
-                        "vault_address": p.vault_address,
-                        "vault_name": p.vault_name,
-                        "asset": p.asset_symbol,
-                        "supplied_amount": str(p.assets),
-                        "supplied_usd": float(supplied_usd),
-                        "apy": float(p.apy),
-                        "chain": chain,
-                    })
-            except Exception as e:
-                logger.warning(
-                    "[MoneyMarketWorkflow] Failed to fetch Morpho positions: %s", e
-                )
 
         if self._aave:
             try:
@@ -691,6 +724,39 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                 logger.debug(
                     "[MoneyMarketWorkflow] Aave positions (none or error): %s", e
                 )
+
+        if self._compound:
+            for asset in ("USDC", "WETH"):
+                try:
+                    pos = await self._compound.get_user_position(
+                        user_address=wallet_address,
+                        asset=asset,
+                        chain=chain,
+                    )
+                    if pos and pos.supplied > 0:
+                        apy = await self._compound.get_supply_apy(
+                            asset=asset,
+                            chain=chain,
+                        )
+                        supplied_usd = (
+                            float(pos.supplied)
+                            if asset == "USDC"
+                            else 0.0
+                        )
+                        positions.append({
+                            "protocol": "compound",
+                            "asset": pos.base_asset,
+                            "supplied_amount": str(pos.supplied),
+                            "supplied_usd": supplied_usd,
+                            "apy": float(apy),
+                            "chain": chain,
+                        })
+                except Exception as e:
+                    logger.debug(
+                        "[MoneyMarketWorkflow] Compound position %s: %s",
+                        asset,
+                        e,
+                    )
 
         return positions
 
@@ -825,9 +891,14 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         state.data["withdraw_amount"] = withdraw_amount
         state.data["awaiting_withdraw_amount"] = False
         state.step = WorkflowStep.CONFIRM.value
-        return await self._show_withdraw_confirmation_mm(
+        reply, state = await self._show_withdraw_confirmation_mm(
             position, withdraw_amount, user_context, state
         )
+        content = self._greeting(user_context) + reply
+        content += self._get_confirm_step_snippet(
+            withdraw_amount, position.get("asset", ""), position.get("protocol", ""), user_context.language
+        )
+        return content, state
 
     async def _show_withdraw_confirmation_mm(
         self,
@@ -876,13 +947,159 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             )
         return response, state
 
+    def _greeting(self, user_context: UserContext) -> str:
+        """Return a short personalized greeting when display_name is available."""
+        name = (user_context.display_name or "").strip()
+        if not name:
+            return ""
+        lang = user_context.language or "en"
+        if lang == "es":
+            return f"Hola **{name}**,\n\n"
+        if lang == "pt":
+            return f"Olá **{name}**,\n\n"
+        return f"Hi **{name}**,\n\n"
+
+    def _get_knowledge_snippet(self, section: str, language: str) -> str:
+        """Return workflow knowledge snippet for enterprise-grade responses."""
+        lang = (language or "en").lower()
+        if lang not in ("en", "es", "pt"):
+            lang = "en"
+        sections = WORKFLOW_SNIPPETS.get(section, {})
+        return sections.get(lang, sections.get("en", ""))
+
+    def _get_confirm_step_snippet(
+        self, amount: str, asset: str, protocol: str, language: str
+    ) -> str:
+        """Contextual, human snippet for confirm step (no sentiment)."""
+        protocol_name = (protocol or "protocol").upper()
+        amt = (amount or "").strip() or "—"
+        asset = (asset or "USD").strip()
+        lang = (language or "en").lower()
+        if lang == "es":
+            return (
+                f"\n\n💡 Responde **sí** para enviar {amt} {asset} desde {protocol_name} "
+                "a tu wallet, o **cancelar** para cambiar el monto."
+            )
+        if lang == "pt":
+            return (
+                f"\n\n💡 Responda **sim** para enviar {amt} {asset} da {protocol_name} "
+                "para sua carteira, ou **cancelar** para alterar o valor."
+            )
+        return (
+            f"\n\n💡 Reply **yes** to send {amt} {asset} from {protocol_name} "
+            "to your wallet, or **cancel** to change the amount."
+        )
+
+    def _get_ready_step_snippet(
+        self, amount: str, asset: str, protocol: str, language: str
+    ) -> str:
+        """Contextual, human snippet for ready step (no sentiment)."""
+        protocol_name = (protocol or "protocol").upper()
+        amt = (amount or "").strip() or "—"
+        asset = (asset or "USD").strip()
+        lang = (language or "en").lower()
+        if lang == "es":
+            return (
+                f"\n\n💡 Al firmar, {amt} {asset} pasarán de {protocol_name} "
+                "a tu wallet; los verás en unos instantes."
+            )
+        if lang == "pt":
+            return (
+                f"\n\n💡 Ao assinar, {amt} {asset} serão transferidos da {protocol_name} "
+                "para sua carteira; você os verá em instantes."
+            )
+        return (
+            f"\n\n💡 Once you sign, {amt} {asset} will move from {protocol_name} "
+            "to your wallet—you’ll see it there shortly."
+        )
+
+    def _format_sentiment_block_enterprise(
+        self,
+        sentiment: dict[str, Any],
+        asset_symbol: str,
+        language: str,
+    ) -> str:
+        """
+        Format enterprise-grade sentiment block for new and mid-level traders.
+
+        Clear heading, plain-language interpretation, context, and disclaimer.
+        """
+        interpretation = (sentiment.get("interpretation") or "").strip() or "neutral"
+        score = sentiment.get("score")
+        confidence = sentiment.get("confidence")
+        time_horizon = sentiment.get("time_horizon") or "24h"
+        asset = (asset_symbol or "").strip() or "USD"
+        score_str = f"{score:.0f}" if score is not None else "—"
+        confidence_note = ""
+        if isinstance(confidence, (int, float)) and confidence < 0.7 and confidence > 0:
+            if language == "es":
+                confidence_note = " (confianza moderada)"
+            elif language == "pt":
+                confidence_note = " (confiança moderada)"
+            else:
+                confidence_note = " (moderate confidence)"
+
+        if language == "es":
+            heading = f"📊 **Sentimiento de mercado ({time_horizon})**"
+            body = (
+                f"El sentimiento reciente para **{asset}** es **{interpretation}** "
+                f"(puntuación {score_str}/100, basado en noticias{confidence_note}). "
+                "Solo como contexto; no modifica la acción recomendada para tu retiro."
+            )
+            footer = "*No es asesoramiento financiero.*"
+        elif language == "pt":
+            heading = f"📊 **Sentimento de mercado ({time_horizon})**"
+            body = (
+                f"O sentimento recente para **{asset}** é **{interpretation}** "
+                f"(pontuação {score_str}/100, com base em notícias{confidence_note}). "
+                "Apenas como contexto; não altera a ação recomendada para sua retirada."
+            )
+            footer = "*Não é aconselhamento financeiro.*"
+        else:
+            heading = f"📊 **Market sentiment ({time_horizon})**"
+            body = (
+                f"Short-term sentiment for **{asset}** is **{interpretation}** "
+                f"(score {score_str}/100, news-based{confidence_note}). "
+                "Use as context only; it does not change the recommended action for your withdrawal."
+            )
+            footer = "*Not financial advice.*"
+
+        return f"\n\n---\n\n{heading}\n\n{body}\n\n{footer}"
+
+    async def _enrich_with_sentiment(
+        self,
+        content: str,
+        state: WorkflowState,
+        asset_symbol: str,
+        language: str,
+    ) -> tuple[str, WorkflowState]:
+        """
+        Optionally append enterprise-grade Hunter sentiment block and set state.data['sentiment_analysis'].
+
+        Best-effort; returns (content, state) unchanged if no provider or sentiment.
+        """
+        if not self._sentiment or not (asset_symbol or "").strip():
+            return content, state
+        try:
+            sentiment = await self._sentiment.get_sentiment(asset_symbol.strip())
+        except Exception as e:
+            logger.debug("[MoneyMarket] Sentiment fetch failed for %s: %s", asset_symbol, e)
+            return content, state
+        if not sentiment or not isinstance(sentiment, dict):
+            return content, state
+        state.data["sentiment_analysis"] = sentiment
+        block = self._format_sentiment_block_enterprise(
+            sentiment, asset_symbol.strip(), language
+        )
+        return content + block, state
+
     async def _handle_positions_withdraw_execute(
         self,
         message: MessageContent,
         state: WorkflowState,
         user_context: UserContext,
     ) -> tuple[str, WorkflowState]:
-        """Build withdraw execute_data for frontend (Morpho/Aave)."""
+        """Build withdraw execute_data for frontend (Aave only; Compound list-only)."""
         language = user_context.language
         position = state.data.get("selected_position", {})
         withdraw_amount = state.data.get("withdraw_amount", "max")
@@ -898,31 +1115,30 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             )
             return msg, state
 
-        protocol = position.get("protocol", "morpho")
+        protocol = position.get("protocol", "aave")
         asset = position.get("asset", "UNKNOWN")
         chain = position.get("chain", "base")
-        vault_address = position.get("vault_address")
         vault_name = position.get("vault_name", f"{asset}")
 
         execute_data: dict[str, Any] | None = None
 
-        if protocol == "morpho" and self._morpho and vault_address:
+        if protocol == "compound" and self._compound:
             try:
-                withdraw_result = await self._morpho.build_withdraw_transaction(
+                withdraw_result = await self._compound.build_withdraw_supply_transaction(
                     user_address=wallet_address,
-                    vault_address=vault_address,
+                    asset_symbol=asset,
                     amount=str(withdraw_amount),
                     chain=chain,
                 )
                 if withdraw_result.get("success") and not withdraw_result.get("error"):
                     execute_data = self._build_execute_data(
                         action_type="withdraw",
-                        provider="morpho",
+                        provider="compound",
                         chain=chain,
                         amount=withdraw_result.get("amount", str(withdraw_amount)),
                         asset_symbol=withdraw_result.get("asset", asset),
-                        asset_address=position.get("asset_address"),
-                        vault_address=vault_address,
+                        asset_address=withdraw_result.get("asset_address"),
+                        pool_address=withdraw_result.get("to"),
                         tx_to=withdraw_result.get("to"),
                         tx_data=withdraw_result.get("data"),
                         tx_value=withdraw_result.get("value", "0"),
@@ -932,10 +1148,9 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                     return f"❌ {err}", state
             except Exception as e:
                 logger.error(
-                    "[MoneyMarketWorkflow] Morpho withdraw build error: %s", e
+                    "[MoneyMarketWorkflow] Compound withdraw build error: %s", e
                 )
                 return f"❌ Error preparing withdrawal: {e!s}", state
-
         elif protocol == "aave" and self._aave:
             try:
                 withdraw_result = await self._aave.build_withdraw_supply_transaction(
@@ -996,7 +1211,11 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                     f"📤 {withdraw_amount} {asset} from {vault_name or protocol.upper()}\n\n"
                     f"Please confirm in your wallet."
                 )
-            return response, state
+            content = self._greeting(user_context) + response
+            content += self._get_ready_step_snippet(
+                withdraw_amount, asset, protocol, language
+            )
+            return content, state
 
         return "❌ Could not build transaction.", state
 
@@ -1641,7 +1860,6 @@ Compare lending rates across DeFi protocols to find the best yield.
 **Protocols Compared:**
 • Aave V3
 • Compound V3
-• Morpho Vaults
 
 💬 Which asset do you want to compare?
 • Reply with a **number (1-{n})** or asset name (e.g., USDC)
@@ -1656,7 +1874,6 @@ Compara tasas de préstamo entre protocolos DeFi para encontrar el mejor rendimi
 **Protocolos Comparados:**
 • Aave V3
 • Compound V3
-• Morpho Vaults
 
 💬 ¿Qué activo quieres comparar?
 • Responde con un **número (1-{n})** o el nombre (ej: USDC)
@@ -1671,7 +1888,6 @@ Compare taxas de empréstimo entre protocolos DeFi para encontrar o melhor rendi
 **Protocolos Comparados:**
 • Aave V3
 • Compound V3
-• Morpho Vaults
 
 💬 Qual ativo você quer comparar?
 • Responda com um **número (1-{n})** ou nome (ex: USDC)
@@ -1686,7 +1902,6 @@ Compare taxas de empréstimo entre protocolos DeFi para encontrar o melhor rendi
 **比较的协议：**
 • Aave V3
 • Compound V3
-• Morpho Vaults
 
 💬 您想比较哪种资产？
 • 回复 **数字 (1-{n})** 或资产名称（如 USDC）
@@ -1737,7 +1952,7 @@ Compare taxas de empréstimo entre protocolos DeFi para encontrar o melhor rendi
 🏆 **Best Option:** {best_name} at **{best_apy:.2f}% APY**
 
 **What would you like to do?**
-• Reply "aave", "compound", or "morpho" to deposit
+• Reply "aave" or "compound" to deposit
 • Enter an amount (e.g., "deposit 1000") to proceed
 • Reply "cancel" to exit""",
             "es": f"""📊 **Comparación de Tasas de {asset}** {emoji}
@@ -1752,7 +1967,7 @@ Compare taxas de empréstimo entre protocolos DeFi para encontrar o melhor rendi
 🏆 **Mejor Opción:** {best_name} con **{best_apy:.2f}% APY**
 
 **¿Qué te gustaría hacer?**
-• Responde "aave", "compound" o "morpho" para depositar
+• Responde "aave" o "compound" para depositar
 • Ingresa una cantidad (ej: "depositar 1000") para continuar
 • Responde "cancelar" para salir""",
             "pt": f"""📊 **Comparação de Taxas de {asset}** {emoji}
@@ -1767,7 +1982,7 @@ Compare taxas de empréstimo entre protocolos DeFi para encontrar o melhor rendi
 🏆 **Melhor Opção:** {best_name} com **{best_apy:.2f}% APY**
 
 **O que você gostaria de fazer?**
-• Responda "aave", "compound" ou "morpho" para depositar
+• Responda "aave" ou "compound" para depositar
 • Digite uma quantia (ex: "depositar 1000") para continuar
 • Responda "cancelar" para sair""",
             "zh": f"""📊 **{asset} 利率比较** {emoji}
@@ -1782,7 +1997,7 @@ Compare taxas de empréstimo entre protocolos DeFi para encontrar o melhor rendi
 🏆 **最佳选择：** {best_name}，**{best_apy:.2f}% APY**
 
 **您想做什么？**
-• 回复 "aave"、"compound" 或 "morpho" 进行存款
+• 回复 "aave" 或 "compound" 进行存款
 • 输入金额（例如："存入 1000"）继续
 • 回复"取消"退出""",
         }

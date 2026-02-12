@@ -94,6 +94,10 @@ COMET_ABI_UTILIZATION = "0x7eb71131"  # getUtilization()
 COMET_ABI_BASE_TOKEN = "0xc55dae63"  # baseToken()
 COMET_ABI_TOTAL_SUPPLY = "0x18160ddd"  # totalSupply()
 COMET_ABI_TOTAL_BORROW = "0x8285ef40"  # totalBorrow()
+# withdraw(address asset, uint256 amount) - withdraw from caller to self
+COMET_ABI_WITHDRAW = "0x69328dec"
+# Max uint256 for "withdraw max"
+MAX_UINT256 = (1 << 256) - 1
 
 
 @dataclass
@@ -476,6 +480,79 @@ class CompoundClient:
         except Exception as e:
             logger.error(f"RPC call failed: {e}")
             return None
+
+    def build_withdraw_transaction(
+        self,
+        user_address: str,
+        asset_symbol: str,
+        amount: str,
+        chain: str = "base",
+    ) -> dict:
+        """
+        Build Comet withdraw(address asset, uint256 amount) calldata for frontend.
+
+        Caller withdraws from their Comet balance to self. Use amount "max" for
+        full withdrawal (sends type(uint256).max to contract).
+
+        Returns:
+            Dict with success, error (if failed), and on success: to, data, value,
+            asset_address, asset, amount for execute_data.
+        """
+        chain_markets = COMPOUND_V3_MARKETS.get(chain.lower())
+        if not chain_markets:
+            return {
+                "success": False,
+                "error": f"Compound V3 not configured for chain {chain}",
+                "chain": chain,
+            }
+        asset_upper = (asset_symbol or "USDC").strip().upper()
+        market_info = chain_markets.get(asset_upper)
+        if not market_info:
+            return {
+                "success": False,
+                "error": f"No {asset_symbol} market on Compound V3 for {chain}",
+                "chain": chain,
+            }
+        comet = market_info["comet"]
+        base_token = market_info["base_token"]
+        decimals = market_info["decimals"]
+
+        if (amount or "").strip().lower() == "max":
+            amount_wei = MAX_UINT256
+            amount_display = "max"
+        else:
+            try:
+                amount_float = float(amount)
+                if amount_float <= 0:
+                    return {
+                        "success": False,
+                        "error": "Amount must be positive or 'max'",
+                        "chain": chain,
+                    }
+                amount_wei = int(amount_float * (10**decimals))
+                amount_display = amount
+            except (TypeError, ValueError):
+                return {
+                    "success": False,
+                    "error": f"Invalid amount: {amount}",
+                    "chain": chain,
+                }
+
+        # ABI-encode withdraw(address asset, uint256 amount): selector + pad(address) + pad(uint256)
+        addr_padded = base_token.lower().replace("0x", "").zfill(64)
+        amount_hex = hex(amount_wei)[2:].zfill(64)
+        data = f"0x{COMET_ABI_WITHDRAW[2:]}{addr_padded}{amount_hex}"
+
+        return {
+            "success": True,
+            "to": comet,
+            "data": data,
+            "value": "0",
+            "asset_address": base_token,
+            "asset": asset_upper,
+            "amount": amount_display,
+            "chain": chain,
+        }
 
     @staticmethod
     def get_supported_chains() -> list[str]:

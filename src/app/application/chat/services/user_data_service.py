@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 
 from app.domain.value_objects.user_id import UserId
 from app.domain.enums.chain_type import ChainType
+from app.infrastructure.auth.handlers.transaction_log import get_explorer_url
 
 logger = logging.getLogger(__name__)
 
@@ -202,26 +203,24 @@ class UserDataService:
             portfolio_repository: Optional portfolio repository (disabled by default)
             transaction_repository: Optional transaction repository (disabled by default)
         """
-        # IMPORTANT: Repositories are disabled by default to prevent session corruption
-        # The authenticated supervisor will work without user data - it just won't
-        # have portfolio/transaction context in the LLM prompt
         self._wallet_repo = wallet_repository
         self._portfolio_repo = portfolio_repository
-        # Transaction repo is particularly problematic - disable by default
-        self._tx_repo = None  # Explicitly disabled - causes session corruption
-        self._tx_repo_enabled = False
+        # Transaction repo re-enabled: _get_transaction_summary has comprehensive
+        # try/except blocks that return empty TransactionSummary on failure,
+        # preventing session corruption.
+        self._tx_repo = transaction_repository
+        self._tx_repo_enabled = transaction_repository is not None
 
     def enable_transaction_repo(self, tx_repo: "TransactionRepository") -> None:
         """
-        Explicitly enable transaction repository (use with caution).
+        Explicitly enable/replace transaction repository at runtime.
 
-        WARNING: The transaction repository has been known to cause session
-        corruption when queries fail. Only enable this if you've verified
-        the schema matches and queries will succeed.
+        The _get_transaction_summary method has comprehensive try/except
+        blocks that return empty TransactionSummary on any failure.
         """
         self._tx_repo = tx_repo
         self._tx_repo_enabled = True
-        logger.warning("Transaction repository enabled - session corruption risk")
+        logger.info("Transaction repository enabled for UserDataService")
 
     async def get_user_context(
         self,
@@ -418,37 +417,70 @@ class UserDataService:
             most_active_chain = None
             try:
                 chain_counts = await self._tx_repo.get_transaction_counts_by_chain()
-                most_active_chain = (
-                    max(chain_counts, key=chain_counts.get) if chain_counts else None
-                )
+                if chain_counts:
+                    top_chain = max(chain_counts, key=chain_counts.get)
+                    # Convert ChainType enum to string if needed
+                    most_active_chain = (
+                        top_chain.value if hasattr(top_chain, "value") else str(top_chain)
+                    )
             except Exception as chain_err:
                 logger.debug(f"Could not get chain counts: {chain_err}")
 
-            # Format recent transactions
+            # Format recent transactions (include full tx_hash and explorer_url for single-link display)
             recent_formatted = []
             for tx in recent_txs:
                 try:
+                    explorer_url = None
+                    if tx.tx_hash and hasattr(tx, "chain") and tx.chain:
+                        explorer_url = get_explorer_url(tx.chain, tx.tx_hash)
+
+                    # Transaction entity uses .type (not .tx_type)
+                    tx_type_val = None
+                    if hasattr(tx, "type") and tx.type:
+                        tx_type_val = tx.type.name if hasattr(tx.type, "name") else str(tx.type)
+
+                    # Status: use .name for human-readable string
+                    status_val = None
+                    if hasattr(tx, "status") and tx.status:
+                        status_val = tx.status.name.lower() if hasattr(tx.status, "name") else str(tx.status)
+
+                    # Chain: use .value for string representation
+                    chain_val = None
+                    if hasattr(tx, "chain") and tx.chain:
+                        chain_val = tx.chain.value if hasattr(tx.chain, "value") else str(tx.chain)
+
+                    # created_at may be a CreatedAt value object wrapping datetime
+                    created_at_str = None
+                    if hasattr(tx, "created_at") and tx.created_at:
+                        ca = tx.created_at
+                        if hasattr(ca, "value"):
+                            ca = ca.value  # Unwrap CreatedAt VO
+                        if hasattr(ca, "isoformat"):
+                            created_at_str = ca.isoformat()
+
+                    # Build asset/amount display string
+                    amount_display = float(tx.amount_in) if hasattr(tx, "amount_in") and tx.amount_in else 0
+                    asset_in = getattr(tx, "asset_in", None) or ""
+                    asset_out = getattr(tx, "asset_out", None) or ""
+                    amount_out = float(tx.amount_out) if hasattr(tx, "amount_out") and tx.amount_out else 0
+
                     recent_formatted.append({
                         "id": str(tx.id_.value) if tx.id_ else None,
                         "tx_hash": tx.tx_hash[:16] + "..." if tx.tx_hash else None,
-                        "type": tx.tx_type.value
-                        if hasattr(tx, "tx_type") and tx.tx_type
-                        else None,
-                        "status": tx.status.value
-                        if hasattr(tx, "status") and tx.status
-                        else None,
-                        "chain": tx.chain.value
-                        if hasattr(tx, "chain") and tx.chain
-                        else None,
-                        "amount": float(tx.amount_in)
-                        if hasattr(tx, "amount_in") and tx.amount_in
-                        else 0,
-                        "created_at": tx.created_at.isoformat()
-                        if hasattr(tx, "created_at") and tx.created_at
-                        else None,
+                        "tx_hash_full": tx.tx_hash,
+                        "type": tx_type_val,
+                        "status": status_val,
+                        "chain": chain_val,
+                        "amount": amount_display,
+                        "asset_in": asset_in,
+                        "asset_out": asset_out,
+                        "amount_out": amount_out,
+                        "created_at": created_at_str,
+                        "explorer_url": explorer_url,
                     })
-                except Exception:
-                    continue  # Skip malformed transactions
+                except Exception as fmt_err:
+                    logger.debug(f"Skipping malformed transaction: {fmt_err}")
+                    continue
 
             return TransactionSummary(
                 total_count=total_count,

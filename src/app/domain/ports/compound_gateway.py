@@ -128,3 +128,22 @@ class CompoundGateway(Protocol):
             CompoundUserPosition or None if no position
         """
         ...
+
+    async def build_withdraw_supply_transaction(
+        self,
+        user_address: str,
+        asset_symbol: str,
+        amount: str,
+        chain: str = "base",
+    ) -> dict:
+        """
+        Build Compound V3 Comet withdraw transaction for frontend signing.
+
+        Withdraws supplied base asset (USDC, WETH) from the user's Comet balance.
+        Use amount "max" for full withdrawal.
+
+        Returns:
+            Dict with success, error (if failed), and on success: to, data, value,
+            asset_address, asset, amount for execute_data.
+        """
+        ...

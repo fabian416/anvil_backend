@@ -322,7 +322,7 @@
     "terminology_warning": {
       "critical_note": "LENDING means supplying assets to EARN yield. BORROWING means taking a loan AGAINST collateral. These are OPPOSITE operations.",
       "common_confusion": "In some languages, 'lending' and 'borrowing' can be confused. Always verify context.",
-      "anvil_support": "Anvil supports BOTH lending (supply to earn) AND borrowing (take loan) via Aave and Morpho"
+      "anvil_support": "Lending feature (my lendings, deposit to vaults) uses Morpho only. Money market feature (positions, withdraw) uses Aave and Compound. Anvil supports lending (supply to earn) only, NOT borrowing."
     },
     "terms": {
       "en": {

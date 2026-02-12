@@ -114,6 +114,32 @@ class CompoundAdapter(CompoundGateway):
             health_factor=position.health_factor,
         )
 
+    async def build_withdraw_supply_transaction(
+        self,
+        user_address: str,
+        asset_symbol: str,
+        amount: str,
+        chain: str = "base",
+    ) -> dict:
+        """Build Compound V3 Comet withdraw transaction for frontend signing."""
+        try:
+            result = self._client.build_withdraw_transaction(
+                user_address=user_address,
+                asset_symbol=asset_symbol,
+                amount=amount,
+                chain=chain,
+            )
+            return result
+        except Exception as e:
+            logger.error(
+                "Compound build_withdraw_supply error: %s", e, exc_info=True
+            )
+            return {
+                "success": False,
+                "error": str(e),
+                "chain": chain,
+            }
+
     def _transform_market(self, market: CompoundMarket) -> CompoundMarketData:
         """Transform client market to gateway data."""
         return CompoundMarketData(

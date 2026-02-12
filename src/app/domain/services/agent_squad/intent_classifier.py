@@ -118,6 +118,10 @@ class IntentClassifier:
         "cross_chain": AgentType.BRIDGE_CROSSCHAIN,
         "borrow_assets": AgentType.LENDING_BORROWING,
         "leverage_position": AgentType.LENDING_BORROWING,
+        # Swap workflow intents (position viewing)
+        "view_swap_positions": AgentType.SWAP_WORKFLOW,
+        "my_swaps": AgentType.SWAP_WORKFLOW,
+        "swap_history": AgentType.SWAP_WORKFLOW,
         # Lending workflow intents
         "check_lending_health": AgentType.LENDING_WORKFLOW,
         "supply_assets": AgentType.LENDING_WORKFLOW,
