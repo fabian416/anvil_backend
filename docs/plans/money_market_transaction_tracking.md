@@ -282,7 +282,7 @@ POST /privy-login
 
 ---
 
-## Phase 6: Login-Triggered Recovery with Redis Cooldown
+## Phase 6: Login-Triggered Recovery with Redis Cooldown ✅
 
 ### Why
 
@@ -290,6 +290,8 @@ When a user logs in (or refreshes the page, which calls `/privy-login` again), w
 recover their Aave/Compound positions immediately — not wait for the 6-hour reconciliation.
 However, if the user refreshes multiple times in quick succession, we must not spam the
 on-chain APIs. A **5-minute Redis cooldown** per user prevents this.
+
+**Status**: ✅ Implemented in `privy_login.py` with `_trigger_earn_recovery()` helper.
 
 ### Redis Key Pattern
 
@@ -415,12 +417,12 @@ def recover_earn_positions(self, user_id: int, wallet_address: str):
 |---|---|---|---|
 | 1 | ✅ SQLAlchemy mapping: `earn_transaction_mapping.py` + `earn_positions` additions | HIGH | `mappings/` |
 | 2 | ✅ Register in `all.py` + update dev guide `04_earn_and_save.py` | HIGH | `mappings/all.py`, `docs/guides/` |
-| 3 | Celery task: `refresh_earn_positions` (hourly) | HIGH | `tasks/earn_position_tasks.py` |
-| 4 | Celery task: `confirm_earn_transaction` (on-demand) | HIGH | `tasks/earn_position_tasks.py` |
-| 5 | Celery task: `recover_earn_positions` (login-triggered) | HIGH | `tasks/earn_position_tasks.py` |
-| 6 | **Login trigger + Redis cooldown** in `/privy-login` | HIGH | `controllers/account/privy_login.py` |
-| 7 | Update `money_market_workflow_agent.py` — record txs | HIGH | `workflows/` |
-| 8 | Celery task: `reconcile_earn_transactions` (6-hourly fallback) | MEDIUM | `tasks/earn_position_tasks.py` |
-| 9 | Beat schedule: register new tasks | HIGH | `celery/app.py` |
-| 10 | Etherscan scanner: classify Aave/Compound txs | MEDIUM | `etherscan_balance_tasks.py` |
-| 11 | Register in `tasks/__init__.py` and IoC | HIGH | `tasks/__init__.py`, `setup/ioc/` |
+| 3 | ✅ Celery task: `refresh_earn_positions` (hourly) | HIGH | `tasks/earn_position_tasks.py` |
+| 4 | ✅ Celery task: `confirm_earn_transaction` (on-demand) | HIGH | `tasks/earn_position_tasks.py` |
+| 5 | ✅ Celery task: `recover_earn_positions` (login-triggered) | HIGH | `tasks/earn_position_tasks.py` |
+| 6 | ✅ **Login trigger + Redis cooldown** in `/privy-login` | HIGH | `controllers/account/privy_login.py` |
+| 7 | ✅ Record txs in `/execute` endpoint (conversations_router.py) | HIGH | `controllers/chat/` |
+| 8 | ✅ Celery task: `reconcile_earn_transactions` (6-hourly fallback) | MEDIUM | `tasks/earn_position_tasks.py` |
+| 9 | ✅ Beat schedule: register new tasks | HIGH | `celery/app.py` |
+| 10 | ✅ Etherscan scanner: classify Aave/Compound txs | MEDIUM | `etherscan_balance_tasks.py` |
+| 11 | ✅ Register in `tasks/__init__.py` | HIGH | `tasks/__init__.py` |

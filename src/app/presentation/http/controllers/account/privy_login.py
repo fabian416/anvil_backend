@@ -77,6 +77,63 @@ class PrivyLoginResponseSchema(BaseModel):
         )
 
 
+_EARN_RECOVERY_COOLDOWN_SECONDS = 300  # 5 minutes
+
+
+async def _trigger_earn_recovery(*, user_id: str, wallet_address: str) -> None:
+    """
+    Dispatch earn position recovery for Aave/Compound on login.
+
+    Uses a Redis key with 5-minute TTL to prevent repeated recovery
+    when the user refreshes the page quickly.
+    """
+    import os
+    import logging
+
+    from redis.asyncio import Redis as AsyncRedis
+
+    logger = logging.getLogger("privy_login.earn_recovery")
+
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    redis_client: AsyncRedis | None = None
+    try:
+        redis_client = AsyncRedis.from_url(
+            redis_url, decode_responses=True, socket_timeout=2
+        )
+        cooldown_key = f"earn_recovery_cooldown:{user_id}"
+
+        # Check cooldown — if key exists, skip recovery
+        if await redis_client.exists(cooldown_key):
+            logger.debug(
+                "Earn recovery cooldown active for user %s, skipping",
+                user_id,
+            )
+            return
+
+        # Set cooldown key with TTL
+        await redis_client.setex(
+            cooldown_key,
+            _EARN_RECOVERY_COOLDOWN_SECONDS,
+            "1",
+        )
+
+        # Dispatch Celery task
+        from app.infrastructure.celery.tasks import recover_earn_positions
+
+        recover_earn_positions.delay(
+            user_id=user_id,
+            wallet_address=wallet_address,
+        )
+        logger.info(
+            "Earn recovery dispatched for user %s wallet %s",
+            user_id,
+            wallet_address[:10] + "...",
+        )
+    finally:
+        if redis_client:
+            await redis_client.aclose()
+
+
 def create_privy_login_router() -> APIRouter:
     """Create the Privy login router."""
     router = ErrorAwareRouter(tags=["Account"])
@@ -219,6 +276,16 @@ def create_privy_login_router() -> APIRouter:
                 sync_single_user.delay(response.user_id)
             except Exception:
                 pass  # Non-critical: login succeeds; incremental will run later
+
+        # Trigger earn position recovery (Aave/Compound) with 5-min cooldown
+        if response.user_id and request_body.wallet_address:
+            try:
+                await _trigger_earn_recovery(
+                    user_id=str(response.user_id),
+                    wallet_address=request_body.wallet_address,
+                )
+            except Exception:
+                pass  # Non-critical: recovery will run via scheduled task
 
         return PrivyLoginResponseSchema.from_response(response)
 
