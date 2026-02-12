@@ -728,8 +728,9 @@ We encountered an issue processing your request. Please try again.
         2. Most recent assistant message metadata
         """
         # If supervisor flagged this as a fresh workflow start, skip all old state
-        if hasattr(conversation_context, "metadata") and conversation_context.metadata:
-            if conversation_context.metadata.get("fresh_workflow_start"):
+        for _meta_attr in ("session_metadata", "metadata"):
+            _meta = getattr(conversation_context, _meta_attr, None)
+            if _meta and _meta.get("fresh_workflow_start"):
                 logger.info(
                     f"[{self.workflow_name}] Fresh workflow start flagged by supervisor — ignoring old state"
                 )
