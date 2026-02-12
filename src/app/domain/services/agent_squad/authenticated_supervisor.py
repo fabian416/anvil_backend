@@ -711,13 +711,27 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
             return False, None, None
 
         # Check recent messages for pending workflow state
+        found_non_workflow_response = False
         for msg in reversed(conversation_context.conversation_history[-5:]):
             if isinstance(msg, dict) and msg.get("role") == "assistant":
                 metadata = msg.get("metadata", {})
                 workflow_state = metadata.get("workflow_state")
                 workflow_name = metadata.get("workflow_name")
 
+                # If we see a non-workflow assistant response (portfolio, chat, etc.)
+                # before finding a workflow, any older workflow state is stale
+                if not workflow_name and not workflow_state:
+                    found_non_workflow_response = True
+
                 if workflow_state:
+                    # If a non-workflow response came after this workflow,
+                    # the user already moved on — workflow is stale, not pending
+                    if found_non_workflow_response:
+                        logger.info(
+                            f"✅ Workflow {workflow_name} is stale (non-workflow response came after) - not pending"
+                        )
+                        return False, None, None
+
                     step = workflow_state.get("step", "")
                     # Workflow is pending if it's in confirm, fetch_data, or execute step
                     # NEVER treat "completed" workflows as pending
@@ -735,6 +749,11 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                 # Also check for execute_data (transaction ready for execution)
                 # But NOT if the workflow is already completed
                 if metadata.get("execute_data"):
+                    if found_non_workflow_response:
+                        logger.info(
+                            f"✅ Ignoring stale execute_data for {workflow_name} (non-workflow response came after)"
+                        )
+                        return False, None, None
                     ws = metadata.get("workflow_state", {})
                     if ws.get("step") != "completed":
                         logger.info(
@@ -855,6 +874,7 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
         if conversation_context.conversation_history:
             # FIRST: Check the most recent assistant message's metadata for workflow_name
             # This is the most reliable indicator of which workflow is active
+            found_non_workflow_response = False
             for msg in reversed(conversation_context.conversation_history[-3:]):
                 if msg.get("role") == "assistant":
                     metadata = msg.get("metadata", {})
@@ -862,7 +882,19 @@ class AuthenticatedSupervisorCoordinator(SupervisorCoordinator):
                     workflow_state = metadata.get("workflow_state", {})
                     content = msg.get("content", "").lower()
 
+                    # If the most recent assistant message has NO workflow_name,
+                    # it means the user already moved on to a non-workflow agent
+                    # (portfolio, transaction_history, etc.). Any older workflow
+                    # state in history is stale — don't continue it.
+                    if not workflow_name:
+                        found_non_workflow_response = True
+
                     if workflow_name:
+                        if found_non_workflow_response:
+                            logger.info(
+                                f"🔍 Stale workflow {workflow_name} found behind non-workflow response — not continuing"
+                            )
+                            break
                         # Normalize PascalCase to snake_case
                         import re
 

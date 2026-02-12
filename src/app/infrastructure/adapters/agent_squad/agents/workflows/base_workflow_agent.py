@@ -241,58 +241,6 @@ class BaseWorkflowAgent(AgentGateway, ABC):
 
     def _detect_non_workflow_intent(self, message: str) -> bool:
         """
-        Detect if user message belongs to a non-workflow agent.
-
-        Catches messages like "my transactions", "my portfolio", "my balance"
-        that the LLM planner may misroute to a workflow agent after recent
-        workflow context in conversation history.
-
-        Returns True if the message should NOT be handled by any workflow.
-        """
-        msg = message.lower().strip()
-
-        # Short messages (1-2 words) that look like parameters should pass through
-        # e.g. "1", "max", "A", "yes", "0x..." — these are workflow continuations
-        if len(msg) < 10 and " " not in msg:
-            return False
-
-        # Non-workflow keywords — these belong to portfolio, transaction_history,
-        # wallet, knowledge, chat, or other non-workflow agents
-        _non_workflow_phrases = [
-            "transaction history",
-            "transactions history",
-            "my transactions",
-            "show transactions",
-            "recent activity",
-            "my activity",
-            "my portfolio",
-            "portfolio value",
-            "my balance",
-            "my holdings",
-            "total holdings",
-            "my wallets",
-            "wallet info",
-            "list wallets",
-            "show wallets",
-            "wallet address",
-            "connected wallets",
-            "receive crypto",
-            "receive funds",
-            "qr code",
-            "what is defi",
-            "how does",
-            "explain",
-            "what are",
-            "tell me about",
-            "price of",
-            "gas price",
-            "gas fees",
-        ]
-
-        return any(phrase in msg for phrase in _non_workflow_phrases)
-
-    def _detect_non_workflow_intent(self, message: str) -> bool:
-        """
         Detect if a message belongs to a non-workflow agent (portfolio, transactions, etc.).
 
         When the LLM planner misroutes a non-workflow request to a workflow agent
