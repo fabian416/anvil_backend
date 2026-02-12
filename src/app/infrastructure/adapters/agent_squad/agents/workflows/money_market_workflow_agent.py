@@ -176,31 +176,8 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
             f"[MoneyMarketWorkflow] Processing step={step}, message={message.value[:50]}..."
         )
 
-        # Guard: reject messages that clearly belong to other agents
-        # (LLM planner may misroute after recent money-market context)
-        _non_mm_keywords = [
-            "transaction history",
-            "transactions history",
-            "my transactions",
-            "show transactions",
-            "recent activity",
-            "my activity",
-            "my portfolio",
-            "my balance",
-            "my holdings",
-            "my wallets",
-        ]
-        if any(kw in text_lower for kw in _non_mm_keywords):
-            logger.info(
-                f"[MoneyMarketWorkflow] Misrouted message detected: '{text_lower[:40]}' — cancelling"
-            )
-            state.step = "completed"
-            state.cancelled = True
-            state.data["redirect_reason"] = "misrouted"
-            return (
-                "I'll help you with that! Let me route your request to the right place.",
-                state,
-            )
+        # NOTE: Non-workflow misroute guard is handled in base_workflow_agent.execute()
+        # before process_step() is called — no need to duplicate here.
 
         # Positions flow: handle position selection and withdraw amount sub-steps
         if state.data.get("flow") == "positions" and (

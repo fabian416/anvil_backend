@@ -239,6 +239,127 @@ class BaseWorkflowAgent(AgentGateway, ABC):
         """
         pass
 
+    def _detect_non_workflow_intent(self, message: str) -> bool:
+        """
+        Detect if user message belongs to a non-workflow agent.
+
+        Catches messages like "my transactions", "my portfolio", "my balance"
+        that the LLM planner may misroute to a workflow agent after recent
+        workflow context in conversation history.
+
+        Returns True if the message should NOT be handled by any workflow.
+        """
+        msg = message.lower().strip()
+
+        # Short messages (1-2 words) that look like parameters should pass through
+        # e.g. "1", "max", "A", "yes", "0x..." — these are workflow continuations
+        if len(msg) < 10 and " " not in msg:
+            return False
+
+        # Non-workflow keywords — these belong to portfolio, transaction_history,
+        # wallet, knowledge, chat, or other non-workflow agents
+        _non_workflow_phrases = [
+            "transaction history",
+            "transactions history",
+            "my transactions",
+            "show transactions",
+            "recent activity",
+            "my activity",
+            "my portfolio",
+            "portfolio value",
+            "my balance",
+            "my holdings",
+            "total holdings",
+            "my wallets",
+            "wallet info",
+            "list wallets",
+            "show wallets",
+            "wallet address",
+            "connected wallets",
+            "receive crypto",
+            "receive funds",
+            "qr code",
+            "what is defi",
+            "how does",
+            "explain",
+            "what are",
+            "tell me about",
+            "price of",
+            "gas price",
+            "gas fees",
+        ]
+
+        return any(phrase in msg for phrase in _non_workflow_phrases)
+
+    def _detect_non_workflow_intent(self, message: str) -> bool:
+        """
+        Detect if a message belongs to a non-workflow agent (portfolio, transactions, etc.).
+
+        When the LLM planner misroutes a non-workflow request to a workflow agent
+        (e.g., "my transactions history" → money_market_workflow), this guard
+        cancels the workflow gracefully so the response doesn't confuse the user.
+
+        Returns:
+            True if the message is clearly NOT intended for any workflow agent.
+        """
+        msg = message.lower().strip()
+
+        # Short messages (1-2 chars, numbers, confirmations) are likely
+        # workflow parameters — never reject them
+        if len(msg) < 4:
+            return False
+
+        # Non-workflow phrases that should go to portfolio, transaction_history,
+        # wallet, knowledge, chat, or other non-workflow agents
+        _non_workflow_phrases = [
+            # Transaction history
+            "transaction history",
+            "transactions history",
+            "my transactions",
+            "show transactions",
+            "recent activity",
+            "my activity",
+            "show activity",
+            "past swaps",
+            "activity summary",
+            "historial de transacciones",
+            "mis transacciones",
+            "histórico de transações",
+            "minhas transações",
+            # Portfolio
+            "my portfolio",
+            "my balance",
+            "my holdings",
+            "portfolio value",
+            "total holdings",
+            "mi portafolio",
+            "mi balance",
+            "meu portfólio",
+            "meu saldo",
+            # Wallet
+            "my wallets",
+            "wallet address",
+            "connected wallets",
+            "show wallets",
+            "list wallets",
+            "receive crypto",
+            "qr code",
+            "mis billeteras",
+            "minhas carteiras",
+            # General knowledge / chat
+            "what is defi",
+            "how does",
+            "explain",
+            "tell me about",
+            "what are the fees",
+            "help",
+        ]
+
+        if any(phrase in msg for phrase in _non_workflow_phrases):
+            return True
+
+        return False
+
     def _detect_different_workflow_intent(
         self,
         message: str,
@@ -471,6 +592,32 @@ class BaseWorkflowAgent(AgentGateway, ABC):
                     "current_step": WorkflowStep.CANCELLED.value,
                     "redirect_to": detected_workflow,
                     "workflow_cancelled": True,
+                },
+            )
+
+        # Guard: detect messages that belong to non-workflow agents
+        # (LLM planner may misroute after recent workflow context in history)
+        is_non_workflow = self._detect_non_workflow_intent(message.value)
+        if is_non_workflow:
+            logger.info(
+                f"[{self.workflow_name}] Non-workflow message detected — cancelling gracefully"
+            )
+            cancelled_state = WorkflowState()
+            cancelled_state.step = WorkflowStep.COMPLETED.value
+            cancelled_state.cancelled = True
+            cancelled_state.data["redirect_reason"] = "misrouted"
+
+            return AgentResponse(
+                content="I'll help you with that! Let me route your request to the right place.",
+                agent_type=self.agent_type,
+                sources=[],
+                tools_used=["workflow_misroute_guard"],
+                metadata={
+                    "workflow_name": self.workflow_name,
+                    "workflow_state": cancelled_state.to_dict(),
+                    "current_step": WorkflowStep.COMPLETED.value,
+                    "workflow_cancelled": True,
+                    "misrouted": True,
                 },
             )
 
