@@ -345,14 +345,16 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
             state.data["chain"] = params.get("chain", state.data.get("chain", "base"))
             return self._ask_for_recipient(state.data, language), state
 
-        # If we have token but no amount, ask for amount
+        # If we have token but no amount, ask for amount (shows actual balance)
         if token and not amount:
             state.data["token"] = token.upper()
             state.data["chain"] = params.get("chain", state.data.get("chain", "base"))
-            return self._ask_for_amount(state.data, language), state
+            msg = await self._ask_for_amount(state.data, language, user_context)
+            return msg, state
 
-        # No token detected - ask user to specify
-        return self._ask_for_token(language), state
+        # No token detected - ask user to specify (shows actual holdings)
+        msg = await self._ask_for_token(language, user_context)
+        return msg, state
 
     async def _handle_validate(
         self,
@@ -822,9 +824,73 @@ Você não tem {token} suficiente na sua carteira.
     # Response Formatting
     # ========================================
 
-    def _ask_for_token(self, language: str) -> str:
-        """Ask user which token to send."""
+    async def _ask_for_token(
+        self,
+        language: str,
+        user_context: UserContext | None = None,
+    ) -> str:
+        """Ask user which token to send, showing actual holdings."""
 
+        # Query actual balances from DB
+        holdings_lines = ""
+        if user_context and user_context.wallet_address:
+            try:
+                from .swap_workflow_agent import _get_token_balances_for_wallet
+
+                chain_balances = await _get_token_balances_for_wallet(
+                    user_context.wallet_address
+                )
+                # Aggregate balances across chains
+                aggregated: dict[str, dict[str, float]] = {}
+                for _chain, chain_data in chain_balances.items():
+                    for symbol, t_info in chain_data.get("tokens", {}).items():
+                        bal = t_info.get("balance", 0.0)
+                        usd = t_info.get("usd", 0.0)
+                        if bal > 0:
+                            if symbol not in aggregated:
+                                aggregated[symbol] = {"balance": 0.0, "usd": 0.0}
+                            aggregated[symbol]["balance"] += bal
+                            aggregated[symbol]["usd"] += usd
+
+                if aggregated:
+                    # Sort by USD value descending
+                    sorted_tokens = sorted(
+                        aggregated.items(),
+                        key=lambda x: x[1]["usd"],
+                        reverse=True,
+                    )
+                    lines = []
+                    for i, (symbol, info) in enumerate(sorted_tokens[:8], 1):
+                        token_meta = SUPPORTED_TOKENS.get(symbol.lower(), {})
+                        em = token_meta.get("emoji", "💎")
+                        lines.append(
+                            f"{i}. {em} **{symbol}** — {info['balance']:,.6g} (~${info['usd']:,.2f})"
+                        )
+                    holdings_lines = "\n".join(lines)
+            except Exception as e:
+                logger.warning(f"[TransferWorkflow] Failed to query holdings: {e}")
+
+        if holdings_lines:
+            header = {
+                "en": "📤 **Send Crypto to Another Wallet**\n\n💰 **Your Holdings:**",
+                "es": "📤 **Enviar Cripto a Otra Billetera**\n\n💰 **Tus Holdings:**",
+                "pt": "📤 **Enviar Cripto para Outra Carteira**\n\n💰 **Seus Holdings:**",
+                "zh": "📤 **发送加密货币到另一个钱包**\n\n💰 **您的持仓：**",
+            }
+            footer = {
+                "en": "\n\n💬 Reply with the token name and amount (e.g., \"100 USDC\")",
+                "es": "\n\n💬 Responde con el nombre del token y la cantidad (ej: \"100 USDC\")",
+                "pt": "\n\n💬 Responda com o nome do token e a quantia (ex: \"100 USDC\")",
+                "zh": "\n\n💬 回复代币名称和金额（例如：\"100 USDC\"）",
+            }
+            return (
+                header.get(language, header["en"])
+                + "\n"
+                + holdings_lines
+                + footer.get(language, footer["en"])
+            )
+
+        # Fallback: no balance data available — show generic list
         msgs = {
             "en": """📤 **Send Crypto to Another Wallet**
 
@@ -878,52 +944,134 @@ Qual token você gostaria de enviar?
 
         return msgs.get(language, msgs["en"])
 
-    def _ask_for_amount(self, data: dict[str, Any], language: str) -> str:
-        """Ask user for transfer amount."""
+    async def _ask_for_amount(
+        self,
+        data: dict[str, Any],
+        language: str,
+        user_context: UserContext | None = None,
+    ) -> str:
+        """Ask user for transfer amount, showing actual balance from DB."""
 
         token = data.get("token", "ETH")
         token_info = SUPPORTED_TOKENS.get(token.lower(), {"emoji": "💎"})
         emoji = token_info.get("emoji", "💎")
 
+        # Query actual token balance from DB
+        balance_line = ""
+        suggestion_lines = ""
+        token_balance = 0.0
+        token_usd = 0.0
+
+        if user_context and user_context.wallet_address:
+            try:
+                from .swap_workflow_agent import _get_token_balances_for_wallet
+
+                chain_balances = await _get_token_balances_for_wallet(
+                    user_context.wallet_address
+                )
+                # Search across all chains for this token
+                for chain_name, chain_data in chain_balances.items():
+                    tokens = chain_data.get("tokens", {})
+                    if token.upper() in tokens:
+                        t_info = tokens[token.upper()]
+                        token_balance += t_info.get("balance", 0.0)
+                        token_usd += t_info.get("usd", 0.0)
+            except Exception as e:
+                logger.warning(f"[TransferWorkflow] Failed to query balance: {e}")
+
+        if token_balance > 0:
+            # Show actual balance and smart suggestions
+            half = token_balance / 2
+            quarter = token_balance / 4
+
+            balance_labels = {
+                "en": f"💰 **Your {token} Balance:** {token_balance:,.6g} {token} (~${token_usd:,.2f})",
+                "es": f"💰 **Tu Saldo de {token}:** {token_balance:,.6g} {token} (~${token_usd:,.2f})",
+                "pt": f"💰 **Seu Saldo de {token}:** {token_balance:,.6g} {token} (~${token_usd:,.2f})",
+                "zh": f"💰 **您的 {token} 余额：** {token_balance:,.6g} {token} (~${token_usd:,.2f})",
+            }
+            balance_line = balance_labels.get(language, balance_labels["en"])
+
+            suggestion_labels = {
+                "en": (
+                    f"💡 *Suggestions:*\n"
+                    f"• `{quarter:,.6g}` (25% — ~${token_usd * 0.25:,.2f})\n"
+                    f"• `{half:,.6g}` (50% — ~${token_usd * 0.5:,.2f})\n"
+                    f"• `{token_balance:,.6g}` (Max — ~${token_usd:,.2f})"
+                ),
+                "es": (
+                    f"💡 *Sugerencias:*\n"
+                    f"• `{quarter:,.6g}` (25% — ~${token_usd * 0.25:,.2f})\n"
+                    f"• `{half:,.6g}` (50% — ~${token_usd * 0.5:,.2f})\n"
+                    f"• `{token_balance:,.6g}` (Máx — ~${token_usd:,.2f})"
+                ),
+                "pt": (
+                    f"💡 *Sugestões:*\n"
+                    f"• `{quarter:,.6g}` (25% — ~${token_usd * 0.25:,.2f})\n"
+                    f"• `{half:,.6g}` (50% — ~${token_usd * 0.5:,.2f})\n"
+                    f"• `{token_balance:,.6g}` (Máx — ~${token_usd:,.2f})"
+                ),
+                "zh": (
+                    f"💡 *建议：*\n"
+                    f"• `{quarter:,.6g}` (25% — ~${token_usd * 0.25:,.2f})\n"
+                    f"• `{half:,.6g}` (50% — ~${token_usd * 0.5:,.2f})\n"
+                    f"• `{token_balance:,.6g}` (最大 — ~${token_usd:,.2f})"
+                ),
+            }
+            suggestion_lines = suggestion_labels.get(language, suggestion_labels["en"])
+        else:
+            # No balance found — show zero balance warning
+            balance_labels = {
+                "en": f"💰 **Your {token} Balance:** 0 {token}",
+                "es": f"💰 **Tu Saldo de {token}:** 0 {token}",
+                "pt": f"💰 **Seu Saldo de {token}:** 0 {token}",
+                "zh": f"💰 **您的 {token} 余额：** 0 {token}",
+            }
+            balance_line = balance_labels.get(language, balance_labels["en"])
+
+            suggestion_labels = {
+                "en": "⚠️ You don't have any {token} yet.\n💳 Say **\"buy crypto\"** to purchase with card/Apple Pay/Google Pay\n📥 Or transfer {token} from another wallet",
+                "es": "⚠️ No tienes {token} aún.\n💳 Di **\"comprar cripto\"** para comprar con tarjeta\n📥 O transfiere {token} desde otra billetera",
+                "pt": "⚠️ Você não tem {token} ainda.\n💳 Diga **\"comprar cripto\"** para comprar com cartão\n📥 Ou transfira {token} de outra carteira",
+                "zh": "⚠️ 您还没有 {token}。\n💳 说 **\"买加密货币\"** 用卡购买\n📥 或从其他钱包转入 {token}",
+            }
+            suggestion_lines = suggestion_labels.get(language, suggestion_labels["en"]).format(token=token)
+
         msgs = {
             "en": f"""{emoji} **Send {token}**
 
+{balance_line}
+
 How much **{token}** would you like to send?
 
-💡 *Examples:*
-• `100` (one hundred {token})
-• `0.5` (half a {token})
-• `1000` (one thousand {token})
+{suggestion_lines}
 
 💬 Enter the amount to continue""",
             "es": f"""{emoji} **Enviar {token}**
 
+{balance_line}
+
 ¿Cuánto **{token}** te gustaría enviar?
 
-💡 *Ejemplos:*
-• `100` (cien {token})
-• `0.5` (medio {token})
-• `1000` (mil {token})
+{suggestion_lines}
 
 💬 Ingresa la cantidad para continuar""",
             "pt": f"""{emoji} **Enviar {token}**
 
+{balance_line}
+
 Quanto **{token}** você gostaria de enviar?
 
-💡 *Exemplos:*
-• `100` (cem {token})
-• `0.5` (meio {token})
-• `1000` (mil {token})
+{suggestion_lines}
 
 💬 Digite a quantia para continuar""",
             "zh": f"""{emoji} **发送 {token}**
 
+{balance_line}
+
 您想发送多少 **{token}**？
 
-💡 *示例：*
-• `100` (一百 {token})
-• `0.5` (半个 {token})
-• `1000` (一千 {token})
+{suggestion_lines}
 
 💬 输入金额以继续""",
         }
