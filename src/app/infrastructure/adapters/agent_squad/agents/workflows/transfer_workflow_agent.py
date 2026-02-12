@@ -447,7 +447,7 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
             user_context=user_context,
         )
 
-        # Store safety analysis in state
+        # Store safety analysis in state (include checks for detailed display)
         state.data["safety_analysis"] = {
             "score": safety_analysis.safety_score,
             "risk_level": safety_analysis.risk_level,
@@ -455,6 +455,15 @@ class TransferWorkflowAgent(BaseWorkflowAgent):
             "is_first_time": safety_analysis.is_first_time,
             "warnings": safety_analysis.warnings,
             "blockers": safety_analysis.blockers,
+            "checks": [
+                {
+                    "name": c.name,
+                    "status": c.status,
+                    "emoji": c.emoji,
+                    "details": c.details,
+                }
+                for c in safety_analysis.checks
+            ],
         }
 
         # Check for blockers (critical safety issues)
@@ -1561,6 +1570,21 @@ Por favor confirme a transação na sua carteira.""",
         previous_interactions = 0
 
         # ========================================
+        # Check 0: Self-transfer detection
+        # ========================================
+        user_wallet = user_context.wallet_address if user_context else None
+        if user_wallet and recipient_lower == user_wallet.lower():
+            checks.append(
+                SafetyCheck(
+                    name="Self-Transfer",
+                    status="warn",
+                    emoji="🔄",
+                    details="You are sending to your own wallet",
+                )
+            )
+            warnings.append("This is your own wallet address")
+
+        # ========================================
         # Check 1: Known addresses (local database)
         # ========================================
         known_info = KNOWN_CONTRACTS.get(recipient_lower)
@@ -1667,6 +1691,102 @@ Por favor confirme a transação na sua carteira.""",
             )
 
         # ========================================
+        # Check 3b: DB-based address activity (fallback when no external APIs)
+        # Query our own transactions table for any activity with this address
+        # ========================================
+        recipient_tx_count = 0
+        recipient_has_db_activity = False
+        user_previous_sends = 0
+        try:
+            import os
+            from sqlalchemy import create_engine, text as sa_text
+            from sqlalchemy.pool import NullPool
+
+            db_url = os.environ.get("DATABASE_URL")
+            if not db_url:
+                # Construct from individual vars (same as swap_workflow_agent)
+                _db_host = os.environ.get("POSTGRES_HOST", "localhost")
+                _db_port = os.environ.get("POSTGRES_PORT", "5432")
+                _db_user = os.environ.get("POSTGRES_USER", "postgres")
+                _db_pass = os.environ.get("POSTGRES_PASSWORD", "changethis")
+                _db_name = os.environ.get("POSTGRES_DB", "anvil_db")
+                db_url = f"postgresql+psycopg://{_db_user}:{_db_pass}@{_db_host}:{_db_port}/{_db_name}"
+
+            if db_url:
+                engine = create_engine(db_url, poolclass=NullPool)
+                with engine.connect() as conn:
+                    # Check if recipient appears as a destination in our transactions
+                    result = conn.execute(
+                        sa_text(
+                            "SELECT COUNT(*) FROM transactions "
+                            "WHERE LOWER(to_address) = LOWER(:addr)"
+                        ),
+                        {"addr": recipient},
+                    )
+                    row = result.fetchone()
+                    recipient_tx_count = row[0] if row else 0
+
+                    # Also check if recipient is a known wallet in our system
+                    result_wallet = conn.execute(
+                        sa_text(
+                            "SELECT COUNT(*) FROM wallets "
+                            "WHERE LOWER(address) = LOWER(:addr)"
+                        ),
+                        {"addr": recipient},
+                    )
+                    row_wallet = result_wallet.fetchone()
+                    is_known_wallet = (row_wallet[0] if row_wallet else 0) > 0
+
+                    recipient_has_db_activity = recipient_tx_count > 0 or is_known_wallet
+
+                    # Check if current user has previously sent to this address
+                    # transactions.wallet_id -> wallets.address for sender
+                    if user_context and user_context.wallet_address:
+                        result2 = conn.execute(
+                            sa_text(
+                                "SELECT COUNT(*) FROM transactions t "
+                                "JOIN wallets w ON t.wallet_id = w.id "
+                                "WHERE LOWER(w.address) = LOWER(:sender) "
+                                "AND LOWER(t.to_address) = LOWER(:recipient)"
+                            ),
+                            {
+                                "sender": user_context.wallet_address,
+                                "recipient": recipient,
+                            },
+                        )
+                        row2 = result2.fetchone()
+                        user_previous_sends = row2[0] if row2 else 0
+
+                engine.dispose()
+
+                if recipient_has_db_activity:
+                    if user_previous_sends > 0:
+                        is_first_time = False
+                        previous_interactions = user_previous_sends
+                    checks.append(
+                        SafetyCheck(
+                            name="On-Chain Activity",
+                            status="pass",
+                            emoji="✅",
+                            details=f"Active address ({recipient_tx_count} txs in our records)",
+                        )
+                    )
+                else:
+                    checks.append(
+                        SafetyCheck(
+                            name="On-Chain Activity",
+                            status="warn",
+                            emoji="⚠️",
+                            details="No activity found in our records",
+                        )
+                    )
+                    warnings.append(
+                        "This address has no transaction history in our system"
+                    )
+        except Exception as e:
+            logger.debug(f"[TransferWorkflow] DB activity check failed: {e}")
+
+        # ========================================
         # Check 4: EOA vs Contract detection (web3)
         # ========================================
         if self._web3_client and address_type == "unknown":
@@ -1748,10 +1868,41 @@ Por favor confirme a transação na sua carteira.""",
             )
 
         # ========================================
+        # Check 4b: On-chain nonce check (web3 - address activity)
+        # ========================================
+        if self._web3_client and not recipient_has_db_activity:
+            try:
+                nonce = await self._web3_client.get_transaction_count(recipient)
+                if nonce > 0:
+                    recipient_has_db_activity = True  # Treat as active
+                    checks.append(
+                        SafetyCheck(
+                            name="On-Chain Activity",
+                            status="pass",
+                            emoji="✅",
+                            details=f"Active address ({nonce} outgoing txs on-chain)",
+                        )
+                    )
+                else:
+                    # Zero nonce = address has never sent a transaction
+                    # Could be a fresh wallet or receive-only address
+                    checks.append(
+                        SafetyCheck(
+                            name="On-Chain Activity",
+                            status="warn",
+                            emoji="⚠️",
+                            details="New address (no outgoing transactions found)",
+                        )
+                    )
+                    warnings.append(
+                        "This address has never sent a transaction on-chain"
+                    )
+            except Exception as e:
+                logger.debug(f"[TransferWorkflow] Web3 nonce check failed: {e}")
+
+        # ========================================
         # Check 5: Interaction history (Etherscan - Phase 2)
         # ========================================
-        user_wallet = user_context.wallet_address if user_context else None
-
         if self._etherscan_client and user_wallet:
             try:
                 interactions = await self._etherscan_client.get_recent_interactions(
@@ -1799,16 +1950,28 @@ Por favor confirme a transação na sua carteira.""",
                 )
                 warnings.append("You haven't sent to this address before")
         else:
-            # No Etherscan client or no wallet - default to first-time warning
-            checks.append(
-                SafetyCheck(
-                    name="Interaction History",
-                    status="warn",
-                    emoji="🆕",
-                    details="First-time recipient",
+            # No Etherscan client - use DB-based interaction data (from Check 3b)
+            if user_previous_sends > 0:
+                is_first_time = False
+                previous_interactions = user_previous_sends
+                checks.append(
+                    SafetyCheck(
+                        name="Interaction History",
+                        status="pass",
+                        emoji="✅",
+                        details=f"Previously sent ({user_previous_sends}x)",
+                    )
                 )
-            )
-            warnings.append("You haven't sent to this address before")
+            else:
+                checks.append(
+                    SafetyCheck(
+                        name="Interaction History",
+                        status="warn",
+                        emoji="🆕",
+                        details="First-time recipient",
+                    )
+                )
+                warnings.append("You haven't sent to this address before")
 
         # ========================================
         # Calculate safety score
@@ -1821,6 +1984,7 @@ Por favor confirme a transação na sua carteira.""",
             has_blockers=len(blockers) > 0,
             is_verified=is_verified_contract,
             previous_interactions=previous_interactions,
+            has_db_activity=recipient_has_db_activity,
         )
 
         # Determine risk level
@@ -1853,6 +2017,7 @@ Por favor confirme a transação na sua carteira.""",
         has_blockers: bool,
         is_verified: bool = False,
         previous_interactions: int = 0,
+        has_db_activity: bool = False,
     ) -> int:
         """
         Calculate safety score (0-100) based on checks (Phase 2 enhanced).
@@ -1864,6 +2029,7 @@ Por favor confirme a transação na sua carteira.""",
         - Verified contract: +10
         - EOA (not contract): +5
         - Previous interactions: +5 to +15 (based on count)
+        - Address has DB activity (known in our system): +5
         - Unknown contract: -15
         - Unverified contract: -5
         - First-time recipient: -10
@@ -1879,6 +2045,10 @@ Por favor confirme a transação na sua carteira.""",
             score += 20
         elif is_known:
             score += 10
+
+        # DB activity bonus (address seen in our transaction history)
+        if has_db_activity:
+            score += 5
 
         # Contract type scoring
         if not is_contract:
@@ -1922,6 +2092,7 @@ Por favor confirme a transação na sua carteira.""",
         risk_level = safety.get("risk_level", "unknown")
         address_type = safety.get("address_type", "unknown")
         warnings = safety.get("warnings", [])
+        checks = safety.get("checks", [])
 
         # Risk emoji and label
         risk_config = {
@@ -1934,9 +2105,9 @@ Por favor confirme a transação na sua carteira.""",
 
         # Address type label
         type_labels = {
-            "eoa": "👤 External Wallet",
+            "eoa": "👤 External Wallet (EOA)",
             "contract": "📄 Smart Contract",
-            "unknown": "❓ Unknown",
+            "unknown": "❓ Unverified Address Type",
         }
         type_label = type_labels.get(address_type, "❓ Unknown")
 
@@ -1948,6 +2119,16 @@ Por favor confirme a transação na sua carteira.""",
 {risk_emoji} **Safety Score:** {score}/100 ({risk_label})
 {type_label}
 """
+
+        # Add individual check results for transparency
+        if checks:
+            section += "\n**Checks Performed:**\n"
+            for check in checks:
+                if isinstance(check, dict):
+                    emoji = check.get("emoji", "•")
+                    name = check.get("name", "")
+                    details = check.get("details", "")
+                    section += f"{emoji} {name}: {details}\n"
 
         # Add warnings if any
         if warnings:

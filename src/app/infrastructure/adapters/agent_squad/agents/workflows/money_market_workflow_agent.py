@@ -600,19 +600,8 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                 f"setting execute_data for {amount} {asset} on {selected_protocol}"
             )
 
-            # Record pending earn transaction for tracking
-            if selected_protocol in ("aave", "compound"):
-                await self._record_earn_transaction(
-                    user_context=user_context,
-                    protocol=selected_protocol,
-                    chain=chain,
-                    action_type="supply",
-                    asset_symbol=asset,
-                    amount=amount,
-                    apy=selected_rate.get("supply_apy"),
-                    pool_address=selected_rate.get("pool_address")
-                    or AAVE_POOL_ADDRESSES.get(chain.lower()),
-                )
+            # NOTE: Earn transaction recording happens in the /execute endpoint
+            # via confirm_earn_transaction Celery task when tx_hash is received.
 
         # The actual deposit is handled by lending_workflow or frontend
         state.step = WorkflowStep.COMPLETED.value
