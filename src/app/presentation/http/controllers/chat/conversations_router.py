@@ -3143,13 +3143,154 @@ Response Guidelines:
                 },
             )
 
+        # ============================================================
+        # TRANSFER OPERATIONS (Send tokens to another wallet)
+        # ============================================================
+        TRANSFER_ACTIONS = {"transfer", "send"}
+
+        action_from_meta = (
+            request.metadata.get("action")
+            or request.metadata.get("action_type")
+            if request.metadata
+            else None
+        )
+
+        if action_from_meta in TRANSFER_ACTIONS:
+            tx_hash = request.transaction_hash
+            chain = request.metadata.get("chain", "base") if request.metadata else "base"
+            token = (
+                request.metadata.get("from_token")
+                or request.metadata.get("token")
+                or "ETH"
+            ) if request.metadata else "ETH"
+            amount = request.metadata.get("amount") if request.metadata else None
+            recipient = request.metadata.get("recipient") if request.metadata else None
+
+            logger.info(
+                f"Transfer operation: token={token}, amount={amount}, "
+                f"recipient={recipient}, tx_hash={tx_hash}, user_id={user.id}"
+            )
+
+            # Persist to transactions table
+            transaction_id = None
+            if transaction_repository and wallet_repository:
+                try:
+                    try:
+                        app_user = await current_user.get_current_user()
+                        user_id_value = app_user.id_.value
+                    except (AuthenticationError, AuthorizationError):
+                        user_id_value = (
+                            int(user.identifier) if user.identifier.isdigit() else 0
+                        )
+
+                    # Resolve wallet_id
+                    wallet_id_value = None
+                    if user_id_value:
+                        wallets = await wallet_repository.get_by_user_id(
+                            UserId(user_id_value)
+                        )
+                        if wallets:
+                            primary = next(
+                                (w for w in wallets if getattr(w, "is_primary", False)),
+                                None,
+                            )
+                            wallet_id_value = (primary or wallets[0]).id_.value
+
+                    if wallet_id_value:
+                        try:
+                            chain_enum = ChainType[chain.upper()]
+                        except (KeyError, AttributeError):
+                            chain_enum = ChainType.BASE
+
+                        amount_decimal = None
+                        if amount:
+                            try:
+                                amount_decimal = Decimal(str(amount))
+                            except (ValueError, TypeError):
+                                pass
+
+                        tx_metadata = {
+                            "conversation_id": str(conversation_id),
+                            "action": "transfer",
+                            "token": token,
+                            "recipient": recipient,
+                            "workflow_type": "transfer",
+                        }
+
+                        transaction = Transaction(
+                            id_=TransactionId(0),
+                            user_id=UserId(user_id_value),
+                            wallet_id=WalletId(wallet_id_value),
+                            to_address=recipient,
+                            type=TransactionType.SEND,
+                            chain=chain_enum,
+                            asset_in=token,
+                            amount_in=amount_decimal,
+                            asset_out=None,
+                            amount_out=None,
+                            fee=None,
+                            fee_usd=None,
+                            tx_hash=tx_hash,
+                            status=TransactionStatus.SUCCESS,
+                            dex_aggregator="transfer",
+                            dex_route=None,
+                            slippage=None,
+                            error_message=None,
+                            block_number=None,
+                            confirmed_at=None,
+                            created_at=CreatedAt.now(),
+                            gas_used=None,
+                            gas_price=None,
+                            tx_metadata=tx_metadata,
+                        )
+
+                        saved_tx = await transaction_repository.save(transaction)
+                        transaction_id = saved_tx.id_.value
+                        logger.info(
+                            f"✅ Transfer transaction persisted: id={transaction_id}, "
+                            f"{amount} {token} → {recipient[:10]}..."
+                        )
+                except Exception as save_error:
+                    logger.error(
+                        f"Failed to persist transfer transaction: {save_error}",
+                        exc_info=True,
+                    )
+
+            display_recipient = (
+                f"{recipient[:8]}...{recipient[-6:]}"
+                if recipient and len(recipient) > 14
+                else recipient or "unknown"
+            )
+            message = f"Transfer confirmed: {amount or '?'} {token} sent to {display_recipient}."
+
+            # Save completion message to clear workflow state
+            await _save_execution_complete_message(
+                msg_text=message,
+                workflow_name="TransferWorkflow",
+            )
+
+            return ExecuteResponse(
+                message=message,
+                execute_data=None,
+                metadata={
+                    "action": "transfer",
+                    "transaction_hash": tx_hash,
+                    "transaction_id": transaction_id,
+                    "token": token,
+                    "amount": amount,
+                    "recipient": recipient,
+                    "status": "complete",
+                    "saved_to_db": transaction_id is not None,
+                },
+            )
+
         # Handle unknown execution types
         logger.warning(
             f"Unknown execution type for conversation {conversation_id}, metadata={request.metadata}"
         )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unknown execution type. Supported: swap actions, lending operations, money_market operations.",
+            detail="Unknown execution type. Supported: swap, lending, money_market, transfer operations.",
         )
 
     return router
