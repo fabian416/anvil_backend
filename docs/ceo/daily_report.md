@@ -1,73 +1,164 @@
-# Informe Diario CEO - 10 de Febrero, 2026
+# Informe Diario CEO - 12 de Febrero, 2026
 
 ## Resumen Ejecutivo
 
-Las últimas 72 horas se enfocaron en **completar el análisis exhaustivo del MVP** y generar especificaciones técnicas para todas las funcionalidades faltantes del producto detallado en el figma y en base a lo hablado en la reunion para no bloquear mobile. Cree **26 especificaciones técnicas completas** organizadas en 4 módulos principales, realizó testing del frontend y del servidor de staging, e identificó blockers críticos para el despliegue.
+Las últimas 40 horas se enfocaron en **3 áreas críticas de desarrollo**: (1) completar el sistema de **Money Market Transaction Tracking** para Aave V3 y Compound V3, llevándolo a paridad con el sistema de Lending (Morpho), (2) implementar el **Swap Workflow completo** con Hyperliquid, catálogo de tokens y análisis de sentimiento, y (3) agregar **Money Market Positions** al agente de chat. Se realizaron **14 commits** con **8,888 líneas nuevas** en 61 archivos.
 
 ---
 
-## 1. Análisis Completo de Funcionalidades MVP ✅
+## 1. Money Market Transaction Tracking (Aave V3 + Compound V3) ✅
 
 ### Problema Resuelto
-Se identificó la necesidad de documentar todas las funcionalidades faltantes del MVP para completar el producto y establecer una base sólida para el desarrollo.
+El sistema de Money Market (Aave V3 + Compound V3) solo comparaba tasas y generaba `execute_data` para el frontend. No tenía tracking de transacciones ni recuperación de posiciones. Si `/execute` fallaba o el usuario firmaba una transacción pero el backend no la registraba, la posición se perdía.
 
-### Solución Entregada
+### Solución Entregada — 7 Fases Completadas
 
-**26 Especificaciones Técnicas Completas** organizadas en `docs/features/mvp/`:
+| Fase | Descripción | Archivos | Estado |
+|------|-------------|----------|--------|
+| 1 | Tabla `earn_transactions` + columnas nuevas en `earn_positions` | `earn_transaction_mapping.py`, `defi_operations.py` | ✅ |
+| 2 | Registro en mappings + guía de desarrollo actualizada | `all.py`, `04_earn_and_save.py` | ✅ |
+| 3-4 | 4 Celery tasks: refresh, confirm, reconcile, recover | `earn_position_tasks.py` (621 líneas) | ✅ |
+| 5 | Endpoint `/execute` registra txs Aave/Compound | `conversations_router.py` | ✅ |
+| 6 | Etherscan scanner clasifica txs Aave/Compound on-chain | `etherscan_balance_tasks.py` (+988 líneas) | ✅ |
+| 7 | Recovery en login con cooldown Redis 5 min | `privy_login.py` | ✅ |
 
-| Módulo | Archivos | Estado | Descripción |
-|--------|----------|--------|-------------|
-| **Endpoints** | 7 specs | ✅ Completo | API para todas las pantallas del frontend |
-| **Agents** | 6 specs | ✅ Completo | Enriquecimientos de chat y respuestas inteligentes |
-| **Discovery** | 10 specs | ✅ Completo | Módulo enterprise de noticias y vaults DeFi |
-| **Push Notifications** | 1 spec | ✅ Completo | Sistema de notificaciones push |
+### Celery Tasks Nuevas
 
-### Especificaciones de Endpoints (7)
+| Task | Schedule | Función |
+|------|----------|---------|
+| `refresh_earn_positions` | Cada hora (:45) | Fetch posiciones Aave/Compound para todos los usuarios |
+| `confirm_earn_transaction` | On-demand (max 5 retries) | Confirma tx hash on-chain |
+| `reconcile_earn_transactions` | Cada 6h (:15) | Verifica txs pendientes stale |
+| `recover_earn_positions` | Login-triggered | Recupera posiciones para un usuario |
 
-| # | Especificación | Funcionalidad | Estado |
-|---|----------------|---------------|--------|
-| 1 | `01_chat_mode_spec.md` | Chat Mode (casual/power user/degen) | 🆕 Nuevo |
-| 2 | `02_activities_spec.md` | Activity Feed (GET list + detail) | 🆕 Nuevo |
-| 3 | `03_receive_spec.md` | Receive (QR + address + chain selector) | ✅ Existente |
-| 4 | `04_send_spec.md` | Send (tokens → preview → execute) | ✅ Existente |
-| 5 | `05_swap_spec.md` | Swap (defaults → from → to) | ✅ Existente |
-| 6 | `06_balance_spec.md` | Balance Dashboard (portfolio + P&L) | ✅ Existente |
-| 7 | `07_cashout_spec.md` | Cash Out (off-ramp USDC → fiat) | 🆕 Nuevo |
-
-### Especificaciones de Agents (6)
-
-| # | Especificación | Intent | Descripción |
-|---|----------------|--------|-------------|
-| 1 | `01_join_waitlist_spec.md` | N/A | CTA periódico para conversión guest → waitlist |
-| 2 | `02_sentiment_analysis_spec.md` | `HUNTER_SENTIMENT` | Análisis de sentimiento de tokens con gráficos |
-| 3 | `03_balance_overview_spec.md` | `BALANCE_CHECK` | Portfolio con holdings, P&L FIFO, recomendaciones AI |
-| 4 | `04_receive_spec.md` | `RECEIVE` | Generación de QR codes con EIP-681 URI |
-| 5 | `05_swap_available_swaps_spec.md` | `SWAP` | Agregación multi-provider (Hyperliquid, 1inch, 0x) |
-| 6 | `06_wallet_qr_storage_spec.md` | `RECEIVE` | QR codes pre-generados almacenados en CDN |
-
-
-### Problemas Detectados y Resueltos
-
-| Issue | Fix | Commit | Autor |
-|-------|-----|--------|-------|
-| **Caddyfile Configuration** | Corrección de configuración de proxy reverso | `e7791140` | Luciano |
-| **CORS Headers** | Agregado headers CORS en Caddyfile y carga de mappings SQLAlchemy | `df0ad196` | Luciano |
-| **PostgreSQL ENUM Duplication** | Resuelto duplicación de ENUMs en migración inicial | `a399e7fa` | - |
-| **Alembic Migration** | Fix de migración | `2684ed32` | - |
-
-### Commits de Infraestructura
+### Commits Relacionados
 
 | Commit | Descripción |
 |--------|-------------|
-| `e7791140` | fix caddyfile |
-| `df0ad196` | fix(cors): add CORS headers to Caddyfile and ensure SQLAlchemy mappings load on startup |
-| `a399e7fa` | fix(alembic): resolve PostgreSQL ENUM duplication with render hook |
-| `b3b18d65` | fix: Resolve PostgreSQL ENUM duplication in initial migration |
-| `8d2b99b9` | fix: Arreglar duplicación de ENUMs en migración inicial |
+| `e3774da0` | feat(earn): add earn_transactions table mapping + earn_positions columns |
+| `0ac8945b` | feat(earn): add Celery tasks for earn position management |
+| `941dcd41` | feat(earn): record earn_transactions in /execute endpoint |
+| `3b19433e` | feat(earn): classify Aave/Compound txs in Etherscan scanner |
+| `2c4f0ee6` | feat(earn): login-triggered earn recovery with 5-min Redis cooldown |
 
 ---
 
-## 3. Blockers Críticos para Desarrollo 🚨
+## 2. Swap Workflow + Token Catalog + Sentiment ✅
+
+### Problema Resuelto
+El sistema de swaps no soportaba Hyperliquid correctamente (HyperCore vs HyperEVM), no tenía catálogo de tokens tradeables, y las recomendaciones de tokens incluían tokens no tradeables.
+
+### Solución Entregada
+
+| Feature | Descripción | Archivos |
+|---------|-------------|----------|
+| **Swap Workflow Agent** | Nuevo agente completo para swaps con Hyperliquid | `swap_workflow_agent.py` (803 líneas) |
+| **Hyperliquid Client** | Cliente para API spotMeta + l2Book | `hyperliquid_client.py` (121 líneas) |
+| **HL Spot Token Catalog** | Tabla `hl_spot_tokens` + sync desde API | `hl_spot_token_mapping.py`, `hl_spot_token_tasks.py` |
+| **Sentiment Enrichment** | Análisis de sentimiento para tokens tradeables | `asset_sentiment_service.py` (125 líneas) |
+| **Swap Positions Cache** | Tabla `swap_positions` + sync periódico | `swap_position_mapping.py`, `swap_position_sync_tasks.py` |
+| **User Sync Schedule** | Tabla `user_sync_schedule` + backoff 1→3→6→12 min | `user_sync_schedule_mapping.py`, `recent_user_sync_tasks.py` |
+| **Compound Client** | Cliente para Compound V3 | `compound_client.py`, `compound_adapter.py` |
+
+### Nuevas Tablas
+
+| Tabla | Propósito |
+|-------|-----------|
+| `hl_spot_tokens` | Catálogo de tokens Hyperliquid con `has_spot_market`, `sentiment_score` |
+| `swap_positions` | Cache de posiciones de swap abiertas |
+| `swap_intents` | Registro de intenciones de swap del usuario |
+| `user_sync_schedule` | Schedule de sync incremental por usuario |
+
+### Commit Principal
+
+| Commit | Descripción | Impacto |
+|--------|-------------|---------|
+| `7725da35` | feat(swap+tokens): add swap_positions cache, hl_spot_tokens catalog + sentiment | +4,651 / -396 líneas, 41 archivos |
+
+---
+
+## 3. Money Market Positions en Chat Agent ✅
+
+### Problema Resuelto
+Los usuarios no podían consultar sus posiciones de Money Market (Aave/Compound) a través del chat.
+
+### Solución Entregada — 4 Fases
+
+| Fase | Descripción | Commit |
+|------|-------------|--------|
+| 1 | Posiciones + withdraw en MoneyMarketWorkflowAgent | `310b03a4` (+509 líneas) |
+| 2 | Supervisor routing para money market positions | `bad0d0a7` |
+| 3 | Intent `MONEY_MARKET_POSITIONS` en shortcuts.json | `d5513d7d` |
+| 4 | Spec actualizada con implementación completada | `81995c88` |
+
+---
+
+## 4. Etherscan + Aave + Infraestructura ✅
+
+### Mejoras de Infraestructura
+
+| Feature | Descripción | Commit |
+|---------|-------------|--------|
+| **Etherscan Paid Tier** | Soporte para Base chain, sync_transactions mejorado | `e49207f0` |
+| **Escalabilidad 1K usuarios** | Documentación de arquitectura para 1,000 usuarios | `e49207f0` |
+| **Lending Domain Ports** | Ports para Aave/Morpho, adapter Morpho mejorado | `820a1a06` |
+| **Vault APIs Reference** | Documentación de APIs de vaults DeFi | `820a1a06` |
+| **MCP Config Cleanup** | Migración a config global `~/.cursor/mcp.json` | `c061c9be` |
+
+---
+
+## 5. Métricas Clave
+
+### Cambios de Código (Últimas 40 Horas)
+
+| Métrica | Valor |
+|---------|-------|
+| **Commits** | 14 |
+| **Líneas Agregadas** | 8,888 |
+| **Líneas Eliminadas** | 405 |
+| **Archivos Modificados** | 61 |
+| **Archivos Nuevos** | ~25 |
+
+### Desglose por Área
+
+| Área | Commits | Líneas Nuevas (aprox) |
+|------|---------|----------------------|
+| Money Market Tracking (earn_*) | 5 | ~2,600 |
+| Swap Workflow + Tokens | 1 (mega-commit) | ~4,650 |
+| Money Market Positions Agent | 4 | ~750 |
+| Etherscan + Lending Infra | 2 | ~1,000 |
+| Docs + Cleanup | 2 | ~250 |
+
+---
+
+## 6. Estado Actual del Sistema
+
+### Sistemas Completados ✅
+
+| Sistema | Componentes | Estado |
+|---------|-------------|--------|
+| **Lending (Morpho)** | Positions, transactions, health monitoring, withdraw confirm | ✅ Producción |
+| **Money Market (Aave/Compound)** | Positions, transactions, recovery, reconciliation | ✅ Nuevo - Completo |
+| **Swap (Hyperliquid)** | Workflow agent, token catalog, sentiment, positions cache | ✅ Nuevo - Completo |
+| **Etherscan Scanner** | Classifica Morpho + Aave + Compound txs on-chain | ✅ Extendido |
+| **User Sync** | Login-triggered + scheduled incremental sync | ✅ Nuevo - Completo |
+
+### Celery Tasks Activas
+
+| Task | Schedule | Sistema |
+|------|----------|---------|
+| `refresh_earn_positions` | Hourly (:45) | Money Market |
+| `reconcile_earn_transactions` | Every 6h (:15) | Money Market |
+| `confirm_earn_transaction` | On-demand | Money Market |
+| `recover_earn_positions` | Login-triggered | Money Market |
+| `seed_hl_spot_tokens` | Every 4h | Swap/Tokens |
+| `enrich_hl_spot_token_sentiment` | Every 2h | Swap/Tokens |
+| `sync_swap_positions` | Every 30 min | Swap |
+| `recent_user_incremental_sync` | Every 1 min | User Sync |
+
+---
+
+## 7. Blockers Actuales 🚨
 
 ### Blocker #1: Etherscan API Key
 
@@ -76,114 +167,53 @@ Se identificó la necesidad de documentar todas las funcionalidades faltantes de
 | **Problema** | API key actual insuficiente para operaciones requeridas |
 | **Solución** | Upgrade a plan Lite de Etherscan |
 | **Costo** | $50 USD |
-| **Impacto** | Bloquea desarrollo de funcionalidades que requieren datos on-chain |
-| **Prioridad** | 🔴 Alta - Bloquea desarrollo activo |
-
-**Acción Requerida**: Aprobar upgrade de API key Etherscan a plan Lite ($50 USD)
+| **Impacto** | Bloquea sync de transacciones on-chain en producción |
+| **Prioridad** | 🔴 Alta |
 
 ### Blocker #2: Acceso a Dominio para Staging
 
 | Aspecto | Detalle |
 |---------|---------|
-| **Problema** | Falta acceso al dominio para desplegar a `stage.anvilcrypto.com` |
-| **Solución** | Obtener acceso administrativo al dominio |
-| **Impacto** | Bloquea despliegue del servidor de staging |
-| **Prioridad** | 🔴 Alta - Bloquea testing en ambiente staging |
+| **Problema** | Falta acceso al dominio para `stage.anvilcrypto.com` |
+| **Impacto** | Bloquea testing en ambiente staging |
+| **Prioridad** | 🔴 Alta |
 
 ---
 
-## 4. Métricas Clave
-
-### Cambios de Código (Últimas 72 Horas)
-
-| Métrica | Valor |
-|---------|-------|
-| **Commits** | 15+ |
-| **Especificaciones Creadas** | 26 archivos |
-| **Líneas de Documentación** | 10,000+ líneas |
-| **Módulos Documentados** | 4 (Endpoints, Agents, Discovery, Push Notifications) |
-
-### Contribuidores
-
-| Autor | Enfoque | Commits |
-|-------|---------|---------|
-| **Matias Baglieri** | Especificaciones MVP, Discovery module | 3+ |
-| **Luciano** | Fixes de infraestructura, Caddyfile, CORS | 2+ |
-
----
-
-## 5. Estado de Desarrollo
-
-### Especificaciones Completadas ✅
-
-- ✅ **Endpoints**: 7/7 especificaciones completas
-- ✅ **Agents**: 6/6 especificaciones completas
-- ✅ **Discovery**: Módulo enterprise completo (10 archivos)
-- ✅ **Push Notifications**: Especificación completa
-
-
-### Pendientes 🟡
-
-- ⏳ **Implementación**: Desarrollo basado en especificaciones
-- ⏳ **Deploy Staging**: Esperando acceso a dominio
-- ⏳ **Etherscan Upgrade**: Esperando aprobación de $50 USD
-
----
-
-## 6. Próximos Pasos
+## 8. Próximos Pasos
 
 ### Inmediato (Requiere Aprobación)
 
-1. **Aprobar upgrade Etherscan API** ($50 USD) - Bloquea desarrollo
-2. **Obtener acceso a dominio** para `stage.anvilcrypto.com` - Bloquea deploy
+1. **Aprobar upgrade Etherscan API** ($50 USD)
+2. **Obtener acceso a dominio** para staging
 
-### Corto Plazo (Equipo Backend)
+### Corto Plazo
 
-1. **Iniciar implementación** basada en especificaciones MVP
-2. **Configurar ambiente staging** una vez se obtenga acceso al dominio
-3. **Integrar Etherscan Lite** una vez aprobado el upgrade
+1. **Testing end-to-end** de Money Market tracking con transacciones reales
+2. **Deploy a staging** de todos los nuevos sistemas
+3. **Alembic migrations** para producción (earn_transactions, hl_spot_tokens, swap_positions, user_sync_schedule)
 
-### Mediano Plazo (Equipo Full-Stack)
+### Mediano Plazo
 
-1. **Desarrollo incremental** de endpoints según prioridad
-2. **Testing continuo** en ambiente staging
-3. **Integración frontend-backend** según especificaciones
-
----
-
-## 7. Análisis de Riesgos
-
-### Riesgos Resueltos ✅
-
-| Riesgo | Resolución |
-|--------|------------|
-| **Falta de especificaciones** | 26 especificaciones completas generadas |
-| **Problemas de configuración staging** | Fixes aplicados por Luciano |
-| **Duplicación de ENUMs** | Resuelto en migraciones |
-
-### Riesgos Actuales 🟡
-
-| Riesgo | Severidad | Mitigación |
-|--------|-----------|------------|
-| **Etherscan API limitado** | 🔴 Alta | Upgrade a plan Lite ($50) |
-| **Falta acceso a dominio** | 🔴 Alta | Coordinar con administrador de dominio |
-| **Dependencia de implementación** | 🟡 Media | Especificaciones completas facilitan desarrollo paralelo |
+1. **Frontend integration** para mostrar posiciones Money Market
+2. **Optimización** de Celery tasks para escalabilidad
+3. **Monitoring** de nuevos tasks en Flower
 
 ---
 
 ## Resumen
 
-Las últimas 72 horas se enfocaron en **completar la documentación técnica del MVP**:
+Las últimas 40 horas fueron de **desarrollo intensivo** con 3 sistemas nuevos completados:
 
-📚 **Documentación**: 26 especificaciones técnicas enterprise-grade completadas  
-🧪 **Testing**: Frontend y stage server probados, issues resueltos  
-🚨 **Blockers**: 2 blockers críticos identificados (Etherscan $50, acceso dominio)  
-✅ **Infraestructura**: Configuración de staging corregida y estabilizada
+💰 **Money Market Tracking**: 7 fases completadas — Aave V3 + Compound V3 ahora tienen paridad completa con Morpho (transacciones, posiciones, recovery, reconciliación)
+🔄 **Swap Workflow**: Agente completo con Hyperliquid, catálogo de tokens, análisis de sentimiento
+📊 **Money Market Positions**: Los usuarios pueden consultar sus posiciones Aave/Compound via chat
+🔧 **Infraestructura**: 8 nuevos Celery tasks, 4 nuevas tablas, Etherscan scanner extendido
 
-**Logro clave**: El MVP ahora cuenta con especificaciones técnicas completas y detalladas que permiten desarrollo paralelo y estructurado del producto.
+**Impacto**: 8,888 líneas nuevas en 14 commits, 61 archivos modificados.
 
 ---
 
-*Reporte generado: 10 de Febrero, 2026*  
-*Período cubierto: 7-10 de Febrero, 2026 (Últimas 72 horas)*  
-*Próximo reporte: 12 de Febrero, 2026*
+*Reporte generado: 12 de Febrero, 2026*
+*Período cubierto: 10-12 de Febrero, 2026 (Últimas 40 horas)*
+*Próximo reporte: 14 de Febrero, 2026*
