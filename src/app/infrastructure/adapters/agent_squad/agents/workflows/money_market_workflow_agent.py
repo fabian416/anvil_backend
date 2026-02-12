@@ -587,10 +587,11 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
         )
 
         if selected_rate:
+            chain = state.data.get("chain", "base")
             state.execute_data = self._build_deposit_execute_data(
                 protocol=selected_protocol,
                 asset=asset,
-                chain=state.data.get("chain", "base"),
+                chain=chain,
                 rate_data=selected_rate,
                 amount=amount,  # Include the amount
             )
@@ -598,6 +599,20 @@ class MoneyMarketWorkflowAgent(BaseWorkflowAgent):
                 f"[MoneyMarketWorkflow] User has funds (${user_context.total_balance_usd:.2f}) - "
                 f"setting execute_data for {amount} {asset} on {selected_protocol}"
             )
+
+            # Record pending earn transaction for tracking
+            if selected_protocol in ("aave", "compound"):
+                await self._record_earn_transaction(
+                    user_context=user_context,
+                    protocol=selected_protocol,
+                    chain=chain,
+                    action_type="supply",
+                    asset_symbol=asset,
+                    amount=amount,
+                    apy=selected_rate.get("supply_apy"),
+                    pool_address=selected_rate.get("pool_address")
+                    or AAVE_POOL_ADDRESSES.get(chain.lower()),
+                )
 
         # The actual deposit is handled by lending_workflow or frontend
         state.step = WorkflowStep.COMPLETED.value

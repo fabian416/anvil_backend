@@ -1525,7 +1525,7 @@ def create_conversations_router() -> APIRouter:
                     }
 
         elif intent_result.intent.value.startswith("SWAP"):
-            # SWAP: Uses Hyperliquid spot quotes (meme tokens only)
+            # SWAP: Uses Hyperliquid spot quotes (440+ tokens)
             # Note: Major tokens (ETH, BTC, etc.) are handled by MOONPAY_SWAP above
             try:
                 # Use injected swap_handler_v2 with Hyperliquid integration
@@ -2618,6 +2618,50 @@ Response Guidelines:
                         f"Failed to schedule withdraw confirmation task: {task_error}"
                     )
 
+            # Trigger earn tx confirmation for Aave/Compound supply/withdraw
+            if (
+                protocol in ("aave", "compound")
+                and action in ("supply", "withdraw")
+                and tx_hash
+            ):
+                try:
+                    from app.infrastructure.celery.tasks import (
+                        confirm_earn_transaction,
+                    )
+
+                    try:
+                        app_user = await current_user.get_current_user()
+                        earn_uid = str(app_user.id_.value)
+                    except (AuthenticationError, AuthorizationError):
+                        earn_uid = str(user.identifier)
+
+                    wallet_addr = request.metadata.get(
+                        "wallet_address"
+                    ) or request.metadata.get("from_address")
+                    pool_addr = request.metadata.get("pool_address")
+
+                    confirm_earn_transaction.delay(
+                        transaction_hash=tx_hash,
+                        user_id=earn_uid,
+                        protocol=protocol,
+                        chain=chain,
+                        asset_symbol=asset or "USDC",
+                        amount=str(amount) if amount else "0",
+                        action_type=action,
+                        wallet_address=wallet_addr,
+                        pool_address=pool_addr,
+                    )
+
+                    logger.info(
+                        f"📤 Earn tx confirmation scheduled: "
+                        f"tx={tx_hash[:10]}..., {action} "
+                        f"{amount} {asset} on {protocol}"
+                    )
+                except Exception as earn_err:
+                    logger.warning(
+                        f"Failed to schedule earn tx: {earn_err}"
+                    )
+
             return ExecuteResponse(
                 message=message,
                 execute_data=None,
@@ -2947,6 +2991,61 @@ Response Guidelines:
                     logger.error(
                         f"Failed to persist money market transaction: {save_error}",
                         exc_info=True,
+                    )
+
+            # ---- Record in earn_transactions + trigger confirmation ----
+            if (
+                protocol in ("aave", "compound")
+                and action in ("money_market_deposit", "money_market_withdraw")
+                and tx_hash
+            ):
+                try:
+                    from app.infrastructure.celery.tasks import (
+                        confirm_earn_transaction,
+                    )
+
+                    # Resolve user ID for earn_transactions
+                    try:
+                        app_user = await current_user.get_current_user()
+                        earn_user_id = str(app_user.id_.value)
+                    except (AuthenticationError, AuthorizationError):
+                        earn_user_id = str(user.id)
+
+                    # Map action to earn action_type
+                    earn_action = (
+                        "supply"
+                        if "deposit" in action
+                        else "withdraw"
+                    )
+
+                    # Get wallet address from metadata
+                    wallet_addr = request.metadata.get(
+                        "wallet_address"
+                    ) or request.metadata.get("from_address")
+                    pool_addr = request.metadata.get("pool_address")
+
+                    # Schedule earn transaction confirmation
+                    confirm_earn_transaction.delay(
+                        transaction_hash=tx_hash,
+                        user_id=earn_user_id,
+                        protocol=protocol,
+                        chain=chain,
+                        asset_symbol=asset or "USDC",
+                        amount=str(amount) if amount else "0",
+                        action_type=earn_action,
+                        wallet_address=wallet_addr,
+                        pool_address=pool_addr,
+                    )
+
+                    logger.info(
+                        f"📤 Earn tx confirmation scheduled: "
+                        f"tx={tx_hash[:10]}..., {earn_action} "
+                        f"{amount} {asset} on {protocol}"
+                    )
+                except Exception as earn_err:
+                    logger.warning(
+                        f"Failed to schedule earn tx confirmation: "
+                        f"{earn_err}"
                     )
 
             # Build response
