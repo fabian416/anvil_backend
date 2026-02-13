@@ -9,6 +9,11 @@
     reverse_proxy frontend:3000
 }
 
+{$REDIRECT_DOMAIN} {
+    # Redirect secondary domain to primary
+    redir https://{$DOMAIN}{uri} permanent
+}
+
 {$API_DOMAIN} {
     # Security headers for API domain (OWASP best practices)
     header {

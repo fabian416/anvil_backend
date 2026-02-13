@@ -531,8 +531,9 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     environment:
-      - DOMAIN=${DOMAIN:-dev.getrampy.com}
-      - API_DOMAIN=${API_DOMAIN:-dev.getrampy.com}
+      - DOMAIN=${DOMAIN:-dev.getramppy.com}
+      - API_DOMAIN=${API_DOMAIN:-dev.api.getramppy.com}
+      - REDIRECT_DOMAIN=${REDIRECT_DOMAIN:-dev.rampyapp.com}
       - FLOWER_DOMAIN=${FLOWER_DOMAIN}
       - FLOWER_USER=${FLOWER_USER}
       - FLOWER_HASH=${FLOWER_HASH}
