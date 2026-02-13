@@ -55,7 +55,7 @@ docker-compose -f docker-compose.yaml up -d
 ```bash
 docker-compose ps
 curl http://localhost:8080/health  # Local
-curl https://getrampy.com/health  # Production
+curl https://getramppy.com/health  # Production
 ```
 
 That's it! ✅

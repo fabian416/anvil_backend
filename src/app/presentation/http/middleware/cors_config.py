@@ -29,18 +29,18 @@ def get_cors_origins(environment: str = "local") -> List[str]:
             "http://127.0.0.1:3000",
             "http://127.0.0.1:5173",
             "http://127.0.0.1:8080",
-            "https://dev.getrampy.com",  # Frontend development
-            "https://dev.api.getrampy.com",  # API development
+            "https://dev.getramppy.com",  # Frontend development
+            "https://dev.api.getramppy.com",  # API development
         ],
         "dev": [
-            "https://staging.getrampy.com",  # Frontend staging
-            "https://staging.api.getrampy.com",  # API staging
+            "https://staging.getramppy.com",  # Frontend staging
+            "https://staging.api.getramppy.com",  # API staging
             "http://localhost:3000",
             "http://localhost:5173",  # Vite dev server
         ],
         "prod": [
-            "https://getrampy.com",  # Frontend production
-            "https://api.getrampy.com",  # API production
+            "https://getramppy.com",  # Frontend production
+            "https://api.getramppy.com",  # API production
         ]
     }
 
